@@ -14,11 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { addDays, isSameDay, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 export default function VacationRequests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [reason, setReason] = useState('');
   const { user, company } = useAuth();
   const { toast } = useToast();
@@ -36,8 +38,8 @@ export default function VacationRequests() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
       setIsModalOpen(false);
-      setStartDate('');
-      setEndDate('');
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
       setReason('');
       toast({
         title: '¡Solicitud enviada!',
@@ -104,11 +106,36 @@ export default function VacationRequests() {
   const availableDays = totalDays - usedDays - pendingDays;
   const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
 
-  const canRequestDays = startDate && endDate ? calculateDays(startDate, endDate) : 0;
+  const canRequestDays = selectedStartDate && selectedEndDate ? 
+    differenceInDays(selectedEndDate, selectedStartDate) + 1 : 0;
   const exceedsAvailable = canRequestDays > availableDays;
 
+  // Calendar logic
+  const handleDateClick = (date: Date) => {
+    if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+      // Starting new selection
+      setSelectedStartDate(date);
+      setSelectedEndDate(null);
+    } else if (date < selectedStartDate) {
+      // Clicked before start date, make it the new start
+      setSelectedStartDate(date);
+    } else {
+      // Set end date and check if range is valid
+      const daysBetween = differenceInDays(date, selectedStartDate) + 1;
+      if (daysBetween <= availableDays) {
+        setSelectedEndDate(date);
+      } else {
+        toast({
+          title: 'Demasiados días',
+          description: `Solo tienes ${availableDays} días disponibles`,
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
   const handleSubmit = () => {
-    if (!startDate || !endDate) {
+    if (!selectedStartDate || !selectedEndDate) {
       toast({
         title: 'Error',
         description: 'Por favor selecciona las fechas de inicio y fin',
@@ -127,10 +154,60 @@ export default function VacationRequests() {
     }
 
     createRequestMutation.mutate({
-      startDate,
-      endDate,
+      startDate: selectedStartDate.toISOString().split('T')[0],
+      endDate: selectedEndDate.toISOString().split('T')[0],
       reason: reason || undefined,
     });
+  };
+
+  const isDateInRange = (date: Date) => {
+    if (!selectedStartDate) return false;
+    if (!selectedEndDate && !hoverDate) return isSameDay(date, selectedStartDate);
+    
+    const endDate = selectedEndDate || hoverDate;
+    if (!endDate) return isSameDay(date, selectedStartDate);
+    
+    return isWithinInterval(date, { 
+      start: selectedStartDate < endDate ? selectedStartDate : endDate,
+      end: selectedStartDate < endDate ? endDate : selectedStartDate
+    });
+  };
+
+  const isDateStart = (date: Date) => selectedStartDate && isSameDay(date, selectedStartDate);
+  const isDateEnd = (date: Date) => selectedEndDate && isSameDay(date, selectedEndDate);
+
+  // Generate calendar days for current month
+  const generateCalendarDays = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    // Get first day of month and its day of week (0 = Sunday, 1 = Monday, etc.)
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const startDay = (firstDayOfMonth.getDay() + 6) % 7; // Convert to Monday = 0
+    
+    // Get days in current month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const days = [];
+    
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startDay; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(currentYear, currentMonth, i);
+      // Only show dates from today onwards
+      if (date >= startOfDay(today)) {
+        days.push(date);
+      } else {
+        days.push(null);
+      }
+    }
+    
+    return days;
   };
 
   if (isLoading) {
@@ -231,64 +308,116 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-800 border-gray-700">
-            <DialogHeader>
-              <DialogTitle className="text-white">Nueva Solicitud de Vacaciones</DialogTitle>
+          <DialogContent className="max-w-md mx-auto bg-gray-900 border border-gray-700 text-white rounded-2xl">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl font-semibold text-center text-white">
+                Solicitar Vacaciones
+              </DialogTitle>
+              <p className="text-sm text-gray-400 text-center">
+                Tienes {availableDays} días disponibles
+              </p>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="start-date" className="text-white">Fecha inicio</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
+            
+            <div className="space-y-6">
+              {/* Calendar */}
+              <div className="bg-gray-800 rounded-xl p-4">
+                <div className="text-sm font-medium text-gray-300 mb-3 text-center">
+                  {format(new Date(), 'MMMM yyyy', { locale: es })}
                 </div>
-                <div>
-                  <Label htmlFor="end-date" className="text-white">Fecha fin</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
+                
+                {/* Days of week header */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
+                    <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar days */}
+                <div className="grid grid-cols-7 gap-1">
+                  {generateCalendarDays().map((date, index) => {
+                    if (!date) {
+                      return <div key={`empty-${index}`} className="w-8 h-8"></div>;
+                    }
+                    
+                    const isInRange = isDateInRange(date);
+                    const isStart = isDateStart(date);
+                    const isEnd = isDateEnd(date);
+                    const isToday = isSameDay(date, new Date());
+                    
+                    return (
+                      <button
+                        key={date.toISOString()}
+                        onClick={() => handleDateClick(date)}
+                        onMouseEnter={() => selectedStartDate && !selectedEndDate && setHoverDate(date)}
+                        onMouseLeave={() => setHoverDate(null)}
+                        className={`
+                          w-8 h-8 text-xs rounded-lg transition-all duration-200 relative
+                          ${isInRange 
+                            ? (isStart || isEnd)
+                              ? 'bg-blue-500 text-white font-semibold'
+                              : 'bg-blue-500/30 text-blue-200'
+                            : 'text-gray-300 hover:bg-gray-700'
+                          }
+                          ${isToday && !isInRange ? 'ring-1 ring-blue-400' : ''}
+                        `}
+                      >
+                        {date.getDate()}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               
+              {/* Selected range info */}
               {canRequestDays > 0 && (
-                <div className={`text-sm p-2 rounded ${exceedsAvailable ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
-                  Días solicitados: {canRequestDays} | Disponibles: {availableDays}
+                <div className={`
+                  text-sm p-3 rounded-lg text-center font-medium
+                  ${exceedsAvailable 
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30' 
+                    : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                  }
+                `}>
+                  {selectedStartDate && selectedEndDate ? (
+                    <>
+                      {format(selectedStartDate, 'd MMM', { locale: es })} - {format(selectedEndDate, 'd MMM', { locale: es })}
+                      <br />
+                      {canRequestDays} días solicitados
+                    </>
+                  ) : (
+                    'Selecciona fecha de inicio y fin'
+                  )}
                 </div>
               )}
               
+              {/* Reason textarea */}
               <div>
-                <Label htmlFor="reason" className="text-white">Motivo (opcional)</Label>
+                <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                  Motivo (opcional)
+                </Label>
                 <Textarea
-                  id="reason"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Describe el motivo de tu solicitud..."
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 rounded-lg resize-none"
+                  rows={3}
                 />
               </div>
               
-              <div className="flex gap-2">
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-2">
                 <Button
                   onClick={() => setIsModalOpen(false)}
                   variant="outline"
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleSubmit}
-                  disabled={createRequestMutation.isPending || !startDate || !endDate || exceedsAvailable}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600"
+                  disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {createRequestMutation.isPending ? (
                     <LoadingSpinner size="sm" className="text-white" />
