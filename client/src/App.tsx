@@ -75,6 +75,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
+  const { user } = useAuth();
+  
   return (
     <Switch>
       {/* Global routes */}
@@ -164,9 +166,22 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      {/* Root redirect */}
+      {/* Login/Register routes for non-authenticated users */}
+      <Route path="/login">
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/register">
+        <PublicRoute>
+          <Register />
+        </PublicRoute>
+      </Route>
+
+      {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        <Redirect to="/dashboard" />
+        {user ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}
