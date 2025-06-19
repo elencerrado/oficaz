@@ -30,7 +30,7 @@ export default function Register() {
       companyAlias: '',
       phone: '',
       address: '',
-      adminUsername: '',
+
       adminFullName: '',
       adminDni: '',
       adminPhoneNumber: '',
@@ -39,7 +39,7 @@ export default function Register() {
     },
   });
 
-  const onSubmit = async (data: CompanyRegistrationData) => {
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       const response = await apiRequest('POST', '/api/auth/register-company', data);
@@ -198,19 +198,6 @@ export default function Register() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="adminUsername">Usuario *</Label>
-                  <Input
-                    id="adminUsername"
-                    className="rounded-xl"
-                    {...form.register('adminUsername')}
-                    placeholder="admin"
-                  />
-                  {form.formState.errors.adminUsername && (
-                    <p className="text-sm text-red-600">{form.formState.errors.adminUsername.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="adminFullName">Nombre completo *</Label>
                   <Input
                     id="adminFullName"
@@ -224,13 +211,16 @@ export default function Register() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adminDni">DNI</Label>
+                  <Label htmlFor="adminDni">DNI/NIE *</Label>
                   <Input
                     id="adminDni"
                     className="rounded-xl"
                     {...form.register('adminDni')}
                     placeholder="12345678A, X1234567L"
                   />
+                  {form.formState.errors.adminDni && (
+                    <p className="text-sm text-red-600">{form.formState.errors.adminDni.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -242,7 +232,9 @@ export default function Register() {
                     placeholder="+34 600 123 456"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña *</Label>
                   <div className="relative">

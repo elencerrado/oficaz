@@ -150,9 +150,8 @@ export const companyRegistrationSchema = z.object({
   logoUrl: z.string().optional(),
   
   // Admin user fields
-  adminUsername: z.string().min(1, "Usuario requerido"),
   adminFullName: z.string().min(1, "Nombre completo requerido"),
-  adminDni: z.string().optional(),
+  adminDni: z.string().min(1, "DNI/NIE requerido"),
   adminPhoneNumber: z.string().optional(),
   password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string(),

@@ -65,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = generateToken({
         id: user.id,
-        username: user.email, // Use email as username for JWT
+        username: user.email, // Use email for token compatibility
         role: user.role,
         companyId: user.companyId,
       });
