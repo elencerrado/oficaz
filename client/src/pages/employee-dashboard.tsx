@@ -134,7 +134,7 @@ export default function EmployeeDashboard() {
     { 
       icon: Clock, 
       title: 'Fichajes', 
-      route: `/${companyAlias}/employee-time-tracking`,
+      route: `/${companyAlias}/horasempleados`,
       notification: false 
     },
     { 

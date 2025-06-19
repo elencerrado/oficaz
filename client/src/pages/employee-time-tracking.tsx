@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocation, Link } from 'wouter';
 
@@ -17,7 +17,7 @@ interface WorkSession {
 }
 
 export default function EmployeeTimeTracking() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [location] = useLocation();
   const companyAlias = location.split('/')[1] || 'test';
@@ -36,13 +36,19 @@ export default function EmployeeTimeTracking() {
     return sessionDate >= monthStart && sessionDate <= monthEnd;
   });
 
-  // Calculate total hours for the month
+  // Calculate total hours for the month correctly
+  const calculateSessionHours = (session: WorkSession) => {
+    if (!session.clockOut) return 0;
+    
+    const clockIn = parseISO(session.clockIn);
+    const clockOut = parseISO(session.clockOut);
+    const totalMinutes = differenceInMinutes(clockOut, clockIn);
+    
+    return totalMinutes / 60; // Convert to hours
+  };
+
   const totalMonthHours = monthSessions.reduce((total, session) => {
-    if (session.totalHours) {
-      const [hours, minutes] = session.totalHours.split(':').map(Number);
-      return total + hours + (minutes / 60);
-    }
-    return total;
+    return total + calculateSessionHours(session);
   }, 0);
 
   const formatTotalHours = (hours: number) => {
@@ -80,35 +86,45 @@ export default function EmployeeTimeTracking() {
 
   const monthName = format(currentDate, 'MMMM yyyy', { locale: es });
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-employee-gradient text-white">
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 pb-4">
+      <div className="flex items-center justify-between p-4 pb-4">
         <Link href={`/${companyAlias}/dashboard`}>
           <Button
             variant="ghost"
-            size="sm"
-            className="text-white hover:bg-white/10 p-2"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="ml-2">Atrás</span>
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
           </Button>
         </Link>
         
-        <div className="flex items-center space-x-2">
-          <div className="text-2xl font-bold text-blue-400">Oficaz</div>
-          <div className="w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
-            <div className="w-3 h-3 bg-white rounded-full"></div>
-          </div>
+        <div className="flex flex-col items-center">
+          {company?.logoUrl ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="w-10 h-10 mb-2 rounded-full object-cover"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-2">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
+          <div className="text-lg font-medium">{user?.fullName}</div>
         </div>
         
-        <div className="text-lg font-medium">{user?.fullName}</div>
+        <div className="w-16"></div> {/* Spacer for centering */}
       </div>
 
       {/* Title */}
-      <div className="flex items-center justify-center mb-8">
-        <Clock className="h-8 w-8 mr-3" />
-        <h1 className="text-2xl font-bold">FICHAJES</h1>
+      <div className="flex items-center justify-center mb-6">
+        <Clock className="h-7 w-7 mr-3" />
+        <h1 className="text-xl font-bold">FICHAJES</h1>
       </div>
 
       {/* Month Navigation */}
@@ -165,7 +181,7 @@ export default function EmployeeTimeTracking() {
                       {session.clockOut ? formatTime(session.clockOut) : '-'}
                     </div>
                     <div className="text-sm text-center font-mono font-semibold">
-                      {session.totalHours || '-'}
+                      {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
                     </div>
                   </div>
                 ))
@@ -179,12 +195,20 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Total Hours */}
-      <div className="px-4 mb-8">
+      <div className="px-4 mb-6">
         <div className="bg-blue-500/20 rounded-lg py-4 px-6 border border-blue-400/30">
           <div className="flex justify-between items-center">
             <span className="text-lg font-semibold">TOTAL HORAS {monthName.split(' ')[0].toUpperCase()}</span>
             <span className="text-2xl font-bold font-mono">{formatTotalHours(totalMonthHours)}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Copyright at bottom */}
+      <div className="text-center pb-4 mt-auto">
+        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
+          <span className="font-semibold text-blue-400">Oficaz</span>
+          <span>© {currentYear}</span>
         </div>
       </div>
     </div>

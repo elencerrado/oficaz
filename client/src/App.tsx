@@ -147,7 +147,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/employee-time-tracking">
+      <Route path="/:companyAlias/horasempleados">
         <ProtectedRoute>
           <AppLayout>
             <EmployeeTimeTracking />
