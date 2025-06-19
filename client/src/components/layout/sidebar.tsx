@@ -107,30 +107,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </ul>
         </div>
         
-        {/* User section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-3 px-4 py-3">
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-gray-300 text-gray-600">
-                {user?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">
-                {user?.fullName}
-              </p>
-              <p className="text-xs text-gray-500">{user?.companyEmail}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <LogOut size={16} />
-            </Button>
-          </div>
-        </div>
+
       </nav>
     </>
   );

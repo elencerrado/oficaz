@@ -32,7 +32,7 @@ export const companyConfigs = pgTable("company_configs", {
 });
 
 // Users table
-export const users = pgTable("users", {
+export const users = pgTable("users", { 
   // Identificación y acceso
   id: serial("id").primaryKey(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
@@ -48,7 +48,7 @@ export const users = pgTable("users", {
   // Datos laborales
   startDate: timestamp("start_date").notNull(), // Lo introduce admin/manager
   isActive: boolean("is_active").notNull().default(true), // Lo introduce admin/manager
-  createdBy: integer("created_by").references(() => users.id), // Automático (admin o manager)
+  createdBy: integer("created_by"), // Automático (admin o manager)
   
   // Dirección
   postalAddress: text("postal_address"), // Lo escribe el empleado

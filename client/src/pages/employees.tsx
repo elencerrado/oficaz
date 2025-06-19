@@ -17,7 +17,8 @@ import {
   Shield,
   User,
   Clock,
-  Calendar
+  Calendar,
+  IdCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
@@ -27,38 +28,24 @@ export default function Employees() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [newEmployee, setNewEmployee] = useState({
-    username: '',
-    email: '',
-    firstName: '',
-    lastName: '',
+    fullName: '',
+    dni: '',
+    companyEmail: '',
     role: 'employee',
     password: '',
+    startDate: new Date().toISOString().split('T')[0],
+    totalVacationDays: '22',
   });
-  
+
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  // Redirect if not admin/manager
-  if (user?.role !== 'admin' && user?.role !== 'manager') {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Shield className="mx-auto mb-4 text-red-500" size={48} />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-500">You don't have permission to view this page.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const { data: employees, isLoading } = useQuery({
+  const { data: employees = [], isLoading: employeesLoading } = useQuery({
     queryKey: ['/api/employees'],
   });
 
-  const { data: companySessions } = useQuery({
+  const { data: companySessions = [] } = useQuery({
     queryKey: ['/api/work-sessions/company'],
   });
 
@@ -67,111 +54,119 @@ export default function Employees() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
       toast({
-        title: 'Employee Added',
-        description: 'New employee has been added successfully.',
+        title: 'Empleado Agregado',
+        description: 'El nuevo empleado ha sido agregado exitosamente.',
       });
       setIsAddModalOpen(false);
       setNewEmployee({
-        username: '',
-        email: '',
-        firstName: '',
-        lastName: '',
+        fullName: '',
+        dni: '',
+        companyEmail: '',
         role: 'employee',
         password: '',
+        startDate: new Date().toISOString().split('T')[0],
+        totalVacationDays: '22',
       });
     },
     onError: (error: any) => {
       toast({
-        title: 'Failed to Add Employee',
+        title: 'Error al Agregar Empleado',
         description: error.message,
         variant: 'destructive',
       });
     },
   });
 
-  const handleAddEmployee = (e: React.FormEvent) => {
-    e.preventDefault();
-    addEmployeeMutation.mutate(newEmployee);
+  const handleAddEmployee = () => {
+    if (!newEmployee.fullName || !newEmployee.dni || !newEmployee.companyEmail || !newEmployee.password) {
+      toast({
+        title: 'Campos Requeridos',
+        description: 'Por favor completa todos los campos obligatorios.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    addEmployeeMutation.mutate({
+      ...newEmployee,
+      totalVacationDays: parseInt(newEmployee.totalVacationDays),
+      startDate: new Date(newEmployee.startDate),
+    });
   };
 
-  const filteredEmployees = employees?.filter((employee: any) =>
-    `${employee.firstName} ${employee.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.username.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Filter employees based on search term
+  const filteredEmployees = Array.isArray(employees) ? employees.filter((employee: any) =>
+    employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.dni?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.companyEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
-  const getRoleColor = (role: string) => {
+  // Get role-based statistics
+  const totalEmployees = filteredEmployees.length;
+  const adminCount = filteredEmployees.filter((emp: any) => emp.role === 'admin').length;
+  const managerCount = filteredEmployees.filter((emp: any) => emp.role === 'manager').length;
+  const employeeCount = filteredEmployees.filter((emp: any) => emp.role === 'employee').length;
+
+  // Active sessions today
+  const today = new Date().toDateString();
+  const activeSessions = Array.isArray(companySessions) ? companySessions.filter((session: any) => 
+    new Date(session.clockIn).toDateString() === today && !session.clockOut
+  ).length : 0;
+
+  const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'manager':
-        return 'bg-blue-100 text-blue-800';
-      case 'employee':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'bg-red-100 text-red-800';
+      case 'manager': return 'bg-blue-100 text-blue-800';
+      case 'employee': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getEmployeeStats = (employeeId: number) => {
-    const sessions = companySessions?.filter((session: any) => session.userId === employeeId) || [];
-    const totalHours = sessions.reduce((sum: number, session: any) => 
-      sum + (parseFloat(session.totalHours || '0')), 0
-    );
-    const activeSessions = sessions.filter((session: any) => session.status === 'active').length;
-    
-    return { totalHours: totalHours.toFixed(1), activeSessions };
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'admin': return <Shield className="h-4 w-4" />;
+      case 'manager': return <Users className="h-4 w-4" />;
+      case 'employee': return <User className="h-4 w-4" />;
+      default: return <User className="h-4 w-4" />;
+    }
   };
 
-  if (isLoading) {
+  if (employeesLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-oficaz-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Employees</h1>
-          <p className="text-gray-500 mt-1">
-            Manage your team members and their roles.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Gestión de Empleados</h1>
+          <p className="text-gray-600">Administra los empleados de tu empresa</p>
         </div>
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'manager') && (
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-oficaz-primary hover:bg-blue-700"
+            className="bg-oficaz-primary hover:bg-oficaz-primary/90"
           >
-            <UserPlus className="mr-2" size={16} />
-            Add Employee
+            <UserPlus className="h-4 w-4 mr-2" />
+            Agregar Empleado
           </Button>
         )}
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users className="text-oficaz-primary" size={20} />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Users className="h-8 w-8 text-oficaz-primary" />
               <div>
-                <p className="text-sm text-gray-500">Total Employees</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {employees?.length || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
+                <p className="text-sm text-gray-500">Total Empleados</p>
               </div>
             </div>
           </CardContent>
@@ -179,15 +174,11 @@ export default function Employees() {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <User className="text-oficaz-success" size={20} />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-8 w-8 text-red-500" />
               <div>
-                <p className="text-sm text-gray-500">Active</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {employees?.filter((emp: any) => emp.isActive).length || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
+                <p className="text-sm text-gray-500">Administradores</p>
               </div>
             </div>
           </CardContent>
@@ -195,15 +186,11 @@ export default function Employees() {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                <Shield className="text-red-600" size={20} />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Users className="h-8 w-8 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-500">Admins</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {employees?.filter((emp: any) => emp.role === 'admin').length || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{managerCount}</p>
+                <p className="text-sm text-gray-500">Gerentes</p>
               </div>
             </div>
           </CardContent>
@@ -211,15 +198,11 @@ export default function Employees() {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Clock className="text-purple-600" size={20} />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Clock className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-sm text-gray-500">Currently Working</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {companySessions?.filter((session: any) => session.status === 'active').length || 0}
-                </p>
+                <p className="text-2xl font-bold text-gray-900">{activeSessions}</p>
+                <p className="text-sm text-gray-500">Activos Hoy</p>
               </div>
             </div>
           </CardContent>
@@ -227,211 +210,193 @@ export default function Employees() {
       </div>
 
       {/* Search */}
-      <Card className="mb-6">
+      <Card>
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search employees by name, email, or username..."
+              placeholder="Buscar empleados por nombre, DNI o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-9"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Employees Grid */}
-      {filteredEmployees.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredEmployees.map((employee: any) => {
-            const stats = getEmployeeStats(employee.id);
-            
-            return (
-              <Card key={employee.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <Avatar className="w-12 h-12">
-                      <AvatarFallback className="bg-oficaz-primary text-white text-lg">
-                        {employee.firstName[0]}{employee.lastName[0]}
+      {/* Employees List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Lista de Empleados ({filteredEmployees.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredEmployees.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No se encontraron empleados</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredEmployees.map((employee: any) => (
+                <div key={employee.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-oficaz-primary text-white">
+                        {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {employee.firstName} {employee.lastName}
-                        </h3>
-                        <Badge className={getRoleColor(employee.role)}>
-                          {employee.role}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{employee.fullName}</p>
+                        <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
+                          <span className="flex items-center gap-1">
+                            {getRoleIcon(employee.role)}
+                            {employee.role === 'admin' ? 'Administrador' : 
+                             employee.role === 'manager' ? 'Gerente' : 'Empleado'}
+                          </span>
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">@{employee.username}</p>
-                      <div className="flex items-center text-sm text-gray-500 mb-3">
-                        <Mail size={14} className="mr-1" />
-                        {employee.email}
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                        <div className="text-center">
-                          <p className="text-lg font-semibold text-gray-900">
-                            {stats.totalHours}h
-                          </p>
-                          <p className="text-xs text-gray-500">Total Hours</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-lg font-semibold text-gray-900">
-                            {employee.vacationDaysTotal - employee.vacationDaysUsed}
-                          </p>
-                          <p className="text-xs text-gray-500">Vacation Days</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex items-center space-x-1">
-                          <div className={`w-2 h-2 rounded-full ${
-                            stats.activeSessions > 0 ? 'bg-oficaz-success' : 'bg-gray-400'
-                          }`}></div>
-                          <span className="text-xs text-gray-500">
-                            {stats.activeSessions > 0 ? 'Working' : 'Offline'}
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <IdCard className="h-3 w-3" />
+                          {employee.dni}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {employee.companyEmail}
+                        </span>
+                        {employee.startDate && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Desde {format(new Date(employee.startDate), 'dd/MM/yyyy')}
                           </span>
-                        </div>
-                        <p className="text-xs text-gray-400">
-                          Joined {format(new Date(employee.createdAt), 'MMM yyyy')}
-                        </p>
+                        )}
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-12">
-            <div className="text-center">
-              <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'No employees found' : 'No employees yet'}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm 
-                  ? 'Try adjusting your search terms.'
-                  : 'Add your first employee to get started.'
-                }
-              </p>
-              {!searchTerm && user?.role === 'admin' && (
-                <Button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="bg-oficaz-primary hover:bg-blue-700"
-                >
-                  <UserPlus className="mr-2" size={16} />
-                  Add Employee
-                </Button>
-              )}
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">
+                      Vacaciones: {employee.usedVacationDays || 0}/{employee.totalVacationDays || 22} días
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Add Employee Dialog */}
+      {/* Add Employee Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Employee</DialogTitle>
+            <DialogTitle>Agregar Nuevo Empleado</DialogTitle>
           </DialogHeader>
-          
-          <form onSubmit={handleAddEmployee} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={newEmployee.firstName}
-                  onChange={(e) => setNewEmployee(prev => ({ ...prev, firstName: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={newEmployee.lastName}
-                  onChange={(e) => setNewEmployee(prev => ({ ...prev, lastName: e.target.value }))}
-                  required
-                />
-              </div>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="fullName">Nombre Completo *</Label>
+              <Input
+                id="fullName"
+                value={newEmployee.fullName}
+                onChange={(e) => setNewEmployee({ ...newEmployee, fullName: e.target.value })}
+                placeholder="Ej: Juan Pérez García"
+              />
             </div>
             
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="dni">DNI/NIE *</Label>
               <Input
-                id="email"
+                id="dni"
+                value={newEmployee.dni}
+                onChange={(e) => setNewEmployee({ ...newEmployee, dni: e.target.value })}
+                placeholder="12345678A"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="companyEmail">Email Corporativo *</Label>
+              <Input
+                id="companyEmail"
                 type="email"
-                value={newEmployee.email}
-                onChange={(e) => setNewEmployee(prev => ({ ...prev, email: e.target.value }))}
-                required
+                value={newEmployee.companyEmail}
+                onChange={(e) => setNewEmployee({ ...newEmployee, companyEmail: e.target.value })}
+                placeholder="empleado@empresa.com"
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={newEmployee.username}
-                onChange={(e) => setNewEmployee(prev => ({ ...prev, username: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña *</Label>
               <Input
                 id="password"
                 type="password"
                 value={newEmployee.password}
-                onChange={(e) => setNewEmployee(prev => ({ ...prev, password: e.target.value }))}
-                required
+                onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                placeholder="Contraseña temporal"
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={newEmployee.role}
-                onValueChange={(value) => setNewEmployee(prev => ({ ...prev, role: value }))}
+              <Label htmlFor="role">Rol</Label>
+              <Select 
+                value={newEmployee.role} 
+                onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="employee">Employee</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="employee">Empleado</SelectItem>
                   {user?.role === 'admin' && (
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <>
+                      <SelectItem value="manager">Gerente</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </>
+                  )}
+                  {user?.role === 'manager' && (
+                    <SelectItem value="manager">Gerente</SelectItem>
                   )}
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="flex space-x-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddModalOpen(false)}
-                className="flex-1"
-              >
-                Cancel
+
+            <div>
+              <Label htmlFor="startDate">Fecha de Inicio</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={newEmployee.startDate}
+                onChange={(e) => setNewEmployee({ ...newEmployee, startDate: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="totalVacationDays">Días de Vacaciones Anuales</Label>
+              <Input
+                id="totalVacationDays"
+                type="number"
+                min="0"
+                max="50"
+                value={newEmployee.totalVacationDays}
+                onChange={(e) => setNewEmployee({ ...newEmployee, totalVacationDays: e.target.value })}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                Cancelar
               </Button>
-              <Button
-                type="submit"
+              <Button 
+                onClick={handleAddEmployee}
                 disabled={addEmployeeMutation.isPending}
-                className="flex-1 bg-oficaz-primary hover:bg-blue-700"
+                className="bg-oficaz-primary hover:bg-oficaz-primary/90"
               >
-                {addEmployeeMutation.isPending ? 'Adding...' : 'Add Employee'}
+                {addEmployeeMutation.isPending ? 'Agregando...' : 'Agregar Empleado'}
               </Button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         companyPhone: data.adminPhoneNumber,
         startDate: new Date(),
         isActive: true,
-        totalVacationDays: '30.0', // Default vacation days for admin
+        totalVacationDays: "30.0", // Default vacation days for admin
       });
 
       const token = generateToken({
@@ -238,15 +238,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create admin user
       const user = await storage.createUser({
-        email: data.companyEmail,
+        companyEmail: data.companyEmail,
         password: hashedPassword,
         fullName: data.adminFullName,
         dni: data.adminDni || 'PENDING-DNI',
-        phoneNumber: data.adminPhoneNumber || null,
+        companyPhone: data.adminPhoneNumber || null,
         companyId: company.id,
         role: 'admin',
         startDate,
-        vacationDaysBalance: vacationBalance.toString(),
+        totalVacationDays: "30.0",
       });
 
       // Generate token for immediate login
@@ -583,14 +583,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await storage.createUser({
-        email,
+        companyEmail: email,
         password: hashedPassword,
         fullName,
         dni,
         role: role || 'employee',
         companyId: (req as AuthRequest).user!.companyId,
-        phoneNumber,
+        companyPhone: phoneNumber,
+        startDate: new Date(),
         isActive: true,
+        totalVacationDays: "22.0",
       });
 
       res.status(201).json({ ...user, password: undefined });
@@ -636,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         todayHours: todayHours.toFixed(1),
         weekHours: weekHours.toFixed(1),
-        vacationDaysRemaining: parseFloat(user?.vacationDaysBalance || '0'),
+        vacationDaysRemaining: parseFloat(user?.totalVacationDays || '0') - parseFloat(user?.usedVacationDays || '0'),
         activeEmployees: employeeCount,
         currentSession: activeSession,
         recentSessions: recentSessions.slice(0, 3),
