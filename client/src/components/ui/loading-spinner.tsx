@@ -12,31 +12,36 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  // Proporción armónica: el grosor del borde y el punto central deben ser proporcionales
+  // Configuración para círculo contorno + círculo relleno interno
   const config = {
-    sm: { borderWidth: 6, dotSize: 6 },
-    md: { borderWidth: 8, dotSize: 8 }, 
-    lg: { borderWidth: 12, dotSize: 12 }
+    sm: { outerSize: 24, borderWidth: 2, innerSize: 6, gap: 4 },
+    md: { outerSize: 32, borderWidth: 2, innerSize: 8, gap: 6 }, 
+    lg: { outerSize: 48, borderWidth: 3, innerSize: 12, gap: 9 }
   };
 
+  const currentConfig = config[size];
+
   return (
-    <div className={cn("relative", sizeClasses[size], className)}>
-      {/* Outer ring - grosor proporcional */}
+    <div className={cn("relative", className)} style={{ 
+      width: `${currentConfig.outerSize}px`, 
+      height: `${currentConfig.outerSize}px` 
+    }}>
+      {/* Círculo contorno fijo */}
       <div 
-        className="absolute inset-0 rounded-full border-white/80"
-        style={{ borderWidth: `${config[size].borderWidth}px` }}
+        className="absolute inset-0 rounded-full border-current"
+        style={{ borderWidth: `${currentConfig.borderWidth}px` }}
       ></div>
       
-      {/* Rotating inner dot - mismo grosor que el borde */}
+      {/* Círculo relleno giratorio interno */}
       <div className="absolute inset-0 animate-spin">
         <div 
-          className="absolute bg-gray-800 rounded-full"
+          className="absolute bg-current rounded-full"
           style={{
-            width: `${config[size].dotSize}px`,
-            height: `${config[size].dotSize}px`,
-            top: '50%',
+            width: `${currentConfig.innerSize}px`,
+            height: `${currentConfig.innerSize}px`,
+            top: `${currentConfig.borderWidth + currentConfig.gap}px`,
             left: '50%',
-            transform: 'translate(-50%, -50%) translateY(-130%)'
+            transform: 'translateX(-50%)'
           }}
         ></div>
       </div>
