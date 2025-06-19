@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(0, 0%, 15%);
+  --muted: hsl(210, 40%, 98%);
+  --muted-foreground: hsl(215, 16%, 47%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(0, 0%, 15%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0, 0%, 15%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(210, 83%, 53%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(210, 40%, 98%);
+  --secondary-foreground: hsl(0, 0%, 15%);
+  --accent: hsl(210, 40%, 98%);
+  --accent-foreground: hsl(0, 0%, 15%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(210, 83%, 53%);
+  --radius: 0.5rem;
+  
+  /* Custom Oficaz colors */
+  --oficaz-primary: hsl(210, 83%, 53%);
+  --oficaz-secondary: hsl(0, 0%, 26%);
+  --oficaz-success: hsl(122, 39%, 49%);
+  --oficaz-warning: hsl(36, 100%, 50%);
+  --oficaz-error: hsl(4, 90%, 58%);
+  --oficaz-gray-50: hsl(210, 40%, 98%);
+  --oficaz-gray-100: hsl(210, 40%, 96%);
+  --oficaz-gray-200: hsl(214, 32%, 91%);
+  --oficaz-gray-300: hsl(213, 27%, 84%);
+  --oficaz-gray-400: hsl(215, 20%, 65%);
+  --oficaz-gray-500: hsl(215, 16%, 47%);
+  --oficaz-gray-600: hsl(215, 19%, 35%);
+  --oficaz-gray-700: hsl(215, 25%, 27%);
+  --oficaz-gray-800: hsl(217, 33%, 17%);
+  --oficaz-gray-900: hsl(222, 47%, 11%);
+}
+
+.dark {
+  --background: hsl(222, 47%, 11%);
+  --foreground: hsl(213, 31%, 91%);
+  --muted: hsl(223, 47%, 11%);
+  --muted-foreground: hsl(215, 16%, 57%);
+  --popover: hsl(224, 71%, 4%);
+  --popover-foreground: hsl(213, 31%, 91%);
+  --card: hsl(224, 71%, 4%);
+  --card-foreground: hsl(213, 31%, 91%);
+  --border: hsl(216, 34%, 17%);
+  --input: hsl(216, 34%, 17%);
+  --primary: hsl(210, 83%, 53%);
+  --primary-foreground: hsl(222, 47%, 1%);
+  --secondary: hsl(222, 47%, 11%);
+  --secondary-foreground: hsl(213, 31%, 91%);
+  --accent: hsl(216, 34%, 17%);
+  --accent-foreground: hsl(213, 31%, 91%);
+  --destructive: hsl(4, 90%, 58%);
+  --destructive-foreground: hsl(213, 31%, 91%);
+  --ring: hsl(216, 34%, 17%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-inter antialiased;
+  }
+}
+
+/* Custom utility classes for Oficaz */
+@layer utilities {
+  .text-oficaz-primary {
+    color: var(--oficaz-primary);
+  }
+  
+  .bg-oficaz-primary {
+    background-color: var(--oficaz-primary);
+  }
+  
+  .text-oficaz-success {
+    color: var(--oficaz-success);
+  }
+  
+  .bg-oficaz-success {
+    background-color: var(--oficaz-success);
+  }
+  
+  .text-oficaz-warning {
+    color: var(--oficaz-warning);
+  }
+  
+  .bg-oficaz-warning {
+    background-color: var(--oficaz-warning);
+  }
+  
+  .text-oficaz-error {
+    color: var(--oficaz-error);
+  }
+  
+  .bg-oficaz-error {
+    background-color: var(--oficaz-error);
+  }
+  
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Animations */
+@keyframes pulse-green {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
