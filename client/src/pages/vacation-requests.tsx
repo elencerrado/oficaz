@@ -209,8 +209,9 @@ export default function VacationRequests() {
     // Add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
-      // Only show dates from today onwards if it's the current month or future months
-      if (date >= startOfDay(today) || calendarDate > today) {
+      // Only show dates from today onwards if it's the current month, otherwise show all dates
+      const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
+      if (!isCurrentMonth || date >= startOfDay(today)) {
         days.push(date);
       } else {
         days.push(null);
@@ -318,30 +319,30 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-gray-900 border border-gray-700 text-white rounded-2xl mt-8">
+          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-white">
                 Solicitar Vacaciones
               </DialogTitle>
-              <p className="text-sm text-gray-400 text-center">
+              <p className="text-sm text-gray-300 text-center">
                 Tienes {availableDays} días disponibles
               </p>
             </DialogHeader>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Calendar */}
-              <div className="bg-gray-800 rounded-xl p-4">
+              <div className="bg-gray-700 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={goToPreviousMonth}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   
-                  <div className="text-sm font-medium text-gray-300 capitalize">
+                  <div className="text-sm font-medium text-white capitalize">
                     {format(calendarDate, 'MMMM yyyy', { locale: es })}
                   </div>
                   
@@ -349,7 +350,7 @@ export default function VacationRequests() {
                     variant="ghost"
                     size="sm"
                     onClick={goToNextMonth}
-                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -358,14 +359,14 @@ export default function VacationRequests() {
                 {/* Days of week header */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
                   {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
-                    <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
+                    <div key={day} className="text-xs text-gray-300 text-center py-2 font-medium">
                       {day}
                     </div>
                   ))}
                 </div>
                 
-                {/* Calendar days */}
-                <div className="grid grid-cols-7 gap-1">
+                {/* Calendar days - Fixed height container */}
+                <div className="grid grid-cols-7 gap-1 min-h-[192px]">
                   {generateCalendarDays().map((date, index) => {
                     if (!date) {
                       return <div key={`empty-${index}`} className="w-8 h-8"></div>;
@@ -388,7 +389,7 @@ export default function VacationRequests() {
                             ? (isStart || isEnd)
                               ? 'bg-blue-500 text-white font-semibold'
                               : 'bg-blue-500/30 text-blue-200'
-                            : 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-100 hover:bg-gray-600'
                           }
                           ${isToday && !isInRange ? 'ring-1 ring-blue-400' : ''}
                         `}
@@ -436,18 +437,18 @@ export default function VacationRequests() {
               </div>
               
               {/* Action buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-1 pb-1">
                 <Button
                   onClick={() => setIsModalOpen(false)}
                   variant="outline"
-                  className="flex-1 border-red-600 text-red-300 hover:bg-red-900/20 hover:border-red-500"
+                  className="flex-1 border-red-600 text-red-300 hover:bg-red-900/20 hover:border-red-500 h-9"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed h-9"
                 >
                   {createRequestMutation.isPending ? (
                     <LoadingSpinner size="sm" className="text-white" />

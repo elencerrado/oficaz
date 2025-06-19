@@ -267,3 +267,18 @@ body::after {
 .animate-pulse-green {
   animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Dialog positioning for vacation requests modal */
+@media (max-width: 640px) {
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    top: 8vh !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100vw - 2rem) !important;
+    max-width: 400px !important;
+    max-height: 84vh !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+  }
+}
