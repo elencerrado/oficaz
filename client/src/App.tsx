@@ -15,6 +15,7 @@ import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";
+import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
 import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
@@ -136,6 +137,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <TimeTracking />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/employee-time-tracking">
+        <ProtectedRoute>
+          <AppLayout>
+            <EmployeeTimeTracking />
           </AppLayout>
         </ProtectedRoute>
       </Route>

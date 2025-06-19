@@ -129,7 +129,7 @@ export default function EmployeeDashboard() {
     { 
       icon: Clock, 
       title: 'Fichajes', 
-      route: '/time-tracking',
+      route: '/employee-time-tracking',
       notification: false 
     },
     { 
@@ -187,11 +187,9 @@ export default function EmployeeDashboard() {
       {/* Company Logo and Name */}
       <div className="flex justify-center mb-12">
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-3 mb-2">
-            <div className="text-4xl font-bold text-blue-400">Oficaz</div>
-            <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-white rounded-full"></div>
-            </div>
+          {/* Space reserved for company logo */}
+          <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
+            <div className="text-white/60 text-xs">LOGO</div>
           </div>
           <div className="text-white text-lg font-medium">
             {company?.name || 'Mi Empresa'}
@@ -199,23 +197,23 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Menu Grid - iPhone style with icons inside and text below */}
+      {/* Menu Grid - iPhone style with larger icons inside and text below */}
       <div className="px-8 mb-12">
         <div className="grid grid-cols-3 gap-8">
           {menuItems.map((item, index) => (
             <div key={index} className="flex flex-col items-center">
               <a
                 href={item.route}
-                className="relative w-16 h-16 bg-blue-500 hover:bg-blue-600 transition-colors rounded-2xl flex items-center justify-center mb-2"
+                className="relative w-20 h-20 bg-blue-500 hover:bg-blue-600 transition-colors rounded-2xl flex items-center justify-center mb-3"
               >
-                <item.icon className="h-7 w-7 text-white" />
+                <item.icon className="h-10 w-10 text-white" />
                 {item.notification && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}
               </a>
-              <span className="text-xs font-medium text-center text-white/90">
+              <span className="text-sm font-medium text-center text-white/90">
                 {item.title}
               </span>
             </div>
