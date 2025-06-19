@@ -90,7 +90,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, company, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -100,8 +100,8 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (user) {
-    return <Redirect to="/dashboard" />;
+  if (user && company) {
+    return <Redirect to={`/${company.companyAlias}/dashboard`} />;
   }
 
   return <>{children}</>;
@@ -195,14 +195,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      {/* Legacy routes - redirect to company-specific routes */}
-      <Route path="/dashboard">
-        <ProtectedRoute>
-          <AppLayout>
-            <Dashboard />
-          </AppLayout>
-        </ProtectedRoute>
-      </Route>
+
 
       {/* Login/Register routes for non-authenticated users */}
       <Route path="/login">
@@ -219,7 +212,7 @@ function Router() {
 
       {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        {user ? <Redirect to={`/${company?.companyAlias || 'test'}/dashboard`} /> : <Redirect to="/login" />}
+        {user && company ? <Redirect to={`/${company.companyAlias}/dashboard`} /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}
