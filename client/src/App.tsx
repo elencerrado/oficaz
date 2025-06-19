@@ -79,7 +79,13 @@ function Router() {
   
   return (
     <Switch>
-      {/* Global routes */}
+      {/* Public routes for authentication */}
+      <Route path="/login">
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      </Route>
+
       <Route path="/register">
         <PublicRoute>
           <Register />
@@ -90,13 +96,6 @@ function Router() {
       <Route path="/:companyAlias/login">
         <PublicRoute>
           <Login />
-        </PublicRoute>
-      </Route>
-      
-      {/* Legacy login route - redirect to registration */}
-      <Route path="/login">
-        <PublicRoute>
-          <Register />
         </PublicRoute>
       </Route>
 
