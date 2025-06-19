@@ -4,6 +4,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix iPhone white areas */
+html, body {
+  background: #232B36 !important;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  position: relative;
+}
+
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  /* Prevent bounce effect that shows white area */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  background: #232B36 !important;
+  position: relative;
+}
+
+/* Prevent white area on overscroll */
+body::before {
+  content: '';
+  position: fixed;
+  top: -100px;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #232B36;
+  z-index: -1;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -100px;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #232B36;
+  z-index: -1;
+}
+
 /* Custom scrollbar styles */
 @layer utilities {
   .scrollbar-thin {
@@ -70,7 +119,37 @@
   /* Page-level scroll */
   .page-scroll {
     touch-action: pan-y;
-    overscroll-behavior: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* iPhone specific bounce prevention */
+  @supports (-webkit-touch-callout: none) {
+    html {
+      position: fixed;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    body {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+    
+    #root {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: none;
+    }
   }
 }
 
