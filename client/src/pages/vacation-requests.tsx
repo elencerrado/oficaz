@@ -154,15 +154,38 @@ export default function VacationRequests() {
         overscrollBehavior: 'none'
       }}
     >
-      {/* Header with back button */}
-      <div className="flex items-center justify-between px-6 py-4">
+      {/* Header - Fixed height */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/employee-dashboard`}>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 p-2 rounded-xl">
-            <ArrowLeft className="h-6 w-6" />
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
           </Button>
         </Link>
-        <h1 className="text-xl font-semibold">Vacaciones</h1>
-        <div className="w-10" /> {/* Spacer */}
+        
+        <div className="flex-1 flex flex-col items-end text-right">
+          {company?.logoUrl ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="w-8 h-8 mb-1 rounded-full object-cover"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
+          <div className="text-base font-medium text-white">{user?.fullName}</div>
+        </div>
+      </div>
+
+      {/* Modern Title - Fixed height */}
+      <div className="text-center mb-8 h-12 flex items-center justify-center">
+        <h1 className="text-2xl font-light text-white/90 tracking-wide">Vacaciones</h1>
       </div>
 
       {/* Vacation Summary */}
