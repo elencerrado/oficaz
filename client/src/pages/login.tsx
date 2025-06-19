@@ -49,19 +49,19 @@ export default function Login() {
           <div className="w-16 h-16 bg-oficaz-primary rounded-full flex items-center justify-center mx-auto mb-4">
             <Building className="text-white text-2xl" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome to Oficaz</CardTitle>
-          <CardDescription>Sign in to your account to continue</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Bienvenido a Oficaz</CardTitle>
+          <CardDescription>Inicia sesión en tu cuenta para continuar</CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Usuario</Label>
               <Input
                 id="username"
                 type="text"
                 {...form.register('username')}
-                placeholder="Enter your username"
+                placeholder="Ingresa tu usuario"
                 className="mt-1"
               />
               {form.formState.errors.username && (
@@ -72,13 +72,13 @@ export default function Login() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <div className="relative mt-1">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   {...form.register('password')}
-                  placeholder="Enter your password"
+                  placeholder="Ingresa tu contraseña"
                   className="pr-10"
                 />
                 <button
@@ -105,16 +105,16 @@ export default function Login() {
               className="w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? 'Signing In...' : 'Sign In'}
+              {form.formState.isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              ¿No tienes una cuenta?{' '}
               <Link href="/register">
                 <a className="font-medium text-oficaz-primary hover:text-blue-500">
-                  Sign up
+                  Registrarse
                 </a>
               </Link>
             </p>

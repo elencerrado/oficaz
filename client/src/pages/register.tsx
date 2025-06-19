@@ -66,19 +66,19 @@ export default function Register() {
           <div className="w-16 h-16 bg-oficaz-primary rounded-full flex items-center justify-center mx-auto mb-4">
             <Building className="text-white text-2xl" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Create Your Account</CardTitle>
-          <CardDescription>Get started with Oficaz for your business</CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-900">Crea tu Cuenta</CardTitle>
+          <CardDescription>Comienza con Oficaz para tu negocio</CardDescription>
         </CardHeader>
         
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">Nombre</Label>
                 <Input
                   id="firstName"
                   {...form.register('firstName')}
-                  placeholder="First name"
+                  placeholder="Tu nombre"
                   className="mt-1"
                 />
                 {form.formState.errors.firstName && (
@@ -89,11 +89,11 @@ export default function Register() {
               </div>
               
               <div>
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Apellidos</Label>
                 <Input
                   id="lastName"
                   {...form.register('lastName')}
-                  placeholder="Last name"
+                  placeholder="Tus apellidos"
                   className="mt-1"
                 />
                 {form.formState.errors.lastName && (
@@ -105,11 +105,11 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="companyName">Company Name</Label>
+              <Label htmlFor="companyName">Nombre de la Empresa</Label>
               <Input
                 id="companyName"
                 {...form.register('companyName')}
-                placeholder="Your company name"
+                placeholder="Nombre de tu empresa"
                 className="mt-1"
               />
               {form.formState.errors.companyName && (
@@ -120,18 +120,18 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="role">Your Role</Label>
+              <Label htmlFor="role">Tu Rol</Label>
               <Select
                 onValueChange={(value) => form.setValue('role', value as 'admin' | 'manager' | 'employee')}
                 defaultValue={form.watch('role')}
               >
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select your role" />
+                  <SelectValue placeholder="Selecciona tu rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin (Full Access)</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="admin">Administrador (Acceso Completo)</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
+                  <SelectItem value="employee">Empleado</SelectItem>
                 </SelectContent>
               </Select>
               {form.formState.errors.role && (
@@ -142,12 +142,12 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo Electrónico</Label>
               <Input
                 id="email"
                 type="email"
                 {...form.register('email')}
-                placeholder="your@email.com"
+                placeholder="tu@email.com"
                 className="mt-1"
               />
               {form.formState.errors.email && (
@@ -158,11 +158,11 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Usuario</Label>
               <Input
                 id="username"
                 {...form.register('username')}
-                placeholder="Choose a username"
+                placeholder="Elige un nombre de usuario"
                 className="mt-1"
               />
               {form.formState.errors.username && (
@@ -173,13 +173,13 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <div className="relative mt-1">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   {...form.register('password')}
-                  placeholder="Create a password"
+                  placeholder="Crea una contraseña"
                   className="pr-10"
                 />
                 <button
@@ -202,13 +202,13 @@ export default function Register() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
               <div className="relative mt-1">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   {...form.register('confirmPassword')}
-                  placeholder="Confirm your password"
+                  placeholder="Confirma tu contraseña"
                   className="pr-10"
                 />
                 <button
@@ -235,7 +235,7 @@ export default function Register() {
               className="w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? 'Creating Account...' : 'Create Account'}
+              {form.formState.isSubmitting ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
           </form>
 

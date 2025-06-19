@@ -38,10 +38,10 @@ export default function Dashboard() {
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('es-ES', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true,
+      hour12: false,
     });
   };
 
@@ -78,14 +78,14 @@ export default function Dashboard() {
       <div className="bg-white shadow-sm border-b border-gray-200 -mx-6 -mt-6 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
             <p className="text-gray-500 mt-1">
-              Welcome back, {user?.firstName}! Here's what's happening today.
+              ¡Bienvenido de nuevo, {user?.firstName}! Esto es lo que está pasando hoy.
             </p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm text-gray-500">Current Time</p>
+              <p className="text-sm text-gray-500">Hora Actual</p>
               <p className="text-lg font-semibold text-gray-900">
                 {formatTime(currentTime)}
               </p>
@@ -99,7 +99,7 @@ export default function Dashboard() {
               }}
             >
               <Clock className="mr-2" size={16} />
-              Quick Clock In
+              Marcar Entrada Rápida
             </Button>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Today's Hours</p>
+                <p className="text-sm text-gray-500 mb-1">Horas de Hoy</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {stats?.todayHours || '0.0'}h
                 </p>
@@ -123,7 +123,7 @@ export default function Dashboard() {
             <div className="mt-4">
               <div className="flex items-center text-sm">
                 <ArrowUp className="text-oficaz-success mr-1" size={16} />
-                <span className="text-oficaz-success">Good progress</span>
+                <span className="text-oficaz-success">Buen progreso</span>
               </div>
             </div>
           </CardContent>
@@ -133,7 +133,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">This Week</p>
+                <p className="text-sm text-gray-500 mb-1">Esta Semana</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {stats?.weekHours || '0.0'}h
                 </p>
@@ -156,7 +156,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Vacation Days</p>
+                <p className="text-sm text-gray-500 mb-1">Días de Vacaciones</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {stats?.vacationDaysRemaining || 0}
                 </p>
@@ -167,7 +167,7 @@ export default function Dashboard() {
             </div>
             <div className="mt-4">
               <div className="flex items-center text-sm">
-                <span className="text-gray-500">remaining this year</span>
+                <span className="text-gray-500">restantes este año</span>
               </div>
             </div>
           </CardContent>
@@ -177,7 +177,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">Active Employees</p>
+                <p className="text-sm text-gray-500 mb-1">Empleados Activos</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {stats?.activeEmployees || 1}
                 </p>

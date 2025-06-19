@@ -20,15 +20,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   });
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
-    { name: 'Vacation Requests', href: '/vacation-requests', icon: Calendar },
-    { name: 'Documents', href: '/documents', icon: FileText },
-    { name: 'Messages', href: '/messages', icon: Mail, badge: unreadCount?.count },
+    { name: 'Panel Principal', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Control de Tiempo', href: '/time-tracking', icon: Clock },
+    { name: 'Solicitudes de Vacaciones', href: '/vacation-requests', icon: Calendar },
+    { name: 'Documentos', href: '/documents', icon: FileText },
+    { name: 'Mensajes', href: '/messages', icon: Mail, badge: unreadCount?.count },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
-      { name: 'Employees', href: '/employees', icon: Users }
+      { name: 'Empleados', href: '/employees', icon: Users }
     ] : []),
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Configuración', href: '/settings', icon: Settings },
   ];
 
   const handleLinkClick = () => {
