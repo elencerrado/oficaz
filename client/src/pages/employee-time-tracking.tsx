@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, isSameWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocation, Link } from 'wouter';
 
@@ -306,27 +306,48 @@ export default function EmployeeTimeTracking() {
           {/* Table Body */}
           <div className="h-full overflow-y-auto scrollbar-thin" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '300px' }}>
             {monthSessions.length > 0 ? (
-              monthSessions
-                .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime())
-                .map((session) => (
-                  <div
-                    key={session.id}
-                    className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5"
-                  >
-                    <div className="text-sm text-center text-white/90 whitespace-nowrap">
-                      {formatDate(session.clockIn)}
+              (() => {
+                const sortedSessions = monthSessions
+                  .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                
+                let currentWeekStart: Date | null = null;
+                
+                return sortedSessions.map((session, index) => {
+                  const sessionDate = new Date(session.clockIn);
+                  const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 }); // Monday start
+                  
+                  // Check if this is a new week
+                  const isNewWeek = currentWeekStart === null || 
+                    weekStart.getTime() !== currentWeekStart.getTime();
+                  
+                  if (isNewWeek) {
+                    currentWeekStart = weekStart;
+                  }
+                  
+                  return (
+                    <div key={session.id}>
+                      {/* Week separator - only show if it's a new week and not the first item */}
+                      {isNewWeek && index > 0 && (
+                        <div className="border-t-2 border-blue-400/30 my-2"></div>
+                      )}
+                      <div className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5">
+                        <div className="text-sm text-center text-white/90 whitespace-nowrap">
+                          {formatDate(session.clockIn)}
+                        </div>
+                        <div className="text-sm text-center font-mono">
+                          {formatTime(session.clockIn)}
+                        </div>
+                        <div className="text-sm text-center font-mono">
+                          {session.clockOut ? formatTime(session.clockOut) : '-'}
+                        </div>
+                        <div className="text-sm text-center font-mono font-semibold">
+                          {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-center font-mono">
-                      {formatTime(session.clockIn)}
-                    </div>
-                    <div className="text-sm text-center font-mono">
-                      {session.clockOut ? formatTime(session.clockOut) : '-'}
-                    </div>
-                    <div className="text-sm text-center font-mono font-semibold">
-                      {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
-                    </div>
-                  </div>
-                ))
+                  );
+                });
+              })()
             ) : (
               <div className="flex items-center justify-center h-full min-h-48">
                 <div className="text-center text-white/60">

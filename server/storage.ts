@@ -156,7 +156,7 @@ export class DrizzleStorage implements IStorage {
     return session;
   }
 
-  async getWorkSessionsByUser(userId: number, limit = 10): Promise<WorkSession[]> {
+  async getWorkSessionsByUser(userId: number, limit = 1000): Promise<WorkSession[]> {
     return db.select().from(schema.workSessions)
       .where(eq(schema.workSessions.userId, userId))
       .orderBy(desc(schema.workSessions.createdAt))
