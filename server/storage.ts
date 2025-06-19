@@ -30,9 +30,8 @@ export interface IStorage {
   // Users
   createUser(user: InsertUser): Promise<User>;
   getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUsersByUsername(username: string): Promise<User[]>;
-  getUserByUsernameAndCompany(username: string, companyId: number): Promise<User | undefined>;
+  getUserByDni(dni: string): Promise<User | undefined>;
+  getUserByDniAndCompany(dni: string, companyId: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByCompany(companyId: number): Promise<User[]>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
@@ -115,18 +114,14 @@ export class DrizzleStorage implements IStorage {
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
+  async getUserByDni(dni: string): Promise<User | undefined> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.dni, dni));
     return user;
   }
 
-  async getUsersByUsername(username: string): Promise<User[]> {
-    return db.select().from(schema.users).where(eq(schema.users.username, username));
-  }
-
-  async getUserByUsernameAndCompany(username: string, companyId: number): Promise<User | undefined> {
+  async getUserByDniAndCompany(dni: string, companyId: number): Promise<User | undefined> {
     const [user] = await db.select().from(schema.users)
-      .where(and(eq(schema.users.username, username), eq(schema.users.companyId, companyId)));
+      .where(and(eq(schema.users.dni, dni), eq(schema.users.companyId, companyId)));
     return user;
   }
 

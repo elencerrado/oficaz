@@ -23,54 +23,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const data = registerSchema.parse(req.body);
+      const data = companyRegistrationSchema.parse(req.body);
       
-      // Check if user already exists
-      const existingUser = await storage.getUserByUsername(data.username);
+      // Check if user already exists by email
+      const existingUser = await storage.getUserByEmail(data.companyEmail);
       if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
-      }
-
-      const existingEmail = await storage.getUserByEmail(data.email);
-      if (existingEmail) {
         return res.status(400).json({ message: 'Email already exists' });
       }
 
-      // For simplicity, use the existing Demo Company (ID 1) or create new company
-      let company;
-      try {
-        company = await storage.getCompany(1); // Try to get Demo Company
-        if (!company) {
-          company = await storage.createCompany({
-            name: data.companyName,
-          });
-        }
-      } catch (error) {
-        company = await storage.createCompany({
-          name: data.companyName,
-        });
+      // Check if company CIF already exists
+      const existingCompany = await storage.getCompanyByCif?.(data.cif);
+      if (existingCompany) {
+        return res.status(400).json({ message: 'CIF already exists' });
       }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      // Create user with selected role
+      // Create company first
+      const company = await storage.createCompany({
+        name: data.companyName,
+        email: data.companyEmail,
+        cif: data.cif,
+        contactName: data.contactName,
+        companyAlias: data.companyAlias,
+        phone: data.phone,
+        address: data.address,
+      });
+
+      // Create admin user
       const user = await storage.createUser({
-        username: data.username,
-        email: data.email,
+        email: data.companyEmail,
         password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role, // Use the role from form
+        fullName: data.adminFullName,
+        dni: data.adminDni || 'TEMP-DNI',
+        role: 'admin',
         companyId: company.id,
-        vacationDaysTotal: data.vacationDaysTotal,
-        vacationDaysUsed: data.vacationDaysUsed,
-        isActive: data.isActive,
+        phoneNumber: data.adminPhoneNumber,
+        isActive: true,
       });
 
       const token = generateToken({
         id: user.id,
-        username: user.username,
+        username: user.email, // Use email as username for JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -101,33 +96,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetCompanyId = company.id;
       }
       
-      // Try to find user by email first, then by username
-      let user = await storage.getUserByEmail(data.emailOrUsername);
+      // Try to find user by email first, then by DNI
+      let user = await storage.getUserByEmail(data.dniOrEmail);
       
       // If company-specific login, verify user belongs to that company
       if (user && targetCompanyId && user.companyId !== targetCompanyId) {
-        user = null; // User exists but not in the specified company
+        user = undefined; // User exists but not in the specified company
       }
       
       if (!user) {
-        // If multiple users have the same username (from different companies), 
-        // we need to get all users with that username and validate password for each
-        const users = await storage.getUsersByUsername(data.emailOrUsername);
-        const filteredUsers = targetCompanyId 
-          ? users.filter(u => u.companyId === targetCompanyId)
-          : users;
-          
-        if (filteredUsers.length === 1) {
-          user = filteredUsers[0];
-        } else if (filteredUsers.length > 1) {
-          // Try to authenticate with each user until we find the correct one
-          for (const candidateUser of filteredUsers) {
-            const validPassword = await bcrypt.compare(data.password, candidateUser.password);
-            if (validPassword && candidateUser.isActive) {
-              user = candidateUser;
-              break;
-            }
-          }
+        // Try to find by DNI
+        if (targetCompanyId) {
+          user = await storage.getUserByDniAndCompany(data.dniOrEmail, targetCompanyId);
+        } else {
+          user = await storage.getUserByDni(data.dniOrEmail);
         }
       }
       
@@ -157,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = generateToken({
         id: user.id,
-        username: user.username,
+        username: user.email, // Use email as username in JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -254,11 +236,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create admin user
       const user = await storage.createUser({
-        username: data.adminUsername,
         email: data.companyEmail,
         password: hashedPassword,
         fullName: data.adminFullName,
-        dni: data.adminDni || null,
+        dni: data.adminDni || 'PENDING-DNI',
         phoneNumber: data.adminPhoneNumber || null,
         companyId: company.id,
         role: 'admin',
@@ -269,7 +250,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate token for immediate login
       const token = generateToken({
         id: user.id,
-        username: user.username,
+        username: user.email, // Use email as username in JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -278,7 +259,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Registro de empresa exitoso',
         user: {
           id: user.id,
-          username: user.username,
           email: user.email,
           fullName: user.fullName,
           role: user.role,
@@ -425,8 +405,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const request = await storage.updateVacationRequest(id, {
         status,
-        reviewedBy: req.user!.id,
-        reviewedAt: new Date(),
       });
 
       if (!request) {
@@ -586,12 +564,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/employees', authenticateToken, requireRole(['admin']), async (req, res) => {
     try {
-      const { username, email, firstName, lastName, role, password } = req.body;
+      const { email, fullName, dni, role, password, phoneNumber } = req.body;
       
-      // Check if user already exists within the same company
-      const existingUser = await storage.getUserByUsernameAndCompany(username, (req as AuthRequest).user!.companyId);
+      // Check if user already exists within the same company by DNI
+      const existingUser = await storage.getUserByDniAndCompany(dni, (req as AuthRequest).user!.companyId);
       if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists in your company' });
+        return res.status(400).json({ message: 'DNI already exists in your company' });
       }
 
       const existingEmail = await storage.getUserByEmail(email);
@@ -603,15 +581,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await storage.createUser({
-        username,
         email,
         password: hashedPassword,
-        firstName,
-        lastName,
+        fullName,
+        dni,
         role: role || 'employee',
         companyId: (req as AuthRequest).user!.companyId,
-        vacationDaysTotal: 20,
-        vacationDaysUsed: 0,
+        phoneNumber,
         isActive: true,
       });
 
@@ -658,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         todayHours: todayHours.toFixed(1),
         weekHours: weekHours.toFixed(1),
-        vacationDaysRemaining: (user?.vacationDaysTotal || 0) - (user?.vacationDaysUsed || 0),
+        vacationDaysRemaining: parseFloat(user?.vacationDaysBalance || '0'),
         activeEmployees: employeeCount,
         currentSession: activeSession,
         recentSessions: recentSessions.slice(0, 3),

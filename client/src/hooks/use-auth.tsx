@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   company: Company | null;
   token: string | null;
-  login: (emailOrUsername: string, password: string, companyAlias?: string) => Promise<void>;
+  login: (dniOrEmail: string, password: string, companyAlias?: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -49,10 +49,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (emailOrUsername: string, password: string, companyAlias?: string) => {
+  const login = async (dniOrEmail: string, password: string, companyAlias?: string) => {
     const loginData = companyAlias 
-      ? { emailOrUsername, password, companyAlias }
-      : { emailOrUsername, password };
+      ? { dniOrEmail, password, companyAlias }
+      : { dniOrEmail, password };
       
     const data = await apiRequest('POST', '/api/auth/login', loginData);
     

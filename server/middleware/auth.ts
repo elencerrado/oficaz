@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 export interface AuthRequest extends Request {
   user?: {
     id: number;
-    username: string;
+    email: string;
     role: string;
     companyId: number;
   };
@@ -20,11 +20,16 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     return res.status(401).json({ message: 'Access token required' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
-    req.user = user;
+    req.user = {
+      id: decoded.id,
+      email: decoded.email || decoded.username, // Support both for transition
+      role: decoded.role,
+      companyId: decoded.companyId,
+    };
     next();
   });
 }
@@ -44,5 +49,10 @@ export function requireRole(roles: string[]) {
 }
 
 export function generateToken(user: { id: number; username: string; role: string; companyId: number }) {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({
+    id: user.id,
+    email: user.username, // username field now contains email
+    role: user.role,
+    companyId: user.companyId
+  }, JWT_SECRET, { expiresIn: '7d' });
 }

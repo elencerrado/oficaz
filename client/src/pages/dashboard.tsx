@@ -80,7 +80,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
             <p className="text-gray-500 mt-1">
-              ¡Bienvenido de nuevo, {user?.firstName}! Esto es lo que está pasando hoy.
+              ¡Bienvenido de nuevo, {user?.fullName?.split(' ')[0]}! Esto es lo que está pasando hoy.
             </p>
           </div>
           <div className="flex items-center space-x-4">
@@ -113,7 +113,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Horas de Hoy</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.todayHours || '0.0'}h
+                  {(stats as any)?.todayHours || '0.0'}h
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -135,7 +135,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Esta Semana</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.weekHours || '0.0'}h
+                  {(stats as any)?.weekHours || '0.0'}h
                 </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -145,7 +145,7 @@ export default function Dashboard() {
             <div className="mt-4">
               <div className="flex items-center text-sm">
                 <span className="text-gray-500">
-                  {Math.max(0, 40 - parseFloat(stats?.weekHours || '0')).toFixed(1)}h remaining
+                  {Math.max(0, 40 - parseFloat((stats as any)?.weekHours || '0')).toFixed(1)}h remaining
                 </span>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Días de Vacaciones</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.vacationDaysRemaining || 0}
+                  {(stats as any)?.vacationDaysRemaining || 0}
                 </p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -179,7 +179,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Empleados Activos</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.activeEmployees || 1}
+                  {(stats as any)?.activeEmployees || 1}
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -212,8 +212,8 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                {stats?.recentSessions?.length > 0 ? (
-                  stats.recentSessions.map((session: any, index: number) => (
+                {(stats as any)?.recentSessions?.length > 0 ? (
+                  (stats as any).recentSessions.map((session: any, index: number) => (
                     <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-oficaz-success rounded-full"></div>
@@ -315,8 +315,8 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-4">
-                {recentMessages?.length > 0 ? (
-                  recentMessages.slice(0, 3).map((message: any) => (
+                {(recentMessages as any)?.length > 0 ? (
+                  (recentMessages as any).slice(0, 3).map((message: any) => (
                     <div key={message.id} className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                         <User className="text-gray-600 text-sm" />
@@ -346,16 +346,16 @@ export default function Dashboard() {
           </Card>
 
           {/* Current Session Timer (if active) */}
-          {stats?.currentSession && (
+          {(stats as any)?.currentSession && (
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Session</h2>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-oficaz-primary mb-2">
-                    {formatSessionTime(stats.currentSession.clockIn)}
+                    {formatSessionTime((stats as any).currentSession.clockIn)}
                   </div>
                   <p className="text-sm text-gray-500">
-                    Started at {format(new Date(stats.currentSession.clockIn), 'h:mm a')}
+                    Started at {format(new Date((stats as any).currentSession.clockIn), 'h:mm a')}
                   </p>
                 </div>
               </CardContent>

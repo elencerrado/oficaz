@@ -34,11 +34,10 @@ export const companyConfigs = pgTable("company_configs", {
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
-  dni: text("dni"),
+  dni: text("dni").notNull().unique(), // DNI is required and unique
   phoneNumber: text("phone_number"),
   role: text("role").notNull().default("employee"), // admin, manager, employee
   companyId: integer("company_id").references(() => companies.id).notNull(),
@@ -135,7 +134,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 
 // Auth schemas
 export const loginSchema = z.object({
-  emailOrUsername: z.string().min(1, "Email o usuario requerido"),
+  dniOrEmail: z.string().min(1, "DNI o email requerido"),
   password: z.string().min(1, "Contraseña requerida"),
 });
 

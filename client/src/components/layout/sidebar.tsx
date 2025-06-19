@@ -24,7 +24,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: 'Control de Tiempo', href: '/time-tracking', icon: Clock },
     { name: 'Solicitudes de Vacaciones', href: '/vacation-requests', icon: Calendar },
     { name: 'Documentos', href: '/documents', icon: FileText },
-    { name: 'Mensajes', href: '/messages', icon: Mail, badge: unreadCount?.count },
+    { name: 'Mensajes', href: '/messages', icon: Mail, badge: unreadCount },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { name: 'Empleados', href: '/employees', icon: Users }
     ] : []),
@@ -89,7 +89,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     >
                       <Icon size={20} />
                       <span>{item.name}</span>
-                      {item.badge && item.badge > 0 && (
+                      {typeof item.badge === 'number' && item.badge > 0 && (
                         <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
                           {item.badge}
                         </span>
@@ -107,12 +107,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center space-x-3 px-4 py-3">
             <Avatar className="w-8 h-8">
               <AvatarFallback className="bg-gray-300 text-gray-600">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {user?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">
-                {user?.firstName} {user?.lastName}
+                {user?.fullName}
               </p>
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>

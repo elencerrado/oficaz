@@ -24,7 +24,7 @@ export default function Login() {
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailOrUsername: '',
+      dniOrEmail: '',
       password: '',
     },
   });
@@ -53,7 +53,7 @@ export default function Login() {
 
   const onSubmit = async (data: LoginData) => {
     try {
-      await login(data.emailOrUsername, data.password, companyAlias);
+      await login(data.dniOrEmail, data.password, companyAlias);
       setLocation(`/${companyAlias}/dashboard`);
     } catch (error) {
       console.error('Login failed:', error);
@@ -76,15 +76,15 @@ export default function Login() {
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="emailOrUsername">Email o usuario</Label>
+              <Label htmlFor="dniOrEmail">DNI o Email</Label>
               <Input
-                id="emailOrUsername"
-                {...form.register('emailOrUsername')}
-                placeholder="tu@empresa.com o usuario"
+                id="dniOrEmail"
+                {...form.register('dniOrEmail')}
+                placeholder="12345678Z o tu@empresa.com"
               />
-              {form.formState.errors.emailOrUsername && (
+              {form.formState.errors.dniOrEmail && (
                 <p className="text-sm text-red-600">
-                  {form.formState.errors.emailOrUsername.message}
+                  {form.formState.errors.dniOrEmail.message}
                 </p>
               )}
             </div>
