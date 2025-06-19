@@ -23,9 +23,76 @@ export default function EmployeeTimeTracking() {
   const companyAlias = location.split('/')[1] || 'test';
 
   // Get work sessions for current user
-  const { data: workSessions = [] } = useQuery<WorkSession[]>({
+  const { data: realWorkSessions = [] } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
   });
+
+  // Generate mock data for previous months
+  const generateMockSessionsForMonth = (year: number, month: number): WorkSession[] => {
+    const sessions: WorkSession[] = [];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let sessionId = 10000 + month * 100; // Unique IDs for mock data
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dayOfWeek = date.getDay();
+      
+      // Only weekdays (Monday = 1, Friday = 5)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        // Random start time between 7:45 and 8:15
+        const startHour = 8;
+        const startMinute = Math.floor(Math.random() * 30) - 15; // -15 to +15 minutes
+        const actualStartMinute = Math.max(0, Math.min(59, startMinute));
+        
+        const clockIn = new Date(year, month, day, startHour, actualStartMinute);
+        
+        // End time: Friday until 14:00, others until 17:00 (+/- 15 minutes)
+        const baseEndHour = dayOfWeek === 5 ? 14 : 17;
+        const endMinute = Math.floor(Math.random() * 30) - 15; // -15 to +15 minutes
+        const actualEndMinute = Math.max(0, Math.min(59, endMinute));
+        
+        const clockOut = new Date(year, month, day, baseEndHour, actualEndMinute);
+        
+        // Calculate total hours
+        const totalMinutes = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60);
+        const totalHours = (totalMinutes / 60).toFixed(2);
+        
+        sessions.push({
+          id: sessionId++,
+          userId: user?.id || 5,
+          clockIn: clockIn.toISOString(),
+          clockOut: clockOut.toISOString(),
+          totalHours: totalHours,
+          createdAt: clockIn.toISOString()
+        });
+      }
+    }
+    
+    return sessions;
+  };
+
+  // Combine real sessions with mock data for previous months
+  const getAllWorkSessions = (): WorkSession[] => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    let allSessions = [...realWorkSessions];
+    
+    // Generate mock data for the last 3 months (excluding current month)
+    for (let i = 1; i <= 3; i++) {
+      const targetMonth = currentMonth - i;
+      const targetYear = targetMonth < 0 ? currentYear - 1 : currentYear;
+      const adjustedMonth = targetMonth < 0 ? targetMonth + 12 : targetMonth;
+      
+      const mockSessions = generateMockSessionsForMonth(targetYear, adjustedMonth);
+      allSessions = [...allSessions, ...mockSessions];
+    }
+    
+    return allSessions;
+  };
+
+  const workSessions = getAllWorkSessions();
 
   // Filter sessions for current month
   const monthStart = startOfMonth(currentDate);
@@ -62,7 +129,13 @@ export default function EmployeeTimeTracking() {
   };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
+    const currentMonth = new Date();
+    
+    // Don't allow going beyond current month
+    if (nextMonth <= currentMonth) {
+      setCurrentDate(nextMonth);
+    }
   };
 
   const formatTime = (timeString: string) => {
@@ -160,7 +233,7 @@ export default function EmployeeTimeTracking() {
       {/* 4-Month Hours Chart */}
       <div className="px-6 mb-8">
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-          <div className="flex items-center mb-4">
+          <div className="flex items-center mb-6">
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
             <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
           </div>
@@ -226,9 +299,9 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="px-4 mb-6">
-        <div className="bg-white/5 rounded-lg overflow-hidden">
+      {/* Table Container - Fixed height to prevent layout shift */}
+      <div className="px-4 mb-6 flex-1">
+        <div className="bg-white/5 rounded-lg overflow-hidden h-full min-h-96">
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
             <div className="text-sm font-semibold text-center">Fecha</div>
@@ -238,7 +311,7 @@ export default function EmployeeTimeTracking() {
           </div>
 
           {/* Table Body */}
-          <div className="max-h-96 overflow-y-auto scrollbar-thin">
+          <div className="h-full overflow-y-auto scrollbar-thin" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '300px' }}>
             {monthSessions.length > 0 ? (
               monthSessions
                 .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime())
@@ -262,8 +335,11 @@ export default function EmployeeTimeTracking() {
                   </div>
                 ))
             ) : (
-              <div className="py-8 text-center text-white/60">
-                No hay fichajes este mes
+              <div className="flex items-center justify-center h-full min-h-48">
+                <div className="text-center text-white/60">
+                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay fichajes este mes</p>
+                </div>
               </div>
             )}
           </div>
