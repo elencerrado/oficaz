@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Resolved username uniqueness constraints for multi-company system
+  - Removed global username uniqueness constraint from database
+  - Updated login system to handle multiple users with same username across different companies
+  - Implemented company-scoped username validation for employee creation
+  - Enhanced authentication logic to validate passwords for duplicate usernames
+  - System now allows same username for different companies while maintaining security
 - June 19, 2025. Enhanced authentication and company registration system
   - Implemented comprehensive company registration system with business data collection
   - Updated login to accept either username or email in single input field

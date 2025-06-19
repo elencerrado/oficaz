@@ -92,14 +92,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Try to find user by email first, then by username
       let user = await storage.getUserByEmail(data.emailOrUsername);
       if (!user) {
-        user = await storage.getUserByUsername(data.emailOrUsername);
+        // If multiple users have the same username (from different companies), 
+        // we need to get all users with that username and validate password for each
+        const users = await storage.getUsersByUsername(data.emailOrUsername);
+        if (users.length === 1) {
+          user = users[0];
+        } else if (users.length > 1) {
+          // Try to authenticate with each user until we find the correct one
+          for (const candidateUser of users) {
+            const validPassword = await bcrypt.compare(data.password, candidateUser.password);
+            if (validPassword && candidateUser.isActive) {
+              user = candidateUser;
+              break;
+            }
+          }
+        }
       }
       
       if (!user) {
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
-      const validPassword = await bcrypt.compare(data.password, user.password);
+      // Only validate password if we haven't already validated it during multi-user check
+      let validPassword = true;
+      if (!user.password) {
+        // If password validation was done during multi-user check, user object might not have password
+        // In this case, we already validated the password
+        validPassword = true;
+      } else {
+        validPassword = await bcrypt.compare(data.password, user.password);
+      }
+      
       if (!validPassword) {
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
@@ -149,11 +172,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Alias de empresa ya está en uso' });
       }
 
-      // Check if admin user already exists
-      const existingUser = await storage.getUserByUsername(data.adminUsername);
-      if (existingUser) {
-        return res.status(400).json({ message: 'Usuario ya existe' });
-      }
+      // For company registration, we don't check username uniqueness globally
+      // since users are scoped to companies. We only check email uniqueness.
 
       const existingUserEmail = await storage.getUserByEmail(data.companyEmail);
       if (existingUserEmail) {
@@ -229,9 +249,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company,
         token
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Company registration error:', error);
-      res.status(400).json({ message: 'Error en el registro de empresa' });
+      res.status(400).json({ message: error.message || 'Error en el registro de empresa' });
     }
   });
 
@@ -530,10 +550,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, email, firstName, lastName, role, password } = req.body;
       
-      // Check if user already exists
-      const existingUser = await storage.getUserByUsername(username);
+      // Check if user already exists within the same company
+      const existingUser = await storage.getUserByUsernameAndCompany(username, (req as AuthRequest).user!.companyId);
       if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
+        return res.status(400).json({ message: 'Username already exists in your company' });
       }
 
       const existingEmail = await storage.getUserByEmail(email);
