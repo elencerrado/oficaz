@@ -34,13 +34,29 @@ export default function EmployeeTimeTracking() {
     queryKey: ['/api/work-sessions'],
   });
 
-  // Filter sessions for current month
+  // Filter sessions for current month + complete weeks that span across months
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   
-  const monthSessions = workSessions.filter(session => {
+  // Get sessions for the month
+  const strictMonthSessions = workSessions.filter(session => {
     const sessionDate = new Date(session.clockIn);
     return sessionDate >= monthStart && sessionDate <= monthEnd;
+  });
+  
+  // Get all weeks that have at least one session in the current month
+  const monthWeeks = new Set();
+  strictMonthSessions.forEach(session => {
+    const sessionDate = new Date(session.clockIn);
+    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+    monthWeeks.add(weekStart.getTime());
+  });
+  
+  // Include all sessions from weeks that intersect with the current month
+  const monthSessions = workSessions.filter(session => {
+    const sessionDate = new Date(session.clockIn);
+    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+    return monthWeeks.has(weekStart.getTime());
   });
 
   // Calculate total hours for the month correctly
@@ -54,7 +70,8 @@ export default function EmployeeTimeTracking() {
     return totalMinutes / 60; // Convert to hours
   };
 
-  const totalMonthHours = monthSessions.reduce((total, session) => {
+  // Calculate total only for sessions that actually belong to the current month
+  const totalMonthHours = strictMonthSessions.reduce((total, session) => {
     return total + calculateSessionHours(session);
   }, 0);
 
@@ -355,20 +372,29 @@ export default function EmployeeTimeTracking() {
                           </div>
                         </div>
                       )}
-                      <div className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5">
-                        <div className="text-sm text-center text-white/90 whitespace-nowrap">
-                          {formatDate(session.clockIn)}
-                        </div>
-                        <div className="text-sm text-center font-mono">
-                          {formatTime(session.clockIn)}
-                        </div>
-                        <div className="text-sm text-center font-mono">
-                          {session.clockOut ? formatTime(session.clockOut) : '-'}
-                        </div>
-                        <div className="text-sm text-center font-mono font-semibold">
-                          {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
-                        </div>
-                      </div>
+                      {(() => {
+                        const sessionDate = new Date(session.clockIn);
+                        const isCurrentMonth = sessionDate >= monthStart && sessionDate <= monthEnd;
+                        const opacity = isCurrentMonth ? 'text-white/90' : 'text-white/50';
+                        const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
+                        
+                        return (
+                          <div className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity}`}>
+                            <div className={`text-sm text-center ${opacity} whitespace-nowrap ${!isCurrentMonth ? 'italic' : ''}`}>
+                              {formatDate(session.clockIn)}
+                            </div>
+                            <div className={`text-sm text-center font-mono ${opacity}`}>
+                              {formatTime(session.clockIn)}
+                            </div>
+                            <div className={`text-sm text-center font-mono ${opacity}`}>
+                              {session.clockOut ? formatTime(session.clockOut) : '-'}
+                            </div>
+                            <div className={`text-sm text-center font-mono font-semibold ${opacity}`}>
+                              {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 });
