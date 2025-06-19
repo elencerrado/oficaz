@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginData } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
@@ -18,6 +19,7 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   // Extract company alias from URL
   const [match, params] = useRoute('/:companyAlias/login');
@@ -54,6 +56,7 @@ export default function Login() {
   }, [companyAlias, setLocation]);
 
   const onSubmit = async (data: LoginData) => {
+    setSubmitting(true);
     try {
       const response = await login(data.dniOrEmail, data.password, companyAlias);
       // Always use the company alias from the URL if we're in a company-specific login
@@ -61,6 +64,8 @@ export default function Login() {
       setLocation(`/${redirectAlias}/dashboard`);
     } catch (error) {
       console.error('Login failed:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -135,9 +140,17 @@ export default function Login() {
             {/* Botón ENTRAR */}
             <Button 
               type="submit" 
-              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm"
+              disabled={submitting}
+              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm disabled:opacity-50"
             >
-              ENTRAR
+              {submitting ? (
+                <div className="flex items-center justify-center">
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  <span>Entrando...</span>
+                </div>
+              ) : (
+                'ENTRAR'
+              )}
             </Button>
 
             {/* Checkbox Recordarme */}

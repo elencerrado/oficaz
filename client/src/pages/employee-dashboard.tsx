@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -246,7 +247,7 @@ export default function EmployeeDashboard() {
           className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
         >
           {clockInMutation.isPending || clockOutMutation.isPending ? (
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            <LoadingSpinner size="md" className="text-white" />
           ) : (
             <>
               {activeSession ? 'SALIR' : 'FICHAR'}

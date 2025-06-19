@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, isSameWeek } from 'date-fns';
@@ -29,7 +30,7 @@ export default function EmployeeTimeTracking() {
   const minSwipeDistance = 50;
 
   // Get work sessions for current user
-  const { data: workSessions = [] } = useQuery<WorkSession[]>({
+  const { data: workSessions = [], isLoading } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
   });
 
@@ -356,6 +357,13 @@ export default function EmployeeTimeTracking() {
                   );
                 });
               })()
+            ) : isLoading ? (
+              <div className="flex items-center justify-center h-full min-h-48">
+                <div className="text-center text-white/60">
+                  <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
+                  <p>Cargando fichajes...</p>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full min-h-48">
                 <div className="text-center text-white/60">
