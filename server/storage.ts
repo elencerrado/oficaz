@@ -3,8 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
-  Company, User, WorkSession, VacationRequest, Document, Message,
-  InsertCompany, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage
+  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message,
+  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -18,7 +18,14 @@ export interface IStorage {
   // Companies
   createCompany(company: InsertCompany): Promise<Company>;
   getCompany(id: number): Promise<Company | undefined>;
+  getCompanyByCif?(cif: string): Promise<Company | undefined>;
+  getCompanyByEmail?(email: string): Promise<Company | undefined>;
+  getCompanyByAlias?(alias: string): Promise<Company | undefined>;
   getAllCompanies(): Promise<Company[]>;
+
+  // Company Configurations
+  createCompanyConfig?(config: InsertCompanyConfig): Promise<CompanyConfig>;
+  getCompanyConfig?(companyId: number): Promise<CompanyConfig | undefined>;
 
   // Users
   createUser(user: InsertUser): Promise<User>;
@@ -68,6 +75,31 @@ export class DrizzleStorage implements IStorage {
 
   async getAllCompanies(): Promise<Company[]> {
     return await db.select().from(schema.companies);
+  }
+
+  async getCompanyByCif(cif: string): Promise<Company | undefined> {
+    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.cif, cif));
+    return company;
+  }
+
+  async getCompanyByEmail(email: string): Promise<Company | undefined> {
+    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.email, email));
+    return company;
+  }
+
+  async getCompanyByAlias(alias: string): Promise<Company | undefined> {
+    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.companyAlias, alias));
+    return company;
+  }
+
+  async createCompanyConfig(config: InsertCompanyConfig): Promise<CompanyConfig> {
+    const [result] = await db.insert(schema.companyConfigs).values(config).returning();
+    return result;
+  }
+
+  async getCompanyConfig(companyId: number): Promise<CompanyConfig | undefined> {
+    const [config] = await db.select().from(schema.companyConfigs).where(eq(schema.companyConfigs.companyId, companyId));
+    return config;
   }
 
   // Users

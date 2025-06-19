@@ -6,9 +6,28 @@ import { z } from "zod";
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  logo: text("logo"),
-  workingHoursStart: text("working_hours_start").notNull().default("09:00"),
+  cif: text("cif").notNull().unique(),
+  email: text("email").notNull().unique(),
+  contactName: text("contact_name").notNull(),
+  companyAlias: text("company_alias").notNull().unique(),
+  phone: text("phone"),
+  address: text("address"),
+  logoUrl: text("logo_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const companyConfigs = pgTable("company_configs", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  workingHoursStart: text("working_hours_start").notNull().default("08:00"),
   workingHoursEnd: text("working_hours_end").notNull().default("17:00"),
+  workingDays: integer("working_days").array().notNull().default([1, 2, 3, 4, 5]),
+  payrollSendDays: text("payroll_send_days").notNull().default("1"),
+  defaultVacationPolicy: decimal("default_vacation_policy", { precision: 3, scale: 1 }).notNull().default("2.5"),
+  language: text("language").notNull().default("es"),
+  timezone: text("timezone").notNull().default("Europe/Madrid"),
+  customAiRules: text("custom_ai_rules").default(""),
+  allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -18,12 +37,13 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
+  fullName: text("full_name").notNull(),
+  dni: text("dni"),
+  phoneNumber: text("phone_number"),
   role: text("role").notNull().default("employee"), // admin, manager, employee
   companyId: integer("company_id").references(() => companies.id).notNull(),
-  vacationDaysTotal: integer("vacation_days_total").notNull().default(20),
-  vacationDaysUsed: integer("vacation_days_used").notNull().default(0),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  vacationDaysBalance: decimal("vacation_days_balance", { precision: 4, scale: 1 }).notNull().default("0.0"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -81,6 +101,11 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   createdAt: true,
 });
 
+export const insertCompanyConfigSchema = createInsertSchema(companyConfigs).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -110,22 +135,36 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 
 // Auth schemas
 export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  emailOrUsername: z.string().min(1, "Email o usuario requerido"),
+  password: z.string().min(1, "Contraseña requerida"),
 });
 
-export const registerSchema = insertUserSchema.omit({
-  companyId: true,
-}).extend({
+export const companyRegistrationSchema = z.object({
+  // Company fields
+  companyName: z.string().min(1, "Nombre de empresa requerido"),
+  cif: z.string().min(1, "CIF requerido"),
+  companyEmail: z.string().email("Email inválido"),
+  contactName: z.string().min(1, "Nombre de contacto requerido"),
+  companyAlias: z.string().min(1, "Alias de empresa requerido").regex(/^[a-zA-Z0-9-]+$/, "Solo letras, números y guiones"),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  logoUrl: z.string().optional(),
+  
+  // Admin user fields
+  adminUsername: z.string().min(1, "Usuario requerido"),
+  adminFullName: z.string().min(1, "Nombre completo requerido"),
+  adminDni: z.string().optional(),
+  adminPhoneNumber: z.string().optional(),
+  password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string(),
-  companyName: z.string().min(1, "Company name is required"),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
 });
 
 // Types
 export type Company = typeof companies.$inferSelect;
+export type CompanyConfig = typeof companyConfigs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type WorkSession = typeof workSessions.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
@@ -133,6 +172,7 @@ export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
+export type InsertCompanyConfig = z.infer<typeof insertCompanyConfigSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
@@ -140,4 +180,4 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
-export type RegisterData = z.infer<typeof registerSchema>;
+export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;

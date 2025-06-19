@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
-import { loginSchema, registerSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
+import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -89,18 +89,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByUsername(data.username);
+      // Try to find user by email first, then by username
+      let user = await storage.getUserByEmail(data.emailOrUsername);
       if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        user = await storage.getUserByUsername(data.emailOrUsername);
+      }
+      
+      if (!user) {
+        return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
       const validPassword = await bcrypt.compare(data.password, user.password);
       if (!validPassword) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+        return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
       if (!user.isActive) {
-        return res.status(401).json({ message: 'Account is inactive' });
+        return res.status(401).json({ message: 'Cuenta inactiva' });
       }
 
       const company = await storage.getCompany(user.companyId);
@@ -113,12 +118,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.json({
+        message: "Inicio de sesión exitoso",
         user: { ...user, password: undefined },
         token,
         company,
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Company registration route
+  app.post('/api/auth/register-company', async (req, res) => {
+    try {
+      const data = companyRegistrationSchema.parse(req.body);
+      
+      // Check if company already exists
+      const existingCompanyCif = await storage.getCompanyByCif?.(data.cif);
+      if (existingCompanyCif) {
+        return res.status(400).json({ message: 'CIF ya está registrado' });
+      }
+
+      const existingCompanyEmail = await storage.getCompanyByEmail?.(data.companyEmail);
+      if (existingCompanyEmail) {
+        return res.status(400).json({ message: 'Email empresarial ya está registrado' });
+      }
+
+      const existingCompanyAlias = await storage.getCompanyByAlias?.(data.companyAlias);
+      if (existingCompanyAlias) {
+        return res.status(400).json({ message: 'Alias de empresa ya está en uso' });
+      }
+
+      // Check if admin user already exists
+      const existingUser = await storage.getUserByUsername(data.adminUsername);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Usuario ya existe' });
+      }
+
+      const existingUserEmail = await storage.getUserByEmail(data.companyEmail);
+      if (existingUserEmail) {
+        return res.status(400).json({ message: 'Email ya está registrado' });
+      }
+
+      // Create company
+      const company = await storage.createCompany({
+        name: data.companyName,
+        cif: data.cif,
+        email: data.companyEmail,
+        contactName: data.contactName,
+        companyAlias: data.companyAlias,
+        phone: data.phone || null,
+        address: data.address || null,
+        logoUrl: data.logoUrl || null,
+      });
+
+      // Create default company configuration
+      await storage.createCompanyConfig?.({
+        companyId: company.id,
+        workingHoursStart: '08:00',
+        workingHoursEnd: '17:00',
+        workingDays: [1, 2, 3, 4, 5],
+        payrollSendDays: '1',
+        defaultVacationPolicy: '2.5',
+        language: 'es',
+        timezone: 'Europe/Madrid',
+        customAiRules: '',
+        allowManagersToGrantRoles: false,
+      });
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      // Calculate vacation days balance (2.5 days per month from start date)
+      const startDate = new Date();
+      const monthsUntilYearEnd = 12 - startDate.getMonth();
+      const vacationBalance = Math.round(monthsUntilYearEnd * 2.5 * 10) / 10;
+
+      // Create admin user
+      const user = await storage.createUser({
+        username: data.adminUsername,
+        email: data.companyEmail,
+        password: hashedPassword,
+        fullName: data.adminFullName,
+        dni: data.adminDni || null,
+        phoneNumber: data.adminPhoneNumber || null,
+        companyId: company.id,
+        role: 'admin',
+        startDate,
+        vacationDaysBalance: vacationBalance.toString(),
+      });
+
+      // Generate token for immediate login
+      const token = generateToken({
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        companyId: user.companyId,
+      });
+
+      res.status(201).json({ 
+        message: 'Registro de empresa exitoso',
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          companyId: user.companyId
+        },
+        company,
+        token
+      });
+    } catch (error) {
+      console.error('Company registration error:', error);
+      res.status(400).json({ message: 'Error en el registro de empresa' });
     }
   });
 

@@ -38,7 +38,7 @@ export function clearAuthData() {
   localStorage.removeItem('company');
 }
 
-export function getAuthHeaders() {
+export function getAuthHeaders(): HeadersInit {
   const authData = getAuthData();
   return authData ? { Authorization: `Bearer ${authData.token}` } : {};
 }

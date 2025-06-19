@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Enhanced authentication and company registration system
+  - Implemented comprehensive company registration system with business data collection
+  - Updated login to accept either username or email in single input field
+  - Enhanced database schema with company configurations and expanded user fields
+  - Fixed token authentication issues for employee management
+  - Added CIF, contact details, company alias, and configuration management
+  - Complete Spanish interface maintained throughout new features
 - June 19, 2025. Complete Oficaz employee management system deployed
   - Built full-stack React + Express application with TypeScript
   - Implemented JWT authentication with role-based access control
