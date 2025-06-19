@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
@@ -17,17 +15,8 @@ interface WorkSession {
 }
 
 export default function EmployeeDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, company } = useAuth();
   const { toast } = useToast();
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Update time every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Get active work session
   const { data: activeSession } = useQuery<WorkSession>({
@@ -37,7 +26,12 @@ export default function EmployeeDashboard() {
   // Get unread messages count
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
+  });
+
+  // Get recent work session for "last clock in" info
+  const { data: recentSessions } = useQuery<WorkSession[]>({
+    queryKey: ['/api/work-sessions'],
   });
 
   // Clock in/out mutations
@@ -55,6 +49,7 @@ export default function EmployeeDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       toast({ title: '¡Entrada registrada!', description: 'Has fichado correctamente la entrada.' });
     },
     onError: () => {
@@ -80,6 +75,7 @@ export default function EmployeeDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       toast({ title: '¡Salida registrada!', description: 'Has fichado correctamente la salida.' });
     },
     onError: () => {
@@ -91,24 +87,34 @@ export default function EmployeeDashboard() {
     },
   });
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', { 
+  const formatLastClockDate = () => {
+    const sessionToShow = activeSession || (recentSessions && recentSessions[0]);
+    if (!sessionToShow) return '';
+    
+    const clockInDate = new Date(sessionToShow.clockIn);
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const isToday = clockInDate.toDateString() === now.toDateString();
+    const isYesterday = clockInDate.toDateString() === yesterday.toDateString();
+    
+    const time = clockInDate.toLocaleTimeString('es-ES', { 
       hour: '2-digit', 
       minute: '2-digit',
       hour12: false 
     });
-  };
-
-  const formatLastClockIn = (session: WorkSession | null) => {
-    if (!session) return '';
-    const date = new Date(session.clockIn);
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
     
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-    const time = formatTime(date);
-    
-    return isYesterday ? `Ayer a las ${time}` : `Hoy a las ${time}`;
+    if (isToday) {
+      return `Hoy a las ${time}`;
+    } else if (isYesterday) {
+      return `Ayer a las ${time}`;
+    } else {
+      const dayName = clockInDate.toLocaleDateString('es-ES', { weekday: 'long' });
+      const dayNumber = clockInDate.getDate();
+      const month = clockInDate.toLocaleDateString('es-ES', { month: 'long' });
+      return `El ${dayName} ${dayNumber} de ${month} a las ${time}`;
+    }
   };
 
   const handleClockAction = () => {
@@ -158,10 +164,12 @@ export default function EmployeeDashboard() {
     },
   ];
 
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 text-white">
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center p-6 pb-4">
+      <div className="flex justify-between items-center p-6 pb-8">
         <div>
           <h1 className="text-xl font-medium">{user?.fullName}</h1>
         </div>
@@ -176,53 +184,59 @@ export default function EmployeeDashboard() {
         </Button>
       </div>
 
-      {/* Logo */}
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center space-x-2">
-          <div className="text-4xl font-bold text-blue-400">Oficaz</div>
-          <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-white rounded-full"></div>
+      {/* Company Logo and Name */}
+      <div className="flex justify-center mb-12">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-3 mb-2">
+            <div className="text-4xl font-bold text-blue-400">Oficaz</div>
+            <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
+              <div className="w-4 h-4 bg-white rounded-full"></div>
+            </div>
+          </div>
+          <div className="text-white text-lg font-medium">
+            {company?.name || 'Mi Empresa'}
           </div>
         </div>
       </div>
 
-      {/* Menu Grid */}
-      <div className="px-6 mb-8">
-        <div className="grid grid-cols-3 gap-4">
+      {/* Menu Grid - iPhone style with icons inside and text below */}
+      <div className="px-8 mb-12">
+        <div className="grid grid-cols-3 gap-8">
           {menuItems.map((item, index) => (
-            <a
-              key={index}
-              href={item.route}
-              className="relative block bg-blue-500 hover:bg-blue-600 transition-colors rounded-2xl p-4 aspect-square flex flex-col items-center justify-center text-center"
-            >
-              <item.icon className="h-8 w-8 mb-2" />
-              <span className="text-sm font-medium">{item.title}</span>
-              {item.notification && (
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
-              )}
-            </a>
+            <div key={index} className="flex flex-col items-center">
+              <a
+                href={item.route}
+                className="relative w-16 h-16 bg-blue-500 hover:bg-blue-600 transition-colors rounded-2xl flex items-center justify-center mb-2"
+              >
+                <item.icon className="h-7 w-7 text-white" />
+                {item.notification && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                )}
+              </a>
+              <span className="text-xs font-medium text-center text-white/90">
+                {item.title}
+              </span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Last Clock In Info */}
-      {activeSession && (
-        <div className="px-6 mb-6 text-center">
-          <div className="text-gray-300 text-sm mb-1">Tu último fichaje:</div>
-          <div className="text-white font-medium">
-            {formatLastClockIn(activeSession as WorkSession)}
-          </div>
+      {/* Last Clock In Info - Always visible */}
+      <div className="px-6 mb-8 text-center">
+        <div className="text-gray-300 text-sm mb-1">Tu último fichaje:</div>
+        <div className="text-white font-medium">
+          {formatLastClockDate() || 'Sin fichajes previos'}
         </div>
-      )}
+      </div>
 
-      {/* Clock Button */}
-      <div className="flex justify-center px-6">
+      {/* Clock Button - Positioned for thumb accessibility */}
+      <div className="flex-1 flex items-center justify-center px-6 pb-16">
         <Button
           onClick={handleClockAction}
           disabled={clockInMutation.isPending || clockOutMutation.isPending}
-          className="w-48 h-48 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+          className="w-44 h-44 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
         >
           {clockInMutation.isPending || clockOutMutation.isPending ? (
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -234,9 +248,12 @@ export default function EmployeeDashboard() {
         </Button>
       </div>
 
-      {/* Current Time */}
-      <div className="text-center mt-8 text-gray-300 text-sm">
-        {formatTime(currentTime)}
+      {/* Small Oficaz logo at bottom */}
+      <div className="text-center pb-4">
+        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
+          <span className="font-semibold text-blue-400">Oficaz</span>
+          <span>© {currentYear}</span>
+        </div>
       </div>
     </div>
   );

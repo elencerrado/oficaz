@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Vista simplificada de empleado implementada siguiendo diseño de referencia móvil-first
+  - Fondo con gradiente radial idéntico al login (#323A46 centro, #232B36 exterior)
+  - Diseño estilo iPhone: íconos cuadrados con texto debajo, grid 3x3 con espaciado amplio
+  - Botón circular "FICHAR" grande posicionado para acceso fácil con pulgar
+  - Información de último fichaje siempre visible (ayer, semana pasada, etc.)
+  - Logo pequeño de Oficaz con copyright en la parte inferior
+  - Header con nombre empleado y botón salir, logo central con nombre de empresa
+  - Hora eliminada debajo del botón como solicitado
+  - Scroll discreto implementado (4px, visible solo en hover)
 - June 19, 2025. Sistema completamente funcional con perfil de usuario en header y gestión de empleados
   - Perfil de usuario movido del sidebar al header con dropdown funcional
   - Página de empleados completamente actualizada con nueva estructura de base de datos

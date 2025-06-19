@@ -39,6 +39,11 @@
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
     background-color: rgb(156 163 175);
   }
+
+  /* Employee dashboard gradient - same as login */
+  .bg-employee-gradient {
+    background: radial-gradient(ellipse at center, #323A46 0%, #232B36 100%);
+  }
 }
 
 :root {
