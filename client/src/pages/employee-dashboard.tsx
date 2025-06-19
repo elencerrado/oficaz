@@ -199,28 +199,23 @@ export default function EmployeeDashboard() {
               className="w-12 h-12 mx-auto rounded-full object-cover"
             />
           ) : (
-            <>
-              <div className="w-12 h-12 mx-auto mb-2 bg-white/10 rounded-full flex items-center justify-center">
-                <div className="text-white/60 text-xs">LOGO</div>
-              </div>
-              <div className="text-white text-sm font-medium">
-                {company?.name || 'Mi Empresa'}
-              </div>
-            </>
+            <div className="text-white text-base font-medium">
+              {company?.name || 'Mi Empresa'}
+            </div>
           )}
         </div>
       </div>
 
       {/* Menu Grid - iPhone style with compact icons */}
       <div className="px-6 mb-6">
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-3 gap-6">
           {menuItems.map((item, index) => (
             <div key={index} className="flex flex-col items-center">
               <a
                 href={item.route}
-                className="relative w-20 h-20 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <item.icon className="h-10 w-10 text-white" />
+                <item.icon className="h-12 w-12 text-white" />
                 {item.notification && (
                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
