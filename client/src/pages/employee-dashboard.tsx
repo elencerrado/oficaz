@@ -174,9 +174,9 @@ export default function EmployeeDashboard() {
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
-      <div className="flex justify-between items-center p-6 pb-8">
+      <div className="flex justify-between items-center p-4 pb-4">
         <div>
-          <h1 className="text-xl font-medium">{user?.fullName}</h1>
+          <h1 className="text-lg font-medium">{user?.fullName}</h1>
         </div>
         <Button
           variant="ghost"
@@ -190,35 +190,44 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Company Logo and Name */}
-      <div className="flex justify-center mb-12">
+      <div className="flex justify-center mb-6">
         <div className="text-center">
-          {/* Space reserved for company logo */}
-          <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
-            <div className="text-white/60 text-xs">LOGO</div>
-          </div>
-          <div className="text-white text-lg font-medium">
-            {company?.name || 'Mi Empresa'}
-          </div>
+          {company?.logoUrl ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="w-12 h-12 mx-auto rounded-full object-cover"
+            />
+          ) : (
+            <>
+              <div className="w-12 h-12 mx-auto mb-2 bg-white/10 rounded-full flex items-center justify-center">
+                <div className="text-white/60 text-xs">LOGO</div>
+              </div>
+              <div className="text-white text-sm font-medium">
+                {company?.name || 'Mi Empresa'}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Menu Grid - iPhone style with larger icons inside and text below */}
-      <div className="px-8 mb-12">
-        <div className="grid grid-cols-3 gap-8">
+      {/* Menu Grid - iPhone style with compact icons */}
+      <div className="px-6 mb-6">
+        <div className="grid grid-cols-3 gap-5">
           {menuItems.map((item, index) => (
             <div key={index} className="flex flex-col items-center">
               <a
                 href={item.route}
-                className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-2xl flex items-center justify-center mb-3 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="relative w-20 h-20 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <item.icon className="h-12 w-12 text-white" />
+                <item.icon className="h-10 w-10 text-white" />
                 {item.notification && (
-                  <div className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-md">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}
               </a>
-              <span className="text-sm font-medium text-center text-white/90">
+              <span className="text-xs font-medium text-center text-white/90 leading-tight">
                 {item.title}
               </span>
             </div>
@@ -227,22 +236,22 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Last Clock In Info - Always visible */}
-      <div className="px-6 mb-8 text-center">
-        <div className="text-gray-300 text-sm mb-1">Tu último fichaje:</div>
-        <div className="text-white font-medium">
+      <div className="px-6 mb-4 text-center">
+        <div className="text-gray-300 text-xs mb-1">Tu último fichaje:</div>
+        <div className="text-white text-sm font-medium">
           {formatLastClockDate() || 'Sin fichajes previos'}
         </div>
       </div>
 
       {/* Clock Button - Positioned for thumb accessibility */}
-      <div className="flex-1 flex items-center justify-center px-6 pb-16">
+      <div className="flex-1 flex items-center justify-center px-6 pb-6">
         <Button
           onClick={handleClockAction}
           disabled={clockInMutation.isPending || clockOutMutation.isPending}
-          className="w-44 h-44 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+          className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
         >
           {clockInMutation.isPending || clockOutMutation.isPending ? (
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
           ) : (
             <>
               {activeSession ? 'SALIR' : 'FICHAR'}
@@ -252,7 +261,7 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Small Oficaz logo at bottom */}
-      <div className="text-center pb-4">
+      <div className="text-center pb-3">
         <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
           <span className="font-semibold text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
