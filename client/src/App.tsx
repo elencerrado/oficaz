@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
+import { PageLoading } from "@/components/ui/page-loading";
+import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 
 // Pages
@@ -50,11 +52,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-oficaz-primary"></div>
-      </div>
-    );
+    return <PageLoading message="Iniciando sesión..." />;
   }
 
   if (!user) {
@@ -93,11 +91,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, company, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-oficaz-primary"></div>
-      </div>
-    );
+    return <PageLoading message="Verificando acceso..." />;
   }
 
   if (user && company) {
@@ -135,7 +129,9 @@ function Router() {
       {/* Company-specific protected routes */}
       <Route path="/:companyAlias/dashboard">
         <ProtectedRoute>
-          <DashboardRouter />
+          <PageWrapper>
+            <DashboardRouter />
+          </PageWrapper>
         </ProtectedRoute>
       </Route>
 
@@ -150,7 +146,9 @@ function Router() {
       <Route path="/:companyAlias/horasempleados">
         <ProtectedRoute>
           <AppLayout>
-            <EmployeeTimeTracking />
+            <PageWrapper>
+              <EmployeeTimeTracking />
+            </PageWrapper>
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -190,7 +188,9 @@ function Router() {
       <Route path="/:companyAlias/settings">
         <ProtectedRoute>
           <AppLayout>
-            <Settings />
+            <PageWrapper>
+              <Settings />
+            </PageWrapper>
           </AppLayout>
         </ProtectedRoute>
       </Route>

@@ -12,36 +12,33 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  const borderClasses = {
-    sm: "border-2",
-    md: "border-2",
-    lg: "border-[3px]"
-  };
-
-  const dotSizeClasses = {
-    sm: "w-2 h-2",
-    md: "w-2.5 h-2.5",
-    lg: "w-4 h-4"
+  // Proporción armónica: el grosor del borde y el punto central deben ser proporcionales
+  const config = {
+    sm: { borderWidth: 6, dotSize: 6 },
+    md: { borderWidth: 8, dotSize: 8 }, 
+    lg: { borderWidth: 12, dotSize: 12 }
   };
 
   return (
     <div className={cn("relative", sizeClasses[size], className)}>
-      {/* Outer ring - white/light colored */}
-      <div className={cn(
-        "absolute inset-0 rounded-full border-white/80",
-        borderClasses[size]
-      )}></div>
+      {/* Outer ring - grosor proporcional */}
+      <div 
+        className="absolute inset-0 rounded-full border-white/80"
+        style={{ borderWidth: `${config[size].borderWidth}px` }}
+      ></div>
       
-      {/* Rotating inner dot - dark */}
+      {/* Rotating inner dot - mismo grosor que el borde */}
       <div className="absolute inset-0 animate-spin">
-        <div className={cn(
-          "absolute bg-gray-800 rounded-full",
-          dotSizeClasses[size]
-        )} style={{
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%) translateY(-120%)'
-        }}></div>
+        <div 
+          className="absolute bg-gray-800 rounded-full"
+          style={{
+            width: `${config[size].dotSize}px`,
+            height: `${config[size].dotSize}px`,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) translateY(-130%)'
+          }}
+        ></div>
       </div>
     </div>
   );
