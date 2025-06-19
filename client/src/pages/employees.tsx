@@ -88,9 +88,14 @@ export default function Employees() {
     }
 
     addEmployeeMutation.mutate({
-      ...newEmployee,
-      totalVacationDays: parseInt(newEmployee.totalVacationDays),
-      startDate: new Date(newEmployee.startDate),
+      companyEmail: newEmployee.companyEmail,
+      fullName: newEmployee.fullName,
+      dni: newEmployee.dni,
+      role: newEmployee.role,
+      password: newEmployee.password,
+      startDate: newEmployee.startDate,
+      totalVacationDays: newEmployee.totalVacationDays,
+      companyPhone: null,
     });
   };
 
@@ -291,11 +296,11 @@ export default function Employees() {
 
       {/* Add Employee Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Agregar Nuevo Empleado</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <div>
               <Label htmlFor="fullName">Nombre Completo *</Label>
               <Input

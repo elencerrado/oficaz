@@ -566,35 +566,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/employees', authenticateToken, requireRole(['admin']), async (req, res) => {
+  app.post('/api/employees', authenticateToken, requireRole(['admin', 'manager']), async (req, res) => {
     try {
-      const { email, fullName, dni, role, password, phoneNumber } = req.body;
+      const { companyEmail, fullName, dni, role, password, companyPhone, startDate, totalVacationDays } = req.body;
       
       // Check if user already exists within the same company by DNI
       const existingUser = await storage.getUserByDniAndCompany(dni, (req as AuthRequest).user!.companyId);
       if (existingUser) {
-        return res.status(400).json({ message: 'DNI already exists in your company' });
+        return res.status(400).json({ message: 'DNI ya existe en tu empresa' });
       }
 
-      const existingEmail = await storage.getUserByEmail(email);
+      const existingEmail = await storage.getUserByEmail(companyEmail);
       if (existingEmail) {
-        return res.status(400).json({ message: 'Email already exists' });
+        return res.status(400).json({ message: 'Email ya existe' });
       }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await storage.createUser({
-        companyEmail: email,
+        companyEmail,
         password: hashedPassword,
         fullName,
         dni,
         role: role || 'employee',
         companyId: (req as AuthRequest).user!.companyId,
-        companyPhone: phoneNumber,
-        startDate: new Date(),
+        companyPhone: companyPhone || null,
+        startDate: startDate ? new Date(startDate) : new Date(),
         isActive: true,
-        totalVacationDays: "22.0",
+        totalVacationDays: totalVacationDays || "22.0",
         createdBy: (req as AuthRequest).user!.id,
       });
 
