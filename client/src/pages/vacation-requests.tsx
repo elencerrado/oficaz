@@ -1,44 +1,53 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { VacationModal } from '@/components/vacation/vacation-modal';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarPlus, Calendar, Check, X } from 'lucide-react';
-import { format } from 'date-fns';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays } from 'lucide-react';
+import { format, parseISO, differenceInDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation, Link } from 'wouter';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function VacationRequests() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user } = useAuth();
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reason, setReason] = useState('');
+  const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
+  const companyAlias = location.split('/')[1] || 'test';
 
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],
   });
 
-  const { data: companyRequests } = useQuery({
-    queryKey: ['/api/vacation-requests/company'],
-    enabled: user?.role === 'admin' || user?.role === 'manager',
-  });
-
-  const updateRequestMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      apiRequest('PATCH', `/api/vacation-requests/${id}`, { status }),
+  const createRequestMutation = useMutation({
+    mutationFn: (data: { startDate: string; endDate: string; reason?: string }) =>
+      apiRequest('POST', '/api/vacation-requests', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      setIsModalOpen(false);
+      setStartDate('');
+      setEndDate('');
+      setReason('');
       toast({
-        title: 'Request Updated',
-        description: 'The vacation request has been updated.',
+        title: '¡Solicitud enviada!',
+        description: 'Tu solicitud de vacaciones ha sido enviada correctamente.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message,
+        description: error.message || 'No se pudo enviar la solicitud',
         variant: 'destructive',
       });
     },
@@ -47,208 +56,288 @@ export default function VacationRequests() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/20 text-green-300 border-green-500/30';
       case 'denied':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-500/20 text-red-300 border-red-500/30';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'Pendiente';
+      case 'approved':
+        return 'Aprobado';
+      case 'denied':
+        return 'Rechazado';
+      default:
+        return status;
     }
   };
 
   const calculateDays = (startDate: string, endDate: string) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    return differenceInDays(end, start) + 1;
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(parseISO(dateString), 'd MMM', { locale: es });
+  };
+
+  const formatDateRange = (start: string, end: string) => {
+    const startFormatted = format(parseISO(start), 'd MMM', { locale: es });
+    const endFormatted = format(parseISO(end), 'd MMM yyyy', { locale: es });
+    return `${startFormatted} - ${endFormatted}`;
+  };
+
+  // Calculate vacation days
+  const totalDays = parseFloat(user?.totalVacationDays || '22');
+  const usedDays = parseFloat(user?.usedVacationDays || '0');
+  const pendingDays = (requests as any[])
+    .filter((r: any) => r.status === 'pending')
+    .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
+  const availableDays = totalDays - usedDays - pendingDays;
+  const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
+
+  const canRequestDays = startDate && endDate ? calculateDays(startDate, endDate) : 0;
+  const exceedsAvailable = canRequestDays > availableDays;
+
+  const handleSubmit = () => {
+    if (!startDate || !endDate) {
+      toast({
+        title: 'Error',
+        description: 'Por favor selecciona las fechas de inicio y fin',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (exceedsAvailable) {
+      toast({
+        title: 'Error',
+        description: `No tienes suficientes días disponibles. Disponibles: ${availableDays}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    createRequestMutation.mutate({
+      startDate,
+      endDate,
+      reason: reason || undefined,
+    });
   };
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-32 bg-gray-200 rounded-lg"></div>
-          <div className="h-96 bg-gray-200 rounded-lg"></div>
+      <div className="min-h-screen flex items-center justify-center" style={{
+        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+      }}>
+        <div className="text-center text-white">
+          <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
+          <p>Cargando vacaciones...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Vacation Requests</h1>
-          <p className="text-gray-500 mt-1">
-            Manage your time off requests and view their status.
-          </p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <CalendarPlus className="mr-2" size={16} />
-          Request Vacation
-        </Button>
+    <div 
+      className="min-h-screen text-white"
+      style={{
+        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+        overscrollBehavior: 'none'
+      }}
+    >
+      {/* Header with back button */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <Link href={`/${companyAlias}/employee-dashboard`}>
+          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 p-2 rounded-xl">
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+        </Link>
+        <h1 className="text-xl font-semibold">Vacaciones</h1>
+        <div className="w-10" /> {/* Spacer */}
       </div>
 
-      {/* Summary Card */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Vacation Summary */}
+      <div className="px-6 mb-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                <Calendar className="text-oficaz-primary" />
-              </div>
-              <p className="text-2xl font-semibold text-gray-900">
-                {(user?.vacationDaysTotal || 0) - (user?.vacationDaysUsed || 0)}
-              </p>
-              <p className="text-sm text-gray-500">Days Remaining</p>
+              <div className="text-2xl font-bold text-blue-300">{totalDays}</div>
+              <div className="text-xs text-white/70">Total</div>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                <Check className="text-oficaz-success" />
-              </div>
-              <p className="text-2xl font-semibold text-gray-900">
-                {requests?.filter((r: any) => r.status === 'approved').length || 0}
-              </p>
-              <p className="text-sm text-gray-500">Approved Requests</p>
+              <div className="text-2xl font-bold text-red-300">{usedDays}</div>
+              <div className="text-xs text-white/70">Usados</div>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                <Calendar className="text-oficaz-warning" />
-              </div>
-              <p className="text-2xl font-semibold text-gray-900">
-                {requests?.filter((r: any) => r.status === 'pending').length || 0}
-              </p>
-              <p className="text-sm text-gray-500">Pending Requests</p>
+              <div className="text-2xl font-bold text-green-300">{availableDays}</div>
+              <div className="text-xs text-white/70">Disponibles</div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* My Requests */}
-        <Card>
-          <CardHeader>
-            <CardTitle>My Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {requests?.length > 0 ? (
-                requests.map((request: any) => (
-                  <div key={request.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge className={getStatusColor(request.status)}>
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </Badge>
-                      <span className="text-sm text-gray-500">
-                        {calculateDays(request.startDate, request.endDate)} days
-                      </span>
-                    </div>
-                    <p className="font-medium text-gray-900">
-                      {format(new Date(request.startDate), 'MMM d')} - {format(new Date(request.endDate), 'MMM d, yyyy')}
-                    </p>
-                    {request.reason && (
-                      <p className="text-sm text-gray-600 mt-1">{request.reason}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      Submitted {format(new Date(request.createdAt), 'MMM d, yyyy')}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <CalendarPlus className="mx-auto mb-4" size={48} />
-                  <p>No vacation requests yet</p>
-                  <p className="text-sm">Click "Request Vacation" to get started</p>
-                </div>
-              )}
+          
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-white/70">Progreso anual</span>
+              <span className="text-sm text-white/70">{usagePercentage.toFixed(1)}%</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Company Requests (Admin/Manager only) */}
-        {(user?.role === 'admin' || user?.role === 'manager') && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {companyRequests?.length > 0 ? (
-                  companyRequests.map((request: any) => (
-                    <div key={request.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(request.status)}>
-                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                          </Badge>
-                          <span className="text-sm font-medium text-gray-900">
-                            Employee ID: {request.userId}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {calculateDays(request.startDate, request.endDate)} days
-                        </span>
-                      </div>
-                      
-                      <p className="font-medium text-gray-900">
-                        {format(new Date(request.startDate), 'MMM d')} - {format(new Date(request.endDate), 'MMM d, yyyy')}
-                      </p>
-                      
-                      {request.reason && (
-                        <p className="text-sm text-gray-600 mt-1">{request.reason}</p>
-                      )}
-                      
-                      <div className="flex items-center justify-between mt-3">
-                        <p className="text-xs text-gray-500">
-                          Submitted {format(new Date(request.createdAt), 'MMM d, yyyy')}
-                        </p>
-                        
-                        {request.status === 'pending' && (
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'approved' })}
-                              disabled={updateRequestMutation.isPending}
-                              className="text-oficaz-success border-oficaz-success hover:bg-green-50"
-                            >
-                              <Check size={14} className="mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'denied' })}
-                              disabled={updateRequestMutation.isPending}
-                              className="text-oficaz-error border-oficaz-error hover:bg-red-50"
-                            >
-                              <X size={14} className="mr-1" />
-                              Deny
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Calendar className="mx-auto mb-4" size={48} />
-                    <p>No team requests</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            <div className="w-full bg-white/20 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <VacationModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      {/* Request button */}
+      <div className="px-6 mb-6">
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">
+              <CalendarPlus className="mr-2 h-5 w-5" />
+              Solicitar Vacaciones
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-gray-800 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Nueva Solicitud de Vacaciones</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-date" className="text-white">Fecha inicio</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-date" className="text-white">Fecha fin</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+              </div>
+              
+              {canRequestDays > 0 && (
+                <div className={`text-sm p-2 rounded ${exceedsAvailable ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
+                  Días solicitados: {canRequestDays} | Disponibles: {availableDays}
+                </div>
+              )}
+              
+              <div>
+                <Label htmlFor="reason" className="text-white">Motivo (opcional)</Label>
+                <Textarea
+                  id="reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Describe el motivo de tu solicitud..."
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setIsModalOpen(false)}
+                  variant="outline"
+                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={createRequestMutation.isPending || !startDate || !endDate || exceedsAvailable}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600"
+                >
+                  {createRequestMutation.isPending ? (
+                    <LoadingSpinner size="sm" className="text-white" />
+                  ) : (
+                    'Solicitar'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Requests table */}
+      <div className="px-4 mb-6 flex-1">
+        <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
+          {/* Table Header */}
+          <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
+            <div className="text-sm font-semibold text-center">Período</div>
+            <div className="text-sm font-semibold text-center">Días</div>
+            <div className="text-sm font-semibold text-center">Estado</div>
+            <div className="text-sm font-semibold text-center">Fecha</div>
+          </div>
+
+          {/* Table Body */}
+          <div className="overflow-y-auto scrollbar-thin" style={{ 
+            maxHeight: 'calc(100vh - 400px)', 
+            minHeight: '300px',
+            backgroundColor: 'rgba(50, 58, 70, 0.6)',
+            overscrollBehavior: 'contain'
+          }}>
+            {(requests as any[]).length > 0 ? (
+              (requests as any[])
+                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .map((request: any) => (
+                  <div key={request.id} className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5">
+                    <div className="text-sm text-center text-white/90">
+                      {formatDateRange(request.startDate, request.endDate)}
+                    </div>
+                    <div className="text-sm text-center font-mono text-white/90">
+                      {calculateDays(request.startDate, request.endDate)}
+                    </div>
+                    <div className="flex justify-center">
+                      <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
+                        {getStatusText(request.status)}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-center text-white/70">
+                      {formatDate(request.createdAt)}
+                    </div>
+                  </div>
+                ))
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-48">
+                <div className="text-center text-white/60">
+                  <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No tienes solicitudes de vacaciones</p>
+                  <p className="text-sm mt-1">Solicita tus primeras vacaciones</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Copyright at bottom */}
+      <div className="text-center pb-4 mt-auto">
+        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
+          <span className="font-semibold text-blue-400">Oficaz</span>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </div>
     </div>
   );
 }
