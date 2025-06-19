@@ -50,61 +50,60 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <nav className={`
-        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30 transform transition-transform duration-300
+        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
-        {/* Company header */}
-        <div className="p-6 border-b border-gray-200">
+        {/* Fixed Company header */}
+        <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
             <img 
               src={oficazLogo} 
               alt="Oficaz" 
-              className="h-8 w-auto"
+              className="h-6 w-auto"
             />
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-sm font-medium text-gray-900">
                 {company?.name || 'Oficaz'}
               </h2>
-              <p className="text-sm text-gray-500 capitalize">
-                {user?.role} Dashboard
-              </p>
             </div>
           </div>
         </div>
         
-        {/* Navigation */}
-        <div className="p-4">
-          <ul className="space-y-2">
-            {navigation.map((item) => {
-              const isActive = location === item.href;
-              const Icon = item.icon;
-              
-              return (
-                <li key={item.name}>
-                  <Link href={item.href}>
-                    <a
-                      className={`
-                        flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors
-                        ${isActive 
-                          ? 'bg-blue-50 text-oficaz-primary' 
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }
-                      `}
-                      onClick={handleLinkClick}
-                    >
-                      <Icon size={20} />
-                      <span>{item.name}</span>
-                      {typeof item.badge === 'number' && item.badge > 0 && (
-                        <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
-                          {item.badge}
-                        </span>
-                      )}
-                    </a>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        {/* Scrollable Navigation */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            <ul className="space-y-2">
+              {navigation.map((item) => {
+                const isActive = location === item.href;
+                const Icon = item.icon;
+                
+                return (
+                  <li key={item.name}>
+                    <Link href={item.href}>
+                      <button
+                        className={`
+                          w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left
+                          ${isActive 
+                            ? 'bg-blue-50 text-oficaz-primary' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                          }
+                        `}
+                        onClick={handleLinkClick}
+                      >
+                        <Icon size={20} />
+                        <span>{item.name}</span>
+                        {typeof item.badge === 'number' && item.badge > 0 && (
+                          <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
         
 
