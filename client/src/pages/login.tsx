@@ -61,8 +61,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        background: `radial-gradient(circle at center, #323A46, #232B36)`,
+      }}
+    >
+      <Card className="w-full max-w-md shadow-2xl rounded-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
             <Building className="h-8 w-8 text-oficaz-primary mr-2" />
@@ -70,17 +75,18 @@ export default function Login() {
           </div>
           <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
           <CardDescription>
-            Accede a tu cuenta empresarial
+            Accede con tu DNI/NIE o email empresarial
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="dniOrEmail">DNI o Email</Label>
+              <Label htmlFor="dniOrEmail">DNI/NIE o Email</Label>
               <Input
                 id="dniOrEmail"
+                className="rounded-xl"
                 {...form.register('dniOrEmail')}
-                placeholder="12345678Z o tu@empresa.com"
+                placeholder="12345678Z, X1234567L o tu@empresa.com"
               />
               {form.formState.errors.dniOrEmail && (
                 <p className="text-sm text-red-600">
@@ -94,6 +100,7 @@ export default function Login() {
               <div className="relative">
                 <Input
                   id="password"
+                  className="rounded-xl"
                   type={showPassword ? 'text' : 'password'}
                   {...form.register('password')}
                   placeholder="Tu contraseña"
@@ -102,7 +109,7 @@ export default function Login() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-r-xl"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -119,7 +126,7 @@ export default function Login() {
               )}
             </div>
 
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full rounded-xl">
               Iniciar sesión
             </Button>
           </form>

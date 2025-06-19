@@ -67,8 +67,13 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-2xl">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        background: `radial-gradient(circle at center, #323A46, #232B36)`,
+      }}
+    >
+      <Card className="w-full max-w-2xl shadow-2xl rounded-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
             <Building className="h-8 w-8 text-oficaz-primary mr-2" />
@@ -93,6 +98,7 @@ export default function Register() {
                   <Label htmlFor="companyName">Nombre de la empresa *</Label>
                   <Input
                     id="companyName"
+                    className="rounded-xl"
                     {...form.register('companyName')}
                     placeholder="Ej: Mi Empresa S.L."
                   />
@@ -105,6 +111,7 @@ export default function Register() {
                   <Label htmlFor="cif">CIF *</Label>
                   <Input
                     id="cif"
+                    className="rounded-xl"
                     {...form.register('cif')}
                     placeholder="Ej: B12345678"
                   />
@@ -118,6 +125,7 @@ export default function Register() {
                   <Input
                     id="companyEmail"
                     type="email"
+                    className="rounded-xl"
                     {...form.register('companyEmail')}
                     placeholder="info@miempresa.com"
                   />
@@ -130,6 +138,7 @@ export default function Register() {
                   <Label htmlFor="companyAlias">Alias de empresa *</Label>
                   <Input
                     id="companyAlias"
+                    className="rounded-xl"
                     {...form.register('companyAlias')}
                     placeholder="miempresa"
                   />
@@ -143,6 +152,7 @@ export default function Register() {
                   <Label htmlFor="contactName">Persona de contacto *</Label>
                   <Input
                     id="contactName"
+                    className="rounded-xl"
                     {...form.register('contactName')}
                     placeholder="Juan Pérez"
                   />
@@ -155,6 +165,7 @@ export default function Register() {
                   <Label htmlFor="phone">Teléfono</Label>
                   <Input
                     id="phone"
+                    className="rounded-xl"
                     {...form.register('phone')}
                     placeholder="+34 600 123 456"
                   />
@@ -165,6 +176,7 @@ export default function Register() {
                 <Label htmlFor="address">Dirección</Label>
                 <Input
                   id="address"
+                  className="rounded-xl"
                   {...form.register('address')}
                   placeholder="Calle Mayor 123, 28001 Madrid"
                 />
@@ -185,6 +197,7 @@ export default function Register() {
                   <Label htmlFor="adminUsername">Usuario *</Label>
                   <Input
                     id="adminUsername"
+                    className="rounded-xl"
                     {...form.register('adminUsername')}
                     placeholder="admin"
                   />
@@ -197,6 +210,7 @@ export default function Register() {
                   <Label htmlFor="adminFullName">Nombre completo *</Label>
                   <Input
                     id="adminFullName"
+                    className="rounded-xl"
                     {...form.register('adminFullName')}
                     placeholder="Juan Pérez García"
                   />
@@ -209,8 +223,9 @@ export default function Register() {
                   <Label htmlFor="adminDni">DNI</Label>
                   <Input
                     id="adminDni"
+                    className="rounded-xl"
                     {...form.register('adminDni')}
-                    placeholder="12345678A"
+                    placeholder="12345678A, X1234567L"
                   />
                 </div>
 
@@ -218,6 +233,7 @@ export default function Register() {
                   <Label htmlFor="adminPhoneNumber">Teléfono personal</Label>
                   <Input
                     id="adminPhoneNumber"
+                    className="rounded-xl"
                     {...form.register('adminPhoneNumber')}
                     placeholder="+34 600 123 456"
                   />
@@ -228,6 +244,7 @@ export default function Register() {
                   <div className="relative">
                     <Input
                       id="password"
+                      className="rounded-xl"
                       type={showPassword ? 'text' : 'password'}
                       {...form.register('password')}
                       placeholder="Mínimo 6 caracteres"
@@ -236,7 +253,7 @@ export default function Register() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-r-xl"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
@@ -256,6 +273,7 @@ export default function Register() {
                   <div className="relative">
                     <Input
                       id="confirmPassword"
+                      className="rounded-xl"
                       type={showConfirmPassword ? 'text' : 'password'}
                       {...form.register('confirmPassword')}
                       placeholder="Repite la contraseña"
@@ -264,7 +282,7 @@ export default function Register() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-r-xl"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
                       {showConfirmPassword ? (
@@ -281,7 +299,7 @@ export default function Register() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full rounded-xl" disabled={isLoading}>
               {isLoading ? 'Creando cuenta...' : 'Crear empresa y cuenta'}
             </Button>
           </form>

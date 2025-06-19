@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   --background: hsl(0, 0%, 100%);
@@ -15,7 +15,7 @@
   --card-foreground: hsl(0, 0%, 15%);
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --primary: hsl(210, 83%, 53%);
+  --primary: hsl(211, 100%, 50%);
   --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(210, 40%, 98%);
   --secondary-foreground: hsl(0, 0%, 15%);
@@ -23,11 +23,11 @@
   --accent-foreground: hsl(0, 0%, 15%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(210, 83%, 53%);
-  --radius: 0.5rem;
+  --ring: hsl(211, 100%, 50%);
+  --radius: 0.9375rem;
   
-  /* Custom Oficaz colors */
-  --oficaz-primary: hsl(210, 83%, 53%);
+  /* Custom Oficaz colors - #007AFF primary */
+  --oficaz-primary: hsl(211, 100%, 50%);
   --oficaz-secondary: hsl(0, 0%, 26%);
   --oficaz-success: hsl(122, 39%, 49%);
   --oficaz-warning: hsl(36, 100%, 50%);

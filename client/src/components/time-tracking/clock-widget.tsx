@@ -81,11 +81,11 @@ export function ClockWidget() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="rounded-2xl shadow-lg">
         <CardContent className="p-6">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded-xl mb-2"></div>
+            <div className="h-8 bg-gray-200 rounded-xl"></div>
           </div>
         </CardContent>
       </Card>
@@ -93,12 +93,12 @@ export function ClockWidget() {
   }
 
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-lg">
       <CardContent className="p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Time Tracking</h2>
         
         {/* Current Status */}
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-6">
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Current Status</p>
@@ -112,7 +112,7 @@ export function ClockWidget() {
               </div>
               {activeSession && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Since {formatTime(new Date(activeSession.clockIn))}
+                  Since {formatTime(new Date((activeSession as any).clockIn))}
                 </p>
               )}
             </div>
@@ -121,7 +121,7 @@ export function ClockWidget() {
                 {activeSession ? 'Current Session' : 'Current Time'}
               </p>
               <p className="text-2xl font-bold text-oficaz-primary">
-                {activeSession ? formatSessionTime(activeSession.clockIn) : formatTime(currentTime)}
+                {activeSession ? formatSessionTime((activeSession as any).clockIn) : formatTime(currentTime)}
               </p>
             </div>
           </div>
@@ -133,7 +133,7 @@ export function ClockWidget() {
             onClick={() => clockInMutation.mutate()}
             disabled={!!activeSession || clockInMutation.isPending}
             className={`
-              flex flex-col items-center justify-center p-6 h-auto border-2
+              flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
               ${activeSession 
                 ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
                 : 'border-oficaz-success text-oficaz-success bg-white hover:bg-green-50'
@@ -150,7 +150,7 @@ export function ClockWidget() {
             onClick={() => clockOutMutation.mutate()}
             disabled={!activeSession || clockOutMutation.isPending}
             className={`
-              flex flex-col items-center justify-center p-6 h-auto border-2
+              flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
               ${!activeSession 
                 ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
                 : 'border-oficaz-error text-oficaz-error bg-white hover:bg-red-50'

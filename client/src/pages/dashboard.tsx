@@ -107,7 +107,7 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="rounded-2xl shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -116,7 +116,7 @@ export default function Dashboard() {
                   {(stats as any)?.todayHours || '0.0'}h
                 </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-100/20 rounded-xl flex items-center justify-center">
                 <Clock className="text-oficaz-primary text-xl" />
               </div>
             </div>
@@ -129,7 +129,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-2xl shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -138,7 +138,7 @@ export default function Dashboard() {
                   {(stats as any)?.weekHours || '0.0'}h
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100/20 rounded-xl flex items-center justify-center">
                 <Calendar className="text-oficaz-success text-xl" />
               </div>
             </div>
@@ -152,7 +152,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-2xl shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +161,7 @@ export default function Dashboard() {
                   {(stats as any)?.vacationDaysRemaining || 0}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-orange-100/20 rounded-xl flex items-center justify-center">
                 <Umbrella className="text-oficaz-warning text-xl" />
               </div>
             </div>
@@ -173,7 +173,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-2xl shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
                   {(stats as any)?.activeEmployees || 1}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-purple-100/20 rounded-xl flex items-center justify-center">
                 <Users className="text-purple-600 text-xl" />
               </div>
             </div>
@@ -202,11 +202,11 @@ export default function Dashboard() {
           <ClockWidget />
 
           {/* Recent Time Entries */}
-          <Card>
+          <Card className="rounded-2xl shadow-lg">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Recent Time Entries</h2>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="rounded-xl">
                   View All
                 </Button>
               </div>
@@ -214,7 +214,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {(stats as any)?.recentSessions?.length > 0 ? (
                   (stats as any).recentSessions.map((session: any, index: number) => (
-                    <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                       <div className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-oficaz-success rounded-full"></div>
                         <div>

@@ -134,7 +134,7 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 
 // Auth schemas
 export const loginSchema = z.object({
-  dniOrEmail: z.string().min(1, "DNI o email requerido"),
+  dniOrEmail: z.string().min(1, "DNI/NIE o email requerido"),
   password: z.string().min(1, "Contraseña requerida"),
 });
 
