@@ -29,81 +29,9 @@ export default function EmployeeTimeTracking() {
   const minSwipeDistance = 50;
 
   // Get work sessions for current user
-  const { data: realWorkSessions = [] } = useQuery<WorkSession[]>({
+  const { data: workSessions = [] } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
   });
-
-  // Generate consistent mock data for previous months using seeded randomness
-  const generateMockSessionsForMonth = (year: number, month: number): WorkSession[] => {
-    const sessions: WorkSession[] = [];
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    let sessionId = 10000 + month * 100; // Unique IDs for mock data
-    
-    // Seeded randomness based on year/month to ensure consistency
-    const seed = year * 100 + month;
-    const seededRandom = (index: number) => {
-      const x = Math.sin(seed * 9999 + index * 1234) * 10000;
-      return x - Math.floor(x);
-    };
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dayOfWeek = date.getDay();
-      
-      // Only weekdays (Monday = 1, Friday = 5)
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-        // Consistent start time between 7:45 and 8:15
-        const startHour = 8;
-        const startMinute = Math.floor(seededRandom(day * 2) * 30) - 15; // -15 to +15 minutes
-        const actualStartMinute = Math.max(0, Math.min(59, startMinute));
-        
-        const clockIn = new Date(year, month, day, startHour, actualStartMinute);
-        
-        // End time: Friday until 14:00, others until 17:00 (+/- 15 minutes)
-        const baseEndHour = dayOfWeek === 5 ? 14 : 17;
-        const endMinute = Math.floor(seededRandom(day * 3) * 30) - 15; // -15 to +15 minutes
-        const actualEndMinute = Math.max(0, Math.min(59, endMinute));
-        
-        const clockOut = new Date(year, month, day, baseEndHour, actualEndMinute);
-        
-        // Calculate total hours
-        const totalMinutes = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60);
-        const totalHours = (totalMinutes / 60).toFixed(2);
-        
-        sessions.push({
-          id: sessionId++,
-          userId: user?.id || 5,
-          clockIn: clockIn.toISOString(),
-          clockOut: clockOut.toISOString(),
-          totalHours: totalHours,
-          createdAt: clockIn.toISOString()
-        });
-      }
-    }
-    
-    return sessions;
-  };
-
-  // Memoize work sessions to prevent regeneration on every render
-  const workSessions = useMemo(() => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    
-    let allSessions = [...realWorkSessions];
-    
-    // Generate mock data for the last 3 months (excluding current month)
-    for (let i = 1; i <= 3; i++) {
-      const targetMonth = currentMonth - i;
-      const targetYear = targetMonth < 0 ? currentYear - 1 : currentYear;
-      const adjustedMonth = targetMonth < 0 ? targetMonth + 12 : targetMonth;
-      
-      const mockSessions = generateMockSessionsForMonth(targetYear, adjustedMonth);
-      allSessions = [...allSessions, ...mockSessions];
-    }
-    
-    return allSessions;
-  }, [realWorkSessions]); // Only recalculate when real sessions change
 
   // Filter sessions for current month
   const monthStart = startOfMonth(currentDate);
