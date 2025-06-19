@@ -12,11 +12,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  // Configuración para círculo contorno + círculo relleno interno
+  // Configuración: grosor del contorno = diámetro del círculo interno
   const config = {
-    sm: { outerSize: 24, borderWidth: 2, innerSize: 6, gap: 4 },
-    md: { outerSize: 32, borderWidth: 2, innerSize: 8, gap: 6 }, 
-    lg: { outerSize: 48, borderWidth: 3, innerSize: 12, gap: 9 }
+    sm: { outerSize: 24, borderWidth: 6, innerSize: 6, gap: 3 },
+    md: { outerSize: 32, borderWidth: 8, innerSize: 8, gap: 4 }, 
+    lg: { outerSize: 48, borderWidth: 12, innerSize: 12, gap: 6 }
   };
 
   const currentConfig = config[size];
