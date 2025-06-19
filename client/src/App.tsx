@@ -49,7 +49,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
       
-      <main className="lg:ml-64 min-h-screen">
+      <main className="lg:ml-64 min-h-screen pt-16">
         {children}
       </main>
     </div>

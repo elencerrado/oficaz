@@ -70,7 +70,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
           <div className="p-4">
             <ul className="space-y-2">
               {navigation.map((item) => {
