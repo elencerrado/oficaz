@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3 } from 'lucide-react';
@@ -33,11 +33,18 @@ export default function EmployeeTimeTracking() {
     queryKey: ['/api/work-sessions'],
   });
 
-  // Generate mock data for previous months
+  // Generate consistent mock data for previous months using seeded randomness
   const generateMockSessionsForMonth = (year: number, month: number): WorkSession[] => {
     const sessions: WorkSession[] = [];
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     let sessionId = 10000 + month * 100; // Unique IDs for mock data
+    
+    // Seeded randomness based on year/month to ensure consistency
+    const seed = year * 100 + month;
+    const seededRandom = (index: number) => {
+      const x = Math.sin(seed * 9999 + index * 1234) * 10000;
+      return x - Math.floor(x);
+    };
     
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
@@ -45,16 +52,16 @@ export default function EmployeeTimeTracking() {
       
       // Only weekdays (Monday = 1, Friday = 5)
       if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-        // Random start time between 7:45 and 8:15
+        // Consistent start time between 7:45 and 8:15
         const startHour = 8;
-        const startMinute = Math.floor(Math.random() * 30) - 15; // -15 to +15 minutes
+        const startMinute = Math.floor(seededRandom(day * 2) * 30) - 15; // -15 to +15 minutes
         const actualStartMinute = Math.max(0, Math.min(59, startMinute));
         
         const clockIn = new Date(year, month, day, startHour, actualStartMinute);
         
         // End time: Friday until 14:00, others until 17:00 (+/- 15 minutes)
         const baseEndHour = dayOfWeek === 5 ? 14 : 17;
-        const endMinute = Math.floor(Math.random() * 30) - 15; // -15 to +15 minutes
+        const endMinute = Math.floor(seededRandom(day * 3) * 30) - 15; // -15 to +15 minutes
         const actualEndMinute = Math.max(0, Math.min(59, endMinute));
         
         const clockOut = new Date(year, month, day, baseEndHour, actualEndMinute);
@@ -77,8 +84,8 @@ export default function EmployeeTimeTracking() {
     return sessions;
   };
 
-  // Combine real sessions with mock data for previous months
-  const getAllWorkSessions = (): WorkSession[] => {
+  // Memoize work sessions to prevent regeneration on every render
+  const workSessions = useMemo(() => {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
@@ -96,9 +103,7 @@ export default function EmployeeTimeTracking() {
     }
     
     return allSessions;
-  };
-
-  const workSessions = getAllWorkSessions();
+  }, [realWorkSessions]); // Only recalculate when real sessions change
 
   // Filter sessions for current month
   const monthStart = startOfMonth(currentDate);
