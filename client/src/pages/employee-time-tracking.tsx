@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useLocation, Link } from 'wouter';
 
 interface WorkSession {
   id: number;
@@ -18,6 +19,8 @@ interface WorkSession {
 export default function EmployeeTimeTracking() {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [location] = useLocation();
+  const companyAlias = location.split('/')[1] || 'test';
 
   // Get work sessions for current user
   const { data: workSessions = [] } = useQuery<WorkSession[]>({
@@ -81,15 +84,16 @@ export default function EmployeeTimeTracking() {
     <div className="min-h-screen bg-employee-gradient text-white">
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => window.history.back()}
-          className="text-white hover:bg-white/10 p-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="ml-2">Atrás</span>
-        </Button>
+        <Link href={`/${companyAlias}/dashboard`}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/10 p-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="ml-2">Atrás</span>
+          </Button>
+        </Link>
         
         <div className="flex items-center space-x-2">
           <div className="text-2xl font-bold text-blue-400">Oficaz</div>

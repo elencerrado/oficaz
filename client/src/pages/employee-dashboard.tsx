@@ -4,6 +4,7 @@ import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut } from 'lu
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 interface WorkSession {
   id: number;
@@ -125,41 +126,45 @@ export default function EmployeeDashboard() {
     }
   };
 
+  // Get company alias from current URL
+  const [location] = useLocation();
+  const companyAlias = location.split('/')[1] || 'test';
+
   const menuItems = [
     { 
       icon: Clock, 
       title: 'Fichajes', 
-      route: '/employee-time-tracking',
+      route: `/${companyAlias}/employee-time-tracking`,
       notification: false 
     },
     { 
       icon: User, 
       title: 'Usuario', 
-      route: '/settings',
+      route: `/${companyAlias}/settings`,
       notification: false 
     },
     { 
       icon: FileText, 
       title: 'Documentos', 
-      route: '/documents',
+      route: `/${companyAlias}/documents`,
       notification: false 
     },
     { 
       icon: Calendar, 
       title: 'Vacaciones', 
-      route: '/vacation-requests',
+      route: `/${companyAlias}/vacation-requests`,
       notification: false 
     },
     { 
       icon: Bell, 
       title: 'Recordatorios', 
-      route: '/notifications',
+      route: `/${companyAlias}/notifications`,
       notification: false 
     },
     { 
       icon: MessageSquare, 
       title: 'Mensajes', 
-      route: '/messages',
+      route: `/${companyAlias}/messages`,
       notification: (unreadCount?.count || 0) > 0 
     },
   ];
