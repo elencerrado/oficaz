@@ -4,11 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation, Link } from 'wouter';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAuthHeaders } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Settings() {
   const { user, company } = useAuth();
   const [location] = useLocation();
   const companyAlias = location.split('/')[1] || 'test';
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,6 +23,40 @@ export default function Settings() {
     postalAddress: user?.postalAddress || 'Avenida Andalucía 1 1º Izquierda\n00000 Sevilla',
     emergencyContactName: user?.emergencyContactName || 'María García García',
     emergencyContactPhone: user?.emergencyContactPhone || '+34 666 66 66 66'
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const response = await fetch('/api/users/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al actualizar el perfil');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Perfil actualizado",
+        description: "Los cambios se han guardado correctamente",
+      });
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron guardar los cambios",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -72,45 +112,27 @@ export default function Settings() {
 
       {/* User Profile */}
       <div className="px-6 flex-1">
-        {/* Modern Profile Card */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-white/10">
-          {/* Avatar and Name Row */}
-          <div className="flex items-center mb-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-              <span className="text-white text-xl font-bold">
-                {getInitials(user?.fullName || 'Juan Ramírez Lopez')}
-              </span>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-white mb-1 leading-tight">
-                {user?.fullName || 'Juan Ramírez Lopez'}
-              </h1>
-              <div className="flex items-center justify-between">
-                <span className="text-blue-300 text-sm font-medium">{user?.position || 'Administrativo'}</span>
-                <span className="text-white/70 text-xs bg-white/10 px-2 py-1 rounded-lg">
-                  DNI {user?.dni || '00000000A'}
-                </span>
-              </div>
-            </div>
+        {/* Simplified Profile Section */}
+        <div className="flex items-start mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg flex-shrink-0">
+            <span className="text-white text-xl font-bold">
+              {getInitials(user?.fullName || 'Juan Ramírez Lopez')}
+            </span>
           </div>
-
-          {/* Contact Info Grid */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-white/5 rounded-xl p-3">
-              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Correo Corporativo</p>
-              <p className="text-white text-sm font-medium">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-white mb-1 leading-tight">
+              {user?.fullName || 'Juan Ramírez Lopez'}
+            </h1>
+            <p className="text-blue-300 text-sm font-medium mb-1">{user?.position || 'Administrativo'}</p>
+            <p className="text-white/70 text-xs mb-3">DNI {user?.dni || '00000000A'}</p>
+            
+            <div className="space-y-1">
+              <p className="text-blue-400 text-sm break-all">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+              <p className="text-white/80 text-sm">{user?.companyPhone || '+34 666 11 11 11'}</p>
             </div>
-            <div className="bg-white/5 rounded-xl p-3">
-              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Teléfono Corporativo</p>
-              <p className="text-white text-sm font-medium">{user?.companyPhone || '+34 666 11 11 11'}</p>
-            </div>
-          </div>
-
-          {/* Hire Date */}
-          <div className="text-center py-3 bg-white/5 rounded-xl">
-            <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Fecha de Alta</p>
-            <p className="text-white text-sm font-medium">
-              {formatDate(user?.startDate?.toString() || '')}
+            
+            <p className="text-white/60 text-xs mt-3">
+              Fecha de alta: {formatDate(user?.startDate?.toString() || '')}
             </p>
           </div>
         </div>
@@ -233,13 +255,23 @@ export default function Settings() {
           {isEditing ? (
             <div className="flex space-x-4">
               <Button
-                onClick={() => setIsEditing(false)}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12"
+                onClick={() => updateProfileMutation.mutate(formData)}
+                disabled={updateProfileMutation.isPending}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
               >
-                Guardar
+                {updateProfileMutation.isPending ? 'Guardando...' : 'Guardar'}
               </Button>
               <Button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setFormData({
+                    personalPhone: user?.personalPhone || '+34 666 11 11 11',
+                    personalEmail: user?.personalEmail || 'juanramirez@gmail.com',
+                    postalAddress: user?.postalAddress || 'Avenida Andalucía 1 1º Izquierda\n00000 Sevilla',
+                    emergencyContactName: user?.emergencyContactName || 'María García García',
+                    emergencyContactPhone: user?.emergencyContactPhone || '+34 666 66 66 66'
+                  });
+                }}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
               >
                 Cancelar
