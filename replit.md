@@ -117,7 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-Changelog:
+- June 19, 2025. Complete Oficaz employee management system deployed
+  - Built full-stack React + Express application with TypeScript
+  - Implemented JWT authentication with role-based access control
+  - Created comprehensive employee management features
+  - Added time tracking, vacation requests, document management, and messaging
+  - Configured Supabase database integration
+  - Application successfully running and accessible
 - June 18, 2025. Initial setup
 
 ## User Preferences
