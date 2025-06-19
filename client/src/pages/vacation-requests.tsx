@@ -155,8 +155,8 @@ export default function VacationRequests() {
     }
 
     createRequestMutation.mutate({
-      startDate: selectedStartDate.toISOString().split('T')[0],
-      endDate: selectedEndDate.toISOString().split('T')[0],
+      startDate: selectedStartDate.toISOString(),
+      endDate: selectedEndDate.toISOString(),
       reason: reason || undefined,
     });
   };
@@ -437,24 +437,19 @@ export default function VacationRequests() {
               </div>
               
               {/* Action buttons */}
-              <div className="flex gap-3 pt-1 pb-1">
-                <Button
-                  onClick={() => setIsModalOpen(false)}
-                  variant="outline"
-                  className="flex-1 border-red-600 text-red-300 hover:bg-red-900/20 hover:border-red-500 h-9"
-                >
-                  Cancelar
-                </Button>
+              <div className="flex space-x-4 pt-2">
                 <Button
                   onClick={handleSubmit}
                   disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed h-9"
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
                 >
-                  {createRequestMutation.isPending ? (
-                    <LoadingSpinner size="sm" className="text-white" />
-                  ) : (
-                    'Solicitar'
-                  )}
+                  {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
+                </Button>
+                <Button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
+                >
+                  Cancelar
                 </Button>
               </div>
             </div>
