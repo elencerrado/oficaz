@@ -320,8 +320,19 @@ export default function EmployeeTimeTracking() {
                   .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
                 
                 let currentWeekStart: Date | null = null;
+                let previousWeekStart: Date | null = null;
                 
-                return sortedSessions.map((session, index) => {
+                // Calculate weekly totals
+                const calculateWeekTotal = (weekStart: Date) => {
+                  return sortedSessions
+                    .filter(session => {
+                      const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
+                      return sessionWeekStart.getTime() === weekStart.getTime();
+                    })
+                    .reduce((total, session) => total + calculateSessionHours(session), 0);
+                };
+                
+                const result = sortedSessions.map((session, index) => {
                   const sessionDate = new Date(session.clockIn);
                   const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 }); // Monday start
                   
@@ -330,14 +341,19 @@ export default function EmployeeTimeTracking() {
                     weekStart.getTime() !== currentWeekStart.getTime();
                   
                   if (isNewWeek) {
+                    previousWeekStart = currentWeekStart;
                     currentWeekStart = weekStart;
                   }
                   
                   return (
                     <div key={session.id}>
-                      {/* Week separator - only show if it's a new week and not the first item */}
-                      {isNewWeek && index > 0 && (
-                        <div className="border-t-2 border-blue-400/30 my-2"></div>
+                      {/* Week separator with total - only show if it's a new week and not the first item */}
+                      {isNewWeek && index > 0 && previousWeekStart && (
+                        <div className="border-t-2 border-blue-400/30 bg-blue-400/10 py-2 px-4">
+                          <div className="text-center text-sm font-semibold text-blue-300">
+                            Total semana: {formatTotalHours(calculateWeekTotal(previousWeekStart))}
+                          </div>
+                        </div>
                       )}
                       <div className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5">
                         <div className="text-sm text-center text-white/90 whitespace-nowrap">
@@ -356,6 +372,19 @@ export default function EmployeeTimeTracking() {
                     </div>
                   );
                 });
+                
+                // Add total for the last (most recent) week at the end
+                if (currentWeekStart) {
+                  result.push(
+                    <div key="current-week-total" className="border-t-2 border-blue-400/30 bg-blue-400/10 py-2 px-4">
+                      <div className="text-center text-sm font-semibold text-blue-300">
+                        Total semana: {formatTotalHours(calculateWeekTotal(currentWeekStart))}
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return result;
               })()
             ) : isLoading ? (
               <div className="flex items-center justify-center h-full min-h-48">
