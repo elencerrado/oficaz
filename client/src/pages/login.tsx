@@ -6,20 +6,21 @@ import { loginSchema, type LoginData } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [, setLocation] = useLocation();
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
   // Extract company alias from URL
-  const [match, params] = useRoute("/:companyAlias/login");
+  const [match, params] = useRoute('/:companyAlias/login');
   const companyAlias = params?.companyAlias;
 
   const form = useForm<LoginData>({
@@ -65,88 +66,107 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+      className="min-h-screen flex items-center justify-center py-12 px-8 sm:px-16 lg:px-24"
       style={{
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
       }}
     >
-      <Card className="w-full max-w-md shadow-2xl rounded-2xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center mb-4">
+      <Card className="w-full max-w-sm shadow-2xl rounded-3xl border-0 bg-white">
+        <CardHeader className="text-center pt-8 pb-6">
+          <div className="flex justify-center mb-6">
             <img 
               src={oficazLogo} 
               alt="Oficaz" 
-              className="h-12 w-auto"
+              className="h-10 w-auto"
             />
           </div>
-          <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
-          <CardDescription>
-            Accede con tu DNI/NIE o email empresarial
-          </CardDescription>
+          <p className="text-gray-600 text-sm font-medium">
+            Inicia sesión para continuar
+          </p>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="dniOrEmail">DNI/NIE o Email</Label>
+        <CardContent className="px-8 pb-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Campo DNI/Email con icono */}
+            <div className="relative">
               <Input
-                id="dniOrEmail"
-                className="rounded-xl"
                 {...form.register('dniOrEmail')}
-                placeholder="12345678Z, X1234567L o tu@empresa.com"
+                placeholder="Introduce tu DNI/NIE o email"
+                className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
               />
+              <User className="absolute right-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               {form.formState.errors.dniOrEmail && (
-                <p className="text-sm text-red-600">
+                <p className="text-xs text-red-500 mt-1">
                   {form.formState.errors.dniOrEmail.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  className="rounded-xl"
-                  type={showPassword ? 'text' : 'password'}
-                  {...form.register('password')}
-                  placeholder="Tu contraseña"
-                />
+            {/* Campo Contraseña con iconos */}
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                {...form.register('password')}
+                placeholder="Introduce tu contraseña"
+                className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
+              />
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                <Lock className="h-4 w-4 text-gray-400" />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent rounded-r-xl"
+                  className="p-0 h-auto hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4 text-gray-400" />
                   ) : (
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-4 w-4 text-gray-400" />
                   )}
                 </Button>
               </div>
               {form.formState.errors.password && (
-                <p className="text-sm text-red-600">
+                <p className="text-xs text-red-500 mt-1">
                   {form.formState.errors.password.message}
                 </p>
               )}
             </div>
 
-            <Button type="submit" className="w-full rounded-xl">
-              Iniciar sesión
+            {/* Botón ENTRAR */}
+            <Button 
+              type="submit" 
+              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm"
+            >
+              ENTRAR
             </Button>
-          </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
+            {/* Checkbox Recordarme */}
+            <div className="flex items-center justify-center mt-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  className="rounded border-gray-300 data-[state=checked]:bg-[#007AFF] data-[state=checked]:border-[#007AFF]"
+                />
+                <label 
+                  htmlFor="remember" 
+                  className="text-sm text-gray-600 cursor-pointer"
+                >
+                  Recordarme
+                </label>
+              </div>
+            </div>
+
+            {/* Enlace de ayuda */}
+            <div className="text-center mt-4">
               <Link href="/register">
-                <a className="font-medium text-oficaz-primary hover:text-blue-500">
-                  Registrar empresa
+                <a className="text-sm text-[#007AFF] hover:underline">
+                  ¿Tienes problemas para acceder?
                 </a>
               </Link>
-            </p>
-          </div>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
