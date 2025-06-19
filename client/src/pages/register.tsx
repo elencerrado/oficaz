@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -27,7 +28,7 @@ export default function Register() {
       confirmPassword: '',
       firstName: '',
       lastName: '',
-      companyName: '',
+      companyName: 'Demo Company',
       role: 'admin',
       vacationDaysTotal: 20,
       vacationDaysUsed: 0,
@@ -108,6 +109,28 @@ export default function Register() {
               {form.formState.errors.companyName && (
                 <p className="text-sm text-oficaz-error mt-1">
                   {form.formState.errors.companyName.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="role">Your Role</Label>
+              <Select
+                onValueChange={(value) => form.setValue('role', value as 'admin' | 'manager' | 'employee')}
+                defaultValue={form.watch('role')}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin (Full Access)</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="employee">Employee</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.formState.errors.role && (
+                <p className="text-sm text-oficaz-error mt-1">
+                  {form.formState.errors.role.message}
                 </p>
               )}
             </div>

@@ -18,6 +18,7 @@ export interface IStorage {
   // Companies
   createCompany(company: InsertCompany): Promise<Company>;
   getCompany(id: number): Promise<Company | undefined>;
+  getAllCompanies(): Promise<Company[]>;
 
   // Users
   createUser(user: InsertUser): Promise<User>;
@@ -63,6 +64,10 @@ export class DrizzleStorage implements IStorage {
   async getCompany(id: number): Promise<Company | undefined> {
     const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, id));
     return company;
+  }
+
+  async getAllCompanies(): Promise<Company[]> {
+    return await db.select().from(schema.companies);
   }
 
   // Users

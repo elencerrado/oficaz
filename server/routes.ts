@@ -36,22 +36,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email already exists' });
       }
 
-      // Create company first
-      const company = await storage.createCompany({
-        name: data.companyName,
-      });
+      // For simplicity, use the existing Demo Company (ID 1) or create new company
+      let company;
+      try {
+        company = await storage.getCompany(1); // Try to get Demo Company
+        if (!company) {
+          company = await storage.createCompany({
+            name: data.companyName,
+          });
+        }
+      } catch (error) {
+        company = await storage.createCompany({
+          name: data.companyName,
+        });
+      }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      // Create user
+      // Create user with selected role
       const user = await storage.createUser({
         username: data.username,
         email: data.email,
         password: hashedPassword,
         firstName: data.firstName,
         lastName: data.lastName,
-        role: 'admin', // First user is admin
+        role: data.role, // Use the role from form
         companyId: company.id,
         vacationDaysTotal: data.vacationDaysTotal,
         vacationDaysUsed: data.vacationDaysUsed,
