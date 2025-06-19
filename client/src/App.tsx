@@ -122,7 +122,7 @@ function Router() {
       <Route path="/:companyAlias/dashboard">
         <ProtectedRoute>
           <AppLayout>
-            <Dashboard />
+            <DashboardRouter />
           </AppLayout>
         </ProtectedRoute>
       </Route>
