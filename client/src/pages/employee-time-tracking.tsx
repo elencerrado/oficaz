@@ -150,11 +150,11 @@ export default function EmployeeTimeTracking() {
     const date = new Date(dateString);
     const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const dayOfWeek = dayNames[getDay(date)];
-    const day = date.getDate();
-    const month = format(date, 'MMM', { locale: es });
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = format(date, 'MMM', { locale: es }).substring(0, 3);
     const year = date.getFullYear().toString().slice(-2);
     
-    return `${dayOfWeek} ${day} ${month} ${year}`;
+    return `${dayOfWeek} ${day}/${month}/${year}`;
   };
 
   const monthName = format(currentDate, 'MMMM yyyy', { locale: es });
@@ -237,23 +237,22 @@ export default function EmployeeTimeTracking() {
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
             <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
           </div>
-          <div className="flex items-end justify-between h-20 space-x-2">
+          <div className="flex items-end justify-between h-24 space-x-3">
             {last4MonthsData.map((data, index) => (
               <div key={index} className="flex-1 flex flex-col items-center">
-                <div className="w-full bg-white/10 rounded-t-lg overflow-hidden" style={{ height: '60px' }}>
+                <div className="text-xs text-white/60 mb-2 capitalize">{data.month}</div>
+                <div className="text-xs text-white/80 font-medium mb-2">
+                  {formatTotalHours(data.hours)}
+                </div>
+                <div className="w-full bg-white/10 rounded-t-lg overflow-hidden relative" style={{ height: '70px' }}>
                   <div 
-                    className={`w-full rounded-t-lg transition-all duration-500 ${
-                      data.isCurrentMonth ? 'bg-blue-500' : 'bg-white/30'
+                    className={`w-full rounded-t-lg transition-all duration-700 absolute bottom-0 ${
+                      data.isCurrentMonth ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-white/40'
                     }`}
                     style={{ 
-                      height: `${(data.hours / maxHours) * 100}%`,
-                      minHeight: data.hours > 0 ? '8px' : '0px'
+                      height: `${Math.max((data.hours / maxHours) * 100, data.hours > 0 ? 15 : 0)}%`
                     }}
                   />
-                </div>
-                <div className="text-xs text-white/60 mt-2 capitalize">{data.month}</div>
-                <div className="text-xs text-white/80 font-medium">
-                  {formatTotalHours(data.hours)}
                 </div>
               </div>
             ))}
@@ -279,14 +278,18 @@ export default function EmployeeTimeTracking() {
           {monthName}
         </button>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={goToNextMonth}
-          className="text-white hover:bg-white/10 p-2 rounded-xl"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </Button>
+        {format(currentDate, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToNextMonth}
+            className="text-white hover:bg-white/10 p-2 rounded-xl"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        ) : (
+          <div className="w-10 h-10" /> // Spacer to maintain layout
+        )}
       </div>
 
       {/* Month Total Hours */}
@@ -320,7 +323,7 @@ export default function EmployeeTimeTracking() {
                     key={session.id}
                     className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5"
                   >
-                    <div className="text-sm text-center text-white/90">
+                    <div className="text-sm text-center text-white/90 whitespace-nowrap">
                       {formatDate(session.clockIn)}
                     </div>
                     <div className="text-sm text-center font-mono">
