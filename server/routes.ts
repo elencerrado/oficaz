@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = generateToken({
         id: user.id,
-        username: user.email, // Use email as username in JWT
+        username: user.companyEmail, // Use company email as username in JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -252,7 +252,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate token for immediate login
       const token = generateToken({
         id: user.id,
-        username: user.email, // Use email as username in JWT
+        username: user.companyEmail, // Use company email as username in JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Registro de empresa exitoso',
         user: {
           id: user.id,
-          email: user.email,
+          email: user.companyEmail,
           fullName: user.fullName,
           role: user.role,
           companyId: user.companyId

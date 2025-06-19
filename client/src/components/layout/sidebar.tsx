@@ -119,7 +119,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <p className="text-sm font-medium text-gray-900">
                 {user?.fullName}
               </p>
-              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-500">{user?.companyEmail}</p>
             </div>
             <Button
               variant="ghost"
