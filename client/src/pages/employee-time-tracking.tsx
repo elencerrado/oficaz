@@ -22,6 +22,12 @@ export default function EmployeeTimeTracking() {
   const [location] = useLocation();
   const companyAlias = location.split('/')[1] || 'test';
 
+  // Touch/swipe handling
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
   // Get work sessions for current user
   const { data: realWorkSessions = [] } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
@@ -165,6 +171,38 @@ export default function EmployeeTimeTracking() {
     setCurrentDate(new Date());
   };
 
+  // Touch event handlers for swipe navigation
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      // Swipe left = next month (if allowed)
+      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
+      const currentMonth = new Date();
+      if (nextMonth <= currentMonth) {
+        setCurrentDate(nextMonth);
+      }
+    }
+    
+    if (isRightSwipe) {
+      // Swipe right = previous month
+      goToPreviousMonth();
+    }
+  };
+
   // Calculate hours for last 4 months for chart
   const getLast4MonthsData = () => {
     const months = [];
@@ -261,7 +299,12 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Month Navigation */}
-      <div className="flex items-center justify-between px-6 mb-4">
+      <div 
+        className="flex items-center justify-between px-6 mb-4"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <Button
           variant="ghost"
           size="sm"
@@ -293,7 +336,12 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Month Total Hours */}
-      <div className="px-6 mb-6">
+      <div 
+        className="px-6 mb-6"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
           <div className="text-center">
             <p className="text-white/70 text-sm mb-1">Total del mes</p>
@@ -303,7 +351,12 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Table Container - Fixed height to prevent layout shift */}
-      <div className="px-4 mb-6 flex-1">
+      <div 
+        className="px-4 mb-6 flex-1"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <div className="bg-white/5 rounded-lg overflow-hidden h-full min-h-96">
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
