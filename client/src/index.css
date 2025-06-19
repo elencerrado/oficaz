@@ -44,6 +44,34 @@
   .bg-employee-gradient {
     background: radial-gradient(ellipse at center, #323A46 0%, #232B36 100%);
   }
+
+  /* iOS Safe Area Support */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Improved scroll behavior for mobile */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Prevent scroll interference */
+  .table-scroll {
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Page-level scroll */
+  .page-scroll {
+    touch-action: pan-y;
+    overscroll-behavior: auto;
+  }
 }
 
 :root {

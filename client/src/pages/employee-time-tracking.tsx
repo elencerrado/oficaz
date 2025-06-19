@@ -170,7 +170,7 @@ export default function EmployeeTimeTracking() {
   const maxHours = Math.max(...last4MonthsData.map(m => m.hours), 1);
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col safe-area-top safe-area-bottom page-scroll">
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-8">
         <Link href={`/${companyAlias}/dashboard`}>
@@ -206,7 +206,12 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* 4-Month Hours Chart */}
-      <div className="px-6 mb-8">
+      <div 
+        className="px-6 mb-8"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
           <div className="flex items-center mb-6">
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
@@ -288,12 +293,7 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Table Container - Fixed height to prevent layout shift */}
-      <div 
-        className="px-4 mb-6 flex-1"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
+      <div className="px-4 mb-6 flex-1">
         <div className="bg-white/5 rounded-lg overflow-hidden h-full min-h-96">
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
@@ -304,7 +304,7 @@ export default function EmployeeTimeTracking() {
           </div>
 
           {/* Table Body */}
-          <div className="h-full overflow-y-auto scrollbar-thin" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '300px' }}>
+          <div className="h-full overflow-y-auto scrollbar-thin table-scroll" style={{ maxHeight: 'calc(100vh - 500px)', minHeight: '300px' }}>
             {monthSessions.length > 0 ? (
               (() => {
                 const sortedSessions = monthSessions
