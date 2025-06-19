@@ -12,11 +12,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  // Configuración: más espacio para que el círculo gire libremente
+  // Configuración: diseño más compacto y "gordito" como la imagen de referencia
   const config = {
-    sm: { outerSize: 32, borderWidth: 4, innerSize: 4, gap: 6 },
-    md: { outerSize: 40, borderWidth: 5, innerSize: 5, gap: 7.5 }, 
-    lg: { outerSize: 56, borderWidth: 7, innerSize: 7, gap: 10.5 }
+    sm: { outerSize: 24, borderWidth: 6, innerSize: 6, gap: 3 },
+    md: { outerSize: 32, borderWidth: 8, innerSize: 8, gap: 4 }, 
+    lg: { outerSize: 48, borderWidth: 12, innerSize: 12, gap: 6 }
   };
 
   const currentConfig = config[size];
