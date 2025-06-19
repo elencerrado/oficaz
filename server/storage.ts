@@ -126,7 +126,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.companyEmail, email));
     return user;
   }
 

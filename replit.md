@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Restructuración completa de la base de datos de usuarios con campos expandidos
+  - Nueva estructura de usuarios con campos categorizados (identificación, laborales, dirección, vacaciones, emergencia)
+  - Separación de email personal y empresarial con permisos diferenciados
+  - Sistema de permisos por roles: admin puede crear manager/empleado, manager puede crear empleados
+  - Campos de contacto de emergencia y dirección postal para empleados
+  - Sistema de vacaciones con días totales asignados y días utilizados
+  - Tracking de quién creó cada usuario y fechas de incorporación
+  - Metadatos completos con created_at y updated_at
 - June 19, 2025. Implementación completa del sistema de diseño moderno y logo oficial
   - Logo oficial de Oficaz integrado en todas las páginas (login, registro, sidebar)
   - Sistema de diseño moderno implementado con color primario #007AFF exacto

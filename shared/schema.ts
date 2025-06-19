@@ -33,18 +33,37 @@ export const companyConfigs = pgTable("company_configs", {
 
 // Users table
 export const users = pgTable("users", {
+  // Identificación y acceso
   id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  fullName: text("full_name").notNull(),
-  dni: text("dni").notNull().unique(), // DNI is required and unique
-  phoneNumber: text("phone_number"),
-  role: text("role").notNull().default("employee"), // admin, manager, employee
   companyId: integer("company_id").references(() => companies.id).notNull(),
-  startDate: timestamp("start_date").defaultNow().notNull(),
-  vacationDaysBalance: decimal("vacation_days_balance", { precision: 4, scale: 1 }).notNull().default("0.0"),
-  isActive: boolean("is_active").notNull().default(true),
+  fullName: text("full_name").notNull(), // Lo escribe admin/manager
+  dni: text("dni").notNull().unique(), // Lo escribe admin/manager
+  role: text("role").notNull().default("employee"), // admin, manager, employee - Lo da admin/manager
+  personalEmail: text("personal_email"), // Lo escribe el empleado
+  companyEmail: text("company_email").notNull().unique(), // Lo introduce admin/manager
+  personalPhone: text("personal_phone"), // Lo escribe el empleado
+  companyPhone: text("company_phone"), // Lo introduce admin/manager
+  password: text("password").notNull(), // Encriptada
+  
+  // Datos laborales
+  startDate: timestamp("start_date").notNull(), // Lo introduce admin/manager
+  isActive: boolean("is_active").notNull().default(true), // Lo introduce admin/manager
+  createdBy: integer("created_by").references(() => users.id), // Automático (admin o manager)
+  
+  // Dirección
+  postalAddress: text("postal_address"), // Lo escribe el empleado
+  
+  // Vacaciones
+  totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Lo puede modificar admin/manager
+  usedVacationDays: decimal("used_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Auto
+  
+  // Contacto de emergencia
+  emergencyContactName: text("emergency_contact_name"), // Lo escribe el empleado
+  emergencyContactPhone: text("emergency_contact_phone"), // Lo escribe el empleado
+  
+  // Metadatos
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Work sessions table
@@ -108,6 +127,8 @@ export const insertCompanyConfigSchema = createInsertSchema(companyConfigs).omit
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+  usedVacationDays: true, // Auto-calculated
 });
 
 export const insertWorkSessionSchema = createInsertSchema(workSessions).omit({

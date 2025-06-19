@@ -53,19 +53,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create admin user
       const user = await storage.createUser({
-        email: data.companyEmail,
+        companyEmail: data.companyEmail,
         password: hashedPassword,
         fullName: data.adminFullName,
-        dni: data.adminDni || 'TEMP-DNI',
+        dni: data.adminDni || 'TEMP-' + Date.now(),
         role: 'admin',
         companyId: company.id,
-        phoneNumber: data.adminPhoneNumber,
+        companyPhone: data.adminPhoneNumber,
+        startDate: new Date(),
         isActive: true,
+        totalVacationDays: '30.0', // Default vacation days for admin
       });
 
       const token = generateToken({
         id: user.id,
-        username: user.email, // Use email for token compatibility
+        username: user.companyEmail, // Use company email for token compatibility
         role: user.role,
         companyId: user.companyId,
       });
@@ -96,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetCompanyId = company.id;
       }
       
-      // Try to find user by email first, then by DNI
+      // Try to find user by company email first, then by DNI
       let user = await storage.getUserByEmail(data.dniOrEmail);
       
       // If company-specific login, verify user belongs to that company
