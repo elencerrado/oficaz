@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useRoute } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginData } from '@shared/schema';
@@ -9,10 +9,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Eye, EyeOff } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
+  const [companyInfo, setCompanyInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Extract company alias from URL
+  const [match, params] = useRoute("/:companyAlias/login");
+  const companyAlias = params?.companyAlias;
 
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -24,10 +31,30 @@ export default function Login() {
 
   const { login } = useAuth();
 
+  useEffect(() => {
+    if (companyAlias) {
+      // Fetch company information by alias
+      const fetchCompanyInfo = async () => {
+        try {
+          const company = await apiRequest('GET', `/api/company/${companyAlias}`);
+          setCompanyInfo(company);
+        } catch (error) {
+          console.error('Company not found:', error);
+          setLocation('/register');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCompanyInfo();
+    } else {
+      setLoading(false);
+    }
+  }, [companyAlias, setLocation]);
+
   const onSubmit = async (data: LoginData) => {
     try {
-      await login(data.emailOrUsername, data.password);
-      setLocation('/dashboard');
+      await login(data.emailOrUsername, data.password, companyAlias);
+      setLocation(`/${companyAlias}/dashboard`);
     } catch (error) {
       console.error('Login failed:', error);
     }

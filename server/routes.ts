@@ -88,18 +88,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const data = loginSchema.parse(req.body);
+      const { companyAlias } = req.body;
+      
+      let targetCompanyId = null;
+      
+      // If companyAlias is provided, get the company and restrict login to that company
+      if (companyAlias) {
+        const company = await storage.getCompanyByAlias?.(companyAlias);
+        if (!company) {
+          return res.status(404).json({ message: 'Empresa no encontrada' });
+        }
+        targetCompanyId = company.id;
+      }
       
       // Try to find user by email first, then by username
       let user = await storage.getUserByEmail(data.emailOrUsername);
+      
+      // If company-specific login, verify user belongs to that company
+      if (user && targetCompanyId && user.companyId !== targetCompanyId) {
+        user = null; // User exists but not in the specified company
+      }
+      
       if (!user) {
         // If multiple users have the same username (from different companies), 
         // we need to get all users with that username and validate password for each
         const users = await storage.getUsersByUsername(data.emailOrUsername);
-        if (users.length === 1) {
-          user = users[0];
-        } else if (users.length > 1) {
+        const filteredUsers = targetCompanyId 
+          ? users.filter(u => u.companyId === targetCompanyId)
+          : users;
+          
+        if (filteredUsers.length === 1) {
+          user = filteredUsers[0];
+        } else if (filteredUsers.length > 1) {
           // Try to authenticate with each user until we find the correct one
-          for (const candidateUser of users) {
+          for (const candidateUser of filteredUsers) {
             const validPassword = await bcrypt.compare(data.password, candidateUser.password);
             if (validPassword && candidateUser.isActive) {
               user = candidateUser;
@@ -148,6 +170,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Get company by alias route
+  app.get('/api/company/:alias', async (req, res) => {
+    try {
+      const { alias } = req.params;
+      const company = await storage.getCompanyByAlias?.(alias);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
+      res.json({ ...company });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

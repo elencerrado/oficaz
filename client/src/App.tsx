@@ -77,21 +77,29 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
-      {/* Public routes */}
-      <Route path="/login">
-        <PublicRoute>
-          <Login />
-        </PublicRoute>
-      </Route>
-      
+      {/* Global routes */}
       <Route path="/register">
         <PublicRoute>
           <Register />
         </PublicRoute>
       </Route>
 
-      {/* Protected routes */}
-      <Route path="/dashboard">
+      {/* Company-specific routes */}
+      <Route path="/:companyAlias/login">
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      </Route>
+      
+      {/* Legacy login route - redirect to registration */}
+      <Route path="/login">
+        <PublicRoute>
+          <Register />
+        </PublicRoute>
+      </Route>
+
+      {/* Company-specific protected routes */}
+      <Route path="/:companyAlias/dashboard">
         <ProtectedRoute>
           <AppLayout>
             <Dashboard />
@@ -99,7 +107,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/time-tracking">
+      <Route path="/:companyAlias/time-tracking">
         <ProtectedRoute>
           <AppLayout>
             <TimeTracking />
@@ -107,7 +115,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/vacation-requests">
+      <Route path="/:companyAlias/vacation-requests">
         <ProtectedRoute>
           <AppLayout>
             <VacationRequests />
@@ -115,7 +123,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/documents">
+      <Route path="/:companyAlias/documents">
         <ProtectedRoute>
           <AppLayout>
             <Documents />
@@ -123,7 +131,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/messages">
+      <Route path="/:companyAlias/messages">
         <ProtectedRoute>
           <AppLayout>
             <Messages />
@@ -131,7 +139,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/employees">
+      <Route path="/:companyAlias/employees">
         <ProtectedRoute>
           <AppLayout>
             <Employees />
@@ -139,10 +147,19 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/settings">
+      <Route path="/:companyAlias/settings">
         <ProtectedRoute>
           <AppLayout>
             <Settings />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      {/* Legacy routes - redirect to company-specific routes */}
+      <Route path="/dashboard">
+        <ProtectedRoute>
+          <AppLayout>
+            <Dashboard />
           </AppLayout>
         </ProtectedRoute>
       </Route>
