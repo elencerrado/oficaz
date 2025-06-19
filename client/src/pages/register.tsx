@@ -37,17 +37,23 @@ export default function Register() {
   });
 
   const onSubmit = async (data: RegisterData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Form errors:', form.formState.errors);
+    
     try {
+      console.log('Attempting to register user...');
       await registerUser(data);
+      console.log('Registration successful');
       setLocation('/dashboard');
       toast({
         title: 'Account Created!',
         description: 'Welcome to Oficaz! Your account has been successfully created.',
       });
     } catch (error: any) {
+      console.error('Registration error:', error);
       toast({
         title: 'Registration Failed',
-        description: error.message,
+        description: error.message || 'An error occurred during registration',
         variant: 'destructive',
       });
     }

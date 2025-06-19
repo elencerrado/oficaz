@@ -114,7 +114,9 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const registerSchema = insertUserSchema.extend({
+export const registerSchema = insertUserSchema.omit({
+  companyId: true,
+}).extend({
   confirmPassword: z.string(),
   companyName: z.string().min(1, "Company name is required"),
 }).refine((data) => data.password === data.confirmPassword, {
