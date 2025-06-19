@@ -63,6 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(),
         isActive: true,
         totalVacationDays: "30.0", // Default vacation days for admin
+        createdBy: null, // First admin user has no creator
       });
 
       const token = generateToken({
@@ -247,6 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: 'admin',
         startDate,
         totalVacationDays: "30.0",
+        createdBy: null,
       });
 
       // Generate token for immediate login
@@ -593,6 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: new Date(),
         isActive: true,
         totalVacationDays: "22.0",
+        createdBy: (req as AuthRequest).user!.id,
       });
 
       res.status(201).json({ ...user, password: undefined });

@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Sistema completamente funcional con perfil de usuario en header y gestión de empleados
+  - Perfil de usuario movido del sidebar al header con dropdown funcional
+  - Página de empleados completamente actualizada con nueva estructura de base de datos
+  - Correcciones completas en backend para manejo de campos requeridos
+  - Base de datos pulida con todas las relaciones y restricciones funcionando correctamente
+  - Sistema de creación de empleados funcionando sin errores
+  - Eliminación completa de referencias a "usuario/username" del sistema
 - June 19, 2025. Restructuración completa de la base de datos de usuarios con campos expandidos
   - Nueva estructura de usuarios con campos categorizados (identificación, laborales, dirección, vacaciones, emergencia)
   - Separación de email personal y empresarial con permisos diferenciados
