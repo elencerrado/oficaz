@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Implementación completa del sistema de diseño moderno y logo oficial
+  - Logo oficial de Oficaz integrado en todas las páginas (login, registro, sidebar)
+  - Sistema de diseño moderno implementado con color primario #007AFF exacto
+  - Fondos con degradado radial (#323A46 centro, #232B36 exterior) en páginas de autenticación
+  - Bordes redondeados consistentes (15px para contenedores grandes, proporcionales para pequeños)
+  - Sombras sutiles añadidas para profundidad visual moderna
+  - Enrutamiento dinámico por empresa completamente funcional (/test/dashboard, etc.)
+  - Soporte completo para DNI y NIE en autenticación con placeholders actualizados
 - June 19, 2025. Complete elimination of username system - migrated to DNI/email authentication
   - Removed username field entirely from database schema and application logic
   - Authentication now exclusively uses DNI or email as login credentials

@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { Building, LayoutDashboard, Clock, Calendar, FileText, Mail, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clock, Calendar, FileText, Mail, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -55,9 +56,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Company header */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
-              <Building className="text-white text-lg" />
-            </div>
+            <img 
+              src={oficazLogo} 
+              alt="Oficaz" 
+              className="h-8 w-auto"
+            />
             <div>
               <h2 className="text-xl font-semibold text-gray-900">
                 {company?.name || 'Oficaz'}

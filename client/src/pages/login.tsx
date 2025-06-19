@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -72,8 +73,11 @@ export default function Login() {
       <Card className="w-full max-w-md shadow-2xl rounded-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
-            <Building className="h-8 w-8 text-oficaz-primary mr-2" />
-            <span className="text-2xl font-bold text-oficaz-primary">Oficaz</span>
+            <img 
+              src={oficazLogo} 
+              alt="Oficaz" 
+              className="h-12 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
           <CardDescription>

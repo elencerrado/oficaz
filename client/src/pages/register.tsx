@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Building, User, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
@@ -76,8 +77,11 @@ export default function Register() {
       <Card className="w-full max-w-2xl shadow-2xl rounded-2xl">
         <CardHeader className="space-y-1 text-center">
           <div className="flex items-center justify-center mb-4">
-            <Building className="h-8 w-8 text-oficaz-primary mr-2" />
-            <span className="text-2xl font-bold text-oficaz-primary">Oficaz</span>
+            <img 
+              src={oficazLogo} 
+              alt="Oficaz" 
+              className="h-12 w-auto"
+            />
           </div>
           <CardTitle className="text-2xl">Registrar nueva empresa</CardTitle>
           <CardDescription>
