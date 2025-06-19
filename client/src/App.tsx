@@ -75,7 +75,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   
   return (
     <Switch>
@@ -180,7 +180,7 @@ function Router() {
 
       {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        {user ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
+        {user ? <Redirect to={`/${company?.companyAlias || 'test'}/dashboard`} /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}

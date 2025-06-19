@@ -19,16 +19,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
+  const companyAlias = company?.companyAlias || 'test';
+  
   const navigation = [
-    { name: 'Panel Principal', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Control de Tiempo', href: '/time-tracking', icon: Clock },
-    { name: 'Solicitudes de Vacaciones', href: '/vacation-requests', icon: Calendar },
-    { name: 'Documentos', href: '/documents', icon: FileText },
-    { name: 'Mensajes', href: '/messages', icon: Mail, badge: unreadCount },
+    { name: 'Panel Principal', href: `/${companyAlias}/dashboard`, icon: LayoutDashboard },
+    { name: 'Control de Tiempo', href: `/${companyAlias}/time-tracking`, icon: Clock },
+    { name: 'Solicitudes de Vacaciones', href: `/${companyAlias}/vacation-requests`, icon: Calendar },
+    { name: 'Documentos', href: `/${companyAlias}/documents`, icon: FileText },
+    { name: 'Mensajes', href: `/${companyAlias}/messages`, icon: Mail, badge: unreadCount },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
-      { name: 'Empleados', href: '/employees', icon: Users }
+      { name: 'Empleados', href: `/${companyAlias}/employees`, icon: Users }
     ] : []),
-    { name: 'Configuración', href: '/settings', icon: Settings },
+    { name: 'Configuración', href: `/${companyAlias}/settings`, icon: Settings },
   ];
 
   const handleLinkClick = () => {

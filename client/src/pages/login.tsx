@@ -53,8 +53,10 @@ export default function Login() {
 
   const onSubmit = async (data: LoginData) => {
     try {
-      await login(data.dniOrEmail, data.password, companyAlias);
-      setLocation(`/${companyAlias}/dashboard`);
+      const response = await login(data.dniOrEmail, data.password, companyAlias);
+      // Use the company alias from the response, or fallback to the current URL alias
+      const redirectAlias = (response as any)?.company?.companyAlias || companyAlias || 'test';
+      setLocation(`/${redirectAlias}/dashboard`);
     } catch (error) {
       console.error('Login failed:', error);
     }

@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCompany(data.company);
     setToken(data.token);
     setAuthData(data);
+    
+    return data;
   };
 
   const register = async (formData: any) => {
