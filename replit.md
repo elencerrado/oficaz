@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Navegación táctil completa en página de fichajes de empleados
+  - Gestos de deslizamiento implementados para navegación intuitiva en móvil
+  - Deslizar izquierda/derecha para navegar entre meses manteniendo flechas
+  - Gráfica de barras de últimos 4 meses con datos ficticios realistas
+  - Navegación limitada al mes actual, flecha de avance se oculta automáticamente
+  - Formato de fechas compacto sin saltos de línea en tabla
+  - Solución completa de problemas de scroll en móvil con altura mínima fija
 - June 19, 2025. Vista simplificada de empleado implementada siguiendo diseño de referencia móvil-first
   - Fondo con gradiente radial idéntico al login (#323A46 centro, #232B36 exterior)
   - Diseño estilo iPhone: íconos cuadrados con texto debajo, grid 3x3 con espaciado amplio

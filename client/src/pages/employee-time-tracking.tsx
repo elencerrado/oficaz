@@ -178,6 +178,7 @@ export default function EmployeeTimeTracking() {
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
+    // Only update touchEnd, don't trigger any navigation during move
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
@@ -188,6 +189,7 @@ export default function EmployeeTimeTracking() {
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
 
+    // Only execute navigation at the end of the gesture
     if (isLeftSwipe) {
       // Swipe left = next month (if allowed)
       const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
@@ -195,12 +197,14 @@ export default function EmployeeTimeTracking() {
       if (nextMonth <= currentMonth) {
         setCurrentDate(nextMonth);
       }
-    }
-    
-    if (isRightSwipe) {
+    } else if (isRightSwipe) {
       // Swipe right = previous month
       goToPreviousMonth();
     }
+    
+    // Reset touch states
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   // Calculate hours for last 4 months for chart
