@@ -171,8 +171,8 @@ export default function EmployeeTimeTracking() {
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 pb-8">
+      {/* Header - Fixed height */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/dashboard`}>
           <Button
             variant="ghost"
@@ -200,8 +200,8 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Modern Title */}
-      <div className="text-center mb-8">
+      {/* Modern Title - Fixed height */}
+      <div className="text-center mb-8 h-12 flex items-center justify-center">
         <h1 className="text-2xl font-light text-white/90 tracking-wide">Fichajes</h1>
       </div>
 
@@ -240,9 +240,9 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Month Navigation */}
+      {/* Month Navigation - Fixed height */}
       <div 
-        className="flex items-center justify-between px-6 mb-4"
+        className="flex items-center justify-between px-6 mb-4 h-16"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -273,18 +273,18 @@ export default function EmployeeTimeTracking() {
             <ChevronRight className="h-6 w-6" />
           </Button>
         ) : (
-          <div className="w-10 h-10" /> // Spacer to maintain layout
+          <div className="w-10 h-10 p-2" /> // Spacer to maintain exact layout
         )}
       </div>
 
-      {/* Month Total Hours */}
+      {/* Month Total Hours - Fixed height */}
       <div 
-        className="px-6 mb-6"
+        className="px-6 mb-6 h-20"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 h-full flex items-center justify-center">
           <div className="text-center">
             <p className="text-white/70 text-sm mb-1">Total del mes</p>
             <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
