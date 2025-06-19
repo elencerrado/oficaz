@@ -72,35 +72,47 @@ export default function Settings() {
 
       {/* User Profile */}
       <div className="px-6 flex-1">
-        {/* Avatar and Basic Info */}
-        <div className="flex items-start mb-6">
-          <div className="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mr-4 flex-shrink-0">
-            <span className="text-white text-2xl font-bold">
-              {getInitials(user?.fullName || 'Juan Ramírez Lopez')}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start mb-1">
-              <h1 className="text-2xl font-bold text-white leading-tight">
+        {/* Modern Profile Card */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 mb-6 border border-white/10">
+          {/* Avatar and Name Row */}
+          <div className="flex items-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+              <span className="text-white text-xl font-bold">
+                {getInitials(user?.fullName || 'Juan Ramírez Lopez')}
+              </span>
+            </div>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-white mb-1 leading-tight">
                 {user?.fullName || 'Juan Ramírez Lopez'}
               </h1>
-            </div>
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-blue-300 text-base">{user?.position || 'Administrativo'}</p>
-              <p className="text-white/80 text-sm">DNI {user?.dni || '00000000A'}</p>
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-blue-400 text-sm">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
-              <p className="text-white/80 text-sm">{user?.companyPhone || '+34 666 11 11 11'}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-blue-300 text-sm font-medium">{user?.position || 'Administrativo'}</span>
+                <span className="text-white/70 text-xs bg-white/10 px-2 py-1 rounded-lg">
+                  DNI {user?.dni || '00000000A'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Company Info */}
-        <div className="text-center mb-6">
-          <p className="text-white/80 text-sm">
-            Fecha de alta en la empresa el {formatDate(user?.startDate?.toString() || '')}
-          </p>
+          {/* Contact Info Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-white/5 rounded-xl p-3">
+              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Correo Corporativo</p>
+              <p className="text-white text-sm font-medium">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+            </div>
+            <div className="bg-white/5 rounded-xl p-3">
+              <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Teléfono Corporativo</p>
+              <p className="text-white text-sm font-medium">{user?.companyPhone || '+34 666 11 11 11'}</p>
+            </div>
+          </div>
+
+          {/* Hire Date */}
+          <div className="text-center py-3 bg-white/5 rounded-xl">
+            <p className="text-white/60 text-xs uppercase tracking-wide mb-1">Fecha de Alta</p>
+            <p className="text-white text-sm font-medium">
+              {formatDate(user?.startDate?.toString() || '')}
+            </p>
+          </div>
         </div>
 
         {/* Editable Fields */}
