@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 19, 2025. Sistema de carga personalizado con spinner armónico de Oficaz implementado
+  - Spinner rediseñado con círculo contorno y círculo relleno giratorio interno
+  - Proporciones armónicas: grosor del contorno igual al diámetro del círculo interno
+  - Colores adaptativos: blanco en fondo oscuro, oscuro en fondo claro
+  - Integrado en todas las páginas y transiciones del sistema
+  - Mensajes específicos por ruta durante las cargas
+  - Eliminado área blanca en iPhone con fondo sólido y safe areas
 - June 19, 2025. Navegación táctil completa en página de fichajes de empleados
   - Gestos de deslizamiento implementados para navegación intuitiva en móvil
   - Deslizar izquierda/derecha para navegar entre meses manteniendo flechas

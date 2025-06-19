@@ -12,11 +12,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  // Configuración: grosor del contorno = diámetro del círculo interno
+  // Configuración: más espacio para que el círculo gire libremente
   const config = {
-    sm: { outerSize: 24, borderWidth: 6, innerSize: 6, gap: 3 },
-    md: { outerSize: 32, borderWidth: 8, innerSize: 8, gap: 4 }, 
-    lg: { outerSize: 48, borderWidth: 12, innerSize: 12, gap: 6 }
+    sm: { outerSize: 32, borderWidth: 4, innerSize: 4, gap: 6 },
+    md: { outerSize: 40, borderWidth: 5, innerSize: 5, gap: 7.5 }, 
+    lg: { outerSize: 56, borderWidth: 7, innerSize: 7, gap: 10.5 }
   };
 
   const currentConfig = config[size];
@@ -26,22 +26,22 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       width: `${currentConfig.outerSize}px`, 
       height: `${currentConfig.outerSize}px` 
     }}>
-      {/* Círculo contorno fijo */}
+      {/* Círculo contorno fijo - blanco en fondo oscuro, oscuro en fondo claro */}
       <div 
-        className="absolute inset-0 rounded-full border-current"
+        className="absolute inset-0 rounded-full border-white dark:border-gray-800"
         style={{ borderWidth: `${currentConfig.borderWidth}px` }}
       ></div>
       
-      {/* Círculo relleno giratorio interno */}
+      {/* Círculo relleno giratorio interno - gira en órbita completa */}
       <div className="absolute inset-0 animate-spin">
         <div 
-          className="absolute bg-current rounded-full"
+          className="absolute bg-white dark:bg-gray-800 rounded-full"
           style={{
             width: `${currentConfig.innerSize}px`,
             height: `${currentConfig.innerSize}px`,
-            top: `${currentConfig.borderWidth + currentConfig.gap}px`,
+            top: `${currentConfig.borderWidth}px`,
             left: '50%',
-            transform: 'translateX(-50%)'
+            transform: `translateX(-50%) translateY(${currentConfig.gap}px)`
           }}
         ></div>
       </div>
