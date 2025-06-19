@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -22,6 +22,7 @@ export default function VacationRequests() {
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [reason, setReason] = useState('');
+  const [calendarDate, setCalendarDate] = useState(new Date());
   const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -176,11 +177,20 @@ export default function VacationRequests() {
   const isDateStart = (date: Date) => selectedStartDate && isSameDay(date, selectedStartDate);
   const isDateEnd = (date: Date) => selectedEndDate && isSameDay(date, selectedEndDate);
 
-  // Generate calendar days for current month
+  // Calendar navigation
+  const goToPreviousMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1));
+  };
+
+  // Generate calendar days for selected month
   const generateCalendarDays = () => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    const currentMonth = calendarDate.getMonth();
+    const currentYear = calendarDate.getFullYear();
     
     // Get first day of month and its day of week (0 = Sunday, 1 = Monday, etc.)
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -199,8 +209,8 @@ export default function VacationRequests() {
     // Add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
-      // Only show dates from today onwards
-      if (date >= startOfDay(today)) {
+      // Only show dates from today onwards if it's the current month or future months
+      if (date >= startOfDay(today) || calendarDate > today) {
         days.push(date);
       } else {
         days.push(null);
@@ -308,8 +318,8 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-gray-900 border border-gray-700 text-white rounded-2xl">
-            <DialogHeader className="pb-4">
+          <DialogContent className="max-w-md mx-auto bg-gray-900 border border-gray-700 text-white rounded-2xl mt-8">
+            <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-white">
                 Solicitar Vacaciones
               </DialogTitle>
@@ -321,8 +331,28 @@ export default function VacationRequests() {
             <div className="space-y-6">
               {/* Calendar */}
               <div className="bg-gray-800 rounded-xl p-4">
-                <div className="text-sm font-medium text-gray-300 mb-3 text-center">
-                  {format(new Date(), 'MMMM yyyy', { locale: es })}
+                <div className="flex items-center justify-between mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToPreviousMonth}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="text-sm font-medium text-gray-300 capitalize">
+                    {format(calendarDate, 'MMMM yyyy', { locale: es })}
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={goToNextMonth}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
                 
                 {/* Days of week header */}
@@ -410,7 +440,7 @@ export default function VacationRequests() {
                 <Button
                   onClick={() => setIsModalOpen(false)}
                   variant="outline"
-                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500"
+                  className="flex-1 border-red-600 text-red-300 hover:bg-red-900/20 hover:border-red-500"
                 >
                   Cancelar
                 </Button>
