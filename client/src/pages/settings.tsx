@@ -1,400 +1,242 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Settings as SettingsIcon, 
-  User, 
-  Building, 
-  Clock, 
-  Shield,
-  Save,
-  Upload
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft } from 'lucide-react';
+import { useLocation, Link } from 'wouter';
 
 export default function Settings() {
-  const { user, company, logout } = useAuth();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  // User settings state
-  const [userSettings, setUserSettings] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+  const { user, company } = useAuth();
+  const [location] = useLocation();
+  const companyAlias = location.split('/')[1] || 'test';
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    personalPhone: user?.personalPhone || '+34 666 11 11 11',
+    personalEmail: user?.personalEmail || 'juanramirez@gmail.com',
+    postalAddress: user?.postalAddress || 'Avenida Andalucía 1 1º Izquierda\n00000 Sevilla',
+    emergencyContactName: user?.emergencyContactName || 'María García García',
+    emergencyContactPhone: user?.emergencyContactPhone || '+34 666 66 66 66'
   });
 
-  // Company settings state (admin only)
-  const [companySettings, setCompanySettings] = useState({
-    name: company?.name || '',
-    workingHoursStart: company?.workingHoursStart || '09:00',
-    workingHoursEnd: company?.workingHoursEnd || '17:00',
-  });
-
-  const handleUserSettingsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Simulate API call - in real implementation, this would update user profile
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been updated successfully.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update your profile. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleInputChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (userSettings.newPassword !== userSettings.confirmPassword) {
-      toast({
-        title: 'Password Mismatch',
-        description: 'New password and confirmation do not match.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (userSettings.newPassword.length < 6) {
-      toast({
-        title: 'Password Too Short',
-        description: 'Password must be at least 6 characters long.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Simulate API call - in real implementation, this would update password
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: 'Password Updated',
-        description: 'Your password has been updated successfully.',
-      });
-
-      setUserSettings(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      }));
-    } catch (error) {
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update your password. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const handleCompanySettingsSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Simulate API call - in real implementation, this would update company settings
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: 'Company Settings Updated',
-        description: 'Company settings have been updated successfully.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update company settings. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '01/01/2024';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
+
+  // Split address into lines
+  const addressLines = formData.postalAddress.split('\n');
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-        <p className="text-gray-500 mt-1">
-          Manage your account and company preferences.
-        </p>
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 pb-4">
+        <Link href={`/${companyAlias}/dashboard`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105 flex items-center"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
+        
+        <div className="flex flex-col items-center">
+          {company?.logoUrl ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="text-blue-400 text-lg font-bold">
+              Oficaz
+            </div>
+          )}
+        </div>
+        
+        <div className="w-16"></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Summary */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <User className="mr-2" size={20} />
-                Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <Avatar className="w-20 h-20 mx-auto mb-4">
-                  <AvatarFallback className="bg-oficaz-primary text-white text-2xl">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="font-semibold text-gray-900">
-                  {user?.firstName} {user?.lastName}
-                </h3>
-                <p className="text-sm text-gray-500">{user?.email}</p>
-                <Badge className="mt-2 capitalize">
-                  {user?.role}
-                </Badge>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Company</span>
-                  <span className="font-medium">{company?.name}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Vacation Days</span>
-                  <span className="font-medium">
-                    {(user?.vacationDaysTotal || 0) - (user?.vacationDaysUsed || 0)}/{user?.vacationDaysTotal} left
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Member Since</span>
-                  <span className="font-medium">
-                    {user?.createdAt && new Date(user.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* User Profile */}
+      <div className="px-6 flex-1">
+        {/* Avatar and Basic Info */}
+        <div className="flex items-start mb-6">
+          <div className="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mr-4 flex-shrink-0">
+            <span className="text-white text-2xl font-bold">
+              {getInitials(user?.fullName || 'Juan Ramírez Lopez')}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold text-white mb-1 leading-tight">
+              {user?.fullName || 'Juan Ramírez Lopez'}
+            </h1>
+            <p className="text-blue-300 text-base mb-1">Administrativo</p>
+            <p className="text-white/80 text-sm">DNI {user?.dni || '00000000A'}</p>
+            <p className="text-blue-400 text-sm">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+          </div>
         </div>
 
-        {/* Settings Forms */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* User Profile Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUserSettingsSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      value={userSettings.firstName}
-                      onChange={(e) => setUserSettings(prev => ({ ...prev, firstName: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      value={userSettings.lastName}
-                      onChange={(e) => setUserSettings(prev => ({ ...prev, lastName: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={userSettings.email}
-                    onChange={(e) => setUserSettings(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="bg-oficaz-primary hover:bg-blue-700"
-                >
-                  <Save className="mr-2" size={16} />
-                  {isLoading ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        {/* Company Info */}
+        <div className="text-center mb-6">
+          <p className="text-white/80 text-sm">
+            Fecha de alta en la empresa el {formatDate(user?.startDate?.toString() || '')}
+          </p>
+        </div>
 
-          {/* Password Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input
-                    id="currentPassword"
-                    type="password"
-                    value={userSettings.currentPassword}
-                    onChange={(e) => setUserSettings(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={userSettings.newPassword}
-                    onChange={(e) => setUserSettings(prev => ({ ...prev, newPassword: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={userSettings.confirmPassword}
-                    onChange={(e) => setUserSettings(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="bg-oficaz-primary hover:bg-blue-700"
-                >
-                  <Shield className="mr-2" size={16} />
-                  {isLoading ? 'Updating...' : 'Update Password'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Company Settings (Admin only) */}
-          {user?.role === 'admin' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Building className="mr-2" size={20} />
-                  Company Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCompanySettingsSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      value={companySettings.name}
-                      onChange={(e) => setCompanySettings(prev => ({ ...prev, name: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="workingHoursStart">Work Start Time</Label>
-                      <Input
-                        id="workingHoursStart"
-                        type="time"
-                        value={companySettings.workingHoursStart}
-                        onChange={(e) => setCompanySettings(prev => ({ ...prev, workingHoursStart: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="workingHoursEnd">Work End Time</Label>
-                      <Input
-                        id="workingHoursEnd"
-                        type="time"
-                        value={companySettings.workingHoursEnd}
-                        onChange={(e) => setCompanySettings(prev => ({ ...prev, workingHoursEnd: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="companyLogo">Company Logo</Label>
-                    <div className="mt-2 flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-oficaz-primary rounded-lg flex items-center justify-center">
-                        <Building className="text-white" size={24} />
-                      </div>
-                      <Button type="button" variant="outline">
-                        <Upload className="mr-2" size={16} />
-                        Upload Logo
-                      </Button>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Recommended: Square image, at least 200x200px
-                    </p>
-                  </div>
-                  
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="bg-oficaz-primary hover:bg-blue-700"
-                  >
-                    <Save className="mr-2" size={16} />
-                    {isLoading ? 'Saving...' : 'Save Company Settings'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Danger Zone */}
-          <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="text-red-600">Danger Zone</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Sign Out</h4>
-                  <p className="text-sm text-gray-500 mb-3">
-                    Sign out of your account on this device.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={logout}
-                    className="border-red-300 text-red-600 hover:bg-red-50"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
+        {/* Editable Fields */}
+        <div className="space-y-4">
+          {/* Personal Phone */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Teléfono personal
+            </label>
+            {isEditing ? (
+              <Input
+                value={formData.personalPhone}
+                onChange={(e) => handleInputChange('personalPhone', e.target.value)}
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-12"
+                placeholder="+34 666 11 11 11"
+              />
+            ) : (
+              <div className="bg-white/20 rounded-xl px-4 py-3 text-white h-12 flex items-center">
+                {formData.personalPhone}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+
+          {/* Personal Email */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Correo electrónico personal
+            </label>
+            {isEditing ? (
+              <Input
+                value={formData.personalEmail}
+                onChange={(e) => handleInputChange('personalEmail', e.target.value)}
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-12"
+                placeholder="juanramirez@gmail.com"
+              />
+            ) : (
+              <div className="bg-white/20 rounded-xl px-4 py-3 text-white h-12 flex items-center">
+                {formData.personalEmail}
+              </div>
+            )}
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Dirección postal
+            </label>
+            {isEditing ? (
+              <>
+                <Input
+                  value={addressLines[0] || ''}
+                  onChange={(e) => {
+                    const newLines = [...addressLines];
+                    newLines[0] = e.target.value;
+                    handleInputChange('postalAddress', newLines.join('\n'));
+                  }}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl mb-2 h-12"
+                  placeholder="Avenida Andalucía 1 1º Izquierda"
+                />
+                <Input
+                  value={addressLines[1] || ''}
+                  onChange={(e) => {
+                    const newLines = [...addressLines];
+                    newLines[1] = e.target.value;
+                    handleInputChange('postalAddress', newLines.join('\n'));
+                  }}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-12"
+                  placeholder="00000 Sevilla"
+                />
+              </>
+            ) : (
+              <>
+                <div className="bg-white/20 rounded-xl px-4 py-3 text-white mb-2 h-12 flex items-center">
+                  {addressLines[0] || 'Avenida Andalucía 1 1º Izquierda'}
+                </div>
+                <div className="bg-white/20 rounded-xl px-4 py-3 text-white h-12 flex items-center">
+                  {addressLines[1] || '00000 Sevilla'}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Emergency Contact */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Contacto de emergencia
+            </label>
+            {isEditing ? (
+              <>
+                <Input
+                  value={formData.emergencyContactName}
+                  onChange={(e) => handleInputChange('emergencyContactName', e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl mb-2 h-12"
+                  placeholder="María García García"
+                />
+                <Input
+                  value={formData.emergencyContactPhone}
+                  onChange={(e) => handleInputChange('emergencyContactPhone', e.target.value)}
+                  className="bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-xl h-12"
+                  placeholder="+34 666 66 66 66"
+                />
+              </>
+            ) : (
+              <>
+                <div className="bg-white/20 rounded-xl px-4 py-3 text-white mb-2 h-12 flex items-center">
+                  {formData.emergencyContactName}
+                </div>
+                <div className="bg-white/20 rounded-xl px-4 py-3 text-white h-12 flex items-center">
+                  {formData.emergencyContactPhone}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Edit/Save Button */}
+        <div className="mt-8 mb-8">
+          {isEditing ? (
+            <div className="flex space-x-4">
+              <Button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12"
+              >
+                Guardar
+              </Button>
+              <Button
+                onClick={() => setIsEditing(false)}
+                variant="outline"
+                className="flex-1 border-white/30 text-white hover:bg-white/10 font-medium py-3 rounded-xl h-12"
+              >
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => setIsEditing(true)}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12"
+            >
+              Editar
+            </Button>
+          )}
         </div>
       </div>
     </div>
