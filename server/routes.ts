@@ -368,14 +368,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Vacation request routes
   app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      console.log('Vacation request body:', req.body);
+      console.log('User ID:', req.user!.id);
+      
       const data = insertVacationRequestSchema.parse({
         ...req.body,
         userId: req.user!.id,
+        startDate: new Date(req.body.startDate),
+        endDate: new Date(req.body.endDate),
       });
 
+      console.log('Parsed data:', data);
+      
       const request = await storage.createVacationRequest(data);
       res.status(201).json(request);
     } catch (error: any) {
+      console.error('Vacation request error:', error);
       res.status(400).json({ message: error.message });
     }
   });

@@ -439,17 +439,17 @@ export default function VacationRequests() {
               {/* Action buttons */}
               <div className="flex space-x-4 pt-2">
                 <Button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
+                >
+                  Cancelar
+                </Button>
+                <Button
                   onClick={handleSubmit}
                   disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
                   className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
                 >
                   {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
-                </Button>
-                <Button
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
-                >
-                  Cancelar
                 </Button>
               </div>
             </div>
