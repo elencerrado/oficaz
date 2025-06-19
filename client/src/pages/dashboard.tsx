@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import EmployeeDashboard from './employee-dashboard';
 import { useQuery } from '@tanstack/react-query';
 import { ClockWidget } from '@/components/time-tracking/clock-widget';
 import { VacationModal } from '@/components/vacation/vacation-modal';
-import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -19,9 +20,15 @@ import {
 import { format } from 'date-fns';
 
 export default function Dashboard() {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
   const { user } = useAuth();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Show employee dashboard for employee role
+  if (user?.role === 'employee') {
+    return <EmployeeDashboard />;
+  }
+  
+  const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],

@@ -13,12 +13,23 @@ import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
+import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
 import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
 import Employees from "@/pages/employees";
 import Settings from "@/pages/settings";
+
+function DashboardRouter() {
+  const { user } = useAuth();
+  
+  if (user?.role === 'employee') {
+    return <EmployeeDashboard />;
+  }
+  
+  return <Dashboard />;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -39,8 +50,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Employee gets simplified view without sidebar
+  if (user?.role === 'employee') {
+    return (
+      <div className="min-h-screen">
+        <main className="min-h-screen">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  // Admin/Manager gets full layout with sidebar
   return (
     <div className="min-h-screen bg-oficaz-gray-50">
       <Sidebar 
