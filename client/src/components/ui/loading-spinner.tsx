@@ -12,11 +12,11 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     lg: "w-12 h-12"
   };
 
-  // Configuración: diseño más compacto y "gordito" como la imagen de referencia
+  // Configuración: gordito pero con espacio para girar libremente
   const config = {
-    sm: { outerSize: 24, borderWidth: 6, innerSize: 6, gap: 3 },
-    md: { outerSize: 32, borderWidth: 8, innerSize: 8, gap: 4 }, 
-    lg: { outerSize: 48, borderWidth: 12, innerSize: 12, gap: 6 }
+    sm: { outerSize: 28, borderWidth: 5, innerSize: 5, gap: 4 },
+    md: { outerSize: 36, borderWidth: 6, innerSize: 6, gap: 6 }, 
+    lg: { outerSize: 52, borderWidth: 9, innerSize: 9, gap: 8 }
   };
 
   const currentConfig = config[size];
