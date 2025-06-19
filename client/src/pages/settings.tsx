@@ -63,8 +63,8 @@ export default function Settings() {
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="text-blue-400 text-lg font-bold">
-              Oficaz
+            <div className="text-white text-base font-medium text-right">
+              {company?.name || 'Mi Empresa'}
             </div>
           )}
         </div>
@@ -82,12 +82,19 @@ export default function Settings() {
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-white mb-1 leading-tight">
-              {user?.fullName || 'Juan Ramírez Lopez'}
-            </h1>
-            <p className="text-blue-300 text-base mb-1">Administrativo</p>
-            <p className="text-white/80 text-sm">DNI {user?.dni || '00000000A'}</p>
-            <p className="text-blue-400 text-sm">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+            <div className="flex justify-between items-start mb-1">
+              <h1 className="text-2xl font-bold text-white leading-tight">
+                {user?.fullName || 'Juan Ramírez Lopez'}
+              </h1>
+            </div>
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-blue-300 text-base">{user?.position || 'Administrativo'}</p>
+              <p className="text-white/80 text-sm">DNI {user?.dni || '00000000A'}</p>
+            </div>
+            <div className="flex justify-between items-center">
+              <p className="text-blue-400 text-sm">{user?.companyEmail || 'j.ramirez@oficaz.com'}</p>
+              <p className="text-white/80 text-sm">{user?.companyPhone || '+34 666 11 11 11'}</p>
+            </div>
           </div>
         </div>
 
@@ -223,8 +230,7 @@ export default function Settings() {
               </Button>
               <Button
                 onClick={() => setIsEditing(false)}
-                variant="outline"
-                className="flex-1 border-white/30 text-white hover:bg-white/10 font-medium py-3 rounded-xl h-12"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
               >
                 Cancelar
               </Button>

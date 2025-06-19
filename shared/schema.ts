@@ -46,6 +46,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(), // Encriptada
   
   // Datos laborales
+  position: text("position"), // Lo introduce admin/manager (cargo/puesto)
   startDate: timestamp("start_date").notNull(), // Lo introduce admin/manager
   isActive: boolean("is_active").notNull().default(true), // Lo introduce admin/manager
   createdBy: integer("created_by"), // Automático (admin o manager)
