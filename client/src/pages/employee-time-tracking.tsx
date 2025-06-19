@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocation, Link } from 'wouter';
 
@@ -85,13 +85,46 @@ export default function EmployeeTimeTracking() {
   };
 
   const monthName = format(currentDate, 'MMMM yyyy', { locale: es });
-
   const currentYear = new Date().getFullYear();
+
+  // Navigate to current month
+  const goToCurrentMonth = () => {
+    setCurrentDate(new Date());
+  };
+
+  // Calculate hours for last 4 months for chart
+  const getLast4MonthsData = () => {
+    const months = [];
+    for (let i = 3; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      const monthSessions = workSessions.filter(session => {
+        const sessionDate = new Date(session.clockIn);
+        return sessionDate >= monthStart && sessionDate <= monthEnd;
+      });
+      
+      const totalHours = monthSessions.reduce((total, session) => {
+        return total + calculateSessionHours(session);
+      }, 0);
+      
+      months.push({
+        month: format(date, 'MMM', { locale: es }),
+        hours: totalHours,
+        isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM')
+      });
+    }
+    return months;
+  };
+
+  const last4MonthsData = getLast4MonthsData();
+  const maxHours = Math.max(...last4MonthsData.map(m => m.hours), 1);
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-4">
+      <div className="flex items-center justify-between p-6 pb-8">
         <Link href={`/${companyAlias}/dashboard`}>
           <Button
             variant="ghost"
@@ -103,51 +136,94 @@ export default function EmployeeTimeTracking() {
           </Button>
         </Link>
         
-        <div className="flex flex-col items-center">
+        <div className="flex-1 flex flex-col items-end text-right">
           {company?.logoUrl ? (
             <img 
               src={company.logoUrl} 
               alt={company.name} 
-              className="w-10 h-10 mb-2 rounded-full object-cover"
+              className="w-8 h-8 mb-1 rounded-full object-cover"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-2">
+            <div className="text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-lg font-medium">{user?.fullName}</div>
+          <div className="text-base font-medium text-white">{user?.fullName}</div>
         </div>
-        
-        <div className="w-16"></div> {/* Spacer for centering */}
       </div>
 
-      {/* Title */}
-      <div className="flex items-center justify-center mb-6">
-        <Clock className="h-7 w-7 mr-3" />
-        <h1 className="text-xl font-bold">FICHAJES</h1>
+      {/* Modern Title */}
+      <div className="text-center mb-8">
+        <h1 className="text-2xl font-light text-white/90 tracking-wide">Fichajes</h1>
+      </div>
+
+      {/* 4-Month Hours Chart */}
+      <div className="px-6 mb-8">
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+          <div className="flex items-center mb-4">
+            <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
+            <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
+          </div>
+          <div className="flex items-end justify-between h-20 space-x-2">
+            {last4MonthsData.map((data, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center">
+                <div className="w-full bg-white/10 rounded-t-lg overflow-hidden" style={{ height: '60px' }}>
+                  <div 
+                    className={`w-full rounded-t-lg transition-all duration-500 ${
+                      data.isCurrentMonth ? 'bg-blue-500' : 'bg-white/30'
+                    }`}
+                    style={{ 
+                      height: `${(data.hours / maxHours) * 100}%`,
+                      minHeight: data.hours > 0 ? '8px' : '0px'
+                    }}
+                  />
+                </div>
+                <div className="text-xs text-white/60 mt-2 capitalize">{data.month}</div>
+                <div className="text-xs text-white/80 font-medium">
+                  {formatTotalHours(data.hours)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Month Navigation */}
-      <div className="flex items-center justify-between px-6 mb-6">
+      <div className="flex items-center justify-between px-6 mb-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={goToPreviousMonth}
-          className="text-white hover:bg-white/10 p-2"
+          className="text-white hover:bg-white/10 p-2 rounded-xl"
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
         
-        <h2 className="text-xl font-semibold capitalize">{monthName}</h2>
+        <button 
+          onClick={goToCurrentMonth}
+          className="text-xl font-semibold capitalize text-white hover:text-blue-300 transition-colors duration-200 cursor-pointer"
+        >
+          {monthName}
+        </button>
         
         <Button
           variant="ghost"
           size="sm"
           onClick={goToNextMonth}
-          className="text-white hover:bg-white/10 p-2"
+          className="text-white hover:bg-white/10 p-2 rounded-xl"
         >
           <ChevronRight className="h-6 w-6" />
         </Button>
+      </div>
+
+      {/* Month Total Hours */}
+      <div className="px-6 mb-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="text-center">
+            <p className="text-white/70 text-sm mb-1">Total del mes</p>
+            <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
+          </div>
+        </div>
       </div>
 
       {/* Table Container */}
@@ -190,16 +266,6 @@ export default function EmployeeTimeTracking() {
                 No hay fichajes este mes
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Total Hours */}
-      <div className="px-4 mb-6">
-        <div className="bg-blue-500/20 rounded-lg py-4 px-6 border border-blue-400/30">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">TOTAL HORAS {monthName.split(' ')[0].toUpperCase()}</span>
-            <span className="text-2xl font-bold font-mono">{formatTotalHours(totalMonthHours)}</span>
           </div>
         </div>
       </div>
