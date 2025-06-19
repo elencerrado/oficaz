@@ -55,7 +55,7 @@ export default function Settings() {
           </Button>
         </Link>
         
-        <div className="flex flex-col items-center">
+        <div className="flex-1 flex justify-end">
           {company?.logoUrl ? (
             <img 
               src={company.logoUrl} 
@@ -63,13 +63,11 @@ export default function Settings() {
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="text-white text-base font-medium text-right">
+            <div className="text-white text-base font-medium">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
         </div>
-        
-        <div className="w-16"></div>
       </div>
 
       {/* User Profile */}
