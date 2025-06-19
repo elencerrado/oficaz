@@ -54,15 +54,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Employee gets simplified view without sidebar
+  // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {
-    return (
-      <div className="min-h-screen">
-        <main className="min-h-screen">
-          {children}
-        </main>
-      </div>
-    );
+    return <>{children}</>;
   }
 
   // Admin/Manager gets full layout with sidebar

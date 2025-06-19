@@ -22,12 +22,6 @@ import { format } from 'date-fns';
 export default function Dashboard() {
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Show employee dashboard for employee role
-  if (user?.role === 'employee') {
-    return <EmployeeDashboard />;
-  }
-  
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
 
   const { data: stats, isLoading } = useQuery({

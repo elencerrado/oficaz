@@ -209,12 +209,12 @@ export default function EmployeeDashboard() {
             <div key={index} className="flex flex-col items-center">
               <a
                 href={item.route}
-                className="relative w-20 h-20 bg-blue-500 hover:bg-blue-600 transition-colors rounded-2xl flex items-center justify-center mb-3"
+                className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-2xl flex items-center justify-center mb-3 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <item.icon className="h-10 w-10 text-white" />
+                <item.icon className="h-12 w-12 text-white" />
                 {item.notification && (
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  <div className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
                   </div>
                 )}
               </a>
