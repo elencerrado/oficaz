@@ -107,9 +107,7 @@ export default function QuickAccess() {
           throw new Error('Super admin login failed');
         }
       } else {
-        // Regular user login
-        const loginUrl = user.companyAlias ? `/${user.companyAlias}/login` : '/login';
-        
+        // Regular user login - simulate the normal login flow
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -124,17 +122,21 @@ export default function QuickAccess() {
 
         if (response.ok) {
           const result = await response.json();
-          localStorage.setItem('authToken', result.token);
-          localStorage.setItem('authData', JSON.stringify(result));
           
-          // Redirect based on role
-          if (user.role === "Empleado") {
-            setLocation(`/${user.companyAlias}`);
-          } else {
-            setLocation(`/${user.companyAlias}/inicio`);
-          }
+          // Store auth data like the normal login does
+          localStorage.setItem('authData', JSON.stringify({
+            token: result.token,
+            user: result.user,
+            company: result.company
+          }));
+          
+          // Force a page reload to reinitialize auth state
+          window.location.href = user.role === "Empleado" 
+            ? `/${user.companyAlias}` 
+            : `/${user.companyAlias}/inicio`;
         } else {
-          throw new Error('Login failed');
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
         }
       }
 
