@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Mejoras en UI/UX de vacaciones y corrección de anchura de contenedores
+  - Mensaje personalizado cuando se exceden días disponibles: "Ojalá pudiéramos darte más..."
+  - Barra de progreso rediseñada con mayor grosor (24px) y efectos shimmer animados
+  - Corrección de cálculos: días disponibles = total - usados (pendientes no reducen disponibles)
+  - Padding consistente (px-6) en todos los contenedores de vacaciones y horas de empleados
+  - Gradientes mejorados con efectos de resplandor y sombras internas en barras de progreso
 - June 20, 2025. Sistema unificado de notificaciones implementado con arquitectura escalable
   - Nueva tabla `notifications` con soporte para múltiples tipos de notificaciones
   - API endpoints unificados: /api/notifications con filtrado por categoría

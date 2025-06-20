@@ -398,7 +398,7 @@ export default function EmployeeTimeTracking() {
 
       {/* Table Container - Dynamic height with touch events */}
       <div 
-        className="px-4 mb-6"
+        className="px-6 mb-6"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

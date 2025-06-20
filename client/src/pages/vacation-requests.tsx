@@ -458,7 +458,10 @@ export default function VacationRequests() {
                     <>
                       {format(selectedStartDate, 'd MMM', { locale: es })} - {format(selectedEndDate, 'd MMM', { locale: es })}
                       <br />
-                      {canRequestDays} días solicitados
+                      {exceedsAvailable 
+                        ? `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`
+                        : `${canRequestDays} días solicitados`
+                      }
                     </>
                   ) : (
                     'Selecciona fecha de inicio y fin'
@@ -502,7 +505,7 @@ export default function VacationRequests() {
       </div>
 
       {/* Requests table */}
-      <div className="px-4 mb-6 flex-1">
+      <div className="px-6 mb-6 flex-1">
         <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
