@@ -355,61 +355,125 @@ export default function Employees() {
               <p className="text-gray-500">No se encontraron empleados</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredEmployees.map((employee: any) => (
                 <div 
                   key={employee.id} 
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => handleEditEmployee(employee)}
+                  className="relative bg-white border rounded-lg hover:bg-gray-50 transition-colors overflow-hidden"
                 >
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-oficaz-primary text-white">
-                        {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{employee.fullName}</p>
-                        <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
+                  {/* Desktop/Tablet View */}
+                  <div 
+                    className="hidden sm:flex items-center justify-between p-4 cursor-pointer"
+                    onClick={() => handleEditEmployee(employee)}
+                  >
+                    <div className="flex items-center space-x-4 flex-1">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-oficaz-primary text-white">
+                          {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 mb-1">{employee.fullName}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
-                            {getRoleIcon(employee.role)}
-                            {employee.role === 'admin' ? 'Administrador' : 
-                             employee.role === 'manager' ? 'Gerente' : 'Empleado'}
+                            <Mail className="h-3 w-3" />
+                            {employee.companyEmail || employee.personalEmail || 'Sin email'}
                           </span>
-                        </Badge>
-                        <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
-                          <span className="flex items-center gap-1">
-                            {getStatusIcon(employee.status || 'active')}
-                            {getStatusText(employee.status || 'active')}
-                          </span>
-                        </Badge>
+                          {(employee.companyPhone || employee.personalPhone) && (
+                            <span className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {employee.companyPhone || employee.personalPhone}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
                         <span className="flex items-center gap-1">
-                          <IdCard className="h-3 w-3" />
-                          {employee.dni}
+                          {getRoleIcon(employee.role)}
+                          {employee.role === 'admin' ? 'Admin' : 
+                           employee.role === 'manager' ? 'Manager' : 'Empleado'}
                         </span>
+                      </Badge>
+                      <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
                         <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {employee.companyEmail}
+                          {getStatusIcon(employee.status || 'active')}
+                          {getStatusText(employee.status || 'active')}
                         </span>
-                        {employee.startDate && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Desde {format(new Date(employee.startDate), 'dd/MM/yyyy')}
-                          </span>
-                        )}
-                      </div>
+                      </Badge>
+                      <Edit className="h-4 w-4 text-gray-400 ml-2" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">
-                        Vacaciones: {employee.usedVacationDays || 0}/{employee.totalVacationDays || 22} días
-                      </p>
+
+                  {/* Mobile View with Swipe Gestures */}
+                  <div 
+                    className="sm:hidden relative"
+                    onTouchStart={(e) => {
+                      const touch = e.touches[0];
+                      e.currentTarget.setAttribute('data-start-x', touch.clientX.toString());
+                    }}
+                    onTouchEnd={(e) => {
+                      const startX = parseFloat(e.currentTarget.getAttribute('data-start-x') || '0');
+                      const endX = e.changedTouches[0].clientX;
+                      const diff = startX - endX;
+                      const phone = employee.companyPhone || employee.personalPhone;
+                      
+                      if (Math.abs(diff) > 50) { // Minimum swipe distance
+                        if (diff > 0 && phone) {
+                          // Swipe left - Call
+                          window.location.href = `tel:${phone}`;
+                        } else if (diff < 0) {
+                          // Swipe right - Message in app
+                          // Navigate to messages with this employee
+                          window.location.href = `/test/mensajes?to=${employee.id}`;
+                        }
+                      } else {
+                        // Tap - Edit employee
+                        handleEditEmployee(employee);
+                      }
+                    }}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-oficaz-primary text-white">
+                            {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
+                            <div className="flex items-center gap-1">
+                              <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
+                                {employee.role === 'admin' ? 'A' : 
+                                 employee.role === 'manager' ? 'M' : 'E'}
+                              </Badge>
+                              <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
+                                {getStatusIcon(employee.status || 'active')}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="space-y-1 mt-1">
+                            <div className="flex items-center gap-1 text-sm text-gray-500">
+                              <Mail className="h-3 w-3" />
+                              <span className="truncate">{employee.companyEmail || employee.personalEmail || 'Sin email'}</span>
+                            </div>
+                            {(employee.companyPhone || employee.personalPhone) && (
+                              <div className="flex items-center gap-1 text-sm text-oficaz-primary font-medium">
+                                <Phone className="h-3 w-3" />
+                                <span>{employee.companyPhone || employee.personalPhone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {(employee.companyPhone || employee.personalPhone) && (
+                        <div className="text-xs text-gray-400 mt-2 text-center">
+                          ← Desliza para llamar | Desliza para mensaje →
+                        </div>
+                      )}
                     </div>
-                    <Edit className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
               ))}
