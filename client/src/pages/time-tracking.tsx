@@ -148,7 +148,7 @@ export default function TimeTracking() {
   const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50">
+    <div className="px-6 py-4 min-h-screen bg-gray-50 overflow-x-visible">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
@@ -225,11 +225,11 @@ export default function TimeTracking() {
       </div>
 
       {/* Filters Section */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+      <Card className="mb-6 overflow-visible">
+        <CardContent className="p-4 overflow-visible">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center overflow-visible">
             {/* Month Navigator */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -258,37 +258,40 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            <div className="flex-1"></div>
+            <div className="flex-1 min-w-0"></div>
 
-            {/* Employee Filter */}
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <div className="min-w-0 w-48">
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Filtrar empleado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los empleados</SelectItem>
-                    {employeesList.map((employee: any) => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Responsive filters container */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full lg:w-auto">
+              {/* Employee Filter */}
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <div className="w-48 relative">
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Filtrar empleado" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50">
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {employeesList.map((employee: any) => (
+                        <SelectItem key={employee.id} value={employee.id.toString()}>
+                          {employee.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar empleado..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-48"
-              />
+              {/* Search */}
+              <div className="relative flex-shrink-0">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Buscar empleado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-48"
+                />
+              </div>
             </div>
           </div>
         </CardContent>
