@@ -466,8 +466,8 @@ export default function EmployeeTimeTracking() {
                         const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
                         
                         return editingSession === session.id ? (
-                          // Editing mode - Mobile-optimized with proper spacing
-                          <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-4 px-5 mx-3 my-2 relative after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-white/10">
+                          // Editing mode - Expanded row with maintained separators  
+                          <div className="border-b border-white/10 bg-blue-500/10 relative py-4 px-4">
                             {/* Date header */}
                             <div className="text-sm text-center text-white/90 mb-4 font-medium">
                               {formatDate(session.clockIn)}
