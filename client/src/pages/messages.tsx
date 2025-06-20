@@ -13,7 +13,10 @@ import {
   FileText,
   Clock,
   CheckCircle2,
-  Check
+  Check,
+  Search,
+  Users,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -43,6 +46,9 @@ interface Manager {
 export default function Messages() {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isGroupMode, setIsGroupMode] = useState(false);
+  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user, company } = useAuth();
@@ -131,15 +137,47 @@ export default function Messages() {
     return subject;
   };
 
-  const handleSendMessage = (managerId: number) => {
+  const handleSendMessage = (receiverId: number) => {
     if (!newMessage.trim()) return;
     
     sendMessageMutation.mutate({
-      receiverId: managerId,
-      subject: 'Mensaje del empleado',
+      receiverId,
+      subject: user?.role === 'employee' ? 'Mensaje del empleado' : 'Mensaje del administrador',
       content: newMessage.trim()
     });
+    
+    setNewMessage('');
   };
+
+  const handleSendGroupMessage = () => {
+    if (!newMessage.trim() || selectedEmployees.length === 0) return;
+    
+    // Send message to each selected employee
+    selectedEmployees.forEach(employeeId => {
+      sendMessageMutation.mutate({
+        receiverId: employeeId,
+        subject: 'Mensaje grupal',
+        content: newMessage.trim()
+      });
+    });
+    
+    // Reset state
+    setNewMessage('');
+    setSelectedEmployees([]);
+    setIsGroupMode(false);
+  };
+
+  const toggleEmployeeSelection = (employeeId: number) => {
+    setSelectedEmployees(prev => 
+      prev.includes(employeeId) 
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    );
+  };
+
+  const filteredEmployees = (employees as any[] || [])
+    .filter(emp => emp.role === 'employee')
+    .filter(emp => emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const getChatMessages = (otherUserId: number) => {
     if (!messages) return [];
@@ -222,10 +260,98 @@ export default function Messages() {
 
             {/* Contacts Section - Different for employees vs admin/manager */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                {user?.role === 'employee' ? 'Tu Manager' : 'Empleados'}
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  {user?.role === 'employee' ? 'Tu Manager' : 'Empleados'}
+                </h3>
+                {(user?.role === 'admin' || user?.role === 'manager') && (
+                  <Button
+                    onClick={() => setIsGroupMode(!isGroupMode)}
+                    className={`text-sm px-3 py-1 rounded-lg ${
+                      isGroupMode 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-white/20 hover:bg-white/30 text-white'
+                    }`}
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    {isGroupMode ? 'Cancelar' : 'Grupal'}
+                  </Button>
+                )}
+              </div>
+
+              {/* Search bar for admin/manager */}
+              {(user?.role === 'admin' || user?.role === 'manager') && (
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+                  <Input
+                    placeholder="Buscar empleados..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-lg"
+                  />
+                </div>
+              )}
+
+              {/* Quick selection buttons for group mode */}
+              {isGroupMode && (
+                <div className="flex space-x-2 mb-3">
+                  <Button
+                    onClick={() => setSelectedEmployees(filteredEmployees.map(emp => emp.id))}
+                    size="sm"
+                    className="bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/50 text-xs px-2 py-1"
+                  >
+                    Todos
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedEmployees([])}
+                    size="sm"
+                    className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 text-xs px-2 py-1"
+                  >
+                    Ninguno
+                  </Button>
+                </div>
+              )}
+
+              {/* Group message panel */}
+              {isGroupMode && selectedEmployees.length > 0 && (
+                <div className="bg-blue-500/20 border border-blue-400 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-white">
+                      {selectedEmployees.length} empleado(s) seleccionado(s)
+                    </span>
+                    <Button
+                      onClick={() => setSelectedEmployees([])}
+                      size="sm"
+                      className="h-6 w-6 p-0 bg-red-500 hover:bg-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Mensaje para todos los seleccionados..."
+                      className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/60 rounded-lg text-sm"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendGroupMessage();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleSendGroupMessage}
+                      disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                      className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-3"
+                      size="sm"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 {user?.role === 'employee' ? (
                   // Employee view: Show managers
@@ -264,9 +390,7 @@ export default function Messages() {
                   })
                 ) : (
                   // Admin/Manager view: Show employees
-                  (employees as any[] || [])
-                    .filter(emp => emp.role === 'employee')
-                    .map(employee => {
+                  filteredEmployees.map(employee => {
                       const unreadCount = (messages as Message[] || []).filter(
                         msg => !msg.isRead && msg.senderId === employee.id && msg.receiverId === user?.id
                       ).length;
@@ -274,13 +398,23 @@ export default function Messages() {
                       return (
                         <div
                           key={employee.id}
-                          onClick={() => setSelectedChat(employee.id)}
-                          className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
+                          onClick={() => {
+                            if (isGroupMode) {
+                              toggleEmployeeSelection(employee.id);
+                            } else {
+                              setSelectedChat(employee.id);
+                            }
+                          }}
+                          className={`rounded-lg p-4 backdrop-blur-sm cursor-pointer transition-colors ${
+                            isGroupMode && selectedEmployees.includes(employee.id)
+                              ? 'bg-blue-500/30 border border-blue-400'
+                              : 'bg-white/10 hover:bg-white/20'
+                          }`}
                         >
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-12 w-12 bg-green-500">
                               <AvatarFallback className="bg-green-500 text-white font-semibold">
-                                {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                {employee.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
@@ -311,11 +445,25 @@ export default function Messages() {
                               <p className="text-white/70 text-sm">Empleado</p>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <MessageCircle className="h-5 w-5 text-green-400" />
-                              {unreadCount > 0 && (
-                                <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                  {unreadCount}
+                              {isGroupMode ? (
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                  selectedEmployees.includes(employee.id)
+                                    ? 'bg-blue-500 border-blue-500'
+                                    : 'border-white/50'
+                                }`}>
+                                  {selectedEmployees.includes(employee.id) && (
+                                    <Check className="h-3 w-3 text-white" />
+                                  )}
                                 </div>
+                              ) : (
+                                <>
+                                  <MessageCircle className="h-5 w-5 text-green-400" />
+                                  {unreadCount > 0 && (
+                                    <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                      {unreadCount}
+                                    </div>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
@@ -348,7 +496,7 @@ export default function Messages() {
                   <>
                     <Avatar className={`h-8 w-8 ${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'}`}>
                       <AvatarFallback className={`${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'} text-white text-sm`}>
-                        {contact?.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        {contact?.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
