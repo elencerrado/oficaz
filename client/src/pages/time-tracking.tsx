@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, 
   Search, 
@@ -38,6 +40,9 @@ export default function TimeTracking() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     clockIn: '',
@@ -349,35 +354,71 @@ export default function TimeTracking() {
           )}
 
           {dateFilter === 'custom' && (
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3 relative z-0">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Desde:</label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-32 text-sm"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Hasta:</label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-32 text-sm"
-                />
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
-                }}
-              >
-                Limpiar
-              </Button>
+            <div className="flex flex-col items-center justify-center mb-3 relative z-0">
+              <Dialog open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="min-w-[200px] justify-center"
+                  >
+                    {selectedStartDate && selectedEndDate
+                      ? `${format(selectedStartDate, 'd MMM', { locale: es })} - ${format(selectedEndDate, 'd MMM yyyy', { locale: es })}`
+                      : 'Seleccionar rango de fechas'
+                    }
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Seleccionar rango de fechas</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: selectedStartDate || undefined,
+                        to: selectedEndDate || undefined,
+                      }}
+                      onSelect={(range) => {
+                        if (range?.from) {
+                          setSelectedStartDate(range.from);
+                          setStartDate(format(range.from, 'yyyy-MM-dd'));
+                        }
+                        if (range?.to) {
+                          setSelectedEndDate(range.to);
+                          setEndDate(format(range.to, 'yyyy-MM-dd'));
+                        }
+                        if (range?.from && range?.to) {
+                          setTimeout(() => setIsRangeDialogOpen(false), 500);
+                        }
+                      }}
+                      className="rounded-md border"
+                      disabled={(date) => date > new Date()}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStartDate(null);
+                          setSelectedEndDate(null);
+                          setStartDate('');
+                          setEndDate('');
+                        }}
+                        className="flex-1"
+                      >
+                        Limpiar
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => setIsRangeDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Aplicar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
