@@ -870,7 +870,72 @@ startxref
     }
   });
 
-  // Document notifications endpoints
+  // Unified notifications endpoints
+  app.get('/api/notifications', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { category } = req.query;
+      let notifications;
+      
+      if (category && typeof category === 'string') {
+        notifications = await storage.getNotificationsByCategory(req.user!.id, category);
+      } else {
+        notifications = await storage.getNotificationsByUser(req.user!.id);
+      }
+      
+      res.json(notifications);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const notification = await storage.markNotificationRead(id);
+      
+      if (!notification) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      
+      res.json(notification);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/notifications/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const notification = await storage.markNotificationCompleted(id);
+      
+      if (!notification) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      
+      res.json(notification);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/notifications/unread-count', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { category } = req.query;
+      let count;
+      
+      if (category && typeof category === 'string') {
+        count = await storage.getUnreadNotificationCountByCategory(req.user!.id, category);
+      } else {
+        count = await storage.getUnreadNotificationCount(req.user!.id);
+      }
+      
+      res.json({ count });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Legacy document notifications endpoints (backward compatibility)
   app.get('/api/document-notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const notifications = await storage.getDocumentNotificationsByUser(req.user!.id);
@@ -883,7 +948,7 @@ startxref
   app.patch('/api/document-notifications/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const notification = await storage.markNotificationCompleted(id);
+      const notification = await storage.markDocumentNotificationCompleted(id);
       
       if (!notification) {
         return res.status(404).json({ message: 'Notification not found' });

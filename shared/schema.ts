@@ -114,7 +114,26 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Document notifications table
+// Unified notifications table for all notification types
+export const systemNotifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // 'document_request', 'message', 'vacation_approval', 'system', 'reminder', etc.
+  category: text("category").notNull(), // 'documents', 'messages', 'vacations', 'system', 'reminders'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: text("action_url"), // URL to navigate when clicked
+  dueDate: timestamp("due_date"),
+  priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
+  isRead: boolean("is_read").default(false).notNull(),
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  metadata: text("metadata"), // JSON string for additional data
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Legacy document notifications table (keep for backward compatibility)
 export const documentNotifications = pgTable("document_notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
@@ -167,6 +186,12 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(systemNotifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDocumentNotificationSchema = createInsertSchema(documentNotifications).omit({
   id: true,
   createdAt: true,
@@ -208,6 +233,7 @@ export type WorkSession = typeof workSessions.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type SystemNotification = typeof systemNotifications.$inferSelect;
 export type DocumentNotification = typeof documentNotifications.$inferSelect;
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -217,6 +243,7 @@ export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;

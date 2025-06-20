@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema unificado de notificaciones implementado con arquitectura escalable
+  - Nueva tabla `notifications` con soporte para múltiples tipos de notificaciones
+  - API endpoints unificados: /api/notifications con filtrado por categoría
+  - Componente React completo para gestión de notificaciones con pestañas por categoría
+  - Soporte para notificaciones de documentos, mensajes, vacaciones, sistema y recordatorios
+  - Estados de lectura y completado independientes con actualizaciones en tiempo real
+  - Prioridades configurables (alta, media, baja) con indicadores visuales
+  - Fechas límite con recordatorios automáticos para acciones pendientes
+  - Backward compatibility mantenida con sistema legacy de document_notifications
 - June 20, 2025. Página de documentos para empleados completamente rediseñada
   - Categorización automática de documentos (nóminas, contratos, otros)
   - Sistema de notificaciones para documentos requeridos con fechas límite

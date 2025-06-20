@@ -3,8 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
-  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message, DocumentNotification,
-  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification
+  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message, DocumentNotification, SystemNotification,
+  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification, InsertSystemNotification
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -62,10 +62,19 @@ export interface IStorage {
   markMessageAsRead(id: number): Promise<Message | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
 
-  // Document Notifications
+  // Unified Notifications
+  getNotificationsByUser(userId: number): Promise<SystemNotification[]>;
+  getNotificationsByCategory(userId: number, category: string): Promise<SystemNotification[]>;
+  createNotification(notification: InsertSystemNotification): Promise<SystemNotification>;
+  markNotificationRead(id: number): Promise<SystemNotification | undefined>;
+  markNotificationCompleted(id: number): Promise<SystemNotification | undefined>;
+  getUnreadNotificationCount(userId: number): Promise<number>;
+  getUnreadNotificationCountByCategory(userId: number, category: string): Promise<number>;
+
+  // Document Notifications (legacy - backward compatibility) 
   getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]>;
   createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
-  markNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
+  markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -290,13 +299,81 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
-  async markNotificationCompleted(id: number): Promise<DocumentNotification | undefined> {
+  async markNotificationCompleted(id: number): Promise<SystemNotification | undefined> {
+    // This method is for the unified notification system
+    const [result] = await db.update(schema.systemNotifications)
+      .set({ isCompleted: true, updatedAt: new Date() })
+      .where(eq(schema.systemNotifications.id, id))
+      .returning();
+    return result;
+  }
+
+  // Legacy document notification method (backward compatibility)
+  async markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined> {
     const [result] = await db
       .update(schema.documentNotifications)
       .set({ isCompleted: true })
       .where(eq(schema.documentNotifications.id, id))
       .returning();
     return result;
+  }
+
+  // Unified Notifications implementation
+  async getNotificationsByUser(userId: number): Promise<SystemNotification[]> {
+    return await db.select().from(schema.systemNotifications)
+      .where(eq(schema.systemNotifications.userId, userId))
+      .orderBy(desc(schema.systemNotifications.createdAt));
+  }
+
+  async getNotificationsByCategory(userId: number, category: string): Promise<SystemNotification[]> {
+    return await db.select().from(schema.systemNotifications)
+      .where(and(
+        eq(schema.systemNotifications.userId, userId),
+        eq(schema.systemNotifications.category, category)
+      ))
+      .orderBy(desc(schema.systemNotifications.createdAt));
+  }
+
+  async createNotification(notification: InsertSystemNotification): Promise<SystemNotification> {
+    const [result] = await db.insert(schema.systemNotifications).values(notification).returning();
+    return result;
+  }
+
+  async markNotificationRead(id: number): Promise<SystemNotification | undefined> {
+    const [result] = await db.update(schema.systemNotifications)
+      .set({ isRead: true, updatedAt: new Date() })
+      .where(eq(schema.systemNotifications.id, id))
+      .returning();
+    return result;
+  }
+
+  async markNotificationCompletedUnified(id: number): Promise<SystemNotification | undefined> {
+    const [result] = await db.update(schema.systemNotifications)
+      .set({ isCompleted: true, updatedAt: new Date() })
+      .where(eq(schema.systemNotifications.id, id))
+      .returning();
+    return result;
+  }
+
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(schema.systemNotifications)
+      .where(and(
+        eq(schema.systemNotifications.userId, userId),
+        eq(schema.systemNotifications.isRead, false)
+      ));
+    return result.count;
+  }
+
+  async getUnreadNotificationCountByCategory(userId: number, category: string): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` })
+      .from(schema.systemNotifications)
+      .where(and(
+        eq(schema.systemNotifications.userId, userId),
+        eq(schema.systemNotifications.category, category),
+        eq(schema.systemNotifications.isRead, false)
+      ));
+    return result.count;
   }
 }
 
