@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
+import oficazLogo from "@assets/Imagotipo Oficaz white_1750407614936.png";
 
 export default function AccessDenied() {
   const [, setLocation] = useLocation();
@@ -20,27 +21,11 @@ export default function AccessDenied() {
       <div className="text-center">
         {/* Logo de Oficaz */}
         <div className="mb-8">
-          <svg
-            width="120"
-            height="40"
-            viewBox="0 0 120 40"
-            className="mx-auto"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect width="120" height="40" rx="8" fill="white" />
-            <text
-              x="60"
-              y="28"
-              fontSize="20"
-              fontWeight="600"
-              textAnchor="middle"
-              fill="#007AFF"
-              fontFamily="system-ui, -apple-system, sans-serif"
-            >
-              Oficaz
-            </text>
-          </svg>
+          <img 
+            src={oficazLogo} 
+            alt="Oficaz"
+            className="mx-auto h-12 w-auto"
+          />
         </div>
 
         {/* Mensaje de error */}
