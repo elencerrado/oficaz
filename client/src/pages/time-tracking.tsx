@@ -684,6 +684,38 @@ export default function TimeTracking() {
                     );
                   });
                   
+                  // Add final summaries for the last week and month when filtering by specific employee
+                  if (showSummaries && sortedSessions.length > 0) {
+                    if (currentWeekStart) {
+                      const weekTotal = calculateWeekTotal(currentWeekStart);
+                      result.push(
+                        <tr key={`week-final`} className="bg-gray-100 border-y border-gray-300">
+                          <td colSpan={6} className="py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    if (currentMonth) {
+                      const monthTotal = calculateMonthTotal(currentMonth);
+                      const [year, month] = currentMonth.split('-');
+                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      
+                      result.push(
+                        <tr key={`month-final`} className="bg-blue-50 border-y-2 border-blue-200">
+                          <td colSpan={6} className="py-3 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize">
+                              Total {monthName}: {monthTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  }
+                  
                   return result;
                 }, [filteredSessions, selectedEmployee, editingSession, editData, handleEditSession, handleSaveSession, handleCancelEdit, updateSessionMutation.isPending, calculateHours])}
               </tbody>
