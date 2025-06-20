@@ -604,6 +604,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get managers for employees to send messages
+  app.get('/api/managers', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const employees = await storage.getUsersByCompany(req.user!.companyId);
+      const managers = employees.filter(emp => emp.role === 'admin' || emp.role === 'manager');
+      const sanitizedManagers = managers.map(mgr => ({ 
+        id: mgr.id, 
+        fullName: mgr.fullName, 
+        email: mgr.companyEmail, 
+        role: mgr.role 
+      }));
+      res.json(sanitizedManagers);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.post('/api/employees', authenticateToken, requireRole(['admin', 'manager']), async (req, res) => {
     try {
       const { companyEmail, fullName, dni, role, password, companyPhone, startDate, totalVacationDays } = req.body;
