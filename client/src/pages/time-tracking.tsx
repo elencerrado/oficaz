@@ -459,7 +459,7 @@ export default function TimeTracking() {
                       Utiliza el calendario para seleccionar un rango de fechas para filtrar los fichajes
                     </p>
                   </DialogHeader>
-                  <div className="flex justify-center">
+                  <div className="flex flex-col items-center space-y-4">
                     <Calendar
                       mode="range"
                       selected={{
@@ -476,11 +476,11 @@ export default function TimeTracking() {
                           setEndDate(format(range.to, 'yyyy-MM-dd'));
                         }
                       }}
-                      className="rounded-md border mx-auto"
+                      className="rounded-md border"
                       disabled={(date) => date > new Date()}
                       locale={es}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 justify-center w-full">
                       <Button
                         variant="outline"
                         size="sm"
@@ -490,14 +490,14 @@ export default function TimeTracking() {
                           setStartDate('');
                           setEndDate('');
                         }}
-                        className="flex-1"
+                        className="px-6"
                       >
                         Limpiar
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => setIsRangeDialogOpen(false)}
-                        className="flex-1"
+                        className="bg-oficaz-primary hover:bg-oficaz-primary/90 px-6"
                       >
                         Aplicar
                       </Button>
