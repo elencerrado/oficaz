@@ -209,10 +209,8 @@ export default function Login() {
 
             {/* Enlace de ayuda */}
             <div className="text-center mt-4">
-              <Link href="/register">
-                <a className="text-sm text-[#007AFF] hover:underline">
-                  ¿Tienes problemas para acceder?
-                </a>
+              <Link href="/register" className="text-sm text-[#007AFF] hover:underline">
+                ¿Tienes problemas para acceder?
               </Link>
             </div>
           </form>
