@@ -20,7 +20,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -33,8 +33,9 @@ export default function TimeTracking() {
   // State for filters and editing
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
+  const [dateFilter, setDateFilter] = useState('month'); // 'day', 'month', 'custom'
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [dateFilter, setDateFilter] = useState('month'); // 'month', 'custom'
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [editingSession, setEditingSession] = useState<number | null>(null);
@@ -131,14 +132,20 @@ export default function TimeTracking() {
     
     // Date filtering
     let matchesDate = true;
-    if (dateFilter === 'month') {
+    if (dateFilter === 'day') {
+      const dayStart = new Date(currentDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(currentDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
+    } else if (dateFilter === 'month') {
       const monthStart = startOfMonth(currentMonth);
       const monthEnd = endOfMonth(currentMonth);
       matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
     } else if (dateFilter === 'custom' && startDate && endDate) {
       const filterStart = new Date(startDate);
       const filterEnd = new Date(endDate);
-      filterEnd.setHours(23, 59, 59, 999); // Include full end date
+      filterEnd.setHours(23, 59, 59, 999);
       matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
     } else if (dateFilter === 'custom' && startDate && !endDate) {
       const filterStart = new Date(startDate);
@@ -281,6 +288,14 @@ export default function TimeTracking() {
             {/* Date Filter Type Selector */}
             <div className="flex items-center justify-center space-x-2 border-b pb-3">
               <Button
+                variant={dateFilter === 'day' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDateFilter('day')}
+                className={dateFilter === 'day' ? 'bg-oficaz-primary' : ''}
+              >
+                Por Día
+              </Button>
+              <Button
                 variant={dateFilter === 'month' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setDateFilter('month')}
@@ -298,13 +313,66 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            {/* Date Selector Based on Type */}
-            {dateFilter === 'custom' ? (
+            {/* Date Navigation Based on Type */}
+            {dateFilter === 'day' && (
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDate(subDays(currentDate, 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Día Anterior
+                </Button>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">
+                    {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDate(addDays(currentDate, 1))}
+                  disabled={format(currentDate, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')}
+                >
+                  Día Siguiente
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {dateFilter === 'month' && (
+              <div className="flex items-center justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Mes Anterior
+                </Button>
+                <div className="text-center">
+                  <p className="font-semibold text-lg">
+                    {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  disabled={format(currentMonth, 'yyyy-MM') >= format(new Date(), 'yyyy-MM')}
+                >
+                  Mes Siguiente
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {dateFilter === 'custom' && (
               <div className="space-y-3">
-                {/* Date Range Inputs */}
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-center">
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Desde:</label>
+                    <label className="text-sm font-medium text-gray-700 w-14">Desde:</label>
                     <Input
                       type="date"
                       value={startDate}
@@ -313,7 +381,7 @@ export default function TimeTracking() {
                     />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">Hasta:</label>
+                    <label className="text-sm font-medium text-gray-700 w-14">Hasta:</label>
                     <Input
                       type="date"
                       value={endDate}
@@ -332,61 +400,60 @@ export default function TimeTracking() {
                     Limpiar
                   </Button>
                 </div>
-
-                {/* Quick Month Selection */}
-                <div className="border-t pt-3">
-                  <p className="text-sm text-gray-600 text-center mb-2">Selección rápida por mes:</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const monthDate = new Date(new Date().getFullYear(), i, 1);
-                      const monthStart = startOfMonth(monthDate);
-                      const monthEnd = endOfMonth(monthDate);
-                      
-                      return (
-                        <Button
-                          key={i}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setStartDate(format(monthStart, 'yyyy-MM-dd'));
-                            setEndDate(format(monthEnd, 'yyyy-MM-dd'));
-                          }}
-                          className="text-xs"
-                        >
-                          {format(monthDate, 'MMM', { locale: es })}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-center gap-2 mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const thisMonth = new Date();
-                        setStartDate(format(startOfMonth(thisMonth), 'yyyy-MM-dd'));
-                        setEndDate(format(endOfMonth(thisMonth), 'yyyy-MM-dd'));
-                      }}
-                      className="text-xs bg-blue-50"
-                    >
-                      Este mes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const lastMonth = subMonths(new Date(), 1);
-                        setStartDate(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
-                        setEndDate(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
-                      }}
-                      className="text-xs bg-gray-50"
-                    >
-                      Mes anterior
-                    </Button>
-                  </div>
+                
+                {/* Quick Options for Custom Range */}
+                <div className="flex flex-wrap justify-center gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const today = new Date();
+                      setStartDate(format(today, 'yyyy-MM-dd'));
+                      setEndDate(format(today, 'yyyy-MM-dd'));
+                    }}
+                    className="text-xs"
+                  >
+                    Hoy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const yesterday = subDays(new Date(), 1);
+                      setStartDate(format(yesterday, 'yyyy-MM-dd'));
+                      setEndDate(format(yesterday, 'yyyy-MM-dd'));
+                    }}
+                    className="text-xs"
+                  >
+                    Ayer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const thisMonth = new Date();
+                      setStartDate(format(startOfMonth(thisMonth), 'yyyy-MM-dd'));
+                      setEndDate(format(endOfMonth(thisMonth), 'yyyy-MM-dd'));
+                    }}
+                    className="text-xs"
+                  >
+                    Este mes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const lastMonth = subMonths(new Date(), 1);
+                      setStartDate(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
+                      setEndDate(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
+                    }}
+                    className="text-xs"
+                  >
+                    Mes pasado
+                  </Button>
                 </div>
               </div>
-            ) : null}
+            )}
 
             {/* Filters row - Simple grid layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
