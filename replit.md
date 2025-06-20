@@ -117,13 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Sistema de empleados móvil perfeccionado con gestos fluidos y sin trabas
-  - Admin excluido de la lista de empleados como se solicitó
-  - Reset inmediato del deslizador para evitar que se quede pillado mostrando colores
-  - Ruteo de mensajes corregido: parámetro ?chat= en lugar de ?to= para navegación correcta
-  - Swipe limitado a 80px con umbral de activación de 50px para mejor control
-  - Iconos posicionados en bordes correspondientes con feedback visual cuando no hay teléfono
-  - Bloqueo de swipe derecha cuando empleado no tiene número disponible
+- June 20, 2025. Sistema de empleados completamente optimizado con experiencia móvil y desktop perfecta
+  - Swipe reducido 30%: límite 56px con activación a 35px para mejor control táctil
+  - Estados en español con colores: activo (verde), inactivo (gris), de baja (rojo), vacaciones (azul)
+  - Edición funcional: doble toque móvil y doble click desktop para modal de edición
+  - Filtro integrado de estados con "Activos" seleccionado por defecto
+  - Búsqueda y filtros integrados en una sola barra dentro de la lista de empleados
+  - Contador dinámico que muestra empleados filtrados del total disponible
   - Corregidas todas las vacaciones según normativa española: Juan Pérez 0 días (recién incorporado), Juan Ramírez 24 días (9.6 meses trabajados), Admin 30 días (año completo)
   - Página de configuración completamente rediseñada: pestañas Empresa/Políticas/Mi Perfil con interfaz clara y campos bien visibles
   - Cambiado "Usuario" por "Configuración" en navegación para admin
