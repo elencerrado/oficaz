@@ -110,7 +110,7 @@ function Router() {
   }
 
   // Quick access page for testing
-  if (location === '/quick-access') {
+  if (location === '/fast') {
     return <QuickAccess />;
   }
   
