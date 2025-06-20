@@ -351,15 +351,31 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Input
-                type="month"
+              <Select
                 value={format(currentMonth, 'yyyy-MM')}
-                onChange={(e) => {
-                  const [year, month] = e.target.value.split('-');
+                onValueChange={(value) => {
+                  const [year, month] = value.split('-');
                   setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
                 }}
-                className="text-center font-medium min-w-[150px] cursor-pointer"
-              />
+              >
+                <SelectTrigger className="w-[150px] text-center font-medium">
+                  <SelectValue>
+                    {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const date = new Date();
+                    date.setMonth(date.getMonth() - 6 + i);
+                    const value = format(date, 'yyyy-MM');
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {format(date, 'MMMM yyyy', { locale: es })}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 size="sm"
