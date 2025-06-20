@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -107,6 +108,20 @@ export default function VacationRequests() {
     .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
   const availableDays = totalDays - usedDays; // Available = Total - Used (pending doesn't reduce available)
   const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
+
+  // Create vacation explanation message
+  const daysPerMonth = parseFloat(user?.vacationDaysPerMonth || '2.5');
+  const adjustment = parseFloat(user?.vacationDaysAdjustment || '0');
+  const startDate = user?.startDate ? new Date(user.startDate) : new Date();
+  const monthsWorked = Math.max(1, (new Date().getFullYear() - startDate.getFullYear()) * 12 + 
+                               (new Date().getMonth() - startDate.getMonth()) + 
+                               (new Date().getDate() >= startDate.getDate() ? 1 : 0));
+  
+  const vacationExplanation = `¿Por qué tengo ${totalDays} días?
+
+En España te corresponden ${daysPerMonth} días de vacaciones por cada mes trabajado desde tu fecha de incorporación (${format(startDate, 'd MMMM yyyy', { locale: es })}). 
+
+Has trabajado ${monthsWorked} meses, lo que te da ${Math.round(monthsWorked * daysPerMonth * 10) / 10} días.${adjustment !== 0 ? ` Además te hemos ajustado ${adjustment > 0 ? '+' : ''}${adjustment} días.` : ''}`;
 
   const canRequestDays = selectedStartDate && selectedEndDate ? 
     differenceInDays(selectedEndDate, selectedStartDate) + 1 : 0;
@@ -281,7 +296,19 @@ export default function VacationRequests() {
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-2xl font-light text-blue-300 mb-1">{totalDays}</div>
+              <div className="text-2xl font-light text-blue-300 mb-1 flex items-center justify-center gap-2">
+                {totalDays}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm p-4 bg-gray-900 border border-gray-700 text-white text-sm leading-relaxed">
+                      <div className="whitespace-pre-line">{vacationExplanation}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
             </div>
             <div className="text-center">
