@@ -466,29 +466,39 @@ export default function EmployeeTimeTracking() {
                         const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
                         
                         return editingSession === session.id ? (
-                          // Editing mode
+                          // Editing mode - Mobile-first vertical layout
                           <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-3 px-4 mx-2 my-1">
-                            <div className="grid grid-cols-5 gap-2 items-center">
-                              <div className="text-xs text-center text-white/90 overflow-hidden">
-                                <div className="truncate">{formatDate(session.clockIn)}</div>
-                              </div>
-                              <div className="flex items-center justify-center">
+                            {/* Date header */}
+                            <div className="text-sm text-center text-white/90 mb-3 font-medium">
+                              {formatDate(session.clockIn)}
+                            </div>
+                            
+                            {/* Time inputs in 2-column grid */}
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <label className="text-xs text-white/70 block mb-1 text-center">Entrada</label>
                                 <Input
                                   type="time"
                                   value={editForm.clockIn}
                                   onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
-                                  className="h-8 w-16 text-center bg-white/10 border-white/20 text-white text-xs"
+                                  className="h-9 text-center bg-white/10 border-white/20 text-white text-sm w-full"
                                 />
                               </div>
-                              <div className="flex items-center justify-center">
+                              <div>
+                                <label className="text-xs text-white/70 block mb-1 text-center">Salida</label>
                                 <Input
                                   type="time"
                                   value={editForm.clockOut}
                                   onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
-                                  className="h-8 w-16 text-center bg-white/10 border-white/20 text-white text-xs"
+                                  className="h-9 text-center bg-white/10 border-white/20 text-white text-sm w-full"
                                 />
                               </div>
-                              <div className="text-xs text-center text-white/70">
+                            </div>
+
+                            {/* Total and action buttons */}
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs text-white/80">
+                                <span className="font-medium">Total: </span>
                                 {editForm.clockIn && editForm.clockOut ? 
                                   formatTotalHours(
                                     (new Date(`2000-01-01T${editForm.clockOut}:00`).getTime() - 
@@ -496,21 +506,21 @@ export default function EmployeeTimeTracking() {
                                   ) : '-'
                                 }
                               </div>
-                              <div className="flex gap-1 justify-center">
+                              <div className="flex gap-2">
                                 <Button
                                   size="sm"
                                   onClick={saveEdit}
                                   disabled={updateSessionMutation.isPending}
-                                  className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700"
+                                  className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
                                 >
-                                  <Save className="h-3 w-3" />
+                                  <Save className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   onClick={cancelEditing}
-                                  className="h-6 w-6 p-0 bg-red-600 hover:bg-red-700"
+                                  className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
                                 >
-                                  <X className="h-3 w-3" />
+                                  <X className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
