@@ -176,7 +176,14 @@ export default function TimeTracking() {
     return total + calculateHours(session.clockIn, session.clockOut);
   }, 0);
 
-  const totalSessions = filteredSessions.length;
+  // Calculate employees who have clocked in
+  const uniqueEmployeesWithSessions = new Set(filteredSessions.map((s: any) => s.userId));
+  const employeesWithSessions = uniqueEmployeesWithSessions.size;
+  const totalEmployees = employeesList.length;
+  
+  // Calculate average hours per employee
+  const averageHoursPerEmployee = employeesWithSessions > 0 ? totalHours / employeesWithSessions : 0;
+  
   const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
 
   return (
@@ -214,9 +221,9 @@ export default function TimeTracking() {
                 <Users className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Fichajes</p>
+                <p className="text-sm text-gray-500">Han Fichado</p>
                 <p className="text-xl font-semibold text-gray-900">
-                  {totalSessions}
+                  {employeesWithSessions}/{totalEmployees}
                 </p>
               </div>
             </div>
@@ -230,9 +237,9 @@ export default function TimeTracking() {
                 <TrendingUp className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Completados</p>
+                <p className="text-sm text-gray-500">Media Horas</p>
                 <p className="text-xl font-semibold text-gray-900">
-                  {completedSessions}
+                  {averageHoursPerEmployee.toFixed(1)}h
                 </p>
               </div>
             </div>
@@ -246,9 +253,9 @@ export default function TimeTracking() {
                 <CalendarDays className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Promedio Día</p>
+                <p className="text-sm text-gray-500">Completados</p>
                 <p className="text-xl font-semibold text-gray-900">
-                  {completedSessions > 0 ? (totalHours / completedSessions).toFixed(1) : '0.0'}h
+                  {completedSessions}
                 </p>
               </div>
             </div>
