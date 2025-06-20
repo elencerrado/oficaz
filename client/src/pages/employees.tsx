@@ -515,18 +515,22 @@ export default function Employees() {
                         content.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                       }
                       
-                      // Reset hints immediately (no transition to avoid blocking next swipe)
+                      // Reset hints with smooth transition back to hidden state
                       const callHint = target.querySelector('.call-hint') as HTMLElement;
                       const messageHint = target.querySelector('.message-hint') as HTMLElement;
                       if (callHint) {
-                        callHint.style.transition = 'none';
+                        callHint.style.transition = 'opacity 0.2s ease-out, visibility 0.2s ease-out';
                         callHint.style.opacity = '0';
-                        callHint.style.visibility = 'hidden';
+                        setTimeout(() => {
+                          if (callHint) callHint.style.visibility = 'hidden';
+                        }, 200);
                       }
                       if (messageHint) {
-                        messageHint.style.transition = 'none';
+                        messageHint.style.transition = 'opacity 0.2s ease-out, visibility 0.2s ease-out';
                         messageHint.style.opacity = '0';
-                        messageHint.style.visibility = 'hidden';
+                        setTimeout(() => {
+                          if (messageHint) messageHint.style.visibility = 'hidden';
+                        }, 200);
                       }
                       
                       if (Math.abs(diff) > 100) {
@@ -596,17 +600,17 @@ export default function Employees() {
                     {/* Main Content - Above hints */}
                     <div className="swipe-content bg-white relative z-20 transition-transform duration-300 ease-out">
                       {/* Swipe Indicators */}
-                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none z-30">
+                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none z-30 px-4 py-3">
                         {/* Left indicator - Call */}
                         {(employee.companyPhone || employee.personalPhone) && (
-                          <div className="ml-2 w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
-                            <Phone className="h-3 w-3 text-green-600" />
+                          <div className="flex items-center justify-center">
+                            <Phone className="h-4 w-4 text-green-500/60" />
                           </div>
                         )}
                         
                         {/* Right indicator - Message */}
-                        <div className="mr-2 w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center">
-                          <MessageCircle className="h-3 w-3 text-blue-600" />
+                        <div className="flex items-center justify-center">
+                          <MessageCircle className="h-4 w-4 text-blue-500/60" />
                         </div>
                       </div>
                       
