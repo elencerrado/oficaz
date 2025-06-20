@@ -210,35 +210,11 @@ export default function Documents() {
     }
   };
 
-  const handleViewDocument = async (id: number, filename: string) => {
-    try {
-      const response = await fetch(`/api/documents/${id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('View failed');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open in new tab for viewing
-      window.open(url, '_blank');
-      
-      // Clean up after a delay
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 1000);
-    } catch (error) {
-      toast({
-        title: 'Error al visualizar',
-        description: 'No se pudo abrir el documento.',
-        variant: 'destructive',
-      });
-    }
+  const handleViewDocument = (id: number, filename: string) => {
+    // Open PDF directly in new tab with token authentication
+    const token = localStorage.getItem('token');
+    const url = `/api/documents/${id}/download?token=${token}&view=true`;
+    window.open(url, '_blank');
   };
 
   const getFileIcon = (filename: string) => {
@@ -343,28 +319,30 @@ export default function Documents() {
 
       {/* Content Container */}
       <div className="flex-1 p-6 pt-0 space-y-6">
-        {/* Document Request Notification */}
+        {/* Document Request Notification - Compact */}
         {pendingRequest && !activeRequest && (
-          <Alert className="border-orange-200 bg-orange-50">
+          <Alert className="border-orange-200 bg-orange-50 py-3">
             <AlertCircle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="font-medium mb-1">Documento requerido</p>
-                  <p className="text-sm">{pendingRequest.message}</p>
-                  {pendingRequest.dueDate && (
-                    <p className="text-xs mt-1 flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Fecha límite: {format(new Date(pendingRequest.dueDate), 'd MMM yyyy', { locale: es })}
-                    </p>
-                  )}
+                  <div className="flex items-center space-x-3">
+                    <span className="font-medium text-sm">DNI:</span>
+                    <span className="text-sm">{pendingRequest.message}</span>
+                    {pendingRequest.dueDate && (
+                      <span className="text-xs text-orange-600 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {format(new Date(pendingRequest.dueDate), 'd MMM yyyy', { locale: es })}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Button
                   onClick={() => setActiveRequest(pendingRequest)}
-                  className="bg-orange-600 hover:bg-orange-700 text-white ml-4"
+                  className="bg-orange-600 hover:bg-orange-700 text-white ml-4 h-8"
                   size="sm"
                 >
-                  Subir documento
+                  Subir
                 </Button>
               </div>
             </AlertDescription>
@@ -474,62 +452,61 @@ export default function Documents() {
               
               return (
                 <Card key={document.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  <CardContent className="p-3">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         category === 'nominas' ? 'bg-green-100' :
                         category === 'contratos' ? 'bg-blue-100' : 'bg-gray-100'
                       }`}>
                         <FileIcon className={`${
                           category === 'nominas' ? 'text-green-600' :
                           category === 'contratos' ? 'text-blue-600' : 'text-gray-600'
-                        }`} size={24} />
+                        }`} size={20} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate mb-1">
-                          {document.originalName}
-                        </h3>
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs ${
-                              category === 'nominas' ? 'bg-green-100 text-green-700' :
-                              category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                            }`}
-                          >
-                            {category === 'nominas' ? 'Nómina' :
-                             category === 'contratos' ? 'Contrato' : 'Documento'}
-                          </Badge>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900 text-sm truncate">
+                              {document.originalName}
+                            </h3>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs px-2 py-0 ${
+                                  category === 'nominas' ? 'bg-green-100 text-green-700' :
+                                  category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                {category === 'nominas' ? 'Nómina' :
+                                 category === 'contratos' ? 'Contrato' : 'Documento'}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {formatFileSize(document.fileSize)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
+                            </p>
+                          </div>
+                          <div className="flex space-x-1 ml-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocument(document.id, document.originalName)}
+                              className="text-[#007AFF] border-[#007AFF] hover:bg-[#007AFF] hover:text-white h-8 px-2"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(document.id, document.originalName)}
+                              className="text-gray-600 border-gray-300 hover:bg-gray-50 h-8 px-2"
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {formatFileSize(document.fileSize)}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDocument(document.id, document.originalName)}
-                          className="text-[#007AFF] border-[#007AFF] hover:bg-[#007AFF] hover:text-white"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(document.id, document.originalName)}
-                          className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Descargar
-                        </Button>
                       </div>
                     </div>
                   </CardContent>

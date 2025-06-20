@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -556,72 +557,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If physical file doesn't exist but it's a demo document, serve a placeholder PDF
       if (!fs.existsSync(filePath) && (document.fileName.includes('nomina') || document.fileName.includes('contrato'))) {
-        // Create a simple PDF response for demo purposes
+        // Set headers for PDF viewing/downloading
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
         
-        // Send a minimal PDF header - browsers will handle this as a PDF
+        // If view parameter, display inline; otherwise download
+        if (req.query.view === 'true') {
+          res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+        } else {
+          res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+        }
+        
+        // Create a proper PDF with realistic content
+        const docType = document.fileName.includes('nomina') ? 'NÓMINA' : 'CONTRATO';
+        const currentDate = new Date().toLocaleDateString('es-ES');
+        
         const pdfContent = Buffer.from(`%PDF-1.4
 1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
+<< /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
 3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
-/Resources <<
-/Font <<
-/F1 5 0 R
->>
->>
->>
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
 endobj
 4 0 obj
-<<
-/Length 44
->>
+<< /Length 300 >>
 stream
 BT
-/F1 12 Tf
-100 700 Td
+/F1 18 Tf
+50 720 Td
+(${docType} - DOCUMENTO OFICIAL) Tj
+0 -30 Td
+/F2 12 Tf
 (${document.originalName}) Tj
+0 -30 Td
+0 -20 Td
+(Empleado: Juan Ramirez) Tj
+0 -20 Td
+(Empresa: Test Company S.L.) Tj
+0 -20 Td
+(Fecha: ${currentDate}) Tj
+0 -30 Td
+0 -20 Td
+(Este es un documento de prueba generado por Oficaz.) Tj
+0 -20 Td
+(Documento válido para demostraciones del sistema.) Tj
 ET
 endstream
 endobj
 5 0 obj
-<<
-/Type /Font
-/Subtype /Type1
-/BaseFont /Helvetica
->>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 xref
-0 6
+0 7
 0000000000 65535 f 
 0000000010 00000 n 
-0000000060 00000 n 
-0000000120 00000 n 
-0000000290 00000 n 
-0000000390 00000 n 
+0000000053 00000 n 
+0000000100 00000 n 
+0000000229 00000 n 
+0000000580 00000 n 
+0000000640 00000 n 
 trailer
-<<
-/Size 6
-/Root 1 0 R
->>
+<< /Size 7 /Root 1 0 R >>
 startxref
-470
+695
 %%EOF`);
         
         return res.send(pdfContent);
