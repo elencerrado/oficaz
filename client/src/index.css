@@ -296,10 +296,22 @@ body::after {
 /* Dialog content styling for consistency */
 [data-radix-dialog-content] {
   padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
 }
 
 [data-radix-dialog-title] {
   margin-bottom: 16px !important;
+}
+
+/* Force calendar centering within dialog */
+[data-radix-dialog-content] .rdp {
+  margin: 0 auto !important;
+  display: block !important;
+  position: relative !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
 }
 
 .font-inter {
