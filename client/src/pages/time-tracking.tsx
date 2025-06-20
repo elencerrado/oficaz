@@ -23,7 +23,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays } from 'date-fns';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -130,8 +130,14 @@ export default function TimeTracking() {
     );
   }
 
-  const sessionsList = sessions as any[];
-  const employeesList = employees as any[];
+  // Filter out admin users from employees and their sessions
+  const allEmployees = employees as any[];
+  const employeesList = allEmployees.filter((emp: any) => emp.role !== 'admin');
+  const sessionsList = (sessions as any[]).filter((session: any) => {
+    // Find the user info for this session
+    const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
+    return sessionUser?.role !== 'admin';
+  });
 
   // Get unique months from sessions
   const availableMonths = sessionsList.reduce((months: string[], session: any) => {
@@ -553,112 +559,236 @@ export default function TimeTracking() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSessions.map((session: any, index: number) => {
-                  const hours = calculateHours(session.clockIn, session.clockOut);
-                  const isActive = !session.clockOut;
-                  const isEditing = editingSession === session.id;
+                {(() => {
+                  if (filteredSessions.length === 0) return null;
                   
-                  return (
-                    <tr 
-                      key={session.id} 
-                      className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} ${isEditing ? 'bg-blue-50' : ''}`}
-                    >
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">
-                          {session.userName || 'Usuario Desconocido'}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {isEditing ? (
-                          <Input
-                            type="date"
-                            value={editData.date}
-                            onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
-                            className="w-32 h-8"
-                          />
-                        ) : (
-                          <div className="text-gray-700">
-                            {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                  // Sort sessions by date (most recent first)
+                  const sortedSessions = filteredSessions
+                    .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                  
+                  let currentWeekStart: Date | null = null;
+                  let previousWeekStart: Date | null = null;
+                  let currentMonth: string | null = null;
+                  let previousMonth: string | null = null;
+                  
+                  // Calculate weekly totals
+                  const calculateWeekTotal = (weekStart: Date) => {
+                    return sortedSessions
+                      .filter(session => {
+                        const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
+                        return sessionWeekStart.getTime() === weekStart.getTime();
+                      })
+                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                  };
+                  
+                  // Calculate monthly totals
+                  const calculateMonthTotal = (monthKey: string) => {
+                    return sortedSessions
+                      .filter(session => {
+                        const sessionDate = new Date(session.clockIn);
+                        const sessionMonthKey = format(sessionDate, 'yyyy-MM');
+                        return sessionMonthKey === monthKey;
+                      })
+                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                  };
+                  
+                  const result: JSX.Element[] = [];
+                  
+                  sortedSessions.forEach((session: any, index: number) => {
+                    const sessionDate = new Date(session.clockIn);
+                    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+                    const monthKey = format(sessionDate, 'yyyy-MM');
+                    
+                    // Check if this is a new week
+                    const isNewWeek = currentWeekStart === null || 
+                      weekStart.getTime() !== currentWeekStart.getTime();
+                    
+                    // Check if this is a new month
+                    const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+                    
+                    if (isNewWeek) {
+                      previousWeekStart = currentWeekStart;
+                      currentWeekStart = weekStart;
+                    }
+                    
+                    if (isNewMonth) {
+                      previousMonth = currentMonth;
+                      currentMonth = monthKey;
+                    }
+                    
+                    // Add month summary (only if it's a new month and not the first item)
+                    if (isNewMonth && index > 0 && previousMonth) {
+                      const monthTotal = calculateMonthTotal(previousMonth);
+                      const [year, month] = previousMonth.split('-');
+                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      
+                      result.push(
+                        <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
+                          <td colSpan={7} className="py-3 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize">
+                              Total {monthName}: {monthTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    // Add week summary (only if it's a new week and not the first item)
+                    if (isNewWeek && index > 0 && previousWeekStart) {
+                      const weekTotal = calculateWeekTotal(previousWeekStart);
+                      
+                      result.push(
+                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
+                          <td colSpan={7} className="py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    // Add session row
+                    const hours = calculateHours(session.clockIn, session.clockOut);
+                    const isActive = !session.clockOut;
+                    const isEditing = editingSession === session.id;
+                    
+                    result.push(
+                      <tr 
+                        key={session.id} 
+                        className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} ${isEditing ? 'bg-blue-50' : ''}`}
+                      >
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-gray-900">
+                            {session.userName || 'Usuario Desconocido'}
                           </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {isEditing ? (
-                          <Input
-                            type="time"
-                            value={editData.clockIn}
-                            onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                            className="w-24 h-8"
-                          />
-                        ) : (
-                          <div className="text-gray-700">
-                            {format(new Date(session.clockIn), 'HH:mm')}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="date"
+                              value={editData.date}
+                              onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
+                              className="w-32 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="time"
+                              value={editData.clockIn}
+                              onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+                              className="w-24 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {format(new Date(session.clockIn), 'HH:mm')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="time"
+                              value={editData.clockOut}
+                              onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+                              className="w-24 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-gray-900">
+                            {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
                           </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        {isEditing ? (
-                          <Input
-                            type="time"
-                            value={editData.clockOut}
-                            onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                            className="w-24 h-8"
-                          />
-                        ) : (
-                          <div className="text-gray-700">
-                            {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-medium text-gray-900">
-                          {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge 
-                          variant={isActive ? "default" : "secondary"}
-                          className={isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                        >
-                          {isActive ? 'Activo' : 'Completado'}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {isEditing ? (
-                          <div className="flex items-center justify-center space-x-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSaveSession(session.id)}
-                              disabled={updateSessionMutation.isPending}
-                              className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
-                            >
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleCancelEdit}
-                              disabled={updateSessionMutation.isPending}
-                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditSession(session)}
-                            className="text-oficaz-primary hover:text-oficaz-primary/80 h-8 w-8 p-0"
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge 
+                            variant={isActive ? "default" : "secondary"}
+                            className={isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
                           >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                            {isActive ? 'Activo' : 'Completado'}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {isEditing ? (
+                            <div className="flex items-center justify-center space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSaveSession(session.id)}
+                                disabled={updateSessionMutation.isPending}
+                                className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                disabled={updateSessionMutation.isPending}
+                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditSession(session)}
+                              className="text-oficaz-primary hover:text-oficaz-primary/80 h-8 w-8 p-0"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  });
+                  
+                  // Add final summaries for the last week and month
+                  if (sortedSessions.length > 0) {
+                    if (currentWeekStart) {
+                      const weekTotal = calculateWeekTotal(currentWeekStart);
+                      result.push(
+                        <tr key={`week-final-${currentWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
+                          <td colSpan={7} className="py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    if (currentMonth) {
+                      const monthTotal = calculateMonthTotal(currentMonth);
+                      const [year, month] = currentMonth.split('-');
+                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      
+                      result.push(
+                        <tr key={`month-final-${currentMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
+                          <td colSpan={7} className="py-3 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize">
+                              Total {monthName}: {monthTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  }
+                  
+                  return result;
+                })()}
               </tbody>
             </table>
             
