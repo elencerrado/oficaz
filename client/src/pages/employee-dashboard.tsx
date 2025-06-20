@@ -144,9 +144,13 @@ export default function EmployeeDashboard() {
   };
 
   // Get company alias from current URL or company data
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const urlParts = location.split('/').filter(part => part.length > 0);
   const companyAlias = urlParts[0] || company?.companyAlias || 'test';
+
+  const handleNavigation = (route: string) => {
+    setLocation(route);
+  };
 
   const menuItems = [
     { 
@@ -230,8 +234,8 @@ export default function EmployeeDashboard() {
         <div className="grid grid-cols-3 gap-6">
           {menuItems.map((item, index) => (
             <div key={index} className="flex flex-col items-center">
-              <a
-                href={item.route}
+              <button
+                onClick={() => handleNavigation(item.route)}
                 className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <item.icon className="h-12 w-12 text-white" />
@@ -242,7 +246,7 @@ export default function EmployeeDashboard() {
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}
-              </a>
+              </button>
               <span className="text-xs font-medium text-center text-white/90 leading-tight">
                 {item.title}
               </span>
