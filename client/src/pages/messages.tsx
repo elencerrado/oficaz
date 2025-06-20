@@ -12,7 +12,8 @@ import {
   MessageCircle,
   FileText,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Check
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -283,7 +284,30 @@ export default function Messages() {
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <p className="text-white font-medium">{employee.fullName}</p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-white font-medium">{employee.fullName}</p>
+                                {(() => {
+                                  // Get last message sent by admin/manager to this employee
+                                  const lastSentMessage = (messages as Message[] || [])
+                                    .filter(msg => msg.senderId === user?.id && msg.receiverId === employee.id)
+                                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+                                  
+                                  if (!lastSentMessage) return null;
+                                  
+                                  return (
+                                    <div className="flex items-center text-xs">
+                                      {lastSentMessage.isRead ? (
+                                        <div className="flex items-center text-green-400">
+                                          <Check className="h-3 w-3" />
+                                          <Check className="h-3 w-3 -ml-1" />
+                                        </div>
+                                      ) : (
+                                        <Check className="h-3 w-3 text-white/50" />
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                              </div>
                               <p className="text-white/70 text-sm">Empleado</p>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -355,11 +379,28 @@ export default function Messages() {
                     }`}
                   >
                     <p>{msg.content}</p>
-                    <p className={`text-xs mt-1 ${
+                    <div className={`flex items-center justify-between mt-1 ${
                       msg.senderId === user?.id ? 'text-blue-100' : 'text-white/70'
                     }`}>
-                      {format(new Date(msg.createdAt), 'HH:mm', { locale: es })}
-                    </p>
+                      <span className="text-xs">
+                        {format(new Date(msg.createdAt), 'HH:mm', { locale: es })}
+                      </span>
+                      {/* Status indicators for sent messages (admin/manager view only) */}
+                      {msg.senderId === user?.id && (user?.role === 'admin' || user?.role === 'manager') && (
+                        <div className="flex items-center ml-2">
+                          {msg.isRead ? (
+                            // Double check - Message read
+                            <div className="flex">
+                              <Check className="h-3 w-3 text-blue-200" />
+                              <Check className="h-3 w-3 text-blue-200 -ml-1" />
+                            </div>
+                          ) : (
+                            // Single check - Message delivered but not read
+                            <Check className="h-3 w-3 text-white/50" />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
