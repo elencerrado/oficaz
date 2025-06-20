@@ -250,9 +250,11 @@ body::after {
   }
 }
 
-/* Dialog overlay customization */
-[data-radix-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.3) !important; /* Reduced from default ~0.8 */
+/* Popover styling for calendar dropdowns */
+[data-radix-popover-content] {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid hsl(214, 32%, 91%) !important;
+  background: white !important;
 }
 
 /* Calendar fixed size and centering */

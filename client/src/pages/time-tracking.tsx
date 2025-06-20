@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Clock, 
@@ -338,38 +339,30 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Dialog open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
-                <DialogTrigger asChild>
+              <Popover open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
+                <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className="w-[200px] justify-center font-medium"
                   >
                     {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-sm" aria-describedby="day-selector-description">
-                  <DialogHeader>
-                    <DialogTitle className="text-center">Seleccionar día</DialogTitle>
-                    <p id="day-selector-description" className="sr-only">
-                      Utiliza el calendario para seleccionar un día específico para filtrar los fichajes
-                    </p>
-                  </DialogHeader>
-                  <div className="calendar-container">
-                    <Calendar
-                      mode="single"
-                      selected={currentDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setCurrentDate(date);
-                          setIsDayDialogOpen(false);
-                        }
-                      }}
-                      locale={es}
-                      className="rounded-md border"
-                    />
-                  </div>
-                </DialogContent>
-              </Dialog>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="single"
+                    selected={currentDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setCurrentDate(date);
+                        setIsDayDialogOpen(false);
+                      }
+                    }}
+                    locale={es}
+                    className="rounded-md border-0"
+                  />
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="outline"
                 size="sm"
@@ -440,8 +433,8 @@ export default function TimeTracking() {
 
           {dateFilter === 'custom' && (
             <div className="flex flex-col items-center justify-center mb-3 relative z-0">
-              <Dialog open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
-                <DialogTrigger asChild>
+              <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
+                <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className="w-[200px] justify-center font-medium"
@@ -451,37 +444,29 @@ export default function TimeTracking() {
                       : 'Seleccionar rango de fechas'
                     }
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-sm" aria-describedby="range-selector-description">
-                  <DialogHeader>
-                    <DialogTitle className="text-center">Seleccionar rango de fechas</DialogTitle>
-                    <p id="range-selector-description" className="sr-only">
-                      Utiliza el calendario para seleccionar un rango de fechas para filtrar los fichajes
-                    </p>
-                  </DialogHeader>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="center">
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="calendar-container">
-                      <Calendar
-                        mode="range"
-                        selected={{
-                          from: selectedStartDate || undefined,
-                          to: selectedEndDate || undefined,
-                        }}
-                        onSelect={(range) => {
-                          if (range?.from) {
-                            setSelectedStartDate(range.from);
-                            setStartDate(format(range.from, 'yyyy-MM-dd'));
-                          }
-                          if (range?.to) {
-                            setSelectedEndDate(range.to);
-                            setEndDate(format(range.to, 'yyyy-MM-dd'));
-                          }
-                        }}
-                        className="rounded-md border"
-                        disabled={(date) => date > new Date()}
-                        locale={es}
-                      />
-                    </div>
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: selectedStartDate || undefined,
+                        to: selectedEndDate || undefined,
+                      }}
+                      onSelect={(range) => {
+                        if (range?.from) {
+                          setSelectedStartDate(range.from);
+                          setStartDate(format(range.from, 'yyyy-MM-dd'));
+                        }
+                        if (range?.to) {
+                          setSelectedEndDate(range.to);
+                          setEndDate(format(range.to, 'yyyy-MM-dd'));
+                        }
+                      }}
+                      className="rounded-md border-0"
+                      disabled={(date) => date > new Date()}
+                      locale={es}
+                    />
                     <div className="flex gap-3 justify-center w-full">
                       <Button
                         variant="outline"
@@ -505,8 +490,8 @@ export default function TimeTracking() {
                       </Button>
                     </div>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
