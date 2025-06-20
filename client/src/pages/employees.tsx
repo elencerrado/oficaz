@@ -568,35 +568,48 @@ export default function Employees() {
                     <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none z-0">
                       {/* Call Action (Left side - revealed when swiping RIGHT) */}
                       <div 
-                        className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
+                        className="call-hint absolute left-0 top-0 bottom-0 flex items-center justify-center text-white"
                         style={{
-                          width: '200px',
+                          width: '80px',
                           backgroundColor: '#22c55e',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <Phone className="h-12 w-12 mb-3 text-white" />
-                        <span className="text-lg font-bold text-white">LLAMAR</span>
+                        <Phone className="h-6 w-6 text-white" />
                       </div>
                       
                       {/* Message Action (Right side - revealed when swiping LEFT) */}
                       <div 
-                        className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
+                        className="message-hint absolute right-0 top-0 bottom-0 flex items-center justify-center text-white"
                         style={{
-                          width: '200px',
+                          width: '80px',
                           backgroundColor: '#3b82f6',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <MessageCircle className="h-12 w-12 mb-3 text-white" />
-                        <span className="text-lg font-bold text-white">MENSAJE</span>
+                        <MessageCircle className="h-6 w-6 text-white" />
                       </div>
                     </div>
                     
                     {/* Main Content - Above hints */}
                     <div className="swipe-content bg-white relative z-20 transition-transform duration-300 ease-out">
+                      {/* Swipe Indicators */}
+                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none z-30">
+                        {/* Left indicator - Call */}
+                        {(employee.companyPhone || employee.personalPhone) && (
+                          <div className="ml-2 w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <Phone className="h-3 w-3 text-green-600" />
+                          </div>
+                        )}
+                        
+                        {/* Right indicator - Message */}
+                        <div className="mr-2 w-5 h-5 bg-blue-500/20 rounded-full flex items-center justify-center">
+                          <MessageCircle className="h-3 w-3 text-blue-600" />
+                        </div>
+                      </div>
+                      
                       <div className="p-4">
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-10 w-10">

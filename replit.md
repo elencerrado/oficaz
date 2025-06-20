@@ -117,11 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Sistema completo corregido: vacaciones, configuración y animaciones estilo iPhone perfectas
-  - Animaciones táctiles corregidas: hints aparecen en lado opuesto al swipe, por debajo del contenido
-  - Lógica natural: swipe derecha revela verde "LLAMAR" izquierda, swipe izquierda revela azul "MENSAJE" derecha
-  - Z-index perfecto: contenido encima (z-20), hints detrás (z-0) para efecto revelación auténtico
-  - Navegación directa al chat: swipe izquierda completo abre conversación específica con URL automática
+- June 20, 2025. Animaciones estilo iPhone Mail perfeccionadas para móvil
+  - Diseño móvil-first: iconos 6x6, hints estrechos (80px), sin texto para reducir altura
+  - Indicadores discretos: círculos translúcidos en extremos muestran acciones disponibles
+  - Movimiento amplificado: factor 0.8x del swipe para revelación completa como iPhone Mail
+  - Reset instantáneo: sin transiciones al soltar para swipes consecutivos fluidos
+  - Sensibilidad optimizada: umbral 5px para activación inmediata, 100px para ejecución
   - Corregidas todas las vacaciones según normativa española: Juan Pérez 0 días (recién incorporado), Juan Ramírez 24 días (9.6 meses trabajados), Admin 30 días (año completo)
   - Página de configuración completamente rediseñada: pestañas Empresa/Políticas/Mi Perfil con interfaz clara y campos bien visibles
   - Cambiado "Usuario" por "Configuración" en navegación para admin
