@@ -81,7 +81,7 @@ export default function Login() {
       const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
       // Always use the company alias from the URL if we're in a company-specific login
       const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
-      setLocation(`/${redirectAlias}/dashboard`);
+      setLocation(`/${redirectAlias}/inicio`);
     } catch (error: any) {
       console.error('Login failed:', error);
       // Show user-friendly message regardless of technical error

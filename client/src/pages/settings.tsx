@@ -91,7 +91,7 @@ export default function Settings() {
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-4">
-        <Link href={`/${companyAlias}/dashboard`}>
+        <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"

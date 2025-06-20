@@ -244,7 +244,7 @@ export default function VacationRequests() {
     >
       {/* Header - Fixed height */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/dashboard`}>
+        <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"

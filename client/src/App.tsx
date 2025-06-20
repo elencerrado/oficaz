@@ -128,7 +128,7 @@ function Router() {
       </Route>
 
       {/* Company-specific protected routes */}
-      <Route path="/:companyAlias/dashboard">
+      <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
           <PageWrapper>
             <DashboardRouter />
@@ -144,7 +144,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/horasempleados">
+      <Route path="/:companyAlias/usuario">
         <ProtectedRoute>
           <AppLayout>
             <PageWrapper>
@@ -154,7 +154,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/vacation-requests">
+      <Route path="/:companyAlias/vacaciones">
         <ProtectedRoute>
           <AppLayout>
             <VacationRequests />
@@ -162,7 +162,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/documents">
+      <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
           <AppLayout>
             <Documents />
@@ -170,7 +170,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/messages">
+      <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
           <AppLayout>
             <Messages />
@@ -217,7 +217,7 @@ function Router() {
 
       {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        {user && company ? <Redirect to={`/${company.companyAlias}/dashboard`} /> : <Redirect to="/login" />}
+        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}

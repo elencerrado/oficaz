@@ -54,7 +54,7 @@ export default function Register() {
         description: "Tu empresa y cuenta de administrador han sido creadas correctamente.",
       });
       
-      window.location.href = '/dashboard';
+      window.location.href = '/inicio';
     } catch (error: any) {
       console.error('Registration error:', error);
       toast({

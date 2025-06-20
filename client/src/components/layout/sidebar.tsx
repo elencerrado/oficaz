@@ -23,11 +23,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const companyAlias = company?.companyAlias || 'test';
   
   const navigation = [
-    { name: 'Panel Principal', href: `/${companyAlias}/dashboard`, icon: LayoutDashboard },
+    { name: 'Panel Principal', href: `/${companyAlias}/inicio`, icon: LayoutDashboard },
     { name: 'Control de Tiempo', href: `/${companyAlias}/time-tracking`, icon: Clock },
-    { name: 'Solicitudes de Vacaciones', href: `/${companyAlias}/vacation-requests`, icon: Calendar },
-    { name: 'Documentos', href: `/${companyAlias}/documents`, icon: FileText },
-    { name: 'Mensajes', href: `/${companyAlias}/messages`, icon: Mail, badge: unreadCount },
+    { name: 'Solicitudes de Vacaciones', href: `/${companyAlias}/vacaciones`, icon: Calendar },
+    { name: 'Documentos', href: `/${companyAlias}/documentos`, icon: FileText },
+    { name: 'Mensajes', href: `/${companyAlias}/mensajes`, icon: Mail, badge: unreadCount },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { name: 'Empleados', href: `/${companyAlias}/employees`, icon: Users }
     ] : []),

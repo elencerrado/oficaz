@@ -277,7 +277,7 @@ export default function Documents() {
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header - Employee Style */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/dashboard`}>
+        <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"

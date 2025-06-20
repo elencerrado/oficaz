@@ -7,10 +7,10 @@ export default function AccessDenied() {
   const params = useParams<{ companyAlias: string }>();
 
   useEffect(() => {
-    // Redirigir al dashboard después de 3 segundos
+    // Redirigir al inicio después de 3 segundos
     const timer = setTimeout(() => {
       const companyAlias = params.companyAlias || "test";
-      setLocation(`/${companyAlias}/dashboard`);
+      setLocation(`/${companyAlias}/inicio`);
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -34,7 +34,7 @@ export default function AccessDenied() {
             Ups, por aquí no hay nada
           </h1>
           <p className="text-gray-300 text-lg">
-            Serás redirigido al dashboard en unos segundos...
+            Serás redirigido al inicio en unos segundos...
           </p>
         </div>
 

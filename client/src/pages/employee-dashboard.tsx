@@ -151,7 +151,7 @@ export default function EmployeeDashboard() {
     { 
       icon: Clock, 
       title: 'Fichajes', 
-      route: `/${companyAlias}/horasempleados`,
+      route: `/${companyAlias}/usuario`,
       notification: false 
     },
     { 
@@ -163,14 +163,14 @@ export default function EmployeeDashboard() {
     { 
       icon: FileText, 
       title: 'Documentos', 
-      route: `/${companyAlias}/documents`,
+      route: `/${companyAlias}/documentos`,
       notification: hasDocumentRequests || hasNewDocuments,
       notificationType: hasDocumentRequests ? 'red' : 'green'
     },
     { 
       icon: Calendar, 
       title: 'Vacaciones', 
-      route: `/${companyAlias}/vacation-requests`,
+      route: `/${companyAlias}/vacaciones`,
       notification: false 
     },
     { 
@@ -182,7 +182,7 @@ export default function EmployeeDashboard() {
     { 
       icon: MessageSquare, 
       title: 'Mensajes', 
-      route: `/${companyAlias}/messages`,
+      route: `/${companyAlias}/mensajes`,
       notification: (unreadCount?.count || 0) > 0 
     },
   ];
