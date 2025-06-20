@@ -296,11 +296,11 @@ export default function VacationRequests() {
       </div>
 
       {/* Compact Vacation Summary */}
-      <div className="px-6 mb-6">
-        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+      <div className="px-6 mb-6 animate-in slide-in-from-bottom-4 fade-in duration-700">
+        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl animate-in slide-in-from-bottom-2 fade-in duration-500 delay-300">
           {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="text-center">
+          <div className="grid grid-cols-3 gap-4 mb-6 animate-in slide-in-from-left-4 fade-in duration-500 delay-500">
+            <div className="text-center animate-in slide-in-from-bottom-2 fade-in duration-500 delay-700">
               <div className="text-2xl font-light text-blue-300 mb-1 flex items-center justify-center gap-2">
                 {totalDays}
                 <Dialog>
@@ -343,30 +343,33 @@ export default function VacationRequests() {
               </div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
             </div>
-            <div className="text-center">
+            <div className="text-center animate-in slide-in-from-bottom-2 fade-in duration-500 delay-800">
               <div className="text-2xl font-light text-orange-300 mb-1">{usedDays}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Usados</div>
             </div>
-            <div className="text-center">
+            <div className="text-center animate-in slide-in-from-bottom-2 fade-in duration-500 delay-900">
               <div className="text-2xl font-light text-emerald-300 mb-1">{availableDays}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Disponibles</div>
             </div>
           </div>
           
           {/* Modern horizontal progress bar */}
-          <div className="space-y-3">
+          <div className="space-y-3 animate-in slide-in-from-bottom-4 fade-in duration-500 delay-1000">
             <div className="flex justify-between items-center">
               <span className="text-sm text-white/70 font-medium">Progreso anual</span>
               <span className="text-sm text-white/70 font-medium">{usagePercentage.toFixed(1)}%</span>
             </div>
             
             {/* Modern thick progress bar */}
-            <div className="relative">
+            <div className="relative animate-in slide-in-from-left-full fade-in duration-800 delay-1200">
               <div className="w-full bg-white/10 rounded-2xl h-6 overflow-hidden shadow-inner">
                 {/* Used days */}
                 <div 
-                  className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 h-full rounded-2xl transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
-                  style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                  className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 h-full rounded-2xl transition-all duration-1500 ease-out shadow-lg relative overflow-hidden animate-in slide-in-from-left-full fade-in delay-1400"
+                  style={{ 
+                    width: `${Math.min(usagePercentage, 100)}%`,
+                    animationDuration: '1000ms'
+                  }}
                 >
                   {/* Shimmer effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>

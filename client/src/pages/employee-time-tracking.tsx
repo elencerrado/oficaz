@@ -323,30 +323,32 @@ export default function EmployeeTimeTracking() {
 
       {/* 4-Month Hours Chart */}
       <div 
-        className="px-6 mb-8"
+        className="px-6 mb-8 animate-in slide-in-from-bottom-4 fade-in duration-700"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
-          <div className="flex items-center mb-6">
+        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl animate-in slide-in-from-bottom-2 fade-in duration-500 delay-300">
+          <div className="flex items-center mb-6 animate-in slide-in-from-left-4 fade-in duration-500 delay-500">
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
             <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
           </div>
           <div className="flex items-end justify-between h-24 space-x-3">
             {last4MonthsData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
+              <div key={index} className="flex-1 flex flex-col items-center animate-in slide-in-from-bottom-4 fade-in duration-500" style={{ animationDelay: `${700 + index * 150}ms` }}>
                 <div className="text-xs text-white/60 mb-2 capitalize">{data.month}</div>
                 <div className="text-xs text-white/80 font-medium mb-2">
                   {formatTotalHours(data.hours)}
                 </div>
                 <div className="w-full bg-white/10 rounded-t-lg overflow-hidden relative" style={{ height: '70px' }}>
                   <div 
-                    className={`w-full rounded-t-lg transition-all duration-700 absolute bottom-0 ${
+                    className={`w-full rounded-t-lg transition-all duration-1000 absolute bottom-0 animate-in slide-in-from-bottom-full fade-in ${
                       data.isCurrentMonth ? 'bg-gradient-to-t from-blue-500 to-blue-400 shadow-lg shadow-blue-500/30' : 'bg-white/40'
                     }`}
                     style={{ 
-                      height: `${Math.max((data.hours / maxHours) * 100, data.hours > 0 ? 15 : 0)}%`
+                      height: `${Math.max((data.hours / maxHours) * 100, data.hours > 0 ? 15 : 0)}%`,
+                      animationDelay: `${1000 + index * 200}ms`,
+                      animationDuration: '800ms'
                     }}
                   />
                 </div>
