@@ -180,7 +180,7 @@ export default function Employees() {
   ) : [];
 
   // Get role-based statistics
-  const totalEmployees = filteredEmployees.length;
+  const totalUsers = filteredEmployees.length;
   const adminCount = filteredEmployees.filter((emp: any) => emp.role === 'admin').length;
   const managerCount = filteredEmployees.filter((emp: any) => emp.role === 'manager').length;
   const employeeCount = filteredEmployees.filter((emp: any) => emp.role === 'employee').length;
@@ -267,50 +267,58 @@ export default function Employees() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-oficaz-primary" />
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
-                <p className="text-sm text-gray-500">Total Empleados</p>
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="h-5 w-5 lg:h-6 lg:w-6 text-oficaz-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl lg:text-2xl font-bold text-gray-900">{totalUsers}</p>
+                <p className="text-xs lg:text-sm text-gray-500">Total Usuarios</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
-                <p className="text-sm text-gray-500">Administradores</p>
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Shield className="h-5 w-5 lg:h-6 lg:w-6 text-red-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl lg:text-2xl font-bold text-gray-900">{adminCount}</p>
+                <p className="text-xs lg:text-sm text-gray-500">Administradores</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{managerCount}</p>
-                <p className="text-sm text-gray-500">Gerentes</p>
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Users className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl lg:text-2xl font-bold text-gray-900">{employeeCount}</p>
+                <p className="text-xs lg:text-sm text-gray-500">Solo Empleados</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{activeSessions}</p>
-                <p className="text-sm text-gray-500">Activos Hoy</p>
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="h-5 w-5 lg:h-6 lg:w-6 text-green-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl lg:text-2xl font-bold text-gray-900">{activeSessions}</p>
+                <p className="text-xs lg:text-sm text-gray-500">Activos Hoy</p>
               </div>
             </div>
           </CardContent>
@@ -337,7 +345,7 @@ export default function Employees() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Lista de Empleados ({filteredEmployees.length})
+            Lista de Empleados ({totalUsers})
           </CardTitle>
         </CardHeader>
         <CardContent>
