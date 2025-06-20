@@ -50,6 +50,8 @@ export default function Messages() {
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   
   const { user, company } = useAuth();
   const { toast } = useToast();
@@ -69,6 +71,65 @@ export default function Messages() {
       }
     }
   }, []);
+
+  // Handle mobile keyboard viewport adjustments
+  useEffect(() => {
+    let initialHeight = window.innerHeight;
+    
+    const handleViewportChange = () => {
+      // Use Visual Viewport API if available (more accurate for mobile keyboards)
+      if (window.visualViewport) {
+        const keyboardHeight = window.innerHeight - window.visualViewport.height;
+        if (keyboardHeight > 150) {
+          setIsKeyboardOpen(true);
+          // Scroll to keep input visible
+          setTimeout(() => {
+            if (messageInputRef.current) {
+              messageInputRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'end',
+                inline: 'nearest'
+              });
+            }
+          }, 100);
+        } else {
+          setIsKeyboardOpen(false);
+        }
+      } else {
+        // Fallback for browsers without Visual Viewport API
+        const currentHeight = window.innerHeight;
+        const heightDifference = initialHeight - currentHeight;
+        
+        if (heightDifference > 150) {
+          setIsKeyboardOpen(true);
+          setTimeout(() => {
+            if (messageInputRef.current) {
+              messageInputRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'end',
+                inline: 'nearest'
+              });
+            }
+          }, 100);
+        } else {
+          setIsKeyboardOpen(false);
+        }
+      }
+    };
+
+    // Listen to both resize and visual viewport changes
+    window.addEventListener('resize', handleViewportChange);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      }
+    };
+  }, [selectedChat]);
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
@@ -489,7 +550,7 @@ export default function Messages() {
           </div>
         ) : (
           // Chat View
-          <div className="flex-1 flex flex-col">
+          <div className={`flex-1 flex flex-col ${isKeyboardOpen ? 'pb-0' : ''}`}>
             {/* Chat Header */}
             <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3">
               <Button
@@ -569,9 +630,10 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className="p-4 bg-white/10 backdrop-blur-sm">
+            <div className={`p-4 bg-white/10 backdrop-blur-sm ${isKeyboardOpen ? 'pb-2' : ''}`}>
               <div className="flex space-x-2">
                 <Input
+                  ref={messageInputRef}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Escribe tu mensaje..."
@@ -581,6 +643,17 @@ export default function Messages() {
                       e.preventDefault();
                       handleSendMessage(selectedChat);
                     }
+                  }}
+                  onFocus={() => {
+                    // Immediate scroll for iOS and better UX
+                    setTimeout(() => {
+                      if (messageInputRef.current) {
+                        messageInputRef.current.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'center' 
+                        });
+                      }
+                    }, 100);
                   }}
                 />
                 <Button
