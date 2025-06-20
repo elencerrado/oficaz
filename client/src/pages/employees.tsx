@@ -456,37 +456,25 @@ export default function Employees() {
                         const threshold = 20;
                         const maxDistance = 80;
                         
-                        console.log(`Swipe: ${diff}, Threshold: ${threshold}`); // Debug
-                        
-                        if (diff < -threshold && (employee.companyPhone || employee.personalPhone)) {
-                          // Swipe left - show call action (verde)
-                          console.log('Activating CALL hint', callHint ? 'found' : 'not found');
-                          if (callHint) {
+                        if (diff > threshold) {
+                          // Swipe right - reveal call action on LEFT (verde)
+                          if (callHint && (employee.companyPhone || employee.personalPhone)) {
                             const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            console.log(`Call progress: ${progress}, opacity: ${Math.max(0.7, progress)}`);
-                            callHint.style.opacity = Math.max(0.7, progress).toString();
-                            callHint.style.transform = `translateX(${-100 + (progress * 80)}%)`;
-                            callHint.style.transition = 'none';
+                            callHint.style.opacity = Math.max(0.8, progress).toString();
                             callHint.style.visibility = 'visible';
                             callHint.style.display = 'flex';
-                            callHint.style.zIndex = '50';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
                             messageHint.style.visibility = 'hidden';
                           }
-                        } else if (diff > threshold) {
-                          // Swipe right - show message action (azul)
-                          console.log('Activating MESSAGE hint', messageHint ? 'found' : 'not found');
+                        } else if (diff < -threshold) {
+                          // Swipe left - reveal message action on RIGHT (azul)
                           if (messageHint) {
                             const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            console.log(`Message progress: ${progress}, opacity: ${Math.max(0.7, progress)}`);
-                            messageHint.style.opacity = Math.max(0.7, progress).toString();
-                            messageHint.style.transform = `translateX(${100 - (progress * 80)}%)`;
-                            messageHint.style.transition = 'none';
+                            messageHint.style.opacity = Math.max(0.8, progress).toString();
                             messageHint.style.visibility = 'visible';
                             messageHint.style.display = 'flex';
-                            messageHint.style.zIndex = '50';
                           }
                           if (callHint) {
                             callHint.style.opacity = '0';
@@ -539,11 +527,11 @@ export default function Employees() {
                       
                       if (Math.abs(diff) > 80) {
                         // Swipe action triggered
-                        if (diff < 0 && phone) {
-                          // Swipe left - Call
+                        if (diff > 0 && phone) {
+                          // Swipe right - Call (reveals left side)
                           window.location.href = `tel:${phone}`;
-                        } else if (diff > 0) {
-                          // Swipe right - Message (direct to conversation)
+                        } else if (diff < 0) {
+                          // Swipe left - Message (reveals right side)
                           window.location.href = `/test/mensajes?chat=${employee.id}`;
                         }
                       } else if (Math.abs(diff) < 10 && timeDiff < 500) {
@@ -572,18 +560,16 @@ export default function Employees() {
                       }
                     }}
                   >
-                    {/* Background Action Hints */}
-                    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none">
-                      {/* Call Action (Left side) */}
+                    {/* Background Action Hints - Behind content */}
+                    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none z-0">
+                      {/* Call Action (Left side - revealed when swiping RIGHT) */}
                       <div 
-                        className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white z-10"
+                        className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '100px',
+                          width: '120px',
                           backgroundColor: '#10b981',
                           boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
                           opacity: '0',
-                          transform: 'translateX(-100%)',
-                          transition: 'all 0.3s ease-out',
                           visibility: 'hidden'
                         }}
                       >
@@ -591,16 +577,14 @@ export default function Employees() {
                         <span className="text-sm font-bold text-white">LLAMAR</span>
                       </div>
                       
-                      {/* Message Action (Right side) */}
+                      {/* Message Action (Right side - revealed when swiping LEFT) */}
                       <div 
-                        className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white z-10"
+                        className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '100px',
+                          width: '120px',
                           backgroundColor: '#3b82f6',
                           boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
                           opacity: '0',
-                          transform: 'translateX(100%)',
-                          transition: 'all 0.3s ease-out',
                           visibility: 'hidden'
                         }}
                       >
@@ -609,8 +593,8 @@ export default function Employees() {
                       </div>
                     </div>
                     
-                    {/* Main Content */}
-                    <div className="swipe-content bg-white relative z-10 transition-transform duration-300 ease-out">
+                    {/* Main Content - Above hints */}
+                    <div className="swipe-content bg-white relative z-20 transition-transform duration-300 ease-out">
                       <div className="p-4">
                         <div className="flex items-center space-x-3">
                           <Avatar className="h-10 w-10">
