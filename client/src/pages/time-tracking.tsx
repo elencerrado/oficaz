@@ -347,11 +347,14 @@ export default function TimeTracking() {
                     {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-sm" aria-describedby="day-selector-description">
                   <DialogHeader>
-                    <DialogTitle>Seleccionar día</DialogTitle>
+                    <DialogTitle className="text-center">Seleccionar día</DialogTitle>
+                    <p id="day-selector-description" className="sr-only">
+                      Utiliza el calendario para seleccionar un día específico para filtrar los fichajes
+                    </p>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="flex justify-center">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -362,7 +365,7 @@ export default function TimeTracking() {
                         }
                       }}
                       locale={es}
-                      className="rounded-md border"
+                      className="rounded-md border mx-auto"
                     />
                   </div>
                 </DialogContent>
@@ -441,7 +444,7 @@ export default function TimeTracking() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="min-w-[200px] justify-center"
+                    className="w-[200px] justify-center font-medium"
                   >
                     {selectedStartDate && selectedEndDate
                       ? `${format(selectedStartDate, 'd MMM', { locale: es })} - ${format(selectedEndDate, 'd MMM yyyy', { locale: es })}`
@@ -449,11 +452,14 @@ export default function TimeTracking() {
                     }
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-sm" aria-describedby="range-selector-description">
                   <DialogHeader>
-                    <DialogTitle>Seleccionar rango de fechas</DialogTitle>
+                    <DialogTitle className="text-center">Seleccionar rango de fechas</DialogTitle>
+                    <p id="range-selector-description" className="sr-only">
+                      Utiliza el calendario para seleccionar un rango de fechas para filtrar los fichajes
+                    </p>
                   </DialogHeader>
-                  <div className="space-y-4">
+                  <div className="flex justify-center">
                     <Calendar
                       mode="range"
                       selected={{
@@ -470,7 +476,7 @@ export default function TimeTracking() {
                           setEndDate(format(range.to, 'yyyy-MM-dd'));
                         }
                       }}
-                      className="rounded-md border"
+                      className="rounded-md border mx-auto"
                       disabled={(date) => date > new Date()}
                       locale={es}
                     />

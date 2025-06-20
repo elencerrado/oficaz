@@ -255,19 +255,22 @@ body::after {
   background-color: rgba(0, 0, 0, 0.3) !important; /* Reduced from default ~0.8 */
 }
 
-/* Calendar fixed size */
+/* Calendar fixed size and centering */
 .rdp {
   width: 320px !important;
   height: 320px !important;
   min-height: 320px !important;
   max-height: 320px !important;
   overflow: hidden !important;
+  margin: 0 auto !important;
+  display: block !important;
 }
 
 .rdp-table {
   width: 100% !important;
   height: 100% !important;
   table-layout: fixed !important;
+  margin: 0 auto !important;
 }
 
 .rdp-tbody {
@@ -287,6 +290,16 @@ body::after {
   width: 45px !important;
   min-width: 45px !important;
   max-width: 45px !important;
+  text-align: center !important;
+}
+
+/* Dialog content styling for consistency */
+[data-radix-dialog-content] {
+  padding: 24px !important;
+}
+
+[data-radix-dialog-title] {
+  margin-bottom: 16px !important;
 }
 
 .font-inter {
