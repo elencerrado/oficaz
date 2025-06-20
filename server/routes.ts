@@ -532,6 +532,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/documents', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      // CRITICAL SECURITY: Users can ONLY see their own documents
+      // No exceptions for admin/manager - they should use separate endpoints if needed
       const documents = await storage.getDocumentsByUser(req.user!.id);
       res.json(documents);
     } catch (error: any) {
@@ -548,9 +550,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Document not found' });
       }
 
-      // Check if user has access to this document
-      if (document.userId !== req.user!.id && !['admin', 'manager'].includes(req.user!.role)) {
-        return res.status(403).json({ message: 'Access denied' });
+      // CRITICAL SECURITY: Users can ONLY access their own documents
+      // Admins and managers can only access documents of users in their company
+      if (document.userId !== req.user!.id) {
+        if (!['admin', 'manager'].includes(req.user!.role)) {
+          return res.status(403).json({ message: 'Access denied - not your document' });
+        }
+        
+        // For admin/manager, verify the document belongs to someone in their company
+        const documentOwner = await storage.getUser(document.userId);
+        if (!documentOwner || documentOwner.companyId !== req.user!.companyId) {
+          return res.status(403).json({ message: 'Access denied - document not in your company' });
+        }
       }
 
       const filePath = path.join(uploadDir, document.fileName);
@@ -649,9 +660,18 @@ startxref
         return res.status(404).json({ message: 'Document not found' });
       }
 
-      // Check if user has access to delete this document
-      if (document.userId !== req.user!.id && !['admin', 'manager'].includes(req.user!.role)) {
-        return res.status(403).json({ message: 'Access denied' });
+      // CRITICAL SECURITY: Users can ONLY delete their own documents
+      // Admins and managers can only delete documents of users in their company
+      if (document.userId !== req.user!.id) {
+        if (!['admin', 'manager'].includes(req.user!.role)) {
+          return res.status(403).json({ message: 'Access denied - not your document' });
+        }
+        
+        // For admin/manager, verify the document belongs to someone in their company
+        const documentOwner = await storage.getUser(document.userId);
+        if (!documentOwner || documentOwner.companyId !== req.user!.companyId) {
+          return res.status(403).json({ message: 'Access denied - document not in your company' });
+        }
       }
 
       const deleted = await storage.deleteDocument(id);
@@ -844,6 +864,31 @@ startxref
     } catch (error: any) {
       console.error('Error updating user profile:', error);
       res.status(500).json({ error: 'Error updating user profile' });
+    }
+  });
+
+  // Document notifications endpoints
+  app.get('/api/document-notifications', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const notifications = await storage.getDocumentNotificationsByUser(req.user!.id);
+      res.json(notifications);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/document-notifications/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const notification = await storage.markNotificationCompleted(id);
+      
+      if (!notification) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      
+      res.json(notification);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

@@ -37,8 +37,14 @@ export default function EmployeeDashboard() {
     refetchInterval: 60000,
   });
 
-  // Document requests only for Juan Ramirez
-  const hasDocumentRequests = user?.fullName === 'Juan Ramirez'; // Only for Juan Ramirez
+  // Get real document notifications from database
+  const { data: documentNotifications } = useQuery({
+    queryKey: ['/api/document-notifications'],
+    enabled: !!user,
+  });
+
+  // Check for pending notifications and new documents
+  const hasDocumentRequests = (documentNotifications as any[] || []).length > 0;
   const hasNewDocuments = (documents as any[] || []).length > 0;
 
   // Get recent work session for "last clock in" info

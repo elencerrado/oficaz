@@ -114,6 +114,19 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Document notifications table
+export const documentNotifications = pgTable("document_notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  documentType: text("document_type").notNull(), // 'DNI', 'passport', etc.
+  message: text("message").notNull(),
+  dueDate: timestamp("due_date"),
+  priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -154,6 +167,11 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertDocumentNotificationSchema = createInsertSchema(documentNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Auth schemas
 export const loginSchema = z.object({
   dniOrEmail: z.string().min(1, "DNI/NIE o email requerido"),
@@ -190,6 +208,7 @@ export type WorkSession = typeof workSessions.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type DocumentNotification = typeof documentNotifications.$inferSelect;
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type InsertCompanyConfig = z.infer<typeof insertCompanyConfigSchema>;
@@ -198,6 +217,7 @@ export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;

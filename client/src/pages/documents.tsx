@@ -53,17 +53,21 @@ export default function Documents() {
   const [match, params] = useRoute('/:companyAlias/documents');
   const companyAlias = params?.companyAlias;
 
-  // Document requests only for Juan Ramirez
-  const documentRequests: DocumentRequest[] = user?.fullName === 'Juan Ramirez' ? [
-    {
-      id: 1,
-      type: 'DNI',
-      message: 'Tu DNI está próximo a caducar. Por favor, sube una copia actualizada.',
-      dueDate: '2025-07-15',
-      priority: 'high',
-      completed: false
-    }
-  ] : [];
+  // Get real document notifications from database
+  const { data: documentNotifications } = useQuery({
+    queryKey: ['/api/document-notifications'],
+    enabled: !!user,
+  });
+
+  // Convert notifications to DocumentRequest format
+  const documentRequests: DocumentRequest[] = (documentNotifications as any[] || []).map((notification: any) => ({
+    id: notification.id,
+    type: notification.documentType,
+    message: notification.message,
+    dueDate: notification.dueDate,
+    priority: notification.priority,
+    completed: notification.isCompleted
+  }));
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ['/api/documents'],

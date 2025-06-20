@@ -3,8 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
-  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message,
-  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage
+  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message, DocumentNotification,
+  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -61,6 +61,11 @@ export interface IStorage {
   getMessagesByUser(userId: number): Promise<Message[]>;
   markMessageAsRead(id: number): Promise<Message | undefined>;
   getUnreadMessageCount(userId: number): Promise<number>;
+
+  // Document Notifications
+  getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]>;
+  createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
+  markNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -266,6 +271,32 @@ export class DrizzleStorage implements IStorage {
       .from(schema.messages)
       .where(and(eq(schema.messages.receiverId, userId), eq(schema.messages.isRead, false)));
     return result.count;
+  }
+
+  // Document Notifications methods
+  async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
+    return await db
+      .select()
+      .from(schema.documentNotifications)
+      .where(and(eq(schema.documentNotifications.userId, userId), eq(schema.documentNotifications.isCompleted, false)))
+      .orderBy(desc(schema.documentNotifications.createdAt));
+  }
+
+  async createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification> {
+    const [result] = await db
+      .insert(schema.documentNotifications)
+      .values(notification)
+      .returning();
+    return result;
+  }
+
+  async markNotificationCompleted(id: number): Promise<DocumentNotification | undefined> {
+    const [result] = await db
+      .update(schema.documentNotifications)
+      .set({ isCompleted: true })
+      .where(eq(schema.documentNotifications.id, id))
+      .returning();
+    return result;
   }
 }
 
