@@ -116,40 +116,7 @@ body::after {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Mobile keyboard handling */
-  .keyboard-open {
-    padding-bottom: 400px !important;
-    transition: padding-bottom 0.3s ease;
-  }
 
-  .message-input-container {
-    position: relative;
-    z-index: 1000;
-  }
-
-  /* Force scroll behavior on mobile for keyboard */
-  @media (max-width: 768px) {
-    body.keyboard-visible {
-      height: 100vh;
-      overflow-y: scroll;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Input container positioned at bottom when keyboard is open */
-    .message-input-container.keyboard-active {
-      position: fixed !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      z-index: 10000 !important;
-      margin: 0 !important;
-    }
-    
-    /* Adjust content area when keyboard is open */
-    .chat-content.keyboard-active {
-      padding-bottom: 80px !important;
-    }
-  }
 
   /* Page-level scroll */
   .page-scroll {

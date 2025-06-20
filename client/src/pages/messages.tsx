@@ -51,8 +51,7 @@ export default function Messages() {
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
   
   const { user, company } = useAuth();
   const { toast } = useToast();
@@ -73,57 +72,7 @@ export default function Messages() {
     }
   }, []);
 
-  // Handle mobile keyboard viewport adjustments
-  useEffect(() => {
-    let initialHeight = window.innerHeight;
-    
 
-    
-    const handleViewportChange = () => {
-      // Use Visual Viewport API if available (more accurate for mobile keyboards)
-      if (window.visualViewport) {
-        const calculatedKeyboardHeight = window.innerHeight - window.visualViewport.height;
-        if (calculatedKeyboardHeight > 150) {
-          setIsKeyboardOpen(true);
-          setKeyboardHeight(calculatedKeyboardHeight);
-          document.body.classList.add('keyboard-visible');
-        } else {
-          setIsKeyboardOpen(false);
-          setKeyboardHeight(0);
-          document.body.classList.remove('keyboard-visible');
-        }
-      } else {
-        // Fallback for browsers without Visual Viewport API
-        const currentHeight = window.innerHeight;
-        const heightDifference = initialHeight - currentHeight;
-        
-        if (heightDifference > 150) {
-          setIsKeyboardOpen(true);
-          setKeyboardHeight(heightDifference);
-          document.body.classList.add('keyboard-visible');
-        } else {
-          setIsKeyboardOpen(false);
-          setKeyboardHeight(0);
-          document.body.classList.remove('keyboard-visible');
-        }
-      }
-    };
-
-    // Listen to both resize and visual viewport changes
-    window.addEventListener('resize', handleViewportChange);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-    }
-
-    return () => {
-      window.removeEventListener('resize', handleViewportChange);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-      }
-      // Clean up body classes
-      document.body.classList.remove('keyboard-visible');
-    };
-  }, [selectedChat]);
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
@@ -544,7 +493,7 @@ export default function Messages() {
           </div>
         ) : (
           // Chat View
-          <div className={`flex-1 flex flex-col ${isKeyboardOpen ? 'pb-0' : ''}`}>
+          <div className="flex-1 flex flex-col">
             {/* Chat Header */}
             <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3">
               <Button
@@ -581,7 +530,7 @@ export default function Messages() {
             </div>
 
             {/* Messages */}
-            <div className={`flex-1 p-4 space-y-4 overflow-y-auto chat-content ${isKeyboardOpen ? 'keyboard-active' : ''}`}>
+            <div className="flex-1 p-4 space-y-4 overflow-y-auto">
               {getChatMessages(selectedChat).map(msg => (
                 <div
                   key={msg.id}
@@ -624,7 +573,7 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className={`p-4 bg-white/10 backdrop-blur-sm message-input-container ${isKeyboardOpen ? 'keyboard-active' : ''}`}>
+            <div className="p-4 bg-white/10 backdrop-blur-sm">
               <div className="flex space-x-2">
                 <Input
                   ref={messageInputRef}
@@ -639,29 +588,13 @@ export default function Messages() {
                     }
                   }}
                   onFocus={() => {
-                    // Wait for keyboard to appear, then calculate precise scroll
+                    // Simple scroll solution for mobile keyboard
                     setTimeout(() => {
-                      if (messageInputRef.current && window.visualViewport) {
-                        const inputRect = messageInputRef.current.getBoundingClientRect();
-                        const viewportHeight = window.visualViewport.height;
-                        const inputBottom = inputRect.bottom;
-                        
-                        // If input is below visible area, scroll to make it visible
-                        if (inputBottom > viewportHeight - 20) {
-                          const scrollAmount = inputBottom - viewportHeight + 80; // 80px buffer
-                          window.scrollBy({
-                            top: scrollAmount,
-                            behavior: 'smooth'
-                          });
-                        }
-                      } else {
-                        // Fallback - scroll to input element
-                        if (messageInputRef.current) {
-                          messageInputRef.current.scrollIntoView({ 
-                            behavior: 'smooth', 
-                            block: 'center'
-                          });
-                        }
+                      if (messageInputRef.current) {
+                        messageInputRef.current.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'center'
+                        });
                       }
                     }, 300);
                   }}
