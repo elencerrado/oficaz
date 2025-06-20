@@ -184,34 +184,19 @@ export default function Documents() {
     uploadMutation.mutate(file);
   };
 
-  const handleDownload = async (id: number, filename: string) => {
-    try {
-      const response = await fetch(`/api/documents/${id}/download`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Download failed');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      toast({
-        title: 'Error de descarga',
-        description: 'No se pudo descargar el archivo.',
-        variant: 'destructive',
-      });
-    }
+  const handleDownload = (id: number, filename: string) => {
+    // Create download link with token authentication  
+    const token = localStorage.getItem('token');
+    const url = `/api/documents/${id}/download?token=${token}`;
+    
+    // Create temporary link and trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const handleViewDocument = (id: number, filename: string) => {
@@ -470,10 +455,10 @@ export default function Documents() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 text-sm truncate">
+                            <h3 className="font-medium text-gray-900 text-sm leading-tight mb-1" title={document.originalName}>
                               {document.originalName}
                             </h3>
-                            <div className="flex items-center space-x-2 mt-1">
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
                               <Badge 
                                 variant="secondary" 
                                 className={`text-xs px-2 py-0 ${
@@ -487,10 +472,10 @@ export default function Documents() {
                               <span className="text-xs text-gray-500">
                                 {formatFileSize(document.fileSize)}
                               </span>
+                              <span className="text-xs text-gray-400">
+                                {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
+                              </span>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
-                            </p>
                           </div>
                           <div className="flex space-x-1 ml-2">
                             <Button
