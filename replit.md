@@ -117,7 +117,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Sistema de empleados completamente optimizado con experiencia móvil y desktop perfecta
+- June 20, 2025. Sistema de empleados completamente optimizado con experiencia móvil y desktop perfecta + llamadas Android
   - Swipe reducido 30%: límite 56px con activación a 35px para mejor control táctil
   - Estados en español con colores: activo (verde), inactivo (gris), de baja (rojo), vacaciones (azul)
   - Edición funcional: doble toque móvil y doble click desktop para modal de edición
@@ -135,6 +135,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Cambiado "Usuario" por "Configuración" en navegación para admin
   - Lista de empleados reorganizada: eliminados DNI, fechas, vacaciones; email/teléfono inteligente (corporativo primero)
   - Interacciones mejoradas: doble click/tap para editar, click simple en email/teléfono para acciones directas
+  - Llamadas por swipe Android: diálogo confirmación + múltiples métodos compatibilidad
 - June 20, 2025. Sistema completo de gestión de empleados para admin implementado
   - Modal de edición de empleados clickeable con todos los campos corporativos editables
   - Campo de estado del empleado: activo, inactivo, de baja, de vacaciones con badges visuales

@@ -295,34 +295,48 @@ export default function EmployeesSimple() {
                           const phone = employee.companyPhone || employee.personalPhone;
                           console.log(`RIGHT SWIPE CALL: ${phone}`);
                           
-                          // Simplified approach - always use the same method but with user interaction simulation
-                          const triggerCall = () => {
-                            // Create a proper user-initiated event
-                            const link = document.createElement('a');
-                            link.href = `tel:${phone}`;
-                            link.style.display = 'none';
-                            document.body.appendChild(link);
-                            
-                            // Add event listener to ensure it's treated as user interaction
-                            link.addEventListener('click', function() {
-                              console.log('Call link clicked successfully');
-                            });
-                            
-                            // Trigger with proper event
-                            link.click();
-                            
-                            // Clean up
-                            setTimeout(() => {
-                              if (document.body.contains(link)) {
-                                document.body.removeChild(link);
-                              }
-                            }, 500);
-                          };
+                          // Android-specific workaround: Show call confirmation
+                          const isAndroid = /Android/i.test(navigator.userAgent);
                           
-                          // Use requestAnimationFrame to ensure it's in the next frame
-                          requestAnimationFrame(() => {
-                            setTimeout(triggerCall, 100);
-                          });
+                          if (isAndroid) {
+                            // For Android: Show confirmation and direct dial
+                            if (confirm(`¿Llamar a ${employee.fullName}?\n${phone}`)) {
+                              // Try multiple methods for Android
+                              try {
+                                window.open(`tel:${phone}`, '_self');
+                              } catch (e) {
+                                try {
+                                  window.location.assign(`tel:${phone}`);
+                                } catch (e2) {
+                                  window.location.href = `tel:${phone}`;
+                                }
+                              }
+                            }
+                          } else {
+                            // For iOS and other platforms: Direct call
+                            const triggerCall = () => {
+                              const link = document.createElement('a');
+                              link.href = `tel:${phone}`;
+                              link.style.display = 'none';
+                              document.body.appendChild(link);
+                              
+                              link.addEventListener('click', function() {
+                                console.log('Call link clicked successfully');
+                              });
+                              
+                              link.click();
+                              
+                              setTimeout(() => {
+                                if (document.body.contains(link)) {
+                                  document.body.removeChild(link);
+                                }
+                              }, 500);
+                            };
+                            
+                            requestAnimationFrame(() => {
+                              setTimeout(triggerCall, 100);
+                            });
+                          }
                           
                         } else if (currentX < 0) {
                           console.log(`LEFT SWIPE MESSAGE: ${employee.id}`);
