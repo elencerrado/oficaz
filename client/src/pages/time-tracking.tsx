@@ -46,6 +46,7 @@ export default function TimeTracking() {
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
+  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     clockIn: '',
@@ -337,17 +338,35 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-center min-w-[200px] cursor-pointer hover:bg-gray-50 p-2 rounded relative">
-                <Input
-                  type="date"
-                  value={format(currentDate, 'yyyy-MM-dd')}
-                  onChange={(e) => setCurrentDate(new Date(e.target.value))}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-                <div className="font-medium pointer-events-none">
-                  {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
-                </div>
-              </div>
+              <Dialog open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[200px] justify-center font-medium"
+                  >
+                    {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Seleccionar día</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Calendar
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentDate(date);
+                          setIsDayDialogOpen(false);
+                        }
+                      }}
+                      locale={es}
+                      className="rounded-md border"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button
                 variant="outline"
                 size="sm"
