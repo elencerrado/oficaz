@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Base de datos restaurada y credenciales de acceso actualizadas
+  - Contraseñas de usuarios restablecidas tras reversión de base de datos
+  - Credenciales de acceso: admin@test.com / 123456 (admin)
+  - Empleados de prueba: juan.perez@test.com y j.ramirez@test.es / 123456
+  - Error de HTML anidado corregido en página de login (Link component)
+  - Sistema de autenticación verificado y funcionando correctamente
 - June 20, 2025. Sistema completo de exportación PDF e interfaz de filtros mejorada
   - PDF rediseñado sin líneas de tabla con formato limpio y profesional
   - Título "INFORME CONTROL HORARIO" alineado a la izquierda en azul
