@@ -364,7 +364,7 @@ export default function Employees() {
                   {/* Desktop/Tablet View */}
                   <div 
                     className="hidden sm:flex items-center justify-between p-4 cursor-pointer"
-                    onClick={() => handleEditEmployee(employee)}
+                    onDoubleClick={() => handleEditEmployee(employee)}
                   >
                     <div className="flex items-center space-x-4 flex-1">
                       <Avatar className="h-10 w-10">
@@ -375,12 +375,26 @@ export default function Employees() {
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 mb-1">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
+                          <span 
+                            className="flex items-center gap-1 hover:text-oficaz-primary cursor-pointer transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const email = employee.companyEmail || employee.personalEmail;
+                              if (email) window.location.href = `mailto:${email}`;
+                            }}
+                          >
                             <Mail className="h-3 w-3" />
                             {employee.companyEmail || employee.personalEmail || 'Sin email'}
                           </span>
                           {(employee.companyPhone || employee.personalPhone) && (
-                            <span className="flex items-center gap-1">
+                            <span 
+                              className="flex items-center gap-1 hover:text-oficaz-primary cursor-pointer transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const phone = employee.companyPhone || employee.personalPhone;
+                                if (phone) window.location.href = `tel:${phone}`;
+                              }}
+                            >
                               <Phone className="h-3 w-3" />
                               {employee.companyPhone || employee.personalPhone}
                             </span>
@@ -406,73 +420,149 @@ export default function Employees() {
                     </div>
                   </div>
 
-                  {/* Mobile View with Swipe Gestures */}
+                  {/* Mobile View with Swipe Gestures and iPhone-style Animation */}
                   <div 
-                    className="sm:hidden relative"
+                    className="sm:hidden relative overflow-hidden"
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
-                      e.currentTarget.setAttribute('data-start-x', touch.clientX.toString());
+                      const target = e.currentTarget;
+                      target.setAttribute('data-start-x', touch.clientX.toString());
+                      target.setAttribute('data-start-time', Date.now().toString());
+                      target.setAttribute('data-tap-count', '0');
+                    }}
+                    onTouchMove={(e) => {
+                      const touch = e.touches[0];
+                      const target = e.currentTarget;
+                      const startX = parseFloat(target.getAttribute('data-start-x') || '0');
+                      const currentX = touch.clientX;
+                      const diff = startX - currentX;
+                      const content = target.querySelector('.swipe-content') as HTMLElement;
+                      
+                      if (content && Math.abs(diff) > 10) {
+                        // Apply transform with smooth animation
+                        const maxSwipe = 80;
+                        const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
+                        content.style.transform = `translateX(${-constrainedDiff}px)`;
+                        content.style.transition = 'none';
+                        
+                        // Show action hints
+                        const callHint = target.querySelector('.call-hint') as HTMLElement;
+                        const messageHint = target.querySelector('.message-hint') as HTMLElement;
+                        
+                        if (diff > 20) {
+                          callHint.style.opacity = '1';
+                          messageHint.style.opacity = '0';
+                        } else if (diff < -20) {
+                          callHint.style.opacity = '0';
+                          messageHint.style.opacity = '1';
+                        } else {
+                          callHint.style.opacity = '0';
+                          messageHint.style.opacity = '0';
+                        }
+                      }
                     }}
                     onTouchEnd={(e) => {
-                      const startX = parseFloat(e.currentTarget.getAttribute('data-start-x') || '0');
+                      const target = e.currentTarget;
+                      const startX = parseFloat(target.getAttribute('data-start-x') || '0');
+                      const startTime = parseFloat(target.getAttribute('data-start-time') || '0');
                       const endX = e.changedTouches[0].clientX;
                       const diff = startX - endX;
+                      const timeDiff = Date.now() - startTime;
+                      const content = target.querySelector('.swipe-content') as HTMLElement;
                       const phone = employee.companyPhone || employee.personalPhone;
                       
-                      if (Math.abs(diff) > 50) { // Minimum swipe distance
+                      // Reset visual state
+                      if (content) {
+                        content.style.transform = 'translateX(0)';
+                        content.style.transition = 'transform 0.3s ease-out';
+                      }
+                      
+                      // Hide hints
+                      const callHint = target.querySelector('.call-hint') as HTMLElement;
+                      const messageHint = target.querySelector('.message-hint') as HTMLElement;
+                      if (callHint) callHint.style.opacity = '0';
+                      if (messageHint) messageHint.style.opacity = '0';
+                      
+                      if (Math.abs(diff) > 60) {
+                        // Swipe action
                         if (diff > 0 && phone) {
-                          // Swipe left - Call
                           window.location.href = `tel:${phone}`;
                         } else if (diff < 0) {
-                          // Swipe right - Message in app
-                          // Navigate to messages with this employee
                           window.location.href = `/test/mensajes?to=${employee.id}`;
                         }
-                      } else {
-                        // Tap - Edit employee
-                        handleEditEmployee(employee);
+                      } else if (Math.abs(diff) < 10 && timeDiff < 300) {
+                        // Handle tap vs double tap
+                        const currentTapCount = parseInt(target.getAttribute('data-tap-count') || '0');
+                        if (currentTapCount === 0) {
+                          target.setAttribute('data-tap-count', '1');
+                          setTimeout(() => {
+                            const finalTapCount = parseInt(target.getAttribute('data-tap-count') || '0');
+                            if (finalTapCount === 1) {
+                              // Single tap - no action for now
+                              target.setAttribute('data-tap-count', '0');
+                            }
+                          }, 300);
+                        } else {
+                          // Double tap - edit employee
+                          target.setAttribute('data-tap-count', '0');
+                          handleEditEmployee(employee);
+                        }
                       }
                     }}
                   >
-                    <div className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-oficaz-primary text-white">
-                            {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
-                            <div className="flex items-center gap-1">
-                              <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
-                                {employee.role === 'admin' ? 'A' : 
-                                 employee.role === 'manager' ? 'M' : 'E'}
-                              </Badge>
-                              <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
-                                {getStatusIcon(employee.status || 'active')}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="space-y-1 mt-1">
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <Mail className="h-3 w-3" />
-                              <span className="truncate">{employee.companyEmail || employee.personalEmail || 'Sin email'}</span>
-                            </div>
-                            {(employee.companyPhone || employee.personalPhone) && (
-                              <div className="flex items-center gap-1 text-sm text-oficaz-primary font-medium">
-                                <Phone className="h-3 w-3" />
-                                <span>{employee.companyPhone || employee.personalPhone}</span>
+                    {/* Background Action Hints */}
+                    <div className="absolute inset-0 flex">
+                      <div className="call-hint absolute left-0 top-0 bottom-0 w-20 bg-green-500 flex items-center justify-center text-white transition-opacity duration-200 opacity-0">
+                        <Phone className="h-5 w-5" />
+                      </div>
+                      <div className="message-hint absolute right-0 top-0 bottom-0 w-20 bg-blue-500 flex items-center justify-center text-white transition-opacity duration-200 opacity-0">
+                        <Mail className="h-5 w-5" />
+                      </div>
+                    </div>
+                    
+                    {/* Main Content */}
+                    <div className="swipe-content bg-white relative z-10 transition-transform duration-300 ease-out">
+                      <div className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-oficaz-primary text-white">
+                              {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
+                              <div className="flex items-center gap-1">
+                                <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
+                                  {employee.role === 'admin' ? 'A' : 
+                                   employee.role === 'manager' ? 'M' : 'E'}
+                                </Badge>
+                                <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
+                                  {getStatusIcon(employee.status || 'active')}
+                                </Badge>
                               </div>
-                            )}
+                            </div>
+                            <div className="space-y-1 mt-1">
+                              <div className="flex items-center gap-1 text-sm text-gray-500">
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate">{employee.companyEmail || employee.personalEmail || 'Sin email'}</span>
+                              </div>
+                              {(employee.companyPhone || employee.personalPhone) && (
+                                <div className="flex items-center gap-1 text-sm text-oficaz-primary font-medium">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{employee.companyPhone || employee.personalPhone}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-2 text-center">
+                          {(employee.companyPhone || employee.personalPhone) ? 
+                            '← Desliza para llamar | Desliza para mensaje → | Doble tap para editar' :
+                            'Doble tap para editar | Desliza → para mensaje'
+                          }
                         </div>
                       </div>
-                      {(employee.companyPhone || employee.personalPhone) && (
-                        <div className="text-xs text-gray-400 mt-2 text-center">
-                          ← Desliza para llamar | Desliza para mensaje →
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
