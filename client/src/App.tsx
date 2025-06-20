@@ -167,6 +167,16 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/:companyAlias/usuario">
+        <ProtectedRoute>
+          <AppLayout>
+            <PageWrapper>
+              <Settings />
+            </PageWrapper>
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/:companyAlias/vacaciones">
         <ProtectedRoute>
           <AppLayout>
