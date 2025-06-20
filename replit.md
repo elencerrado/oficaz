@@ -131,7 +131,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - API endpoints para actualizar suscripciones con validación de planes
   - Actualización automática de estadísticas e ingresos al cambiar planes
   - Página de acceso rápido temporal en /fast para testing sin credenciales
-  - Dropdown con todos los usuarios: Super Admin, Admin Test, Juan Pérez, Juan José Ramírez
+  - Dropdown con todos los usuarios: Super Admin, Admin Test, Marta Pérez, Juan José Ramírez
   - Botón en login normal para acceder al panel de testing rápido
 - June 20, 2025. Loading unificado y rendimiento vista empleado optimizado completamente
   - Loading limpio: solo logo Oficaz girando centrado, sin texto ni componentes duplicados
