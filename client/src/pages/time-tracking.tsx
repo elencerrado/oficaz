@@ -5,12 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { 
   Clock, 
-  Calendar, 
   Search, 
   Edit, 
   Users,
@@ -19,7 +16,9 @@ import {
   TrendingUp,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Check,
+  X
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -31,12 +30,11 @@ export default function TimeTracking() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for filters and pagination
+  // State for filters and editing
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [editingSession, setEditingSession] = useState<any>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     clockIn: '',
     clockOut: '',
@@ -57,15 +55,15 @@ export default function TimeTracking() {
 
   // Update session mutation
   const updateSessionMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('PATCH', `/api/work-sessions/${editingSession?.id}`, data),
+    mutationFn: ({ id, data }: { id: number; data: any }) => apiRequest('PATCH', `/api/work-sessions/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
       toast({
         title: 'Fichaje Actualizado',
         description: 'Los cambios se han guardado exitosamente.',
       });
-      setShowEditModal(false);
       setEditingSession(null);
+      setEditData({ clockIn: '', clockOut: '', date: '' });
     },
     onError: (error: any) => {
       toast({
@@ -78,26 +76,32 @@ export default function TimeTracking() {
 
   // Handle edit session
   const handleEditSession = (session: any) => {
-    setEditingSession(session);
+    setEditingSession(session.id);
     setEditData({
       clockIn: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
       clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '',
       date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
     });
-    setShowEditModal(true);
   };
 
   // Save edited session
-  const handleSaveSession = () => {
-    if (!editingSession) return;
-    
+  const handleSaveSession = (sessionId: number) => {
     const clockInDateTime = new Date(`${editData.date}T${editData.clockIn}:00`);
     const clockOutDateTime = editData.clockOut ? new Date(`${editData.date}T${editData.clockOut}:00`) : null;
     
     updateSessionMutation.mutate({
-      clockIn: clockInDateTime.toISOString(),
-      clockOut: clockOutDateTime?.toISOString() || null,
+      id: sessionId,
+      data: {
+        clockIn: clockInDateTime.toISOString(),
+        clockOut: clockOutDateTime?.toISOString() || null,
+      }
     });
+  };
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setEditingSession(null);
+    setEditData({ clockIn: '', clockOut: '', date: '' });
   };
 
   if (isLoading) {
@@ -147,7 +151,7 @@ export default function TimeTracking() {
     <div className="px-6 py-4 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Horas</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
         <p className="text-gray-500 mt-1">
           Administra todos los fichajes de empleados y genera reportes.
         </p>
@@ -223,7 +227,7 @@ export default function TimeTracking() {
       {/* Filters Section */}
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
             {/* Month Navigator */}
             <div className="flex items-center space-x-2">
               <Button
@@ -259,19 +263,21 @@ export default function TimeTracking() {
             {/* Employee Filter */}
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filtrar empleado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employeesList.map((employee: any) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="min-w-0 w-48">
+                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Filtrar empleado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los empleados</SelectItem>
+                    {employeesList.map((employee: any) => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Search */}
@@ -317,11 +323,12 @@ export default function TimeTracking() {
                 {filteredSessions.map((session: any, index: number) => {
                   const hours = calculateHours(session.clockIn, session.clockOut);
                   const isActive = !session.clockOut;
+                  const isEditing = editingSession === session.id;
                   
                   return (
                     <tr 
                       key={session.id} 
-                      className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                      className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'} ${isEditing ? 'bg-blue-50' : ''}`}
                     >
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">
@@ -329,19 +336,46 @@ export default function TimeTracking() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-700">
-                          {format(new Date(session.clockIn), 'dd/MM/yyyy')}
-                        </div>
+                        {isEditing ? (
+                          <Input
+                            type="date"
+                            value={editData.date}
+                            onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
+                            className="w-32 h-8"
+                          />
+                        ) : (
+                          <div className="text-gray-700">
+                            {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-700">
-                          {format(new Date(session.clockIn), 'HH:mm')}
-                        </div>
+                        {isEditing ? (
+                          <Input
+                            type="time"
+                            value={editData.clockIn}
+                            onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+                            className="w-24 h-8"
+                          />
+                        ) : (
+                          <div className="text-gray-700">
+                            {format(new Date(session.clockIn), 'HH:mm')}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="text-gray-700">
-                          {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
-                        </div>
+                        {isEditing ? (
+                          <Input
+                            type="time"
+                            value={editData.clockOut}
+                            onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+                            className="w-24 h-8"
+                          />
+                        ) : (
+                          <div className="text-gray-700">
+                            {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="font-medium text-gray-900">
@@ -357,14 +391,37 @@ export default function TimeTracking() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditSession(session)}
-                          className="text-oficaz-primary hover:text-oficaz-primary/80"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        {isEditing ? (
+                          <div className="flex items-center justify-center space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSaveSession(session.id)}
+                              disabled={updateSessionMutation.isPending}
+                              className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              disabled={updateSessionMutation.isPending}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditSession(session)}
+                            className="text-oficaz-primary hover:text-oficaz-primary/80 h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -380,60 +437,6 @@ export default function TimeTracking() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Edit Session Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Fichaje</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="date">Fecha</Label>
-              <Input
-                id="date"
-                type="date"
-                value={editData.date}
-                onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="clockIn">Hora de Entrada</Label>
-              <Input
-                id="clockIn"
-                type="time"
-                value={editData.clockIn}
-                onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="clockOut">Hora de Salida</Label>
-              <Input
-                id="clockOut"
-                type="time"
-                value={editData.clockOut}
-                onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-              />
-            </div>
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowEditModal(false)}
-                disabled={updateSessionMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleSaveSession}
-                disabled={updateSessionMutation.isPending}
-                className="bg-oficaz-primary hover:bg-oficaz-primary/90"
-              >
-                {updateSessionMutation.isPending ? 'Guardando...' : 'Guardar'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
