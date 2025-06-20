@@ -287,7 +287,9 @@ export default function VacationRequests() {
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-base font-medium text-white">{user?.fullName}</div>
+          <div className="text-white/70 text-xs">
+            {user?.fullName}
+          </div>
         </div>
       </div>
 

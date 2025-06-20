@@ -215,7 +215,7 @@ export default function Messages() {
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 pb-4">
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
@@ -228,8 +228,20 @@ export default function Messages() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          <h2 className="text-lg font-semibold text-white">{company?.name}</h2>
-          <p className="text-sm text-white/70">{user?.fullName}</p>
+          {company?.logoUrl ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="w-8 h-8 mb-1 rounded-full object-cover"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
+          <div className="text-white/70 text-xs">
+            {user?.fullName}
+          </div>
         </div>
       </div>
 

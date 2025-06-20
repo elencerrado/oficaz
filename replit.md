@@ -117,13 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Navegación admin optimizada y teclado móvil solucionado completamente
-  - Navegación fluida admin: unificado AppLayout para todas páginas, eliminado PageWrapper problemático
-  - Sidebar texto corregido: "Solicitudes de Vacaciones" → "Vacaciones"
-  - Distribución vertical mejorada: espaciado dinámico clamp() adaptable a altura ventana
-  - Botones sidebar responsivos: altura y padding ajustables según tamaño pantalla
+- June 20, 2025. Headers móvil empleado unificados y navegación admin optimizada
+  - Headers consistentes: fichajes, documentos, vacaciones, mensajes con tipografía y espaciado idénticos
+  - Empresa: text-sm font-medium, Empleado: text-white/70 text-xs, altura fija h-20
+  - Navegación fluida admin: eliminado PageWrapper de Inicio, Fichajes, Configuración y Control Tiempo
+  - Sidebar optimizado: "Vacaciones" texto corregido, distribución vertical clamp() responsiva
   - Teclado móvil solucionado: scroll suave simplificado sin posiciones fijas complejas
-  - Navegación consistente: Inicio, Fichajes, Mensajes, Documentos sin recargas completas
+  - AppLayout unificado: todas páginas admin navegan sin recargas completas de página
   - Diseño tipo ficha usuario: avatar circular, nombre, cargo, DNI, teléfono y email corporativo
   - Botón "Editar Datos Personales" centrado, modo edición con "Cancelar" rojo y "Guardar" verde
   - Campos editables: email personal, teléfono personal, dirección, contacto emergencia
