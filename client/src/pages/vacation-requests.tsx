@@ -128,7 +128,6 @@ export default function VacationRequests() {
         setSelectedEndDate(date);
       } else {
         toast({
-          title: 'Error',
           description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
           variant: 'destructive',
         });
@@ -148,7 +147,6 @@ export default function VacationRequests() {
 
     if (exceedsAvailable) {
       toast({
-        title: 'Error',
         description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
         variant: 'destructive',
       });
