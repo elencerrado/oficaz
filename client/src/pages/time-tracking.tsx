@@ -441,13 +441,20 @@ export default function TimeTracking() {
 
       {/* Filters Section */}
       <Card className="mb-4">
-        <CardContent className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* Employee Filter with integrated search */}
-            <div className="flex flex-col">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+            <Filter className="w-5 h-5 mr-2" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-end">
+            {/* Left side - Employee Filter */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Empleado</label>
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                 <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Filtrar empleado" />
+                  <SelectValue placeholder="Seleccionar empleado" />
                 </SelectTrigger>
                 <SelectContent>
                   <div className="p-2">
@@ -475,138 +482,153 @@ export default function TimeTracking() {
               </Select>
             </div>
 
-            {/* Date Filter */}
-            <div className="flex gap-2">
-              <Button
-                variant={dateFilter === 'today' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateFilter('today')}
-                className="flex-1"
-              >
-                Hoy
-              </Button>
-              
-              <Popover open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={dateFilter === 'day' ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Día
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={currentDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setCurrentDate(date);
-                        setDateFilter('day');
-                        setIsDayDialogOpen(false);
-                      }
-                    }}
-                    className="rounded-md border"
-                  />
-                </PopoverContent>
-              </Popover>
-
-              <Select 
-                value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : ''} 
-                onValueChange={(value) => {
-                  if (value) {
-                    const [year, month] = value.split('-');
-                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
-                    setDateFilter('month');
-                  }
-                }}
-              >
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Mes" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMonths.map((monthKey: string) => {
-                    const [year, month] = monthKey.split('-');
-                    const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-                    return (
-                      <SelectItem key={monthKey} value={monthKey}>
-                        {format(monthDate, 'MMMM yyyy', { locale: es })}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-
-              <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={dateFilter === 'custom' ? 'default' : 'outline'}
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Rango
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-4" align="start">
-                  <div className="space-y-4">
-                    <div className="text-sm font-medium text-center">
-                      Seleccionar rango de fechas
-                    </div>
+            {/* Right side - Date Filters */}
+            <div className="flex flex-col space-y-2">
+              <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Button
+                  variant={dateFilter === 'today' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDateFilter('today')}
+                  className="h-10"
+                >
+                  Hoy
+                </Button>
+                
+                <Popover open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={dateFilter === 'day' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-10"
+                    >
+                      Día
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      mode="range"
-                      selected={{
-                        from: selectedStartDate || undefined,
-                        to: selectedEndDate || undefined
-                      }}
-                      onSelect={(range) => {
-                        if (range?.from) {
-                          setSelectedStartDate(range.from);
-                          setStartDate(format(range.from, 'yyyy-MM-dd'));
-                        } else {
-                          setSelectedStartDate(null);
-                          setStartDate('');
-                        }
-                        
-                        if (range?.to) {
-                          setSelectedEndDate(range.to);
-                          setEndDate(format(range.to, 'yyyy-MM-dd'));
-                        } else if (range?.from && !range?.to) {
-                          setSelectedEndDate(null);
-                          setEndDate('');
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentDate(date);
+                          setDateFilter('day');
+                          setIsDayDialogOpen(false);
                         }
                       }}
                       className="rounded-md border"
-                      numberOfMonths={2}
                     />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => {
-                          setDateFilter('custom');
-                          setIsRangeDialogOpen(false);
+                  </PopoverContent>
+                </Popover>
+
+                <Select 
+                  value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : ''} 
+                  onValueChange={(value) => {
+                    if (value) {
+                      const [year, month] = value.split('-');
+                      setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                      setDateFilter('month');
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMonths.map((monthKey: string) => {
+                      const [year, month] = monthKey.split('-');
+                      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                      return (
+                        <SelectItem key={monthKey} value={monthKey}>
+                          {format(monthDate, 'MMMM yyyy', { locale: es })}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+
+                <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={dateFilter === 'custom' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-10"
+                    >
+                      Rango
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-4" align="end">
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-center">
+                        Seleccionar rango de fechas
+                      </div>
+                      <div className="text-xs text-gray-500 text-center">
+                        Haz clic en una fecha de inicio y luego en una fecha de fin
+                      </div>
+                      <Calendar
+                        mode="range"
+                        selected={{
+                          from: selectedStartDate || undefined,
+                          to: selectedEndDate || undefined
                         }}
-                        className="flex-1"
-                        disabled={!startDate && !endDate}
-                      >
-                        Aplicar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setStartDate('');
-                          setEndDate('');
-                          setSelectedStartDate(null);
-                          setSelectedEndDate(null);
-                          setIsRangeDialogOpen(false);
+                        onSelect={(range) => {
+                          if (range?.from) {
+                            setSelectedStartDate(range.from);
+                            setStartDate(format(range.from, 'yyyy-MM-dd'));
+                          }
+                          if (range?.to) {
+                            setSelectedEndDate(range.to);
+                            setEndDate(format(range.to, 'yyyy-MM-dd'));
+                          }
+                          if (!range) {
+                            setSelectedStartDate(null);
+                            setSelectedEndDate(null);
+                            setStartDate('');
+                            setEndDate('');
+                          }
                         }}
-                        className="flex-1"
-                      >
-                        Limpiar
-                      </Button>
+                        className="rounded-md border"
+                        numberOfMonths={1}
+                        showOutsideDays={false}
+                      />
+                      {(selectedStartDate || selectedEndDate) && (
+                        <div className="text-xs text-center text-gray-600">
+                          {selectedStartDate && (
+                            <div>Desde: {format(selectedStartDate, 'dd/MM/yyyy', { locale: es })}</div>
+                          )}
+                          {selectedEndDate && (
+                            <div>Hasta: {format(selectedEndDate, 'dd/MM/yyyy', { locale: es })}</div>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            setDateFilter('custom');
+                            setIsRangeDialogOpen(false);
+                          }}
+                          className="flex-1"
+                          disabled={!selectedStartDate}
+                        >
+                          Aplicar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setStartDate('');
+                            setEndDate('');
+                            setSelectedStartDate(null);
+                            setSelectedEndDate(null);
+                          }}
+                          className="flex-1"
+                        >
+                          Limpiar
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
         </CardContent>
