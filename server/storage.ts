@@ -223,9 +223,11 @@ export class DrizzleStorage implements IStorage {
       totalHours: schema.workSessions.totalHours,
       status: schema.workSessions.status,
       createdAt: schema.workSessions.createdAt,
+      userName: schema.users.fullName,
     }).from(schema.workSessions)
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
-      .where(eq(schema.users.companyId, companyId));
+      .where(eq(schema.users.companyId, companyId))
+      .orderBy(desc(schema.workSessions.createdAt));
   }
 
   // Vacation Requests

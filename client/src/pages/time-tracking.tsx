@@ -1,86 +1,218 @@
-import { useQuery } from '@tanstack/react-query';
-import { ClockWidget } from '@/components/time-tracking/clock-widget';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { 
+  Clock, 
+  Calendar, 
+  Search, 
+  Edit, 
+  Users,
+  Filter,
+  CalendarDays,
+  TrendingUp,
+  Download,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TimeTracking() {
-  const { data: sessions, isLoading } = useQuery({
-    queryKey: ['/api/work-sessions'],
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // State for filters and pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState('all');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [editingSession, setEditingSession] = useState<any>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState({
+    clockIn: '',
+    clockOut: '',
+    date: '',
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+  // Load company work sessions for admin/manager
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['/api/work-sessions/company'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
   });
+
+  // Load employees for filter dropdown
+  const { data: employees = [] } = useQuery({
+    queryKey: ['/api/employees'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+  });
+
+  // Update session mutation
+  const updateSessionMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('PATCH', `/api/work-sessions/${editingSession?.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      toast({
+        title: 'Fichaje Actualizado',
+        description: 'Los cambios se han guardado exitosamente.',
+      });
+      setShowEditModal(false);
+      setEditingSession(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo actualizar el fichaje.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handle edit session
+  const handleEditSession = (session: any) => {
+    setEditingSession(session);
+    setEditData({
+      clockIn: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
+      clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '',
+      date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
+    });
+    setShowEditModal(true);
+  };
+
+  // Save edited session
+  const handleSaveSession = () => {
+    if (!editingSession) return;
+    
+    const clockInDateTime = new Date(`${editData.date}T${editData.clockIn}:00`);
+    const clockOutDateTime = editData.clockOut ? new Date(`${editData.date}T${editData.clockOut}:00`) : null;
+    
+    updateSessionMutation.mutate({
+      clockIn: clockInDateTime.toISOString(),
+      clockOut: clockOutDateTime?.toISOString() || null,
+    });
+  };
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="px-6 py-4">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-64 bg-gray-200 rounded-lg"></div>
+          <div className="h-16 bg-gray-200 rounded-lg"></div>
           <div className="h-96 bg-gray-200 rounded-lg"></div>
         </div>
       </div>
     );
   }
 
+  const sessionsList = sessions as any[];
+  const employeesList = employees as any[];
+
+  // Filter sessions based on search and selected employee and month
+  const filteredSessions = sessionsList.filter((session: any) => {
+    const sessionDate = new Date(session.clockIn);
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    
+    const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
+    const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMonth = sessionDate >= monthStart && sessionDate <= monthEnd;
+    
+    return matchesEmployee && matchesSearch && matchesMonth;
+  });
+
+  // Calculate totals
+  const calculateHours = (clockIn: string, clockOut: string | null) => {
+    if (!clockOut) return 0;
+    const start = new Date(clockIn);
+    const end = new Date(clockOut);
+    return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  };
+
+  const totalHours = filteredSessions.reduce((total: number, session: any) => {
+    return total + calculateHours(session.clockIn, session.clockOut);
+  }, 0);
+
+  const totalSessions = filteredSessions.length;
+  const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
+
   return (
-    <div className="p-6 min-h-screen bg-gray-50">
+    <div className="px-6 py-4 min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Time Tracking</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Horas</h1>
         <p className="text-gray-500 mt-1">
-          Track your work hours and view your time history.
+          Administra todos los fichajes de empleados y genera reportes.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Weekly Summary */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="text-oficaz-primary" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">This Week</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.weekHours || '0.0'}h
+                <p className="text-sm text-gray-500">Total Horas</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {totalHours.toFixed(1)}h
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Today Summary */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Clock className="text-oficaz-success" />
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Today</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {stats?.todayHours || '0.0'}h
+                <p className="text-sm text-gray-500">Fichajes</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {totalSessions}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Current Status */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className={`w-3 h-3 rounded-full ${
-                stats?.currentSession ? 'bg-oficaz-success animate-pulse-green' : 'bg-gray-400'
-              }`}></div>
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
+              </div>
               <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {stats?.currentSession ? 'Clocked In' : 'Not Working'}
+                <p className="text-sm text-gray-500">Completados</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {completedSessions}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Promedio Día</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {completedSessions > 0 ? (totalHours / completedSessions).toFixed(1) : '0.0'}h
                 </p>
               </div>
             </div>
@@ -88,58 +220,220 @@ export default function TimeTracking() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Clock Widget */}
-        <div>
-          <ClockWidget />
-        </div>
-
-        {/* Time History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Time History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {sessions?.length > 0 ? (
-                sessions.map((session: any) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {format(new Date(session.createdAt), 'MMM d, yyyy')}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {format(new Date(session.clockIn), 'h:mm a')} - {
-                          session.clockOut 
-                            ? format(new Date(session.clockOut), 'h:mm a')
-                            : 'In Progress'
-                        }
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
-                        {session.totalHours ? `${parseFloat(session.totalHours).toFixed(1)}h` : 'Active'}
-                      </p>
-                      <Badge 
-                        variant={session.status === 'active' ? 'default' : 'secondary'}
-                        className={session.status === 'active' ? 'bg-oficaz-primary' : ''}
-                      >
-                        {session.status === 'active' ? 'In Progress' : 'Complete'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Clock className="mx-auto mb-4" size={48} />
-                  <p>No time entries yet</p>
-                  <p className="text-sm">Clock in to start tracking your time</p>
-                </div>
-              )}
+      {/* Filters Section */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Month Navigator */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="text-center min-w-[160px]">
+                <p className="font-medium text-gray-900">
+                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentMonth(new Date())}
+              >
+                Hoy
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            <div className="flex-1"></div>
+
+            {/* Employee Filter */}
+            <div className="flex items-center space-x-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los empleados</SelectItem>
+                  {employeesList.map((employee: any) => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar empleado..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-48"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sessions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Fichajes ({filteredSessions.length})</span>
+            <Button variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Entrada</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Salida</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Horas</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Estado</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSessions.map((session: any, index: number) => {
+                  const hours = calculateHours(session.clockIn, session.clockOut);
+                  const isActive = !session.clockOut;
+                  
+                  return (
+                    <tr 
+                      key={session.id} 
+                      className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900">
+                          {session.userName || 'Usuario Desconocido'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-gray-700">
+                          {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-gray-700">
+                          {format(new Date(session.clockIn), 'HH:mm')}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-gray-700">
+                          {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-gray-900">
+                          {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge 
+                          variant={isActive ? "default" : "secondary"}
+                          className={isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
+                        >
+                          {isActive ? 'Activo' : 'Completado'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSession(session)}
+                          className="text-oficaz-primary hover:text-oficaz-primary/80"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            
+            {filteredSessions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No se encontraron fichajes para los filtros seleccionados.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Session Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Fichaje</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="date">Fecha</Label>
+              <Input
+                id="date"
+                type="date"
+                value={editData.date}
+                onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="clockIn">Hora de Entrada</Label>
+              <Input
+                id="clockIn"
+                type="time"
+                value={editData.clockIn}
+                onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="clockOut">Hora de Salida</Label>
+              <Input
+                id="clockOut"
+                type="time"
+                value={editData.clockOut}
+                onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowEditModal(false)}
+                disabled={updateSessionMutation.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSaveSession}
+                disabled={updateSessionMutation.isPending}
+                className="bg-oficaz-primary hover:bg-oficaz-primary/90"
+              >
+                {updateSessionMutation.isPending ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
