@@ -52,6 +52,7 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const { user, company } = useAuth();
   const { toast } = useToast();
@@ -81,16 +82,14 @@ export default function Messages() {
     const handleViewportChange = () => {
       // Use Visual Viewport API if available (more accurate for mobile keyboards)
       if (window.visualViewport) {
-        const keyboardHeight = window.innerHeight - window.visualViewport.height;
-        if (keyboardHeight > 150) {
+        const calculatedKeyboardHeight = window.innerHeight - window.visualViewport.height;
+        if (calculatedKeyboardHeight > 150) {
           setIsKeyboardOpen(true);
+          setKeyboardHeight(calculatedKeyboardHeight);
           document.body.classList.add('keyboard-visible');
-          // Simple scroll approach
-          setTimeout(() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          }, 100);
         } else {
           setIsKeyboardOpen(false);
+          setKeyboardHeight(0);
           document.body.classList.remove('keyboard-visible');
         }
       } else {
@@ -100,12 +99,11 @@ export default function Messages() {
         
         if (heightDifference > 150) {
           setIsKeyboardOpen(true);
+          setKeyboardHeight(heightDifference);
           document.body.classList.add('keyboard-visible');
-          setTimeout(() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-          }, 100);
         } else {
           setIsKeyboardOpen(false);
+          setKeyboardHeight(0);
           document.body.classList.remove('keyboard-visible');
         }
       }
@@ -266,9 +264,7 @@ export default function Messages() {
   }
 
   return (
-    <div className={`min-h-screen bg-employee-gradient text-white flex flex-col ${isKeyboardOpen ? 'pb-96' : ''}`} style={{
-      paddingBottom: isKeyboardOpen ? '400px' : '0px'
-    }}>
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-4">
         <Link href={`/${companyAlias}/inicio`}>
@@ -585,7 +581,7 @@ export default function Messages() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div className={`flex-1 p-4 space-y-4 overflow-y-auto chat-content ${isKeyboardOpen ? 'keyboard-active' : ''}`}>
               {getChatMessages(selectedChat).map(msg => (
                 <div
                   key={msg.id}
@@ -628,7 +624,7 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className={`p-4 bg-white/10 backdrop-blur-sm message-input-container ${isKeyboardOpen ? 'pb-2 message-input-focused' : ''}`}>
+            <div className={`p-4 bg-white/10 backdrop-blur-sm message-input-container ${isKeyboardOpen ? 'keyboard-active' : ''}`}>
               <div className="flex space-x-2">
                 <Input
                   ref={messageInputRef}
@@ -643,24 +639,31 @@ export default function Messages() {
                     }
                   }}
                   onFocus={() => {
-                    // Simple and direct scroll approach
+                    // Wait for keyboard to appear, then calculate precise scroll
                     setTimeout(() => {
-                      // Force scroll to bottom of page
-                      window.scrollTo(0, document.body.scrollHeight);
-                      
-                      // Also try scrollIntoView as backup
-                      if (messageInputRef.current) {
-                        messageInputRef.current.scrollIntoView({ 
-                          behavior: 'instant', 
-                          block: 'end'
-                        });
+                      if (messageInputRef.current && window.visualViewport) {
+                        const inputRect = messageInputRef.current.getBoundingClientRect();
+                        const viewportHeight = window.visualViewport.height;
+                        const inputBottom = inputRect.bottom;
+                        
+                        // If input is below visible area, scroll to make it visible
+                        if (inputBottom > viewportHeight - 20) {
+                          const scrollAmount = inputBottom - viewportHeight + 80; // 80px buffer
+                          window.scrollBy({
+                            top: scrollAmount,
+                            behavior: 'smooth'
+                          });
+                        }
+                      } else {
+                        // Fallback - scroll to input element
+                        if (messageInputRef.current) {
+                          messageInputRef.current.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center'
+                          });
+                        }
                       }
-                    }, 200);
-                    
-                    // Second attempt with more delay for keyboard animation
-                    setTimeout(() => {
-                      window.scrollTo(0, document.body.scrollHeight);
-                    }, 500);
+                    }, 300);
                   }}
                 />
                 <Button

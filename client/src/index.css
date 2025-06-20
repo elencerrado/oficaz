@@ -135,9 +135,19 @@ body::after {
       -webkit-overflow-scrolling: touch;
     }
     
-    .message-input-focused {
-      transform: translateY(-100px);
-      transition: transform 0.3s ease;
+    /* Input container positioned at bottom when keyboard is open */
+    .message-input-container.keyboard-active {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 10000 !important;
+      margin: 0 !important;
+    }
+    
+    /* Adjust content area when keyboard is open */
+    .chat-content.keyboard-active {
+      padding-bottom: 80px !important;
     }
   }
 
