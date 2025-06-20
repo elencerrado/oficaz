@@ -76,24 +76,22 @@ export default function Messages() {
   useEffect(() => {
     let initialHeight = window.innerHeight;
     
+
+    
     const handleViewportChange = () => {
       // Use Visual Viewport API if available (more accurate for mobile keyboards)
       if (window.visualViewport) {
         const keyboardHeight = window.innerHeight - window.visualViewport.height;
         if (keyboardHeight > 150) {
           setIsKeyboardOpen(true);
-          // Scroll to keep input visible
+          document.body.classList.add('keyboard-visible');
+          // Simple scroll approach
           setTimeout(() => {
-            if (messageInputRef.current) {
-              messageInputRef.current.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'end',
-                inline: 'nearest'
-              });
-            }
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
           }, 100);
         } else {
           setIsKeyboardOpen(false);
+          document.body.classList.remove('keyboard-visible');
         }
       } else {
         // Fallback for browsers without Visual Viewport API
@@ -102,17 +100,13 @@ export default function Messages() {
         
         if (heightDifference > 150) {
           setIsKeyboardOpen(true);
+          document.body.classList.add('keyboard-visible');
           setTimeout(() => {
-            if (messageInputRef.current) {
-              messageInputRef.current.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'end',
-                inline: 'nearest'
-              });
-            }
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
           }, 100);
         } else {
           setIsKeyboardOpen(false);
+          document.body.classList.remove('keyboard-visible');
         }
       }
     };
@@ -128,6 +122,8 @@ export default function Messages() {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleViewportChange);
       }
+      // Clean up body classes
+      document.body.classList.remove('keyboard-visible');
     };
   }, [selectedChat]);
 
@@ -270,7 +266,9 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
+    <div className={`min-h-screen bg-employee-gradient text-white flex flex-col ${isKeyboardOpen ? 'pb-96' : ''}`} style={{
+      paddingBottom: isKeyboardOpen ? '400px' : '0px'
+    }}>
       {/* Header */}
       <div className="flex items-center justify-between p-6 pb-4">
         <Link href={`/${companyAlias}/inicio`}>
@@ -630,7 +628,7 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className={`p-4 bg-white/10 backdrop-blur-sm ${isKeyboardOpen ? 'pb-2' : ''}`}>
+            <div className={`p-4 bg-white/10 backdrop-blur-sm message-input-container ${isKeyboardOpen ? 'pb-2 message-input-focused' : ''}`}>
               <div className="flex space-x-2">
                 <Input
                   ref={messageInputRef}
@@ -645,15 +643,24 @@ export default function Messages() {
                     }
                   }}
                   onFocus={() => {
-                    // Immediate scroll for iOS and better UX
+                    // Simple and direct scroll approach
                     setTimeout(() => {
+                      // Force scroll to bottom of page
+                      window.scrollTo(0, document.body.scrollHeight);
+                      
+                      // Also try scrollIntoView as backup
                       if (messageInputRef.current) {
                         messageInputRef.current.scrollIntoView({ 
-                          behavior: 'smooth', 
-                          block: 'center' 
+                          behavior: 'instant', 
+                          block: 'end'
                         });
                       }
-                    }, 100);
+                    }, 200);
+                    
+                    // Second attempt with more delay for keyboard animation
+                    setTimeout(() => {
+                      window.scrollTo(0, document.body.scrollHeight);
+                    }, 500);
                   }}
                 />
                 <Button

@@ -116,6 +116,31 @@ body::after {
     -webkit-overflow-scrolling: touch;
   }
 
+  /* Mobile keyboard handling */
+  .keyboard-open {
+    padding-bottom: 400px !important;
+    transition: padding-bottom 0.3s ease;
+  }
+
+  .message-input-container {
+    position: relative;
+    z-index: 1000;
+  }
+
+  /* Force scroll behavior on mobile for keyboard */
+  @media (max-width: 768px) {
+    body.keyboard-visible {
+      height: 100vh;
+      overflow-y: scroll;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .message-input-focused {
+      transform: translateY(-100px);
+      transition: transform 0.3s ease;
+    }
+  }
+
   /* Page-level scroll */
   .page-scroll {
     touch-action: pan-y;
