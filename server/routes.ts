@@ -411,6 +411,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Parsed data:', data);
       
+      // Validate vacation days availability
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      const requestedDays = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const totalDays = parseFloat(user.totalVacationDays || '22');
+      const usedDays = parseFloat(user.usedVacationDays || '0');
+      const availableDays = totalDays - usedDays;
+
+      if (requestedDays > availableDays) {
+        return res.status(400).json({ 
+          message: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días disponibles.` 
+        });
+      }
+      
       const request = await storage.createVacationRequest(data);
       res.status(201).json(request);
     } catch (error: any) {

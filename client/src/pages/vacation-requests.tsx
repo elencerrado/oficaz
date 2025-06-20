@@ -149,7 +149,7 @@ export default function VacationRequests() {
     if (exceedsAvailable) {
       toast({
         title: 'Error',
-        description: `No tienes suficientes días disponibles. Disponibles: ${availableDays}`,
+        description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
         variant: 'destructive',
       });
       return;
