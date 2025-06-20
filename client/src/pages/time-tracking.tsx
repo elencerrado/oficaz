@@ -185,7 +185,47 @@ export default function TimeTracking() {
   const handleExportPDF = useCallback(() => {
     const doc = new jsPDF();
     
-    // Get period text for reuse
+    // Company info (right aligned with proper margins)
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Test Company', 190, 20, { align: 'right' });
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('CIF: B12345678', 190, 26, { align: 'right' });
+    doc.text('Calle Principal, 123, Madrid', 190, 31, { align: 'right' });
+    doc.text('+34 912 345 678', 190, 36, { align: 'right' });
+    
+    // Report title (left aligned)
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 122, 255);
+    doc.text('INFORME CONTROL HORARIO', 20, 25);
+    
+    // Employee info and period
+    if (selectedEmployee !== 'all') {
+      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(employee?.fullName || 'Empleado Desconocido', 20, 42);
+      
+      if (employee?.dni) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(102, 102, 102);
+        doc.text(`DNI: ${employee.dni}`, 20, 48);
+      }
+    } else {
+      // For all employees
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text('TODOS LOS EMPLEADOS', 20, 42);
+    }
+    
+    // Period info (always show)
     let periodText = '';
     if (dateFilter === 'day') {
       periodText = format(currentDate, 'dd/MM/yyyy', { locale: es });
@@ -202,218 +242,202 @@ export default function TimeTracking() {
     } else {
       periodText = 'Todos los registros';
     }
-
-    // Function to create a page for an employee
-    const createEmployeePage = (employee: any, employeeSessions: any[], isFirstPage: boolean) => {
-      if (!isFirstPage) {
-        doc.addPage();
-      }
-      
-      // Company info (right aligned with proper margins)
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Test Company', 190, 20, { align: 'right' });
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text('CIF: B12345678', 190, 26, { align: 'right' });
-      doc.text('Calle Principal, 123, Madrid', 190, 31, { align: 'right' });
-      doc.text('+34 912 345 678', 190, 36, { align: 'right' });
-      
-      // Report title (left aligned)
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text('INFORME CONTROL HORARIO', 20, 25);
-      
-      // Employee info
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(employee?.fullName || 'Empleado Desconocido', 20, 42);
-      
-      if (employee?.dni) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(102, 102, 102);
-        doc.text(`DNI: ${employee.dni}`, 20, 48);
-      }
-      
-      // Period info
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text(`Período: ${periodText}`, 120, 42);
-      
-      // Table setup for individual employee (no employee column needed)
-      let currentY = 65;
-      const tableStartX = 60;
-      const colWidths = [35, 25, 25, 25];
-      const colPositions = [
-        tableStartX, 
-        tableStartX + colWidths[0], 
-        tableStartX + colWidths[0] + colWidths[1], 
-        tableStartX + colWidths[0] + colWidths[1] + colWidths[2]
-      ];
-      
-      // Header row
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 122, 255);
+    doc.text(`Período: ${periodText}`, 120, 42);
+    
+    // Elegant centered table without visible lines
+    const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+    let currentY = 65;
+    
+    // Table positioning (adjusted for employee column when showing all)
+    const showEmployeeColumn = selectedEmployee === 'all';
+    const tableStartX = showEmployeeColumn ? 40 : 60;
+    const colWidths = showEmployeeColumn ? [40, 30, 25, 25, 25] : [35, 25, 25, 25];
+    const colPositions = showEmployeeColumn ? [
+      tableStartX,
+      tableStartX + colWidths[0],
+      tableStartX + colWidths[0] + colWidths[1], 
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+    ] : [
+      tableStartX, 
+      tableStartX + colWidths[0], 
+      tableStartX + colWidths[0] + colWidths[1], 
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2]
+    ];
+    
+    // Header row with elegant styling
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 122, 255);
+    if (showEmployeeColumn) {
+      doc.text('Empleado', colPositions[0], currentY);
+      doc.text('Fecha', colPositions[1], currentY);
+      doc.text('Entrada', colPositions[2], currentY);
+      doc.text('Salida', colPositions[3], currentY);
+      doc.text('Horas', colPositions[4], currentY);
+    } else {
       doc.text('Fecha', colPositions[0], currentY);
       doc.text('Entrada', colPositions[1], currentY);
       doc.text('Salida', colPositions[2], currentY);
       doc.text('Horas', colPositions[3], currentY);
-      
-      currentY += 8;
-      
-      // Sort sessions by date
-      const sortedSessions = [...employeeSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
-      
-      // Track totals for summaries
-      let weekHours = 0;
-      let monthHours = 0;
+    }
+    
+    currentY += 8;
+    
+    const showSummaries = selectedEmployee !== 'all';
+    
+    if (showSummaries && sortedSessions.length > 0) {
       let currentWeekStart: Date | null = null;
       let currentMonth: string | null = null;
+      let weekHours = 0;
+      let monthHours = 0;
       
-      const showSummaries = true; // Always show summaries for individual employees
-      
-      if (showSummaries && sortedSessions.length > 0) {
-        sortedSessions.forEach((session: any, index: number) => {
-          const sessionDate = new Date(session.clockIn);
-          const hours = calculateHours(session.clockIn, session.clockOut);
+      sortedSessions.forEach((session: any, index: number) => {
+        const sessionDate = new Date(session.clockIn);
+        const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+        const monthKey = format(sessionDate, 'yyyy-MM');
+        const hours = calculateHours(session.clockIn, session.clockOut);
+        
+        const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
+        const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+        
+        // Add week summary (aligned with hours column)
+        if (isNewWeek && index > 0 && currentWeekStart) {
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(80, 80, 80);
+          doc.text('TOTAL SEMANA:', colPositions[0], currentY);
+          doc.text(`${weekHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
+          currentY += 7;
+          weekHours = 0;
+        }
+        
+        // Add month summary (aligned with hours column)
+        if (isNewMonth && index > 0 && currentMonth) {
+          const [year, month] = currentMonth.split('-');
+          const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 122, 255);
+          doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
+          doc.text(`${monthHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
+          currentY += 10;
+          monthHours = 0;
+        }
+        
+        if (isNewWeek) currentWeekStart = weekStart;
+        if (isNewMonth) currentMonth = monthKey;
+        
+        // Regular row with modern styling
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(40, 40, 40);
+        
+        if (showEmployeeColumn) {
+          // Truncate employee name if too long
+          const employeeName = session.employeeName || 'Desconocido';
+          const maxLength = 15;
+          const displayName = employeeName.length > maxLength ? employeeName.substring(0, maxLength) + '...' : employeeName;
           
-          // Calculate week start (Monday)
-          const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
-          const monthKey = format(sessionDate, 'yyyy-MM');
-          
-          const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
-          const isNewMonth = currentMonth === null || monthKey !== currentMonth;
-          
-          // Add week summary
-          if (isNewWeek && index > 0 && currentWeekStart) {
+          doc.text(displayName, colPositions[0], currentY);
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[1], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[2], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+        } else {
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        }
+        
+        currentY += 6;
+        weekHours += hours;
+        monthHours += hours;
+        
+        // Final summaries (aligned with hours column)
+        if (index === sortedSessions.length - 1) {
+          if (weekHours > 0) {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(80, 80, 80);
             doc.text('TOTAL SEMANA:', colPositions[0], currentY);
-            doc.text(`${weekHours.toFixed(1)}h`, colPositions[3], currentY);
+            doc.text(`${weekHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
             currentY += 7;
-            weekHours = 0;
           }
-          
-          // Add month summary
-          if (isNewMonth && index > 0 && currentMonth) {
+          if (monthHours > 0 && currentMonth) {
             const [year, month] = currentMonth.split('-');
             const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 122, 255);
             doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
-            doc.text(`${monthHours.toFixed(1)}h`, colPositions[3], currentY);
-            currentY += 10;
-            monthHours = 0;
+            doc.text(`${monthHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
           }
-          
-          if (isNewWeek) currentWeekStart = weekStart;
-          if (isNewMonth) currentMonth = monthKey;
-          
-          // Regular row
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(40, 40, 40);
-          
-          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
-          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
-          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
-          
-          currentY += 6;
-          weekHours += hours;
-          monthHours += hours;
-          
-          // Final summaries
-          if (index === sortedSessions.length - 1) {
-            if (weekHours > 0) {
-              doc.setFontSize(8);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(80, 80, 80);
-              doc.text('TOTAL SEMANA:', colPositions[0], currentY);
-              doc.text(`${weekHours.toFixed(1)}h`, colPositions[3], currentY);
-              currentY += 7;
-            }
-            if (monthHours > 0 && currentMonth) {
-              const [year, month] = currentMonth.split('-');
-              const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
-              doc.setFontSize(8);
-              doc.setFont('helvetica', 'bold');
-              doc.setTextColor(0, 122, 255);
-              doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
-              doc.text(`${monthHours.toFixed(1)}h`, colPositions[3], currentY);
-            }
-          }
-        });
-      } else {
-        sortedSessions.forEach((session: any) => {
-          const sessionDate = new Date(session.clockIn);
-          const hours = calculateHours(session.clockIn, session.clockOut);
-          
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(40, 40, 40);
-          
-          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
-          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
-          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
-          
-          currentY += 6;
-        });
-      }
-      
-      // Footer
-      const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
-      const pageHeight = doc.internal.pageSize.height;
-      
-      // Footer line matching table width
-      const footerLineStartX = tableStartX;
-      const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
-      
-      doc.setDrawColor(0, 122, 255);
-      doc.setLineWidth(0.3);
-      doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
-      
-      doc.setFontSize(7);
-      doc.setTextColor(120, 120, 120);
-      doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
-      doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
-    };
-
-    if (selectedEmployee !== 'all') {
-      // Single employee PDF
-      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
-      createEmployeePage(employee, filteredSessions, true);
+        }
+      });
     } else {
-      // Multiple employees - one page per employee
-      const employeesWithSessions = employeesList.filter(employee => 
-        filteredSessions.some(session => session.userId === employee.id)
-      );
-      
-      employeesWithSessions.forEach((employee, index) => {
-        const employeeSessions = filteredSessions.filter(session => session.userId === employee.id);
-        createEmployeePage(employee, employeeSessions, index === 0);
+      sortedSessions.forEach((session: any) => {
+        const sessionDate = new Date(session.clockIn);
+        const hours = calculateHours(session.clockIn, session.clockOut);
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(40, 40, 40);
+        
+        if (showEmployeeColumn) {
+          // Truncate employee name if too long
+          const employeeName = session.employeeName || 'Desconocido';
+          const maxLength = 15;
+          const displayName = employeeName.length > maxLength ? employeeName.substring(0, maxLength) + '...' : employeeName;
+          
+          doc.text(displayName, colPositions[0], currentY);
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[1], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[2], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+        } else {
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        }
+        
+        currentY += 6;
       });
     }
-
+    
+    // Footer with centered elegant design
+    const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
+    const pageHeight = doc.internal.pageSize.height;
+    
+    // Centered footer line matching table width
+    const footerLineStartX = tableStartX;
+    const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
+    
+    doc.setDrawColor(0, 122, 255);
+    doc.setLineWidth(0.3);
+    doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
+    
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
+    doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
+    
     // Save the PDF
     const fileName = selectedEmployee !== 'all' 
-      ? `control_horario_${employeesList.find((emp: any) => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
+      ? `control_horario_${employeesList.find(emp => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
       : `control_horario_todos_empleados_${format(new Date(), 'yyyyMMdd')}.pdf`;
     
     doc.save(fileName);
     
     toast({
-      title: "PDF exportado correctamente",
-      description: `El archivo ${fileName} se ha descargado`,
+      title: 'PDF Generado',
+      description: 'El informe de control horario se ha descargado correctamente.',
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
