@@ -25,6 +25,7 @@ import Employees from "@/pages/employees";
 import Settings from "@/pages/settings";
 import AccessDenied from "@/pages/access-denied";
 
+
 function DashboardRouter() {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -96,7 +97,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user && company) {
-    return <Redirect to={`/${company.companyAlias}/dashboard`} />;
+    return <Redirect to={`/${company.companyAlias}/inicio`} />;
   }
 
   return <>{children}</>;
@@ -133,14 +134,6 @@ function Router() {
           <PageWrapper>
             <DashboardRouter />
           </PageWrapper>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/:companyAlias/time-tracking">
-        <ProtectedRoute>
-          <AppLayout>
-            <TimeTracking />
-          </AppLayout>
         </ProtectedRoute>
       </Route>
 
@@ -188,7 +181,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/employees">
+      <Route path="/:companyAlias/empleados">
         <ProtectedRoute>
           <AppLayout>
             <Employees />
@@ -196,15 +189,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/settings">
-        <ProtectedRoute>
-          <AppLayout>
-            <PageWrapper>
-              <Settings />
-            </PageWrapper>
-          </AppLayout>
-        </ProtectedRoute>
-      </Route>
+
 
       <Route path="/:companyAlias/access-denied">
         <AccessDenied />
