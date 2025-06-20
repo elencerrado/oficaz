@@ -33,7 +33,7 @@ export default function EmployeesSimple() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('activo'); // Default to active
+  const [statusFilter, setStatusFilter] = useState('activos'); // Default to active
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editEmployee, setEditEmployee] = useState({
@@ -89,6 +89,10 @@ export default function EmployeesSimple() {
 
   const employeeList = employees as any[];
   const filteredEmployees = employeeList.filter((employee: any) => {
+    // First check if it's not an admin
+    const notAdmin = employee.role !== 'admin';
+    if (!notAdmin) return false;
+    
     const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Convert filter selection to actual database values
@@ -100,8 +104,8 @@ export default function EmployeesSimple() {
     
     const employeeStatus = employee.status || 'active'; // Default to 'active' if no status
     const matchesStatus = statusFilter === 'todos' || employeeStatus === statusToMatch;
-    const notAdmin = employee.role !== 'admin';
-    return matchesSearch && matchesStatus && notAdmin;
+    
+    return matchesSearch && matchesStatus;
   });
 
   const totalUsers = employeeList.filter((employee: any) => employee.role !== 'admin').length;
