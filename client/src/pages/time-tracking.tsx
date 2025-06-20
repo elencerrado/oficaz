@@ -217,39 +217,52 @@ export default function TimeTracking() {
         doc.setTextColor(102, 102, 102);
         doc.text(`DNI: ${employee.dni}`, 20, 48);
       }
-      
-      // Period info
-      let periodText = '';
-      if (dateFilter === 'day') {
-        periodText = format(currentDate, 'dd/MM/yyyy', { locale: es });
-      } else if (dateFilter === 'month') {
-        periodText = format(currentMonth, 'MMMM yyyy', { locale: es });
-      } else if (dateFilter === 'custom' && (startDate || endDate)) {
-        if (startDate && endDate) {
-          periodText = `${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-        } else if (startDate) {
-          periodText = `Desde ${format(new Date(startDate), 'dd/MM/yyyy')}`;
-        } else if (endDate) {
-          periodText = `Hasta ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-        }
-      } else {
-        periodText = 'Todos los registros';
-      }
-      
-      doc.setFontSize(9);
+    } else {
+      // For all employees
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text(`Período: ${periodText}`, 120, 42);
+      doc.setTextColor(0, 0, 0);
+      doc.text('TODOS LOS EMPLEADOS', 20, 42);
     }
+    
+    // Period info (always show)
+    let periodText = '';
+    if (dateFilter === 'day') {
+      periodText = format(currentDate, 'dd/MM/yyyy', { locale: es });
+    } else if (dateFilter === 'month') {
+      periodText = format(currentMonth, 'MMMM yyyy', { locale: es });
+    } else if (dateFilter === 'custom' && (startDate || endDate)) {
+      if (startDate && endDate) {
+        periodText = `${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+      } else if (startDate) {
+        periodText = `Desde ${format(new Date(startDate), 'dd/MM/yyyy')}`;
+      } else if (endDate) {
+        periodText = `Hasta ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+      }
+    } else {
+      periodText = 'Todos los registros';
+    }
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 122, 255);
+    doc.text(`Período: ${periodText}`, 120, 42);
     
     // Elegant centered table without visible lines
     const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
     let currentY = 65;
     
-    // Table positioning (centered and narrower)
-    const tableStartX = 60; // Start further right for centering
-    const colWidths = [35, 25, 25, 25]; // Narrower columns
-    const colPositions = [
+    // Table positioning (adjusted for employee column when showing all)
+    const showEmployeeColumn = selectedEmployee === 'all';
+    const tableStartX = showEmployeeColumn ? 40 : 60;
+    const colWidths = showEmployeeColumn ? [40, 30, 25, 25, 25] : [35, 25, 25, 25];
+    const colPositions = showEmployeeColumn ? [
+      tableStartX,
+      tableStartX + colWidths[0],
+      tableStartX + colWidths[0] + colWidths[1], 
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
+    ] : [
       tableStartX, 
       tableStartX + colWidths[0], 
       tableStartX + colWidths[0] + colWidths[1], 
@@ -260,10 +273,18 @@ export default function TimeTracking() {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 122, 255);
-    doc.text('Fecha', colPositions[0], currentY);
-    doc.text('Entrada', colPositions[1], currentY);
-    doc.text('Salida', colPositions[2], currentY);
-    doc.text('Horas', colPositions[3], currentY);
+    if (showEmployeeColumn) {
+      doc.text('Empleado', colPositions[0], currentY);
+      doc.text('Fecha', colPositions[1], currentY);
+      doc.text('Entrada', colPositions[2], currentY);
+      doc.text('Salida', colPositions[3], currentY);
+      doc.text('Horas', colPositions[4], currentY);
+    } else {
+      doc.text('Fecha', colPositions[0], currentY);
+      doc.text('Entrada', colPositions[1], currentY);
+      doc.text('Salida', colPositions[2], currentY);
+      doc.text('Horas', colPositions[3], currentY);
+    }
     
     currentY += 8;
     
@@ -284,30 +305,26 @@ export default function TimeTracking() {
         const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
         const isNewMonth = currentMonth === null || monthKey !== currentMonth;
         
-        // Add week summary (centered)
+        // Add week summary (aligned with hours column)
         if (isNewWeek && index > 0 && currentWeekStart) {
           doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(80, 80, 80);
-          const totalText = `TOTAL SEMANA: ${weekHours.toFixed(1)}h`;
-          const textWidth = doc.getTextWidth(totalText);
-          const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
-          doc.text(totalText, centerX, currentY);
+          doc.text('TOTAL SEMANA:', colPositions[0], currentY);
+          doc.text(`${weekHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
           currentY += 7;
           weekHours = 0;
         }
         
-        // Add month summary (centered)
+        // Add month summary (aligned with hours column)
         if (isNewMonth && index > 0 && currentMonth) {
           const [year, month] = currentMonth.split('-');
           const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
           doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(0, 122, 255);
-          const totalText = `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`;
-          const textWidth = doc.getTextWidth(totalText);
-          const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
-          doc.text(totalText, centerX, currentY);
+          doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
+          doc.text(`${monthHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
           currentY += 10;
           monthHours = 0;
         }
@@ -320,25 +337,36 @@ export default function TimeTracking() {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(40, 40, 40);
         
-        doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
-        doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
-        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        if (showEmployeeColumn) {
+          // Truncate employee name if too long
+          const employeeName = session.employeeName || 'Desconocido';
+          const maxLength = 15;
+          const displayName = employeeName.length > maxLength ? employeeName.substring(0, maxLength) + '...' : employeeName;
+          
+          doc.text(displayName, colPositions[0], currentY);
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[1], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[2], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+        } else {
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        }
         
         currentY += 6;
         weekHours += hours;
         monthHours += hours;
         
-        // Final summaries (centered)
+        // Final summaries (aligned with hours column)
         if (index === sortedSessions.length - 1) {
           if (weekHours > 0) {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(80, 80, 80);
-            const totalText = `TOTAL SEMANA: ${weekHours.toFixed(1)}h`;
-            const textWidth = doc.getTextWidth(totalText);
-            const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
-            doc.text(totalText, centerX, currentY);
+            doc.text('TOTAL SEMANA:', colPositions[0], currentY);
+            doc.text(`${weekHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
             currentY += 7;
           }
           if (monthHours > 0 && currentMonth) {
@@ -347,10 +375,8 @@ export default function TimeTracking() {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 122, 255);
-            const totalText = `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`;
-            const textWidth = doc.getTextWidth(totalText);
-            const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
-            doc.text(totalText, centerX, currentY);
+            doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
+            doc.text(`${monthHours.toFixed(1)}h`, showEmployeeColumn ? colPositions[4] : colPositions[3], currentY);
           }
         }
       });
@@ -363,10 +389,23 @@ export default function TimeTracking() {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(40, 40, 40);
         
-        doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
-        doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
-        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        if (showEmployeeColumn) {
+          // Truncate employee name if too long
+          const employeeName = session.employeeName || 'Desconocido';
+          const maxLength = 15;
+          const displayName = employeeName.length > maxLength ? employeeName.substring(0, maxLength) + '...' : employeeName;
+          
+          doc.text(displayName, colPositions[0], currentY);
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[1], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[2], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+        } else {
+          doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+          doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+          doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+        }
         
         currentY += 6;
       });
