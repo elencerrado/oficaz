@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Users, 
   Search, 
@@ -15,22 +16,28 @@ import {
   Edit,
   Shield,
   Clock,
-  Calendar
+  Calendar,
+  Plus,
+  UserPlus
 } from 'lucide-react';
 
 export default function EmployeesSimple() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager')
   });
 
-  const filteredEmployees = employees.filter((employee: any) =>
+  const employeeList = employees as any[];
+  const filteredEmployees = employeeList.filter((employee: any) =>
     employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalUsers = employeeList.length;
 
   return (
     <div className="container mx-auto p-4 lg:p-6 space-y-6">
@@ -39,6 +46,24 @@ export default function EmployeesSimple() {
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
           Gestión de Empleados
         </h1>
+        
+        {/* Desktop: Button and count side by side */}
+        <div className="hidden sm:flex items-center gap-3">
+          <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
+          <Button onClick={() => setShowCreateModal(true)} size="sm">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Crear Usuario
+          </Button>
+        </div>
+        
+        {/* Mobile: Button and count in same line, compact */}
+        <div className="flex sm:hidden items-center justify-between">
+          <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
+          <Button onClick={() => setShowCreateModal(true)} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Crear
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -70,18 +95,18 @@ export default function EmployeesSimple() {
               <div key={employee.id} className="relative">
                 {/* Mobile Swipe Container */}
                 <div className="sm:hidden">
-                  {/* Background Colors */}
-                  <div className="absolute inset-0 flex">
-                    {/* Green Call Background - Left */}
+                  {/* Background Colors - Full width to prevent white showing */}
+                  <div className="absolute inset-0 flex rounded-lg overflow-hidden">
+                    {/* Green Call Background - Left side, extends beyond swipe limit */}
                     {(employee.companyPhone || employee.personalPhone) && (
-                      <div className="w-20 bg-green-500 flex items-center justify-center rounded-l-lg">
+                      <div className="w-40 bg-green-500 flex items-center justify-center">
                         <Phone className="h-6 w-6 text-white" />
                       </div>
                     )}
                     
-                    {/* Blue Message Background - Right */}
+                    {/* Blue Message Background - Right side, extends beyond swipe limit */}
                     <div className="flex-1"></div>
-                    <div className="w-20 bg-blue-500 flex items-center justify-center rounded-r-lg">
+                    <div className="w-40 bg-blue-500 flex items-center justify-center">
                       <MessageCircle className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -100,9 +125,12 @@ export default function EmployeesSimple() {
                       
                       if (Math.abs(diff) > 10) {
                         e.preventDefault();
-                        e.currentTarget.style.transform = `translateX(${diff}px)`;
+                        // Limit swipe distance to prevent showing white background
+                        const maxSwipe = 120; // Reduced from unlimited
+                        const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
+                        e.currentTarget.style.transform = `translateX(${constrainedDiff}px)`;
                         e.currentTarget.style.transition = 'none';
-                        console.log(`Swipe: ${diff}px`);
+                        console.log(`Swipe: ${constrainedDiff}px`);
                       }
                     }}
                     onTouchEnd={(e) => {
@@ -110,7 +138,7 @@ export default function EmployeesSimple() {
                       const match = transform.match(/translateX\((.+?)px\)/);
                       const currentX = match ? parseFloat(match[1]) : 0;
                       
-                      if (Math.abs(currentX) > 80) {
+                      if (Math.abs(currentX) > 70) { // Reduced threshold
                         if (currentX < 0 && (employee.companyPhone || employee.personalPhone)) {
                           // Call action
                           const phone = employee.companyPhone || employee.personalPhone;
@@ -182,6 +210,29 @@ export default function EmployeesSimple() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Create User Modal */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input placeholder="Nombre completo" />
+            <Input placeholder="DNI/NIE" />
+            <Input placeholder="Email empresarial" type="email" />
+            <Input placeholder="Teléfono" type="tel" />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button className="flex-1">
+                Crear Usuario
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

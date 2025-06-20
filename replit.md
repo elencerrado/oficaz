@@ -117,12 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Animaciones swipe estilo iPhone completamente funcionales y optimizadas
-  - Lógica corregida: swipe izquierda revela llamada (verde), swipe derecha revela mensaje (azul)
-  - Indicadores discretos sin fondo: iconos 4x4 posicionados sin solapar con avatar del usuario
-  - Posicionamiento inteligente: indicador verde solo aparece si hay teléfono disponible
-  - Transiciones suaves: desvanecimiento gradual 0.2s cuando no se completa la acción
-  - Sensibilidad optimizada: umbral 5px activación, factor 0.8x movimiento, 100px ejecución
+- June 20, 2025. Sistema de empleados móvil completamente optimizado con gestos iPhone perfectos
+  - Colores de fondo siempre visibles: verde (llamada) y azul (mensaje) como fondo fijo
+  - Swipe limitado a 120px para evitar mostrar fondo blanco del contenedor
+  - Fondos de color extendidos (40px) para cubrir completamente el área de deslizamiento
+  - Umbral de activación reducido a 70px para respuesta más inmediata
+  - Conteo de usuarios y botón crear añadidos: desktop expandido, móvil compacto
+  - Modal de creación de usuarios funcional con campos básicos requeridos
   - Corregidas todas las vacaciones según normativa española: Juan Pérez 0 días (recién incorporado), Juan Ramírez 24 días (9.6 meses trabajados), Admin 30 días (año completo)
   - Página de configuración completamente rediseñada: pestañas Empresa/Políticas/Mi Perfil con interfaz clara y campos bien visibles
   - Cambiado "Usuario" por "Configuración" en navegación para admin
