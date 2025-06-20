@@ -34,6 +34,9 @@ export default function TimeTracking() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [dateFilter, setDateFilter] = useState('month'); // 'month', 'custom'
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     clockIn: '',
@@ -119,17 +122,34 @@ export default function TimeTracking() {
   const sessionsList = sessions as any[];
   const employeesList = employees as any[];
 
-  // Filter sessions based on search and selected employee and month
+  // Filter sessions based on search, employee and date range
   const filteredSessions = sessionsList.filter((session: any) => {
     const sessionDate = new Date(session.clockIn);
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
     
     const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
     const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesMonth = sessionDate >= monthStart && sessionDate <= monthEnd;
     
-    return matchesEmployee && matchesSearch && matchesMonth;
+    // Date filtering
+    let matchesDate = true;
+    if (dateFilter === 'month') {
+      const monthStart = startOfMonth(currentMonth);
+      const monthEnd = endOfMonth(currentMonth);
+      matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
+    } else if (dateFilter === 'custom' && startDate && endDate) {
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      filterEnd.setHours(23, 59, 59, 999); // Include full end date
+      matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
+    } else if (dateFilter === 'custom' && startDate && !endDate) {
+      const filterStart = new Date(startDate);
+      matchesDate = sessionDate >= filterStart;
+    } else if (dateFilter === 'custom' && !startDate && endDate) {
+      const filterEnd = new Date(endDate);
+      filterEnd.setHours(23, 59, 59, 999);
+      matchesDate = sessionDate <= filterEnd;
+    }
+    
+    return matchesEmployee && matchesSearch && matchesDate;
   });
 
   // Calculate totals
@@ -257,6 +277,116 @@ export default function TimeTracking() {
                 Hoy
               </Button>
             </div>
+
+            {/* Date Filter Type Selector */}
+            <div className="flex items-center justify-center space-x-2 border-b pb-3">
+              <Button
+                variant={dateFilter === 'month' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDateFilter('month')}
+                className={dateFilter === 'month' ? 'bg-oficaz-primary' : ''}
+              >
+                Por Mes
+              </Button>
+              <Button
+                variant={dateFilter === 'custom' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDateFilter('custom')}
+                className={dateFilter === 'custom' ? 'bg-oficaz-primary' : ''}
+              >
+                Rango Personalizado
+              </Button>
+            </div>
+
+            {/* Date Selector Based on Type */}
+            {dateFilter === 'custom' ? (
+              <div className="space-y-3">
+                {/* Date Range Inputs */}
+                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-center">
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">Desde:</label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-40"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">Hasta:</label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-40"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                  >
+                    Limpiar
+                  </Button>
+                </div>
+
+                {/* Quick Month Selection */}
+                <div className="border-t pt-3">
+                  <p className="text-sm text-gray-600 text-center mb-2">Selección rápida por mes:</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const monthDate = new Date(new Date().getFullYear(), i, 1);
+                      const monthStart = startOfMonth(monthDate);
+                      const monthEnd = endOfMonth(monthDate);
+                      
+                      return (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setStartDate(format(monthStart, 'yyyy-MM-dd'));
+                            setEndDate(format(monthEnd, 'yyyy-MM-dd'));
+                          }}
+                          className="text-xs"
+                        >
+                          {format(monthDate, 'MMM', { locale: es })}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-center gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const thisMonth = new Date();
+                        setStartDate(format(startOfMonth(thisMonth), 'yyyy-MM-dd'));
+                        setEndDate(format(endOfMonth(thisMonth), 'yyyy-MM-dd'));
+                      }}
+                      className="text-xs bg-blue-50"
+                    >
+                      Este mes
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const lastMonth = subMonths(new Date(), 1);
+                        setStartDate(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
+                        setEndDate(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
+                      }}
+                      className="text-xs bg-gray-50"
+                    >
+                      Mes anterior
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {/* Filters row - Simple grid layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
