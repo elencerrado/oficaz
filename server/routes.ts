@@ -1093,9 +1093,21 @@ startxref
   app.post('/api/super-admin/login', async (req, res) => {
     try {
       const { email, password } = req.body;
-      const admin = await storage.getSuperAdminByEmail(email);
+      console.log('Super admin login attempt:', { email, password: password ? 'provided' : 'missing' });
       
-      if (!admin || !await bcrypt.compare(password, admin.password)) {
+      const admin = await storage.getSuperAdminByEmail(email);
+      console.log('Found admin:', admin ? { id: admin.id, email: admin.email } : 'none');
+      
+      if (!admin) {
+        console.log('No admin found with email:', email);
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      const passwordMatch = await bcrypt.compare(password, admin.password);
+      console.log('Password comparison result:', passwordMatch);
+      
+      if (!passwordMatch) {
+        console.log('Password mismatch for admin:', email);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -1110,6 +1122,7 @@ startxref
         { expiresIn: '24h' }
       );
 
+      console.log('Super admin login successful for:', email);
       res.json({ token, admin: { id: admin.id, email: admin.email, name: admin.name } });
     } catch (error) {
       console.error("Error logging in super admin:", error);
