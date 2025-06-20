@@ -242,20 +242,30 @@ export default function TimeTracking() {
       doc.text(`Período: ${periodText}`, 120, 42);
     }
     
-    // Clean table without visible lines
+    // Elegant centered table without visible lines
     const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
-    let currentY = 60;
+    let currentY = 65;
     
-    // Header row
+    // Table positioning (centered and narrower)
+    const tableStartX = 60; // Start further right for centering
+    const colWidths = [35, 25, 25, 25]; // Narrower columns
+    const colPositions = [
+      tableStartX, 
+      tableStartX + colWidths[0], 
+      tableStartX + colWidths[0] + colWidths[1], 
+      tableStartX + colWidths[0] + colWidths[1] + colWidths[2]
+    ];
+    
+    // Header row with elegant styling
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 122, 255);
-    doc.text('Fecha', 20, currentY);
-    doc.text('Entrada', 70, currentY);
-    doc.text('Salida', 110, currentY);
-    doc.text('Horas', 150, currentY);
+    doc.text('Fecha', colPositions[0], currentY);
+    doc.text('Entrada', colPositions[1], currentY);
+    doc.text('Salida', colPositions[2], currentY);
+    doc.text('Horas', colPositions[3], currentY);
     
-    currentY += 5;
+    currentY += 8;
     
     const showSummaries = selectedEmployee !== 'all';
     
@@ -274,53 +284,62 @@ export default function TimeTracking() {
         const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
         const isNewMonth = currentMonth === null || monthKey !== currentMonth;
         
-        // Add week summary
+        // Add week summary (centered)
         if (isNewWeek && index > 0 && currentWeekStart) {
           doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(60, 60, 60);
-          doc.text(`TOTAL SEMANA: ${weekHours.toFixed(1)}h`, 20, currentY);
-          currentY += 6;
+          doc.setTextColor(80, 80, 80);
+          const totalText = `TOTAL SEMANA: ${weekHours.toFixed(1)}h`;
+          const textWidth = doc.getTextWidth(totalText);
+          const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
+          doc.text(totalText, centerX, currentY);
+          currentY += 7;
           weekHours = 0;
         }
         
-        // Add month summary
+        // Add month summary (centered)
         if (isNewMonth && index > 0 && currentMonth) {
           const [year, month] = currentMonth.split('-');
           const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
           doc.setFontSize(8);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(0, 122, 255);
-          doc.text(`TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, 20, currentY);
-          currentY += 8;
+          const totalText = `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`;
+          const textWidth = doc.getTextWidth(totalText);
+          const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
+          doc.text(totalText, centerX, currentY);
+          currentY += 10;
           monthHours = 0;
         }
         
         if (isNewWeek) currentWeekStart = weekStart;
         if (isNewMonth) currentMonth = monthKey;
         
-        // Regular row
+        // Regular row with modern styling
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(40, 40, 40);
         
-        doc.text(format(sessionDate, 'dd/MM/yyyy'), 20, currentY);
-        doc.text(format(sessionDate, 'HH:mm'), 70, currentY);
-        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', 110, currentY);
-        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', 150, currentY);
+        doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+        doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
         
-        currentY += 5;
+        currentY += 6;
         weekHours += hours;
         monthHours += hours;
         
-        // Final summaries
+        // Final summaries (centered)
         if (index === sortedSessions.length - 1) {
           if (weekHours > 0) {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(60, 60, 60);
-            doc.text(`TOTAL SEMANA: ${weekHours.toFixed(1)}h`, 20, currentY);
-            currentY += 6;
+            doc.setTextColor(80, 80, 80);
+            const totalText = `TOTAL SEMANA: ${weekHours.toFixed(1)}h`;
+            const textWidth = doc.getTextWidth(totalText);
+            const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
+            doc.text(totalText, centerX, currentY);
+            currentY += 7;
           }
           if (monthHours > 0 && currentMonth) {
             const [year, month] = currentMonth.split('-');
@@ -328,7 +347,10 @@ export default function TimeTracking() {
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 122, 255);
-            doc.text(`TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, 20, currentY);
+            const totalText = `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`;
+            const textWidth = doc.getTextWidth(totalText);
+            const centerX = (colPositions[0] + colPositions[3] + 25) / 2 - textWidth / 2;
+            doc.text(totalText, centerX, currentY);
           }
         }
       });
@@ -339,29 +361,33 @@ export default function TimeTracking() {
         
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(40, 40, 40);
         
-        doc.text(format(sessionDate, 'dd/MM/yyyy'), 20, currentY);
-        doc.text(format(sessionDate, 'HH:mm'), 70, currentY);
-        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', 110, currentY);
-        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', 150, currentY);
+        doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
+        doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
+        doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
+        doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
         
-        currentY += 5;
+        currentY += 6;
       });
     }
     
-    // Footer
+    // Footer with centered elegant design
     const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
     const pageHeight = doc.internal.pageSize.height;
     
+    // Centered footer line matching table width
+    const footerLineStartX = tableStartX;
+    const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
+    
     doc.setDrawColor(0, 122, 255);
     doc.setLineWidth(0.3);
-    doc.line(20, pageHeight - 20, 190, pageHeight - 20);
+    doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
     
     doc.setFontSize(7);
-    doc.setTextColor(102, 102, 102);
-    doc.text('Este documento ha sido generado automáticamente por el sistema Oficaz', 20, pageHeight - 14);
-    doc.text(`Fecha del informe: ${reportDate}`, 20, pageHeight - 9);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
+    doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
     
     // Save the PDF
     const fileName = selectedEmployee !== 'all' 
