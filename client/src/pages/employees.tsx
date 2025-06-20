@@ -453,14 +453,14 @@ export default function Employees() {
                         const callHint = target.querySelector('.call-hint') as HTMLElement;
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
-                        const threshold = 20;
-                        const maxDistance = 80;
+                        const threshold = 10;
+                        const maxDistance = 50;
                         
                         if (diff > threshold) {
                           // Swipe right - reveal call action on LEFT (verde)
                           if (callHint && (employee.companyPhone || employee.personalPhone)) {
                             const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            callHint.style.opacity = Math.max(0.8, progress).toString();
+                            callHint.style.opacity = Math.max(0.9, progress).toString();
                             callHint.style.visibility = 'visible';
                             callHint.style.display = 'flex';
                           }
@@ -472,7 +472,7 @@ export default function Employees() {
                           // Swipe left - reveal message action on RIGHT (azul)
                           if (messageHint) {
                             const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            messageHint.style.opacity = Math.max(0.8, progress).toString();
+                            messageHint.style.opacity = Math.max(0.9, progress).toString();
                             messageHint.style.visibility = 'visible';
                             messageHint.style.display = 'flex';
                           }
@@ -525,7 +525,7 @@ export default function Employees() {
                         messageHint.style.visibility = 'hidden';
                       }
                       
-                      if (Math.abs(diff) > 80) {
+                      if (Math.abs(diff) > 60) {
                         // Swipe action triggered
                         if (diff > 0 && phone) {
                           // Swipe right - Call (reveals left side)
@@ -566,30 +566,28 @@ export default function Employees() {
                       <div 
                         className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '120px',
-                          backgroundColor: '#10b981',
-                          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+                          width: '140px',
+                          backgroundColor: '#22c55e',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <Phone className="h-8 w-8 mb-2 text-white" />
-                        <span className="text-sm font-bold text-white">LLAMAR</span>
+                        <Phone className="h-10 w-10 mb-2 text-white" />
+                        <span className="text-base font-bold text-white">LLAMAR</span>
                       </div>
                       
                       {/* Message Action (Right side - revealed when swiping LEFT) */}
                       <div 
                         className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '120px',
+                          width: '140px',
                           backgroundColor: '#3b82f6',
-                          boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <MessageCircle className="h-8 w-8 mb-2 text-white" />
-                        <span className="text-sm font-bold text-white">MENSAJE</span>
+                        <MessageCircle className="h-10 w-10 mb-2 text-white" />
+                        <span className="text-base font-bold text-white">MENSAJE</span>
                       </div>
                     </div>
                     
