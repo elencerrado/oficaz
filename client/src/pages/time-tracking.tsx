@@ -354,7 +354,7 @@ export default function TimeTracking() {
                       Utiliza el calendario para seleccionar un día específico para filtrar los fichajes
                     </p>
                   </DialogHeader>
-                  <div className="rdp-wrapper">
+                  <div className="calendar-container">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -460,7 +460,7 @@ export default function TimeTracking() {
                     </p>
                   </DialogHeader>
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="rdp-wrapper">
+                    <div className="calendar-container">
                       <Calendar
                         mode="range"
                         selected={{
