@@ -128,6 +128,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Campos corporativos editables: email, teléfono, cargo, fecha incorporación, estado
   - Funcionalidad de guardado con validación y mensajes de confirmación
   - Filtro de estado corregido para mapear correctamente valores español-inglés
+  - Email y teléfono clickeables en lista PC: mailto/tel links priorizando corporativo
+  - Roles traducidos al español: "employee" = "Empleado"
   - Corregidas todas las vacaciones según normativa española: Juan Pérez 0 días (recién incorporado), Juan Ramírez 24 días (9.6 meses trabajados), Admin 30 días (año completo)
   - Página de configuración completamente rediseñada: pestañas Empresa/Políticas/Mi Perfil con interfaz clara y campos bien visibles
   - Cambiado "Usuario" por "Configuración" en navegación para admin

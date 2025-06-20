@@ -325,11 +325,24 @@ export default function EmployeesSimple() {
                       </Avatar>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
-                        <p className="text-sm text-gray-500">{employee.role}</p>
+                        <p className="text-sm text-gray-500">{employee.role === 'employee' ? 'Empleado' : employee.role === 'manager' ? 'Manager' : employee.role}</p>
                         {(employee.companyEmail || employee.personalEmail) && (
-                          <div className="text-sm text-blue-600 mt-1">
+                          <a 
+                            href={`mailto:${employee.companyEmail || employee.personalEmail}`}
+                            className="text-sm text-blue-600 mt-1 block hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {employee.companyEmail || employee.personalEmail}
-                          </div>
+                          </a>
+                        )}
+                        {(employee.companyPhone || employee.personalPhone) && (
+                          <a 
+                            href={`tel:${employee.companyPhone || employee.personalPhone}`}
+                            className="text-sm text-blue-600 block hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {employee.companyPhone || employee.personalPhone}
+                          </a>
                         )}
                       </div>
                       <Badge className={`${getStatusColor(employee.status)} capitalize border-0`}>
@@ -354,9 +367,24 @@ export default function EmployeesSimple() {
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>{employee.role}</span>
+                          <span>{employee.role === 'employee' ? 'Empleado' : employee.role === 'manager' ? 'Manager' : employee.role}</span>
                           {(employee.companyEmail || employee.personalEmail) && (
-                            <span>{employee.companyEmail || employee.personalEmail}</span>
+                            <a 
+                              href={`mailto:${employee.companyEmail || employee.personalEmail}`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {employee.companyEmail || employee.personalEmail}
+                            </a>
+                          )}
+                          {(employee.companyPhone || employee.personalPhone) && (
+                            <a 
+                              href={`tel:${employee.companyPhone || employee.personalPhone}`}
+                              className="text-blue-600 hover:text-blue-800 hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {employee.companyPhone || employee.personalPhone}
+                            </a>
                           )}
                         </div>
                       </div>
