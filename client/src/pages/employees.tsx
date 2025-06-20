@@ -30,7 +30,8 @@ import {
   CheckCircle,
   XCircle,
   Pause,
-  Plane
+  Plane,
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
@@ -453,36 +454,38 @@ export default function Employees() {
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
                         if (diff > 20 && (employee.companyPhone || employee.personalPhone)) {
-                          // Swipe left - show call action
+                          // Swipe left - show call action (verde)
                           if (callHint) {
-                            const progress = Math.min(1, Math.abs(diff) / 80);
-                            callHint.style.opacity = progress.toString();
-                            callHint.style.transform = `translateX(${-80 + (progress * 80)}px)`;
+                            const progress = Math.min(1, Math.abs(diff) / 100);
+                            callHint.style.opacity = (0.3 + progress * 0.7).toString(); // Min 30% opacity
+                            callHint.style.transform = `translateX(${-96 + (progress * 96)}px)`;
+                            callHint.style.transition = 'none';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
-                            messageHint.style.transform = 'translateX(80px)';
+                            messageHint.style.transform = 'translateX(100%)';
                           }
                         } else if (diff < -20) {
-                          // Swipe right - show message action
+                          // Swipe right - show message action (azul)
                           if (messageHint) {
-                            const progress = Math.min(1, Math.abs(diff) / 80);
-                            messageHint.style.opacity = progress.toString();
-                            messageHint.style.transform = `translateX(${80 - (progress * 80)}px)`;
+                            const progress = Math.min(1, Math.abs(diff) / 100);
+                            messageHint.style.opacity = (0.3 + progress * 0.7).toString(); // Min 30% opacity
+                            messageHint.style.transform = `translateX(${96 - (progress * 96)}px)`;
+                            messageHint.style.transition = 'none';
                           }
                           if (callHint) {
                             callHint.style.opacity = '0';
-                            callHint.style.transform = 'translateX(-80px)';
+                            callHint.style.transform = 'translateX(-100%)';
                           }
                         } else {
                           // Reset both hints
                           if (callHint) {
                             callHint.style.opacity = '0';
-                            callHint.style.transform = 'translateX(-80px)';
+                            callHint.style.transform = 'translateX(-100%)';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
-                            messageHint.style.transform = 'translateX(80px)';
+                            messageHint.style.transform = 'translateX(100%)';
                           }
                         }
                       }
@@ -555,15 +558,15 @@ export default function Employees() {
                     {/* Background Action Hints */}
                     <div className="absolute inset-0 flex justify-between overflow-hidden rounded-lg">
                       {/* Call Action (Left side) */}
-                      <div className="call-hint absolute left-0 top-0 bottom-0 w-20 bg-green-500 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform -translate-x-full shadow-lg">
-                        <Phone className="h-5 w-5 mb-1" />
-                        <span className="text-xs font-bold">Llamar</span>
+                      <div className="call-hint absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-green-500 to-green-600 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform -translate-x-full shadow-xl">
+                        <Phone className="h-6 w-6 mb-1 drop-shadow-sm" />
+                        <span className="text-xs font-bold drop-shadow-sm">Llamar</span>
                       </div>
                       
                       {/* Message Action (Right side) */}
-                      <div className="message-hint absolute right-0 top-0 bottom-0 w-20 bg-blue-500 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform translate-x-full shadow-lg">
-                        <Mail className="h-5 w-5 mb-1" />
-                        <span className="text-xs font-bold">Mensaje</span>
+                      <div className="message-hint absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-blue-500 to-blue-600 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform translate-x-full shadow-xl">
+                        <MessageCircle className="h-6 w-6 mb-1 drop-shadow-sm" />
+                        <span className="text-xs font-bold drop-shadow-sm">Mensaje</span>
                       </div>
                     </div>
                     
