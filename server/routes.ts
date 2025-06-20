@@ -554,13 +554,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Admins and managers can only access documents of users in their company
       if (document.userId !== req.user!.id) {
         if (!['admin', 'manager'].includes(req.user!.role)) {
-          return res.status(403).json({ message: 'Access denied - not your document' });
+          // Redirect to custom 403 page instead of JSON response
+          const companyAlias = req.user!.companyId === 1 ? 'test' : 'company';
+          return res.redirect(`/${companyAlias}/access-denied`);
         }
         
         // For admin/manager, verify the document belongs to someone in their company
         const documentOwner = await storage.getUser(document.userId);
         if (!documentOwner || documentOwner.companyId !== req.user!.companyId) {
-          return res.status(403).json({ message: 'Access denied - document not in your company' });
+          const companyAlias = req.user!.companyId === 1 ? 'test' : 'company';
+          return res.redirect(`/${companyAlias}/access-denied`);
         }
       }
 

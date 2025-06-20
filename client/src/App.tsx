@@ -23,6 +23,7 @@ import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
 import Employees from "@/pages/employees";
 import Settings from "@/pages/settings";
+import AccessDenied from "@/pages/access-denied";
 
 function DashboardRouter() {
   const { user } = useAuth();
@@ -193,6 +194,10 @@ function Router() {
             </PageWrapper>
           </AppLayout>
         </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/access-denied">
+        <AccessDenied />
       </Route>
 
 
