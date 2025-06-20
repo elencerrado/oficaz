@@ -7,35 +7,25 @@ interface AuthData {
 }
 
 export function setAuthData(data: AuthData) {
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  localStorage.setItem('company', JSON.stringify(data.company));
+  localStorage.setItem('authData', JSON.stringify(data));
 }
 
 export function getAuthData(): AuthData | null {
-  const token = localStorage.getItem('token');
-  const userStr = localStorage.getItem('user');
-  const companyStr = localStorage.getItem('company');
-
-  if (!token || !userStr || !companyStr) {
+  const authDataStr = localStorage.getItem('authData');
+  
+  if (!authDataStr) {
     return null;
   }
 
   try {
-    return {
-      token,
-      user: JSON.parse(userStr),
-      company: JSON.parse(companyStr),
-    };
+    return JSON.parse(authDataStr);
   } catch {
     return null;
   }
 }
 
 export function clearAuthData() {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('company');
+  localStorage.removeItem('authData');
 }
 
 export function getAuthHeaders(): HeadersInit {

@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       const authData = getAuthData();
+      console.log('Auth init with data:', authData ? 'found' : 'none');
+      
       if (authData) {
         try {
           // Verify token by fetching user data
@@ -31,15 +33,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           
+          console.log('Auth verification response:', response.status);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name });
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);
           } else {
+            console.log('Auth verification failed, clearing data');
             clearAuthData();
           }
-        } catch {
+        } catch (error) {
+          console.log('Auth init error:', error);
           clearAuthData();
         }
       }
