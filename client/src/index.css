@@ -248,10 +248,30 @@ body::after {
   .bg-oficaz-error {
     background-color: var(--oficaz-error);
   }
-  
-  .font-inter {
-    font-family: 'Inter', sans-serif;
-  }
+}
+
+/* Dialog overlay customization */
+[data-radix-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.3) !important; /* Reduced from default ~0.8 */
+}
+
+/* Calendar fixed size */
+.rdp {
+  width: 320px !important;
+  min-height: 280px !important;
+}
+
+.rdp-table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+.rdp-tbody {
+  min-height: 200px !important;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
 }
 
 /* Animations */
