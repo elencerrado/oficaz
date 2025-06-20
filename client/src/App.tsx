@@ -21,7 +21,7 @@ import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
 import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
-import Employees from "@/pages/employees";
+import Employees from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import AccessDenied from "@/pages/access-denied";
 
