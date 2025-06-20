@@ -1,21 +1,17 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { 
-  Clock, 
   Search, 
   Edit, 
   Users,
   Filter,
-  CalendarDays,
   TrendingUp,
   Download,
   ChevronLeft,
@@ -23,7 +19,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths, addDays, subDays, startOfWeek } from 'date-fns';
+import { format, startOfWeek, addDays, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -88,18 +84,17 @@ export default function TimeTracking() {
     },
   });
 
-  // Handle edit session
-  const handleEditSession = (session: any) => {
+  // Optimized event handlers with useCallback
+  const handleEditSession = useCallback((session: any) => {
     setEditingSession(session.id);
     setEditData({
       clockIn: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
       clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '',
       date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
     });
-  };
+  }, []);
 
-  // Save edited session
-  const handleSaveSession = (sessionId: number) => {
+  const handleSaveSession = useCallback((sessionId: number) => {
     const clockInDateTime = new Date(`${editData.date}T${editData.clockIn}:00`);
     const clockOutDateTime = editData.clockOut ? new Date(`${editData.date}T${editData.clockOut}:00`) : null;
     
@@ -110,13 +105,12 @@ export default function TimeTracking() {
         clockOut: clockOutDateTime?.toISOString() || null,
       }
     });
-  };
+  }, [editData, updateSessionMutation]);
 
-  // Cancel editing
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingSession(null);
     setEditData({ clockIn: '', clockOut: '', date: '' });
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -130,91 +124,79 @@ export default function TimeTracking() {
     );
   }
 
-  // Filter out admin users from employees and their sessions
-  const allEmployees = employees as any[];
-  const employeesList = allEmployees.filter((emp: any) => emp.role !== 'admin');
-  const sessionsList = (sessions as any[]).filter((session: any) => {
-    // Find the user info for this session
-    const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
-    return sessionUser?.role !== 'admin';
-  });
+  // Memoized calculations for better performance
+  const { employeesList, sessionsList, availableMonths } = useMemo(() => {
+    const allEmployees = employees as any[];
+    const filteredEmployees = allEmployees.filter((emp: any) => emp.role !== 'admin');
+    const filteredSessions = (sessions as any[]).filter((session: any) => {
+      const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
+      return sessionUser?.role !== 'admin';
+    });
 
-  // Get unique months from sessions
-  const availableMonths = sessionsList.reduce((months: string[], session: any) => {
-    const sessionDate = new Date(session.clockIn);
-    const monthKey = format(sessionDate, 'yyyy-MM');
-    if (!months.includes(monthKey)) {
-      months.push(monthKey);
-    }
-    return months;
-  }, []).sort().reverse(); // Most recent first
+    const months = filteredSessions.reduce((acc: string[], session: any) => {
+      const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
+      if (!acc.includes(monthKey)) acc.push(monthKey);
+      return acc;
+    }, []).sort().reverse();
 
-  // Update currentMonth to most recent available month if not already set correctly
-  const currentMonthKey = format(currentMonth, 'yyyy-MM');
-  if (availableMonths.length > 0 && !availableMonths.includes(currentMonthKey)) {
-    const [year, month] = availableMonths[0].split('-');
-    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
-  }
+    return {
+      employeesList: filteredEmployees,
+      sessionsList: filteredSessions,
+      availableMonths: months
+    };
+  }, [employees, sessions]);
 
-  // Filter sessions based on search, employee and date range
-  const filteredSessions = sessionsList.filter((session: any) => {
-    const sessionDate = new Date(session.clockIn);
-    
-    const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
-    const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Date filtering
-    let matchesDate = true;
-    if (dateFilter === 'day') {
-      const dayStart = new Date(currentDate);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(currentDate);
-      dayEnd.setHours(23, 59, 59, 999);
-      matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
-    } else if (dateFilter === 'month') {
-      const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-      monthStart.setHours(0, 0, 0, 0);
-      const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-      monthEnd.setHours(23, 59, 59, 999);
-      matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
-    } else if (dateFilter === 'custom' && startDate && endDate) {
-      const filterStart = new Date(startDate);
-      const filterEnd = new Date(endDate);
-      filterEnd.setHours(23, 59, 59, 999);
-      matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
-    } else if (dateFilter === 'custom' && startDate && !endDate) {
-      const filterStart = new Date(startDate);
-      matchesDate = sessionDate >= filterStart;
-    } else if (dateFilter === 'custom' && !startDate && endDate) {
-      const filterEnd = new Date(endDate);
-      filterEnd.setHours(23, 59, 59, 999);
-      matchesDate = sessionDate <= filterEnd;
-    }
-    
-    return matchesEmployee && matchesSearch && matchesDate;
-  });
-
-  // Calculate totals
-  const calculateHours = (clockIn: string, clockOut: string | null) => {
+  // Calculate hours helper function
+  const calculateHours = useCallback((clockIn: string, clockOut: string | null) => {
     if (!clockOut) return 0;
-    const start = new Date(clockIn);
-    const end = new Date(clockOut);
-    return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-  };
+    return (new Date(clockOut).getTime() - new Date(clockIn).getTime()) / (1000 * 60 * 60);
+  }, []);
 
-  const totalHours = filteredSessions.reduce((total: number, session: any) => {
-    return total + calculateHours(session.clockIn, session.clockOut);
-  }, 0);
+  // Memoized filtered sessions
+  const filteredSessions = useMemo(() => {
+    return sessionsList.filter((session: any) => {
+      const sessionDate = new Date(session.clockIn);
+      
+      const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
+      const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Date filtering
+      let matchesDate = true;
+      if (dateFilter === 'day') {
+        const dayStart = new Date(currentDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(currentDate);
+        dayEnd.setHours(23, 59, 59, 999);
+        matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
+      } else if (dateFilter === 'month') {
+        const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+        const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+        monthEnd.setHours(23, 59, 59, 999);
+        matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
+      } else if (dateFilter === 'custom' && (startDate || endDate)) {
+        const filterStart = startDate ? new Date(startDate) : new Date(0);
+        const filterEnd = endDate ? new Date(endDate) : new Date();
+        if (endDate) filterEnd.setHours(23, 59, 59, 999);
+        matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
+      }
+      
+      return matchesEmployee && matchesSearch && matchesDate;
+    });
+  }, [sessionsList, selectedEmployee, searchTerm, dateFilter, currentDate, currentMonth, startDate, endDate]);
 
-  // Calculate employees who have clocked in
-  const uniqueEmployeesWithSessions = new Set(filteredSessions.map((s: any) => s.userId));
-  const employeesWithSessions = uniqueEmployeesWithSessions.size;
-  const totalEmployees = employeesList.length;
-  
-  // Calculate average hours per employee
-  const averageHoursPerEmployee = employeesWithSessions > 0 ? totalHours / employeesWithSessions : 0;
-  
-  const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
+  // Memoized statistics
+  const { employeesWithSessions, totalEmployees, averageHoursPerEmployee } = useMemo(() => {
+    const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
+    const totalHours = filteredSessions.reduce((total: number, session: any) => {
+      return total + calculateHours(session.clockIn, session.clockOut);
+    }, 0);
+    
+    return {
+      employeesWithSessions: uniqueEmployees,
+      totalEmployees: employeesList.length,
+      averageHoursPerEmployee: uniqueEmployees > 0 ? totalHours / uniqueEmployees : 0
+    };
+  }, [filteredSessions, employeesList.length, calculateHours]);
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
@@ -531,41 +513,30 @@ export default function TimeTracking() {
                 </tr>
               </thead>
               <tbody>
-                {(() => {
+                {useMemo(() => {
                   if (filteredSessions.length === 0) return null;
                   
-                  // Sort sessions by date (most recent first)
                   const sortedSessions = filteredSessions
                     .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
                   
-                  // Only show summaries when filtering by a specific employee
                   const showSummaries = selectedEmployee !== 'all';
-                  
                   let currentWeekStart: Date | null = null;
                   let previousWeekStart: Date | null = null;
                   let currentMonth: string | null = null;
                   let previousMonth: string | null = null;
                   
-                  // Calculate weekly totals
-                  const calculateWeekTotal = (weekStart: Date) => {
-                    return sortedSessions
+                  const calculateWeekTotal = (weekStart: Date) => 
+                    sortedSessions
                       .filter(session => {
                         const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                         return sessionWeekStart.getTime() === weekStart.getTime();
                       })
                       .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
-                  };
                   
-                  // Calculate monthly totals
-                  const calculateMonthTotal = (monthKey: string) => {
-                    return sortedSessions
-                      .filter(session => {
-                        const sessionDate = new Date(session.clockIn);
-                        const sessionMonthKey = format(sessionDate, 'yyyy-MM');
-                        return sessionMonthKey === monthKey;
-                      })
+                  const calculateMonthTotal = (monthKey: string) => 
+                    sortedSessions
+                      .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
                       .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
-                  };
                   
                   const result: JSX.Element[] = [];
                   
@@ -573,12 +544,7 @@ export default function TimeTracking() {
                     const sessionDate = new Date(session.clockIn);
                     const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
                     const monthKey = format(sessionDate, 'yyyy-MM');
-                    
-                    // Check if this is a new week
-                    const isNewWeek = currentWeekStart === null || 
-                      weekStart.getTime() !== currentWeekStart.getTime();
-                    
-                    // Check if this is a new month
+                    const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
                     const isNewMonth = currentMonth === null || monthKey !== currentMonth;
                     
                     if (isNewWeek) {
@@ -591,7 +557,7 @@ export default function TimeTracking() {
                       currentMonth = monthKey;
                     }
                     
-                    // Add month summary (only if it's a new month, not the first item, and filtering by specific employee)
+                    // Add summaries only when filtering by specific employee
                     if (showSummaries && isNewMonth && index > 0 && previousMonth) {
                       const monthTotal = calculateMonthTotal(previousMonth);
                       const [year, month] = previousMonth.split('-');
@@ -608,10 +574,8 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    // Add week summary (only if it's a new week, not the first item, and filtering by specific employee)
                     if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
-                      
                       result.push(
                         <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
                           <td colSpan={6} className="py-2 px-4 text-center">
@@ -623,9 +587,7 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    // Add session row
                     const hours = calculateHours(session.clockIn, session.clockOut);
-                    const isActive = !session.clockOut;
                     const isEditing = editingSession === session.id;
                     
                     result.push(
@@ -722,10 +684,8 @@ export default function TimeTracking() {
                     );
                   });
                   
-
-                  
                   return result;
-                })()}
+                }, [filteredSessions, selectedEmployee, editingSession, editData, handleEditSession, handleSaveSession, handleCancelEdit, updateSessionMutation.isPending, calculateHours])}
               </tbody>
             </table>
             
