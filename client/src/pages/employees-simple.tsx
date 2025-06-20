@@ -108,10 +108,14 @@ export default function EmployeesSimple() {
 
   // Function to adjust vacation days
   const adjustVacationDays = (amount: number) => {
-    setEditEmployee(prev => ({
-      ...prev,
-      vacationDaysAdjustment: (prev.vacationDaysAdjustment || 0) + amount
-    }));
+    setEditEmployee(prev => {
+      const currentAdjustment = Number(prev.vacationDaysAdjustment) || 0;
+      const newAdjustment = currentAdjustment + amount;
+      return {
+        ...prev,
+        vacationDaysAdjustment: newAdjustment
+      };
+    });
   };
 
   // Function to handle opening edit modal
@@ -123,7 +127,7 @@ export default function EmployeesSimple() {
       position: employee.position || employee.role,
       startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
       status: employee.status || 'active',
-      vacationDaysAdjustment: employee.vacationDaysAdjustment || 0,
+      vacationDaysAdjustment: Number(employee.vacationDaysAdjustment || 0),
     });
     setShowEditModal(true);
   };
@@ -550,17 +554,28 @@ export default function EmployeesSimple() {
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-lg font-bold text-blue-600">
-                              {Math.round(Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0))}
+                              {(() => {
+                                const total = Number(selectedEmployee?.totalVacationDays || 0);
+                                const adjustment = Number(editEmployee?.vacationDaysAdjustment || 0);
+                                return Math.round(total + adjustment);
+                              })()}
                             </p>
                             <p className="text-xs text-gray-600">Total</p>
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-orange-600">{Math.round(Number(selectedEmployee.usedVacationDays || 0))}</p>
+                            <p className="text-lg font-bold text-orange-600">
+                              {Math.round(Number(selectedEmployee?.usedVacationDays || 0))}
+                            </p>
                             <p className="text-xs text-gray-600">Usados</p>
                           </div>
                           <div>
                             <p className="text-lg font-bold text-green-600">
-                              {Math.max(0, Math.round((Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0)) - Number(selectedEmployee.usedVacationDays || 0)))}
+                              {(() => {
+                                const total = Number(selectedEmployee?.totalVacationDays || 0);
+                                const adjustment = Number(editEmployee?.vacationDaysAdjustment || 0);
+                                const used = Number(selectedEmployee?.usedVacationDays || 0);
+                                return Math.max(0, Math.round((total + adjustment) - used));
+                              })()}
                             </p>
                             <p className="text-xs text-gray-600">Disponibles</p>
                           </div>
@@ -586,11 +601,12 @@ export default function EmployeesSimple() {
                             
                             <Input
                               type="number"
-                              value={Number(editEmployee.vacationDaysAdjustment || 0)}
+                              value={editEmployee.vacationDaysAdjustment || 0}
                               onChange={(e) => {
-                                const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                                if (!isNaN(value)) {
-                                  setEditEmployee({ ...editEmployee, vacationDaysAdjustment: value });
+                                const value = e.target.value === '' ? '0' : e.target.value;
+                                const numValue = parseInt(value, 10);
+                                if (!isNaN(numValue)) {
+                                  setEditEmployee({ ...editEmployee, vacationDaysAdjustment: numValue });
                                 }
                               }}
                               className="w-16 text-center font-bold"
