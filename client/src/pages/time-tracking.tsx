@@ -401,6 +401,7 @@ export default function TimeTracking() {
                       }}
                       className="rounded-md border"
                       disabled={(date) => date > new Date()}
+                      locale={es}
                     />
                     <div className="flex gap-2">
                       <Button
