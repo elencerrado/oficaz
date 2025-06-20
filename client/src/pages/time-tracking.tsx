@@ -131,6 +131,23 @@ export default function TimeTracking() {
   const sessionsList = sessions as any[];
   const employeesList = employees as any[];
 
+  // Get unique months from sessions
+  const availableMonths = sessionsList.reduce((months: string[], session: any) => {
+    const sessionDate = new Date(session.clockIn);
+    const monthKey = format(sessionDate, 'yyyy-MM');
+    if (!months.includes(monthKey)) {
+      months.push(monthKey);
+    }
+    return months;
+  }, []).sort().reverse(); // Most recent first
+
+  // Update currentMonth to most recent available month if not already set correctly
+  const currentMonthKey = format(currentMonth, 'yyyy-MM');
+  if (availableMonths.length > 0 && !availableMonths.includes(currentMonthKey)) {
+    const [year, month] = availableMonths[0].split('-');
+    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+  }
+
   // Filter sessions based on search, employee and date range
   const filteredSessions = sessionsList.filter((session: any) => {
     const sessionDate = new Date(session.clockIn);
@@ -347,7 +364,14 @@ export default function TimeTracking() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                onClick={() => {
+                  const currentIndex = availableMonths.indexOf(format(currentMonth, 'yyyy-MM'));
+                  if (currentIndex < availableMonths.length - 1) {
+                    const [year, month] = availableMonths[currentIndex + 1].split('-');
+                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                  }
+                }}
+                disabled={availableMonths.indexOf(format(currentMonth, 'yyyy-MM')) >= availableMonths.length - 1}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -364,12 +388,11 @@ export default function TimeTracking() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const date = new Date();
-                    date.setMonth(date.getMonth() - 6 + i);
-                    const value = format(date, 'yyyy-MM');
+                  {availableMonths.map((monthKey) => {
+                    const [year, month] = monthKey.split('-');
+                    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
                     return (
-                      <SelectItem key={value} value={value}>
+                      <SelectItem key={monthKey} value={monthKey}>
                         {format(date, 'MMMM yyyy', { locale: es })}
                       </SelectItem>
                     );
@@ -379,8 +402,14 @@ export default function TimeTracking() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                disabled={format(currentMonth, 'yyyy-MM') >= format(new Date(), 'yyyy-MM')}
+                onClick={() => {
+                  const currentIndex = availableMonths.indexOf(format(currentMonth, 'yyyy-MM'));
+                  if (currentIndex > 0) {
+                    const [year, month] = availableMonths[currentIndex - 1].split('-');
+                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                  }
+                }}
+                disabled={availableMonths.indexOf(format(currentMonth, 'yyyy-MM')) <= 0}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
