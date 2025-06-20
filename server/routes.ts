@@ -21,6 +21,67 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Test route for database connection and create test user
+  app.get('/api/test/db', async (req, res) => {
+    try {
+      // Ensure test company exists
+      let company = await storage.getCompanyByCif?.('B12345678');
+      if (!company) {
+        company = await storage.createCompany({
+          name: 'Test Company',
+          email: 'admin@test.com',
+          cif: 'B12345678',
+          contactName: 'Admin Test',
+          companyAlias: 'test',
+          address: 'Calle Principal, 123',
+          phone: '+34 912 345 678'
+        });
+      }
+
+      // Ensure test admin user exists
+      let adminUser = await storage.getUserByEmail('admin@test.com');
+      if (!adminUser) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        adminUser = await storage.createUser({
+          dni: '12345678A',
+          personalEmail: 'admin@test.com',
+          companyEmail: 'admin@test.com',
+          fullName: 'Admin Test',
+          role: 'admin',
+          companyId: company.id,
+          password: hashedPassword,
+          isActive: true,
+          jobTitle: 'Administrator',
+          hireDate: new Date().toISOString(),
+          totalVacationDays: 30,
+          usedVacationDays: 0,
+          createdBy: 1
+        });
+      }
+
+      const users = await storage.getUsersByCompany(company.id);
+      res.json({ 
+        status: 'Database connected',
+        company: { id: company.id, name: company.name, alias: company.companyAlias },
+        userCount: users.length,
+        testCredentials: {
+          email: 'admin@test.com',
+          password: 'admin123',
+          companyAlias: 'test'
+        },
+        users: users.map(u => ({
+          id: u.id,
+          dni: u.dni,
+          email: u.companyEmail,
+          role: u.role,
+          isActive: u.isActive
+        }))
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -86,6 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('Login attempt:', { body: req.body });
       const data = loginSchema.parse(req.body);
       const { companyAlias } = req.body;
       
@@ -102,6 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Try to find user by company email first, then by DNI
       let user = await storage.getUserByEmail(data.dniOrEmail);
+      console.log('User found by email:', !!user);
       
       // If company-specific login, verify user belongs to that company
       if (user && targetCompanyId && user.companyId !== targetCompanyId) {
@@ -115,21 +178,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           user = await storage.getUserByDni(data.dniOrEmail);
         }
+        console.log('User found by DNI:', !!user);
       }
       
       if (!user) {
+        console.log('No user found');
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
-      // Only validate password if we haven't already validated it during multi-user check
-      let validPassword = true;
-      if (!user.password) {
-        // If password validation was done during multi-user check, user object might not have password
-        // In this case, we already validated the password
-        validPassword = true;
-      } else {
-        validPassword = await bcrypt.compare(data.password, user.password);
-      }
+      // Validate password
+      const validPassword = await bcrypt.compare(data.password, user.password || '');
+      console.log('Password valid:', validPassword);
       
       if (!validPassword) {
         return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -143,11 +202,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const token = generateToken({
         id: user.id,
-        username: user.companyEmail, // Use company email as username in JWT
+        username: user.companyEmail || user.personalEmail || user.dni, // Fallback for username
         role: user.role,
         companyId: user.companyId,
       });
 
+      console.log('Login successful for user:', user.id);
       res.json({
         message: "Inicio de sesión exitoso",
         user: { ...user, password: undefined },
@@ -155,7 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company,
       });
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
 
