@@ -151,7 +151,7 @@ export default function Employees() {
       position: employee.position || '',
       startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
       status: employee.status || 'active',
-      vacationDaysAdjustment: parseFloat(employee.vacationDaysAdjustment || '0'),
+      vacationDaysAdjustment: parseInt(employee.vacationDaysAdjustment || '0', 10) || 0,
     });
     setIsEditModalOpen(true);
   };
@@ -704,17 +704,17 @@ export default function Employees() {
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-lg font-bold text-blue-600">
-                              {(selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0)}
+                              {Math.round((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0))}
                             </p>
                             <p className="text-xs text-gray-600">Total</p>
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-orange-600">{selectedEmployee.usedVacationDays || 0}</p>
+                            <p className="text-lg font-bold text-orange-600">{Math.round(selectedEmployee.usedVacationDays || 0)}</p>
                             <p className="text-xs text-gray-600">Usados</p>
                           </div>
                           <div>
                             <p className="text-lg font-bold text-green-600">
-                              {((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0)) - (selectedEmployee.usedVacationDays || 0)}
+                              {Math.max(0, Math.round(((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0)) - (selectedEmployee.usedVacationDays || 0)))}
                             </p>
                             <p className="text-xs text-gray-600">Disponibles</p>
                           </div>
@@ -742,11 +742,15 @@ export default function Employees() {
                               type="number"
                               value={editEmployee.vacationDaysAdjustment || 0}
                               onChange={(e) => {
-                                const value = parseInt(e.target.value) || 0;
-                                setEditEmployee({ ...editEmployee, vacationDaysAdjustment: value });
+                                const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                if (!isNaN(value)) {
+                                  setEditEmployee({ ...editEmployee, vacationDaysAdjustment: value });
+                                }
                               }}
                               className="w-16 text-center font-bold"
                               step="1"
+                              min="-50"
+                              max="50"
                             />
                             
                             <Button
