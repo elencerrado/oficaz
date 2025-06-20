@@ -262,6 +262,17 @@ export default function TimeTracking() {
           {/* Date Filter Type Selector */}
           <div className="flex items-center justify-center space-x-2 mb-3">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentDate(new Date());
+                setDateFilter('day');
+              }}
+              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              Hoy
+            </Button>
+            <Button
               variant={dateFilter === 'day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setDateFilter('day')}
@@ -283,7 +294,7 @@ export default function TimeTracking() {
               onClick={() => setDateFilter('custom')}
               className={dateFilter === 'custom' ? 'bg-oficaz-primary' : ''}
             >
-              Rango Personalizado
+              Rango
             </Button>
           </div>
 
@@ -386,9 +397,6 @@ export default function TimeTracking() {
                         if (range?.to) {
                           setSelectedEndDate(range.to);
                           setEndDate(format(range.to, 'yyyy-MM-dd'));
-                        }
-                        if (range?.from && range?.to) {
-                          setTimeout(() => setIsRangeDialogOpen(false), 500);
                         }
                       }}
                       className="rounded-md border"
