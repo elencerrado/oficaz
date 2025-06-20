@@ -531,223 +531,287 @@ export default function Employees() {
 
       {/* Edit Employee Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit className="h-5 w-5" />
-              Editar Empleado - {selectedEmployee?.fullName}
+        <DialogContent className="sm:max-w-4xl max-h-[95vh] overflow-hidden">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-oficaz-primary/10 rounded-lg flex items-center justify-center">
+                <Edit className="h-5 w-5 text-oficaz-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Editar Empleado</h2>
+                <p className="text-sm text-gray-500 font-normal">Gestionar información corporativa y personal</p>
+              </div>
             </DialogTitle>
           </DialogHeader>
           
           {selectedEmployee && (
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-              {/* Employee Overview */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-oficaz-primary text-white">
+            <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
+              {/* Employee Header */}
+              <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-6 rounded-xl mb-6">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
+                    <AvatarFallback className="bg-oficaz-primary text-white text-lg font-semibold">
                       {selectedEmployee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-lg">{selectedEmployee.fullName}</h3>
-                    <p className="text-sm text-gray-600 flex items-center gap-1">
-                      <IdCard className="h-3 w-3" />
-                      {selectedEmployee.dni}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Admin/Manager Editable Fields */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Campos Corporativos (Solo Admin/Manager)
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="companyEmail">Email Corporativo</Label>
-                    <Input
-                      id="companyEmail"
-                      type="email"
-                      value={editEmployee.companyEmail}
-                      onChange={(e) => setEditEmployee({ ...editEmployee, companyEmail: e.target.value })}
-                      placeholder="empleado@empresa.com"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="companyPhone">Teléfono Corporativo</Label>
-                    <Input
-                      id="companyPhone"
-                      value={editEmployee.companyPhone}
-                      onChange={(e) => setEditEmployee({ ...editEmployee, companyPhone: e.target.value })}
-                      placeholder="666 666 666"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="position">Cargo/Puesto</Label>
-                    <Input
-                      id="position"
-                      value={editEmployee.position}
-                      onChange={(e) => setEditEmployee({ ...editEmployee, position: e.target.value })}
-                      placeholder="Administrativo, Técnico, etc."
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="startDate">Fecha de Incorporación</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={editEmployee.startDate}
-                      onChange={(e) => setEditEmployee({ ...editEmployee, startDate: e.target.value })}
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <Label htmlFor="status">Estado del Empleado</Label>
-                    <Select 
-                      value={editEmployee.status} 
-                      onValueChange={(value) => setEditEmployee({ ...editEmployee, status: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">
-                          <span className="flex items-center gap-2">
-                            <CheckCircle className="h-3 w-3 text-green-600" />
-                            Activo
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="inactive">
-                          <span className="flex items-center gap-2">
-                            <XCircle className="h-3 w-3 text-gray-600" />
-                            Inactivo
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="on_leave">
-                          <span className="flex items-center gap-2">
-                            <Pause className="h-3 w-3 text-orange-600" />
-                            De Baja
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="on_vacation">
-                          <span className="flex items-center gap-2">
-                            <Plane className="h-3 w-3 text-blue-600" />
-                            De Vacaciones
-                          </span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vacation Adjustment */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Ajuste de Días de Vacaciones
-                </h4>
-                
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-medium">Días Totales: {selectedEmployee.totalVacationDays || 0}</p>
-                      <p className="text-sm text-gray-600">Días Utilizados: {selectedEmployee.usedVacationDays || 0}</p>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-xl text-gray-900">{selectedEmployee.fullName}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <IdCard className="h-4 w-4 text-gray-500" />
+                      <span className="text-gray-600 font-medium">{selectedEmployee.dni}</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">Ajuste Actual: {editEmployee.vacationDaysAdjustment} días</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-gray-600">{selectedEmployee.companyEmail}</span>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => adjustVacationDays(-1)}
-                      className="p-2"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    
-                    <Input
-                      type="number"
-                      value={editEmployee.vacationDaysAdjustment}
-                      onChange={(e) => setEditEmployee({ ...editEmployee, vacationDaysAdjustment: parseFloat(e.target.value) || 0 })}
-                      className="w-20 text-center"
-                      step="0.5"
-                    />
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => adjustVacationDays(1)}
-                      className="p-2"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                    
-                    <span className="text-sm text-gray-600 ml-2">
-                      días extra (+ o -)
-                    </span>
+                  <div className="text-right">
+                    {(() => {
+                      const status = selectedEmployee.status || 'active';
+                      const statusConfig = {
+                        active: { label: 'Activo', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+                        inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-800', icon: XCircle },
+                        on_leave: { label: 'De Baja', color: 'bg-orange-100 text-orange-800', icon: Pause },
+                        on_vacation: { label: 'De Vacaciones', color: 'bg-blue-100 text-blue-800', icon: Plane }
+                      };
+                      const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
+                      const Icon = config.icon;
+                      return (
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+                          <Icon className="h-3 w-3" />
+                          {config.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
 
-              <Separator />
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column - Corporate Fields */}
+                <div className="space-y-6">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                      </div>
+                      Información Corporativa
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700">Email Corporativo</Label>
+                        <Input
+                          id="companyEmail"
+                          type="email"
+                          value={editEmployee.companyEmail}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, companyEmail: e.target.value })}
+                          placeholder="empleado@empresa.com"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="companyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
+                        <Input
+                          id="companyPhone"
+                          value={editEmployee.companyPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, companyPhone: e.target.value })}
+                          placeholder="666 666 666"
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="position" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
+                        <Input
+                          id="position"
+                          value={editEmployee.position}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, position: e.target.value })}
+                          placeholder="Administrativo, Técnico, etc."
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={editEmployee.startDate}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, startDate: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="status" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
+                        <Select 
+                          value={editEmployee.status} 
+                          onValueChange={(value) => setEditEmployee({ ...editEmployee, status: value })}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">
+                              <span className="flex items-center gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                Activo
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="inactive">
+                              <span className="flex items-center gap-2">
+                                <XCircle className="h-3 w-3 text-gray-600" />
+                                Inactivo
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="on_leave">
+                              <span className="flex items-center gap-2">
+                                <Pause className="h-3 w-3 text-orange-600" />
+                                De Baja
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="on_vacation">
+                              <span className="flex items-center gap-2">
+                                <Plane className="h-3 w-3 text-blue-600" />
+                                De Vacaciones
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Employee Viewable Fields (Read-only) */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                {/* Right Column - Vacation Management */}
+                <div className="space-y-6">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-green-600" />
+                      </div>
+                      Gestión de Vacaciones
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      {/* Current Vacation Status */}
+                      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border border-blue-100">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-blue-600">{selectedEmployee.totalVacationDays || 0}</p>
+                            <p className="text-xs text-gray-600">Días Totales</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-orange-600">{selectedEmployee.usedVacationDays || 0}</p>
+                            <p className="text-xs text-gray-600">Días Utilizados</p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-green-600">
+                            {((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0)) - (selectedEmployee.usedVacationDays || 0)}
+                          </p>
+                          <p className="text-xs text-gray-600">Días Disponibles</p>
+                        </div>
+                      </div>
+                      
+                      {/* Vacation Adjustment Controls */}
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                          Ajuste Manual de Vacaciones
+                        </Label>
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div className="flex items-center justify-center gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustVacationDays(-1)}
+                              className="w-10 h-10 p-0 rounded-full"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            
+                            <div className="text-center min-w-0 flex-1">
+                              <Input
+                                type="number"
+                                value={editEmployee.vacationDaysAdjustment || 0}
+                                onChange={(e) => setEditEmployee({ ...editEmployee, vacationDaysAdjustment: parseFloat(e.target.value) || 0 })}
+                                className="w-20 text-center text-lg font-bold mx-auto"
+                                step="0.5"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">días de ajuste</p>
+                            </div>
+                            
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustVacationDays(1)}
+                              className="w-10 h-10 p-0 rounded-full"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 text-center mt-2">
+                            Usar + para días extra o - para reducir
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Information Section */}
+              <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <User className="h-4 w-4 text-gray-600" />
+                  </div>
                   Información Personal (Solo Lectura)
                 </h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                  <div>
-                    <Label className="text-gray-600">Email Personal</Label>
-                    <p className="text-sm mt-1 flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Email Personal</Label>
+                    <p className="text-sm mt-1 flex items-center gap-2 font-medium">
+                      <Mail className="h-3 w-3 text-gray-400" />
                       {selectedEmployee.personalEmail || 'No especificado'}
                     </p>
                   </div>
                   
-                  <div>
-                    <Label className="text-gray-600">Teléfono Personal</Label>
-                    <p className="text-sm mt-1 flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono Personal</Label>
+                    <p className="text-sm mt-1 flex items-center gap-2 font-medium">
+                      <Phone className="h-3 w-3 text-gray-400" />
                       {selectedEmployee.personalPhone || 'No especificado'}
                     </p>
                   </div>
                   
-                  <div className="md:col-span-2">
-                    <Label className="text-gray-600">Dirección Postal</Label>
-                    <p className="text-sm mt-1 flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
+                  <div className="bg-gray-50 p-3 rounded-lg md:col-span-2">
+                    <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Dirección Postal</Label>
+                    <p className="text-sm mt-1 flex items-center gap-2 font-medium">
+                      <MapPin className="h-3 w-3 text-gray-400" />
                       {selectedEmployee.postalAddress || 'No especificada'}
                     </p>
                   </div>
                   
-                  <div>
-                    <Label className="text-gray-600">Contacto de Emergencia</Label>
-                    <p className="text-sm mt-1 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contacto de Emergencia</Label>
+                    <p className="text-sm mt-1 flex items-center gap-2 font-medium">
+                      <AlertTriangle className="h-3 w-3 text-gray-400" />
                       {selectedEmployee.emergencyContactName || 'No especificado'}
                     </p>
                   </div>
                   
-                  <div>
-                    <Label className="text-gray-600">Teléfono de Emergencia</Label>
-                    <p className="text-sm mt-1 flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Teléfono de Emergencia</Label>
+                    <p className="text-sm mt-1 flex items-center gap-2 font-medium">
+                      <Phone className="h-3 w-3 text-gray-400" />
                       {selectedEmployee.emergencyContactPhone || 'No especificado'}
                     </p>
                   </div>
@@ -755,14 +819,18 @@ export default function Employees() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              <div className="flex justify-end space-x-3 pt-6 border-t mt-6">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-6"
+                >
                   Cancelar
                 </Button>
                 <Button 
                   onClick={handleSaveEmployee}
                   disabled={editEmployeeMutation.isPending}
-                  className="bg-oficaz-primary hover:bg-oficaz-primary/90"
+                  className="bg-oficaz-primary hover:bg-oficaz-primary/90 px-6"
                 >
                   {editEmployeeMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
