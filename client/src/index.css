@@ -263,20 +263,37 @@ body::after {
   max-height: 320px !important;
   overflow: hidden !important;
   margin: 0 auto !important;
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.rdp-months {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.rdp-month {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .rdp-table {
-  width: 100% !important;
-  height: 100% !important;
+  width: 280px !important;
+  height: 240px !important;
   table-layout: fixed !important;
   margin: 0 auto !important;
 }
 
 .rdp-tbody {
-  height: 240px !important;
-  min-height: 240px !important;
-  max-height: 240px !important;
+  height: 200px !important;
+  min-height: 200px !important;
+  max-height: 200px !important;
 }
 
 .rdp-row {
@@ -287,10 +304,22 @@ body::after {
 
 .rdp-cell {
   height: 40px !important;
-  width: 45px !important;
-  min-width: 45px !important;
-  max-width: 45px !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   text-align: center !important;
+}
+
+.rdp-head_cell {
+  text-align: center !important;
+  width: 40px !important;
+}
+
+.rdp-caption {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
 }
 
 /* Dialog content styling for consistency */
