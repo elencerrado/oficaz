@@ -148,7 +148,7 @@ export default function TimeTracking() {
   const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 overflow-x-visible">
+    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
