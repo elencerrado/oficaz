@@ -29,7 +29,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     ] : [
       { name: 'Control de Tiempo', href: `/${companyAlias}/horas`, icon: Clock }
     ]),
-    { name: 'Solicitudes de Vacaciones', href: `/${companyAlias}/vacaciones`, icon: Calendar },
+    { name: 'Vacaciones', href: `/${companyAlias}/vacaciones`, icon: Calendar },
     { name: 'Documentos', href: `/${companyAlias}/documentos`, icon: FileText },
     { name: 'Mensajes', href: `/${companyAlias}/mensajes`, icon: Mail, badge: unreadCount },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
@@ -74,24 +74,31 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-          <div className="p-4">
-            <ul className="space-y-2">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 flex flex-col">
+          <div className="flex-1 p-4">
+            <div className="h-full flex flex-col justify-start space-y-1"
+                 style={{ 
+                   gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
+                 }}>
               {navigation.map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
                 
                 return (
-                  <li key={item.name}>
+                  <div key={item.name}>
                     <Link href={item.href}>
                       <button
                         className={`
-                          w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left
+                          w-full flex items-center space-x-3 rounded-lg transition-colors text-left
                           ${isActive 
                             ? 'bg-blue-50 text-oficaz-primary' 
                             : 'text-gray-700 hover:bg-gray-100'
                           }
                         `}
+                        style={{
+                          padding: 'clamp(0.75rem, 1.5vh, 1rem) 1rem',
+                          minHeight: 'clamp(2.5rem, 5vh, 3.5rem)'
+                        }}
                         onClick={handleLinkClick}
                       >
                         <Icon size={20} />
@@ -103,10 +110,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         )}
                       </button>
                     </Link>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           </div>
         </div>
         
