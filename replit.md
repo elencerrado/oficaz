@@ -117,6 +117,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema avanzado de filtrado de fechas con calendarios dropdown perfeccionado
+  - Calendarios convertidos de modales a popovers tipo dropdown sin fondo oscurecido
+  - Altura fija de 360px para acomodar 6 semanas sin cambios de tamaño entre meses
+  - Encabezado del mes fijo en posición constante (48px altura) 
+  - Selector de mes inteligente mostrando solo meses con registros existentes
+  - Navegación con flechas limitada a meses disponibles con datos
+  - Centrado perfecto del contenido interno del calendario (tabla de números y flechas)
+  - Estadísticas mejoradas: "Han Fichado" (ratio empleados), "Media Horas" por empleado
+  - Cuatro modos de filtrado: Hoy, Día (calendario), Mes (dropdown), Rango (calendario con botones)
+  - Estética consistente entre todos los selectores con botones uniformes de 200px
+  - Overlay reducido al 30% y sombras elegantes en dropdowns
 - June 20, 2025. Sistema completo de gestión de fichajes para admin implementado + optimizaciones empleados
   - Página "Fichajes" para admin/manager con tabla completa de todos los fichajes de la empresa
   - Filtros avanzados: por empleado, navegación mensual, búsqueda en tiempo real
