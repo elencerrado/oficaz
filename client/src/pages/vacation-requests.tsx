@@ -117,11 +117,7 @@ export default function VacationRequests() {
                                (new Date().getMonth() - startDate.getMonth()) + 
                                (new Date().getDate() >= startDate.getDate() ? 1 : 0));
   
-  const vacationExplanation = `¿Por qué tengo ${totalDays} días?
-
-En España te corresponden ${daysPerMonth} días de vacaciones por cada mes trabajado desde tu fecha de incorporación (${format(startDate, 'd MMMM yyyy', { locale: es })}). 
-
-Has trabajado ${monthsWorked} meses, lo que te da ${Math.round(monthsWorked * daysPerMonth * 10) / 10} días.${adjustment !== 0 ? ` Además te hemos ajustado ${adjustment > 0 ? '+' : ''}${adjustment} días.` : ''}`;
+  const calculatedBaseDays = Math.round(monthsWorked * daysPerMonth * 10) / 10;
 
   const canRequestDays = selectedStartDate && selectedEndDate ? 
     differenceInDays(selectedEndDate, selectedStartDate) + 1 : 0;
@@ -304,28 +300,39 @@ Has trabajado ${monthsWorked} meses, lo que te da ${Math.round(monthsWorked * da
                       <HelpCircle className="w-4 h-4 text-white/40 hover:text-white/70 transition-colors" />
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="bg-gray-900 border border-gray-700 text-white max-w-md">
-                    <DialogHeader>
-                      <DialogTitle className="text-blue-300">¿Por qué tengo {totalDays} días?</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-3 text-sm leading-relaxed">
-                      <p>
-                        En España te corresponden <span className="font-semibold text-blue-300">{daysPerMonth} días</span> de 
-                        vacaciones por cada mes trabajado desde tu fecha de incorporación.
-                      </p>
-                      <p>
-                        Empezaste el <span className="font-semibold text-emerald-300">
-                        {format(startDate, 'd MMMM yyyy', { locale: es })}</span> y has trabajado{' '}
-                        <span className="font-semibold text-emerald-300">{monthsWorked} meses</span>, lo que te da{' '}
-                        <span className="font-semibold text-blue-300">
-                        {Math.round(monthsWorked * daysPerMonth * 10) / 10} días</span>.
-                      </p>
-                      {adjustment !== 0 && (
-                        <p className="text-orange-300">
-                          Además te hemos ajustado <span className="font-semibold">
-                          {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
+                  <DialogContent 
+                    className="max-w-md border-0 p-0 bg-transparent"
+                    style={{ backgroundColor: 'rgba(50, 58, 70, 0.95)' }}
+                  >
+                    <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                      <DialogHeader className="mb-4">
+                        <DialogTitle className="text-blue-300 text-lg font-medium">
+                          ¿Por qué tengo {totalDays} días?
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 text-sm leading-relaxed text-white/90">
+                        <p>
+                          En España te corresponden <span className="font-semibold text-blue-300">{daysPerMonth} días</span> de 
+                          vacaciones por cada mes trabajado desde tu fecha de incorporación.
                         </p>
-                      )}
+                        <p>
+                          Empezaste el <span className="font-semibold text-emerald-300">
+                          {format(startDate, 'd MMMM yyyy', { locale: es })}</span> y has trabajado{' '}
+                          <span className="font-semibold text-emerald-300">{monthsWorked} meses</span>, lo que te da{' '}
+                          <span className="font-semibold text-blue-300">{calculatedBaseDays} días</span>.
+                        </p>
+                        {adjustment !== 0 && (
+                          <p>
+                            Además te hemos ajustado <span className="font-semibold text-orange-300">
+                            {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
+                          </p>
+                        )}
+                        <div className="pt-2 border-t border-white/10">
+                          <p className="font-medium text-blue-300">
+                            Total final: {totalDays} días
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
