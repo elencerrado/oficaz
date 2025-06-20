@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Página de documentos para empleados completamente rediseñada
+  - Categorización automática de documentos (nóminas, contratos, otros)
+  - Sistema de notificaciones para documentos requeridos con fechas límite
+  - Interfaz modal para subida de documentos específicos solicitados
+  - Visualización directa de PDFs en nueva pestaña del navegador
+  - Descarga segura de documentos con autenticación por token
+  - Filtrado por categorías con iconos diferenciados por tipo
+  - Búsqueda en tiempo real de documentos por nombre
+  - Interfaz completamente en español con mensajes localizados
 - June 20, 2025. Sistema de búsqueda y mensajes grupales implementado para admin/manager
   - Campo de búsqueda en tiempo real para filtrar empleados por nombre
   - Modo grupal activable con botón "Grupal" para selección múltiple

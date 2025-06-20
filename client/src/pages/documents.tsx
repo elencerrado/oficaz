@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Upload, 
   FileText, 
@@ -12,21 +13,50 @@ import {
   Trash2, 
   Search,
   File,
-  Image,
-  Video,
-  Music
+  AlertCircle,
+  CheckCircle,
+  X,
+  Receipt,
+  FileSignature,
+  Folder,
+  Calendar,
+  Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
+interface DocumentRequest {
+  id: number;
+  type: string;
+  message: string;
+  dueDate?: string;
+  priority: 'low' | 'medium' | 'high';
+  completed: boolean;
+}
+
 export default function Documents() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeRequest, setActiveRequest] = useState<DocumentRequest | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Mock document requests - in real app this would come from API
+  const documentRequests: DocumentRequest[] = [
+    {
+      id: 1,
+      type: 'DNI',
+      message: 'Tu DNI está próximo a caducar. Por favor, sube una copia actualizada.',
+      dueDate: '2025-07-15',
+      priority: 'high',
+      completed: false
+    }
+  ];
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['/api/documents'],
@@ -55,8 +85,8 @@ export default function Documents() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       toast({
-        title: 'File Uploaded',
-        description: 'Your document has been uploaded successfully.',
+        title: 'Documento subido',
+        description: 'Tu documento se ha subido correctamente.',
       });
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -65,7 +95,7 @@ export default function Documents() {
     },
     onError: (error: any) => {
       toast({
-        title: 'Upload Failed',
+        title: 'Error al subir',
         description: error.message,
         variant: 'destructive',
       });
@@ -132,19 +162,65 @@ export default function Documents() {
       document.body.removeChild(a);
     } catch (error) {
       toast({
-        title: 'Download Failed',
-        description: 'Unable to download the file.',
+        title: 'Error de descarga',
+        description: 'No se pudo descargar el archivo.',
         variant: 'destructive',
       });
     }
   };
 
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType.startsWith('image/')) return Image;
-    if (mimeType.startsWith('video/')) return Video;
-    if (mimeType.startsWith('audio/')) return Music;
+  const handleViewDocument = async (id: number, filename: string) => {
+    try {
+      const response = await fetch(`/api/documents/${id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('View failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab for viewing
+      window.open(url, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error) {
+      toast({
+        title: 'Error al visualizar',
+        description: 'No se pudo abrir el documento.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getFileIcon = (filename: string) => {
+    const ext = filename.toLowerCase().split('.').pop();
+    if (ext === 'pdf') return FileText;
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext || '')) return File;
+    if (['doc', 'docx'].includes(ext || '')) return FileSignature;
     return File;
   };
+
+  const getDocumentCategory = (filename: string) => {
+    const name = filename.toLowerCase();
+    if (name.includes('nomina') || name.includes('nómina') || name.includes('payroll')) return 'nominas';
+    if (name.includes('contrato') || name.includes('contract')) return 'contratos';
+    return 'otros';
+  };
+
+  const categories = [
+    { id: 'all', name: 'Todos', icon: Folder },
+    { id: 'nominas', name: 'Nóminas', icon: Receipt },
+    { id: 'contratos', name: 'Contratos', icon: FileSignature },
+    { id: 'otros', name: 'Otros documentos', icon: File },
+  ];
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -154,9 +230,26 @@ export default function Documents() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const filteredDocuments = documents?.filter((doc: any) =>
-    doc.originalName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredDocuments = (documents as any[] || [])
+    .filter((doc: any) => {
+      const matchesSearch = doc.originalName.toLowerCase().includes(searchTerm.toLowerCase());
+      if (selectedCategory === 'all') return matchesSearch;
+      return matchesSearch && getDocumentCategory(doc.originalName) === selectedCategory;
+    });
+
+  // Get pending document request
+  const pendingRequest = documentRequests.find(req => !req.completed);
+
+  const handleCompleteRequest = () => {
+    if (activeRequest) {
+      // In real app, this would mark the request as completed via API
+      setActiveRequest(null);
+      toast({
+        title: 'Documento subido',
+        description: 'Tu documento ha sido enviado correctamente.',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -175,64 +268,132 @@ export default function Documents() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Documents</h1>
-          <p className="text-gray-500 mt-1">
-            Upload and manage your documents and files.
-          </p>
-        </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">Mis Documentos</h1>
+        <p className="text-gray-500 mt-1">
+          Accede a tus nóminas, contratos y otros documentos importantes.
+        </p>
       </div>
 
-      {/* Upload Section */}
-      <Card className="mb-6">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6">
-            <div className="text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="flex flex-col sm:flex-row items-center gap-2">
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                  className="bg-oficaz-primary hover:bg-blue-700"
-                >
-                  {isUploading ? 'Uploading...' : 'Choose File'}
-                </Button>
-                <span className="text-sm text-gray-500">
-                  or drag and drop files here
-                </span>
+      {/* Document Request Notification */}
+      {pendingRequest && !activeRequest && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="font-medium mb-1">Documento requerido</p>
+                <p className="text-sm">{pendingRequest.message}</p>
+                {pendingRequest.dueDate && (
+                  <p className="text-xs mt-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Fecha límite: {format(new Date(pendingRequest.dueDate), 'd MMM yyyy', { locale: es })}
+                  </p>
+                )}
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                Maximum file size: 10MB
-              </p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isUploading}
-              />
+              <Button
+                onClick={() => setActiveRequest(pendingRequest)}
+                className="bg-orange-600 hover:bg-orange-700 text-white ml-4"
+                size="sm"
+              >
+                Subir documento
+              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {/* Search and Filters */}
-      <Card className="mb-6">
+      {/* Upload Section (Active Request) */}
+      {activeRequest && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-blue-800 flex items-center">
+                <Upload className="h-5 w-5 mr-2" />
+                Subiendo: {activeRequest.type}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setActiveRequest(null)}
+                className="text-blue-600 hover:text-blue-800"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-6 bg-white">
+              <div className="text-center">
+                <Upload className="mx-auto h-12 w-12 text-blue-400 mb-4" />
+                <p className="text-sm text-blue-700 mb-4">{activeRequest.message}</p>
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUploading ? 'Subiendo...' : 'Seleccionar archivo'}
+                  </Button>
+                  <span className="text-xs text-blue-500">
+                    Tamaño máximo: 10MB - PDF, JPG, PNG
+                  </span>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    handleFileUpload(e);
+                    if (e.target.files?.[0]) {
+                      handleCompleteRequest();
+                    }
+                  }}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Categories */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => {
+          const IconComponent = category.icon;
+          return (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category.id)}
+              className={selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC]" : ""}
+            >
+              <IconComponent className="h-4 w-4 mr-2" />
+              {category.name}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Search */}
+      <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
               <Input
-                placeholder="Search documents..."
+                placeholder="Buscar documentos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
             <div className="text-sm text-gray-500">
-              {filteredDocuments.length} documents
+              {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
             </div>
           </div>
         </CardContent>
@@ -242,51 +403,67 @@ export default function Documents() {
       {filteredDocuments.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDocuments.map((document: any) => {
-            const FileIcon = getFileIcon(document.mimeType);
+            const FileIcon = getFileIcon(document.originalName);
+            const category = getDocumentCategory(document.originalName);
             
             return (
               <Card key={document.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileIcon className="text-oficaz-primary" size={20} />
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      category === 'nominas' ? 'bg-green-100' :
+                      category === 'contratos' ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
+                      <FileIcon className={`${
+                        category === 'nominas' ? 'text-green-600' :
+                        category === 'contratos' ? 'text-blue-600' : 'text-gray-600'
+                      }`} size={24} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-gray-900 truncate mb-1">
                         {document.originalName}
                       </h3>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${
+                            category === 'nominas' ? 'bg-green-100 text-green-700' :
+                            category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {category === 'nominas' ? 'Nómina' :
+                           category === 'contratos' ? 'Contrato' : 'Documento'}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {formatFileSize(document.fileSize)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                        {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
                       </p>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between mt-4">
-                    <Badge variant="secondary" className="text-xs">
-                      {document.mimeType.split('/')[0]}
-                    </Badge>
                     <div className="flex space-x-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDocument(document.id, document.originalName)}
+                        className="text-[#007AFF] border-[#007AFF] hover:bg-[#007AFF] hover:text-white"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver
+                      </Button>
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleDownload(document.id, document.originalName)}
+                        className="text-gray-600 border-gray-300 hover:bg-gray-50"
                       >
-                        <Download size={14} />
+                        <Download className="h-4 w-4 mr-1" />
+                        Descargar
                       </Button>
-                      {(document.userId === user?.id || ['admin', 'manager'].includes(user?.role || '')) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMutation.mutate(document.id)}
-                          disabled={deleteMutation.isPending}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -300,23 +477,18 @@ export default function Documents() {
             <div className="text-center">
               <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchTerm ? 'No documents found' : 'No documents yet'}
+                {searchTerm ? 'No se encontraron documentos' : 
+                 selectedCategory === 'nominas' ? 'No hay nóminas disponibles' :
+                 selectedCategory === 'contratos' ? 'No hay contratos disponibles' :
+                 selectedCategory === 'otros' ? 'No hay otros documentos' :
+                 'No hay documentos disponibles'}
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-gray-500">
                 {searchTerm 
-                  ? 'Try adjusting your search terms.'
-                  : 'Upload your first document to get started.'
+                  ? 'Intenta ajustar los términos de búsqueda.'
+                  : 'Los documentos aparecerán aquí cuando estén disponibles.'
                 }
               </p>
-              {!searchTerm && (
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="bg-oficaz-primary hover:bg-blue-700"
-                >
-                  <Upload className="mr-2" size={16} />
-                  Upload Document
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
