@@ -501,33 +501,38 @@ export default function TimeTracking() {
             </div>
           )}
 
-          {/* Employee Filter and Search */}
+          {/* Employee Filter with integrated search */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-center border-t pt-3">
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-64">
                   <SelectValue placeholder="Filtrar empleado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employeesList.map((employee: any) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.fullName}
-                    </SelectItem>
-                  ))}
+                  <div className="p-2 border-b">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        placeholder="Buscar empleado..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full"
+                      />
+                    </div>
+                  </div>
+                  <SelectItem value="all">Filtrar empleado</SelectItem>
+                  {employeesList
+                    .filter((employee: any) => 
+                      employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((employee: any) => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.fullName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar empleado..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-48"
-              />
             </div>
           </div>
         </CardContent>
@@ -758,40 +763,7 @@ export default function TimeTracking() {
                     );
                   });
                   
-                  // Add final summaries for the last week and month (only when filtering by specific employee)
-                  if (showSummaries && sortedSessions.length > 0) {
-                    const lastWeekStart = currentWeekStart;
-                    const lastMonth = currentMonth;
-                    
-                    if (lastWeekStart) {
-                      const weekTotal = calculateWeekTotal(lastWeekStart);
-                      result.push(
-                        <tr key={`week-final-${lastWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
-                          <td colSpan={7} className="py-2 px-4 text-center">
-                            <div className="font-medium text-gray-700">
-                              Total semana: {weekTotal.toFixed(1)}h
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
-                    
-                    if (lastMonth) {
-                      const monthTotal = calculateMonthTotal(lastMonth);
-                      const [year, month] = lastMonth.split('-');
-                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
-                      
-                      result.push(
-                        <tr key={`month-final-${lastMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
-                          <td colSpan={7} className="py-3 px-4 text-center">
-                            <div className="font-semibold text-blue-800 capitalize">
-                              Total {monthName}: {monthTotal.toFixed(1)}h
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    }
-                  }
+
                   
                   return result;
                 })()}
