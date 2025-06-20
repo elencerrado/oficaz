@@ -559,7 +559,6 @@ export default function TimeTracking() {
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Entrada</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Salida</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Horas</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Estado</th>
                   <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
                 </tr>
               </thead>
@@ -632,7 +631,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
-                          <td colSpan={7} className="py-3 px-4 text-center">
+                          <td colSpan={6} className="py-3 px-4 text-center">
                             <div className="font-semibold text-blue-800 capitalize">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
@@ -647,7 +646,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
-                          <td colSpan={7} className="py-2 px-4 text-center">
+                          <td colSpan={6} className="py-2 px-4 text-center">
                             <div className="font-medium text-gray-700">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
@@ -717,14 +716,6 @@ export default function TimeTracking() {
                           <div className="font-medium text-gray-900">
                             {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge 
-                            variant={isActive ? "default" : "secondary"}
-                            className={isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                          >
-                            {isActive ? 'Activo' : 'Completado'}
-                          </Badge>
                         </td>
                         <td className="py-3 px-4 text-center">
                           {isEditing ? (
