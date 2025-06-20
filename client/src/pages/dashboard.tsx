@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import EmployeeDashboard from './employee-dashboard';
 import { useQuery } from '@tanstack/react-query';
 import { ClockWidget } from '@/components/time-tracking/clock-widget';
 import { VacationModal } from '@/components/vacation/vacation-modal';

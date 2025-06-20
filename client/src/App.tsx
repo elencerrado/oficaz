@@ -120,9 +120,7 @@ function Router() {
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
           <AppLayout>
-            <PageWrapper>
-              <DashboardRouter />
-            </PageWrapper>
+            <DashboardRouter />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -140,9 +138,7 @@ function Router() {
       <Route path="/:companyAlias/fichajes">
         <ProtectedRoute>
           <AppLayout>
-            <PageWrapper>
-              <TimeTracking />
-            </PageWrapper>
+            <TimeTracking />
           </AppLayout>
         </ProtectedRoute>
       </Route>

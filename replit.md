@@ -117,19 +117,19 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Página de mensajes optimizada para móvil y página de usuario tipo ficha implementada
-  - Solución completa teclado móvil: detección automática, scroll inteligente, Visual Viewport API
-  - Ajuste automático de pantalla cuando se abre teclado en caja de texto de mensajes
-  - Compatible iOS/Android con múltiples métodos de detección y scroll suave
+- June 20, 2025. Navegación admin optimizada y teclado móvil solucionado completamente
+  - Navegación fluida admin: unificado AppLayout para todas páginas, eliminado PageWrapper problemático
+  - Sidebar texto corregido: "Solicitudes de Vacaciones" → "Vacaciones"
+  - Distribución vertical mejorada: espaciado dinámico clamp() adaptable a altura ventana
+  - Botones sidebar responsivos: altura y padding ajustables según tamaño pantalla
+  - Teclado móvil solucionado: scroll suave simplificado sin posiciones fijas complejas
+  - Navegación consistente: Inicio, Fichajes, Mensajes, Documentos sin recargas completas
   - Diseño tipo ficha usuario: avatar circular, nombre, cargo, DNI, teléfono y email corporativo
   - Botón "Editar Datos Personales" centrado, modo edición con "Cancelar" rojo y "Guardar" verde
   - Campos editables: email personal, teléfono personal, dirección, contacto emergencia
   - Icono "Usuario" en dashboard empleado corregido: nombre y ruta /usuario específica
-  - Contraseñas de usuarios restablecidas tras reversión de base de datos
-  - Credenciales de acceso: admin@test.com / 123456 (admin)
-  - Empleados de prueba: juan.perez@test.com y j.ramirez@test.es / 123456
-  - Error de HTML anidado corregido en página de login (Link component)
   - Sistema de autenticación verificado y funcionando correctamente
+  - Credenciales de acceso: admin@test.com / 123456 (admin), juan.perez@test.com y j.ramirez@test.es / 123456
 - June 20, 2025. Sistema completo de exportación PDF e interfaz de filtros mejorada
   - PDF rediseñado sin líneas de tabla con formato limpio y profesional
   - Título "INFORME CONTROL HORARIO" alineado a la izquierda en azul
