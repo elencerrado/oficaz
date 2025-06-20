@@ -319,7 +319,8 @@ body::after {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  margin-bottom: 8px !important;
+  margin: 16px 0 12px 0 !important;
+  padding-top: 8px !important;
 }
 
 /* Dialog content styling for consistency */
