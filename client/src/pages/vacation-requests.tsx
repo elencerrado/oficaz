@@ -277,103 +277,71 @@ export default function VacationRequests() {
         <h1 className="text-2xl font-light text-white/90 tracking-wide">Vacaciones</h1>
       </div>
 
-      {/* Modern Vacation Summary */}
+      {/* Compact Vacation Summary */}
       <div className="px-6 mb-6">
-        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">
-          {/* Header with elegant typography */}
-          <div className="text-center mb-8">
-            <h2 className="text-lg font-light text-white/90 mb-2">Balance de Vacaciones</h2>
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent mx-auto"></div>
+        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+          {/* Stats grid */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="text-center">
+              <div className="text-2xl font-light text-blue-300 mb-1">{totalDays}</div>
+              <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-light text-orange-300 mb-1">{usedDays}</div>
+              <div className="text-xs text-white/60 uppercase tracking-wider">Usados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-light text-emerald-300 mb-1">{availableDays}</div>
+              <div className="text-xs text-white/60 uppercase tracking-wider">Disponibles</div>
+            </div>
           </div>
-
-          {/* Modern circular progress */}
-          <div className="flex justify-center mb-8">
-            <div className="relative w-40 h-40">
-              {/* Background circle */}
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 144 144">
-                <circle
-                  cx="72"
-                  cy="72"
-                  r="64"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.1)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                />
-                {/* Progress circle */}
-                <circle
-                  cx="72"
-                  cy="72"
-                  r="64"
-                  fill="none"
-                  stroke="url(#progressGradient)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 64}`}
-                  strokeDashoffset={`${2 * Math.PI * 64 * (1 - usagePercentage / 100)}`}
-                  className="transition-all duration-1000 ease-out"
-                />
-                {/* Gradient definition */}
-                <defs>
-                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#60A5FA" />
-                    <stop offset="50%" stopColor="#3B82F6" />
-                    <stop offset="100%" stopColor="#1D4ED8" />
-                  </linearGradient>
-                </defs>
-              </svg>
+          
+          {/* Modern horizontal progress bar */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-white/70 font-medium">Progreso anual</span>
+              <span className="text-sm text-white/70 font-medium">{usagePercentage.toFixed(1)}%</span>
+            </div>
+            
+            {/* Multi-segment progress bar */}
+            <div className="relative">
+              <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+                {/* Used days */}
+                <div 
+                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-700 ease-out shadow-lg"
+                  style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+                ></div>
+              </div>
               
-              {/* Center content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-3xl font-light text-white mb-1">{availableDays}</div>
-                <div className="text-xs text-white/60 uppercase tracking-wider">Disponibles</div>
-                <div className="text-xs text-white/40 mt-1">{usagePercentage.toFixed(0)}% usado</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Elegant stats grid */}
-          <div className="grid grid-cols-3 gap-6">
-            <div className="text-center group">
-              <div className="mb-3">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Calendar className="w-5 h-5 text-blue-300" />
-                </div>
-              </div>
-              <div className="text-xl font-light text-white">{totalDays}</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider mt-1">Total Anual</div>
+              {/* Pending days overlay if any */}
+              {pendingDays > 0 && (
+                <div 
+                  className="absolute top-0 bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full opacity-70"
+                  style={{ 
+                    left: `${Math.min(usagePercentage, 100)}%`,
+                    width: `${Math.min((pendingDays / totalDays) * 100, 100 - usagePercentage)}%`
+                  }}
+                ></div>
+              )}
             </div>
             
-            <div className="text-center group">
-              <div className="mb-3">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-orange-400/20 to-red-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Clock className="w-5 h-5 text-orange-300" />
+            {/* Legend */}
+            <div className="flex justify-between items-center text-xs text-white/50">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>Utilizados</span>
                 </div>
+                {pendingDays > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span>Pendientes ({pendingDays}d)</span>
+                  </div>
+                )}
               </div>
-              <div className="text-xl font-light text-white">{usedDays}</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider mt-1">Utilizados</div>
-            </div>
-            
-            <div className="text-center group">
-              <div className="mb-3">
-                <div className="w-12 h-12 mx-auto bg-gradient-to-br from-emerald-400/20 to-green-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <Check className="w-5 h-5 text-emerald-300" />
-                </div>
-              </div>
-              <div className="text-xl font-light text-white">{availableDays}</div>
-              <div className="text-xs text-white/50 uppercase tracking-wider mt-1">Restantes</div>
+              <span className="text-white/40">{availableDays} días restantes</span>
             </div>
           </div>
-
-          {/* Minimal progress indicator */}
-          {pendingDays > 0 && (
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-white/60">Días pendientes de aprobación</span>
-                <span className="text-yellow-300 font-medium">{pendingDays}</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
