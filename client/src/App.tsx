@@ -128,9 +128,7 @@ function Router() {
       <Route path="/:companyAlias/horas">
         <ProtectedRoute>
           <AppLayout>
-            <PageWrapper>
-              <EmployeeTimeTracking />
-            </PageWrapper>
+            <EmployeeTimeTracking />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -146,9 +144,7 @@ function Router() {
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
-            <PageWrapper>
-              <Settings />
-            </PageWrapper>
+            <Settings />
           </AppLayout>
         </ProtectedRoute>
       </Route>
