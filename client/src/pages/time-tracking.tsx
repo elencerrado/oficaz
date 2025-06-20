@@ -37,7 +37,10 @@ export default function TimeTracking() {
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [dateFilter, setDateFilter] = useState('month'); // 'day', 'month', 'custom'
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
@@ -144,8 +147,10 @@ export default function TimeTracking() {
       dayEnd.setHours(23, 59, 59, 999);
       matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
     } else if (dateFilter === 'month') {
-      const monthStart = startOfMonth(currentMonth);
-      const monthEnd = endOfMonth(currentMonth);
+      const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+      monthEnd.setHours(23, 59, 59, 999);
       matchesDate = sessionDate >= monthStart && sessionDate <= monthEnd;
     } else if (dateFilter === 'custom' && startDate && endDate) {
       const filterStart = new Date(startDate);
