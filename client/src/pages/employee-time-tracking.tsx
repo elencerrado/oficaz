@@ -328,7 +328,7 @@ export default function EmployeeTimeTracking() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
           <div className="flex items-center mb-6">
             <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
             <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
@@ -343,7 +343,7 @@ export default function EmployeeTimeTracking() {
                 <div className="w-full bg-white/10 rounded-t-lg overflow-hidden relative" style={{ height: '70px' }}>
                   <div 
                     className={`w-full rounded-t-lg transition-all duration-700 absolute bottom-0 ${
-                      data.isCurrentMonth ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-white/40'
+                      data.isCurrentMonth ? 'bg-gradient-to-t from-blue-500 to-blue-400 shadow-lg shadow-blue-500/30' : 'bg-white/40'
                     }`}
                     style={{ 
                       height: `${Math.max((data.hours / maxHours) * 100, data.hours > 0 ? 15 : 0)}%`

@@ -433,66 +433,64 @@ export default function Documents() {
               const category = getDocumentCategory(document.originalName);
               
               return (
-                <Card key={document.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-3">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        category === 'nominas' ? 'bg-green-100' :
-                        category === 'contratos' ? 'bg-blue-100' : 'bg-gray-100'
-                      }`}>
-                        <FileIcon className={`${
-                          category === 'nominas' ? 'text-green-600' :
-                          category === 'contratos' ? 'text-blue-600' : 'text-gray-600'
-                        }`} size={20} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 text-sm leading-tight mb-1" title={document.originalName}>
-                              {document.originalName}
-                            </h3>
-                            <div className="flex flex-wrap items-center gap-1 mt-1">
-                              <Badge 
-                                variant="secondary" 
-                                className={`text-xs px-2 py-0 ${
-                                  category === 'nominas' ? 'bg-green-100 text-green-700' :
-                                  category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {category === 'nominas' ? 'Nómina' :
-                                 category === 'contratos' ? 'Contrato' : 'Documento'}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                {formatFileSize(document.fileSize)}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex space-x-1 ml-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleViewDocument(document.id, document.originalName)}
-                              className="text-[#007AFF] border-[#007AFF] hover:bg-[#007AFF] hover:text-white h-8 px-2"
+                <div key={document.id} className="bg-white/8 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-200">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      category === 'nominas' ? 'bg-green-100' :
+                      category === 'contratos' ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
+                      <FileIcon className={`${
+                        category === 'nominas' ? 'text-green-600' :
+                        category === 'contratos' ? 'text-blue-600' : 'text-gray-600'
+                      }`} size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-white text-sm leading-tight mb-1" title={document.originalName}>
+                            {document.originalName}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            <Badge 
+                              variant="secondary" 
+                              className={`text-xs px-2 py-0 ${
+                                category === 'nominas' ? 'bg-green-100 text-green-700' :
+                                category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                              }`}
                             >
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDownload(document.id, document.originalName)}
-                              className="text-gray-600 border-gray-300 hover:bg-gray-50 h-8 px-2"
-                            >
-                              <Download className="h-3 w-3" />
-                            </Button>
+                              {category === 'nominas' ? 'Nómina' :
+                               category === 'contratos' ? 'Contrato' : 'Documento'}
+                            </Badge>
+                            <span className="text-xs text-white/60">
+                              {formatFileSize(document.fileSize)}
+                            </span>
+                            <span className="text-xs text-white/50">
+                              {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
+                            </span>
                           </div>
+                        </div>
+                        <div className="flex space-x-1 ml-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDocument(document.id, document.originalName)}
+                            className="text-blue-400 border-blue-400/50 hover:bg-blue-400 hover:text-white h-8 px-2 bg-white/10"
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(document.id, document.originalName)}
+                            className="text-white/70 border-white/30 hover:bg-white/20 h-8 px-2 bg-white/5"
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
