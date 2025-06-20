@@ -114,19 +114,7 @@ export default function TimeTracking() {
     setEditData({ clockIn: '', clockOut: '', date: '' });
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="px-6 py-4">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-16 bg-gray-200 rounded-lg"></div>
-          <div className="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Memoized calculations for better performance
+  // Memoized calculations for better performance - moved before return
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
     const allEmployees = employees as any[];
     const filteredEmployees = allEmployees.filter((emp: any) => emp.role !== 'admin');
@@ -402,6 +390,18 @@ export default function TimeTracking() {
       description: 'El informe de control horario se ha descargado correctamente.',
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="px-6 py-4">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-16 bg-gray-200 rounded-lg"></div>
+          <div className="h-96 bg-gray-200 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
