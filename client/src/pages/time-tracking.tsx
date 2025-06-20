@@ -566,6 +566,9 @@ export default function TimeTracking() {
                   const sortedSessions = filteredSessions
                     .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
                   
+                  // Only show summaries when filtering by a specific employee
+                  const showSummaries = selectedEmployee !== 'all';
+                  
                   let currentWeekStart: Date | null = null;
                   let previousWeekStart: Date | null = null;
                   let currentMonth: string | null = null;
@@ -616,8 +619,8 @@ export default function TimeTracking() {
                       currentMonth = monthKey;
                     }
                     
-                    // Add month summary (only if it's a new month and not the first item)
-                    if (isNewMonth && index > 0 && previousMonth) {
+                    // Add month summary (only if it's a new month, not the first item, and filtering by specific employee)
+                    if (showSummaries && isNewMonth && index > 0 && previousMonth) {
                       const monthTotal = calculateMonthTotal(previousMonth);
                       const [year, month] = previousMonth.split('-');
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
@@ -633,8 +636,8 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    // Add week summary (only if it's a new week and not the first item)
-                    if (isNewWeek && index > 0 && previousWeekStart) {
+                    // Add week summary (only if it's a new week, not the first item, and filtering by specific employee)
+                    if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       
                       result.push(
@@ -755,12 +758,15 @@ export default function TimeTracking() {
                     );
                   });
                   
-                  // Add final summaries for the last week and month
-                  if (sortedSessions.length > 0) {
-                    if (currentWeekStart) {
-                      const weekTotal = calculateWeekTotal(currentWeekStart);
+                  // Add final summaries for the last week and month (only when filtering by specific employee)
+                  if (showSummaries && sortedSessions.length > 0) {
+                    const lastWeekStart = currentWeekStart;
+                    const lastMonth = currentMonth;
+                    
+                    if (lastWeekStart) {
+                      const weekTotal = calculateWeekTotal(lastWeekStart);
                       result.push(
-                        <tr key={`week-final-${currentWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
+                        <tr key={`week-final-${lastWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
                           <td colSpan={7} className="py-2 px-4 text-center">
                             <div className="font-medium text-gray-700">
                               Total semana: {weekTotal.toFixed(1)}h
@@ -770,13 +776,13 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    if (currentMonth) {
-                      const monthTotal = calculateMonthTotal(currentMonth);
-                      const [year, month] = currentMonth.split('-');
+                    if (lastMonth) {
+                      const monthTotal = calculateMonthTotal(lastMonth);
+                      const [year, month] = lastMonth.split('-');
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-final-${currentMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
+                        <tr key={`month-final-${lastMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
                           <td colSpan={7} className="py-3 px-4 text-center">
                             <div className="font-semibold text-blue-800 capitalize">
                               Total {monthName}: {monthTotal.toFixed(1)}h
