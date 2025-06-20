@@ -124,9 +124,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Vista de todas las empresas con filtros por plan, estado y búsqueda en tiempo real
   - Distribución visual de planes con contadores y colores diferenciados
   - Base de datos expandida: tablas super_admins y subscriptions con relaciones
-  - Credenciales super admin: admin@oficaz.com / superadmin123!
+  - Credenciales super admin: admin@oficaz.com / admin123
   - Sistema de tokens JWT separado para autenticación de super admin
   - Interfaz moderna con gradientes, glassmorphism y animaciones suaves
+  - Gestión de planes en tiempo real: click en badge o botón editar para cambiar plan
+  - API endpoints para actualizar suscripciones con validación de planes
+  - Actualización automática de estadísticas e ingresos al cambiar planes
 - June 20, 2025. Loading unificado y rendimiento vista empleado optimizado completamente
   - Loading limpio: solo logo Oficaz girando centrado, sin texto ni componentes duplicados
   - Componentes duplicados eliminados: vacaciones tenía dos loadings, usePageLoading hook removido

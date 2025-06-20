@@ -83,6 +83,7 @@ export interface IStorage {
   getSuperAdminStats(): Promise<SuperAdminStats>;
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getSubscriptionByCompanyId(companyId: number): Promise<Subscription | undefined>;
+  updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -516,6 +517,21 @@ export class DrizzleStorage implements IStorage {
 
   async getSubscriptionByCompanyId(companyId: number): Promise<any | undefined> {
     const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+    return subscription;
+  }
+
+  async updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined> {
+    const [subscription] = await db
+      .update(schema.subscriptions)
+      .set({
+        plan: updates.plan,
+        maxUsers: updates.maxUsers,
+        status: updates.status,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.subscriptions.companyId, companyId))
+      .returning();
+    
     return subscription;
   }
 }

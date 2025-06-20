@@ -1150,6 +1150,37 @@ startxref
     }
   });
 
+  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { plan, maxUsers } = req.body;
+      
+      console.log('Updating subscription for company:', companyId, 'to plan:', plan);
+      
+      // Validate plan
+      const validPlans = ['free', 'basic', 'pro', 'master'];
+      if (!validPlans.includes(plan)) {
+        return res.status(400).json({ message: 'Invalid plan type' });
+      }
+      
+      // Update subscription
+      const updatedSubscription = await storage.updateCompanySubscription(companyId, {
+        plan,
+        maxUsers: maxUsers || (plan === 'free' ? 5 : plan === 'basic' ? 25 : plan === 'pro' ? 100 : 500),
+        status: 'active'
+      });
+      
+      if (!updatedSubscription) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+      
+      res.json({ message: 'Subscription updated successfully', subscription: updatedSubscription });
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      res.status(500).json({ message: "Failed to update subscription" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

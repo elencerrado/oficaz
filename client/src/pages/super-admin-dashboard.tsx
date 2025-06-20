@@ -9,13 +9,19 @@ import {
   Search,
   Filter,
   Eye,
-  Settings
+  Settings,
+  Edit,
+  Check,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 interface CompanyWithStats {
@@ -67,6 +73,10 @@ export default function SuperAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPlan, setFilterPlan] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [editingCompany, setEditingCompany] = useState<number | null>(null);
+  const [newPlan, setNewPlan] = useState<string>("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: stats, isLoading: statsLoading } = useQuery<SuperAdminStats>({
     queryKey: ['/api/super-admin/stats'],
@@ -99,6 +109,55 @@ export default function SuperAdminDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('superAdminToken');
     setLocation("/super-admin/login");
+  };
+
+  const updateSubscriptionMutation = useMutation({
+    mutationFn: async ({ companyId, plan }: { companyId: number; plan: string }) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan }),
+      });
+      if (!response.ok) throw new Error('Failed to update subscription');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Plan actualizado",
+        description: "El plan de suscripción se ha actualizado correctamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/stats'] });
+      setEditingCompany(null);
+      setNewPlan("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el plan",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePlanChange = (companyId: number, currentPlan: string) => {
+    setEditingCompany(companyId);
+    setNewPlan(currentPlan);
+  };
+
+  const savePlanChange = (companyId: number) => {
+    if (newPlan) {
+      updateSubscriptionMutation.mutate({ companyId, plan: newPlan });
+    }
+  };
+
+  const cancelPlanChange = () => {
+    setEditingCompany(null);
+    setNewPlan("");
   };
 
   const filteredCompanies = companies?.filter(company => {
@@ -308,25 +367,60 @@ export default function SuperAdminDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white`}
-                    >
-                      {planLabels[company.subscription.plan as keyof typeof planLabels]}
-                    </Badge>
+                    {editingCompany === company.id ? (
+                      <div className="flex items-center gap-2">
+                        <Select value={newPlan} onValueChange={setNewPlan}>
+                          <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                            <SelectValue placeholder="Seleccionar plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="basic">Basic</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="master">Master</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          onClick={() => savePlanChange(company.id)}
+                          disabled={updateSubscriptionMutation.isPending}
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={cancelPlanChange}
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Badge 
+                          className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white cursor-pointer hover:opacity-80`}
+                          onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                        >
+                          {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                          className="text-white/60 hover:text-white hover:bg-white/10"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                     <Badge 
                       variant={company.subscription.status === 'active' ? 'default' : 'secondary'}
                       className={company.subscription.status === 'active' ? 'bg-emerald-500' : 'bg-gray-500'}
                     >
                       {company.subscription.status === 'active' ? 'Activo' : 'Inactivo'}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-white/60 hover:text-white hover:bg-white/10"
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver
-                    </Button>
                   </div>
                 </div>
               ))}
