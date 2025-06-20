@@ -163,7 +163,7 @@ export default function EmployeesSimple() {
                         } else if (currentX < 0) {
                           // Swipe LEFT = Message action
                           setTimeout(() => {
-                            navigate(`/test/messages?chat=${employee.id}`);
+                            navigate(`/test/mensajes?chat=${employee.id}`);
                           }, 100); // Small delay to allow reset animation
                         }
                       }
