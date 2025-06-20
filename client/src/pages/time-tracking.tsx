@@ -442,27 +442,31 @@ export default function TimeTracking() {
       {/* Filters Section */}
       <Card className="mb-4">
         <CardContent className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            {/* Search Input */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar empleado..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-10"
-              />
-            </div>
-
-            {/* Employee Filter */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Employee Filter with integrated search */}
             <div className="flex flex-col">
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Filtrar empleado" />
                 </SelectTrigger>
                 <SelectContent>
+                  <div className="p-2">
+                    <div className="relative mb-2">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        placeholder="Buscar empleado..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 h-8"
+                      />
+                    </div>
+                  </div>
                   <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employeesList.map((employee: any) => (
+                  {employeesList
+                    .filter((employee: any) => 
+                      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((employee: any) => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>
                       {employee.fullName}
                     </SelectItem>
@@ -546,36 +550,35 @@ export default function TimeTracking() {
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-4" align="start">
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-sm font-medium">Desde:</label>
-                        <Calendar
-                          mode="single"
-                          selected={selectedStartDate}
-                          onSelect={(date) => {
-                            setSelectedStartDate(date);
-                            if (date) {
-                              setStartDate(format(date, 'yyyy-MM-dd'));
-                            }
-                          }}
-                          className="rounded-md border"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Hasta:</label>
-                        <Calendar
-                          mode="single"
-                          selected={selectedEndDate}
-                          onSelect={(date) => {
-                            setSelectedEndDate(date);
-                            if (date) {
-                              setEndDate(format(date, 'yyyy-MM-dd'));
-                            }
-                          }}
-                          className="rounded-md border"
-                        />
-                      </div>
+                    <div className="text-sm font-medium text-center">
+                      Seleccionar rango de fechas
                     </div>
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: selectedStartDate || undefined,
+                        to: selectedEndDate || undefined
+                      }}
+                      onSelect={(range) => {
+                        if (range?.from) {
+                          setSelectedStartDate(range.from);
+                          setStartDate(format(range.from, 'yyyy-MM-dd'));
+                        } else {
+                          setSelectedStartDate(null);
+                          setStartDate('');
+                        }
+                        
+                        if (range?.to) {
+                          setSelectedEndDate(range.to);
+                          setEndDate(format(range.to, 'yyyy-MM-dd'));
+                        } else if (range?.from && !range?.to) {
+                          setSelectedEndDate(null);
+                          setEndDate('');
+                        }
+                      }}
+                      className="rounded-md border"
+                      numberOfMonths={2}
+                    />
                     <div className="flex gap-2">
                       <Button
                         onClick={() => {
@@ -812,10 +815,10 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    if (currentMonth && typeof currentMonth === 'string') {
+                    if (currentMonth) {
                       const monthTotal = calculateMonthTotal(currentMonth);
-                      const [year, month] = currentMonth.split('-');
-                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      // Use currentMonth directly as it's already a string from the monthKey
+                      const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
                       
                       result.push(
                         <tr key={`month-final`} className="bg-blue-50 border-y-2 border-blue-200">

@@ -117,6 +117,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema completo de exportación PDF e interfaz de filtros mejorada
+  - PDF rediseñado sin líneas de tabla con formato limpio y profesional
+  - Título "INFORME CONTROL HORARIO" alineado a la izquierda en azul
+  - Datos de empresa justificados a la derecha con márgenes corregidos
+  - Tabla sin bordes visibles, solo con líneas estructurales bajo header y footer
+  - Espaciado compacto (5px entre filas) y letra pequeña (8px) para optimizar espacio
+  - Totales semanales y mensuales destacados con colores diferenciados
+  - Búsqueda de empleados integrada dentro del selector de empleados
+  - Calendario de rango mejorado con selección de dos fechas y coloreado de días intermedios
+  - Corrección completa de errores de React Hooks reorganizando orden de hooks
+  - Error de TypeScript resuelto en cálculos de totales mensuales
 - June 20, 2025. Sistema avanzado de filtrado de fechas con calendarios dropdown perfeccionado
   - Calendarios convertidos de modales a popovers tipo dropdown sin fondo oscurecido
   - Altura fija de 360px para acomodar 6 semanas sin cambios de tamaño entre meses
