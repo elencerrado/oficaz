@@ -258,16 +258,35 @@ body::after {
 /* Calendar fixed size */
 .rdp {
   width: 320px !important;
-  min-height: 280px !important;
+  height: 320px !important;
+  min-height: 320px !important;
+  max-height: 320px !important;
+  overflow: hidden !important;
 }
 
 .rdp-table {
   width: 100% !important;
+  height: 100% !important;
   table-layout: fixed !important;
 }
 
 .rdp-tbody {
-  min-height: 200px !important;
+  height: 240px !important;
+  min-height: 240px !important;
+  max-height: 240px !important;
+}
+
+.rdp-row {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+}
+
+.rdp-cell {
+  height: 40px !important;
+  width: 45px !important;
+  min-width: 45px !important;
+  max-width: 45px !important;
 }
 
 .font-inter {
