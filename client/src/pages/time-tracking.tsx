@@ -354,7 +354,7 @@ export default function TimeTracking() {
                       Utiliza el calendario para seleccionar un día específico para filtrar los fichajes
                     </p>
                   </DialogHeader>
-                  <div className="flex justify-center">
+                  <div className="rdp-wrapper">
                     <Calendar
                       mode="single"
                       selected={currentDate}
@@ -365,7 +365,7 @@ export default function TimeTracking() {
                         }
                       }}
                       locale={es}
-                      className="rounded-md border mx-auto"
+                      className="rounded-md border"
                     />
                   </div>
                 </DialogContent>
@@ -460,26 +460,28 @@ export default function TimeTracking() {
                     </p>
                   </DialogHeader>
                   <div className="flex flex-col items-center space-y-4">
-                    <Calendar
-                      mode="range"
-                      selected={{
-                        from: selectedStartDate || undefined,
-                        to: selectedEndDate || undefined,
-                      }}
-                      onSelect={(range) => {
-                        if (range?.from) {
-                          setSelectedStartDate(range.from);
-                          setStartDate(format(range.from, 'yyyy-MM-dd'));
-                        }
-                        if (range?.to) {
-                          setSelectedEndDate(range.to);
-                          setEndDate(format(range.to, 'yyyy-MM-dd'));
-                        }
-                      }}
-                      className="rounded-md border"
-                      disabled={(date) => date > new Date()}
-                      locale={es}
-                    />
+                    <div className="rdp-wrapper">
+                      <Calendar
+                        mode="range"
+                        selected={{
+                          from: selectedStartDate || undefined,
+                          to: selectedEndDate || undefined,
+                        }}
+                        onSelect={(range) => {
+                          if (range?.from) {
+                            setSelectedStartDate(range.from);
+                            setStartDate(format(range.from, 'yyyy-MM-dd'));
+                          }
+                          if (range?.to) {
+                            setSelectedEndDate(range.to);
+                            setEndDate(format(range.to, 'yyyy-MM-dd'));
+                          }
+                        }}
+                        className="rounded-md border"
+                        disabled={(date) => date > new Date()}
+                        locale={es}
+                      />
+                    </div>
                     <div className="flex gap-3 justify-center w-full">
                       <Button
                         variant="outline"
