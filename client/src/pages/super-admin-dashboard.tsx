@@ -1,0 +1,346 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { 
+  Building2, 
+  Users, 
+  Crown, 
+  TrendingUp, 
+  LogOut,
+  Search,
+  Filter,
+  Eye,
+  Settings
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+
+interface CompanyWithStats {
+  id: number;
+  name: string;
+  cif: string;
+  email: string;
+  alias: string;
+  userCount: number;
+  subscription: {
+    plan: string;
+    status: string;
+    maxUsers: number;
+    startDate: string;
+    endDate?: string;
+  };
+  createdAt: string;
+}
+
+interface SuperAdminStats {
+  totalCompanies: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+  revenue: number;
+  planDistribution: {
+    free: number;
+    basic: number;
+    pro: number;
+    master: number;
+  };
+}
+
+const planColors = {
+  free: "bg-gray-500",
+  basic: "bg-blue-500", 
+  pro: "bg-purple-500",
+  master: "bg-gradient-to-r from-yellow-400 to-yellow-600"
+};
+
+const planLabels = {
+  free: "Free",
+  basic: "Basic", 
+  pro: "Pro",
+  master: "Master"
+};
+
+export default function SuperAdminDashboard() {
+  const [, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPlan, setFilterPlan] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const { data: stats, isLoading: statsLoading } = useQuery<SuperAdminStats>({
+    queryKey: ['/api/super-admin/stats'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+  });
+
+  const { data: companies, isLoading: companiesLoading } = useQuery<CompanyWithStats[]>({
+    queryKey: ['/api/super-admin/companies'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/companies', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch companies');
+      return response.json();
+    },
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem('superAdminToken');
+    setLocation("/super-admin/login");
+  };
+
+  const filteredCompanies = companies?.filter(company => {
+    const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          company.cif.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          company.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesPlan = filterPlan === "all" || company.subscription.plan === filterPlan;
+    const matchesStatus = filterStatus === "all" || company.subscription.status === filterStatus;
+    
+    return matchesSearch && matchesPlan && matchesStatus;
+  }) || [];
+
+  if (statsLoading || companiesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white/70">Cargando panel de administración...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Crown className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-white">Oficaz Super Admin</h1>
+                <p className="text-white/60 text-sm">Panel de administración global</p>
+              </div>
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Total Empresas
+              </CardTitle>
+              <Building2 className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{stats?.totalCompanies || 0}</div>
+              <p className="text-xs text-white/60">
+                Empresas registradas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Total Usuarios
+              </CardTitle>
+              <Users className="h-4 w-4 text-emerald-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
+              <p className="text-xs text-white/60">
+                Usuarios activos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Suscripciones Activas
+              </CardTitle>
+              <Crown className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
+              <p className="text-xs text-white/60">
+                Con plan de pago
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Ingresos MRR
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-yellow-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">€{stats?.revenue || 0}</div>
+              <p className="text-xs text-white/60">
+                Ingresos mensuales
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Plan Distribution */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white">Distribución de Planes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Object.entries(stats?.planDistribution || {}).map(([plan, count]) => (
+                <div key={plan} className="text-center">
+                  <div className={`w-12 h-12 ${planColors[plan as keyof typeof planColors]} rounded-xl flex items-center justify-center mx-auto mb-2`}>
+                    <span className="text-white font-bold">{count}</span>
+                  </div>
+                  <p className="text-white/80 font-medium">{planLabels[plan as keyof typeof planLabels]}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Filters */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar empresas por nombre, CIF o email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={filterPlan} onValueChange={setFilterPlan}>
+                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Filtrar por plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los planes</SelectItem>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="master">Master</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="inactive">Inactivo</SelectItem>
+                  <SelectItem value="suspended">Suspendido</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Companies List */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center justify-between">
+              Empresas ({filteredCompanies.length})
+              <Badge variant="secondary" className="bg-white/20 text-white">
+                {filteredCompanies.length} de {companies?.length || 0}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredCompanies.map((company) => (
+                <div
+                  key={company.id}
+                  className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{company.name}</h3>
+                      <div className="flex items-center gap-4 text-sm text-white/60">
+                        <span>{company.cif}</span>
+                        <span>•</span>
+                        <span>{company.email}</span>
+                        <span>•</span>
+                        <span>{company.userCount} usuarios</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      className={`${planColors[company.subscription.plan as keyof typeof planColors]} text-white`}
+                    >
+                      {planLabels[company.subscription.plan as keyof typeof planLabels]}
+                    </Badge>
+                    <Badge 
+                      variant={company.subscription.status === 'active' ? 'default' : 'secondary'}
+                      className={company.subscription.status === 'active' ? 'bg-emerald-500' : 'bg-gray-500'}
+                    >
+                      {company.subscription.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Ver
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              {filteredCompanies.length === 0 && (
+                <div className="text-center py-12">
+                  <Filter className="w-12 h-12 text-white/30 mx-auto mb-4" />
+                  <p className="text-white/60">No se encontraron empresas con los filtros aplicados</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

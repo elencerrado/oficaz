@@ -75,6 +75,14 @@ export interface IStorage {
   getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]>;
   createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
   markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
+
+  // Super Admin operations
+  getSuperAdminByEmail(email: string): Promise<SuperAdmin | undefined>;
+  createSuperAdmin(admin: InsertSuperAdmin): Promise<SuperAdmin>;
+  getAllCompaniesWithStats(): Promise<CompanyWithStats[]>;
+  getSuperAdminStats(): Promise<SuperAdminStats>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  getSubscriptionByCompanyId(companyId: number): Promise<Subscription | undefined>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -405,6 +413,110 @@ export class DrizzleStorage implements IStorage {
         eq(schema.systemNotifications.isRead, false)
       ));
     return result.count;
+  }
+
+  // Super Admin operations
+  async getSuperAdminByEmail(email: string): Promise<any | undefined> {
+    const [admin] = await db.select().from(schema.superAdmins).where(eq(schema.superAdmins.email, email));
+    return admin;
+  }
+
+  async createSuperAdmin(admin: any): Promise<any> {
+    const [newAdmin] = await db.insert(schema.superAdmins).values(admin).returning();
+    return newAdmin;
+  }
+
+  async getAllCompaniesWithStats(): Promise<any[]> {
+    const result = await db
+      .select({
+        id: schema.companies.id,
+        name: schema.companies.name,
+        cif: schema.companies.cif,
+        email: schema.companies.email,
+        alias: schema.companies.companyAlias,
+        createdAt: schema.companies.createdAt,
+        userCount: sql<number>`count(${schema.users.id})`.as('userCount'),
+        subscriptionPlan: schema.subscriptions.plan,
+        subscriptionStatus: schema.subscriptions.status,
+        subscriptionMaxUsers: schema.subscriptions.maxUsers,
+        subscriptionStartDate: schema.subscriptions.startDate,
+        subscriptionEndDate: schema.subscriptions.endDate,
+      })
+      .from(schema.companies)
+      .leftJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
+      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+      .groupBy(schema.companies.id, schema.subscriptions.id);
+
+    return result.map(row => ({
+      id: row.id,
+      name: row.name,
+      cif: row.cif,
+      email: row.email,
+      alias: row.alias,
+      userCount: row.userCount || 0,
+      subscription: {
+        plan: row.subscriptionPlan || 'free',
+        status: row.subscriptionStatus || 'active',
+        maxUsers: row.subscriptionMaxUsers || 5,
+        startDate: row.subscriptionStartDate?.toISOString() || new Date().toISOString(),
+        endDate: row.subscriptionEndDate?.toISOString(),
+      },
+      createdAt: row.createdAt?.toISOString() || new Date().toISOString(),
+    }));
+  }
+
+  async getSuperAdminStats(): Promise<any> {
+    const companiesCount = await db.select({ count: sql<number>`count(*)` }).from(schema.companies);
+    const usersCount = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
+    
+    // Get subscription stats
+    const subscriptionStats = await db
+      .select({
+        plan: schema.subscriptions.plan,
+        count: sql<number>`count(*)`,
+      })
+      .from(schema.subscriptions)
+      .groupBy(schema.subscriptions.plan);
+
+    const planCounts = subscriptionStats.reduce((acc, row) => {
+      acc[row.plan as keyof typeof acc] = row.count;
+      return acc;
+    }, { free: 0, basic: 0, pro: 0, master: 0 });
+
+    // Calculate active paid subscriptions
+    const activeSubscriptions = subscriptionStats.reduce((acc, row) => {
+      if (row.plan !== 'free') {
+        acc += row.count;
+      }
+      return acc;
+    }, 0);
+
+    // Calculate revenue
+    const pricing = { basic: 29, pro: 59, master: 149 };
+    const revenue = subscriptionStats.reduce((acc, row) => {
+      if (row.plan !== 'free') {
+        acc += (pricing[row.plan as keyof typeof pricing] || 0) * row.count;
+      }
+      return acc;
+    }, 0);
+
+    return {
+      totalCompanies: companiesCount[0]?.count || 0,
+      totalUsers: usersCount[0]?.count || 0,
+      activeSubscriptions,
+      revenue,
+      planDistribution: planCounts,
+    };
+  }
+
+  async createSubscription(subscription: any): Promise<any> {
+    const [newSubscription] = await db.insert(schema.subscriptions).values(subscription).returning();
+    return newSubscription;
+  }
+
+  async getSubscriptionByCompanyId(companyId: number): Promise<any | undefined> {
+    const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+    return subscription;
   }
 }
 

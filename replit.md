@@ -117,6 +117,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema completo de super admin implementado para gestión multi-empresa
+  - Nueva URL separada: /super-admin/login con autenticación independiente
+  - Dashboard con estadísticas globales: empresas activas, usuarios totales, ingresos MRR
+  - Planes de suscripción: Free (5 usuarios), Basic (€29), Pro (€59), Master (€149)
+  - Vista de todas las empresas con filtros por plan, estado y búsqueda en tiempo real
+  - Distribución visual de planes con contadores y colores diferenciados
+  - Base de datos expandida: tablas super_admins y subscriptions con relaciones
+  - Credenciales super admin: admin@oficaz.com / superadmin123!
+  - Sistema de tokens JWT separado para autenticación de super admin
+  - Interfaz moderna con gradientes, glassmorphism y animaciones suaves
 - June 20, 2025. Loading unificado y rendimiento vista empleado optimizado completamente
   - Loading limpio: solo logo Oficaz girando centrado, sin texto ni componentes duplicados
   - Componentes duplicados eliminados: vacaciones tenía dos loadings, usePageLoading hook removido

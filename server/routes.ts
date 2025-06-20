@@ -1070,6 +1070,73 @@ startxref
     }
   });
 
+  // Super Admin endpoints
+  const authenticateSuperAdmin = (req: any, res: any, next: any) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      if (decoded.type !== 'super-admin') {
+        return res.status(401).json({ message: "Invalid token type" });
+      }
+      req.superAdmin = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  };
+
+  app.post('/api/super-admin/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const admin = await storage.getSuperAdminByEmail(email);
+      
+      if (!admin || !await bcrypt.compare(password, admin.password)) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const token = jwt.sign(
+        { 
+          id: admin.id, 
+          email: admin.email, 
+          name: admin.name,
+          type: 'super-admin'
+        },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      res.json({ token, admin: { id: admin.id, email: admin.email, name: admin.name } });
+    } catch (error) {
+      console.error("Error logging in super admin:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.get('/api/super-admin/stats', authenticateSuperAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getSuperAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching super admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/super-admin/companies', authenticateSuperAdmin, async (req, res) => {
+    try {
+      const companies = await storage.getAllCompaniesWithStats();
+      res.json(companies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Failed to fetch companies" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

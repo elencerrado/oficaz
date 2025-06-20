@@ -25,6 +25,8 @@ import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
 import AccessDenied from "@/pages/access-denied";
+import SuperAdminLogin from "@/pages/super-admin-login";
+import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 
 
 function DashboardRouter() {

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -29,6 +29,30 @@ export const companyConfigs = pgTable("company_configs", {
   customAiRules: text("custom_ai_rules").default(""),
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Super admin table for platform owner
+export const superAdmins = pgTable("super_admins", {
+  id: serial("id").primaryKey(),
+  email: varchar("email", { length: 255 }).unique().notNull(),
+  password: varchar("password", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Company subscriptions
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).unique().notNull(),
+  plan: varchar("plan", { length: 50 }).notNull(), // free, basic, pro, master
+  status: varchar("status", { length: 50 }).default("active").notNull(), // active, inactive, suspended
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"),
+  maxUsers: integer("max_users").default(5).notNull(),
+  features: jsonb("features").default('{}').notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Users table
@@ -200,6 +224,24 @@ export const insertDocumentNotificationSchema = createInsertSchema(documentNotif
   createdAt: true,
 });
 
+export const insertSuperAdminSchema = createInsertSchema(superAdmins).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  features: true,
+});
+
+export const superAdminLoginSchema = z.object({
+  email: z.string().email("Email debe ser válido"),
+  password: z.string().min(1, "Password es requerido"),
+});
+
 // Auth schemas
 export const loginSchema = z.object({
   dniOrEmail: z.string().min(1, "DNI/NIE o email requerido"),
@@ -248,6 +290,12 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
+export type InsertSuperAdmin = z.infer<typeof insertSuperAdminSchema>;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type SuperAdmin = typeof superAdmins.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
 
 export type LoginData = z.infer<typeof loginSchema>;
+export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;
 export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;
