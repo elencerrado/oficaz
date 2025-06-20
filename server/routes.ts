@@ -365,6 +365,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/work-sessions/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { clockIn, clockOut } = req.body;
+
+      // Verify session belongs to user (or user is admin/manager)
+      const session = await storage.getWorkSession(id);
+      if (!session) {
+        return res.status(404).json({ message: 'Work session not found' });
+      }
+
+      if (session.userId !== req.user!.id && !['admin', 'manager'].includes(req.user!.role)) {
+        return res.status(403).json({ message: 'Not authorized to edit this session' });
+      }
+
+      const updateData: any = {};
+      if (clockIn) updateData.clockIn = new Date(clockIn);
+      if (clockOut) updateData.clockOut = new Date(clockOut);
+
+      const updatedSession = await storage.updateWorkSession(id, updateData);
+      if (!updatedSession) {
+        return res.status(404).json({ message: 'Work session not found' });
+      }
+
+      res.json(updatedSession);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Vacation request routes
   app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {

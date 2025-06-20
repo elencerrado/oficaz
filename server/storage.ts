@@ -39,6 +39,7 @@ export interface IStorage {
   // Work Sessions
   createWorkSession(session: InsertWorkSession): Promise<WorkSession>;
   getActiveWorkSession(userId: number): Promise<WorkSession | undefined>;
+  getWorkSession(id: number): Promise<WorkSession | undefined>;
   updateWorkSession(id: number, updates: Partial<InsertWorkSession>): Promise<WorkSession | undefined>;
   getWorkSessionsByUser(userId: number, limit?: number): Promise<WorkSession[]>;
   getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]>;
@@ -148,6 +149,13 @@ export class DrizzleStorage implements IStorage {
   async getActiveWorkSession(userId: number): Promise<WorkSession | undefined> {
     const [session] = await db.select().from(schema.workSessions)
       .where(and(eq(schema.workSessions.userId, userId), eq(schema.workSessions.status, 'active')));
+    return session;
+  }
+
+  async getWorkSession(id: number): Promise<WorkSession | undefined> {
+    const [session] = await db.select().from(schema.workSessions)
+      .where(eq(schema.workSessions.id, id))
+      .limit(1);
     return session;
   }
 

@@ -2,11 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3, Edit3, Save, X } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, isSameWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocation, Link } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface WorkSession {
   id: number;
@@ -22,12 +25,44 @@ export default function EmployeeTimeTracking() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [location] = useLocation();
   const companyAlias = location.split('/')[1] || 'test';
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Touch/swipe handling
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  // Editing functionality
+  const [editingSession, setEditingSession] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    clockIn: '',
+    clockOut: ''
+  });
+  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+
   const minSwipeDistance = 50;
+
+  // Update work session mutation
+  const updateSessionMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: { clockIn: string; clockOut?: string } }) => {
+      return apiRequest('PATCH', `/api/work-sessions/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      setEditingSession(null);
+      toast({
+        title: 'Fichaje actualizado',
+        description: 'Los horarios han sido modificados correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo actualizar el fichaje',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Get work sessions for current user
   const { data: workSessions = [], isLoading } = useQuery<WorkSession[]>({
@@ -93,6 +128,54 @@ export default function EmployeeTimeTracking() {
     if (nextMonth <= currentMonth) {
       setCurrentDate(nextMonth);
     }
+  };
+
+  // Long press handlers for editing
+  const handleLongPressStart = (session: WorkSession, event: React.TouchEvent | React.MouseEvent) => {
+    event.preventDefault();
+    const timer = setTimeout(() => {
+      startEditing(session);
+    }, 800); // 800ms long press
+    setPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      setPressTimer(null);
+    }
+  };
+
+  const startEditing = (session: WorkSession) => {
+    setEditingSession(session.id);
+    setEditForm({
+      clockIn: format(new Date(session.clockIn), 'HH:mm'),
+      clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : ''
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingSession(null);
+    setEditForm({ clockIn: '', clockOut: '' });
+  };
+
+  const saveEdit = () => {
+    if (!editingSession) return;
+    
+    const session = workSessions.find(s => s.id === editingSession);
+    if (!session) return;
+
+    const sessionDate = format(new Date(session.clockIn), 'yyyy-MM-dd');
+    const newClockIn = `${sessionDate}T${editForm.clockIn}:00.000Z`;
+    const newClockOut = editForm.clockOut ? `${sessionDate}T${editForm.clockOut}:00.000Z` : undefined;
+
+    updateSessionMutation.mutate({
+      id: editingSession,
+      data: {
+        clockIn: newClockIn,
+        clockOut: newClockOut
+      }
+    });
   };
 
   const formatTime = (timeString: string) => {
@@ -380,8 +463,58 @@ export default function EmployeeTimeTracking() {
                         const opacity = isCurrentMonth ? 'text-white/90' : 'text-white/50';
                         const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
                         
-                        return (
-                          <div className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity}`}>
+                        return editingSession === session.id ? (
+                          // Editing mode
+                          <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-3 px-4 mx-2 my-1">
+                            <div className="grid grid-cols-4 gap-2 items-center">
+                              <div className="text-sm text-center text-white/90 whitespace-nowrap">
+                                {formatDate(session.clockIn)}
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <Input
+                                  type="time"
+                                  value={editForm.clockIn}
+                                  onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
+                                  className="h-8 text-center bg-white/10 border-white/20 text-white text-xs"
+                                />
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <Input
+                                  type="time"
+                                  value={editForm.clockOut}
+                                  onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
+                                  className="h-8 text-center bg-white/10 border-white/20 text-white text-xs"
+                                />
+                              </div>
+                              <div className="flex gap-1 justify-center">
+                                <Button
+                                  size="sm"
+                                  onClick={saveEdit}
+                                  disabled={updateSessionMutation.isPending}
+                                  className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700"
+                                >
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={cancelEditing}
+                                  className="h-6 w-6 p-0 bg-red-600 hover:bg-red-700"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          // Normal mode with long press
+                          <div 
+                            className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity} relative select-none`}
+                            onTouchStart={(e) => handleLongPressStart(session, e)}
+                            onTouchEnd={handleLongPressEnd}
+                            onMouseDown={(e) => handleLongPressStart(session, e)}
+                            onMouseUp={handleLongPressEnd}
+                            onMouseLeave={handleLongPressEnd}
+                          >
                             <div className={`text-sm text-center ${opacity} whitespace-nowrap ${!isCurrentMonth ? 'italic' : ''}`}>
                               {formatDate(session.clockIn)}
                             </div>
@@ -393,6 +526,10 @@ export default function EmployeeTimeTracking() {
                             </div>
                             <div className={`text-sm text-center font-mono font-semibold ${opacity}`}>
                               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
+                            </div>
+                            {/* Edit indicator */}
+                            <div className="absolute top-1 right-1 opacity-30">
+                              <Edit3 className="h-3 w-3 text-white" />
                             </div>
                           </div>
                         );
