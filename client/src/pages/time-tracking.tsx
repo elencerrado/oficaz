@@ -351,20 +351,15 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-center min-w-[150px] cursor-pointer hover:bg-gray-50 p-2 rounded relative">
-                <Input
-                  type="month"
-                  value={format(currentMonth, 'yyyy-MM')}
-                  onChange={(e) => {
-                    const [year, month] = e.target.value.split('-');
-                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
-                  }}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                />
-                <div className="font-medium pointer-events-none">
-                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
-                </div>
-              </div>
+              <Input
+                type="month"
+                value={format(currentMonth, 'yyyy-MM')}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split('-');
+                  setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                }}
+                className="text-center font-medium min-w-[150px] cursor-pointer"
+              />
               <Button
                 variant="outline"
                 size="sm"
