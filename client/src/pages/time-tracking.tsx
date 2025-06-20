@@ -292,10 +292,17 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-center min-w-[200px]">
-                <p className="font-medium text-sm">
+              <div className="text-center min-w-[200px] cursor-pointer hover:bg-gray-50 p-2 rounded date-navigation-input">
+                <Input
+                  type="date"
+                  value={format(currentDate, 'yyyy-MM-dd')}
+                  onChange={(e) => setCurrentDate(new Date(e.target.value))}
+                  className="text-center border-none shadow-none p-0 h-auto font-medium text-sm bg-transparent cursor-pointer"
+                  title="Haz clic para seleccionar una fecha"
+                />
+                <div className="text-xs text-gray-500 mt-1">
                   {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
-                </p>
+                </div>
               </div>
               <Button
                 variant="outline"
@@ -317,10 +324,20 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-center min-w-[150px]">
-                <p className="font-medium">
+              <div className="text-center min-w-[150px] cursor-pointer hover:bg-gray-50 p-2 rounded date-navigation-input">
+                <Input
+                  type="month"
+                  value={format(currentMonth, 'yyyy-MM')}
+                  onChange={(e) => {
+                    const [year, month] = e.target.value.split('-');
+                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                  }}
+                  className="text-center border-none shadow-none p-0 h-auto font-medium bg-transparent cursor-pointer"
+                  title="Haz clic para seleccionar un mes"
+                />
+                <div className="text-xs text-gray-500 mt-1">
                   {format(currentMonth, 'MMMM yyyy', { locale: es })}
-                </p>
+                </div>
               </div>
               <Button
                 variant="outline"
