@@ -75,14 +75,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Admin/Manager gets full layout with sidebar
   return (
-    <div className="min-h-screen bg-oficaz-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
       />
       <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
       
-      <main className="lg:ml-64 min-h-screen pt-16">
+      <main className="lg:ml-64 min-h-screen pt-16 bg-gray-50">
         {children}
       </main>
     </div>

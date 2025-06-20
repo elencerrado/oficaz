@@ -74,7 +74,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 min-h-screen bg-gray-50">
       {/* Top Bar */}
       <div className="bg-white shadow-sm border-b border-gray-200 -mx-6 -mt-6 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">

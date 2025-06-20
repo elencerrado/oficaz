@@ -248,7 +248,7 @@ export default function Employees() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -271,7 +271,7 @@ export default function Employees() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Users className="h-8 w-8 text-oficaz-primary" />
+              <Users className="h-5 w-5 text-oficaz-primary" />
               <div>
                 <p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
                 <p className="text-sm text-gray-500">Total Empleados</p>
@@ -283,7 +283,7 @@ export default function Employees() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-red-500" />
+              <Shield className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-2xl font-bold text-gray-900">{adminCount}</p>
                 <p className="text-sm text-gray-500">Administradores</p>
@@ -295,7 +295,7 @@ export default function Employees() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Users className="h-8 w-8 text-blue-500" />
+              <Users className="h-5 w-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold text-gray-900">{managerCount}</p>
                 <p className="text-sm text-gray-500">Gerentes</p>
@@ -307,7 +307,7 @@ export default function Employees() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <Clock className="h-8 w-8 text-green-500" />
+              <Clock className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold text-gray-900">{activeSessions}</p>
                 <p className="text-sm text-gray-500">Activos Hoy</p>

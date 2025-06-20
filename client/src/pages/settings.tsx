@@ -89,14 +89,20 @@ export default function Settings() {
   const addressLines = formData.postalAddress.split('\n');
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
+    <div className={`min-h-screen flex flex-col ${
+      user?.role === 'employee' 
+        ? 'bg-employee-gradient text-white' 
+        : 'bg-gray-50 text-gray-900'
+    }`}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-4">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"
-            className="text-white hover:bg-white/20 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105 flex items-center"
+            className={`hover:bg-white/20 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105 flex items-center ${
+              user?.role === 'employee' ? 'text-white' : 'text-gray-900'
+            }`}
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -111,7 +117,9 @@ export default function Settings() {
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (
-            <div className="text-white text-base font-medium">
+            <div className={`text-base font-medium ${
+              user?.role === 'employee' ? 'text-white' : 'text-gray-900'
+            }`}>
               {company?.name || 'Mi Empresa'}
             </div>
           )}

@@ -954,7 +954,7 @@ startxref
       if (updates.companyEmail !== undefined) allowedUpdates.companyEmail = updates.companyEmail;
       if (updates.companyPhone !== undefined) allowedUpdates.companyPhone = updates.companyPhone;
       if (updates.position !== undefined) allowedUpdates.position = updates.position;
-      if (updates.startDate !== undefined) allowedUpdates.startDate = updates.startDate;
+      if (updates.startDate !== undefined) allowedUpdates.startDate = new Date(updates.startDate);
       if (updates.status !== undefined) allowedUpdates.status = updates.status;
       if (updates.vacationDaysAdjustment !== undefined) allowedUpdates.vacationDaysAdjustment = updates.vacationDaysAdjustment.toString();
 
