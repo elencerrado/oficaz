@@ -113,9 +113,19 @@ export default function VacationRequests() {
   const daysPerMonth = parseFloat(user?.vacationDaysPerMonth || '2.5');
   const adjustment = parseFloat(user?.vacationDaysAdjustment || '0');
   const startDate = user?.startDate ? new Date(user.startDate) : new Date();
-  const monthsWorked = Math.max(1, (new Date().getFullYear() - startDate.getFullYear()) * 12 + 
-                               (new Date().getMonth() - startDate.getMonth()) + 
-                               (new Date().getDate() >= startDate.getDate() ? 1 : 0));
+  const currentDate = new Date();
+  
+  // Calculate months more accurately
+  let monthsWorked = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                     (currentDate.getMonth() - startDate.getMonth());
+  
+  // Add partial month if current day >= start day
+  if (currentDate.getDate() >= startDate.getDate()) {
+    monthsWorked += 1;
+  }
+  
+  // Ensure minimum of 1 month
+  monthsWorked = Math.max(1, monthsWorked);
   
   const calculatedBaseDays = Math.round(monthsWorked * daysPerMonth * 10) / 10;
 
@@ -327,11 +337,6 @@ export default function VacationRequests() {
                             {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
                           </p>
                         )}
-                        <div className="pt-2 border-t border-white/10">
-                          <p className="font-medium text-blue-300">
-                            Total final: {totalDays} días
-                          </p>
-                        </div>
                       </div>
                     </div>
                   </DialogContent>
