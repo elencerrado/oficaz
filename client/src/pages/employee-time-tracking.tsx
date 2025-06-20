@@ -466,59 +466,61 @@ export default function EmployeeTimeTracking() {
                         const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
                         
                         return editingSession === session.id ? (
-                          // Editing mode - Mobile-first vertical layout
-                          <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-3 px-4 mx-2 my-1">
+                          // Editing mode - Mobile-optimized with proper spacing
+                          <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-4 px-5 mx-3 my-2">
                             {/* Date header */}
-                            <div className="text-sm text-center text-white/90 mb-3 font-medium">
+                            <div className="text-sm text-center text-white/90 mb-4 font-medium">
                               {formatDate(session.clockIn)}
                             </div>
                             
-                            {/* Time inputs in 2-column grid */}
-                            <div className="grid grid-cols-2 gap-4 mb-3">
-                              <div>
-                                <label className="text-xs text-white/70 block mb-1 text-center">Entrada</label>
+                            {/* Time inputs with generous spacing */}
+                            <div className="grid grid-cols-2 gap-6 mb-4">
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/70 block text-center font-medium">Entrada</label>
                                 <Input
                                   type="time"
                                   value={editForm.clockIn}
                                   onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
-                                  className="h-9 text-center bg-white/10 border-white/20 text-white text-sm w-full"
+                                  className="h-10 text-center bg-white/10 border-white/20 text-white text-sm w-full rounded-lg"
                                 />
                               </div>
-                              <div>
-                                <label className="text-xs text-white/70 block mb-1 text-center">Salida</label>
+                              <div className="space-y-2">
+                                <label className="text-xs text-white/70 block text-center font-medium">Salida</label>
                                 <Input
                                   type="time"
                                   value={editForm.clockOut}
                                   onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
-                                  className="h-9 text-center bg-white/10 border-white/20 text-white text-sm w-full"
+                                  className="h-10 text-center bg-white/10 border-white/20 text-white text-sm w-full rounded-lg"
                                 />
                               </div>
                             </div>
 
-                            {/* Total and action buttons */}
-                            <div className="flex justify-between items-center">
-                              <div className="text-xs text-white/80">
+                            {/* Total and action buttons with better spacing */}
+                            <div className="flex justify-between items-center pt-2">
+                              <div className="text-sm text-white/80">
                                 <span className="font-medium">Total: </span>
-                                {editForm.clockIn && editForm.clockOut ? 
-                                  formatTotalHours(
-                                    (new Date(`2000-01-01T${editForm.clockOut}:00`).getTime() - 
-                                     new Date(`2000-01-01T${editForm.clockIn}:00`).getTime()) / (1000 * 60 * 60)
-                                  ) : '-'
-                                }
+                                <span className="font-mono">
+                                  {editForm.clockIn && editForm.clockOut ? 
+                                    formatTotalHours(
+                                      (new Date(`2000-01-01T${editForm.clockOut}:00`).getTime() - 
+                                       new Date(`2000-01-01T${editForm.clockIn}:00`).getTime()) / (1000 * 60 * 60)
+                                    ) : '-'
+                                  }
+                                </span>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-3">
                                 <Button
                                   size="sm"
                                   onClick={saveEdit}
                                   disabled={updateSessionMutation.isPending}
-                                  className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
+                                  className="h-9 w-9 p-0 bg-green-600 hover:bg-green-700 rounded-lg"
                                 >
                                   <Save className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   onClick={cancelEditing}
-                                  className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                                  className="h-9 w-9 p-0 bg-red-600 hover:bg-red-700 rounded-lg"
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
