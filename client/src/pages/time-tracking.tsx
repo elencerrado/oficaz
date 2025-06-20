@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Clock, 
   Search, 
@@ -293,27 +292,17 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-center min-w-[200px] cursor-pointer hover:bg-gray-50 p-2 rounded font-medium"
-                  >
-                    {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
-                  <div className="p-4">
-                    <p className="text-sm font-medium mb-3">Seleccionar fecha</p>
-                    <Input
-                      type="date"
-                      value={format(currentDate, 'yyyy-MM-dd')}
-                      onChange={(e) => setCurrentDate(new Date(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <div className="text-center min-w-[200px] cursor-pointer hover:bg-gray-50 p-2 rounded relative">
+                <Input
+                  type="date"
+                  value={format(currentDate, 'yyyy-MM-dd')}
+                  onChange={(e) => setCurrentDate(new Date(e.target.value))}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <div className="font-medium pointer-events-none">
+                  {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
+                </div>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -334,30 +323,20 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="text-center min-w-[150px] cursor-pointer hover:bg-gray-50 p-2 rounded font-medium"
-                  >
-                    {format(currentMonth, 'MMMM yyyy', { locale: es })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
-                  <div className="p-4">
-                    <p className="text-sm font-medium mb-3">Seleccionar mes</p>
-                    <Input
-                      type="month"
-                      value={format(currentMonth, 'yyyy-MM')}
-                      onChange={(e) => {
-                        const [year, month] = e.target.value.split('-');
-                        setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
-                      }}
-                      className="w-full"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <div className="text-center min-w-[150px] cursor-pointer hover:bg-gray-50 p-2 rounded relative">
+                <Input
+                  type="month"
+                  value={format(currentMonth, 'yyyy-MM')}
+                  onChange={(e) => {
+                    const [year, month] = e.target.value.split('-');
+                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                />
+                <div className="font-medium pointer-events-none">
+                  {format(currentMonth, 'MMMM yyyy', { locale: es })}
+                </div>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
@@ -370,7 +349,7 @@ export default function TimeTracking() {
           )}
 
           {dateFilter === 'custom' && (
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3">
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3 relative z-0">
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium text-gray-700">Desde:</label>
                 <Input
