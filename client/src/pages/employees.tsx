@@ -442,51 +442,57 @@ export default function Employees() {
                       const diff = currentX - startX;
                       const content = target.querySelector('.swipe-content') as HTMLElement;
                       
-                      if (content && Math.abs(diff) > 5) {
-                        // Apply transform with smooth animation
-                        const maxSwipe = 100;
+                      if (content && Math.abs(diff) > 3) {
+                        // Apply transform with more movement like iPhone Mail
+                        const maxSwipe = 150;
                         const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
-                        content.style.transform = `translateX(${constrainedDiff * 0.3}px)`;
+                        content.style.transform = `translateX(${constrainedDiff * 0.8}px)`;
                         content.style.transition = 'none';
                         
                         // Show action hints based on swipe direction
                         const callHint = target.querySelector('.call-hint') as HTMLElement;
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
-                        const threshold = 10;
-                        const maxDistance = 50;
+                        const threshold = 5;
+                        const maxDistance = 80;
                         
                         if (diff > threshold) {
                           // Swipe right - reveal call action on LEFT (verde)
                           if (callHint && (employee.companyPhone || employee.personalPhone)) {
-                            const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            callHint.style.opacity = Math.max(0.9, progress).toString();
+                            const progress = Math.min(1, Math.abs(diff) / 100);
+                            callHint.style.opacity = Math.max(0.95, progress).toString();
                             callHint.style.visibility = 'visible';
                             callHint.style.display = 'flex';
+                            callHint.style.transition = 'none';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
                             messageHint.style.visibility = 'hidden';
+                            messageHint.style.transition = 'none';
                           }
                         } else if (diff < -threshold) {
                           // Swipe left - reveal message action on RIGHT (azul)
                           if (messageHint) {
-                            const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
-                            messageHint.style.opacity = Math.max(0.9, progress).toString();
+                            const progress = Math.min(1, Math.abs(diff) / 100);
+                            messageHint.style.opacity = Math.max(0.95, progress).toString();
                             messageHint.style.visibility = 'visible';
                             messageHint.style.display = 'flex';
+                            messageHint.style.transition = 'none';
                           }
                           if (callHint) {
                             callHint.style.opacity = '0';
                             callHint.style.visibility = 'hidden';
+                            callHint.style.transition = 'none';
                           }
                         } else {
-                          // Reset both hints
+                          // Reset both hints without transition
                           if (callHint) {
+                            callHint.style.transition = 'none';
                             callHint.style.opacity = '0';
                             callHint.style.visibility = 'hidden';
                           }
                           if (messageHint) {
+                            messageHint.style.transition = 'none';
                             messageHint.style.opacity = '0';
                             messageHint.style.visibility = 'hidden';
                           }
@@ -509,23 +515,21 @@ export default function Employees() {
                         content.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                       }
                       
-                      // Reset hints with smooth animation
+                      // Reset hints immediately (no transition to avoid blocking next swipe)
                       const callHint = target.querySelector('.call-hint') as HTMLElement;
                       const messageHint = target.querySelector('.message-hint') as HTMLElement;
                       if (callHint) {
-                        callHint.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                        callHint.style.transition = 'none';
                         callHint.style.opacity = '0';
-                        callHint.style.transform = 'translateX(-100%)';
                         callHint.style.visibility = 'hidden';
                       }
                       if (messageHint) {
-                        messageHint.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                        messageHint.style.transition = 'none';
                         messageHint.style.opacity = '0';
-                        messageHint.style.transform = 'translateX(100%)';
                         messageHint.style.visibility = 'hidden';
                       }
                       
-                      if (Math.abs(diff) > 60) {
+                      if (Math.abs(diff) > 100) {
                         // Swipe action triggered
                         if (diff > 0 && phone) {
                           // Swipe right - Call (reveals left side)
@@ -566,28 +570,28 @@ export default function Employees() {
                       <div 
                         className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '140px',
+                          width: '200px',
                           backgroundColor: '#22c55e',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <Phone className="h-10 w-10 mb-2 text-white" />
-                        <span className="text-base font-bold text-white">LLAMAR</span>
+                        <Phone className="h-12 w-12 mb-3 text-white" />
+                        <span className="text-lg font-bold text-white">LLAMAR</span>
                       </div>
                       
                       {/* Message Action (Right side - revealed when swiping LEFT) */}
                       <div 
                         className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white"
                         style={{
-                          width: '140px',
+                          width: '200px',
                           backgroundColor: '#3b82f6',
                           opacity: '0',
                           visibility: 'hidden'
                         }}
                       >
-                        <MessageCircle className="h-10 w-10 mb-2 text-white" />
-                        <span className="text-base font-bold text-white">MENSAJE</span>
+                        <MessageCircle className="h-12 w-12 mb-3 text-white" />
+                        <span className="text-lg font-bold text-white">MENSAJE</span>
                       </div>
                     </div>
                     
