@@ -456,8 +456,8 @@ export default function Employees() {
                         const threshold = 5;
                         const maxDistance = 80;
                         
-                        if (diff > threshold) {
-                          // Swipe right - reveal call action on LEFT (verde)
+                        if (diff < -threshold) {
+                          // Swipe left - reveal call action on LEFT (verde)
                           if (callHint && (employee.companyPhone || employee.personalPhone)) {
                             const progress = Math.min(1, Math.abs(diff) / 100);
                             callHint.style.opacity = Math.max(0.95, progress).toString();
@@ -470,8 +470,8 @@ export default function Employees() {
                             messageHint.style.visibility = 'hidden';
                             messageHint.style.transition = 'none';
                           }
-                        } else if (diff < -threshold) {
-                          // Swipe left - reveal message action on RIGHT (azul)
+                        } else if (diff > threshold) {
+                          // Swipe right - reveal message action on RIGHT (azul)
                           if (messageHint) {
                             const progress = Math.min(1, Math.abs(diff) / 100);
                             messageHint.style.opacity = Math.max(0.95, progress).toString();
@@ -535,11 +535,11 @@ export default function Employees() {
                       
                       if (Math.abs(diff) > 100) {
                         // Swipe action triggered
-                        if (diff > 0 && phone) {
-                          // Swipe right - Call (reveals left side)
+                        if (diff < 0 && phone) {
+                          // Swipe left - Call (reveals left side)
                           window.location.href = `tel:${phone}`;
-                        } else if (diff < 0) {
-                          // Swipe left - Message (reveals right side)
+                        } else if (diff > 0) {
+                          // Swipe right - Message (reveals right side)
                           window.location.href = `/test/mensajes?chat=${employee.id}`;
                         }
                       } else if (Math.abs(diff) < 10 && timeDiff < 500) {
@@ -600,17 +600,17 @@ export default function Employees() {
                     {/* Main Content - Above hints */}
                     <div className="swipe-content bg-white relative z-20 transition-transform duration-300 ease-out">
                       {/* Swipe Indicators */}
-                      <div className="absolute inset-0 flex justify-between items-center pointer-events-none z-30 px-4 py-3">
-                        {/* Left indicator - Call */}
+                      <div className="absolute inset-0 flex items-center pointer-events-none z-30">
+                        {/* Left indicator - Call (only if phone available) */}
                         {(employee.companyPhone || employee.personalPhone) && (
-                          <div className="flex items-center justify-center">
-                            <Phone className="h-4 w-4 text-green-500/60" />
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                            <Phone className="h-4 w-4 text-green-500/50" />
                           </div>
                         )}
                         
-                        {/* Right indicator - Message */}
-                        <div className="flex items-center justify-center">
-                          <MessageCircle className="h-4 w-4 text-blue-500/60" />
+                        {/* Right indicator - Message (always available) */}
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                          <MessageCircle className="h-4 w-4 text-blue-500/50" />
                         </div>
                       </div>
                       
