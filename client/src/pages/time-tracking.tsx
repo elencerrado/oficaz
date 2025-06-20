@@ -210,6 +210,25 @@ export default function TimeTracking() {
   
   const completedSessions = filteredSessions.filter((s: any) => s.clockOut).length;
 
+  // Calculate summary text based on current filter
+  const getSummaryText = () => {
+    if (dateFilter === 'today') {
+      return `Total de hoy: ${totalHours.toFixed(1)}h`;
+    } else if (dateFilter === 'day') {
+      const dayName = format(currentDate, 'EEEE, d MMMM yyyy', { locale: es });
+      return `Total del ${dayName}: ${totalHours.toFixed(1)}h`;
+    } else if (dateFilter === 'month') {
+      const monthName = format(currentMonth, 'MMMM yyyy', { locale: es });
+      return `Total de ${monthName}: ${totalHours.toFixed(1)}h`;
+    } else if (dateFilter === 'custom' && selectedStartDate && selectedEndDate) {
+      const startStr = format(selectedStartDate, 'd MMM', { locale: es });
+      const endStr = format(selectedEndDate, 'd MMM yyyy', { locale: es });
+      return `Total del ${startStr} - ${endStr}: ${totalHours.toFixed(1)}h`;
+    } else {
+      return `Total general: ${totalHours.toFixed(1)}h`;
+    }
+  };
+
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
       {/* Header */}
@@ -218,6 +237,16 @@ export default function TimeTracking() {
         <p className="text-gray-500 mt-1">
           Administra todos los fichajes de empleados y genera reportes.
         </p>
+      </div>
+
+      {/* Summary Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-lg mb-6 shadow-lg">
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-1">{getSummaryText()}</div>
+          <div className="text-blue-100 text-sm">
+            {filteredSessions.length} registros • {employeesWithSessions} empleados activos
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
