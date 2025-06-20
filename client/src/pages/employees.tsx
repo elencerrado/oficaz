@@ -456,14 +456,19 @@ export default function Employees() {
                         const threshold = 5;
                         const maxDistance = 80;
                         
+                        console.log(`Swipe detected: ${diff}`); // Debug log
+                        
                         if (diff < -threshold) {
                           // Swipe left - reveal call action on LEFT (verde)
+                          console.log('Activating CALL (green) on left'); // Debug
                           if (callHint && (employee.companyPhone || employee.personalPhone)) {
                             const progress = Math.min(1, Math.abs(diff) / 100);
                             callHint.style.opacity = Math.max(0.95, progress).toString();
                             callHint.style.visibility = 'visible';
                             callHint.style.display = 'flex';
                             callHint.style.transition = 'none';
+                            callHint.style.zIndex = '10';
+                            console.log(`Call hint opacity set to: ${callHint.style.opacity}`); // Debug
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
@@ -472,12 +477,15 @@ export default function Employees() {
                           }
                         } else if (diff > threshold) {
                           // Swipe right - reveal message action on RIGHT (azul)
+                          console.log('Activating MESSAGE (blue) on right'); // Debug
                           if (messageHint) {
                             const progress = Math.min(1, Math.abs(diff) / 100);
                             messageHint.style.opacity = Math.max(0.95, progress).toString();
                             messageHint.style.visibility = 'visible';
                             messageHint.style.display = 'flex';
                             messageHint.style.transition = 'none';
+                            messageHint.style.zIndex = '10';
+                            console.log(`Message hint opacity set to: ${messageHint.style.opacity}`); // Debug
                           }
                           if (callHint) {
                             callHint.style.opacity = '0';
@@ -569,36 +577,38 @@ export default function Employees() {
                     }}
                   >
                     {/* Background Action Hints - Behind content */}
-                    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none z-0">
-                      {/* Call Action (Left side - revealed when swiping RIGHT) */}
+                    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none">
+                      {/* Call Action (Left side - revealed when swiping LEFT) */}
                       <div 
                         className="call-hint absolute left-0 top-0 bottom-0 flex items-center justify-center text-white"
                         style={{
-                          width: '80px',
+                          width: '100px',
                           backgroundColor: '#22c55e',
                           opacity: '0',
-                          visibility: 'hidden'
+                          visibility: 'hidden',
+                          zIndex: '5'
                         }}
                       >
-                        <Phone className="h-6 w-6 text-white" />
+                        <Phone className="h-7 w-7 text-white" />
                       </div>
                       
-                      {/* Message Action (Right side - revealed when swiping LEFT) */}
+                      {/* Message Action (Right side - revealed when swiping RIGHT) */}
                       <div 
                         className="message-hint absolute right-0 top-0 bottom-0 flex items-center justify-center text-white"
                         style={{
-                          width: '80px',
+                          width: '100px',
                           backgroundColor: '#3b82f6',
                           opacity: '0',
-                          visibility: 'hidden'
+                          visibility: 'hidden',
+                          zIndex: '5'
                         }}
                       >
-                        <MessageCircle className="h-6 w-6 text-white" />
+                        <MessageCircle className="h-7 w-7 text-white" />
                       </div>
                     </div>
                     
                     {/* Main Content - Above hints */}
-                    <div className="swipe-content bg-white relative z-20 transition-transform duration-300 ease-out">
+                    <div className="swipe-content bg-white relative z-10 transition-transform duration-300 ease-out">
                       {/* Swipe Indicators */}
                       <div className="absolute inset-0 flex items-center pointer-events-none z-30">
                         {/* Left indicator - Call (only if phone available) */}
