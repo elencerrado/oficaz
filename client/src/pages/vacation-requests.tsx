@@ -298,16 +298,37 @@ Has trabajado ${monthsWorked} meses, lo que te da ${Math.round(monthsWorked * da
             <div className="text-center">
               <div className="text-2xl font-light text-blue-300 mb-1 flex items-center justify-center gap-2">
                 {totalDays}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="w-4 h-4 text-white/40 hover:text-white/70 cursor-help transition-colors" />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-sm p-4 bg-gray-900 border border-gray-700 text-white text-sm leading-relaxed">
-                      <div className="whitespace-pre-line">{vacationExplanation}</div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="p-1 rounded-full hover:bg-white/10 transition-colors">
+                      <HelpCircle className="w-4 h-4 text-white/40 hover:text-white/70 transition-colors" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-gray-900 border border-gray-700 text-white max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="text-blue-300">¿Por qué tengo {totalDays} días?</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 text-sm leading-relaxed">
+                      <p>
+                        En España te corresponden <span className="font-semibold text-blue-300">{daysPerMonth} días</span> de 
+                        vacaciones por cada mes trabajado desde tu fecha de incorporación.
+                      </p>
+                      <p>
+                        Empezaste el <span className="font-semibold text-emerald-300">
+                        {format(startDate, 'd MMMM yyyy', { locale: es })}</span> y has trabajado{' '}
+                        <span className="font-semibold text-emerald-300">{monthsWorked} meses</span>, lo que te da{' '}
+                        <span className="font-semibold text-blue-300">
+                        {Math.round(monthsWorked * daysPerMonth * 10) / 10} días</span>.
+                      </p>
+                      {adjustment !== 0 && (
+                        <p className="text-orange-300">
+                          Además te hemos ajustado <span className="font-semibold">
+                          {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
+                        </p>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
             </div>
