@@ -29,26 +29,13 @@ import AccessDenied from "@/pages/access-denied";
 
 function DashboardRouter() {
   const { user } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   if (user?.role === 'employee') {
     return <EmployeeDashboard />;
   }
   
-  // Admin/Manager gets full layout with sidebar
-  return (
-    <div className="min-h-screen bg-oficaz-gray-50">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-      <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
-      
-      <main className="lg:ml-64 min-h-screen pt-16">
-        <Dashboard />
-      </main>
-    </div>
-  );
+  // Admin/Manager - just return Dashboard component without layout
+  return <Dashboard />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -132,9 +119,11 @@ function Router() {
       {/* Company-specific protected routes */}
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
-          <PageWrapper>
-            <DashboardRouter />
-          </PageWrapper>
+          <AppLayout>
+            <PageWrapper>
+              <DashboardRouter />
+            </PageWrapper>
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
