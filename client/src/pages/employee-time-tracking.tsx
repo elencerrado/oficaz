@@ -473,27 +473,25 @@ export default function EmployeeTimeTracking() {
                               {formatDate(session.clockIn)}
                             </div>
                             
-                            {/* Time inputs centered and balanced */}
-                            <div className="flex justify-center mb-4">
-                              <div className="grid grid-cols-2 gap-8 w-full max-w-xs">
-                                <div className="space-y-2">
-                                  <label className="text-xs text-white/70 block text-center font-medium">Entrada</label>
-                                  <Input
-                                    type="time"
-                                    value={editForm.clockIn}
-                                    onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
-                                    className="h-10 text-center bg-white/10 border-white/20 text-white text-sm w-full rounded-lg"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-xs text-white/70 block text-center font-medium">Salida</label>
-                                  <Input
-                                    type="time"
-                                    value={editForm.clockOut}
-                                    onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
-                                    className="h-10 text-center bg-white/10 border-white/20 text-white text-sm w-full rounded-lg"
-                                  />
-                                </div>
+                            {/* Time inputs perfectly centered */}
+                            <div className="flex justify-center gap-6 mb-4">
+                              <div className="flex flex-col items-center space-y-2">
+                                <label className="text-xs text-white/70 font-medium">Entrada</label>
+                                <Input
+                                  type="time"
+                                  value={editForm.clockIn}
+                                  onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
+                                  className="h-10 w-24 text-center bg-white/10 border-white/20 text-white text-sm rounded-lg"
+                                />
+                              </div>
+                              <div className="flex flex-col items-center space-y-2">
+                                <label className="text-xs text-white/70 font-medium">Salida</label>
+                                <Input
+                                  type="time"
+                                  value={editForm.clockOut}
+                                  onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
+                                  className="h-10 w-24 text-center bg-white/10 border-white/20 text-white text-sm rounded-lg"
+                                />
                               </div>
                             </div>
 
