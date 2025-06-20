@@ -310,9 +310,9 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Table Container - Fixed height to prevent layout shift */}
-      <div className="px-4 mb-6 flex-1">
-        <div className="bg-white/5 rounded-lg overflow-hidden h-full min-h-96" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
+      {/* Table Container - Dynamic height */}
+      <div className="px-4 mb-6">
+        <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
             <div className="text-sm font-semibold text-center">Fecha</div>
@@ -321,14 +321,11 @@ export default function EmployeeTimeTracking() {
             <div className="text-sm font-semibold text-center">Total</div>
           </div>
 
-          {/* Table Body */}
+          {/* Table Body - No internal scroll */}
           <div 
-            className="h-full overflow-y-auto scrollbar-thin table-scroll" 
+            className="w-full" 
             style={{ 
-              maxHeight: 'calc(100vh - 500px)', 
-              minHeight: '300px',
-              backgroundColor: 'rgba(50, 58, 70, 0.6)',
-              overscrollBehavior: 'contain'
+              backgroundColor: 'rgba(50, 58, 70, 0.6)'
             }}
           >
             {monthSessions.length > 0 ? (
@@ -432,7 +429,7 @@ export default function EmployeeTimeTracking() {
       </div>
 
       {/* Copyright at bottom */}
-      <div className="text-center pb-4 mt-auto">
+      <div className="text-center pb-4 pt-6">
         <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
           <span className="font-semibold text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
