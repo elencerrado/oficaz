@@ -121,45 +121,8 @@ export default function EmployeeProfile() {
 
         {/* Datos Editables */}
         <div className="bg-white/10 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <h3 className="text-lg font-medium text-white">Datos Personales</h3>
-            {!isEditing ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="text-white hover:bg-white/10"
-              >
-                <Edit3 className="h-4 w-4 mr-2" />
-                Editar
-              </Button>
-            ) : (
-              <div className="flex space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  className="text-white hover:bg-white/10"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancelar
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={updateProfileMutation.isPending}
-                  className="text-white hover:bg-white/10"
-                >
-                  {updateProfileMutation.isPending ? (
-                    <LoadingSpinner size="sm" className="text-white mr-2" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  Guardar
-                </Button>
-              </div>
-            )}
           </div>
 
           <div className="space-y-4">
@@ -245,6 +208,43 @@ export default function EmployeeProfile() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="mt-6 pt-4 border-t border-white/20">
+            {!isEditing ? (
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Editar Datos Personales
+                </Button>
+              </div>
+            ) : (
+              <div className="flex justify-between space-x-4">
+                <Button
+                  onClick={handleCancel}
+                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={updateProfileMutation.isPending}
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex-1"
+                >
+                  {updateProfileMutation.isPending ? (
+                    <LoadingSpinner size="sm" className="text-white mr-2" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Guardar
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

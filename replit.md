@@ -117,10 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Página de usuario específica para empleados implementada
-  - Nueva página EmployeeProfile con estilo consistente al dashboard empleado
-  - Campos organizados: datos personales (solo lectura), laborales (solo lectura), contacto personal y emergencia (editables)
-  - Botón atrás funcional, guardado de cambios con validación y mensajes de confirmación
+- June 20, 2025. Página de usuario para empleados rediseñada con layout tipo ficha
+  - Diseño tipo ficha: avatar circular, nombre, cargo, DNI, teléfono y email corporativo
+  - Botón "Editar Datos Personales" centrado al final de la sección
+  - Modo edición: botón "Cancelar" rojo (izquierda) y "Guardar" verde (derecha)
+  - Campos editables: email personal, teléfono personal, dirección, contacto emergencia
+  - Separador visual y botones de ancho completo para mejor UX
   - Icono "Usuario" en dashboard empleado corregido: nombre y ruta /usuario específica
   - Contraseñas de usuarios restablecidas tras reversión de base de datos
   - Credenciales de acceso: admin@test.com / 123456 (admin)
