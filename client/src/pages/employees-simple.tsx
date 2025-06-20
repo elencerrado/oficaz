@@ -291,9 +291,24 @@ export default function EmployeesSimple() {
                         // Swipe actions
                         if (currentX > 0 && (employee.companyPhone || employee.personalPhone)) {
                           const phone = employee.companyPhone || employee.personalPhone;
-                          setTimeout(() => {
-                            window.location.href = `tel:${phone}`;
-                          }, 100);
+                          
+                          // Enhanced Android compatibility
+                          if (navigator.userAgent.includes('Android')) {
+                            // Create a temporary link element for Android
+                            setTimeout(() => {
+                              const link = document.createElement('a');
+                              link.href = `tel:${phone}`;
+                              link.style.display = 'none';
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }, 150);
+                          } else {
+                            // iOS and other platforms
+                            setTimeout(() => {
+                              window.location.href = `tel:${phone}`;
+                            }, 100);
+                          }
                         } else if (currentX < 0) {
                           setTimeout(() => {
                             navigate(`/test/mensajes?chat=${employee.id}`);
