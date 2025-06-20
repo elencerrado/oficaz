@@ -27,6 +27,7 @@ import EmployeeProfile from "@/pages/employee-profile";
 import AccessDenied from "@/pages/access-denied";
 import SuperAdminLogin from "@/pages/super-admin-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
+import QuickAccess from "@/pages/quick-access";
 
 
 function DashboardRouter() {
@@ -106,6 +107,11 @@ function Router() {
         <Route component={NotFound} />
       </Switch>
     );
+  }
+
+  // Quick access page for testing
+  if (location === '/quick-access') {
+    return <QuickAccess />;
   }
   
   return (
