@@ -116,18 +116,18 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getUserByDni(dni: string): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.dni, dni));
+    const [user] = await db.select().from(schema.users).where(sql`UPPER(${schema.users.dni}) = UPPER(${dni})`);
     return user;
   }
 
   async getUserByDniAndCompany(dni: string, companyId: number): Promise<User | undefined> {
     const [user] = await db.select().from(schema.users)
-      .where(and(eq(schema.users.dni, dni), eq(schema.users.companyId, companyId)));
+      .where(and(sql`UPPER(${schema.users.dni}) = UPPER(${dni})`, eq(schema.users.companyId, companyId)));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(schema.users).where(eq(schema.users.companyEmail, email));
+    const [user] = await db.select().from(schema.users).where(sql`LOWER(${schema.users.companyEmail}) = LOWER(${email})`);
     return user;
   }
 

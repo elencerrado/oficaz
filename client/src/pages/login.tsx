@@ -20,6 +20,7 @@ export default function Login() {
   const [companyInfo, setCompanyInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   // Extract company alias from URL
   const [match, params] = useRoute('/:companyAlias/login');
@@ -57,13 +58,33 @@ export default function Login() {
 
   const onSubmit = async (data: LoginData) => {
     setSubmitting(true);
+    setLoginError(null);
+    
     try {
-      const response = await login(data.dniOrEmail, data.password, companyAlias);
+      // Normalize email/DNI case - lowercase for emails, uppercase last char for DNI/NIE
+      const trimmed = data.dniOrEmail.trim();
+      let normalizedDniOrEmail = trimmed;
+      
+      // If it contains @ it's an email, convert to lowercase
+      if (trimmed.includes('@')) {
+        normalizedDniOrEmail = trimmed.toLowerCase();
+      } else {
+        // For DNI/NIE, normalize: numbers lowercase, last letter uppercase
+        normalizedDniOrEmail = trimmed.toLowerCase().replace(/([a-z])$/, (match) => match.toUpperCase());
+      }
+      
+      const normalizedData = {
+        ...data,
+        dniOrEmail: normalizedDniOrEmail
+      };
+      
+      const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
       // Always use the company alias from the URL if we're in a company-specific login
       const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
       setLocation(`/${redirectAlias}/dashboard`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      setLoginError(error?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
       setSubmitting(false);
     }
@@ -97,6 +118,10 @@ export default function Login() {
                 {...form.register('dniOrEmail')}
                 placeholder="Introduce tu DNI/NIE o email"
                 className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
+                onChange={(e) => {
+                  form.setValue('dniOrEmail', e.target.value);
+                  if (loginError) setLoginError(null);
+                }}
               />
               <User className="absolute right-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               {form.formState.errors.dniOrEmail && (
@@ -113,6 +138,10 @@ export default function Login() {
                 {...form.register('password')}
                 placeholder="Introduce tu contraseña"
                 className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
+                onChange={(e) => {
+                  form.setValue('password', e.target.value);
+                  if (loginError) setLoginError(null);
+                }}
               />
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                 <Lock className="h-4 w-4 text-gray-400" />
@@ -137,16 +166,22 @@ export default function Login() {
               )}
             </div>
 
+            {/* Error message */}
+            {loginError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mt-4">
+                <p className="text-red-600 text-sm text-center">{loginError}</p>
+              </div>
+            )}
+
             {/* Botón ENTRAR */}
             <Button 
               type="submit" 
               disabled={submitting}
-              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm disabled:opacity-50"
+              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm disabled:opacity-100 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <div className="flex items-center justify-center">
-                  <LoadingSpinner size="sm" className="mr-2" />
-                  <span>Entrando...</span>
+                  <LoadingSpinner size="sm" className="text-white" />
                 </div>
               ) : (
                 'ENTRAR'
