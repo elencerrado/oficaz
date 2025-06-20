@@ -23,6 +23,7 @@ import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
 import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
+import EmployeeProfile from "@/pages/employee-profile";
 import AccessDenied from "@/pages/access-denied";
 
 
@@ -169,11 +170,7 @@ function Router() {
 
       <Route path="/:companyAlias/usuario">
         <ProtectedRoute>
-          <AppLayout>
-            <PageWrapper>
-              <Settings />
-            </PageWrapper>
-          </AppLayout>
+          <EmployeeProfile />
         </ProtectedRoute>
       </Route>
 
