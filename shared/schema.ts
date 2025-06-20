@@ -48,6 +48,7 @@ export const users = pgTable("users", {
   // Datos laborales
   position: text("position"), // Lo introduce admin/manager (cargo/puesto)
   startDate: timestamp("start_date").notNull(), // Lo introduce admin/manager
+  status: text("status").notNull().default("active"), // active, inactive, on_leave, on_vacation - Lo introduce admin/manager
   isActive: boolean("is_active").notNull().default(true), // Lo introduce admin/manager
   createdBy: integer("created_by"), // Automático (admin o manager)
   

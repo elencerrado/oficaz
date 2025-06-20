@@ -929,6 +929,57 @@ startxref
     }
   });
 
+  // Update employee (admin/manager only)
+  app.patch('/api/employees/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: 'ID de usuario inválido' });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      // Verify the user belongs to the same company
+      if (user.companyId !== req.user!.companyId) {
+        return res.status(403).json({ error: 'No tienes permiso para editar este usuario' });
+      }
+
+      // Only allow specific fields to be updated by admin/manager
+      const allowedUpdates: any = {};
+      if (updates.companyEmail !== undefined) allowedUpdates.companyEmail = updates.companyEmail;
+      if (updates.companyPhone !== undefined) allowedUpdates.companyPhone = updates.companyPhone;
+      if (updates.position !== undefined) allowedUpdates.position = updates.position;
+      if (updates.startDate !== undefined) allowedUpdates.startDate = updates.startDate;
+      if (updates.status !== undefined) allowedUpdates.status = updates.status;
+      if (updates.vacationDaysAdjustment !== undefined) allowedUpdates.vacationDaysAdjustment = updates.vacationDaysAdjustment.toString();
+
+      const updatedUser = await storage.updateUser(userId, allowedUpdates);
+
+      if (!updatedUser) {
+        return res.status(500).json({ error: 'Error al actualizar el usuario' });
+      }
+
+      // Recalculate vacation days if start date changed
+      if (updates.startDate) {
+        await storage.updateUserVacationDays(userId);
+      }
+
+      const finalUser = await storage.getUser(userId);
+      res.json({ 
+        message: 'Usuario actualizado correctamente',
+        user: finalUser 
+      });
+    } catch (error: any) {
+      console.error('Error updating employee:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
   // Unified notifications endpoints
   app.get('/api/notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {
