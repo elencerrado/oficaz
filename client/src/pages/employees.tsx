@@ -172,11 +172,13 @@ export default function Employees() {
     }));
   };
 
-  // Filter employees based on search term
+  // Filter employees based on search term and exclude admin
   const filteredEmployees = Array.isArray(employees) ? employees.filter((employee: any) =>
-    employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.dni?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.companyEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.role !== 'admin' && (
+      employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.dni?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.companyEmail?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   ) : [];
 
   // Get role-based statistics
@@ -364,7 +366,7 @@ export default function Employees() {
                   {/* Desktop/Tablet View */}
                   <div 
                     className="hidden sm:flex items-center justify-between p-4 cursor-pointer"
-                    onDoubleClick={() => handleEditEmployee(employee)}
+                    onClick={() => handleEditEmployee(employee)}
                   >
                     <div className="flex items-center space-x-4 flex-1">
                       <Avatar className="h-10 w-10">
@@ -422,15 +424,16 @@ export default function Employees() {
 
                   {/* Mobile View with Swipe Gestures and iPhone-style Animation */}
                   <div 
-                    className="sm:hidden relative overflow-hidden"
+                    className="sm:hidden relative overflow-hidden rounded-lg"
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
                       const target = e.currentTarget;
                       target.setAttribute('data-start-x', touch.clientX.toString());
                       target.setAttribute('data-start-time', Date.now().toString());
-                      target.setAttribute('data-tap-count', '0');
+                      target.setAttribute('data-tap-count', (parseInt(target.getAttribute('data-tap-count') || '0')).toString());
                     }}
                     onTouchMove={(e) => {
+                      e.preventDefault();
                       const touch = e.touches[0];
                       const target = e.currentTarget;
                       const startX = parseFloat(target.getAttribute('data-start-x') || '0');
@@ -438,26 +441,32 @@ export default function Employees() {
                       const diff = startX - currentX;
                       const content = target.querySelector('.swipe-content') as HTMLElement;
                       
-                      if (content && Math.abs(diff) > 10) {
+                      if (content && Math.abs(diff) > 5) {
                         // Apply transform with smooth animation
-                        const maxSwipe = 80;
+                        const maxSwipe = 100;
                         const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
                         content.style.transform = `translateX(${-constrainedDiff}px)`;
                         content.style.transition = 'none';
                         
-                        // Show action hints
+                        // Show action hints based on swipe direction
                         const callHint = target.querySelector('.call-hint') as HTMLElement;
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
-                        if (diff > 20) {
-                          callHint.style.opacity = '1';
-                          messageHint.style.opacity = '0';
-                        } else if (diff < -20) {
-                          callHint.style.opacity = '0';
-                          messageHint.style.opacity = '1';
+                        if (diff > 30 && (employee.companyPhone || employee.personalPhone)) {
+                          if (callHint) {
+                            callHint.style.opacity = Math.min(1, Math.abs(diff) / 60).toString();
+                            callHint.style.transform = `translateX(${Math.min(0, -80 + Math.abs(diff))}px)`;
+                          }
+                          if (messageHint) messageHint.style.opacity = '0';
+                        } else if (diff < -30) {
+                          if (messageHint) {
+                            messageHint.style.opacity = Math.min(1, Math.abs(diff) / 60).toString();
+                            messageHint.style.transform = `translateX(${Math.max(0, 80 - Math.abs(diff))}px)`;
+                          }
+                          if (callHint) callHint.style.opacity = '0';
                         } else {
-                          callHint.style.opacity = '0';
-                          messageHint.style.opacity = '0';
+                          if (callHint) callHint.style.opacity = '0';
+                          if (messageHint) messageHint.style.opacity = '0';
                         }
                       }
                     }}
@@ -471,52 +480,73 @@ export default function Employees() {
                       const content = target.querySelector('.swipe-content') as HTMLElement;
                       const phone = employee.companyPhone || employee.personalPhone;
                       
-                      // Reset visual state
+                      // Reset visual state with animation
                       if (content) {
                         content.style.transform = 'translateX(0)';
-                        content.style.transition = 'transform 0.3s ease-out';
+                        content.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                       }
                       
-                      // Hide hints
+                      // Reset hints
                       const callHint = target.querySelector('.call-hint') as HTMLElement;
                       const messageHint = target.querySelector('.message-hint') as HTMLElement;
-                      if (callHint) callHint.style.opacity = '0';
-                      if (messageHint) messageHint.style.opacity = '0';
+                      if (callHint) {
+                        callHint.style.opacity = '0';
+                        callHint.style.transform = 'translateX(-80px)';
+                        callHint.style.transition = 'all 0.3s ease-out';
+                      }
+                      if (messageHint) {
+                        messageHint.style.opacity = '0';
+                        messageHint.style.transform = 'translateX(80px)';
+                        messageHint.style.transition = 'all 0.3s ease-out';
+                      }
                       
-                      if (Math.abs(diff) > 60) {
-                        // Swipe action
+                      if (Math.abs(diff) > 80) {
+                        // Swipe action triggered
                         if (diff > 0 && phone) {
+                          // Swipe left - Call
                           window.location.href = `tel:${phone}`;
                         } else if (diff < 0) {
-                          window.location.href = `/test/mensajes?to=${employee.id}`;
+                          // Swipe right - Message (direct to conversation)
+                          window.location.href = `/test/mensajes?chat=${employee.id}`;
                         }
-                      } else if (Math.abs(diff) < 10 && timeDiff < 300) {
-                        // Handle tap vs double tap
+                      } else if (Math.abs(diff) < 10 && timeDiff < 500) {
+                        // Handle tap detection for double tap
                         const currentTapCount = parseInt(target.getAttribute('data-tap-count') || '0');
-                        if (currentTapCount === 0) {
-                          target.setAttribute('data-tap-count', '1');
+                        const newTapCount = currentTapCount + 1;
+                        target.setAttribute('data-tap-count', newTapCount.toString());
+                        
+                        if (newTapCount === 1) {
+                          // First tap - wait for potential second tap
                           setTimeout(() => {
                             const finalTapCount = parseInt(target.getAttribute('data-tap-count') || '0');
                             if (finalTapCount === 1) {
-                              // Single tap - no action for now
+                              // Single tap - reset count
                               target.setAttribute('data-tap-count', '0');
                             }
-                          }, 300);
-                        } else {
+                          }, 400);
+                        } else if (newTapCount === 2) {
                           // Double tap - edit employee
                           target.setAttribute('data-tap-count', '0');
                           handleEditEmployee(employee);
                         }
+                      } else {
+                        // Reset tap count if movement or long press
+                        target.setAttribute('data-tap-count', '0');
                       }
                     }}
                   >
                     {/* Background Action Hints */}
-                    <div className="absolute inset-0 flex">
-                      <div className="call-hint absolute left-0 top-0 bottom-0 w-20 bg-green-500 flex items-center justify-center text-white transition-opacity duration-200 opacity-0">
-                        <Phone className="h-5 w-5" />
+                    <div className="absolute inset-0 flex justify-between">
+                      {/* Call Action (Left side) */}
+                      <div className="call-hint absolute left-0 top-0 bottom-0 w-24 bg-green-500 flex flex-col items-center justify-center text-white transition-all duration-200 opacity-0 transform -translate-x-20 rounded-l-lg">
+                        <Phone className="h-6 w-6 mb-1" />
+                        <span className="text-xs font-medium">Llamar</span>
                       </div>
-                      <div className="message-hint absolute right-0 top-0 bottom-0 w-20 bg-blue-500 flex items-center justify-center text-white transition-opacity duration-200 opacity-0">
-                        <Mail className="h-5 w-5" />
+                      
+                      {/* Message Action (Right side) */}
+                      <div className="message-hint absolute right-0 top-0 bottom-0 w-24 bg-oficaz-primary flex flex-col items-center justify-center text-white transition-all duration-200 opacity-0 transform translate-x-20 rounded-r-lg">
+                        <Mail className="h-6 w-6 mb-1" />
+                        <span className="text-xs font-medium">Mensaje</span>
                       </div>
                     </div>
                     
