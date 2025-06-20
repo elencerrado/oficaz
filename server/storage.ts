@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message,
@@ -249,7 +249,7 @@ export class DrizzleStorage implements IStorage {
 
   async getMessagesByUser(userId: number): Promise<Message[]> {
     return db.select().from(schema.messages)
-      .where(eq(schema.messages.receiverId, userId))
+      .where(or(eq(schema.messages.receiverId, userId), eq(schema.messages.senderId, userId)))
       .orderBy(desc(schema.messages.createdAt));
   }
 
