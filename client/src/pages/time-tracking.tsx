@@ -204,51 +204,65 @@ export default function TimeTracking() {
   const handleExportPDF = useCallback(() => {
     const doc = new jsPDF();
     
-    // Company header
-    doc.setFontSize(20);
+    // Modern header design
+    // Company info (right aligned)
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('INFORME DE FICHAJES', 105, 25, { align: 'center' });
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Test Company', 105, 35, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.text('CIF: B12345678', 105, 42, { align: 'center' });
-    doc.text('Dirección: Calle Principal, 123, Madrid', 105, 47, { align: 'center' });
-    doc.text('Teléfono: +34 912 345 678', 105, 52, { align: 'center' });
-    
-    const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
-    doc.text(`Fecha del informe: ${reportDate}`, 20, 65);
-    
-    // Filter information
-    let filterText = 'Filtros aplicados: ';
-    if (selectedEmployee !== 'all') {
-      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
-      filterText += `Empleado: ${employee?.fullName || 'Desconocido'}`;
-      if (employee?.dni) filterText += ` (DNI: ${employee.dni})`;
-    } else {
-      filterText += 'Todos los empleados';
-    }
-    
-    if (dateFilter === 'day') {
-      filterText += `, Día: ${format(currentDate, 'dd/MM/yyyy', { locale: es })}`;
-    } else if (dateFilter === 'month') {
-      filterText += `, Mes: ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
-    } else if (dateFilter === 'custom' && (startDate || endDate)) {
-      if (startDate && endDate) {
-        filterText += `, Rango: ${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-      } else if (startDate) {
-        filterText += `, Desde: ${format(new Date(startDate), 'dd/MM/yyyy')}`;
-      } else if (endDate) {
-        filterText += `, Hasta: ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-      }
-    }
+    doc.text('Test Company', 210, 20, { align: 'right' });
     
     doc.setFontSize(9);
-    doc.text(filterText, 20, 72);
+    doc.setFont('helvetica', 'normal');
+    doc.text('CIF: B12345678', 210, 26, { align: 'right' });
+    doc.text('Calle Principal, 123, Madrid', 210, 31, { align: 'right' });
+    doc.text('+34 912 345 678', 210, 36, { align: 'right' });
     
-    // Prepare table data
+    // Report title (left aligned)
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 122, 255);
+    doc.text('INFORME CONTROL HORARIO', 20, 25);
+    
+    // Employee info and period (left side, below title)
+    if (selectedEmployee !== 'all') {
+      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
+      
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+      doc.text(employee?.fullName || 'Empleado Desconocido', 20, 45);
+      
+      if (employee?.dni) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(102, 102, 102);
+        doc.text(`DNI: ${employee.dni}`, 20, 52);
+      }
+      
+      // Period info (right side of employee info)
+      let periodText = '';
+      if (dateFilter === 'day') {
+        periodText = format(currentDate, 'dd/MM/yyyy', { locale: es });
+      } else if (dateFilter === 'month') {
+        periodText = format(currentMonth, 'MMMM yyyy', { locale: es });
+      } else if (dateFilter === 'custom' && (startDate || endDate)) {
+        if (startDate && endDate) {
+          periodText = `${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+        } else if (startDate) {
+          periodText = `Desde ${format(new Date(startDate), 'dd/MM/yyyy')}`;
+        } else if (endDate) {
+          periodText = `Hasta ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+        }
+      } else {
+        periodText = 'Todos los registros';
+      }
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 122, 255);
+      doc.text(`Período: ${periodText}`, 130, 45);
+    }
+    
+    // Prepare table data (simplified columns - no Employee or Status)
     const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
     const tableData: any[] = [];
     const showSummaries = selectedEmployee !== 'all';
@@ -269,14 +283,14 @@ export default function TimeTracking() {
         const isNewMonth = currentMonth === null || monthKey !== currentMonth;
         
         if (isNewWeek && index > 0 && currentWeekStart) {
-          tableData.push(['', '', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`, '']);
+          tableData.push(['', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`]);
           weekHours = 0;
         }
         
         if (isNewMonth && index > 0 && currentMonth) {
           const [year, month] = currentMonth.split('-');
           const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
-          tableData.push(['', '', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, '']);
+          tableData.push(['', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`]);
           monthHours = 0;
         }
         
@@ -284,12 +298,10 @@ export default function TimeTracking() {
         if (isNewMonth) currentMonth = monthKey;
         
         tableData.push([
-          session.userName || 'Usuario Desconocido',
           format(sessionDate, 'dd/MM/yyyy'),
           format(sessionDate, 'HH:mm'),
           session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-',
-          hours > 0 ? `${hours.toFixed(1)}h` : '-',
-          session.clockOut ? 'Completado' : 'Activo'
+          hours > 0 ? `${hours.toFixed(1)}h` : '-'
         ]);
         
         weekHours += hours;
@@ -297,12 +309,12 @@ export default function TimeTracking() {
         
         if (index === sortedSessions.length - 1) {
           if (weekHours > 0) {
-            tableData.push(['', '', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`, '']);
+            tableData.push(['', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`]);
           }
           if (monthHours > 0 && currentMonth) {
             const [year, month] = currentMonth.split('-');
             const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
-            tableData.push(['', '', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, '']);
+            tableData.push(['', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`]);
           }
         }
       });
@@ -312,49 +324,82 @@ export default function TimeTracking() {
         const hours = calculateHours(session.clockIn, session.clockOut);
         
         tableData.push([
-          session.userName || 'Usuario Desconocido',
           format(sessionDate, 'dd/MM/yyyy'),
           format(sessionDate, 'HH:mm'),
           session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-',
-          hours > 0 ? `${hours.toFixed(1)}h` : '-',
-          session.clockOut ? 'Completado' : 'Activo'
+          hours > 0 ? `${hours.toFixed(1)}h` : '-'
         ]);
       });
     }
     
-    // Generate table
+    // Modern table design with proper spacing
     autoTable(doc, {
-      head: [['Empleado', 'Fecha', 'Entrada', 'Salida', 'Horas', 'Estado']],
+      head: [['Fecha', 'Entrada', 'Salida', 'Horas']],
       body: tableData,
-      startY: 80,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [0, 122, 255], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+      startY: 65,
+      styles: { 
+        fontSize: 10, 
+        cellPadding: 4,
+        lineColor: [230, 230, 230],
+        lineWidth: 0.5
+      },
+      headStyles: { 
+        fillColor: [0, 122, 255], 
+        textColor: 255, 
+        fontStyle: 'bold',
+        fontSize: 11
+      },
+      alternateRowStyles: { 
+        fillColor: [248, 249, 250]
+      },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 25, halign: 'center' },
+        3: { cellWidth: 25, halign: 'center' }
+      },
       didParseCell: function(data) {
         if (data.cell.text[0] && (data.cell.text[0].includes('TOTAL SEMANA:') || data.cell.text[0].includes('TOTAL '))) {
-          data.cell.styles.fillColor = data.cell.text[0].includes('TOTAL SEMANA:') ? [200, 200, 200] : [173, 216, 230];
+          data.cell.styles.fillColor = data.cell.text[0].includes('TOTAL SEMANA:') 
+            ? [220, 220, 220] 
+            : [0, 122, 255];
+          data.cell.styles.textColor = data.cell.text[0].includes('TOTAL SEMANA:') 
+            ? [0, 0, 0] 
+            : [255, 255, 255];
           data.cell.styles.fontStyle = 'bold';
           data.cell.styles.halign = 'center';
+          data.cell.colSpan = 4;
         }
-      }
+      },
+      margin: { left: 20, right: 20 },
+      tableLineColor: [200, 200, 200],
+      tableLineWidth: 0.1
     });
     
-    // Footer
+    // Modern footer with proper spacing
+    const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
     const pageHeight = doc.internal.pageSize.height;
+    
+    // Footer line
+    doc.setDrawColor(0, 122, 255);
+    doc.setLineWidth(0.5);
+    doc.line(20, pageHeight - 25, 190, pageHeight - 25);
+    
     doc.setFontSize(8);
-    doc.text('Este documento ha sido generado automáticamente por el sistema Oficaz', 105, pageHeight - 20, { align: 'center' });
-    doc.text(`Página 1 de 1 - Generado el ${reportDate}`, 105, pageHeight - 15, { align: 'center' });
+    doc.setTextColor(102, 102, 102);
+    doc.text('Este documento ha sido generado automáticamente por el sistema Oficaz', 20, pageHeight - 18);
+    doc.text(`Fecha del informe: ${reportDate}`, 20, pageHeight - 12);
     
     // Save the PDF
     const fileName = selectedEmployee !== 'all' 
-      ? `fichajes_${employeesList.find(emp => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
-      : `fichajes_todos_empleados_${format(new Date(), 'yyyyMMdd')}.pdf`;
+      ? `control_horario_${employeesList.find(emp => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
+      : `control_horario_todos_empleados_${format(new Date(), 'yyyyMMdd')}.pdf`;
     
     doc.save(fileName);
     
     toast({
       title: 'PDF Generado',
-      description: 'El informe de fichajes se ha descargado correctamente.',
+      description: 'El informe de control horario se ha descargado correctamente.',
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
