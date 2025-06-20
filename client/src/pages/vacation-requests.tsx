@@ -105,7 +105,7 @@ export default function VacationRequests() {
   const pendingDays = (requests as any[])
     .filter((r: any) => r.status === 'pending')
     .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
-  const availableDays = totalDays - usedDays - pendingDays;
+  const availableDays = totalDays - usedDays; // Available = Total - Used (pending doesn't reduce available)
   const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
 
   const canRequestDays = selectedStartDate && selectedEndDate ? 
@@ -303,26 +303,35 @@ export default function VacationRequests() {
               <span className="text-sm text-white/70 font-medium">{usagePercentage.toFixed(1)}%</span>
             </div>
             
-            {/* Multi-segment progress bar */}
+            {/* Modern thick progress bar */}
             <div className="relative">
-              <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-white/10 rounded-2xl h-6 overflow-hidden shadow-inner">
                 {/* Used days */}
                 <div 
-                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full transition-all duration-700 ease-out shadow-lg"
+                  className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 h-full rounded-2xl transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
                   style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-                ></div>
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                </div>
               </div>
               
               {/* Pending days overlay if any */}
               {pendingDays > 0 && (
                 <div 
-                  className="absolute top-0 bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full opacity-70"
+                  className="absolute top-0 bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500 h-6 rounded-2xl opacity-80 shadow-lg"
                   style={{ 
                     left: `${Math.min(usagePercentage, 100)}%`,
                     width: `${Math.min((pendingDays / totalDays) * 100, 100 - usagePercentage)}%`
                   }}
-                ></div>
+                >
+                  {/* Pending shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+                </div>
               )}
+              
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-blue-600/20 blur-sm -z-10"></div>
             </div>
             
             {/* Legend */}
