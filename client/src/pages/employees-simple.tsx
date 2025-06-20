@@ -97,16 +97,20 @@ export default function EmployeesSimple() {
                 <div className="sm:hidden">
                   {/* Background Colors - Full width to prevent white showing */}
                   <div className="absolute inset-0 flex rounded-lg overflow-hidden">
-                    {/* Green Call Background - Left side, extends beyond swipe limit */}
-                    {(employee.companyPhone || employee.personalPhone) && (
-                      <div className="w-40 bg-green-500 flex items-center justify-center">
+                    {/* Green Call Background - Left side, icon positioned near edge */}
+                    {(employee.companyPhone || employee.personalPhone) ? (
+                      <div className="w-24 bg-green-500 flex items-center justify-start pl-4">
                         <Phone className="h-6 w-6 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-24 bg-gray-400 flex items-center justify-start pl-4">
+                        <Phone className="h-6 w-6 text-white opacity-50" />
                       </div>
                     )}
                     
-                    {/* Blue Message Background - Right side, extends beyond swipe limit */}
+                    {/* Blue Message Background - Right side, icon positioned near edge */}
                     <div className="flex-1"></div>
-                    <div className="w-40 bg-blue-500 flex items-center justify-center">
+                    <div className="w-24 bg-blue-500 flex items-center justify-end pr-4">
                       <MessageCircle className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -123,10 +127,16 @@ export default function EmployeesSimple() {
                       const startX = parseFloat(e.currentTarget.getAttribute('data-start-x') || '0');
                       const diff = touch.clientX - startX;
                       
-                      if (Math.abs(diff) > 10) {
+                      if (Math.abs(diff) > 5) {
                         e.preventDefault();
-                        // Limit swipe distance to prevent showing white background
-                        const maxSwipe = 120; // Reduced from unlimited
+                        
+                        // Block left swipe if no phone available
+                        if (diff > 0 && !(employee.companyPhone || employee.personalPhone)) {
+                          return; // Don't allow swipe right for call if no phone
+                        }
+                        
+                        // Limit swipe distance more strictly
+                        const maxSwipe = 80;
                         const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
                         e.currentTarget.style.transform = `translateX(${constrainedDiff}px)`;
                         e.currentTarget.style.transition = 'none';
@@ -138,14 +148,14 @@ export default function EmployeesSimple() {
                       const match = transform.match(/translateX\((.+?)px\)/);
                       const currentX = match ? parseFloat(match[1]) : 0;
                       
-                      if (Math.abs(currentX) > 70) { // Reduced threshold
-                        if (currentX < 0 && (employee.companyPhone || employee.personalPhone)) {
-                          // Call action
+                      if (Math.abs(currentX) > 50) { // Lower threshold
+                        if (currentX > 0 && (employee.companyPhone || employee.personalPhone)) {
+                          // Swipe RIGHT = Call action (corrected direction)
                           const phone = employee.companyPhone || employee.personalPhone;
                           window.location.href = `tel:${phone}`;
                           return;
-                        } else if (currentX > 0) {
-                          // Message action
+                        } else if (currentX < 0) {
+                          // Swipe LEFT = Message action (corrected direction)
                           navigate(`/test/messages?to=${employee.id}`);
                           return;
                         }
