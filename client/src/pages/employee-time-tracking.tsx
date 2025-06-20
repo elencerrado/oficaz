@@ -72,9 +72,7 @@ export default function EmployeeTimeTracking() {
     staleTime: 30000, // Cache for 30 seconds to reduce API calls
   });
 
-  if (isLoading) {
-    return <PageLoading message="Cargando fichajes..." />;
-  }
+
 
   // Filter sessions for current month + complete weeks that span across months
   const monthStart = startOfMonth(currentDate);
@@ -279,6 +277,11 @@ export default function EmployeeTimeTracking() {
 
   const last4MonthsData = getLast4MonthsData();
   const maxHours = Math.max(...last4MonthsData.map(m => m.hours), 1);
+
+  // Show loading state
+  if (isLoading) {
+    return <PageLoading message="Cargando fichajes..." />;
+  }
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">

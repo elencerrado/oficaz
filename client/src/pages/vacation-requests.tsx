@@ -38,9 +38,7 @@ export default function VacationRequests() {
     staleTime: 30000,
   });
 
-  if (isLoading) {
-    return <PageLoading message="Cargando vacaciones..." />;
-  }
+
 
   const createRequestMutation = useMutation({
     mutationFn: (data: { startDate: string; endDate: string; reason?: string }) =>
@@ -259,6 +257,11 @@ export default function VacationRequests() {
         </div>
       </div>
     );
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return <PageLoading message="Cargando vacaciones..." />;
   }
 
   return (
