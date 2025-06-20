@@ -251,12 +251,65 @@ export default function TimeTracking() {
         </Card>
       </div>
 
-      {/* Filters Section */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {/* Month Navigator - Full width row */}
-            <div className="flex items-center justify-center space-x-2">
+      {/* Filters Section - Compact */}
+      <Card className="mb-4">
+        <CardContent className="p-3">
+          {/* Date Filter Type Selector */}
+          <div className="flex items-center justify-center space-x-2 mb-3">
+            <Button
+              variant={dateFilter === 'day' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDateFilter('day')}
+              className={dateFilter === 'day' ? 'bg-oficaz-primary' : ''}
+            >
+              Por Día
+            </Button>
+            <Button
+              variant={dateFilter === 'month' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDateFilter('month')}
+              className={dateFilter === 'month' ? 'bg-oficaz-primary' : ''}
+            >
+              Por Mes
+            </Button>
+            <Button
+              variant={dateFilter === 'custom' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setDateFilter('custom')}
+              className={dateFilter === 'custom' ? 'bg-oficaz-primary' : ''}
+            >
+              Rango Personalizado
+            </Button>
+          </div>
+
+          {/* Date Navigation Based on Type */}
+          {dateFilter === 'day' && (
+            <div className="flex items-center justify-center space-x-3 mb-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentDate(subDays(currentDate, 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="text-center min-w-[200px]">
+                <p className="font-medium text-sm">
+                  {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentDate(addDays(currentDate, 1))}
+                disabled={format(currentDate, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          {dateFilter === 'month' && (
+            <div className="flex items-center justify-center space-x-3 mb-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -264,8 +317,8 @@ export default function TimeTracking() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-center min-w-[160px]">
-                <p className="font-medium text-gray-900">
+              <div className="text-center min-w-[150px]">
+                <p className="font-medium">
                   {format(currentMonth, 'MMMM yyyy', { locale: es })}
                 </p>
               </div>
@@ -273,220 +326,73 @@ export default function TimeTracking() {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                disabled={format(currentMonth, 'yyyy-MM') >= format(new Date(), 'yyyy-MM')}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
+            </div>
+          )}
+
+          {dateFilter === 'custom' && (
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-center mb-3">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Desde:</label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-32 text-sm"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Hasta:</label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-32 text-sm"
+                />
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentMonth(new Date())}
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
               >
-                Hoy
+                Limpiar
               </Button>
             </div>
+          )}
 
-            {/* Date Filter Type Selector */}
-            <div className="flex items-center justify-center space-x-2 border-b pb-3">
-              <Button
-                variant={dateFilter === 'day' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateFilter('day')}
-                className={dateFilter === 'day' ? 'bg-oficaz-primary' : ''}
-              >
-                Por Día
-              </Button>
-              <Button
-                variant={dateFilter === 'month' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateFilter('month')}
-                className={dateFilter === 'month' ? 'bg-oficaz-primary' : ''}
-              >
-                Por Mes
-              </Button>
-              <Button
-                variant={dateFilter === 'custom' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setDateFilter('custom')}
-                className={dateFilter === 'custom' ? 'bg-oficaz-primary' : ''}
-              >
-                Rango Personalizado
-              </Button>
+          {/* Employee Filter and Search */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-center border-t pt-3">
+            <div className="flex items-center space-x-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los empleados</SelectItem>
+                  {employeesList.map((employee: any) => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Date Navigation Based on Type */}
-            {dateFilter === 'day' && (
-              <div className="flex items-center justify-center space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentDate(subDays(currentDate, 1))}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Día Anterior
-                </Button>
-                <div className="text-center">
-                  <p className="font-semibold text-lg">
-                    {format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentDate(addDays(currentDate, 1))}
-                  disabled={format(currentDate, 'yyyy-MM-dd') >= format(new Date(), 'yyyy-MM-dd')}
-                >
-                  Día Siguiente
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-
-            {dateFilter === 'month' && (
-              <div className="flex items-center justify-center space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Mes Anterior
-                </Button>
-                <div className="text-center">
-                  <p className="font-semibold text-lg">
-                    {format(currentMonth, 'MMMM yyyy', { locale: es })}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  disabled={format(currentMonth, 'yyyy-MM') >= format(new Date(), 'yyyy-MM')}
-                >
-                  Mes Siguiente
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-
-            {dateFilter === 'custom' && (
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-center">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700 w-14">Desde:</label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-40"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700 w-14">Hasta:</label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-40"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setStartDate('');
-                      setEndDate('');
-                    }}
-                  >
-                    Limpiar
-                  </Button>
-                </div>
-                
-                {/* Quick Options for Custom Range */}
-                <div className="flex flex-wrap justify-center gap-2 pt-2 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const today = new Date();
-                      setStartDate(format(today, 'yyyy-MM-dd'));
-                      setEndDate(format(today, 'yyyy-MM-dd'));
-                    }}
-                    className="text-xs"
-                  >
-                    Hoy
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const yesterday = subDays(new Date(), 1);
-                      setStartDate(format(yesterday, 'yyyy-MM-dd'));
-                      setEndDate(format(yesterday, 'yyyy-MM-dd'));
-                    }}
-                    className="text-xs"
-                  >
-                    Ayer
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const thisMonth = new Date();
-                      setStartDate(format(startOfMonth(thisMonth), 'yyyy-MM-dd'));
-                      setEndDate(format(endOfMonth(thisMonth), 'yyyy-MM-dd'));
-                    }}
-                    className="text-xs"
-                  >
-                    Este mes
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const lastMonth = subMonths(new Date(), 1);
-                      setStartDate(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
-                      setEndDate(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
-                    }}
-                    className="text-xs"
-                  >
-                    Mes pasado
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Filters row - Simple grid layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Employee Filter */}
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-gray-500" />
-                <div className="flex-1 max-w-xs">
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filtrar empleado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los empleados</SelectItem>
-                      {employeesList.map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar empleado..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 max-w-xs"
-                />
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar empleado..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-48"
+              />
             </div>
           </div>
         </CardContent>
