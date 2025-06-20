@@ -255,12 +255,7 @@ export default function TimeTracking() {
     doc.text('Salida', 110, currentY);
     doc.text('Horas', 150, currentY);
     
-    currentY += 8;
-    
-    // Separator line under header
-    doc.setDrawColor(0, 122, 255);
-    doc.setLineWidth(0.5);
-    doc.line(20, currentY - 2, 190, currentY - 2);
+    currentY += 5;
     
     const showSummaries = selectedEmployee !== 'all';
     
