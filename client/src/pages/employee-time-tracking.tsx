@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3, Edit3, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, endOfWeek, addWeeks, isSameWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, isSameWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useLocation, Link } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
@@ -264,52 +264,14 @@ export default function EmployeeTimeTracking() {
       months.push({
         month: format(date, 'MMM', { locale: es }),
         hours: totalHours,
-        sessions: monthSessions.length,
         isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM')
       });
     }
     return months;
   };
 
-  // Calculate weekly summary for current month
-  const getWeeklySummary = () => {
-    const weeks = [];
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    
-    let weekStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
-    
-    while (weekStart <= monthEnd) {
-      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-      
-      const weekSessions = strictMonthSessions.filter(session => {
-        const sessionDate = new Date(session.clockIn);
-        return sessionDate >= weekStart && sessionDate <= weekEnd;
-      });
-      
-      const weekHours = weekSessions.reduce((total, session) => {
-        return total + calculateSessionHours(session);
-      }, 0);
-      
-      if (weekHours > 0) {
-        weeks.push({
-          weekStart,
-          weekEnd,
-          hours: weekHours,
-          sessions: weekSessions.length,
-          weekNumber: format(weekStart, 'w', { locale: es })
-        });
-      }
-      
-      weekStart = addWeeks(weekStart, 1);
-    }
-    
-    return weeks;
-  };
-
   const last4MonthsData = getLast4MonthsData();
   const maxHours = Math.max(...last4MonthsData.map(m => m.hours), 1);
-  const weeklySummary = getWeeklySummary();
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
@@ -430,40 +392,9 @@ export default function EmployeeTimeTracking() {
           <div className="text-center">
             <p className="text-white/70 text-sm mb-1">Total del mes</p>
             <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
-            <p className="text-white/60 text-xs mt-1">{strictMonthSessions.length} fichajes</p>
           </div>
         </div>
       </div>
-
-      {/* Weekly Summary - Only show if there are weeks with data */}  
-      {weeklySummary.length > 0 && (
-        <div 
-          className="px-6 mb-6"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-            <h3 className="text-white/80 text-sm font-medium mb-3 flex items-center">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Resumen semanal
-            </h3>
-            <div className="space-y-2">
-              {weeklySummary.map((week, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
-                  <span className="text-white/70">
-                    Semana {week.weekNumber}
-                  </span>
-                  <div className="text-right">
-                    <span className="text-white font-medium">{formatTotalHours(week.hours)}</span>
-                    <span className="text-white/50 text-xs ml-2">({week.sessions})</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Table Container - Dynamic height with touch events */}
       <div 
