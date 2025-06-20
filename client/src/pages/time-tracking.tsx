@@ -23,6 +23,8 @@ import { format, startOfWeek, addDays, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function TimeTracking() {
   const { user } = useAuth();
@@ -197,6 +199,164 @@ export default function TimeTracking() {
       averageHoursPerEmployee: uniqueEmployees > 0 ? totalHours / uniqueEmployees : 0
     };
   }, [filteredSessions, employeesList.length, calculateHours]);
+
+  // PDF Export function
+  const handleExportPDF = useCallback(() => {
+    const doc = new jsPDF();
+    
+    // Company header
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INFORME DE FICHAJES', 105, 25, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Test Company', 105, 35, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text('CIF: B12345678', 105, 42, { align: 'center' });
+    doc.text('Dirección: Calle Principal, 123, Madrid', 105, 47, { align: 'center' });
+    doc.text('Teléfono: +34 912 345 678', 105, 52, { align: 'center' });
+    
+    const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
+    doc.text(`Fecha del informe: ${reportDate}`, 20, 65);
+    
+    // Filter information
+    let filterText = 'Filtros aplicados: ';
+    if (selectedEmployee !== 'all') {
+      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
+      filterText += `Empleado: ${employee?.fullName || 'Desconocido'}`;
+      if (employee?.dni) filterText += ` (DNI: ${employee.dni})`;
+    } else {
+      filterText += 'Todos los empleados';
+    }
+    
+    if (dateFilter === 'day') {
+      filterText += `, Día: ${format(currentDate, 'dd/MM/yyyy', { locale: es })}`;
+    } else if (dateFilter === 'month') {
+      filterText += `, Mes: ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
+    } else if (dateFilter === 'custom' && (startDate || endDate)) {
+      if (startDate && endDate) {
+        filterText += `, Rango: ${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+      } else if (startDate) {
+        filterText += `, Desde: ${format(new Date(startDate), 'dd/MM/yyyy')}`;
+      } else if (endDate) {
+        filterText += `, Hasta: ${format(new Date(endDate), 'dd/MM/yyyy')}`;
+      }
+    }
+    
+    doc.setFontSize(9);
+    doc.text(filterText, 20, 72);
+    
+    // Prepare table data
+    const sortedSessions = [...filteredSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+    const tableData: any[] = [];
+    const showSummaries = selectedEmployee !== 'all';
+    
+    if (showSummaries && sortedSessions.length > 0) {
+      let currentWeekStart: Date | null = null;
+      let currentMonth: string | null = null;
+      let weekHours = 0;
+      let monthHours = 0;
+      
+      sortedSessions.forEach((session: any, index: number) => {
+        const sessionDate = new Date(session.clockIn);
+        const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+        const monthKey = format(sessionDate, 'yyyy-MM');
+        const hours = calculateHours(session.clockIn, session.clockOut);
+        
+        const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
+        const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+        
+        if (isNewWeek && index > 0 && currentWeekStart) {
+          tableData.push(['', '', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`, '']);
+          weekHours = 0;
+        }
+        
+        if (isNewMonth && index > 0 && currentMonth) {
+          const [year, month] = currentMonth.split('-');
+          const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+          tableData.push(['', '', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, '']);
+          monthHours = 0;
+        }
+        
+        if (isNewWeek) currentWeekStart = weekStart;
+        if (isNewMonth) currentMonth = monthKey;
+        
+        tableData.push([
+          session.userName || 'Usuario Desconocido',
+          format(sessionDate, 'dd/MM/yyyy'),
+          format(sessionDate, 'HH:mm'),
+          session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-',
+          hours > 0 ? `${hours.toFixed(1)}h` : '-',
+          session.clockOut ? 'Completado' : 'Activo'
+        ]);
+        
+        weekHours += hours;
+        monthHours += hours;
+        
+        if (index === sortedSessions.length - 1) {
+          if (weekHours > 0) {
+            tableData.push(['', '', '', '', `TOTAL SEMANA: ${weekHours.toFixed(1)}h`, '']);
+          }
+          if (monthHours > 0 && currentMonth) {
+            const [year, month] = currentMonth.split('-');
+            const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+            tableData.push(['', '', '', '', `TOTAL ${monthName.toUpperCase()}: ${monthHours.toFixed(1)}h`, '']);
+          }
+        }
+      });
+    } else {
+      sortedSessions.forEach((session: any) => {
+        const sessionDate = new Date(session.clockIn);
+        const hours = calculateHours(session.clockIn, session.clockOut);
+        
+        tableData.push([
+          session.userName || 'Usuario Desconocido',
+          format(sessionDate, 'dd/MM/yyyy'),
+          format(sessionDate, 'HH:mm'),
+          session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-',
+          hours > 0 ? `${hours.toFixed(1)}h` : '-',
+          session.clockOut ? 'Completado' : 'Activo'
+        ]);
+      });
+    }
+    
+    // Generate table
+    autoTable(doc, {
+      head: [['Empleado', 'Fecha', 'Entrada', 'Salida', 'Horas', 'Estado']],
+      body: tableData,
+      startY: 80,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [0, 122, 255], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      didParseCell: function(data) {
+        if (data.cell.text[0] && (data.cell.text[0].includes('TOTAL SEMANA:') || data.cell.text[0].includes('TOTAL '))) {
+          data.cell.styles.fillColor = data.cell.text[0].includes('TOTAL SEMANA:') ? [200, 200, 200] : [173, 216, 230];
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.halign = 'center';
+        }
+      }
+    });
+    
+    // Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.text('Este documento ha sido generado automáticamente por el sistema Oficaz', 105, pageHeight - 20, { align: 'center' });
+    doc.text(`Página 1 de 1 - Generado el ${reportDate}`, 105, pageHeight - 15, { align: 'center' });
+    
+    // Save the PDF
+    const fileName = selectedEmployee !== 'all' 
+      ? `fichajes_${employeesList.find(emp => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
+      : `fichajes_todos_empleados_${format(new Date(), 'yyyyMMdd')}.pdf`;
+    
+    doc.save(fileName);
+    
+    toast({
+      title: 'PDF Generado',
+      description: 'El informe de fichajes se ha descargado correctamente.',
+    });
+  }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
@@ -493,7 +653,7 @@ export default function TimeTracking() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Fichajes ({filteredSessions.length})</span>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
             </Button>
@@ -699,7 +859,7 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    if (currentMonth) {
+                    if (currentMonth && typeof currentMonth === 'string') {
                       const monthTotal = calculateMonthTotal(currentMonth);
                       const [year, month] = currentMonth.split('-');
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
