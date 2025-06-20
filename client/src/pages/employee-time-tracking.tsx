@@ -310,8 +310,13 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Table Container - Dynamic height */}
-      <div className="px-4 mb-6">
+      {/* Table Container - Dynamic height with touch events */}
+      <div 
+        className="px-4 mb-6"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
           {/* Table Header */}
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
@@ -321,7 +326,7 @@ export default function EmployeeTimeTracking() {
             <div className="text-sm font-semibold text-center">Total</div>
           </div>
 
-          {/* Table Body - No internal scroll */}
+          {/* Table Body - No internal scroll with touch events */}
           <div 
             className="w-full" 
             style={{ 
