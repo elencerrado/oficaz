@@ -85,7 +85,7 @@ export default function Login() {
     } catch (error: any) {
       console.error('Login failed:', error);
       // Show user-friendly message regardless of technical error
-      setLoginError('DNI/Email o contraseña incorrectos. Por favor, verifica e inténtalo de nuevo.');
+      setLoginError('Mmm... ese usuario o contraseña no nos suena.');
     } finally {
       setSubmitting(false);
     }
