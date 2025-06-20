@@ -34,10 +34,11 @@ export default function EmployeesSimple() {
 
   const employeeList = employees as any[];
   const filteredEmployees = employeeList.filter((employee: any) =>
-    employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+    employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    employee.role !== 'admin' // Exclude admin from the list
   );
 
-  const totalUsers = employeeList.length;
+  const totalUsers = employeeList.filter((employee: any) => employee.role !== 'admin').length;
 
   return (
     <div className="container mx-auto p-4 lg:p-6 space-y-6">
@@ -148,22 +149,24 @@ export default function EmployeesSimple() {
                       const match = transform.match(/translateX\((.+?)px\)/);
                       const currentX = match ? parseFloat(match[1]) : 0;
                       
+                      // Always reset first to avoid getting stuck
+                      e.currentTarget.style.transition = 'transform 0.2s ease-out';
+                      e.currentTarget.style.transform = 'translateX(0px)';
+                      
                       if (Math.abs(currentX) > 50) { // Lower threshold
                         if (currentX > 0 && (employee.companyPhone || employee.personalPhone)) {
-                          // Swipe RIGHT = Call action (corrected direction)
+                          // Swipe RIGHT = Call action
                           const phone = employee.companyPhone || employee.personalPhone;
-                          window.location.href = `tel:${phone}`;
-                          return;
+                          setTimeout(() => {
+                            window.location.href = `tel:${phone}`;
+                          }, 100); // Small delay to allow reset animation
                         } else if (currentX < 0) {
-                          // Swipe LEFT = Message action (corrected direction)
-                          navigate(`/test/messages?to=${employee.id}`);
-                          return;
+                          // Swipe LEFT = Message action
+                          setTimeout(() => {
+                            navigate(`/test/messages?chat=${employee.id}`);
+                          }, 100); // Small delay to allow reset animation
                         }
                       }
-                      
-                      // Reset
-                      e.currentTarget.style.transition = 'transform 0.3s ease-out';
-                      e.currentTarget.style.transform = 'translateX(0px)';
                     }}
                   >
                     <div className="flex items-center space-x-3">
