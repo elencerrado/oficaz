@@ -41,9 +41,9 @@ const quickUsers: QuickUser[] = [
     color: "bg-gradient-to-r from-blue-500 to-cyan-500"
   },
   {
-    id: "juan-perez",
-    name: "Juan Pérez",
-    email: "juan.perez@test.com",
+    id: "marta-perez",
+    name: "Marta Pérez García",
+    email: "marta.perez@test.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -53,7 +53,7 @@ const quickUsers: QuickUser[] = [
   },
   {
     id: "juan-ramirez",
-    name: "Juan José Ramírez",
+    name: "Juan José Ramírez Martín",
     email: "j.ramirez@test.es",
     password: "123456",
     role: "Empleado",
@@ -131,9 +131,11 @@ export default function QuickAccess() {
           }));
           
           // Force a page reload to reinitialize auth state
-          window.location.href = user.role === "Empleado" 
-            ? `/${user.companyAlias}` 
-            : `/${user.companyAlias}/inicio`;
+          if (user.role === "Empleado") {
+            window.location.href = `/${user.companyAlias}`;
+          } else {
+            window.location.href = `/${user.companyAlias}/inicio`;
+          }
         } else {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Login failed');

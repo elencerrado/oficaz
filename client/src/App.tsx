@@ -136,6 +136,19 @@ function Router() {
         </PublicRoute>
       </Route>
 
+      {/* Employee dashboard route */}
+      <Route path="/:companyAlias">
+        {(params) => (
+          <ProtectedRoute>
+            {user && user.role === 'employee' ? (
+              <EmployeeDashboard />
+            ) : (
+              <Redirect to={`/${params.companyAlias}/inicio`} />
+            )}
+          </ProtectedRoute>
+        )}
+      </Route>
+
       {/* Company-specific protected routes */}
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
