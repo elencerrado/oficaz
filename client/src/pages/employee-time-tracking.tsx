@@ -280,7 +280,7 @@ export default function EmployeeTimeTracking() {
 
   // Show loading state
   if (isLoading) {
-    return <PageLoading message="Cargando fichajes..." />;
+    return <PageLoading />;
   }
 
   return (

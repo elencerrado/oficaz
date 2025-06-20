@@ -263,7 +263,7 @@ export default function Documents() {
   };
 
   if (isLoading) {
-    return <PageLoading message="Cargando documentos..." />;
+    return <PageLoading />;
   }
 
   return (

@@ -261,7 +261,7 @@ export default function VacationRequests() {
 
   // Show loading state
   if (isLoading) {
-    return <PageLoading message="Cargando vacaciones..." />;
+    return <PageLoading />;
   }
 
   return (

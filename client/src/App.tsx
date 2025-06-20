@@ -42,7 +42,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <PageLoading message="Iniciando sesión..." />;
+    return <PageLoading />;
   }
 
   if (!user) {
@@ -81,7 +81,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, company, isLoading } = useAuth();
 
   if (isLoading) {
-    return <PageLoading message="Verificando acceso..." />;
+    return <PageLoading />;
   }
 
   if (user && company) {

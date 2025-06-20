@@ -213,7 +213,7 @@ export default function Messages() {
 
   // Show loading indicator if needed
   if (isLoading) {
-    return <PageLoading message="Cargando mensajes..." />;
+    return <PageLoading />;
   }
 
   return (
