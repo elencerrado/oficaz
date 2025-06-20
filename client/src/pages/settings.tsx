@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
 import { useLocation, Link } from 'wouter';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -23,6 +25,11 @@ export default function Settings() {
     postalAddress: user?.postalAddress || 'Avenida Andalucía 1 1º Izquierda\n00000 Sevilla',
     emergencyContactName: user?.emergencyContactName || 'María García García',
     emergencyContactPhone: user?.emergencyContactPhone || '+34 666 66 66 66'
+  });
+
+  // Company settings (only for admin/manager)
+  const [companySettings, setCompanySettings] = useState({
+    employeeTimeEditPermission: 'yes' // yes, no, validation
   });
 
   const updateProfileMutation = useMutation({
@@ -249,6 +256,38 @@ export default function Settings() {
             )}
           </div>
         </div>
+
+        {/* Company Settings - Only for admin/manager */}
+        {user?.role === 'admin' || user?.role === 'manager' ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-white mb-4">Configuración de Empresa</h3>
+            <div className="space-y-4">
+              <div>
+                <Label className="block text-white text-sm font-medium mb-2">
+                  Los trabajadores pueden editar sus horas
+                </Label>
+                <Select 
+                  value={companySettings.employeeTimeEditPermission} 
+                  onValueChange={(value) => setCompanySettings({ ...companySettings, employeeTimeEditPermission: value })}
+                >
+                  <SelectTrigger className="bg-white/20 border-white/30 text-white rounded-xl h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Sí</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                    <SelectItem value="validation">Con validación</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-white/60 text-xs mt-1">
+                  {companySettings.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar libremente sus horarios'}
+                  {companySettings.employeeTimeEditPermission === 'no' && 'Solo admin/manager pueden editar horarios'}
+                  {companySettings.employeeTimeEditPermission === 'validation' && 'Los empleados pueden solicitar cambios que requieren aprobación'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Edit/Save Button */}
         <div className="mt-8 mb-8">

@@ -38,7 +38,6 @@ export default function EmployeeTimeTracking() {
     clockIn: '',
     clockOut: ''
   });
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   const minSwipeDistance = 50;
 
@@ -130,19 +129,22 @@ export default function EmployeeTimeTracking() {
     }
   };
 
-  // Long press handlers for editing
-  const handleLongPressStart = (session: WorkSession, event: React.TouchEvent | React.MouseEvent) => {
-    event.preventDefault();
-    const timer = setTimeout(() => {
-      startEditing(session);
-    }, 800); // 800ms long press
-    setPressTimer(timer);
+  // Double click/tap handlers for editing
+  const [lastTap, setLastTap] = useState<number>(0);
+
+  const handleDoubleClick = (session: WorkSession) => {
+    startEditing(session);
   };
 
-  const handleLongPressEnd = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
+  const handleTouchEnd = (session: WorkSession) => {
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTap;
+    
+    if (tapLength < 500 && tapLength > 0) {
+      // Double tap detected
+      startEditing(session);
+    } else {
+      setLastTap(currentTime);
     }
   };
 
@@ -466,16 +468,16 @@ export default function EmployeeTimeTracking() {
                         return editingSession === session.id ? (
                           // Editing mode
                           <div className="bg-blue-500/20 border border-blue-400 rounded-lg py-3 px-4 mx-2 my-1">
-                            <div className="grid grid-cols-4 gap-2 items-center">
-                              <div className="text-sm text-center text-white/90 whitespace-nowrap">
-                                {formatDate(session.clockIn)}
+                            <div className="grid grid-cols-5 gap-2 items-center">
+                              <div className="text-xs text-center text-white/90 overflow-hidden">
+                                <div className="truncate">{formatDate(session.clockIn)}</div>
                               </div>
                               <div className="flex items-center justify-center">
                                 <Input
                                   type="time"
                                   value={editForm.clockIn}
                                   onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
-                                  className="h-8 text-center bg-white/10 border-white/20 text-white text-xs"
+                                  className="h-8 w-16 text-center bg-white/10 border-white/20 text-white text-xs"
                                 />
                               </div>
                               <div className="flex items-center justify-center">
@@ -483,8 +485,16 @@ export default function EmployeeTimeTracking() {
                                   type="time"
                                   value={editForm.clockOut}
                                   onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
-                                  className="h-8 text-center bg-white/10 border-white/20 text-white text-xs"
+                                  className="h-8 w-16 text-center bg-white/10 border-white/20 text-white text-xs"
                                 />
+                              </div>
+                              <div className="text-xs text-center text-white/70">
+                                {editForm.clockIn && editForm.clockOut ? 
+                                  formatTotalHours(
+                                    (new Date(`2000-01-01T${editForm.clockOut}:00`).getTime() - 
+                                     new Date(`2000-01-01T${editForm.clockIn}:00`).getTime()) / (1000 * 60 * 60)
+                                  ) : '-'
+                                }
                               </div>
                               <div className="flex gap-1 justify-center">
                                 <Button
@@ -506,14 +516,11 @@ export default function EmployeeTimeTracking() {
                             </div>
                           </div>
                         ) : (
-                          // Normal mode with long press
+                          // Normal mode with double click/tap
                           <div 
-                            className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity} relative select-none`}
-                            onTouchStart={(e) => handleLongPressStart(session, e)}
-                            onTouchEnd={handleLongPressEnd}
-                            onMouseDown={(e) => handleLongPressStart(session, e)}
-                            onMouseUp={handleLongPressEnd}
-                            onMouseLeave={handleLongPressEnd}
+                            className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity} relative select-none cursor-pointer`}
+                            onDoubleClick={() => handleDoubleClick(session)}
+                            onTouchEnd={() => handleTouchEnd(session)}
                           >
                             <div className={`text-sm text-center ${opacity} whitespace-nowrap ${!isCurrentMonth ? 'italic' : ''}`}>
                               {formatDate(session.clockIn)}
@@ -527,9 +534,9 @@ export default function EmployeeTimeTracking() {
                             <div className={`text-sm text-center font-mono font-semibold ${opacity}`}>
                               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
                             </div>
-                            {/* Edit indicator */}
-                            <div className="absolute top-1 right-1 opacity-30">
-                              <Edit3 className="h-3 w-3 text-white" />
+                            {/* Edit indicator - centered */}
+                            <div className="absolute inset-0 flex items-center justify-end pr-2 pointer-events-none">
+                              <Edit3 className="h-3 w-3 text-white/20" />
                             </div>
                           </div>
                         );
