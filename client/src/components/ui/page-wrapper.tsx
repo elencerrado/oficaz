@@ -1,18 +1,18 @@
-import { usePageLoading } from "@/hooks/use-page-loading";
-import { PageLoading } from "@/components/ui/page-loading";
+import { ReactNode } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { PageLoading } from './page-loading';
 
 interface PageWrapperProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  loadingMessage?: string;
 }
 
-export function PageWrapper({ children }: PageWrapperProps) {
-  const { isLoading, loadingMessage } = usePageLoading();
+export function PageWrapper({ children, loadingMessage = "Cargando..." }: PageWrapperProps) {
+  const { user, company, isLoading } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || !user || !company) {
     return <PageLoading message={loadingMessage} />;
   }
 
   return <>{children}</>;
 }
-
-export default PageWrapper;

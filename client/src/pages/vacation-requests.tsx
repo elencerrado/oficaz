@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageLoading } from '@/components/ui/page-loading';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
@@ -33,7 +34,13 @@ export default function VacationRequests() {
 
   const { data: requests = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],
+    enabled: !!user,
+    staleTime: 30000,
   });
+
+  if (isLoading) {
+    return <PageLoading message="Cargando vacaciones..." />;
+  }
 
   const createRequestMutation = useMutation({
     mutationFn: (data: { startDate: string; endDate: string; reason?: string }) =>

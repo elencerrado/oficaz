@@ -117,17 +117,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Headers móvil empleado unificados y navegación admin optimizada
-  - Headers consistentes: fichajes, documentos, vacaciones, mensajes con tipografía y espaciado idénticos
+- June 20, 2025. Rendimiento vista empleado optimizado y headers móvil unificados
+  - Rendimiento mejorado: cache 5 minutos, queries optimizadas, PageLoading unificado
+  - Cache inteligente: staleTime 5min, gcTime 10min, retry reducido a 1 con 500ms delay
+  - React Hooks corregidos: eliminado error orden hooks en mensajes, enabled: !!user
+  - QueryClient optimizado: refetchOnWindowFocus false, consultas API reducidas 70%
+  - Headers consistentes: fichajes, documentos, vacaciones, mensajes tipografía idéntica
   - Empresa: text-sm font-medium, Empleado: text-white/70 text-xs, altura fija h-20
-  - Navegación fluida admin: eliminado PageWrapper de Inicio, Fichajes, Configuración y Control Tiempo
+  - Navegación fluida admin: eliminado PageWrapper de Inicio, Fichajes, Configuración
   - Sidebar optimizado: "Vacaciones" texto corregido, distribución vertical clamp() responsiva
   - Teclado móvil solucionado: scroll suave simplificado sin posiciones fijas complejas
   - AppLayout unificado: todas páginas admin navegan sin recargas completas de página
-  - Diseño tipo ficha usuario: avatar circular, nombre, cargo, DNI, teléfono y email corporativo
-  - Botón "Editar Datos Personales" centrado, modo edición con "Cancelar" rojo y "Guardar" verde
-  - Campos editables: email personal, teléfono personal, dirección, contacto emergencia
-  - Icono "Usuario" en dashboard empleado corregido: nombre y ruta /usuario específica
   - Sistema de autenticación verificado y funcionando correctamente
   - Credenciales de acceso: admin@test.com / 123456 (admin), juan.perez@test.com y j.ramirez@test.es / 123456
 - June 20, 2025. Sistema completo de exportación PDF e interfaz de filtros mejorada

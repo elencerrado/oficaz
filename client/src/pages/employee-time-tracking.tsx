@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PageLoading } from '@/components/ui/page-loading';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3, Edit3, Save, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -67,7 +68,13 @@ export default function EmployeeTimeTracking() {
   // Get work sessions for current user
   const { data: workSessions = [], isLoading } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
+    enabled: !!user,
+    staleTime: 30000, // Cache for 30 seconds to reduce API calls
   });
+
+  if (isLoading) {
+    return <PageLoading message="Cargando fichajes..." />;
+  }
 
   // Filter sessions for current month + complete weeks that span across months
   const monthStart = startOfMonth(currentDate);

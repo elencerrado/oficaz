@@ -18,6 +18,7 @@ import {
   Users,
   X
 } from 'lucide-react';
+import { PageLoading } from '@/components/ui/page-loading';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -76,18 +77,24 @@ export default function Messages() {
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
+    enabled: !!user,
+    staleTime: 30000,
     refetchInterval: 10000, // Refetch every 10 seconds for real-time feel
   });
 
   const { data: managers } = useQuery({
     queryKey: ['/api/managers'],
     enabled: user?.role === 'employee',
+    staleTime: 60000,
   });
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
     enabled: user?.role === 'admin' || user?.role === 'manager',
+    staleTime: 60000,
   });
+
+
 
   const sendMessageMutation = useMutation({
     mutationFn: (data: { receiverId: number; subject: string; content: string }) => 
@@ -204,12 +211,9 @@ export default function Messages() {
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   };
 
+  // Show loading indicator if needed
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-employee-gradient flex items-center justify-center">
-        <div className="text-white">Cargando mensajes...</div>
-      </div>
-    );
+    return <PageLoading message="Cargando mensajes..." />;
   }
 
   return (
