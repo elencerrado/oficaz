@@ -124,6 +124,10 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Filtro integrado de estados con "Activos" seleccionado por defecto
   - Búsqueda y filtros integrados en una sola barra dentro de la lista de empleados
   - Contador dinámico que muestra empleados filtrados del total disponible
+  - Modal de edición completo restaurado con controles de ajuste manual de vacaciones (+/-)
+  - Campos corporativos editables: email, teléfono, cargo, fecha incorporación, estado
+  - Funcionalidad de guardado con validación y mensajes de confirmación
+  - Filtro de estado corregido para mapear correctamente valores español-inglés
   - Corregidas todas las vacaciones según normativa española: Juan Pérez 0 días (recién incorporado), Juan Ramírez 24 días (9.6 meses trabajados), Admin 30 días (año completo)
   - Página de configuración completamente rediseñada: pestañas Empresa/Políticas/Mi Perfil con interfaz clara y campos bien visibles
   - Cambiado "Usuario" por "Configuración" en navegación para admin

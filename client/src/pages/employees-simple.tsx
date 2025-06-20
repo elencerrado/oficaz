@@ -21,9 +21,12 @@ import {
   UserPlus,
   IdCard,
   Mail,
-  User
+  User,
+  Minus
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EmployeesSimple() {
   const { user } = useAuth();
@@ -33,6 +36,51 @@ export default function EmployeesSimple() {
   const [statusFilter, setStatusFilter] = useState('activo'); // Default to active
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editEmployee, setEditEmployee] = useState({
+    companyEmail: '',
+    companyPhone: '',
+    position: '',
+    startDate: '',
+    status: 'active',
+    vacationDaysAdjustment: 0,
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation for updating employee
+  const updateEmployeeMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('PATCH', `/api/employees/${selectedEmployee?.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      toast({
+        title: 'Empleado Actualizado',
+        description: 'Los cambios se han guardado exitosamente.',
+      });
+      setShowEditModal(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo actualizar el empleado.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Function to save employee changes
+  const handleSaveEmployee = () => {
+    if (!selectedEmployee) return;
+    
+    updateEmployeeMutation.mutate({
+      companyEmail: editEmployee.companyEmail,
+      companyPhone: editEmployee.companyPhone,
+      position: editEmployee.position,
+      startDate: editEmployee.startDate,
+      status: editEmployee.status,
+      vacationDaysAdjustment: editEmployee.vacationDaysAdjustment,
+    });
+  };
 
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
@@ -57,6 +105,28 @@ export default function EmployeesSimple() {
   });
 
   const totalUsers = employeeList.filter((employee: any) => employee.role !== 'admin').length;
+
+  // Function to adjust vacation days
+  const adjustVacationDays = (amount: number) => {
+    setEditEmployee(prev => ({
+      ...prev,
+      vacationDaysAdjustment: (prev.vacationDaysAdjustment || 0) + amount
+    }));
+  };
+
+  // Function to handle opening edit modal
+  const handleEditEmployee = (employee: any) => {
+    setSelectedEmployee(employee);
+    setEditEmployee({
+      companyEmail: employee.companyEmail || '',
+      companyPhone: employee.companyPhone || '',
+      position: employee.position || employee.role,
+      startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
+      status: employee.status || 'active',
+      vacationDaysAdjustment: employee.vacationDaysAdjustment || 0,
+    });
+    setShowEditModal(true);
+  };
 
   // Helper function to translate status
   const translateStatus = (status: string) => {
@@ -228,8 +298,7 @@ export default function EmployeesSimple() {
                         
                         if (now - lastTap < 300) {
                           // Double tap detected
-                          setSelectedEmployee(employee);
-                          setShowEditModal(true);
+                          handleEditEmployee(employee);
                           e.currentTarget.setAttribute('data-last-tap', '0');
                         } else {
                           // First tap
@@ -265,10 +334,7 @@ export default function EmployeesSimple() {
                 {/* Desktop View */}
                 <div 
                   className="hidden sm:block bg-white border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
-                  onDoubleClick={() => {
-                    setSelectedEmployee(employee);
-                    setShowEditModal(true);
-                  }}
+                  onDoubleClick={() => handleEditEmployee(employee)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -382,9 +448,10 @@ export default function EmployeesSimple() {
                         <Input
                           id="companyEmail"
                           type="email"
-                          value={selectedEmployee.companyEmail || ''}
-                          readOnly
-                          className="mt-1 bg-gray-50"
+                          value={editEmployee.companyEmail}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, companyEmail: e.target.value })}
+                          placeholder="empleado@empresa.com"
+                          className="mt-1"
                         />
                       </div>
                       
@@ -392,9 +459,10 @@ export default function EmployeesSimple() {
                         <Label htmlFor="companyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
                         <Input
                           id="companyPhone"
-                          value={selectedEmployee.companyPhone || ''}
-                          readOnly
-                          className="mt-1 bg-gray-50"
+                          value={editEmployee.companyPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, companyPhone: e.target.value })}
+                          placeholder="666 666 666"
+                          className="mt-1"
                         />
                       </div>
                       
@@ -402,9 +470,10 @@ export default function EmployeesSimple() {
                         <Label htmlFor="position" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
                         <Input
                           id="position"
-                          value={selectedEmployee.position || selectedEmployee.role}
-                          readOnly
-                          className="mt-1 bg-gray-50"
+                          value={editEmployee.position}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, position: e.target.value })}
+                          placeholder="Administrativo, Técnico, etc."
+                          className="mt-1"
                         />
                       </div>
                       
@@ -413,9 +482,9 @@ export default function EmployeesSimple() {
                         <Input
                           id="startDate"
                           type="date"
-                          value={selectedEmployee.startDate ? new Date(selectedEmployee.startDate).toISOString().split('T')[0] : ''}
-                          readOnly
-                          className="mt-1 bg-gray-50"
+                          value={editEmployee.startDate}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, startDate: e.target.value })}
+                          className="mt-1"
                         />
                       </div>
                       
@@ -423,12 +492,13 @@ export default function EmployeesSimple() {
                         <Label htmlFor="status" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
                         <select 
                           className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          defaultValue={selectedEmployee.status || 'activo'}
+                          value={editEmployee.status}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, status: e.target.value })}
                         >
-                          <option value="activo">Activo</option>
-                          <option value="inactivo">Inactivo</option>
-                          <option value="de baja">De baja</option>
-                          <option value="de vacaciones">De vacaciones</option>
+                          <option value="active">Activo</option>
+                          <option value="inactive">Inactivo</option>
+                          <option value="on_leave">De baja</option>
+                          <option value="on_vacation">De vacaciones</option>
                         </select>
                       </div>
                     </div>
@@ -465,32 +535,83 @@ export default function EmployeesSimple() {
                     </div>
                   </div>
 
-                  {/* Vacation Summary */}
+                  {/* Vacation Management */}
                   <div className="bg-white border border-gray-200 rounded-xl p-4">
                     <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-3 w-3 text-purple-600" />
+                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-3 w-3 text-green-600" />
                       </div>
-                      Resumen de Vacaciones
+                      Gestión de Vacaciones
                     </h4>
                     
-                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-100">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-blue-600">
-                            {Math.round(Number(selectedEmployee.totalVacationDays || 0))}
-                          </p>
-                          <p className="text-xs text-gray-600">Total</p>
+                    <div className="space-y-3">
+                      {/* Current Vacation Status */}
+                      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-100">
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div>
+                            <p className="text-lg font-bold text-blue-600">
+                              {Math.round(Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0))}
+                            </p>
+                            <p className="text-xs text-gray-600">Total</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-orange-600">{Math.round(Number(selectedEmployee.usedVacationDays || 0))}</p>
+                            <p className="text-xs text-gray-600">Usados</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-green-600">
+                              {Math.max(0, Math.round((Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0)) - Number(selectedEmployee.usedVacationDays || 0)))}
+                            </p>
+                            <p className="text-xs text-gray-600">Disponibles</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-orange-600">{Math.round(Number(selectedEmployee.usedVacationDays || 0))}</p>
-                          <p className="text-xs text-gray-600">Usados</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-green-600">
-                            {Math.max(0, Math.round(Number(selectedEmployee.totalVacationDays || 0) - Number(selectedEmployee.usedVacationDays || 0)))}
+                      </div>
+                      
+                      {/* Vacation Adjustment Controls */}
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Ajuste Manual
+                        </Label>
+                        <div className="bg-gray-50 p-3 rounded-lg">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustVacationDays(-1)}
+                              className="w-8 h-8 p-0 rounded-full"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            
+                            <Input
+                              type="number"
+                              value={Number(editEmployee.vacationDaysAdjustment || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                if (!isNaN(value)) {
+                                  setEditEmployee({ ...editEmployee, vacationDaysAdjustment: value });
+                                }
+                              }}
+                              className="w-16 text-center font-bold"
+                              step="1"
+                              min="-50"
+                              max="50"
+                            />
+                            
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => adjustVacationDays(1)}
+                              className="w-8 h-8 p-0 rounded-full"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-gray-500 text-center mt-1">
+                            Días extra (+ o -)
                           </p>
-                          <p className="text-xs text-gray-600">Disponibles</p>
                         </div>
                       </div>
                     </div>
@@ -500,11 +621,11 @@ export default function EmployeesSimple() {
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
-                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={updateEmployeeMutation.isPending}>
                   Cancelar
                 </Button>
-                <Button>
-                  Guardar Cambios
+                <Button onClick={handleSaveEmployee} disabled={updateEmployeeMutation.isPending}>
+                  {updateEmployeeMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
               </div>
             </div>
