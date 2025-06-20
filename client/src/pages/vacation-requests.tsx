@@ -27,7 +27,8 @@ export default function VacationRequests() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
-  const companyAlias = location.split('/')[1] || 'test';
+  const urlParts = location.split('/').filter(part => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
   const { data: requests = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],

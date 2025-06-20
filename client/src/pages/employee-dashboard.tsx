@@ -143,21 +143,22 @@ export default function EmployeeDashboard() {
     }
   };
 
-  // Get company alias from current URL
+  // Get company alias from current URL or company data
   const [location] = useLocation();
-  const companyAlias = location.split('/')[1] || 'test';
+  const urlParts = location.split('/').filter(part => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
   const menuItems = [
     { 
       icon: Clock, 
       title: 'Fichajes', 
-      route: `/${companyAlias}/usuario`,
+      route: `/${companyAlias}/horas`,
       notification: false 
     },
     { 
       icon: User, 
       title: 'Usuario', 
-      route: `/${companyAlias}/settings`,
+      route: `/${companyAlias}/usuario`,
       notification: false 
     },
     { 

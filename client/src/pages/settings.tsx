@@ -13,7 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function Settings() {
   const { user, company } = useAuth();
   const [location] = useLocation();
-  const companyAlias = location.split('/')[1] || 'test';
+  const urlParts = location.split('/').filter(part => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
