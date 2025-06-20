@@ -18,8 +18,12 @@ import {
   Clock,
   Calendar,
   Plus,
-  UserPlus
+  UserPlus,
+  IdCard,
+  Mail,
+  User
 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 export default function EmployeesSimple() {
   const { user } = useAuth();
@@ -38,7 +42,16 @@ export default function EmployeesSimple() {
   const employeeList = employees as any[];
   const filteredEmployees = employeeList.filter((employee: any) => {
     const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'todos' || (employee.status || 'activo') === statusFilter;
+    
+    // Convert filter selection to actual database values
+    let statusToMatch = statusFilter;
+    if (statusFilter === 'activos') statusToMatch = 'active';
+    else if (statusFilter === 'inactivos') statusToMatch = 'inactive';
+    else if (statusFilter === 'de baja') statusToMatch = 'on_leave';
+    else if (statusFilter === 'de vacaciones') statusToMatch = 'on_vacation';
+    
+    const employeeStatus = employee.status || 'active'; // Default to 'active' if no status
+    const matchesStatus = statusFilter === 'todos' || employeeStatus === statusToMatch;
     const notAdmin = employee.role !== 'admin';
     return matchesSearch && matchesStatus && notAdmin;
   });
@@ -123,8 +136,8 @@ export default function EmployeesSimple() {
               className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="todos">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
+              <option value="activos">Activos</option>
+              <option value="inactivos">Inactivos</option>
               <option value="de baja">De baja</option>
               <option value="de vacaciones">De vacaciones</option>
             </select>
@@ -209,24 +222,18 @@ export default function EmployeesSimple() {
                           }, 100);
                         }
                       } else if (!isSwiping) {
-                        // Handle double tap for edit
-                        const currentTapCount = parseInt(e.currentTarget.getAttribute('data-tap-count') || '0');
-                        const newTapCount = currentTapCount + 1;
-                        e.currentTarget.setAttribute('data-tap-count', newTapCount.toString());
+                        // Handle double tap for edit - simplified approach
+                        const now = Date.now();
+                        const lastTap = parseInt(e.currentTarget.getAttribute('data-last-tap') || '0');
                         
-                        if (newTapCount === 1) {
-                          setTimeout(() => {
-                            const finalTapCount = parseInt(e.currentTarget.getAttribute('data-tap-count') || '0');
-                            if (finalTapCount === 1) {
-                              // Single tap - no action
-                            }
-                            e.currentTarget.setAttribute('data-tap-count', '0');
-                          }, 300);
-                        } else if (newTapCount === 2) {
-                          // Double tap - open edit modal
+                        if (now - lastTap < 300) {
+                          // Double tap detected
                           setSelectedEmployee(employee);
                           setShowEditModal(true);
-                          e.currentTarget.setAttribute('data-tap-count', '0');
+                          e.currentTarget.setAttribute('data-last-tap', '0');
+                        } else {
+                          // First tap
+                          e.currentTarget.setAttribute('data-last-tap', now.toString());
                         }
                       }
                       
@@ -319,37 +326,184 @@ export default function EmployeesSimple() {
 
       {/* Edit Employee Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Empleado</DialogTitle>
+        <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-hidden">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Editar Empleado
+            </DialogTitle>
           </DialogHeader>
+          
           {selectedEmployee && (
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Nombre completo</label>
-                <Input value={selectedEmployee.fullName} readOnly className="mt-1" />
+            <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
+              {/* Employee Header */}
+              <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12 border-2 border-white shadow">
+                    <AvatarFallback className="bg-oficaz-primary text-white font-semibold">
+                      {selectedEmployee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                      <div className="flex items-center gap-1">
+                        <IdCard className="h-3 w-3" />
+                        <span>{selectedEmployee.dni}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate">{selectedEmployee.companyEmail}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Badge className={`${getStatusColor(selectedEmployee.status)} capitalize border-0`}>
+                      {translateStatus(selectedEmployee.status)}
+                    </Badge>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input value={selectedEmployee.companyEmail || selectedEmployee.personalEmail} readOnly className="mt-1" />
+
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Left Column - Corporate Fields */}
+                <div className="space-y-4">
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Shield className="h-3 w-3 text-blue-600" />
+                      </div>
+                      Información Corporativa
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700">Email Corporativo</Label>
+                        <Input
+                          id="companyEmail"
+                          type="email"
+                          value={selectedEmployee.companyEmail || ''}
+                          readOnly
+                          className="mt-1 bg-gray-50"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="companyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
+                        <Input
+                          id="companyPhone"
+                          value={selectedEmployee.companyPhone || ''}
+                          readOnly
+                          className="mt-1 bg-gray-50"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="position" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
+                        <Input
+                          id="position"
+                          value={selectedEmployee.position || selectedEmployee.role}
+                          readOnly
+                          className="mt-1 bg-gray-50"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={selectedEmployee.startDate ? new Date(selectedEmployee.startDate).toISOString().split('T')[0] : ''}
+                          readOnly
+                          className="mt-1 bg-gray-50"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="status" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
+                        <select 
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          defaultValue={selectedEmployee.status || 'activo'}
+                        >
+                          <option value="activo">Activo</option>
+                          <option value="inactivo">Inactivo</option>
+                          <option value="de baja">De baja</option>
+                          <option value="de vacaciones">De vacaciones</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Personal Info */}
+                <div className="space-y-4">
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                        <User className="h-3 w-3 text-green-600" />
+                      </div>
+                      Información Personal
+                    </h4>
+                    
+                    <div className="space-y-3 text-sm">
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Email Personal</Label>
+                        <p className="mt-1 text-gray-900">{selectedEmployee.personalEmail || 'No especificado'}</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Teléfono Personal</Label>
+                        <p className="mt-1 text-gray-900">{selectedEmployee.personalPhone || 'No especificado'}</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Dirección</Label>
+                        <p className="mt-1 text-gray-900 text-wrap break-words">
+                          {selectedEmployee.address || 'No especificada'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vacation Summary */}
+                  <div className="bg-white border border-gray-200 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-3 w-3 text-purple-600" />
+                      </div>
+                      Resumen de Vacaciones
+                    </h4>
+                    
+                    <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-100">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-blue-600">
+                            {Math.round(Number(selectedEmployee.totalVacationDays || 0))}
+                          </p>
+                          <p className="text-xs text-gray-600">Total</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-orange-600">{Math.round(Number(selectedEmployee.usedVacationDays || 0))}</p>
+                          <p className="text-xs text-gray-600">Usados</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-green-600">
+                            {Math.max(0, Math.round(Number(selectedEmployee.totalVacationDays || 0) - Number(selectedEmployee.usedVacationDays || 0)))}
+                          </p>
+                          <p className="text-xs text-gray-600">Disponibles</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Estado</label>
-                <select 
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  defaultValue={selectedEmployee.status || 'activo'}
-                >
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                  <option value="de baja">De baja</option>
-                  <option value="de vacaciones">De vacaciones</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowEditModal(false)} className="flex-1">
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
+                <Button variant="outline" onClick={() => setShowEditModal(false)}>
                   Cancelar
                 </Button>
-                <Button className="flex-1">
+                <Button>
                   Guardar Cambios
                 </Button>
               </div>
