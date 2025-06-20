@@ -84,7 +84,8 @@ export default function Login() {
       setLocation(`/${redirectAlias}/dashboard`);
     } catch (error: any) {
       console.error('Login failed:', error);
-      setLoginError(error?.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+      // Show user-friendly message regardless of technical error
+      setLoginError('DNI/Email o contraseña incorrectos. Por favor, verifica e inténtalo de nuevo.');
     } finally {
       setSubmitting(false);
     }

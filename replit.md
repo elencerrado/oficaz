@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema de búsqueda y mensajes grupales implementado para admin/manager
+  - Campo de búsqueda en tiempo real para filtrar empleados por nombre
+  - Modo grupal activable con botón "Grupal" para selección múltiple
+  - Checkboxes visuales para seleccionar empleados en modo grupal
+  - Botones "Todos" y "Ninguno" para selección rápida masiva
+  - Panel de mensaje grupal con contador de empleados seleccionados
+  - Envío simultáneo de mensajes a múltiples empleados con un solo clic
+  - Sistema de normalización de mayúsculas/minúsculas en login (DNI/email)
+  - Validación mejorada con mensajes de error amigables y estados de carga
 - June 20, 2025. Sistema de mensajería estilo WhatsApp implementado con roles diferenciados
   - Página de mensajes completamente rediseñada con interfaz estilo WhatsApp
   - Vista diferenciada: empleados ven managers, admin/manager ven empleados
