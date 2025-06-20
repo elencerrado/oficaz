@@ -151,7 +151,7 @@ export default function Employees() {
       position: employee.position || '',
       startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
       status: employee.status || 'active',
-      vacationDaysAdjustment: parseInt(employee.vacationDaysAdjustment || '0', 10) || 0,
+      vacationDaysAdjustment: Number(employee.vacationDaysAdjustment || 0),
     });
     setIsEditModalOpen(true);
   };
@@ -168,7 +168,7 @@ export default function Employees() {
   const adjustVacationDays = (amount: number) => {
     setEditEmployee(prev => ({
       ...prev,
-      vacationDaysAdjustment: (prev.vacationDaysAdjustment || 0) + amount
+      vacationDaysAdjustment: Number(prev.vacationDaysAdjustment || 0) + amount
     }));
   };
 
@@ -704,17 +704,17 @@ export default function Employees() {
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-lg font-bold text-blue-600">
-                              {Math.round((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0))}
+                              {Math.round(Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0))}
                             </p>
                             <p className="text-xs text-gray-600">Total</p>
                           </div>
                           <div>
-                            <p className="text-lg font-bold text-orange-600">{Math.round(selectedEmployee.usedVacationDays || 0)}</p>
+                            <p className="text-lg font-bold text-orange-600">{Math.round(Number(selectedEmployee.usedVacationDays || 0))}</p>
                             <p className="text-xs text-gray-600">Usados</p>
                           </div>
                           <div>
                             <p className="text-lg font-bold text-green-600">
-                              {Math.max(0, Math.round(((selectedEmployee.totalVacationDays || 0) + (editEmployee.vacationDaysAdjustment || 0)) - (selectedEmployee.usedVacationDays || 0)))}
+                              {Math.max(0, Math.round((Number(selectedEmployee.totalVacationDays || 0) + Number(editEmployee.vacationDaysAdjustment || 0)) - Number(selectedEmployee.usedVacationDays || 0)))}
                             </p>
                             <p className="text-xs text-gray-600">Disponibles</p>
                           </div>
@@ -740,7 +740,7 @@ export default function Employees() {
                             
                             <Input
                               type="number"
-                              value={editEmployee.vacationDaysAdjustment || 0}
+                              value={Number(editEmployee.vacationDaysAdjustment || 0)}
                               onChange={(e) => {
                                 const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                 if (!isNaN(value)) {
