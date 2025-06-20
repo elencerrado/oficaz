@@ -58,6 +58,18 @@ export default function Messages() {
   const urlParts = location.split('/').filter(part => part.length > 0);
   const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
+  // Check for URL parameters to open specific chat
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatParam = urlParams.get('chat');
+    if (chatParam) {
+      const chatId = parseInt(chatParam);
+      if (!isNaN(chatId)) {
+        setSelectedChat(chatId);
+      }
+    }
+  }, []);
+
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
     refetchInterval: 10000, // Refetch every 10 seconds for real-time feel

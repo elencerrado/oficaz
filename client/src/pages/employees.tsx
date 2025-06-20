@@ -452,21 +452,38 @@ export default function Employees() {
                         const callHint = target.querySelector('.call-hint') as HTMLElement;
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
-                        if (diff > 30 && (employee.companyPhone || employee.personalPhone)) {
+                        if (diff > 20 && (employee.companyPhone || employee.personalPhone)) {
+                          // Swipe left - show call action
                           if (callHint) {
-                            callHint.style.opacity = Math.min(1, Math.abs(diff) / 60).toString();
-                            callHint.style.transform = `translateX(${Math.min(0, -80 + Math.abs(diff))}px)`;
+                            const progress = Math.min(1, Math.abs(diff) / 80);
+                            callHint.style.opacity = progress.toString();
+                            callHint.style.transform = `translateX(${-80 + (progress * 80)}px)`;
                           }
-                          if (messageHint) messageHint.style.opacity = '0';
-                        } else if (diff < -30) {
                           if (messageHint) {
-                            messageHint.style.opacity = Math.min(1, Math.abs(diff) / 60).toString();
-                            messageHint.style.transform = `translateX(${Math.max(0, 80 - Math.abs(diff))}px)`;
+                            messageHint.style.opacity = '0';
+                            messageHint.style.transform = 'translateX(80px)';
                           }
-                          if (callHint) callHint.style.opacity = '0';
+                        } else if (diff < -20) {
+                          // Swipe right - show message action
+                          if (messageHint) {
+                            const progress = Math.min(1, Math.abs(diff) / 80);
+                            messageHint.style.opacity = progress.toString();
+                            messageHint.style.transform = `translateX(${80 - (progress * 80)}px)`;
+                          }
+                          if (callHint) {
+                            callHint.style.opacity = '0';
+                            callHint.style.transform = 'translateX(-80px)';
+                          }
                         } else {
-                          if (callHint) callHint.style.opacity = '0';
-                          if (messageHint) messageHint.style.opacity = '0';
+                          // Reset both hints
+                          if (callHint) {
+                            callHint.style.opacity = '0';
+                            callHint.style.transform = 'translateX(-80px)';
+                          }
+                          if (messageHint) {
+                            messageHint.style.opacity = '0';
+                            messageHint.style.transform = 'translateX(80px)';
+                          }
                         }
                       }
                     }}
@@ -486,18 +503,18 @@ export default function Employees() {
                         content.style.transition = 'transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                       }
                       
-                      // Reset hints
+                      // Reset hints with smooth animation
                       const callHint = target.querySelector('.call-hint') as HTMLElement;
                       const messageHint = target.querySelector('.message-hint') as HTMLElement;
                       if (callHint) {
+                        callHint.style.transition = 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)';
                         callHint.style.opacity = '0';
-                        callHint.style.transform = 'translateX(-80px)';
-                        callHint.style.transition = 'all 0.3s ease-out';
+                        callHint.style.transform = 'translateX(-100%)';
                       }
                       if (messageHint) {
+                        messageHint.style.transition = 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)';
                         messageHint.style.opacity = '0';
-                        messageHint.style.transform = 'translateX(80px)';
-                        messageHint.style.transition = 'all 0.3s ease-out';
+                        messageHint.style.transform = 'translateX(100%)';
                       }
                       
                       if (Math.abs(diff) > 80) {
@@ -536,17 +553,17 @@ export default function Employees() {
                     }}
                   >
                     {/* Background Action Hints */}
-                    <div className="absolute inset-0 flex justify-between">
+                    <div className="absolute inset-0 flex justify-between overflow-hidden rounded-lg">
                       {/* Call Action (Left side) */}
-                      <div className="call-hint absolute left-0 top-0 bottom-0 w-24 bg-green-500 flex flex-col items-center justify-center text-white transition-all duration-200 opacity-0 transform -translate-x-20 rounded-l-lg">
-                        <Phone className="h-6 w-6 mb-1" />
-                        <span className="text-xs font-medium">Llamar</span>
+                      <div className="call-hint absolute left-0 top-0 bottom-0 w-20 bg-green-500 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform -translate-x-full shadow-lg">
+                        <Phone className="h-5 w-5 mb-1" />
+                        <span className="text-xs font-bold">Llamar</span>
                       </div>
                       
                       {/* Message Action (Right side) */}
-                      <div className="message-hint absolute right-0 top-0 bottom-0 w-24 bg-oficaz-primary flex flex-col items-center justify-center text-white transition-all duration-200 opacity-0 transform translate-x-20 rounded-r-lg">
-                        <Mail className="h-6 w-6 mb-1" />
-                        <span className="text-xs font-medium">Mensaje</span>
+                      <div className="message-hint absolute right-0 top-0 bottom-0 w-20 bg-blue-500 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform translate-x-full shadow-lg">
+                        <Mail className="h-5 w-5 mb-1" />
+                        <span className="text-xs font-bold">Mensaje</span>
                       </div>
                     </div>
                     
