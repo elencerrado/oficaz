@@ -117,7 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Sistema de empleados completamente optimizado con experiencia móvil y desktop perfecta + llamadas Android
+- June 20, 2025. Sistema completo de gestión de fichajes para admin implementado + optimizaciones empleados
+  - Página "Fichajes" para admin/manager con tabla completa de todos los fichajes de la empresa
+  - Filtros avanzados: por empleado, navegación mensual, búsqueda en tiempo real
+  - Estadísticas en dashboard: total horas, fichajes, completados, promedio diario
+  - Modal de edición rápida: fecha, hora entrada/salida con validación completa
+  - Backend mejorado: endpoint work-sessions/company incluye nombre empleado
+  - Navegación diferenciada: "Fichajes" para admin/manager, "Control de Tiempo" para empleados
+  - Estética consistente con página de empleados, diseño responsive móvil/desktop
   - Swipe reducido 30%: límite 56px con activación a 35px para mejor control táctil
   - Estados en español con colores: activo (verde), inactivo (gris), de baja (rojo), vacaciones (azul)
   - Edición funcional: doble toque móvil y doble click desktop para modal de edición

@@ -24,7 +24,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   
   const navigation = [
     { name: 'Panel Principal', href: `/${companyAlias}/inicio`, icon: LayoutDashboard },
-    { name: 'Control de Tiempo', href: `/${companyAlias}/horas`, icon: Clock },
+    ...(user?.role === 'admin' || user?.role === 'manager' ? [
+      { name: 'Fichajes', href: `/${companyAlias}/fichajes`, icon: Clock }
+    ] : [
+      { name: 'Control de Tiempo', href: `/${companyAlias}/horas`, icon: Clock }
+    ]),
     { name: 'Solicitudes de Vacaciones', href: `/${companyAlias}/vacaciones`, icon: Calendar },
     { name: 'Documentos', href: `/${companyAlias}/documentos`, icon: FileText },
     { name: 'Mensajes', href: `/${companyAlias}/mensajes`, icon: Mail, badge: unreadCount },

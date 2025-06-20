@@ -147,6 +147,16 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/:companyAlias/fichajes">
+        <ProtectedRoute>
+          <AppLayout>
+            <PageWrapper>
+              <TimeTracking />
+            </PageWrapper>
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
