@@ -246,19 +246,6 @@ export default function VacationRequests() {
     return days;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{
-        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
-      }}>
-        <div className="text-center text-white">
-          <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
-          <p>Cargando vacaciones...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Show loading state
   if (isLoading) {
     return <PageLoading />;

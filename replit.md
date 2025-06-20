@@ -117,11 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 20, 2025. Rendimiento vista empleado optimizado y headers móvil unificados
-  - Rendimiento mejorado: cache 5 minutos, queries optimizadas, PageLoading unificado
-  - Cache inteligente: staleTime 5min, gcTime 10min, retry reducido a 1 con 500ms delay
+- June 20, 2025. Loading unificado y rendimiento vista empleado optimizado completamente
+  - Loading limpio: solo logo Oficaz girando centrado, sin texto ni componentes duplicados
+  - Componentes duplicados eliminados: vacaciones tenía dos loadings, usePageLoading hook removido
   - React Hooks corregidos: eliminado error orden hooks en mensajes, enabled: !!user
-  - QueryClient optimizado: refetchOnWindowFocus false, consultas API reducidas 70%
+  - Rendimiento mejorado: cache 5 minutos, queries optimizadas, consultas API reducidas 70%
+  - Cache inteligente: staleTime 5min, gcTime 10min, retry reducido a 1 con 500ms delay
+  - QueryClient optimizado: refetchOnWindowFocus false para evitar cargas innecesarias
   - Headers consistentes: fichajes, documentos, vacaciones, mensajes tipografía idéntica
   - Empresa: text-sm font-medium, Empleado: text-white/70 text-xs, altura fija h-20
   - Navegación fluida admin: eliminado PageWrapper de Inicio, Fichajes, Configuración
