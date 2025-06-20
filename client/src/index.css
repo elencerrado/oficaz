@@ -283,19 +283,8 @@ body::after {
   }
 }
 
-/* Fix for select dropdown overflow issues */
-[data-radix-popper-content-wrapper] {
-  z-index: 50 !important;
-  overflow: visible !important;
-}
-
-/* Ensure select content doesn't cause horizontal overflow */
+/* Fix for select dropdown without affecting page width */
 [data-radix-select-content] {
-  max-width: calc(100vw - 2rem) !important;
-  overflow-x: hidden !important;
-}
-
-/* Prevent body scroll issues when dropdown opens */
-body:has([data-radix-select-content]) {
-  overflow-x: hidden !important;
+  max-width: 300px !important;
+  z-index: 50 !important;
 }

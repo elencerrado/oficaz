@@ -225,11 +225,11 @@ export default function TimeTracking() {
       </div>
 
       {/* Filters Section */}
-      <Card className="mb-6 overflow-visible">
-        <CardContent className="p-4 overflow-visible">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center overflow-visible">
-            {/* Month Navigator */}
-            <div className="flex items-center space-x-2 flex-shrink-0">
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            {/* Month Navigator - Full width row */}
+            <div className="flex items-center justify-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -258,19 +258,17 @@ export default function TimeTracking() {
               </Button>
             </div>
 
-            <div className="flex-1 min-w-0"></div>
-
-            {/* Responsive filters container */}
-            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center w-full lg:w-auto">
+            {/* Filters row - Simple grid layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Employee Filter */}
-              <div className="flex items-center space-x-2 flex-shrink-0">
+              <div className="flex items-center space-x-2">
                 <Filter className="w-4 h-4 text-gray-500" />
-                <div className="w-48 relative">
+                <div className="flex-1 max-w-xs">
                   <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger>
                       <SelectValue placeholder="Filtrar empleado" />
                     </SelectTrigger>
-                    <SelectContent className="z-50">
+                    <SelectContent>
                       <SelectItem value="all">Todos los empleados</SelectItem>
                       {employeesList.map((employee: any) => (
                         <SelectItem key={employee.id} value={employee.id.toString()}>
@@ -283,13 +281,13 @@ export default function TimeTracking() {
               </div>
 
               {/* Search */}
-              <div className="relative flex-shrink-0">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Buscar empleado..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-48"
+                  className="pl-10 max-w-xs"
                 />
               </div>
             </div>
