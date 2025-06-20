@@ -6,6 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { useEffect } from 'react';
 
 interface WorkSession {
   id: number;
@@ -194,90 +195,98 @@ export default function EmployeeDashboard() {
 
   const currentYear = new Date().getFullYear();
 
+  // Ensure page always starts at top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 pb-4">
-        <div>
-          <h1 className="text-lg font-medium">{user?.fullName}</h1>
+    <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
+      {/* Scrollable Content Container */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 pb-4 flex-shrink-0">
+          <div>
+            <h1 className="text-lg font-medium">{user?.fullName}</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            className="text-white hover:bg-white/10"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Salir
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={logout}
-          className="text-white hover:bg-white/10"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Salir
-        </Button>
-      </div>
 
-      {/* Company Logo and Name */}
-      <div className="flex justify-center mb-6">
-        <div className="text-center">
-          {company?.logoUrl ? (
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="w-12 h-12 mx-auto rounded-full object-cover"
-            />
-          ) : (
-            <div className="text-white text-base font-medium">
-              {company?.name || 'Mi Empresa'}
-            </div>
-          )}
+        {/* Company Logo and Name */}
+        <div className="flex justify-center mb-6">
+          <div className="text-center">
+            {company?.logoUrl ? (
+              <img 
+                src={company.logoUrl} 
+                alt={company.name} 
+                className="w-12 h-12 mx-auto rounded-full object-cover"
+              />
+            ) : (
+              <div className="text-white text-base font-medium">
+                {company?.name || 'Mi Empresa'}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Menu Grid - iPhone style with compact icons */}
-      <div className="px-6 mb-6">
-        <div className="grid grid-cols-3 gap-6">
-          {menuItems.map((item, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <button
-                onClick={() => handleNavigation(item.route)}
-                className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <item.icon className="h-12 w-12 text-white" />
-                {item.notification && (
-                  <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
-                    (item as any).notificationType === 'red' ? 'bg-red-500' : 'bg-green-500'
-                  }`}>
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                )}
-              </button>
-              <span className="text-xs font-medium text-center text-white/90 leading-tight">
-                {item.title}
-              </span>
-            </div>
-          ))}
+        {/* Menu Grid - iPhone style with compact icons */}
+        <div className="px-6 mb-6">
+          <div className="grid grid-cols-3 gap-6">
+            {menuItems.map((item, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <button
+                  onClick={() => handleNavigation(item.route)}
+                  className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <item.icon className="h-12 w-12 text-white" />
+                  {item.notification && (
+                    <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
+                      (item as any).notificationType === 'red' ? 'bg-red-500' : 'bg-green-500'
+                    }`}>
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                  )}
+                </button>
+                <span className="text-xs font-medium text-center text-white/90 leading-tight">
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Last Clock In Info - Always visible */}
-      <div className="px-6 mb-4 text-center">
-        <div className="text-gray-300 text-xs mb-1">Tu último fichaje:</div>
-        <div className="text-white text-sm font-medium">
-          {formatLastClockDate() || 'Sin fichajes previos'}
+        {/* Last Clock In Info - Always visible */}
+        <div className="px-6 mb-4 text-center">
+          <div className="text-gray-300 text-xs mb-1">Tu último fichaje:</div>
+          <div className="text-white text-sm font-medium">
+            {formatLastClockDate() || 'Sin fichajes previos'}
+          </div>
         </div>
-      </div>
 
-      {/* Clock Button - Positioned for thumb accessibility */}
-      <div className="flex-1 flex items-center justify-center px-6 pb-6">
-        <Button
-          onClick={handleClockAction}
-          disabled={clockInMutation.isPending || clockOutMutation.isPending}
-          className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-        >
-          {clockInMutation.isPending || clockOutMutation.isPending ? (
-            <LoadingSpinner size="lg" className="text-white scale-150" />
-          ) : (
-            <>
-              {activeSession ? 'SALIR' : 'FICHAR'}
-            </>
-          )}
-        </Button>
+        {/* Clock Button - Positioned for thumb accessibility */}
+        <div className="flex-1 flex items-center justify-center px-6 pb-6 min-h-[200px]">
+          <Button
+            onClick={handleClockAction}
+            disabled={clockInMutation.isPending || clockOutMutation.isPending}
+            className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+          >
+            {clockInMutation.isPending || clockOutMutation.isPending ? (
+              <LoadingSpinner size="lg" className="text-white scale-150" />
+            ) : (
+              <>
+                {activeSession ? 'SALIR' : 'FICHAR'}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Small Oficaz logo at bottom */}
