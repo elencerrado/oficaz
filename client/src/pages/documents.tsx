@@ -28,7 +28,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { Link, useRoute } from 'wouter';
+import { Link } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface DocumentRequest {
   id: number;
@@ -49,9 +50,10 @@ export default function Documents() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Extract company alias from URL
-  const [match, params] = useRoute('/:companyAlias/documents');
-  const companyAlias = params?.companyAlias;
+  // Extract company alias from URL robustly
+  const [location] = useLocation();
+  const urlParts = location.split('/').filter((part: string) => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
   // Get real document notifications from database
   const { data: documentNotifications } = useQuery({
