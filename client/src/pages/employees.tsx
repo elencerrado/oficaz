@@ -439,53 +439,68 @@ export default function Employees() {
                       const target = e.currentTarget;
                       const startX = parseFloat(target.getAttribute('data-start-x') || '0');
                       const currentX = touch.clientX;
-                      const diff = startX - currentX;
+                      const diff = currentX - startX;
                       const content = target.querySelector('.swipe-content') as HTMLElement;
                       
                       if (content && Math.abs(diff) > 5) {
                         // Apply transform with smooth animation
                         const maxSwipe = 100;
                         const constrainedDiff = Math.max(-maxSwipe, Math.min(maxSwipe, diff));
-                        content.style.transform = `translateX(${-constrainedDiff}px)`;
+                        content.style.transform = `translateX(${constrainedDiff * 0.3}px)`;
                         content.style.transition = 'none';
                         
                         // Show action hints based on swipe direction
                         const callHint = target.querySelector('.call-hint') as HTMLElement;
                         const messageHint = target.querySelector('.message-hint') as HTMLElement;
                         
-                        if (diff > 20 && (employee.companyPhone || employee.personalPhone)) {
+                        const threshold = 20;
+                        const maxDistance = 80;
+                        
+                        console.log(`Swipe: ${diff}, Threshold: ${threshold}`); // Debug
+                        
+                        if (diff < -threshold && (employee.companyPhone || employee.personalPhone)) {
                           // Swipe left - show call action (verde)
+                          console.log('Activating CALL hint', callHint ? 'found' : 'not found');
                           if (callHint) {
-                            const progress = Math.min(1, Math.abs(diff) / 100);
-                            callHint.style.opacity = (0.3 + progress * 0.7).toString(); // Min 30% opacity
-                            callHint.style.transform = `translateX(${-96 + (progress * 96)}px)`;
+                            const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
+                            console.log(`Call progress: ${progress}, opacity: ${Math.max(0.7, progress)}`);
+                            callHint.style.opacity = Math.max(0.7, progress).toString();
+                            callHint.style.transform = `translateX(${-100 + (progress * 80)}%)`;
                             callHint.style.transition = 'none';
+                            callHint.style.visibility = 'visible';
+                            callHint.style.display = 'flex';
+                            callHint.style.zIndex = '50';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
-                            messageHint.style.transform = 'translateX(100%)';
+                            messageHint.style.visibility = 'hidden';
                           }
-                        } else if (diff < -20) {
+                        } else if (diff > threshold) {
                           // Swipe right - show message action (azul)
+                          console.log('Activating MESSAGE hint', messageHint ? 'found' : 'not found');
                           if (messageHint) {
-                            const progress = Math.min(1, Math.abs(diff) / 100);
-                            messageHint.style.opacity = (0.3 + progress * 0.7).toString(); // Min 30% opacity
-                            messageHint.style.transform = `translateX(${96 - (progress * 96)}px)`;
+                            const progress = Math.min(1, (Math.abs(diff) - threshold) / maxDistance);
+                            console.log(`Message progress: ${progress}, opacity: ${Math.max(0.7, progress)}`);
+                            messageHint.style.opacity = Math.max(0.7, progress).toString();
+                            messageHint.style.transform = `translateX(${100 - (progress * 80)}%)`;
                             messageHint.style.transition = 'none';
+                            messageHint.style.visibility = 'visible';
+                            messageHint.style.display = 'flex';
+                            messageHint.style.zIndex = '50';
                           }
                           if (callHint) {
                             callHint.style.opacity = '0';
-                            callHint.style.transform = 'translateX(-100%)';
+                            callHint.style.visibility = 'hidden';
                           }
                         } else {
                           // Reset both hints
                           if (callHint) {
                             callHint.style.opacity = '0';
-                            callHint.style.transform = 'translateX(-100%)';
+                            callHint.style.visibility = 'hidden';
                           }
                           if (messageHint) {
                             messageHint.style.opacity = '0';
-                            messageHint.style.transform = 'translateX(100%)';
+                            messageHint.style.visibility = 'hidden';
                           }
                         }
                       }
@@ -510,22 +525,24 @@ export default function Employees() {
                       const callHint = target.querySelector('.call-hint') as HTMLElement;
                       const messageHint = target.querySelector('.message-hint') as HTMLElement;
                       if (callHint) {
-                        callHint.style.transition = 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                        callHint.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                         callHint.style.opacity = '0';
                         callHint.style.transform = 'translateX(-100%)';
+                        callHint.style.visibility = 'hidden';
                       }
                       if (messageHint) {
-                        messageHint.style.transition = 'all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1)';
+                        messageHint.style.transition = 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)';
                         messageHint.style.opacity = '0';
                         messageHint.style.transform = 'translateX(100%)';
+                        messageHint.style.visibility = 'hidden';
                       }
                       
                       if (Math.abs(diff) > 80) {
                         // Swipe action triggered
-                        if (diff > 0 && phone) {
+                        if (diff < 0 && phone) {
                           // Swipe left - Call
                           window.location.href = `tel:${phone}`;
-                        } else if (diff < 0) {
+                        } else if (diff > 0) {
                           // Swipe right - Message (direct to conversation)
                           window.location.href = `/test/mensajes?chat=${employee.id}`;
                         }
@@ -556,17 +573,39 @@ export default function Employees() {
                     }}
                   >
                     {/* Background Action Hints */}
-                    <div className="absolute inset-0 flex justify-between overflow-hidden rounded-lg">
+                    <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none">
                       {/* Call Action (Left side) */}
-                      <div className="call-hint absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-green-500 to-green-600 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform -translate-x-full shadow-xl">
-                        <Phone className="h-6 w-6 mb-1 drop-shadow-sm" />
-                        <span className="text-xs font-bold drop-shadow-sm">Llamar</span>
+                      <div 
+                        className="call-hint absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center text-white z-10"
+                        style={{
+                          width: '100px',
+                          backgroundColor: '#10b981',
+                          boxShadow: '0 8px 32px rgba(16, 185, 129, 0.4)',
+                          opacity: '0',
+                          transform: 'translateX(-100%)',
+                          transition: 'all 0.3s ease-out',
+                          visibility: 'hidden'
+                        }}
+                      >
+                        <Phone className="h-8 w-8 mb-2 text-white" />
+                        <span className="text-sm font-bold text-white">LLAMAR</span>
                       </div>
                       
                       {/* Message Action (Right side) */}
-                      <div className="message-hint absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-blue-500 to-blue-600 flex flex-col items-center justify-center text-white transition-all duration-300 opacity-0 transform translate-x-full shadow-xl">
-                        <MessageCircle className="h-6 w-6 mb-1 drop-shadow-sm" />
-                        <span className="text-xs font-bold drop-shadow-sm">Mensaje</span>
+                      <div 
+                        className="message-hint absolute right-0 top-0 bottom-0 flex flex-col items-center justify-center text-white z-10"
+                        style={{
+                          width: '100px',
+                          backgroundColor: '#3b82f6',
+                          boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
+                          opacity: '0',
+                          transform: 'translateX(100%)',
+                          transition: 'all 0.3s ease-out',
+                          visibility: 'hidden'
+                        }}
+                      >
+                        <MessageCircle className="h-8 w-8 mb-2 text-white" />
+                        <span className="text-sm font-bold text-white">MENSAJE</span>
                       </div>
                     </div>
                     
