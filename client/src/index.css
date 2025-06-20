@@ -185,6 +185,27 @@ body::after {
   --oficaz-gray-900: hsl(222, 47%, 11%);
 }
 
+/* Custom animations for employee charts */
+@keyframes slideUp {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--final-height);
+    opacity: 1;
+  }
+}
+
+@keyframes growWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--final-width);
+  }
+}
+
 .dark {
   --background: hsl(222, 47%, 11%);
   --foreground: hsl(213, 31%, 91%);
