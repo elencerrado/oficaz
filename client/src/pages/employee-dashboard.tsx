@@ -31,6 +31,16 @@ export default function EmployeeDashboard() {
     refetchInterval: 30000,
   });
 
+  // Get document notifications
+  const { data: documents } = useQuery({
+    queryKey: ['/api/documents'],
+    refetchInterval: 60000,
+  });
+
+  // Mock document requests - in real app this would come from API
+  const hasDocumentRequests = true; // Simulate having document requests
+  const hasNewDocuments = (documents as any[] || []).length > 0;
+
   // Get recent work session for "last clock in" info
   const { data: recentSessions } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
@@ -148,7 +158,8 @@ export default function EmployeeDashboard() {
       icon: FileText, 
       title: 'Documentos', 
       route: `/${companyAlias}/documents`,
-      notification: false 
+      notification: hasDocumentRequests || hasNewDocuments,
+      notificationType: hasDocumentRequests ? 'red' : 'green'
     },
     { 
       icon: Calendar, 
@@ -218,7 +229,9 @@ export default function EmployeeDashboard() {
               >
                 <item.icon className="h-12 w-12 text-white" />
                 {item.notification && (
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+                  <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
+                    (item as any).notificationType === 'red' ? 'bg-red-500' : 'bg-green-500'
+                  }`}>
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}

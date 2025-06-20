@@ -459,6 +459,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create demo documents for testing
+  app.post('/api/documents/create-demo', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const demoDocuments = [
+        {
+          userId: req.user!.id,
+          fileName: 'nomina-diciembre-2024.pdf',
+          originalName: 'Nómina Diciembre 2024.pdf',
+          fileSize: 245760,
+          mimeType: 'application/pdf',
+          uploadedBy: req.user!.id,
+        },
+        {
+          userId: req.user!.id,
+          fileName: 'contrato-trabajo.pdf',
+          originalName: 'Contrato de Trabajo.pdf',
+          fileSize: 512000,
+          mimeType: 'application/pdf',
+          uploadedBy: req.user!.id,
+        },
+        {
+          userId: req.user!.id,
+          fileName: 'nomina-noviembre-2024.pdf',
+          originalName: 'Nómina Noviembre 2024.pdf',
+          fileSize: 238900,
+          mimeType: 'application/pdf',
+          uploadedBy: req.user!.id,
+        },
+      ];
+
+      const createdDocuments = [];
+      for (const doc of demoDocuments) {
+        const document = await storage.createDocument(doc);
+        createdDocuments.push(document);
+      }
+
+      res.status(201).json(createdDocuments);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Document routes
   app.post('/api/documents/upload', authenticateToken, upload.single('file'), async (req: AuthRequest, res) => {
     try {
@@ -505,6 +547,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const filePath = path.join(uploadDir, document.fileName);
+      
+      // If physical file doesn't exist but it's a demo document, serve a placeholder PDF
+      if (!fs.existsSync(filePath) && (document.fileName.includes('nomina') || document.fileName.includes('contrato'))) {
+        // Create a simple PDF response for demo purposes
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+        
+        // Send a minimal PDF header - browsers will handle this as a PDF
+        const pdfContent = Buffer.from(`%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(${document.originalName}) Tj
+ET
+endstream
+endobj
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000060 00000 n 
+0000000120 00000 n 
+0000000290 00000 n 
+0000000390 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+470
+%%EOF`);
+        
+        return res.send(pdfContent);
+      }
+      
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: 'File not found on server' });
       }
