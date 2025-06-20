@@ -147,7 +147,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/usuario">
+      <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
             <PageWrapper>

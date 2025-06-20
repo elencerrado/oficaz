@@ -157,8 +157,8 @@ export default function EmployeeDashboard() {
     },
     { 
       icon: User, 
-      title: 'Usuario', 
-      route: `/${companyAlias}/usuario`,
+      title: 'Configuración', 
+      route: `/${companyAlias}/configuracion`,
       notification: false 
     },
     { 

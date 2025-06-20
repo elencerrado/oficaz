@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { name: 'Empleados', href: `/${companyAlias}/empleados`, icon: Users }
     ] : []),
-    { name: 'Configuración', href: `/${companyAlias}/usuario`, icon: Settings },
+    { name: 'Configuración', href: `/${companyAlias}/configuracion`, icon: Settings },
   ];
 
   const handleLinkClick = () => {
