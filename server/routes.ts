@@ -459,9 +459,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create demo documents for testing
+  // Create demo documents for Juan Ramírez only
   app.post('/api/documents/create-demo', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      // Only create documents for Juan Ramirez (user with fullName "Juan Ramirez")
+      const user = await storage.getUser(req.user!.id);
+      if (!user || user.fullName !== 'Juan Ramirez') {
+        return res.status(403).json({ message: 'Demo documents only available for Juan Ramirez' });
+      }
+
       const demoDocuments = [
         {
           userId: req.user!.id,

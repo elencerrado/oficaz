@@ -53,8 +53,8 @@ export default function Documents() {
   const [match, params] = useRoute('/:companyAlias/documents');
   const companyAlias = params?.companyAlias;
 
-  // Mock document requests - in real app this would come from API
-  const documentRequests: DocumentRequest[] = [
+  // Document requests only for Juan Ramirez
+  const documentRequests: DocumentRequest[] = user?.fullName === 'Juan Ramirez' ? [
     {
       id: 1,
       type: 'DNI',
@@ -63,7 +63,7 @@ export default function Documents() {
       priority: 'high',
       completed: false
     }
-  ];
+  ] : [];
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ['/api/documents'],
@@ -436,7 +436,7 @@ export default function Documents() {
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC]" : ""}
+                className={selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}
               >
                 <IconComponent className="h-4 w-4 mr-2" />
                 {category.name}
@@ -562,7 +562,7 @@ export default function Documents() {
                     className="bg-[#007AFF] hover:bg-[#0056CC] text-white"
                   >
                     {createDemoMutation.isPending ? (
-                      <LoadingSpinner size="sm" className="mr-2" />
+                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                     ) : (
                       <FileText className="h-4 w-4 mr-2" />
                     )}

@@ -37,8 +37,8 @@ export default function EmployeeDashboard() {
     refetchInterval: 60000,
   });
 
-  // Mock document requests - in real app this would come from API
-  const hasDocumentRequests = true; // Simulate having document requests
+  // Document requests only for Juan Ramirez
+  const hasDocumentRequests = user?.fullName === 'Juan Ramirez'; // Only for Juan Ramirez
   const hasNewDocuments = (documents as any[] || []).length > 0;
 
   // Get recent work session for "last clock in" info
