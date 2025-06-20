@@ -288,28 +288,44 @@ export default function EmployeesSimple() {
                       e.currentTarget.style.transform = 'translateX(0px)';
                       
                       if (isSwiping && Math.abs(currentX) > 35) {
+                        console.log(`Swipe detected: currentX=${currentX}, isSwiping=${isSwiping}`);
+                        
                         // Swipe actions
                         if (currentX > 0 && (employee.companyPhone || employee.personalPhone)) {
                           const phone = employee.companyPhone || employee.personalPhone;
+                          console.log(`RIGHT SWIPE CALL: ${phone}`);
                           
-                          // Enhanced Android compatibility
-                          if (navigator.userAgent.includes('Android')) {
-                            // Create a temporary link element for Android
+                          // Simplified approach - always use the same method but with user interaction simulation
+                          const triggerCall = () => {
+                            // Create a proper user-initiated event
+                            const link = document.createElement('a');
+                            link.href = `tel:${phone}`;
+                            link.style.display = 'none';
+                            document.body.appendChild(link);
+                            
+                            // Add event listener to ensure it's treated as user interaction
+                            link.addEventListener('click', function() {
+                              console.log('Call link clicked successfully');
+                            });
+                            
+                            // Trigger with proper event
+                            link.click();
+                            
+                            // Clean up
                             setTimeout(() => {
-                              const link = document.createElement('a');
-                              link.href = `tel:${phone}`;
-                              link.style.display = 'none';
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }, 150);
-                          } else {
-                            // iOS and other platforms
-                            setTimeout(() => {
-                              window.location.href = `tel:${phone}`;
-                            }, 100);
-                          }
+                              if (document.body.contains(link)) {
+                                document.body.removeChild(link);
+                              }
+                            }, 500);
+                          };
+                          
+                          // Use requestAnimationFrame to ensure it's in the next frame
+                          requestAnimationFrame(() => {
+                            setTimeout(triggerCall, 100);
+                          });
+                          
                         } else if (currentX < 0) {
+                          console.log(`LEFT SWIPE MESSAGE: ${employee.id}`);
                           setTimeout(() => {
                             navigate(`/test/mensajes?chat=${employee.id}`);
                           }, 100);
