@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema de mensajería estilo WhatsApp implementado con roles diferenciados
+  - Página de mensajes completamente rediseñada con interfaz estilo WhatsApp
+  - Vista diferenciada: empleados ven managers, admin/manager ven empleados
+  - Notificaciones del sistema para nóminas, documentos y recordatorios
+  - Chat en tiempo real con burbujas de mensaje y scroll automático
+  - Endpoint /api/managers para acceso de empleados a sus responsables
+  - Indicador de mensajes no leídos en dashboard con actualización automática
+  - Interfaz móvil-first optimizada con avatares y contadores de mensajes
 - June 19, 2025. Sistema de carga personalizado con spinner armónico de Oficaz implementado
   - Spinner rediseñado con círculo contorno y círculo relleno giratorio interno
   - Proporciones armónicas: grosor del contorno igual al diámetro del círculo interno

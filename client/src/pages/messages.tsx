@@ -57,6 +57,12 @@ export default function Messages() {
 
   const { data: managers } = useQuery({
     queryKey: ['/api/managers'],
+    enabled: user?.role === 'employee',
+  });
+
+  const { data: employees } = useQuery({
+    queryKey: ['/api/employees'],
+    enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
   const sendMessageMutation = useMutation({
@@ -134,11 +140,11 @@ export default function Messages() {
     });
   };
 
-  const getChatMessages = (managerId: number) => {
+  const getChatMessages = (otherUserId: number) => {
     if (!messages) return [];
     return (messages as Message[]).filter(
-      msg => (msg.senderId === managerId && msg.receiverId === user?.id) ||
-             (msg.senderId === user?.id && msg.receiverId === managerId)
+      msg => (msg.senderId === otherUserId && msg.receiverId === user?.id) ||
+             (msg.senderId === user?.id && msg.receiverId === otherUserId)
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   };
 
@@ -213,46 +219,86 @@ export default function Messages() {
               </div>
             </div>
 
-            {/* Managers Section */}
+            {/* Contacts Section - Different for employees vs admin/manager */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <User className="h-5 w-5 mr-2" />
-                Tu Manager
+                {user?.role === 'employee' ? 'Tu Manager' : 'Empleados'}
               </h3>
               <div className="space-y-3">
-                {(managers as Manager[] || []).map(manager => {
-                  const unreadCount = (messages as Message[] || []).filter(
-                    msg => !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
-                  ).length;
-                  
-                  return (
-                    <div
-                      key={manager.id}
-                      onClick={() => setSelectedChat(manager.id)}
-                      className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-12 w-12 bg-blue-500">
-                          <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                            {manager.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="text-white font-medium">{manager.fullName}</p>
-                          <p className="text-white/70 text-sm capitalize">{manager.role}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <MessageCircle className="h-5 w-5 text-blue-400" />
-                          {unreadCount > 0 && (
-                            <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                              {unreadCount}
-                            </div>
-                          )}
+                {user?.role === 'employee' ? (
+                  // Employee view: Show managers
+                  (managers as Manager[] || []).map(manager => {
+                    const unreadCount = (messages as Message[] || []).filter(
+                      msg => !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
+                    ).length;
+                    
+                    return (
+                      <div
+                        key={manager.id}
+                        onClick={() => setSelectedChat(manager.id)}
+                        className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-12 w-12 bg-blue-500">
+                            <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                              {manager.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-white font-medium">{manager.fullName}</p>
+                            <p className="text-white/70 text-sm capitalize">{manager.role}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <MessageCircle className="h-5 w-5 text-blue-400" />
+                            {unreadCount > 0 && (
+                              <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {unreadCount}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  // Admin/Manager view: Show employees
+                  (employees as any[] || [])
+                    .filter(emp => emp.role === 'employee')
+                    .map(employee => {
+                      const unreadCount = (messages as Message[] || []).filter(
+                        msg => !msg.isRead && msg.senderId === employee.id && msg.receiverId === user?.id
+                      ).length;
+                      
+                      return (
+                        <div
+                          key={employee.id}
+                          onClick={() => setSelectedChat(employee.id)}
+                          className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-12 w-12 bg-green-500">
+                              <AvatarFallback className="bg-green-500 text-white font-semibold">
+                                {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="text-white font-medium">{employee.fullName}</p>
+                              <p className="text-white/70 text-sm">Empleado</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <MessageCircle className="h-5 w-5 text-green-400" />
+                              {unreadCount > 0 && (
+                                <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                  {unreadCount}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
               </div>
             </div>
           </div>
@@ -269,19 +315,29 @@ export default function Messages() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <Avatar className="h-8 w-8 bg-blue-500">
-                <AvatarFallback className="bg-blue-500 text-white text-sm">
-                  {(managers as Manager[] || []).find(m => m.id === selectedChat)?.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-white font-medium">
-                  {(managers as Manager[] || []).find(m => m.id === selectedChat)?.fullName}
-                </p>
-                <p className="text-white/70 text-xs">
-                  {(managers as Manager[] || []).find(m => m.id === selectedChat)?.role}
-                </p>
-              </div>
+              {(() => {
+                const contact = user?.role === 'employee' 
+                  ? (managers as Manager[] || []).find(m => m.id === selectedChat)
+                  : (employees as any[] || []).find(e => e.id === selectedChat);
+                
+                return (
+                  <>
+                    <Avatar className={`h-8 w-8 ${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'}`}>
+                      <AvatarFallback className={`${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'} text-white text-sm`}>
+                        {contact?.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-white font-medium">
+                        {contact?.fullName}
+                      </p>
+                      <p className="text-white/70 text-xs">
+                        {user?.role === 'employee' ? contact?.role : 'Empleado'}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Messages */}
