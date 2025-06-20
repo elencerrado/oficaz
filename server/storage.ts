@@ -154,6 +154,35 @@ export class DrizzleStorage implements IStorage {
     return user;
   }
 
+  // Calculate vacation days based on start date and company policy
+  async calculateVacationDays(userId: number): Promise<number> {
+    const user = await this.getUser(userId);
+    if (!user) return 0;
+
+    const companyConfig = await this.getCompanyConfig?.(user.companyId);
+    const defaultDaysPerMonth = parseFloat(companyConfig?.defaultVacationPolicy || '2.5');
+    const userDaysPerMonth = user.vacationDaysPerMonth ? parseFloat(user.vacationDaysPerMonth) : defaultDaysPerMonth;
+    
+    const startDate = new Date(user.startDate);
+    const currentDate = new Date();
+    
+    // Calculate months worked (including partial months)
+    const monthsWorked = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                         (currentDate.getMonth() - startDate.getMonth()) + 
+                         (currentDate.getDate() >= startDate.getDate() ? 1 : 0);
+    
+    const calculatedDays = Math.round((monthsWorked * userDaysPerMonth) * 10) / 10;
+    const adjustment = parseFloat(user.vacationDaysAdjustment || '0');
+    
+    return Math.max(0, calculatedDays + adjustment);
+  }
+
+  // Update user's vacation days automatically
+  async updateUserVacationDays(userId: number): Promise<User | undefined> {
+    const calculatedDays = await this.calculateVacationDays(userId);
+    return this.updateUser(userId, { totalVacationDays: calculatedDays.toString() });
+  }
+
   // Work Sessions
   async createWorkSession(session: InsertWorkSession): Promise<WorkSession> {
     const [result] = await db.insert(schema.workSessions).values(session).returning();

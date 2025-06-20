@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 20, 2025. Sistema de vacaciones español completo implementado con cálculo automático
+  - Cálculo automático basado en normativa española: 30 días naturales/año (2.5 días por mes trabajado)
+  - Nuevos campos en usuarios: días por mes personalizables y ajustes manuales del admin
+  - API endpoints para recálculo automático (/api/users/:id/calculate-vacation) y ajustes (/api/users/:id/vacation-adjustment)
+  - Función calculateVacationDays() en storage que calcula días basado en fecha de incorporación
+  - Sistema configurable por empresa en company_configs.defaultVacationPolicy
+  - Juan Ramírez actualizado: sept 2024 entrada → 10 días totales (3.7 meses × 2.5), 7 usados, 3 disponibles
 - June 20, 2025. Mejoras en UI/UX de vacaciones y corrección de anchura de contenedores
   - Mensaje personalizado cuando se exceden días disponibles: "Ojalá pudiéramos darte más..."
   - Barra de progreso rediseñada con mayor grosor (24px) y efectos shimmer animados

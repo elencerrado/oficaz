@@ -55,8 +55,10 @@ export const users = pgTable("users", {
   postalAddress: text("postal_address"), // Lo escribe el empleado
   
   // Vacaciones
-  totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Lo puede modificar admin/manager
+  totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Calculado automáticamente
   usedVacationDays: decimal("used_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Auto
+  vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"), // Días por mes (nullable = usa default de empresa)
+  vacationDaysAdjustment: decimal("vacation_days_adjustment", { precision: 4, scale: 1 }).notNull().default("0.0"), // Ajuste manual del admin (+/-)
   
   // Contacto de emergencia
   emergencyContactName: text("emergency_contact_name"), // Lo escribe el empleado

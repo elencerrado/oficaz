@@ -887,6 +887,48 @@ startxref
     }
   });
 
+  // Calculate vacation days for a user
+  app.post('/api/users/:id/calculate-vacation', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updatedUser = await storage.updateUserVacationDays(userId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      res.json({ message: 'Días de vacaciones recalculados', user: updatedUser });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Adjust vacation days manually
+  app.patch('/api/users/:id/vacation-adjustment', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { adjustment, daysPerMonth } = req.body;
+      
+      const updates: any = {};
+      if (adjustment !== undefined) updates.vacationDaysAdjustment = adjustment.toString();
+      if (daysPerMonth !== undefined) updates.vacationDaysPerMonth = daysPerMonth.toString();
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Recalculate total vacation days after adjustment
+      await storage.updateUserVacationDays(userId);
+      const finalUser = await storage.getUser(userId);
+
+      res.json({ message: 'Ajuste de vacaciones actualizado', user: finalUser });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Unified notifications endpoints
   app.get('/api/notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {
