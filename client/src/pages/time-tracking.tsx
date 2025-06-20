@@ -227,23 +227,7 @@ export default function TimeTracking() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Total Horas</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {totalHours.toFixed(1)}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
@@ -267,25 +251,9 @@ export default function TimeTracking() {
                 <TrendingUp className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Media Horas</p>
+                <p className="text-sm text-gray-500">Media Horas Diarias</p>
                 <p className="text-xl font-semibold text-gray-900">
                   {averageHoursPerEmployee.toFixed(1)}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <CalendarDays className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Completados</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {completedSessions}
                 </p>
               </div>
             </div>
