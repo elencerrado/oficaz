@@ -278,7 +278,7 @@ export default function TimeTracking() {
               onClick={() => setDateFilter('day')}
               className={dateFilter === 'day' ? 'bg-oficaz-primary' : ''}
             >
-              Por Día
+              Día
             </Button>
             <Button
               variant={dateFilter === 'month' ? 'default' : 'outline'}
@@ -286,7 +286,7 @@ export default function TimeTracking() {
               onClick={() => setDateFilter('month')}
               className={dateFilter === 'month' ? 'bg-oficaz-primary' : ''}
             >
-              Por Mes
+              Mes
             </Button>
             <Button
               variant={dateFilter === 'custom' ? 'default' : 'outline'}
