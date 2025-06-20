@@ -439,6 +439,176 @@ export default function TimeTracking() {
         </Card>
       </div>
 
+      {/* Filters Section */}
+      <Card className="mb-4">
+        <CardContent className="p-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar empleado..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-10"
+              />
+            </div>
+
+            {/* Employee Filter */}
+            <div className="flex flex-col">
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Filtrar empleado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los empleados</SelectItem>
+                  {employeesList.map((employee: any) => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.fullName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Filter */}
+            <div className="flex gap-2">
+              <Button
+                variant={dateFilter === 'today' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setDateFilter('today')}
+                className="flex-1"
+              >
+                Hoy
+              </Button>
+              
+              <Popover open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={dateFilter === 'day' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Día
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={currentDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setCurrentDate(date);
+                        setDateFilter('day');
+                        setIsDayDialogOpen(false);
+                      }
+                    }}
+                    className="rounded-md border"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Select 
+                value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : ''} 
+                onValueChange={(value) => {
+                  if (value) {
+                    const [year, month] = value.split('-');
+                    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+                    setDateFilter('month');
+                  }
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Mes" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMonths.map((monthKey: string) => {
+                    const [year, month] = monthKey.split('-');
+                    const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                    return (
+                      <SelectItem key={monthKey} value={monthKey}>
+                        {format(monthDate, 'MMMM yyyy', { locale: es })}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={dateFilter === 'custom' ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Rango
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="start">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-sm font-medium">Desde:</label>
+                        <Calendar
+                          mode="single"
+                          selected={selectedStartDate}
+                          onSelect={(date) => {
+                            setSelectedStartDate(date);
+                            if (date) {
+                              setStartDate(format(date, 'yyyy-MM-dd'));
+                            }
+                          }}
+                          className="rounded-md border"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Hasta:</label>
+                        <Calendar
+                          mode="single"
+                          selected={selectedEndDate}
+                          onSelect={(date) => {
+                            setSelectedEndDate(date);
+                            if (date) {
+                              setEndDate(format(date, 'yyyy-MM-dd'));
+                            }
+                          }}
+                          className="rounded-md border"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setDateFilter('custom');
+                          setIsRangeDialogOpen(false);
+                        }}
+                        className="flex-1"
+                        disabled={!startDate && !endDate}
+                      >
+                        Aplicar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setStartDate('');
+                          setEndDate('');
+                          setSelectedStartDate(null);
+                          setSelectedEndDate(null);
+                          setIsRangeDialogOpen(false);
+                        }}
+                        className="flex-1"
+                      >
+                        Limpiar
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Sessions Table */}
       <Card>
         <CardHeader>
@@ -451,8 +621,218 @@ export default function TimeTracking() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="text-center py-8 text-gray-500">
-            PDF Export funcional - Interfaz simplificada para evitar error de hooks
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Entrada</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Salida</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Horas</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const sortedSessions = filteredSessions
+                    .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                  
+                  const showSummaries = selectedEmployee !== 'all';
+                  let currentWeekStart: Date | null = null;
+                  let previousWeekStart: Date | null = null;
+                  let currentMonth: string | null = null;
+                  let previousMonth: string | null = null;
+                  
+                  const calculateWeekTotal = (weekStart: Date) => 
+                    sortedSessions
+                      .filter(session => {
+                        const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
+                        return sessionWeekStart.getTime() === weekStart.getTime();
+                      })
+                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                  
+                  const calculateMonthTotal = (monthKey: string) => 
+                    sortedSessions
+                      .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
+                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                  
+                  const result: JSX.Element[] = [];
+                  
+                  sortedSessions.forEach((session: any, index: number) => {
+                    const sessionDate = new Date(session.clockIn);
+                    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+                    const monthKey = format(sessionDate, 'yyyy-MM');
+                    const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
+                    const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+                    
+                    if (isNewWeek) {
+                      previousWeekStart = currentWeekStart;
+                      currentWeekStart = weekStart;
+                    }
+                    
+                    if (isNewMonth) {
+                      previousMonth = currentMonth;
+                      currentMonth = monthKey;
+                    }
+                    
+                    // Add summaries only when filtering by specific employee
+                    if (showSummaries && isNewMonth && index > 0 && previousMonth) {
+                      const monthTotal = calculateMonthTotal(previousMonth);
+                      const [year, month] = previousMonth.split('-');
+                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      
+                      result.push(
+                        <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
+                          <td colSpan={6} className="py-3 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize">
+                              Total {monthName}: {monthTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
+                      const weekTotal = calculateWeekTotal(previousWeekStart);
+                      result.push(
+                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
+                          <td colSpan={6} className="py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    const hours = calculateHours(session.clockIn, session.clockOut);
+                    const isEditing = editingSession === session.id;
+                    
+                    result.push(
+                      <tr key={session.id} className="hover:bg-gray-50 border-b border-gray-100">
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-gray-900">
+                            {session.userName || 'Usuario Desconocido'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="date"
+                              value={editData.date}
+                              onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
+                              className="w-36 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="time"
+                              value={editData.clockIn}
+                              onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+                              className="w-24 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {format(new Date(session.clockIn), 'HH:mm')}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {isEditing ? (
+                            <Input
+                              type="time"
+                              value={editData.clockOut}
+                              onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+                              className="w-24 h-8"
+                            />
+                          ) : (
+                            <div className="text-gray-700">
+                              {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-gray-900">
+                            {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {isEditing ? (
+                            <div className="flex gap-2 justify-center">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveSession(session.id)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleCancelEdit}
+                                className="h-8 w-8 p-0"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditSession(session)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  });
+                  
+                  // Add final summaries for the last entries
+                  if (showSummaries && sortedSessions.length > 0) {
+                    if (previousWeekStart) {
+                      const weekTotal = calculateWeekTotal(previousWeekStart);
+                      result.push(
+                        <tr key={`week-final`} className="bg-gray-100 border-y border-gray-300">
+                          <td colSpan={6} className="py-2 px-4 text-center">
+                            <div className="font-medium text-gray-700">
+                              Total semana: {weekTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    if (currentMonth && typeof currentMonth === 'string') {
+                      const monthTotal = calculateMonthTotal(currentMonth);
+                      const [year, month] = currentMonth.split('-');
+                      const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                      
+                      result.push(
+                        <tr key={`month-final`} className="bg-blue-50 border-y-2 border-blue-200">
+                          <td colSpan={6} className="py-3 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize">
+                              Total {monthName}: {monthTotal.toFixed(1)}h
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  }
+                  
+                  return result;
+                })()}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
