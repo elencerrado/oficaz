@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, Calendar as CalendarIcon } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -77,9 +76,7 @@ export default function VacationManagement() {
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit'>('approve');
-  const [editDates, setEditDates] = useState({ startDate: "", endDate: "" });
-  const [startCalendarOpen, setStartCalendarOpen] = useState(false);
-  const [endCalendarOpen, setEndCalendarOpen] = useState(false);
+  const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
   
   const { toast } = useToast();
@@ -181,11 +178,9 @@ export default function VacationManagement() {
     setSelectedRequest(request);
     setModalAction(action);
     setEditDates({
-      startDate: request.startDate ? new Date(request.startDate).toISOString().split('T')[0] : "",
-      endDate: request.endDate ? new Date(request.endDate).toISOString().split('T')[0] : ""
+      startDate: request.startDate ? new Date(request.startDate) : null,
+      endDate: request.endDate ? new Date(request.endDate) : null
     });
-    setStartCalendarOpen(false);
-    setEndCalendarOpen(false);
     setAdminComment("");
     setShowRequestModal(true);
   };
@@ -199,8 +194,8 @@ export default function VacationManagement() {
     };
 
     if (modalAction === 'edit' && editDates.startDate && editDates.endDate) {
-      updateData.startDate = editDates.startDate;
-      updateData.endDate = editDates.endDate;
+      updateData.startDate = editDates.startDate.toISOString().split('T')[0];
+      updateData.endDate = editDates.endDate.toISOString().split('T')[0];
       updateData.status = 'approved'; // Auto-approve when editing dates
     }
 
@@ -552,14 +547,8 @@ export default function VacationManagement() {
       </Tabs>
 
       {/* Request Management Modal */}
-      <Dialog open={showRequestModal} onOpenChange={(open) => {
-        if (!open) {
-          setStartCalendarOpen(false);
-          setEndCalendarOpen(false);
-        }
-        setShowRequestModal(open);
-      }}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
@@ -596,72 +585,28 @@ export default function VacationManagement() {
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
                       Nueva fecha de inicio
                     </label>
-                    <Popover open={startCalendarOpen} onOpenChange={setStartCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {editDates.startDate ? format(new Date(editDates.startDate), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2 max-w-sm" align="start" side="bottom" sideOffset={4}>
-                        <Calendar
-                          mode="single"
-                          selected={editDates.startDate ? new Date(editDates.startDate) : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              setEditDates(prev => ({ 
-                                ...prev, 
-                                startDate: date.toISOString().split('T')[0]
-                              }));
-                            }
-                            setStartCalendarOpen(false);
-                          }}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className="rounded-md border-0"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker
+                      value={editDates.startDate}
+                      onChange={(date) => setEditDates(prev => ({ ...prev, startDate: date || null }))}
+                      placeholder="Seleccionar fecha de inicio"
+                      disabled={(date) => date < new Date()}
+                    />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
                       Nueva fecha de fin
                     </label>
-                    <Popover open={endCalendarOpen} onOpenChange={setEndCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {editDates.endDate ? format(new Date(editDates.endDate), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2 max-w-sm" align="start" side="bottom" sideOffset={4}>
-                        <Calendar
-                          mode="single"
-                          selected={editDates.endDate ? new Date(editDates.endDate) : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              setEditDates(prev => ({ 
-                                ...prev, 
-                                endDate: date.toISOString().split('T')[0]
-                              }));
-                            }
-                            setEndCalendarOpen(false);
-                          }}
-                          disabled={(date) => {
-                            const startDate = editDates.startDate ? new Date(editDates.startDate) : new Date();
-                            return date < startDate;
-                          }}
-                          initialFocus
-                          className="rounded-md border-0"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker
+                      value={editDates.endDate}
+                      onChange={(date) => setEditDates(prev => ({ ...prev, endDate: date || null }))}
+                      placeholder="Seleccionar fecha de fin"
+                      disabled={(date) => {
+                        if (editDates.startDate) {
+                          return date < editDates.startDate;
+                        }
+                        return date < new Date();
+                      }}
+                    />
                   </div>
                 </div>
               )}
