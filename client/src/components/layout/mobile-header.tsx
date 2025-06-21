@@ -10,7 +10,7 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, company, logout } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="text-gray-600" size={20} />
         </Button>
-        <h1 className="text-lg font-semibold text-gray-900 ml-2 lg:ml-0">{user?.companyName || 'Oficaz'}</h1>
+        <h1 className="text-lg font-semibold text-gray-900 ml-2 lg:ml-0">{company?.name || 'Oficaz'}</h1>
       </div>
       
       <div className="flex items-center space-x-4">
