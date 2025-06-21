@@ -595,7 +595,7 @@ export default function VacationRequests() {
                               <MessageCircle className="w-3 h-3 text-white/40" />
                             </div>
                           </PopoverTrigger>
-                          <PopoverContent className="w-80 p-3" align="center">
+                          <PopoverContent className="w-80 max-w-[90vw] p-3" side="left" sideOffset={10} align="start">
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <MessageCircle className="w-4 h-4 text-blue-600" />
