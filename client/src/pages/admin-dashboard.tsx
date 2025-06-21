@@ -142,7 +142,10 @@ export default function AdminDashboard() {
       const startDate = parseISO(req.startDate);
       const endDate = parseISO(req.endDate);
       return date >= startDate && date <= endDate;
-    }) || [];
+    }).map((req: any) => ({
+      ...req,
+      userName: req.userName || req.fullName || 'Empleado'
+    })) || [];
   };
 
   // Check if date has events
@@ -380,8 +383,20 @@ export default function AdminDashboard() {
                       const events = getDateEvents(selectedDate);
                       const vacations = getVacationDetailsForDate(selectedDate);
                       
+                      // Debug logs
+                      console.log('Selected date:', format(selectedDate, 'yyyy-MM-dd'));
+                      console.log('All approved vacations:', approvedVacations);
+                      console.log('Vacations for this date:', vacations);
+                      
                       if (events.length === 0 && vacations.length === 0) {
-                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                        return (
+                          <div>
+                            <p className="text-sm text-gray-500 mb-2">No hay eventos programados</p>
+                            <p className="text-xs text-gray-400">
+                              Debug: {approvedVacations?.length || 0} vacaciones aprobadas en total
+                            </p>
+                          </div>
+                        );
                       }
                       
                       return (
@@ -413,7 +428,10 @@ export default function AdminDashboard() {
                               <div className="space-y-1">
                                 {vacations.map((vacation: any, idx: number) => (
                                   <div key={idx} className="text-sm text-green-700 ml-5">
-                                    • {vacation.userName || 'Empleado'}
+                                    • {vacation.userName || vacation.fullName || `Usuario ${vacation.userId}`}
+                                    <span className="text-xs text-gray-500 ml-2">
+                                      ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
+                                    </span>
                                   </div>
                                 ))}
                               </div>
