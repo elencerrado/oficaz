@@ -43,13 +43,14 @@ export function DatePickerDay({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-0 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden z-50" 
+        className="w-auto p-0 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden z-[9999] max-h-[80vh] overflow-auto" 
         align="start"
-        side="bottom"
-        sideOffset={4}
+        side="top"
+        sideOffset={8}
         avoidCollisions={true}
-        collisionPadding={16}
+        collisionPadding={32}
         sticky="always"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="p-3">
           <Calendar
@@ -130,44 +131,47 @@ export function DatePickerPeriod({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-4 z-50" 
-        align="center"
-        side="bottom"
-        sideOffset={4}
+        className="w-auto p-4 z-[9999] max-h-[80vh] overflow-auto" 
+        align="start"
+        side="top"
+        sideOffset={8}
         avoidCollisions={true}
-        collisionPadding={20}
+        collisionPadding={32}
         sticky="always"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="space-y-4">
+        <div className="space-y-3 w-full min-w-0">
           <div className="text-sm font-medium text-center">
             Seleccionar rango de fechas
           </div>
           <div className="text-xs text-gray-500 text-center">
             Haz clic en una fecha de inicio y luego en una fecha de fin
           </div>
-          <Calendar
-            mode="range"
-            selected={{
-              from: startDate || undefined,
-              to: endDate || undefined
-            }}
-            onSelect={(range) => {
-              if (range?.from) {
-                onStartDateChange(range.from);
-              }
-              if (range?.to) {
-                onEndDateChange(range.to);
-              }
-              if (!range) {
-                onStartDateChange(undefined);
-                onEndDateChange(undefined);
-              }
-            }}
-            className="rounded-md border"
-            numberOfMonths={1}
-            showOutsideDays={false}
-            locale={es}
-          />
+          <div className="flex justify-center">
+            <Calendar
+              mode="range"
+              selected={{
+                from: startDate || undefined,
+                to: endDate || undefined
+              }}
+              onSelect={(range) => {
+                if (range?.from) {
+                  onStartDateChange(range.from);
+                }
+                if (range?.to) {
+                  onEndDateChange(range.to);
+                }
+                if (!range) {
+                  onStartDateChange(undefined);
+                  onEndDateChange(undefined);
+                }
+              }}
+              className="rounded-md border w-fit"
+              numberOfMonths={1}
+              showOutsideDays={false}
+              locale={es}
+            />
+          </div>
           {(startDate || endDate) && (
             <div className="text-xs text-center text-gray-600">
               {startDate && (
