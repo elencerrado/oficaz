@@ -44,6 +44,11 @@ export default function EmployeesSimple() {
     startDate: '',
     status: 'active',
     vacationDaysAdjustment: 0,
+    personalEmail: '',
+    personalPhone: '',
+    address: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
   });
 
   const { toast } = useToast();
@@ -80,6 +85,11 @@ export default function EmployeesSimple() {
       startDate: editEmployee.startDate,
       status: editEmployee.status,
       vacationDaysAdjustment: editEmployee.vacationDaysAdjustment,
+      personalEmail: editEmployee.personalEmail,
+      personalPhone: editEmployee.personalPhone,
+      address: editEmployee.address,
+      emergencyContactName: editEmployee.emergencyContactName,
+      emergencyContactPhone: editEmployee.emergencyContactPhone,
     });
   };
 
@@ -141,6 +151,11 @@ export default function EmployeesSimple() {
       startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
       status: employee.status || 'active',
       vacationDaysAdjustment: Number(employee.vacationDaysAdjustment || 0),
+      personalEmail: employee.personalEmail || '',
+      personalPhone: employee.personalPhone || '',
+      address: employee.address || '',
+      emergencyContactName: employee.emergencyContactName || '',
+      emergencyContactPhone: employee.emergencyContactPhone || '',
     });
     setShowEditModal(true);
   };
@@ -623,32 +638,61 @@ export default function EmployeesSimple() {
                       Información Personal
                     </h4>
                     
-                    <div className="space-y-3 text-sm">
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Email Personal</Label>
-                        <p className="mt-1 text-gray-900">{selectedEmployee.personalEmail || 'No especificado'}</p>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="personalEmail" className="text-sm font-medium text-gray-700">Email Personal</Label>
+                        <Input
+                          id="personalEmail"
+                          type="email"
+                          value={editEmployee.personalEmail}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, personalEmail: e.target.value })}
+                          placeholder="email@personal.com"
+                          className="mt-1"
+                        />
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Teléfono Personal</Label>
-                        <p className="mt-1 text-gray-900">{selectedEmployee.personalPhone || 'No especificado'}</p>
+                      <div>
+                        <Label htmlFor="personalPhone" className="text-sm font-medium text-gray-700">Teléfono Personal</Label>
+                        <Input
+                          id="personalPhone"
+                          value={editEmployee.personalPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, personalPhone: e.target.value })}
+                          placeholder="+34 666 666 666"
+                          className="mt-1"
+                        />
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Dirección</Label>
-                        <p className="mt-1 text-gray-900 text-wrap break-words">
-                          {selectedEmployee.address || 'No especificada'}
-                        </p>
+                      <div>
+                        <Label htmlFor="address" className="text-sm font-medium text-gray-700">Dirección</Label>
+                        <Input
+                          id="address"
+                          value={editEmployee.address}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, address: e.target.value })}
+                          placeholder="Calle, número, ciudad..."
+                          className="mt-1"
+                        />
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Persona de Contacto</Label>
-                        <p className="mt-1 text-gray-900">{selectedEmployee.emergencyContactName || 'No especificada'}</p>
+                      <div>
+                        <Label htmlFor="emergencyContactName" className="text-sm font-medium text-gray-700">Persona de Contacto</Label>
+                        <Input
+                          id="emergencyContactName"
+                          value={editEmployee.emergencyContactName}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactName: e.target.value })}
+                          placeholder="Nombre del contacto de emergencia"
+                          className="mt-1"
+                        />
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Teléfono de Contacto</Label>
-                        <p className="mt-1 text-gray-900">{selectedEmployee.emergencyContactPhone || 'No especificado'}</p>
+                      <div>
+                        <Label htmlFor="emergencyContactPhone" className="text-sm font-medium text-gray-700">Teléfono de Contacto</Label>
+                        <Input
+                          id="emergencyContactPhone"
+                          value={editEmployee.emergencyContactPhone}
+                          onChange={(e) => setEditEmployee({ ...editEmployee, emergencyContactPhone: e.target.value })}
+                          placeholder="+34 666 666 666"
+                          className="mt-1"
+                        />
                       </div>
                     </div>
                   </div>
