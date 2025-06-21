@@ -142,25 +142,33 @@ export function DatePickerPeriod({
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 p-4">
           <Calendar
-            mode="single"
-            selected={isSelectingStart ? startDate : endDate}
+            mode="range"
+            selected={{
+              from: startDate || undefined,
+              to: endDate || undefined
+            }}
             defaultMonth={startDate || new Date()}
-            onSelect={(date) => {
-              if (!date) return;
-              
-              if (isSelectingStart) {
+            onSelect={(range) => {
+              if (!range) {
+                onStartDateChange(undefined);
+                onEndDateChange(undefined);
+                setIsSelectingStart(true);
+                return;
+              }
+
+              if (isSelectingStart && range.from) {
                 // Primer click: establecer fecha de inicio
-                onStartDateChange(date);
+                onStartDateChange(range.from);
                 onEndDateChange(undefined); // Limpiar fecha de fin
                 setIsSelectingStart(false);
-              } else {
+              } else if (!isSelectingStart && range.to) {
                 // Segundo click: establecer fecha de fin
-                if (startDate && date < startDate) {
+                if (startDate && range.to < startDate) {
                   // Si la fecha seleccionada es anterior al inicio, intercambiar
                   onEndDateChange(startDate);
-                  onStartDateChange(date);
+                  onStartDateChange(range.to);
                 } else {
-                  onEndDateChange(date);
+                  onEndDateChange(range.to);
                 }
                 // Cerrar el modal automáticamente cuando se completa el rango
                 setTimeout(() => {
