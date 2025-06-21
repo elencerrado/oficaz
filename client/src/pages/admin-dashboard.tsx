@@ -391,58 +391,24 @@ export default function AdminDashboard() {
                     }}
                     modifiersStyles={{
                       nationalHoliday: { 
-                        backgroundColor: '#fecaca', 
+                        backgroundColor: '#fee2e2', 
                         color: '#dc2626', 
-                        fontWeight: '600',
-                        borderRadius: '8px',
-                        border: '1px solid #fca5a5'
+                        fontWeight: '600'
                       },
                       customHoliday: { 
                         backgroundColor: '#fed7aa', 
                         color: '#d97706', 
-                        fontWeight: '600',
-                        borderRadius: '8px',
-                        border: '1px solid #fdba74'
-                      },
-                      vacation: { 
-                        backgroundColor: '#bbf7d0', 
-                        color: '#16a34a', 
-                        fontWeight: '600',
-                        borderRadius: '8px',
-                        border: '1px solid #86efac'
-                      },
-                      pendingVacation: { 
-                        backgroundColor: '#fed7aa', 
-                        color: '#ea580c', 
-                        fontWeight: '600',
-                        borderRadius: '8px',
-                        border: '1px solid #fdba74'
-                      }
-                    }}
-                    modifiersStyles={{
-                      nationalHoliday: { 
-                        backgroundColor: '#fecaca', 
-                        color: '#dc2626', 
-                        fontWeight: '600',
-                        borderRadius: '8px'
-                      },
-                      customHoliday: { 
-                        backgroundColor: '#fed7aa', 
-                        color: '#d97706', 
-                        fontWeight: '600',
-                        borderRadius: '8px'
+                        fontWeight: '600'
                       },
                       approvedVacation: { 
-                        backgroundColor: '#bbf7d0', 
+                        backgroundColor: '#dcfce7', 
                         color: '#16a34a', 
-                        fontWeight: '600',
-                        borderRadius: '8px'
+                        fontWeight: '600'
                       },
                       pendingVacation: { 
-                        backgroundColor: '#fde68a', 
+                        backgroundColor: '#fef3c7', 
                         color: '#d97706', 
-                        fontWeight: '600',
-                        borderRadius: '8px'
+                        fontWeight: '600'
                       }
                     }}
                   />
