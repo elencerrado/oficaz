@@ -248,7 +248,7 @@ export default function Messages() {
   // Admin view with light theme
   if (isAdmin) {
     return (
-      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="h-screen bg-gray-50 flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center space-x-4">
@@ -264,11 +264,11 @@ export default function Messages() {
           </div>
         </div>
         {/* Content */}
-        <div className="p-6 flex-1 overflow-hidden">
+        <div className="flex-1 p-6 min-h-0">
           <div className="grid lg:grid-cols-3 gap-6 h-full">
             {/* Employee List */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg border border-gray-200 h-full">
+            <div className="lg:col-span-1 h-full">
+              <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-medium text-gray-900">Empleados</h2>
@@ -392,9 +392,9 @@ export default function Messages() {
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 h-full">
               {selectedChat ? (
-                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden">
+                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                   {/* Chat Header - Fixed */}
                   <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-lg">
                     <div className="flex items-center space-x-3">
