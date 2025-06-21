@@ -593,7 +593,7 @@ export default function TimeTracking() {
                       Rango
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4" align="end">
+                  <PopoverContent className="w-auto p-4" align="end" side="bottom" avoidCollisions={true}>
                     <div className="space-y-4">
                       <div className="text-sm font-medium text-center">
                         Seleccionar rango de fechas
