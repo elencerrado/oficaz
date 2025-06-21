@@ -43,10 +43,13 @@ export function DatePickerDay({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-0 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden" 
+        className="w-auto p-0 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden z-50" 
         align="start"
         side="bottom"
         sideOffset={4}
+        avoidCollisions={true}
+        collisionPadding={16}
+        sticky="always"
       >
         <div className="p-3">
           <Calendar
@@ -126,7 +129,15 @@ export function DatePickerPeriod({
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-4" align="center">
+      <PopoverContent 
+        className="w-auto p-4 z-50" 
+        align="center"
+        side="bottom"
+        sideOffset={4}
+        avoidCollisions={true}
+        collisionPadding={20}
+        sticky="always"
+      >
         <div className="space-y-4">
           <div className="text-sm font-medium text-center">
             Seleccionar rango de fechas
