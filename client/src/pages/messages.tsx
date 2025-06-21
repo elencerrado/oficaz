@@ -113,7 +113,12 @@ export default function Messages() {
     }
   });
 
-  // Removed auto-scroll to prevent unwanted page scrolling when opening chats
+  // Auto-scroll chat to bottom when opening chat or new messages arrive
+  useEffect(() => {
+    if (selectedChat && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [selectedChat, messages]);
 
   useEffect(() => {
     if (selectedChat && messages) {
@@ -411,7 +416,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable middle section */}
-                  <div className="overflow-y-auto p-4" style={{ height: 'calc(70vh - 160px)' }}>
+                  <div ref={messagesContainerRef} className="overflow-y-auto p-4" style={{ height: 'calc(70vh - 160px)' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
