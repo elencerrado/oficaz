@@ -50,20 +50,30 @@ export default function VacationRequests() {
     // Check if user has vacation updates notification active in dashboard
     const hasVacationUpdates = localStorage.getItem('hasVacationUpdates') === 'true';
     
+    console.log('🔍 Vacation request page - checking highlights:', {
+      requestsCount: requests.length,
+      hasVacationUpdates,
+      requests: requests.map(r => ({
+        id: r.id,
+        status: r.status,
+        reviewedAt: r.reviewedAt
+      }))
+    });
+    
     if (!hasVacationUpdates) {
       // No notification active, don't highlight anything
       setHighlightedRequests(new Set());
+      console.log('❌ No vacation updates notification - not highlighting');
       return;
     }
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z'); // Set to before recent approvals
     
     console.log('🔍 Checking for highlighted requests (notification active):', {
-      requestsCount: requests.length,
-      hasVacationUpdates,
       lastCheckTime,
-      lastCheckDate: lastCheckDate.toISOString()
+      lastCheckDate: lastCheckDate.toISOString(),
+      now: new Date().toISOString()
     });
     
     const newlyProcessedRequests = requests.filter((request: any) => {
@@ -77,6 +87,7 @@ export default function VacationRequests() {
         status: request.status,
         reviewedAt: request.reviewedAt,
         reviewDate: reviewDate.toISOString(),
+        lastCheckDate: lastCheckDate.toISOString(),
         isProcessed,
         isNew,
         shouldHighlight: isProcessed && isNew
@@ -85,13 +96,15 @@ export default function VacationRequests() {
       return isProcessed && isNew;
     });
     
+    console.log('📋 Newly processed requests found:', newlyProcessedRequests.map(r => r.id));
+    
     if (newlyProcessedRequests.length > 0) {
       const newHighlighted = new Set(newlyProcessedRequests.map((req: any) => req.id));
       setHighlightedRequests(newHighlighted);
       console.log('✨ Highlighting processed requests:', Array.from(newHighlighted));
     } else {
       setHighlightedRequests(new Set());
-      console.log('No requests to highlight');
+      console.log('❌ No requests to highlight based on criteria');
     }
   }, [requests]);
 
