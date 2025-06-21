@@ -50,6 +50,7 @@ export default function Messages() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -120,6 +121,25 @@ export default function Messages() {
       });
     }
   }, [selectedChat, messages, user?.id]);
+
+  // Detect keyboard open/close for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const windowHeight = window.screen.height;
+      const keyboardThreshold = windowHeight * 0.75;
+      
+      setIsKeyboardOpen(viewportHeight < keyboardThreshold);
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport.removeEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   const getMessageIcon = (type: string) => {
     switch (type) {
@@ -523,8 +543,8 @@ export default function Messages() {
       ) : (
         // Chat View - Full screen with proper mobile layout
         <div className="flex flex-col h-screen bg-employee-gradient">
-          {/* Chat Header - Fixed position */}
-          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
+          {/* Chat Header - Fixed position with keyboard detection */}
+          <div className={`${isKeyboardOpen ? 'absolute' : 'fixed'} top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50`}>
             <Button
               variant="ghost"
               size="sm"
@@ -614,7 +634,7 @@ export default function Messages() {
                   }
                 }}
                 onFocus={() => {
-                  // Mobile keyboard handling
+                  setIsKeyboardOpen(true);
                   setTimeout(() => {
                     if (messageInputRef.current) {
                       messageInputRef.current.scrollIntoView({ 
@@ -622,6 +642,11 @@ export default function Messages() {
                         block: 'center'
                       });
                     }
+                  }, 300);
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setIsKeyboardOpen(false);
                   }, 300);
                 }}
               />
