@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force toast to appear above everything */
+[data-radix-toast-viewport] {
+  z-index: 999999 !important;
+}
+
+[data-radix-toast-viewport] [data-radix-toast-root] {
+  z-index: 999999 !important;
+}
+
 /* Personalizar colores del calendario de rango */
 .rdp-day_range_middle {
   @apply bg-blue-100 text-blue-900 !important;
