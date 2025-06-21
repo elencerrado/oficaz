@@ -448,20 +448,25 @@ export default function AdminDashboard() {
                       ver más
                     </Button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {pendingVacations.slice(0, 3).map((request: any) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md"
+                        className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={() => {
                           const companyAlias = 'test';
                           window.location.href = `/${companyAlias}/vacaciones`;
                         }}
                       >
-                        <Coffee className="h-4 w-4 text-orange-500" />
-                        <span className="text-sm text-gray-900">
-                          Vacaciones de {request.userName || 'Empleado'}
-                        </span>
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Vacaciones de {request.userName || 'Empleado'}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            Del {format(parseISO(request.startDate), 'dd/MM')} al {format(parseISO(request.endDate), 'dd/MM')}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -482,7 +487,7 @@ export default function AdminDashboard() {
                     ver más
                   </Button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {allHolidays
                     .filter(holiday => {
                       const holidayDate = parseISO(holiday.date);
@@ -496,28 +501,22 @@ export default function AdminDashboard() {
                       const isCustom = holiday.type === 'custom';
                       
                       return (
-                        <div key={idx} className="flex items-center gap-3 py-2">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            isCustom 
-                              ? 'bg-amber-100 text-amber-600' 
-                              : 'bg-red-100 text-red-600'
-                          }`}>
-                            <span className="text-xs font-medium">
-                              {format(holidayDate, 'dd')}
-                            </span>
-                          </div>
-                          <div className="flex-1">
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                          <div className={`w-3 h-3 rounded-full ${
+                            isCustom ? 'bg-orange-500' : 'bg-red-500'
+                          }`}></div>
+                          <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
+                              {holiday.name}
                             </p>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs text-gray-500">{holiday.name}</p>
+                            <p className="text-xs text-gray-600">
+                              {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
                               {isCustom && (
-                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                                   Personalizado
                                 </span>
                               )}
-                            </div>
+                            </p>
                           </div>
                         </div>
                       );
