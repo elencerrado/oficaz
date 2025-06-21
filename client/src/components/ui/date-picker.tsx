@@ -146,9 +146,6 @@ export function DatePickerPeriod({
           <div className="text-sm font-medium text-center">
             Seleccionar rango de fechas
           </div>
-          <div className="text-xs text-gray-500 text-center">
-            Haz clic en una fecha de inicio y luego en una fecha de fin
-          </div>
           <Calendar
             mode="range"
             selected={{
@@ -175,25 +172,16 @@ export function DatePickerPeriod({
             locale={es}
           />
 
-          <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                setIsRangeDialogOpen(false);
-              }}
-              className="flex-1"
-              disabled={!startDate}
-            >
-              Aplicar
-            </Button>
+          <div className="flex justify-center">
             <Button
               variant="outline"
               onClick={() => {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
               }}
-              className="flex-1"
+              size="sm"
             >
-              Limpiar
+              Limpiar fechas
             </Button>
           </div>
         </div>
