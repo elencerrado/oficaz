@@ -16,7 +16,7 @@ import {
   Plane,
   PartyPopper
 } from 'lucide-react';
-import { format, addDays, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
