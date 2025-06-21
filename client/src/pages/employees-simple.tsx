@@ -23,7 +23,8 @@ import {
   IdCard,
   Mail,
   User,
-  Minus
+  Minus,
+  AlertCircle
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { apiRequest } from '@/lib/queryClient';
