@@ -528,3 +528,36 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   font-size: 14px;
   opacity: 0.6;
 }
+
+/* Calendar styling for wider display */
+.calendario-amplio .rdp {
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+.calendario-amplio .rdp-table {
+  width: 100% !important;
+  max-width: none !important;
+  table-layout: fixed !important;
+}
+
+.calendario-amplio .rdp-cell {
+  width: 14.28% !important;
+  text-align: center !important;
+  padding: 0.25rem !important;
+}
+
+.calendario-amplio .rdp-day {
+  width: 100% !important;
+  height: 2.5rem !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.calendario-amplio .rdp-head_cell {
+  width: 14.28% !important;
+  text-align: center !important;
+  padding: 0.5rem 0.25rem !important;
+}
