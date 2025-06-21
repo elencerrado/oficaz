@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
 import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
