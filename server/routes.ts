@@ -867,7 +867,19 @@ startxref
   // Update company information
   app.patch('/api/companies/update', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { name, cif, email, contactName, phone, address, province } = req.body;
+      const { 
+        name, 
+        cif, 
+        email, 
+        contactName, 
+        phone, 
+        address, 
+        province,
+        employeeTimeEditPermission,
+        workingHoursPerDay,
+        defaultVacationDays,
+        vacationDaysPerMonth
+      } = req.body;
       const userId = req.user!.id;
       const user = await storage.getUser(userId);
 
@@ -882,7 +894,11 @@ startxref
         contactName,
         phone,
         address,
-        province
+        province,
+        employeeTimeEditPermission,
+        workingHoursPerDay,
+        defaultVacationDays,
+        vacationDaysPerMonth
       });
 
       if (!updatedCompany) {

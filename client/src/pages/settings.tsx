@@ -656,9 +656,12 @@ export default function Settings() {
               </Card>
 
               <div className="flex justify-end">
-                <Button>
+                <Button
+                  onClick={() => updateCompanyMutation.mutate(companyData)}
+                  disabled={updateCompanyMutation.isPending}
+                >
                   <Save className="h-4 w-4 mr-2" />
-                  Guardar configuración
+                  {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
                 </Button>
               </div>
             </div>
