@@ -248,9 +248,9 @@ export default function Messages() {
   // Admin view with light theme
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center space-x-4">
             <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
               <MessageCircle className="h-6 w-6 text-white" />
@@ -264,8 +264,8 @@ export default function Messages() {
           </div>
         </div>
         {/* Content */}
-        <div className="p-6 pt-[5px] pb-[5px]">
-          <div className="grid lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 12rem)' }}>
+        <div className="p-6 flex-1 overflow-hidden">
+          <div className="grid lg:grid-cols-3 gap-6 h-full">
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
