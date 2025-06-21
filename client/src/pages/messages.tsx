@@ -266,7 +266,7 @@ export default function Messages() {
 
         {/* Content */}
         <div className="p-6">
-          <div className="grid lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 10rem)' }}>
+          <div className="grid lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 8rem)' }}>
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
@@ -414,7 +414,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 22rem)' }}>
+                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 18rem)' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
