@@ -248,29 +248,25 @@ export default function Messages() {
   // Admin view with light theme
   if (isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Fixed Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 z-50">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <MessageCircle className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Mensajería</h1>
-                  <p className="text-gray-600 text-sm">
-                    Comunícate con empleados y gestiona mensajes
-                  </p>
-                </div>
-              </div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
+              <MessageCircle className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Mensajería</h1>
+              <p className="text-gray-600 text-sm">
+                Comunícate con empleados y gestiona mensajes
+              </p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6">
-          <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+        <div className="p-6">
+          <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-10rem)]">
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
@@ -418,7 +414,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4">
+                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 20rem)' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
