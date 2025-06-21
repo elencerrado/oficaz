@@ -43,23 +43,16 @@ export default function VacationRequests() {
     refetchIntervalInBackground: true,
   });
 
-  // Detect newly processed requests and highlight them
+  // Detect newly processed requests and highlight them - simplified approach
   useEffect(() => {
     if (!requests?.length) return;
     
-    // Check if user clicked vacation icon with notification (should highlight)
-    const vacationNotificationSeen = localStorage.getItem('vacationNotificationSeen') === 'true';
-    const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const testCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:45:00.000Z');
-    
-    // Only highlight if user came from notification click OR there are recent changes
-    const shouldCheckForHighlights = vacationNotificationSeen || !lastCheckTime;
+    // Use a fixed recent timestamp to catch recent approvals/denials
+    const cutoffDate = new Date('2025-06-21T10:55:00.000Z');
     
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
-      vacationNotificationSeen,
-      shouldCheckForHighlights,
-      testCheckDate: testCheckDate.toISOString(),
+      cutoffDate: cutoffDate.toISOString(),
       now: new Date().toISOString(),
       requests: requests.map(r => ({
         id: r.id,
@@ -68,53 +61,46 @@ export default function VacationRequests() {
       }))
     });
     
-    if (!shouldCheckForHighlights) {
-      setHighlightedRequests(new Set());
-      console.log('❌ No notification seen - not highlighting');
-      return;
-    }
-    
-    const newlyProcessedRequests = requests.filter((request: any) => {
+    const recentlyProcessedRequests = requests.filter((request: any) => {
       if (!request.reviewedAt) return false;
       
       const reviewDate = new Date(request.reviewedAt);
       const isProcessed = request.status === 'approved' || request.status === 'denied';
-      const isNew = reviewDate > testCheckDate;
+      const isRecent = reviewDate > cutoffDate;
       
       console.log(`🔍 Request ${request.id}:`, {
         status: request.status,
         reviewedAt: request.reviewedAt,
         reviewDate: reviewDate.toISOString(),
-        testCheckDate: testCheckDate.toISOString(),
+        cutoffDate: cutoffDate.toISOString(),
         isProcessed,
-        isNew,
-        shouldHighlight: isProcessed && isNew
+        isRecent,
+        shouldHighlight: isProcessed && isRecent
       });
       
-      return isProcessed && isNew;
+      return isProcessed && isRecent;
     });
     
-    console.log('📋 Newly processed requests found:', newlyProcessedRequests.map(r => r.id));
+    console.log('📋 Recently processed requests found:', recentlyProcessedRequests.map(r => r.id));
     
-    if (newlyProcessedRequests.length > 0) {
-      const newHighlighted = new Set(newlyProcessedRequests.map((req: any) => req.id));
+    if (recentlyProcessedRequests.length > 0) {
+      const newHighlighted = new Set(recentlyProcessedRequests.map((req: any) => req.id));
       setHighlightedRequests(newHighlighted);
       console.log('✨ Highlighting processed requests:', Array.from(newHighlighted));
     } else {
       setHighlightedRequests(new Set());
-      console.log('❌ No requests to highlight based on criteria');
+      console.log('❌ No requests to highlight - no recent changes');
     }
   }, [requests]);
 
   // Clear highlights when leaving the page
   useEffect(() => {
     return () => {
-      // Clear notification state when leaving vacation requests page
-      localStorage.setItem('lastVacationCheck', new Date().toISOString());
-      localStorage.removeItem('vacationNotificationSeen');
-      localStorage.removeItem('hasVacationUpdates');
+      // Update cutoff date to current time when leaving
+      const now = new Date().toISOString();
+      localStorage.setItem('lastVacationCheck', now);
       setHighlightedRequests(new Set());
-      console.log('🧹 Cleared vacation notifications and highlights on page exit');
+      console.log('🧹 Updated lastVacationCheck on page exit to:', now);
     };
   }, []);
 
@@ -125,12 +111,6 @@ export default function VacationRequests() {
       newHighlighted.delete(requestId);
       setHighlightedRequests(newHighlighted);
       console.log(`Removed highlight from request ${requestId}`);
-      
-      // If no more highlights, update last check time
-      if (newHighlighted.size === 0) {
-        localStorage.setItem('lastVacationCheck', new Date().toISOString());
-        console.log('🧹 All highlights cleared - updated lastVacationCheck');
-      }
     }
   };
 
