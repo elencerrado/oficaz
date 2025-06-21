@@ -151,7 +151,7 @@ export default function AdminDashboard() {
     const events = [];
 
     // Check holidays
-    const holiday = holidays.find(h => h.date === dateStr);
+    const holiday = allHolidays.find(h => h.date === dateStr);
     if (holiday) {
       events.push({ type: 'holiday', name: holiday.name });
     }
