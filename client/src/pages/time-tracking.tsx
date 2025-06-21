@@ -528,7 +528,7 @@ export default function TimeTracking() {
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setDateFilter('today')}
-                  className="h-10"
+                  className="h-10 text-sm font-normal"
                 >
                   Hoy
                 </Button>
@@ -538,7 +538,7 @@ export default function TimeTracking() {
                     <Button
                       variant={dateFilter === 'day' ? 'default' : 'outline'}
                       size="sm"
-                      className="h-10"
+                      className="h-10 text-sm font-normal"
                     >
                       Día
                     </Button>
@@ -569,7 +569,12 @@ export default function TimeTracking() {
                     }
                   }}
                 >
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className={cn(
+                    "h-10 text-sm font-normal",
+                    dateFilter === 'month' 
+                      ? "bg-black text-white border-black hover:bg-black/90" 
+                      : "bg-white border-gray-200 hover:bg-gray-50"
+                  )}>
                     <SelectValue placeholder="Mes" />
                   </SelectTrigger>
                   <SelectContent>
