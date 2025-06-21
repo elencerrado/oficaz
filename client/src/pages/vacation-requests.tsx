@@ -47,8 +47,9 @@ export default function VacationRequests() {
   useEffect(() => {
     if (!requests?.length) return;
     
-    // Use a fixed older timestamp to detect recent changes for testing
-    const testCheckDate = new Date('2025-06-21T10:45:00.000Z');
+    // Check if coming from dashboard notification or use stored timestamp
+    const lastCheckTime = localStorage.getItem('lastVacationCheck');
+    const testCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:45:00.000Z');
     
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
@@ -96,11 +97,12 @@ export default function VacationRequests() {
   // Clear highlights when leaving the page
   useEffect(() => {
     return () => {
-      // Only clear if there were highlights
+      // Clear notification state when leaving vacation requests page
       if (highlightedRequests.size > 0) {
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        localStorage.removeItem('hasVacationUpdates');
         setHighlightedRequests(new Set());
-        console.log('🧹 Cleared vacation notifications on page exit');
+        console.log('🧹 Cleared vacation notifications and highlights on page exit');
       }
     };
   }, [highlightedRequests]);

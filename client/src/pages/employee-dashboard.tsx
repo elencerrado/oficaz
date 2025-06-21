@@ -64,12 +64,12 @@ export default function EmployeeDashboard() {
     staleTime: 0, // Always fetch fresh data for vacation notifications
   });
 
-  // Check for vacation updates - using reviewedAt timestamp with real-time detection
+  // Check for vacation updates - clear notification when back on dashboard
   useEffect(() => {
     if (!vacationRequests?.length) return;
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z'); // Set to before recent changes
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:45:00.000Z');
     
     // Find processed requests (approved/denied) that were reviewed after last check
     const newlyProcessedRequests = vacationRequests.filter((request: any) => {
@@ -109,6 +109,20 @@ export default function EmployeeDashboard() {
       setHasVacationUpdates(false);
     }
   }, [vacationRequests]);
+
+  // Clear vacation notifications when user is on dashboard (auto-dismiss after viewing)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (hasVacationUpdates) {
+        console.log('Dashboard auto-clearing vacation notifications after 5 seconds');
+        setHasVacationUpdates(false);
+        localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        localStorage.removeItem('hasVacationUpdates');
+      }
+    }, 5000); // Clear after 5 seconds on dashboard
+
+    return () => clearTimeout(timer);
+  }, [hasVacationUpdates]);
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
