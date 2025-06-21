@@ -405,12 +405,84 @@ export default function Settings() {
                         id="companyAddress"
                         value={companyData.address}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, address: e.target.value }))}
-                        placeholder="Calle, número, código postal, ciudad, provincia"
+                        placeholder="Calle, número, código postal, ciudad"
                         rows={3}
                       />
                     ) : (
                       <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
                         {companyData.address || 'No especificada'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="companyProvince">Provincia</Label>
+                    {isEditingCompany ? (
+                      <Select 
+                        value={companyData.province}
+                        onValueChange={(value) => setCompanyData(prev => ({ ...prev, province: value }))}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Seleccionar provincia" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          <SelectItem value="alava">Álava</SelectItem>
+                          <SelectItem value="albacete">Albacete</SelectItem>
+                          <SelectItem value="alicante">Alicante</SelectItem>
+                          <SelectItem value="almeria">Almería</SelectItem>
+                          <SelectItem value="asturias">Asturias</SelectItem>
+                          <SelectItem value="avila">Ávila</SelectItem>
+                          <SelectItem value="badajoz">Badajoz</SelectItem>
+                          <SelectItem value="barcelona">Barcelona</SelectItem>
+                          <SelectItem value="burgos">Burgos</SelectItem>
+                          <SelectItem value="caceres">Cáceres</SelectItem>
+                          <SelectItem value="cadiz">Cádiz</SelectItem>
+                          <SelectItem value="cantabria">Cantabria</SelectItem>
+                          <SelectItem value="castellon">Castellón</SelectItem>
+                          <SelectItem value="ceuta">Ceuta</SelectItem>
+                          <SelectItem value="ciudad_real">Ciudad Real</SelectItem>
+                          <SelectItem value="cordoba">Córdoba</SelectItem>
+                          <SelectItem value="cuenca">Cuenca</SelectItem>
+                          <SelectItem value="girona">Girona</SelectItem>
+                          <SelectItem value="granada">Granada</SelectItem>
+                          <SelectItem value="guadalajara">Guadalajara</SelectItem>
+                          <SelectItem value="guipuzcoa">Guipúzcoa</SelectItem>
+                          <SelectItem value="huelva">Huelva</SelectItem>
+                          <SelectItem value="huesca">Huesca</SelectItem>
+                          <SelectItem value="islas_baleares">Islas Baleares</SelectItem>
+                          <SelectItem value="jaen">Jaén</SelectItem>
+                          <SelectItem value="la_coruna">La Coruña</SelectItem>
+                          <SelectItem value="la_rioja">La Rioja</SelectItem>
+                          <SelectItem value="las_palmas">Las Palmas</SelectItem>
+                          <SelectItem value="leon">León</SelectItem>
+                          <SelectItem value="lleida">Lleida</SelectItem>
+                          <SelectItem value="lugo">Lugo</SelectItem>
+                          <SelectItem value="madrid">Madrid</SelectItem>
+                          <SelectItem value="malaga">Málaga</SelectItem>
+                          <SelectItem value="melilla">Melilla</SelectItem>
+                          <SelectItem value="murcia">Murcia</SelectItem>
+                          <SelectItem value="navarra">Navarra</SelectItem>
+                          <SelectItem value="ourense">Ourense</SelectItem>
+                          <SelectItem value="palencia">Palencia</SelectItem>
+                          <SelectItem value="pontevedra">Pontevedra</SelectItem>
+                          <SelectItem value="salamanca">Salamanca</SelectItem>
+                          <SelectItem value="santa_cruz_tenerife">Santa Cruz de Tenerife</SelectItem>
+                          <SelectItem value="segovia">Segovia</SelectItem>
+                          <SelectItem value="sevilla">Sevilla</SelectItem>
+                          <SelectItem value="soria">Soria</SelectItem>
+                          <SelectItem value="tarragona">Tarragona</SelectItem>
+                          <SelectItem value="teruel">Teruel</SelectItem>
+                          <SelectItem value="toledo">Toledo</SelectItem>
+                          <SelectItem value="valencia">Valencia</SelectItem>
+                          <SelectItem value="valladolid">Valladolid</SelectItem>
+                          <SelectItem value="vizcaya">Vizcaya</SelectItem>
+                          <SelectItem value="zamora">Zamora</SelectItem>
+                          <SelectItem value="zaragoza">Zaragoza</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        {companyData.province ? companyData.province.charAt(0).toUpperCase() + companyData.province.slice(1).replace('_', ' ') : 'No especificada'}
                       </div>
                     )}
                   </div>
