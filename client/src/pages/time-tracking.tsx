@@ -46,7 +46,6 @@ export default function TimeTracking() {
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
-  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false);
   const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
@@ -534,31 +533,23 @@ export default function TimeTracking() {
                   Hoy
                 </Button>
                 
-                <Popover open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={dateFilter === 'day' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-10 text-sm font-normal"
-                    >
-                      Día
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={currentDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setCurrentDate(date);
-                          setDateFilter('day');
-                          setIsDayDialogOpen(false);
-                        }
-                      }}
-                      className="rounded-md border"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerDay
+                  date={dateFilter === 'day' ? currentDate : undefined}
+                  onDateChange={(date) => {
+                    if (date) {
+                      setCurrentDate(date);
+                      setDateFilter('day');
+                    }
+                  }}
+                  buttonText={dateFilter === 'day' 
+                    ? format(currentDate, 'd MMM yyyy', { locale: es })
+                    : 'Día'
+                  }
+                  className={cn(
+                    "h-10 text-sm font-normal",
+                    dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                  )}
+                />
 
                 <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
                   <PopoverTrigger asChild>
