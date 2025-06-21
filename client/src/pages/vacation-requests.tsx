@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export default function VacationRequests() {
   const [reason, setReason] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [highlightedRequests, setHighlightedRequests] = useState<Set<number>>(new Set());
   const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,7 +39,40 @@ export default function VacationRequests() {
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
     staleTime: 30000,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
   });
+
+  // Detect newly processed requests and highlight them
+  useEffect(() => {
+    if (!requests?.length) return;
+    
+    const lastCheckTime = localStorage.getItem('lastVacationCheck');
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const newlyProcessedRequests = requests.filter((request: any) => {
+      if (request.status === 'pending') return false;
+      
+      const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
+      return reviewDate > lastCheckDate;
+    });
+    
+    if (newlyProcessedRequests.length > 0) {
+      const newHighlighted = new Set(newlyProcessedRequests.map((req: any) => req.id));
+      setHighlightedRequests(newHighlighted);
+      console.log('Highlighting processed requests:', newHighlighted);
+    }
+  }, [requests]);
+
+  // Clear highlights when leaving the page
+  useEffect(() => {
+    return () => {
+      if (highlightedRequests.size > 0) {
+        localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        setHighlightedRequests(new Set());
+      }
+    };
+  }, [highlightedRequests]);
 
 
 
@@ -591,18 +625,24 @@ export default function VacationRequests() {
             <div className="text-sm font-semibold text-center">Fecha</div>
           </div>
 
-          {/* Table Body */}
-          <div className="overflow-y-auto scrollbar-thin" style={{ 
-            maxHeight: 'calc(100vh - 400px)', 
-            minHeight: '300px',
+          {/* Table Body - No scroll, fixed height */}
+          <div style={{ 
             backgroundColor: 'rgba(50, 58, 70, 0.6)',
-            overscrollBehavior: 'contain'
           }}>
             {(requests as any[]).length > 0 ? (
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((request: any) => (
-                  <div key={request.id} className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 hover:bg-white/5 items-center min-h-[48px]">
+                .map((request: any) => {
+                  const isHighlighted = highlightedRequests.has(request.id);
+                  return (
+                    <div 
+                      key={request.id} 
+                      className={`grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] transition-colors duration-300 ${
+                        isHighlighted 
+                          ? 'bg-blue-200/20 hover:bg-blue-200/30' 
+                          : 'hover:bg-white/5'
+                      }`}
+                    >
                     <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
@@ -643,10 +683,11 @@ export default function VacationRequests() {
                     <div className="text-sm text-center text-white/70 flex items-center justify-center">
                       {formatDate(request.createdAt)}
                     </div>
-                  </div>
-                ))
+                    </div>
+                  );
+                })
             ) : (
-              <div className="flex items-center justify-center h-full min-h-48">
+              <div className="flex items-center justify-center py-12">
                 <div className="text-center text-white/60">
                   <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No tienes solicitudes de vacaciones</p>
