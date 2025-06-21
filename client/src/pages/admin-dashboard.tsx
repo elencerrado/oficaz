@@ -419,6 +419,32 @@ export default function AdminDashboard() {
                         border: '1px solid #fdba74'
                       }
                     }}
+                    modifiersStyles={{
+                      nationalHoliday: { 
+                        backgroundColor: '#fecaca', 
+                        color: '#dc2626', 
+                        fontWeight: '600',
+                        borderRadius: '8px'
+                      },
+                      customHoliday: { 
+                        backgroundColor: '#fed7aa', 
+                        color: '#d97706', 
+                        fontWeight: '600',
+                        borderRadius: '8px'
+                      },
+                      approvedVacation: { 
+                        backgroundColor: '#bbf7d0', 
+                        color: '#16a34a', 
+                        fontWeight: '600',
+                        borderRadius: '8px'
+                      },
+                      pendingVacation: { 
+                        backgroundColor: '#fde68a', 
+                        color: '#d97706', 
+                        fontWeight: '600',
+                        borderRadius: '8px'
+                      }
+                    }}
                   />
                 </div>
 
