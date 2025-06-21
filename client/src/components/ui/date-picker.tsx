@@ -124,7 +124,6 @@ export function DatePickerPeriod({
           )}
         >
           <div className="flex items-center">
-            <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
             {buttonText || (startDate && endDate
               ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
               : 'Seleccionar rango de fechas')
@@ -134,7 +133,7 @@ export function DatePickerPeriod({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-3 z-[9999] max-h-[80vh] overflow-auto" 
+        className="w-auto p-3 z-[9999]" 
         align="center"
         side="bottom"
         sideOffset={4}
@@ -162,6 +161,8 @@ export function DatePickerPeriod({
               }
               if (range?.to) {
                 onEndDateChange(range.to);
+                // Cerrar el popup automáticamente cuando se selecciona el rango completo
+                setTimeout(() => setIsRangeDialogOpen(false), 100);
               }
               if (!range) {
                 onStartDateChange(undefined);

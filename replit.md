@@ -117,12 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 21, 2025. Componentes DatePicker renovados basados en filtros de fichajes admin
+- June 21, 2025. Componentes DatePicker finalizados con optimizaciones UX
   - DatePickerDay: selector de día individual con formato español completo
-  - DatePickerPeriod: selector de rango con pestañas inicio/fin y formato compacto
-  - Estilo consistente con páginas admin existentes (200px width, bordes grises)
-  - Meses y días en español con locale={es} configurado
-  - Calendario con tamaño adecuado que no se sale de pantalla
+  - DatePickerPeriod: selector de rango optimizado, integrado en fichajes admin
+  - Sin icono de calendario en botón Rango para diseño limpio
+  - Cierre automático al completar selección de rango evita saltos de página
+  - Estilo consistente: 200px width por defecto, w-auto para botones con texto fijo
+  - Posicionamiento inteligente para evitar cortes de pantalla
 - June 21, 2025. Página de gestión de vacaciones para admin implementada con diseño consistente
   - Nueva vista separada para admin/manager en /vacaciones con gestión completa
   - 3 pestañas: Solicitudes, Empleados de Vacaciones, Días Festivos
