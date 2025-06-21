@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 21, 2025. Login con email personal implementado y calendario expandido
+  - Sistema de login actualizado: busca en company_email primero, luego en personal_email automáticamente
+  - Empleados pueden hacer login con email personal si no tienen corporativo asignado
+  - Calendario del dashboard admin expandido: ancho 100% con máximo 400px, celdas distribuidas uniformemente
+  - Filtro de empleados corregido: mapeo correcto español-inglés para todos los estados
+  - Componente Select de shadcn/ui implementado para consistencia visual en filtros
+  - Traducción de estados corregida: "on_vacation" → "De vacaciones" en interfaz
+  - Modal de empleado mejorado: eliminado email del header, añadidos campos contacto emergencia
+  - Credenciales verificadas: juanramirez2@gmail.com / 123456, marta.perez@test.com / 123456
 - June 21, 2025. Sistema completo de detección automática de vacaciones implementado
   - Dashboard empleado: detecta vacaciones activas y muestra mensaje "¡Disfruta de tus vacaciones, te las has ganado!" con icono palmera
   - Vista admin mejorada: empleados de vacaciones se detectan automáticamente por solicitudes aprobadas activas
