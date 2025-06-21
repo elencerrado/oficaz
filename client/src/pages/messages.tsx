@@ -83,10 +83,6 @@ export default function Messages() {
       apiRequest('POST', '/api/messages', data),
     onSuccess: () => {
       setNewMessage('');
-      toast({
-        title: "Mensaje enviado",
-        description: "Tu mensaje ha sido enviado correctamente",
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     },
     onError: () => {
