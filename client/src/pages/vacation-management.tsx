@@ -485,24 +485,45 @@ export default function VacationManagement() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {employeesOnVacation.map((employee: Employee) => (
-                    <Card key={employee.id} className="border-blue-200 bg-blue-50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-500 rounded-full">
-                            <Plane className="w-4 h-4 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">{employee.fullName}</h3>
-                            <div className="text-sm text-gray-600">
-                              <p>Días totales: {employee.totalVacationDays}</p>
-                              <p>Días usados: {employee.usedVacationDays}</p>
+                  {employeesOnVacation.map((employee: Employee) => {
+                    // Calcular días usados (vacaciones aprobadas)
+                    const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                      req.userId === employee.id && req.status === 'approved'
+                    );
+                    const usedDays = employeeRequests.reduce((sum, req) => 
+                      sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                    );
+                    
+                    // Encontrar la solicitud de vacaciones activa actual
+                    const currentVacation = employeeRequests.find((req: VacationRequest) => {
+                      const today = new Date().toISOString().split('T')[0];
+                      return req.startDate.split('T')[0] <= today && req.endDate.split('T')[0] >= today;
+                    });
+                    
+                    return (
+                      <Card key={employee.id} className="border-blue-200 bg-blue-50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500 rounded-full">
+                              <Plane className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">{employee.fullName}</h3>
+                              <div className="text-sm text-gray-600">
+                                <p>Días totales: {employee.totalVacationDays}</p>
+                                <p>Días aprobados: {usedDays}</p>
+                                {currentVacation && (
+                                  <p className="text-blue-600 font-medium">
+                                    Hasta: {format(new Date(currentVacation.endDate), "dd/MM/yyyy", { locale: es })}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
               </div>

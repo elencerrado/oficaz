@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 21, 2025. Sistema completo de detección automática de vacaciones implementado
+  - Dashboard empleado: detecta vacaciones activas y muestra mensaje "¡Disfruta de tus vacaciones, te las has ganado!" con icono palmera
+  - Vista admin mejorada: empleados de vacaciones se detectan automáticamente por solicitudes aprobadas activas
+  - Cálculo dinámico de días: tarjetas muestran días aprobados calculados en tiempo real, no campos obsoletos de BD
+  - Barra empleado simplificada: "Aprobados" (todas las aprobadas) vs "Disponibles" (total - aprobados), sin pendientes
+  - Función calculateDays implementada correctamente usando differenceInDays + 1 para períodos inclusivos
 - June 21, 2025. Sistema completo de gestión de vacaciones admin-empleado implementado y funcionando
   - Funcionalidad PATCH corregida: conversión correcta de fechas string a Date objects
   - Popover con comentarios admin: empleados ven comentarios en solicitudes procesadas
