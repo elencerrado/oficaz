@@ -561,9 +561,9 @@ export default function Messages() {
         </>
       ) : (
         // Chat View - Full screen with proper mobile layout
-        <div className="flex flex-col bg-employee-gradient" style={{ height: isKeyboardOpen ? 'auto' : '100vh', minHeight: '100vh' }}>
-          {/* Chat Header - Always sticky for better mobile compatibility */}
-          <div className="sticky top-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50" style={{ position: isKeyboardOpen ? 'sticky' : 'fixed', top: 0 }}>
+        <div className="relative flex flex-col h-screen bg-employee-gradient overflow-hidden">
+          {/* Chat Header - Always at top */}
+          <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -597,11 +597,8 @@ export default function Messages() {
             })()}
           </div>
 
-          {/* Messages - Scrollable area with dynamic padding */}
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto" style={{ 
-            paddingTop: isKeyboardOpen ? '0px' : '80px',
-            paddingBottom: isKeyboardOpen ? '80px' : '100px'
-          }}>
+          {/* Messages - Scrollable area */}
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-20">
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
@@ -640,8 +637,8 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input - Sticky at bottom with keyboard handling */}
-          <div className="sticky bottom-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-10">
+          {/* Message Input - Fixed at bottom */}
+          <div className="flex-shrink-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-10">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
