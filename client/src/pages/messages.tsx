@@ -228,10 +228,6 @@ export default function Messages() {
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   };
 
-  if (isLoading) {
-    return <PageLoading />;
-  }
-
   // Reset scroll when returning from chat
   useEffect(() => {
     if (!selectedChat) {
@@ -241,6 +237,10 @@ export default function Messages() {
       document.body.scrollTop = 0;
     }
   }, [selectedChat]);
+
+  if (isLoading) {
+    return <PageLoading />;
+  }
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
