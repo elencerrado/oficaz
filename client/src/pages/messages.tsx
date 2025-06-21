@@ -236,8 +236,8 @@ export default function Messages() {
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {!selectedChat ? (
         <>
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 pb-8 h-20">
+          {/* Header - Fixed at top for better visibility */}
+          <div className="sticky top-0 bg-employee-gradient flex items-center justify-between p-6 pb-8 h-20 z-40">
             <Link href={`/${companyAlias}/inicio`}>
               <Button
                 variant="ghost"
@@ -567,7 +567,11 @@ export default function Messages() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSelectedChat(null)}
+              onClick={() => {
+                setSelectedChat(null);
+                // Scroll to top when returning to chat list
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="text-white hover:bg-white/20 p-2 rounded-lg"
             >
               <ArrowLeft className="h-4 w-4" />
