@@ -577,22 +577,22 @@ export default function VacationRequests() {
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((request: any) => (
-                  <div key={request.id} className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5 items-center min-h-[48px]">
+                  <div key={request.id} className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 hover:bg-white/5 items-center min-h-[48px]">
                     <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
                     <div className="text-sm text-center font-mono text-white/90 flex items-center justify-center">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
-                    <div className="flex justify-start items-center pl-4 pr-2">
+                    <div className="flex justify-start items-center pl-2 pr-1 overflow-hidden">
                       {request.status !== 'pending' && request.adminComment ? (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <div className="flex items-center gap-1 cursor-pointer max-w-full">
-                              <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0`}>
+                            <div className="flex items-center gap-0.5 cursor-pointer overflow-hidden">
+                              <Badge className={`text-xs px-1.5 py-0.5 ${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0 truncate`}>
                                 {getStatusText(request.status)}
                               </Badge>
-                              <MessageCircle className="w-3 h-3 text-white/40 flex-shrink-0" />
+                              <MessageCircle className="w-2.5 h-2.5 text-white/40 flex-shrink-0 ml-0.5" />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 max-w-[80vw] p-3" side="top" sideOffset={5} align="start" avoidCollisions={true}>
