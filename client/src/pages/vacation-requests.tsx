@@ -47,20 +47,50 @@ export default function VacationRequests() {
   useEffect(() => {
     if (!requests?.length) return;
     
+    // For testing: use a recent timestamp to detect changes from today
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:20:00.000Z');
+    
+    console.log('🔍 Checking for highlighted requests:', {
+      requestsCount: requests.length,
+      lastCheckTime,
+      lastCheckDate: lastCheckDate.toISOString()
+    });
     
     const newlyProcessedRequests = requests.filter((request: any) => {
-      if (request.status === 'pending') return false;
+      if (!request.reviewedAt) return false; // Only consider requests with reviewedAt
       
-      const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
-      return reviewDate > lastCheckDate;
+      const reviewDate = new Date(request.reviewedAt);
+      const isProcessed = request.status === 'approved' || request.status === 'denied';
+      const isNew = reviewDate > lastCheckDate;
+      
+      console.log(`Request ${request.id}:`, {
+        status: request.status,
+        reviewedAt: request.reviewedAt,
+        reviewDate: reviewDate.toISOString(),
+        isProcessed,
+        isNew,
+        shouldHighlight: isProcessed && isNew
+      });
+      
+      return isProcessed && isNew;
     });
     
     if (newlyProcessedRequests.length > 0) {
       const newHighlighted = new Set(newlyProcessedRequests.map((req: any) => req.id));
       setHighlightedRequests(newHighlighted);
-      console.log('Highlighting processed requests:', newHighlighted);
+      console.log('✨ Highlighting processed requests:', Array.from(newHighlighted));
+    } else {
+      console.log('No requests to highlight');
+      // If no highlights and we have approved/denied requests, show all recent ones for testing
+      const recentProcessed = requests.filter((r: any) => 
+        (r.status === 'approved' || r.status === 'denied') && r.reviewedAt
+      );
+      if (recentProcessed.length > 0) {
+        const testHighlighted = new Set(recentProcessed.map((r: any) => r.id));
+        setHighlightedRequests(testHighlighted);
+        console.log('🧪 Test highlighting all processed requests:', Array.from(testHighlighted));
+      }
     }
   }, [requests]);
 
@@ -634,14 +664,19 @@ export default function VacationRequests() {
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((request: any) => {
                   const isHighlighted = highlightedRequests.has(request.id);
+                  console.log(`Rendering request ${request.id}: highlighted=${isHighlighted}`);
                   return (
                     <div 
                       key={request.id} 
                       className={`grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] transition-colors duration-300 ${
                         isHighlighted 
-                          ? 'bg-blue-200/20 hover:bg-blue-200/30' 
+                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50' 
                           : 'hover:bg-white/5'
                       }`}
+                      style={isHighlighted ? {
+                        backgroundColor: 'rgba(96, 165, 250, 0.25)',
+                        borderColor: 'rgba(96, 165, 250, 0.4)'
+                      } : {}}
                     >
                     <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
