@@ -233,34 +233,36 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between min-h-[60px]">
+                <div className="flex items-center">
                   <p className="text-sm text-gray-500">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <Button
-                  size="default"
-                  onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
-                  disabled={clockMutation.isPending}
-                  className={`px-6 py-2 font-medium rounded-lg transition-all duration-200 shadow-sm ${
-                    activeSession 
-                      ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200' 
-                      : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200'
-                  } hover:shadow-md`}
-                >
-                  {activeSession ? (
-                    <>
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Salir
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Entrar
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center">
+                  <Button
+                    size="default"
+                    onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
+                    disabled={clockMutation.isPending}
+                    className={`px-6 py-2 font-medium rounded-lg transition-all duration-200 shadow-sm ${
+                      activeSession 
+                        ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200' 
+                        : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200'
+                    } hover:shadow-md`}
+                  >
+                    {activeSession ? (
+                      <>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Salir
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Entrar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
