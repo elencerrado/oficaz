@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
 import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -189,11 +190,19 @@ export default function VacationManagement() {
     return hasActiveVacation;
   });
 
+  // Calcular estadísticas dinámicas
   const getVacationStats = () => {
     const pending = pendingRequests.length;
     const approved = approvedRequests.length;
     const onVacation = employeesOnVacation.length;
-    return { pending, approved, onVacation };
+    
+    // Calcular días festivos del año actual
+    const currentYear = new Date().getFullYear();
+    const holidaysCount = spanishHolidays2025.filter(holiday => 
+      new Date(holiday.date).getFullYear() === currentYear
+    ).length;
+    
+    return { pending, approved, onVacation, holidaysCount };
   };
 
   const stats = getVacationStats();
@@ -427,7 +436,8 @@ export default function VacationManagement() {
                           )}
                           <p>
                             <span className="font-medium">Solicitado:</span>{" "}
-                            {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                            {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
+                             request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                         </div>
                       </div>
@@ -510,8 +520,9 @@ export default function VacationManagement() {
                             <div>
                               <h3 className="font-medium text-gray-900">{employee.fullName}</h3>
                               <div className="text-sm text-gray-600">
-                                <p>Días totales: {employee.totalVacationDays}</p>
+                                <p>Días totales: {employee.totalVacationDays || 22}</p>
                                 <p>Días aprobados: {usedDays}</p>
+                                <p>Disponibles: {Math.max(0, (employee.totalVacationDays || 22) - usedDays)}</p>
                                 {currentVacation && (
                                   <p className="text-blue-600 font-medium">
                                     Hasta: {format(new Date(currentVacation.endDate), "dd/MM/yyyy", { locale: es })}
