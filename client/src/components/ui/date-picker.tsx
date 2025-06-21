@@ -46,12 +46,12 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[260px] p-2 z-50" 
+        className="w-[250px] p-3 z-50" 
         align="center" 
         side="bottom"
         sideOffset={4}
         avoidCollisions={true}
-        collisionPadding={20}
+        collisionPadding={16}
         sticky="always"
       >
         <Calendar
@@ -66,24 +66,24 @@ export function DatePicker({
           locale={es}
           className="rounded-md border-0"
           classNames={{
-            months: "flex flex-col space-y-3",
-            month: "space-y-3 w-full",
-            caption: "flex justify-center pt-2 relative items-center w-full",
-            caption_label: "text-sm font-medium text-center",
+            months: "flex flex-col space-y-2",
+            month: "space-y-2 w-full",
+            caption: "flex justify-center py-2 relative items-center w-full",
+            caption_label: "text-sm font-medium text-center min-w-0",
             nav: "space-x-1 flex items-center",
-            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-            nav_button_previous: "absolute left-1",
-            nav_button_next: "absolute right-1",
-            table: "w-full border-collapse table-fixed",
-            head_row: "flex w-full",
-            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-xs flex-1 text-center",
-            row: "flex w-full mt-1",
-            cell: "text-center text-sm p-0 relative flex-1 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-            day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-sm mx-auto flex items-center justify-center",
-            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-            day_today: "bg-accent text-accent-foreground",
+            nav_button: "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100",
+            nav_button_previous: "absolute left-0",
+            nav_button_next: "absolute right-0",
+            table: "w-full border-collapse",
+            head_row: "flex w-full mb-1",
+            head_cell: "text-muted-foreground text-xs font-normal text-center flex-1 min-w-0 px-1",
+            row: "flex w-full",
+            cell: "text-center p-0 relative flex-1 min-w-0",
+            day: "h-7 w-7 p-0 font-normal text-xs mx-auto flex items-center justify-center rounded-md hover:bg-accent transition-colors",
+            day_selected: "bg-primary text-primary-foreground hover:bg-primary/90",
+            day_today: "bg-accent text-accent-foreground font-semibold",
             day_outside: "text-muted-foreground opacity-50",
-            day_disabled: "text-muted-foreground opacity-50",
+            day_disabled: "text-muted-foreground opacity-30 cursor-not-allowed",
             day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
             day_hidden: "invisible",
           }}
