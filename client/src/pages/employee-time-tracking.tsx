@@ -52,8 +52,10 @@ export default function EmployeeTimeTracking() {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       setEditingSession(null);
       toast({
-        title: 'Fichaje actualizado',
-        description: 'Los horarios han sido modificados correctamente.',
+        title: company?.employeeTimeEditPermission === 'validation' ? 'Solicitud enviada' : 'Fichaje actualizado',
+        description: company?.employeeTimeEditPermission === 'validation' 
+          ? 'Tu solicitud de cambio ha sido enviada para aprobación.' 
+          : 'Los horarios han sido modificados correctamente.',
       });
     },
     onError: (error: any) => {
@@ -71,6 +73,10 @@ export default function EmployeeTimeTracking() {
     enabled: !!user,
     staleTime: 30000, // Cache for 30 seconds to reduce API calls
   });
+
+  // Check if user can edit time entries based on company configuration
+  const canEditTime = company?.employeeTimeEditPermission === 'yes' || 
+                     company?.employeeTimeEditPermission === 'validation';
 
 
 
@@ -139,22 +145,28 @@ export default function EmployeeTimeTracking() {
   const [lastTap, setLastTap] = useState<number>(0);
 
   const handleDoubleClick = (session: WorkSession) => {
-    startEditing(session);
+    if (canEditTime) {
+      startEditing(session);
+    }
   };
 
   const handleTouchEnd = (session: WorkSession) => {
+    if (!canEditTime) return;
+    
     const currentTime = new Date().getTime();
     const tapLength = currentTime - lastTap;
     
     if (tapLength < 500 && tapLength > 0) {
       // Double tap detected
       startEditing(session);
-    } else {
-      setLastTap(currentTime);
     }
+    
+    setLastTap(currentTime);
   };
 
   const startEditing = (session: WorkSession) => {
+    if (!canEditTime) return;
+    
     setEditingSession(session.id);
     setEditForm({
       clockIn: format(new Date(session.clockIn), 'HH:mm'),
@@ -479,7 +491,7 @@ export default function EmployeeTimeTracking() {
                         const opacity = isCurrentMonth ? 'text-white/90' : 'text-white/50';
                         const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
                         
-                        return editingSession === session.id ? (
+                        return editingSession === session.id && canEditTime ? (
                           // Editing mode - Expanded row with maintained separators  
                           <div className="border-b border-white/10 bg-blue-500/10 relative py-4 px-4">
                             {/* Date header */}
