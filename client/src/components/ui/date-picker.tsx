@@ -112,6 +112,7 @@ export function DatePickerPeriod({
   buttonText
 }: DatePickerPeriodProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSelectingStart, setIsSelectingStart] = useState(true);
 
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -136,29 +137,36 @@ export function DatePickerPeriod({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
-            Seleccionar rango de fechas
+            {isSelectingStart ? 'Seleccionar fecha de inicio' : 'Seleccionar fecha de fin'}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 p-4">
           <Calendar
-            mode="range"
-            selected={{
-              from: startDate || undefined,
-              to: endDate || undefined
-            }}
+            mode="single"
+            selected={isSelectingStart ? startDate : endDate}
             defaultMonth={startDate || new Date()}
-            onSelect={(range) => {
-              if (range?.from) {
-                onStartDateChange(range.from);
-              }
-              if (range?.to) {
-                onEndDateChange(range.to);
-                // Cerrar el modal automáticamente cuando se selecciona el rango completo
-                setTimeout(() => setIsModalOpen(false), 300);
-              }
-              if (!range) {
-                onStartDateChange(undefined);
-                onEndDateChange(undefined);
+            onSelect={(date) => {
+              if (!date) return;
+              
+              if (isSelectingStart) {
+                // Primer click: establecer fecha de inicio
+                onStartDateChange(date);
+                onEndDateChange(undefined); // Limpiar fecha de fin
+                setIsSelectingStart(false);
+              } else {
+                // Segundo click: establecer fecha de fin
+                if (startDate && date < startDate) {
+                  // Si la fecha seleccionada es anterior al inicio, intercambiar
+                  onEndDateChange(startDate);
+                  onStartDateChange(date);
+                } else {
+                  onEndDateChange(date);
+                }
+                // Cerrar el modal automáticamente cuando se completa el rango
+                setTimeout(() => {
+                  setIsModalOpen(false);
+                  setIsSelectingStart(true); // Reset para próxima vez
+                }, 300);
               }
             }}
             className="rounded-md border"
@@ -173,13 +181,17 @@ export function DatePickerPeriod({
               onClick={() => {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
+                setIsSelectingStart(true);
               }}
               className="flex-1"
             >
               Limpiar fechas
             </Button>
             <Button
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                setIsModalOpen(false);
+                setIsSelectingStart(true);
+              }}
               className="flex-1"
             >
               Cerrar
