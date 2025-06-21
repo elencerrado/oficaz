@@ -53,6 +53,7 @@ export default function VacationRequests() {
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
       hasVacationUpdates,
+      hasVacationUpdatesRaw: localStorage.getItem('hasVacationUpdates'),
       requests: requests.map(r => ({
         id: r.id,
         status: r.status,
@@ -67,8 +68,11 @@ export default function VacationRequests() {
       return;
     }
     
+    console.log('✅ Vacation notification is ACTIVE - proceeding with highlight detection');
+    
+    // For testing: use an older check time to force detection of recent changes
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z');
     
     console.log('🔍 Checking for highlighted requests (notification active):', {
       lastCheckTime,

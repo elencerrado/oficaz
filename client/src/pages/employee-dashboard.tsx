@@ -69,7 +69,7 @@ export default function EmployeeDashboard() {
     if (!vacationRequests?.length) return;
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default to 24h ago
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z'); // Set to before recent changes
     
     // Find processed requests (approved/denied) that were reviewed after last check
     const newlyProcessedRequests = vacationRequests.filter((request: any) => {
@@ -78,7 +78,7 @@ export default function EmployeeDashboard() {
       const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
       const isNew = reviewDate > lastCheckDate;
       
-      console.log('Real-time vacation check:', {
+      console.log('Dashboard vacation check:', {
         id: request.id,
         status: request.status,
         reviewedAt: request.reviewedAt,
@@ -91,9 +91,11 @@ export default function EmployeeDashboard() {
       return isNew;
     });
     
-    if (newlyProcessedRequests.length > 0) {
-      console.log('🔔 NEW vacation updates detected:', newlyProcessedRequests.length, 'requests');
-      setHasVacationUpdates(true);
+    const hasUpdates = newlyProcessedRequests.length > 0;
+    setHasVacationUpdates(hasUpdates);
+    
+    if (hasUpdates) {
+      console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
       localStorage.setItem('hasVacationUpdates', 'true');
       
       // Show browser notification if supported
@@ -103,6 +105,8 @@ export default function EmployeeDashboard() {
           icon: '/favicon.ico'
         });
       }
+    } else {
+      setHasVacationUpdates(false);
     }
   }, [vacationRequests]);
 
