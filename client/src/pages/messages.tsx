@@ -911,14 +911,6 @@ export default function Messages() {
                 }}
                 onFocus={() => {
                   setIsKeyboardOpen(true);
-                  setTimeout(() => {
-                    if (messageInputRef.current) {
-                      messageInputRef.current.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center'
-                      });
-                    }
-                  }, 300);
                 }}
                 onBlur={() => {
                   setTimeout(() => {
