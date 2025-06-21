@@ -129,7 +129,8 @@ export default function VacationManagement() {
 
   const filteredRequests = vacationRequests.filter((request: VacationRequest) => {
     const matchesStatus = selectedStatus === "all" || request.status === selectedStatus;
-    const matchesSearch = request.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+    const matchesSearch = searchTerm === "" || 
+      (request.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     return matchesStatus && matchesSearch;
   });
 
@@ -257,7 +258,12 @@ export default function VacationManagement() {
                 </div>
               ) : filteredRequests.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No se encontraron solicitudes
+                  {vacationRequests.length === 0 
+                    ? "No hay solicitudes de vacaciones" 
+                    : "No se encontraron solicitudes con los filtros aplicados"}
+                  <div className="text-xs text-gray-400 mt-2">
+                    Total de solicitudes: {vacationRequests.length}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -292,28 +298,34 @@ export default function VacationManagement() {
                         </div>
                       </div>
                       
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2 ml-4">
-                          <Button
-                            size="sm"
-                            onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'approved' })}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            disabled={updateRequestMutation.isPending}
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            Aprobar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'denied' })}
-                            disabled={updateRequestMutation.isPending}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Denegar
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex gap-2 ml-4">
+                        {request.status === 'pending' ? (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'approved' })}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              disabled={updateRequestMutation.isPending}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Aprobar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'denied' })}
+                              disabled={updateRequestMutation.isPending}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Denegar
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
