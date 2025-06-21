@@ -572,7 +572,7 @@ export default function VacationRequests() {
           <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
             <div className="text-sm font-semibold text-center">Período</div>
             <div className="text-sm font-semibold text-center">Días</div>
-            <div className="text-sm font-semibold text-center">Estado</div>
+            <div className="text-sm font-semibold text-left pl-4">Estado</div>
             <div className="text-sm font-semibold text-center">Fecha</div>
           </div>
 
