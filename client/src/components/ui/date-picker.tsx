@@ -145,10 +145,9 @@ export function DatePickerPeriod({
           <div className="flex items-center">
             {buttonText || (startDate && endDate
               ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
-              : 'Seleccionar rango de fechas')
+              : 'Rango')
             }
           </div>
-          <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

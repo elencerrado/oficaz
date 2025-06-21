@@ -47,6 +47,7 @@ export default function TimeTracking() {
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
   const [isDayDialogOpen, setIsDayDialogOpen] = useState(false);
+  const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<number | null>(null);
   const [editData, setEditData] = useState({
     clockIn: '',
@@ -559,36 +560,39 @@ export default function TimeTracking() {
                   </PopoverContent>
                 </Popover>
 
-                <Select 
-                  value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : ''} 
-                  onValueChange={(value) => {
-                    if (value) {
-                      const [year, month] = value.split('-');
-                      setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
-                      setDateFilter('month');
-                    }
-                  }}
-                >
-                  <SelectTrigger className={cn(
-                    "h-10 text-sm font-normal",
-                    dateFilter === 'month' 
-                      ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90" 
-                      : "bg-white border-gray-200 hover:bg-gray-50"
-                  )}>
-                    <SelectValue placeholder="Mes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMonths.map((monthKey: string) => {
-                      const [year, month] = monthKey.split('-');
-                      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-                      return (
-                        <SelectItem key={monthKey} value={monthKey}>
-                          {format(monthDate, 'MMMM yyyy', { locale: es })}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={dateFilter === 'month' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-10 text-sm font-normal"
+                    >
+                      {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="start">
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {availableMonths.map((monthKey: string) => {
+                        const [year, month] = monthKey.split('-');
+                        const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                        return (
+                          <Button
+                            key={monthKey}
+                            variant="ghost"
+                            className="w-full justify-start text-sm"
+                            onClick={() => {
+                              setCurrentMonth(monthDate);
+                              setDateFilter('month');
+                              setIsMonthDialogOpen(false);
+                            }}
+                          >
+                            {format(monthDate, 'MMMM yyyy', { locale: es })}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
 
                 <DatePickerPeriod
                   startDate={selectedStartDate}
@@ -607,11 +611,7 @@ export default function TimeTracking() {
                       setDateFilter('custom');
                     }
                   }}
-                  buttonText="Rango"
-                  className={cn(
-                    "h-10",
-                    dateFilter === 'custom' && "bg-primary text-primary-foreground hover:bg-primary/90"
-                  )}
+                  className="h-10 text-sm font-normal"
                 />
               </div>
             </div>
