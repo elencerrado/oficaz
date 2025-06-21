@@ -166,27 +166,19 @@ export function DatePickerPeriod({
             }}
             defaultMonth={startDate || new Date()}
             onSelect={(range) => {
-              if (!range) {
+              if (!range?.from) {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
                 setIsSelectingStart(true);
                 return;
               }
 
-              // Si hay un rango completo y hacemos click, siempre iniciar nuevo rango
-              if (startDate && endDate) {
+              if (isSelectingStart) {
+                // Primer click: establecer fecha de inicio y limpiar fecha de fin
                 onStartDateChange(range.from);
                 onEndDateChange(undefined);
                 setIsSelectingStart(false);
-                return;
-              }
-
-              if (isSelectingStart && range.from) {
-                // Primer click: establecer fecha de inicio
-                onStartDateChange(range.from);
-                onEndDateChange(undefined); // Limpiar fecha de fin
-                setIsSelectingStart(false);
-              } else if (!isSelectingStart && range.to) {
+              } else if (range.to) {
                 // Segundo click: establecer fecha de fin
                 if (startDate && range.to < startDate) {
                   // Si la fecha seleccionada es anterior al inicio, intercambiar
