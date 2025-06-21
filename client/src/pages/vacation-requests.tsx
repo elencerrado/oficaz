@@ -190,10 +190,14 @@ export default function VacationRequests() {
     }
 
     if (exceedsAvailable) {
-      toast({
-        description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
-        variant: 'destructive',
-      });
+      setIsModalOpen(false); // Cerrar modal primero
+      setTimeout(() => {
+        toast({
+          title: 'Días insuficientes',
+          description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
+          variant: 'destructive',
+        });
+      }, 100);
       return;
     }
 
@@ -252,9 +256,11 @@ export default function VacationRequests() {
     // Add all days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       const date = new Date(currentYear, currentMonth, i);
-      // Only show dates from today onwards if it's the current month, otherwise show all dates
-      const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
-      if (!isCurrentMonth || date >= startOfDay(today)) {
+      // Block past dates - only allow today and future dates
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      
+      if (date > yesterday) {
         days.push(date);
       } else {
         days.push(null);
@@ -441,7 +447,8 @@ export default function VacationRequests() {
                     variant="ghost"
                     size="sm"
                     onClick={goToPreviousMonth}
-                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
+                    disabled={calendarDate.getMonth() <= new Date().getMonth() && calendarDate.getFullYear() <= new Date().getFullYear()}
+                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
