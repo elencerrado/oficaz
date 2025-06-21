@@ -394,7 +394,7 @@ export default function Messages() {
               {selectedChat ? (
                 <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                   {/* Chat Header - Fixed */}
-                  <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-lg">
+                  <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-lg z-10">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
                         <span className="text-white font-medium">
@@ -411,7 +411,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4" style={{ height: '55vh' }}>
+                  <div className="flex-1 overflow-y-auto p-4" style={{ height: 'calc(75vh - 140px)' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
@@ -447,7 +447,7 @@ export default function Messages() {
                   </div>
 
                   {/* Message Input - Fixed */}
-                  <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white rounded-b-lg">
+                  <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white rounded-b-lg z-10">
                     <div className="flex space-x-2">
                       <Input
                         ref={messageInputRef}
