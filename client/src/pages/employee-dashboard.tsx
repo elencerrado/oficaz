@@ -6,7 +6,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface WorkSession {
   id: number;
@@ -20,6 +20,8 @@ interface WorkSession {
 export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { toast } = useToast();
+  const [hasVacationUpdates, setHasVacationUpdates] = useState(false);
+  const [lastVacationCheck, setLastVacationCheck] = useState<any[]>([]);
 
   // Get active work session
   const { data: activeSession } = useQuery<WorkSession>({
@@ -48,7 +50,27 @@ export default function EmployeeDashboard() {
   const { data: vacationRequests = [] } = useQuery({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
+    refetchInterval: 30000, // Check every 30 seconds for updates
   });
+
+  // Check for vacation status changes
+  useEffect(() => {
+    if (vacationRequests.length > 0 && lastVacationCheck.length > 0) {
+      const hasChanges = vacationRequests.some((current: any) => {
+        const previous = lastVacationCheck.find((prev: any) => prev.id === current.id);
+        return previous && previous.status !== current.status && 
+               (current.status === 'approved' || current.status === 'denied');
+      });
+      
+      if (hasChanges) {
+        setHasVacationUpdates(true);
+      }
+    }
+    
+    if (vacationRequests.length > 0) {
+      setLastVacationCheck(vacationRequests);
+    }
+  }, [vacationRequests, lastVacationCheck]);
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
