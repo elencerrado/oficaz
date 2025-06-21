@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 21, 2025. Sistema de comentarios admin en solicitudes de vacaciones implementado para empleados
+  - Globo discreto (popover) al pulsar sobre estados "Aprobada" o "Denegada" 
+  - Icono MessageCircle sutil junto al badge de estado cuando hay comentario admin
+  - Tooltip elegante con fondo gris claro y texto del comentario
+  - Solo visible para solicitudes con adminComment, mantiene interfaz limpia
+  - Funcionalidad PATCH de solicitudes corregida y funcionando correctamente
 - June 21, 2025. Página de fichajes admin optimizada y documentada completamente
   - Código reorganizado con secciones claras y comentarios descriptivos
   - Imports agrupados por categoría (hooks, componentes UI, iconos)
