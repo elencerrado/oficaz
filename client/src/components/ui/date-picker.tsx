@@ -138,10 +138,14 @@ export function DatePickerPeriod({
             className
           )}
         >
-          {buttonText || (startDate && endDate
-            ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
-            : 'Rango')
-          }
+          <span className="truncate text-xs">
+            {buttonText || (startDate && endDate
+              ? (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()
+                ? `${format(startDate, 'd', { locale: es })}-${format(endDate, 'd MMM', { locale: es })}`
+                : `${format(startDate, 'd/M', { locale: es })}-${format(endDate, 'd/M', { locale: es })}`)
+              : 'Rango')
+            }
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

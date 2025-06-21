@@ -603,7 +603,7 @@ export default function TimeTracking() {
                     }
                   }}
                   className={cn(
-                    "h-10 text-sm font-normal",
+                    "h-10 text-xs font-normal w-[120px]",
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
