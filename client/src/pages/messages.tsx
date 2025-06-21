@@ -263,9 +263,8 @@ export default function Messages() {
             </div>
           </div>
         </div>
-
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 pt-[5px] pb-[5px]">
           <div className="grid lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 12rem)' }}>
             {/* Employee List */}
             <div className="lg:col-span-1">
@@ -660,7 +659,7 @@ export default function Messages() {
                 <div className="space-y-3">
                   {user?.role === 'employee' ? (
                     // Employee view - show managers
-                    (managers as Manager[] || []).map(manager => (
+                    ((managers as Manager[] || []).map(manager => (
                       <div 
                         key={manager.id}
                         onClick={() => setSelectedChat(manager.id)}
@@ -705,10 +704,10 @@ export default function Messages() {
                           })()}
                         </div>
                       </div>
-                    ))
+                    )))
                   ) : (
                     // Admin/Manager view - show employees
-                    filteredEmployees.map(employee => (
+                    (filteredEmployees.map(employee => (
                       <div 
                         key={employee.id}
                         onClick={() => {
@@ -806,7 +805,7 @@ export default function Messages() {
                           </div>
                         </div>
                       </div>
-                    ))
+                    )))
                   )}
                 </div>
               </div>
@@ -815,7 +814,7 @@ export default function Messages() {
         </>
       ) : (
         // Chat View - Fixed header layout
-        <div className="h-screen bg-employee-gradient">
+        (<div className="h-screen bg-employee-gradient">
           {/* Chat Header - Fixed at top */}
           <div className="fixed top-0 left-0 right-0 bg-[#323A46] p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
@@ -858,7 +857,6 @@ export default function Messages() {
               );
             })()}
           </div>
-
           {/* Messages - Scrollable area with fixed header/footer */}
           <div className="pt-20 pb-20 p-4 space-y-4 overflow-y-auto h-screen">
             {getChatMessages(selectedChat).map(msg => (
@@ -898,7 +896,6 @@ export default function Messages() {
             ))}
             <div ref={messagesEndRef} />
           </div>
-
           {/* Message Input - Fixed at bottom */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#323A46] border-t border-white/20 z-50">
             <div className="flex space-x-2">
@@ -940,7 +937,7 @@ export default function Messages() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>)
       )}
     </div>
   );
