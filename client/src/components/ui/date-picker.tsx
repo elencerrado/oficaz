@@ -99,6 +99,7 @@ interface DatePickerPeriodProps {
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
   className?: string;
+  buttonText?: string;
 }
 
 export function DatePickerPeriod({
@@ -106,7 +107,8 @@ export function DatePickerPeriod({
   endDate,
   onStartDateChange,
   onEndDateChange,
-  className
+  className,
+  buttonText
 }: DatePickerPeriodProps) {
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
 
@@ -116,15 +118,16 @@ export function DatePickerPeriod({
         <Button
           variant="outline"
           className={cn(
-            "w-[200px] justify-between text-left font-normal bg-white border-gray-200 hover:bg-gray-50",
+            "justify-between text-left font-normal bg-white border-gray-200 hover:bg-gray-50",
+            buttonText ? "w-auto px-3" : "w-[200px]",
             className
           )}
         >
           <div className="flex items-center">
             <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
-            {startDate && endDate
+            {buttonText || (startDate && endDate
               ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
-              : 'Seleccionar rango de fechas'
+              : 'Seleccionar rango de fechas')
             }
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400" />

@@ -585,30 +585,29 @@ export default function TimeTracking() {
                   </SelectContent>
                 </Select>
 
-                <div className="relative">
-                  <DatePickerPeriod
-                    startDate={selectedStartDate}
-                    endDate={selectedEndDate}
-                    onStartDateChange={(date) => {
-                      setSelectedStartDate(date || null);
-                      setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
-                      if (date && selectedEndDate) {
-                        setDateFilter('custom');
-                      }
-                    }}
-                    onEndDateChange={(date) => {
-                      setSelectedEndDate(date || null);
-                      setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
-                      if (selectedStartDate && date) {
-                        setDateFilter('custom');
-                      }
-                    }}
-                    className={cn(
-                      "h-10",
-                      dateFilter === 'custom' && "bg-primary text-primary-foreground hover:bg-primary/90"
-                    )}
-                  />
-                </div>
+                <DatePickerPeriod
+                  startDate={selectedStartDate}
+                  endDate={selectedEndDate}
+                  onStartDateChange={(date) => {
+                    setSelectedStartDate(date || null);
+                    setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
+                    if (date && selectedEndDate) {
+                      setDateFilter('custom');
+                    }
+                  }}
+                  onEndDateChange={(date) => {
+                    setSelectedEndDate(date || null);
+                    setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
+                    if (selectedStartDate && date) {
+                      setDateFilter('custom');
+                    }
+                  }}
+                  buttonText="Rango"
+                  className={cn(
+                    "h-10",
+                    dateFilter === 'custom' && "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
+                />
               </div>
             </div>
           </div>
