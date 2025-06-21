@@ -8,7 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -72,6 +73,11 @@ export default function VacationManagement() {
   const [selectedRegion, setSelectedRegion] = useState("Madrid");
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", type: "regional" as const });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit'>('approve');
+  const [editDates, setEditDates] = useState({ startDate: "", endDate: "" });
+  const [adminComment, setAdminComment] = useState("");
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -99,14 +105,28 @@ export default function VacationManagement() {
 
   // Update vacation request status
   const updateRequestMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+    mutationFn: async ({ id, status, startDate, endDate, adminComment }: { 
+      id: number; 
+      status: string; 
+      startDate?: string; 
+      endDate?: string; 
+      adminComment?: string;
+    }) => {
+      const updateData: any = { status };
+      if (startDate) updateData.startDate = startDate;
+      if (endDate) updateData.endDate = endDate;
+      if (adminComment) updateData.adminComment = adminComment;
+      
       return apiRequest(`/api/vacation-requests/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(updateData),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+      setShowRequestModal(false);
+      setSelectedRequest(null);
+      setAdminComment("");
       toast({ title: "Solicitud actualizada correctamente" });
     },
     onError: () => {
@@ -153,6 +173,38 @@ export default function VacationManagement() {
   };
 
   const stats = getVacationStats();
+
+  const openRequestModal = (request: VacationRequest, action: 'approve' | 'deny' | 'edit') => {
+    setSelectedRequest(request);
+    setModalAction(action);
+    setEditDates({
+      startDate: request.startDate ? new Date(request.startDate).toISOString().split('T')[0] : "",
+      endDate: request.endDate ? new Date(request.endDate).toISOString().split('T')[0] : ""
+    });
+    setAdminComment("");
+    setShowRequestModal(true);
+  };
+
+  const handleRequestAction = () => {
+    if (!selectedRequest) return;
+
+    const updateData: any = {
+      id: selectedRequest.id,
+      status: modalAction === 'approve' ? 'approved' : modalAction === 'deny' ? 'denied' : selectedRequest.status
+    };
+
+    if (modalAction === 'edit' && editDates.startDate && editDates.endDate) {
+      updateData.startDate = editDates.startDate;
+      updateData.endDate = editDates.endDate;
+      updateData.status = 'approved'; // Auto-approve when editing dates
+    }
+
+    if (adminComment.trim()) {
+      updateData.adminComment = adminComment.trim();
+    }
+
+    updateRequestMutation.mutate(updateData);
+  };
 
   return (
     <div className="space-y-6">
@@ -312,18 +364,24 @@ export default function VacationManagement() {
                           <>
                             <Button
                               size="sm"
-                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'approved' })}
+                              onClick={() => openRequestModal(request, 'approve')}
                               className="bg-green-600 hover:bg-green-700 text-white"
-                              disabled={updateRequestMutation.isPending}
                             >
                               <Check className="w-4 h-4 mr-1" />
                               Aprobar
                             </Button>
                             <Button
                               size="sm"
+                              onClick={() => openRequestModal(request, 'edit')}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Modificar
+                            </Button>
+                            <Button
+                              size="sm"
                               variant="destructive"
-                              onClick={() => updateRequestMutation.mutate({ id: request.id, status: 'denied' })}
-                              disabled={updateRequestMutation.isPending}
+                              onClick={() => openRequestModal(request, 'deny')}
                             >
                               <X className="w-4 h-4 mr-1" />
                               Denegar
@@ -487,6 +545,118 @@ export default function VacationManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Request Management Modal */}
+      <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
+              {modalAction === 'deny' && <X className="w-5 h-5 text-red-600" />}
+              {modalAction === 'edit' && <Edit className="w-5 h-5 text-blue-600" />}
+              
+              {modalAction === 'approve' && 'Aprobar Solicitud'}
+              {modalAction === 'deny' && 'Denegar Solicitud'}
+              {modalAction === 'edit' && 'Modificar Solicitud'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-1">{selectedRequest.user?.fullName}</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedRequest.startDate ? format(new Date(selectedRequest.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
+                  {selectedRequest.endDate ? format(new Date(selectedRequest.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Días:</span> {selectedRequest.days || "N/A"}
+                </p>
+                {selectedRequest.reason && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Motivo:</span> {selectedRequest.reason}
+                  </p>
+                )}
+              </div>
+
+              {modalAction === 'edit' && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Nueva fecha de inicio
+                    </label>
+                    <Input
+                      type="date"
+                      value={editDates.startDate}
+                      onChange={(e) => setEditDates(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Nueva fecha de fin
+                    </label>
+                    <Input
+                      type="date"
+                      value={editDates.endDate}
+                      onChange={(e) => setEditDates(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  {modalAction === 'deny' ? 'Motivo del rechazo' : 'Comentario (opcional)'}
+                </label>
+                <Textarea
+                  value={adminComment}
+                  onChange={(e) => setAdminComment(e.target.value)}
+                  placeholder={modalAction === 'deny' 
+                    ? "Explica el motivo del rechazo..." 
+                    : "Añade un comentario si es necesario..."
+                  }
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRequestModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleRequestAction}
+                  disabled={updateRequestMutation.isPending || (modalAction === 'deny' && !adminComment.trim())}
+                  className={
+                    modalAction === 'approve' 
+                      ? "bg-green-600 hover:bg-green-700"
+                      : modalAction === 'deny'
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }
+                >
+                  {updateRequestMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {modalAction === 'approve' && <Check className="w-4 h-4 mr-1" />}
+                      {modalAction === 'deny' && <X className="w-4 h-4 mr-1" />}
+                      {modalAction === 'edit' && <Edit className="w-4 h-4 mr-1" />}
+                      
+                      {modalAction === 'approve' && 'Aprobar'}
+                      {modalAction === 'deny' && 'Denegar'}
+                      {modalAction === 'edit' && 'Modificar'}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

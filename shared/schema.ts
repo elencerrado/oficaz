@@ -115,6 +115,7 @@ export const vacationRequests = pgTable("vacation_requests", {
   status: text("status").notNull().default("pending"), // pending, approved, denied
   reviewedBy: integer("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
+  adminComment: text("admin_comment"), // Admin's comment when reviewing
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
