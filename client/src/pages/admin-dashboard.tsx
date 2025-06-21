@@ -226,20 +226,25 @@ export default function AdminDashboard() {
           
           {/* Quick Clock In/Out */}
           <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-4 items-center min-h-[80px]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Fichaje Rápido
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between min-h-[60px]">
                 <div className="flex flex-col justify-center">
-                  <h3 className="font-medium text-gray-900 mb-1">Fichaje Rápido</h3>
                   <p className="text-sm text-gray-500">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <div className="flex justify-center items-center h-full">
+                <div className="flex justify-end">
                   <Button
-                    size="default"
+                    size="lg"
                     onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
                     disabled={clockMutation.isPending}
-                    className={`px-6 py-2 font-medium rounded-lg transition-all duration-200 shadow-sm ${
+                    className={`px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm ${
                       activeSession 
                         ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200' 
                         : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200'
@@ -247,12 +252,12 @@ export default function AdminDashboard() {
                   >
                     {activeSession ? (
                       <>
-                        <LogOut className="h-4 w-4 mr-2" />
+                        <LogOut className="h-5 w-5 mr-2" />
                         Salir
                       </>
                     ) : (
                       <>
-                        <LogIn className="h-4 w-4 mr-2" />
+                        <LogIn className="h-5 w-5 mr-2" />
                         Entrar
                       </>
                     )}
