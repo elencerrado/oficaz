@@ -4,24 +4,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Force toast to appear above everything */
+/* Force toast to appear above everything, especially on mobile */
 [data-radix-toast-viewport] {
-  z-index: 999999 !important;
+  z-index: 2147483647 !important;
   position: fixed !important;
+  pointer-events: none !important;
 }
 
 [data-radix-toast-viewport] [data-radix-toast-root] {
-  z-index: 999999 !important;
+  z-index: 2147483647 !important;
   position: relative !important;
+  pointer-events: auto !important;
 }
 
-/* Ensure dialog has lower z-index than toast */
+/* Ensure dialog has much lower z-index than toast */
 [data-radix-dialog-overlay] {
-  z-index: 1000 !important;
+  z-index: 50 !important;
 }
 
 [data-radix-dialog-content] {
-  z-index: 1001 !important;
+  z-index: 51 !important;
+}
+
+/* Mobile specific toast positioning */
+@media (max-width: 768px) {
+  [data-radix-toast-viewport] {
+    top: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 32px) !important;
+    max-width: 400px !important;
+  }
 }
 
 /* Personalizar colores del calendario de rango */

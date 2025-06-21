@@ -190,14 +190,11 @@ export default function VacationRequests() {
     }
 
     if (exceedsAvailable) {
-      setIsModalOpen(false); // Cerrar modal primero
-      setTimeout(() => {
-        toast({
-          title: 'Días insuficientes',
-          description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
-          variant: 'destructive',
-        });
-      }, 100);
+      toast({
+        title: 'Días insuficientes',
+        description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -429,7 +426,7 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto z-[1000]">
+          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-white">
                 Solicitar Vacaciones
