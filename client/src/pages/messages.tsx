@@ -61,6 +61,7 @@ export default function Messages() {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
