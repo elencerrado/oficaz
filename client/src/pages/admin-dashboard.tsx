@@ -139,9 +139,12 @@ export default function AdminDashboard() {
   // Get vacation details for a specific date
   const getVacationDetailsForDate = (date: Date) => {
     return approvedVacations?.filter((req: any) => {
-      const startDate = parseISO(req.startDate);
-      const endDate = parseISO(req.endDate);
-      return date >= startDate && date <= endDate;
+      // Parse dates and normalize to date-only comparison
+      const startDate = startOfDay(parseISO(req.startDate));
+      const endDate = startOfDay(parseISO(req.endDate));
+      const targetDate = startOfDay(date);
+      
+      return targetDate >= startDate && targetDate <= endDate;
     }).map((req: any) => ({
       ...req,
       userName: req.userName || req.fullName || 'Empleado'
@@ -161,9 +164,12 @@ export default function AdminDashboard() {
 
     // Check employee vacations (only approved ones)
     const vacations = approvedVacations?.filter((req: any) => {
-      const startDate = parseISO(req.startDate);
-      const endDate = parseISO(req.endDate);
-      return date >= startDate && date <= endDate;
+      // Parse dates and normalize to date-only comparison
+      const startDate = startOfDay(parseISO(req.startDate));
+      const endDate = startOfDay(parseISO(req.endDate));
+      const targetDate = startOfDay(date);
+      
+      return targetDate >= startDate && targetDate <= endDate;
     });
 
     if (vacations?.length) {
@@ -337,8 +343,8 @@ export default function AdminDashboard() {
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
                       customHoliday: customHolidays.map(h => parseISO(h.date)),
                       vacation: approvedVacations?.flatMap((req: any) => {
-                        const start = parseISO(req.startDate);
-                        const end = parseISO(req.endDate);
+                        const start = startOfDay(parseISO(req.startDate));
+                        const end = startOfDay(parseISO(req.endDate));
                         const dates = [];
                         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                           dates.push(new Date(d));
@@ -383,10 +389,7 @@ export default function AdminDashboard() {
                       const events = getDateEvents(selectedDate);
                       const vacations = getVacationDetailsForDate(selectedDate);
                       
-                      // Debug logs
-                      console.log('Selected date:', format(selectedDate, 'yyyy-MM-dd'));
-                      console.log('All approved vacations:', approvedVacations);
-                      console.log('Vacations for this date:', vacations);
+
                       
                       if (events.length === 0 && vacations.length === 0) {
                         return (
