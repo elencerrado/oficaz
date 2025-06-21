@@ -47,12 +47,18 @@ export default function VacationRequests() {
   useEffect(() => {
     if (!requests?.length) return;
     
-    // Check if coming from dashboard notification or use stored timestamp
+    // Check if user clicked vacation icon with notification (should highlight)
+    const vacationNotificationSeen = localStorage.getItem('vacationNotificationSeen') === 'true';
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
     const testCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:45:00.000Z');
     
+    // Only highlight if user came from notification click OR there are recent changes
+    const shouldCheckForHighlights = vacationNotificationSeen || !lastCheckTime;
+    
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
+      vacationNotificationSeen,
+      shouldCheckForHighlights,
       testCheckDate: testCheckDate.toISOString(),
       now: new Date().toISOString(),
       requests: requests.map(r => ({
@@ -61,6 +67,12 @@ export default function VacationRequests() {
         reviewedAt: r.reviewedAt
       }))
     });
+    
+    if (!shouldCheckForHighlights) {
+      setHighlightedRequests(new Set());
+      console.log('❌ No notification seen - not highlighting');
+      return;
+    }
     
     const newlyProcessedRequests = requests.filter((request: any) => {
       if (!request.reviewedAt) return false;
@@ -98,14 +110,13 @@ export default function VacationRequests() {
   useEffect(() => {
     return () => {
       // Clear notification state when leaving vacation requests page
-      if (highlightedRequests.size > 0) {
-        localStorage.setItem('lastVacationCheck', new Date().toISOString());
-        localStorage.removeItem('hasVacationUpdates');
-        setHighlightedRequests(new Set());
-        console.log('🧹 Cleared vacation notifications and highlights on page exit');
-      }
+      localStorage.setItem('lastVacationCheck', new Date().toISOString());
+      localStorage.removeItem('vacationNotificationSeen');
+      localStorage.removeItem('hasVacationUpdates');
+      setHighlightedRequests(new Set());
+      console.log('🧹 Cleared vacation notifications and highlights on page exit');
     };
-  }, [highlightedRequests]);
+  }, []);
 
   // Handle click on highlighted request to remove highlight
   const handleRequestClick = (requestId: number) => {

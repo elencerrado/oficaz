@@ -110,19 +110,18 @@ export default function EmployeeDashboard() {
     }
   }, [vacationRequests]);
 
-  // Clear vacation notifications when user is on dashboard (auto-dismiss after viewing)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (hasVacationUpdates) {
-        console.log('Dashboard auto-clearing vacation notifications after 5 seconds');
-        setHasVacationUpdates(false);
-        localStorage.setItem('lastVacationCheck', new Date().toISOString());
-        localStorage.removeItem('hasVacationUpdates');
-      }
-    }, 5000); // Clear after 5 seconds on dashboard
-
-    return () => clearTimeout(timer);
-  }, [hasVacationUpdates]);
+  // Handle vacation icon click - only clear notification when user actually clicks
+  const handleVacationClick = () => {
+    const companyAlias = location.split('/').filter(part => part.length > 0)[0] || 'test';
+    
+    // Mark that user has seen the notification by clicking
+    if (hasVacationUpdates) {
+      localStorage.setItem('vacationNotificationSeen', 'true');
+      console.log('User clicked vacation icon - marking notification as seen');
+    }
+    
+    setLocation(`/${companyAlias}/vacaciones`);
+  };
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
@@ -259,7 +258,8 @@ export default function EmployeeDashboard() {
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
       notification: hasVacationUpdates,
-      notificationType: 'red'
+      notificationType: 'red',
+      onClick: handleVacationClick
     },
     { 
       icon: FileText, 
