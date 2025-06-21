@@ -354,12 +354,12 @@ export default function AdminDashboard() {
                       nav_button_previous: "absolute left-0 top-2",
                       nav_button_next: "absolute right-0 top-2",
                       table: "w-full border-collapse flex-1 px-4",
-                      head_row: "grid grid-cols-8 mb-2 w-full",
-                      head_cell: "text-gray-600 h-10 font-semibold text-sm flex items-center justify-center uppercase tracking-wide",
-                      row: "grid grid-cols-8 w-full mb-2",
-                      weeknumber: "col-span-1 h-24 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50",
-                      cell: "relative h-24 text-center text-sm p-0 focus-within:relative focus-within:z-20",
-                      day: "w-full h-24 p-3 font-medium flex flex-col items-start justify-start hover:bg-blue-50 transition-all duration-200 text-sm relative",
+                      head_row: "flex mb-2 w-full",
+                      head_cell: "text-gray-600 h-10 font-semibold text-sm flex items-center justify-center uppercase tracking-wide flex-1",
+                      row: "flex w-full mb-2",
+                      weeknumber: "w-12 h-24 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-2 bg-gray-50 flex-shrink-0",
+                      cell: "relative h-24 text-center text-sm p-0 focus-within:relative focus-within:z-20 flex-1",
+                      day: "w-full h-24 p-2 font-medium flex flex-col items-start justify-start hover:bg-blue-50 transition-all duration-200 text-sm relative border border-gray-100",
                       day_selected: "bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold border border-blue-300",
                       day_today: "bg-blue-50 text-blue-800 font-bold ring-1 ring-blue-300 ring-inset",
                       day_outside: "text-gray-300",
@@ -403,9 +403,9 @@ export default function AdminDashboard() {
                           <button 
                             {...props} 
                             style={dayStyle}
-                            className={`${props.className} flex flex-col items-start justify-start h-24 p-3 relative w-full`}
+                            className={`${props.className} flex flex-col items-start justify-start h-24 p-2 relative w-full border border-gray-100`}
                           >
-                            <span className="font-bold text-lg mb-1">{format(date, 'd')}</span>
+                            <span className="font-bold text-base mb-1">{format(date, 'd')}</span>
                             {eventNote && (
                               <span className="text-xs opacity-75 leading-tight text-left mt-auto max-w-full overflow-hidden">
                                 {eventNote}
