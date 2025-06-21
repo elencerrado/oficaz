@@ -360,7 +360,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId);
-      res.json(sessions);
+      
+      // Add user names to sessions
+      const sessionsWithNames = await Promise.all(sessions.map(async (session: any) => {
+        const user = await storage.getUser(session.userId);
+        return {
+          ...session,
+          userName: user?.fullName || 'Usuario desconocido'
+        };
+      }));
+      
+      res.json(sessionsWithNames);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

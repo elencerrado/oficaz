@@ -14,7 +14,7 @@ import { useState } from "react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import Dashboard from "@/pages/dashboard";
+import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";
 import EmployeeTimeTracking from "@/pages/employee-time-tracking";
@@ -38,8 +38,8 @@ function DashboardRouter() {
     return <EmployeeDashboard />;
   }
   
-  // Admin/Manager - just return Dashboard component without layout
-  return <Dashboard />;
+  // Admin/Manager - just return AdminDashboard component without layout
+  return <AdminDashboard />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
