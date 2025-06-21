@@ -375,46 +375,31 @@ export default function AdminDashboard() {
                         const hasHoliday = nationalHolidays.some(h => isSameDay(parseISO(h.date), date)) || 
                                          customHolidays.some(h => isSameDay(parseISO(h.date), date));
                         
+                        // Determinar el color del borde izquierdo basado en prioridad
+                        let leftBorderColor = '';
+                        if (hasHoliday) leftBorderColor = 'border-l-red-400';
+                        else if (approvedCount > 0) leftBorderColor = 'border-l-green-400';
+                        else if (pendingCount > 0) leftBorderColor = 'border-l-orange-400';
+                        
                         return (
                           <div className="relative group">
-                            <button {...props} />
+                            <button 
+                              {...props} 
+                              className={`${props.className} ${leftBorderColor} ${leftBorderColor ? 'border-l-4' : ''}`}
+                            />
                             
-                            {/* Holiday indicator */}
-                            {hasHoliday && (
-                              <div className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
-                            )}
-                            
-                            {/* Vacation indicators */}
-                            <div className="absolute -bottom-0.5 -right-0.5 flex gap-0.5">
-                              {approvedCount > 0 && (
-                                <div className="bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium border border-white">
-                                  {approvedCount}
-                                </div>
-                              )}
-                              {pendingCount > 0 && (
-                                <div className="bg-orange-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium border border-white">
-                                  {pendingCount}
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Tooltip on hover */}
+                            {/* Tooltip discreto con información detallada */}
                             {(dateVacations.length > 0 || hasHoliday) && (
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap shadow-lg">
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
                                 {hasHoliday && (
-                                  <div className="text-red-300 mb-1">🎉 Día festivo</div>
+                                  <div className="text-red-300">Día festivo</div>
                                 )}
                                 {approvedCount > 0 && (
-                                  <div className="text-green-300 mb-1">
-                                    ✅ {approvedCount} de vacaciones
-                                  </div>
+                                  <div className="text-green-300">{approvedCount} de vacaciones</div>
                                 )}
                                 {pendingCount > 0 && (
-                                  <div className="text-orange-300">
-                                    ⏳ {pendingCount} pendiente{pendingCount > 1 ? 's' : ''}
-                                  </div>
+                                  <div className="text-orange-300">{pendingCount} pendiente{pendingCount > 1 ? 's' : ''}</div>
                                 )}
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                               </div>
                             )}
                           </div>
@@ -494,18 +479,15 @@ export default function AdminDashboard() {
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                                     <span className="text-sm font-semibold text-green-800">
-                                      Empleados de vacaciones ({vacations.filter(v => v.status === 'approved').length})
+                                      {vacations.filter(v => v.status === 'approved').length} empleado{vacations.filter(v => v.status === 'approved').length > 1 ? 's' : ''} de vacaciones
                                     </span>
                                   </div>
-                                  <div className="grid gap-2">
+                                  <div className="space-y-1">
                                     {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                                      <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
-                                        <div className="flex items-center gap-2">
-                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                          <span className="text-sm font-medium text-green-900">{vacation.userName}</span>
-                                        </div>
-                                        <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                                          {format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')}
+                                      <div key={idx} className="text-sm text-green-700 ml-5">
+                                        • {vacation.userName}
+                                        <span className="text-xs text-gray-500 ml-2">
+                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
                                         </span>
                                       </div>
                                     ))}
@@ -518,18 +500,15 @@ export default function AdminDashboard() {
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                                     <span className="text-sm font-semibold text-orange-800">
-                                      Solicitudes pendientes ({vacations.filter(v => v.status === 'pending').length})
+                                      {vacations.filter(v => v.status === 'pending').length} solicitud{vacations.filter(v => v.status === 'pending').length > 1 ? 'es' : ''} pendiente{vacations.filter(v => v.status === 'pending').length > 1 ? 's' : ''}
                                     </span>
                                   </div>
-                                  <div className="grid gap-2">
+                                  <div className="space-y-1">
                                     {vacations.filter(v => v.status === 'pending').map((vacation: any, idx: number) => (
-                                      <div key={idx} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
-                                        <div className="flex items-center gap-2">
-                                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                          <span className="text-sm font-medium text-orange-900">{vacation.userName}</span>
-                                        </div>
-                                        <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                                          {format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')}
+                                      <div key={idx} className="text-sm text-orange-700 ml-5">
+                                        • {vacation.userName}
+                                        <span className="text-xs text-gray-500 ml-2">
+                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
                                         </span>
                                       </div>
                                     ))}
