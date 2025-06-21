@@ -298,75 +298,130 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Large and Enhanced */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[480px]">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  locale={es}
-                  showWeekNumber={true}
-                  className="w-full px-6 pt-6 pb-3"
-                  classNames={{
-                    months: "flex flex-col space-y-6",
-                    month: "space-y-6 w-full min-h-[400px]",
-                    caption: "flex justify-center pt-2 relative items-center mb-6",
-                    caption_label: "text-xl font-bold text-gray-800",
-                    nav: "space-x-1 flex items-center",
-                    nav_button: "h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-xl p-0 transition-colors flex items-center justify-center shadow-sm",
-                    nav_button_previous: "absolute left-0 top-2",
-                    nav_button_next: "absolute right-0 top-2",
-                    table: "w-full border-collapse",
-                    head_row: "flex mb-3",
-                    head_cell: "text-gray-600 w-14 h-10 font-semibold text-sm flex items-center justify-center uppercase tracking-wide",
-                    row: "flex w-full mb-2",
-                    weeknumber: "w-10 h-14 text-sm text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-2",
-                    cell: "relative w-14 h-14 text-center text-base p-0 focus-within:relative focus-within:z-20",
-                    day: "w-14 h-14 p-0 font-medium flex items-center justify-center rounded-xl hover:bg-blue-50 transition-all duration-200 relative",
-                    day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-lg",
-                    day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset shadow-md",
-                    day_outside: "text-gray-300",
-                    day_disabled: "text-gray-200 cursor-not-allowed",
-                    day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
-                    day_hidden: "invisible",
-                  }}
-                  modifiers={{
-                    nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                    customHoliday: customHolidays.map(h => parseISO(h.date)),
-                    vacation: approvedVacations?.flatMap((req: any) => {
-                      const start = parseISO(req.startDate);
-                      const end = parseISO(req.endDate);
-                      const dates = [];
-                      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                        dates.push(new Date(d));
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-6">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    locale={es}
+                    showWeekNumber={true}
+                    className="w-full"
+                    classNames={{
+                      months: "flex flex-col space-y-4 w-full",
+                      month: "space-y-4 w-full",
+                      caption: "flex justify-center pt-2 relative items-center mb-4",
+                      caption_label: "text-xl font-bold text-gray-800",
+                      nav: "space-x-1 flex items-center",
+                      nav_button: "h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-xl p-0 transition-colors flex items-center justify-center shadow-sm",
+                      nav_button_previous: "absolute left-0 top-2",
+                      nav_button_next: "absolute right-0 top-2",
+                      table: "w-full border-collapse",
+                      head_row: "flex mb-3",
+                      head_cell: "text-gray-600 w-12 h-8 font-semibold text-sm flex items-center justify-center uppercase tracking-wide",
+                      row: "flex w-full mb-1",
+                      weeknumber: "w-8 h-12 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50",
+                      cell: "relative w-12 h-12 text-center text-sm p-0 focus-within:relative focus-within:z-20",
+                      day: "w-12 h-12 p-0 font-medium flex items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200",
+                      day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-lg",
+                      day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset shadow-md",
+                      day_outside: "text-gray-300",
+                      day_disabled: "text-gray-200 cursor-not-allowed",
+                      day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
+                      day_hidden: "invisible",
+                    }}
+                    modifiers={{
+                      nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
+                      customHoliday: customHolidays.map(h => parseISO(h.date)),
+                      vacation: approvedVacations?.flatMap((req: any) => {
+                        const start = parseISO(req.startDate);
+                        const end = parseISO(req.endDate);
+                        const dates = [];
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                          dates.push(new Date(d));
+                        }
+                        return dates;
+                      }) || []
+                    }}
+                    modifiersStyles={{
+                      nationalHoliday: { 
+                        backgroundColor: '#dc2626', 
+                        color: 'white', 
+                        fontWeight: '700',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)'
+                      },
+                      customHoliday: { 
+                        backgroundColor: '#d97706', 
+                        color: 'white', 
+                        fontWeight: '700',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(217, 119, 6, 0.3)'
+                      },
+                      vacation: { 
+                        backgroundColor: '#16a34a', 
+                        color: 'white', 
+                        fontWeight: '700',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
                       }
-                      return dates;
-                    }) || []
-                  }}
-                  modifiersStyles={{
-                    nationalHoliday: { 
-                      backgroundColor: '#dc2626', 
-                      color: 'white', 
-                      fontWeight: '700',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)'
-                    },
-                    customHoliday: { 
-                      backgroundColor: '#d97706', 
-                      color: 'white', 
-                      fontWeight: '700',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 4px rgba(217, 119, 6, 0.3)'
-                    },
-                    vacation: { 
-                      backgroundColor: '#16a34a', 
-                      color: 'white', 
-                      fontWeight: '700',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
-                    }
-                  }}
+                    }}
+                  />
+                </div>
 
-                />
+                {/* Event Details Panel */}
+                {selectedDate && (
+                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" />
+                      {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
+                    </h4>
+                    {(() => {
+                      const events = getDateEvents(selectedDate);
+                      const vacations = getVacationDetailsForDate(selectedDate);
+                      
+                      if (events.length === 0 && vacations.length === 0) {
+                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                      }
+                      
+                      return (
+                        <div className="space-y-3">
+                          {events.map((event, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded-lg border">
+                              {event.type === 'holiday' ? (
+                                <>
+                                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">{event.name}</p>
+                                    <p className="text-xs text-red-600">Día festivo nacional</p>
+                                  </div>
+                                </>
+                              ) : null}
+                            </div>
+                          ))}
+                          
+                          {vacations.length > 0 && (
+                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm font-semibold text-green-800">
+                                  {vacations.length} empleado{vacations.length > 1 ? 's' : ''} de vacaciones
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                {vacations.map((vacation: any, idx: number) => (
+                                  <div key={idx} className="text-sm text-green-700 ml-5">
+                                    • {vacation.userName || 'Empleado'}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
 
               {/* Pending Requests Section */}
