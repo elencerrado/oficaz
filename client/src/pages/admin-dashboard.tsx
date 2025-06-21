@@ -240,10 +240,14 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <Button
-                  size="lg"
+                  size="default"
                   onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
                   disabled={clockMutation.isPending}
-                  className={activeSession ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+                  className={`px-6 py-2 font-medium rounded-lg transition-all duration-200 shadow-sm ${
+                    activeSession 
+                      ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200' 
+                      : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200'
+                  } hover:shadow-md`}
                 >
                   {activeSession ? (
                     <>
