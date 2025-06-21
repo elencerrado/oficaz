@@ -43,17 +43,17 @@ export default function VacationRequests() {
     refetchIntervalInBackground: true,
   });
 
-  // Detect newly processed requests and highlight them - only when coming from notification
+  // Detect newly processed requests and highlight them
   useEffect(() => {
     if (!requests?.length) return;
     
-    // Check if user has vacation updates notification active in dashboard
-    const hasVacationUpdates = localStorage.getItem('hasVacationUpdates') === 'true';
+    // Use a fixed older timestamp to detect recent changes for testing
+    const testCheckDate = new Date('2025-06-21T10:45:00.000Z');
     
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
-      hasVacationUpdates,
-      hasVacationUpdatesRaw: localStorage.getItem('hasVacationUpdates'),
+      testCheckDate: testCheckDate.toISOString(),
+      now: new Date().toISOString(),
       requests: requests.map(r => ({
         id: r.id,
         status: r.status,
@@ -61,37 +61,18 @@ export default function VacationRequests() {
       }))
     });
     
-    if (!hasVacationUpdates) {
-      // No notification active, don't highlight anything
-      setHighlightedRequests(new Set());
-      console.log('❌ No vacation updates notification - not highlighting');
-      return;
-    }
-    
-    console.log('✅ Vacation notification is ACTIVE - proceeding with highlight detection');
-    
-    // For testing: use an older check time to force detection of recent changes
-    const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z');
-    
-    console.log('🔍 Checking for highlighted requests (notification active):', {
-      lastCheckTime,
-      lastCheckDate: lastCheckDate.toISOString(),
-      now: new Date().toISOString()
-    });
-    
     const newlyProcessedRequests = requests.filter((request: any) => {
       if (!request.reviewedAt) return false;
       
       const reviewDate = new Date(request.reviewedAt);
       const isProcessed = request.status === 'approved' || request.status === 'denied';
-      const isNew = reviewDate > lastCheckDate;
+      const isNew = reviewDate > testCheckDate;
       
-      console.log(`Request ${request.id}:`, {
+      console.log(`🔍 Request ${request.id}:`, {
         status: request.status,
         reviewedAt: request.reviewedAt,
         reviewDate: reviewDate.toISOString(),
-        lastCheckDate: lastCheckDate.toISOString(),
+        testCheckDate: testCheckDate.toISOString(),
         isProcessed,
         isNew,
         shouldHighlight: isProcessed && isNew
@@ -112,16 +93,17 @@ export default function VacationRequests() {
     }
   }, [requests]);
 
-  // Clear highlights when leaving the page - this clears the notification
+  // Clear highlights when leaving the page
   useEffect(() => {
     return () => {
-      // Clear vacation notification when leaving the page
-      localStorage.setItem('lastVacationCheck', new Date().toISOString());
-      localStorage.removeItem('hasVacationUpdates');
-      setHighlightedRequests(new Set());
-      console.log('🧹 Cleared vacation notifications on page exit');
+      // Only clear if there were highlights
+      if (highlightedRequests.size > 0) {
+        localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        setHighlightedRequests(new Set());
+        console.log('🧹 Cleared vacation notifications on page exit');
+      }
     };
-  }, []);
+  }, [highlightedRequests]);
 
   // Handle click on highlighted request to remove highlight
   const handleRequestClick = (requestId: number) => {
@@ -131,11 +113,10 @@ export default function VacationRequests() {
       setHighlightedRequests(newHighlighted);
       console.log(`Removed highlight from request ${requestId}`);
       
-      // If no more highlights, clear the vacation notification completely
+      // If no more highlights, update last check time
       if (newHighlighted.size === 0) {
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
-        localStorage.removeItem('hasVacationUpdates');
-        console.log('🧹 All highlights cleared - notification removed');
+        console.log('🧹 All highlights cleared - updated lastVacationCheck');
       }
     }
   };
