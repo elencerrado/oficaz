@@ -4,6 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Personalizar colores del calendario de rango */
+.rdp-day_range_middle {
+  @apply bg-blue-100 text-blue-900 !important;
+}
+
+.rdp-day_range_start {
+  @apply bg-blue-500 text-white !important;
+}
+
+.rdp-day_range_end {
+  @apply bg-blue-500 text-white !important;
+}
+
 /* Fix iPhone white areas */
 html, body {
   background: #232B36 !important;

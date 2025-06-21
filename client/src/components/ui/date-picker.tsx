@@ -207,7 +207,7 @@ export function DatePickerPeriod({
             locale={es}
           />
 
-          <div className="flex gap-3 w-full">
+          <div className="flex justify-center">
             <Button
               variant="outline"
               onClick={() => {
@@ -215,18 +215,9 @@ export function DatePickerPeriod({
                 onEndDateChange(undefined);
                 setIsSelectingStart(true);
               }}
-              className="flex-1"
+              size="sm"
             >
               Limpiar fechas
-            </Button>
-            <Button
-              onClick={() => {
-                setIsModalOpen(false);
-                setIsSelectingStart(true);
-              }}
-              className="flex-1"
-            >
-              Cerrar
             </Button>
           </div>
         </div>
