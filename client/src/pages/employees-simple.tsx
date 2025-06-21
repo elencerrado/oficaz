@@ -97,17 +97,22 @@ export default function EmployeesSimple() {
     const matchesSearch = employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Convert filter selection to actual database values
-    let statusToMatch = statusFilter;
-    if (statusFilter === 'activos') statusToMatch = 'active';
-    else if (statusFilter === 'inactivos') statusToMatch = 'inactive';
-    else if (statusFilter === 'de baja') statusToMatch = 'on_leave';
-    else if (statusFilter === 'de vacaciones') statusToMatch = 'on_vacation';
+    const statusMap: Record<string, string> = {
+      'activos': 'active',
+      'inactivos': 'inactive', 
+      'de baja': 'on_leave',
+      'de vacaciones': 'on_vacation'
+    };
     
     const employeeStatus = employee.status || 'active'; // Default to 'active' if no status
     
     // Handle both Spanish and English status values for compatibility
     const normalizedEmployeeStatus = employeeStatus === 'activo' ? 'active' : employeeStatus;
-    const matchesStatus = statusFilter === 'todos' || normalizedEmployeeStatus === statusToMatch;
+    
+    // Check status match
+    const matchesStatus = statusFilter === 'todos' || 
+                         normalizedEmployeeStatus === statusMap[statusFilter] ||
+                         normalizedEmployeeStatus === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
