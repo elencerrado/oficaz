@@ -572,7 +572,7 @@ export default function TimeTracking() {
                   <SelectTrigger className={cn(
                     "h-10 text-sm font-normal",
                     dateFilter === 'month' 
-                      ? "bg-black text-white border-black hover:bg-black/90" 
+                      ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90" 
                       : "bg-white border-gray-200 hover:bg-gray-50"
                   )}>
                     <SelectValue placeholder="Mes" />
