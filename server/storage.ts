@@ -22,6 +22,7 @@ export interface IStorage {
   getCompanyByEmail?(email: string): Promise<Company | undefined>;
   getCompanyByAlias?(alias: string): Promise<Company | undefined>;
   getAllCompanies(): Promise<Company[]>;
+  updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company | undefined>;
 
   // Company Configurations
   createCompanyConfig?(config: InsertCompanyConfig): Promise<CompanyConfig>;
@@ -105,6 +106,15 @@ export class DrizzleStorage implements IStorage {
 
   async getAllCompanies(): Promise<Company[]> {
     return await db.select().from(schema.companies);
+  }
+
+  async updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company | undefined> {
+    const [updatedCompany] = await db
+      .update(schema.companies)
+      .set(updates)
+      .where(eq(schema.companies.id, id))
+      .returning();
+    return updatedCompany || undefined;
   }
 
   async getCompanyByCif(cif: string): Promise<Company | undefined> {

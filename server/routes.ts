@@ -864,6 +864,38 @@ startxref
     }
   });
 
+  // Update company information
+  app.patch('/api/companies/update', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { name, cif, email, contactName, phone, address, province } = req.body;
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'No autorizado para actualizar información de empresa' });
+      }
+
+      const updatedCompany = await storage.updateCompany(user.companyId, {
+        name,
+        cif,
+        email,
+        contactName,
+        phone,
+        address,
+        province
+      });
+
+      if (!updatedCompany) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      res.json({ company: updatedCompany });
+    } catch (error) {
+      console.error('Error updating company:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Dashboard stats
   app.get('/api/dashboard/stats', authenticateToken, async (req: AuthRequest, res) => {
     try {

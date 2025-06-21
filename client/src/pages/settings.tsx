@@ -94,6 +94,40 @@ export default function Settings() {
     },
   });
 
+  const updateCompanyMutation = useMutation({
+    mutationFn: async (data: typeof companyData) => {
+      const response = await fetch('/api/companies/update', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al actualizar la empresa');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Empresa actualizada',
+        description: 'La información de la empresa ha sido guardada correctamente.',
+      });
+      setIsEditingCompany(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar la empresa. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
+  });
+
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
@@ -495,9 +529,12 @@ export default function Settings() {
                     >
                       Cancelar
                     </Button>
-                    <Button>
+                    <Button
+                      onClick={() => updateCompanyMutation.mutate(companyData)}
+                      disabled={updateCompanyMutation.isPending}
+                    >
                       <Save className="h-4 w-4 mr-2" />
-                      Guardar cambios
+                      {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
                     </Button>
                   </div>
                 )}
