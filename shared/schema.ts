@@ -12,6 +12,7 @@ export const companies = pgTable("companies", {
   companyAlias: text("company_alias").notNull().unique(),
   phone: text("phone"),
   address: text("address"),
+  province: text("province"),
   logoUrl: text("logo_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -49,10 +49,9 @@ export default function Settings() {
     name: company?.name || '',
     cif: company?.cif || '',
     email: company?.email || '',
+    contactName: company?.contactName || '',
     phone: company?.phone || '',
     address: company?.address || '',
-    postalCode: company?.postalCode || '',
-    city: company?.city || '',
     province: company?.province || '',
     // Configuration settings
     defaultVacationDays: 30,
