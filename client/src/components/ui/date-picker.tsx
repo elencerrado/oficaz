@@ -137,17 +137,14 @@ export function DatePickerPeriod({
         <Button
           variant="outline"
           className={cn(
-            "justify-between text-left font-normal bg-white border-gray-200 hover:bg-gray-50",
-            buttonText ? "w-auto px-3" : "w-[200px]",
+            "justify-center text-center font-normal bg-white border-gray-200 hover:bg-gray-50 w-full",
             className
           )}
         >
-          <div className="flex items-center">
-            {buttonText || (startDate && endDate
-              ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
-              : 'Rango')
-            }
-          </div>
+          {buttonText || (startDate && endDate
+            ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
+            : 'Rango')
+          }
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
