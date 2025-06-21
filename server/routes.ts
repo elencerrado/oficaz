@@ -465,7 +465,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid status' });
       }
 
-      const updateData: any = { status };
+      const updateData: any = { 
+        status,
+        reviewedAt: new Date() // Add timestamp when status changes
+      };
       if (startDate) updateData.startDate = new Date(startDate);
       if (endDate) updateData.endDate = new Date(endDate);
       if (adminComment) updateData.adminComment = adminComment;
