@@ -598,8 +598,8 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input - Fixed at bottom */}
-          <div className="p-4 bg-white/10 backdrop-blur-sm sticky bottom-0 border-t border-white/20">
+          {/* Message Input - Fixed at bottom with keyboard handling */}
+          <div className="p-4 bg-white/10 backdrop-blur-sm flex-shrink-0 border-t border-white/20">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
@@ -614,14 +614,29 @@ export default function Messages() {
                   }
                 }}
                 onFocus={() => {
+                  // Better mobile keyboard handling
                   setTimeout(() => {
                     if (messageInputRef.current) {
+                      // Scroll the entire viewport to bring input into view
+                      window.scrollTo({
+                        top: document.body.scrollHeight,
+                        behavior: 'smooth'
+                      });
+                      
+                      // Alternative approach for iOS Safari
                       messageInputRef.current.scrollIntoView({ 
                         behavior: 'smooth', 
-                        block: 'center'
+                        block: 'nearest',
+                        inline: 'nearest'
                       });
                     }
                   }, 300);
+                }}
+                onBlur={() => {
+                  // Reset scroll position when keyboard closes
+                  setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }, 100);
                 }}
               />
               <Button
