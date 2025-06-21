@@ -104,112 +104,89 @@ export function DatePickerPeriod({
   onEndDateChange,
   className
 }: DatePickerPeriodProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const formatDateRange = () => {
-    if (startDate && endDate) {
-      return `${format(startDate, "d MMM", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
-    } else if (startDate) {
-      return `Desde ${format(startDate, "d MMM yyyy", { locale: es })}`;
-    } else if (endDate) {
-      return `Hasta ${format(endDate, "d MMM yyyy", { locale: es })}`;
-    }
-    return "Seleccionar rango de fechas";
-  };
+  const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           className={cn(
             "w-[200px] justify-between text-left font-normal bg-white border-gray-200 hover:bg-gray-50",
-            !startDate && !endDate && "text-gray-500",
             className
           )}
         >
           <div className="flex items-center">
             <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
-            <span className="truncate">{formatDateRange()}</span>
+            {startDate && endDate
+              ? `${format(startDate, 'd MMM', { locale: es })} - ${format(endDate, 'd MMM yyyy', { locale: es })}`
+              : 'Seleccionar rango de fechas'
+            }
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        className="w-auto p-0 bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden" 
-        align="start"
-        side="bottom"
-        sideOffset={4}
-      >
-        <div className="p-4">
-          <div className="flex flex-col items-center space-y-4">
-            <Calendar
-              mode="range"
-              selected={{
-                from: startDate || undefined,
-                to: endDate || undefined,
+      <PopoverContent className="w-auto p-4" align="center">
+        <div className="space-y-4">
+          <div className="text-sm font-medium text-center">
+            Seleccionar rango de fechas
+          </div>
+          <div className="text-xs text-gray-500 text-center">
+            Haz clic en una fecha de inicio y luego en una fecha de fin
+          </div>
+          <Calendar
+            mode="range"
+            selected={{
+              from: startDate || undefined,
+              to: endDate || undefined
+            }}
+            onSelect={(range) => {
+              if (range?.from) {
+                onStartDateChange(range.from);
+              }
+              if (range?.to) {
+                onEndDateChange(range.to);
+              }
+              if (!range) {
+                onStartDateChange(undefined);
+                onEndDateChange(undefined);
+              }
+            }}
+            className="rounded-md border"
+            numberOfMonths={1}
+            showOutsideDays={false}
+            locale={es}
+          />
+          {(startDate || endDate) && (
+            <div className="text-xs text-center text-gray-600">
+              {startDate && (
+                <div>Desde: {format(startDate, 'dd/MM/yyyy', { locale: es })}</div>
+              )}
+              {endDate && (
+                <div>Hasta: {format(endDate, 'dd/MM/yyyy', { locale: es })}</div>
+              )}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setIsRangeDialogOpen(false);
               }}
-              onSelect={(range) => {
-                if (range?.from) {
-                  onStartDateChange(range.from);
-                }
-                if (range?.to) {
-                  onEndDateChange(range.to);
-                  setTimeout(() => setIsOpen(false), 300);
-                } else if (range?.from && !range?.to) {
-                  onEndDateChange(undefined);
-                }
+              className="flex-1"
+              disabled={!startDate}
+            >
+              Aplicar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                onStartDateChange(undefined);
+                onEndDateChange(undefined);
               }}
-              numberOfMonths={1}
-              locale={es}
-              className="rounded-md"
-              classNames={{
-                months: "flex flex-col space-y-4",
-                month: "space-y-4",
-                caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-medium",
-                nav: "space-x-1 flex items-center",
-                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                nav_button_previous: "absolute left-1",
-                nav_button_next: "absolute right-1",
-                table: "w-full border-collapse space-y-1",
-                head_row: "flex",
-                head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                row: "flex w-full mt-2",
-                cell: "text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-                day_range_end: "day-range-end",
-                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                day_today: "bg-accent text-accent-foreground",
-                day_outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
-                day_disabled: "text-muted-foreground opacity-50",
-                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                day_hidden: "invisible",
-              }}
-            />
-            
-            {(startDate || endDate) && (
-              <div className="flex gap-2 w-full">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    onStartDateChange(undefined);
-                    onEndDateChange(undefined);
-                  }}
-                  className="flex-1 text-gray-600 hover:text-gray-800"
-                >
-                  Limpiar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  className="flex-1"
-                >
-                  Cerrar
-                </Button>
-              </div>
-            )}
+              className="flex-1"
+            >
+              Limpiar
+            </Button>
           </div>
         </div>
       </PopoverContent>
