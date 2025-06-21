@@ -466,8 +466,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updateData: any = { status };
-      if (startDate) updateData.startDate = startDate;
-      if (endDate) updateData.endDate = endDate;
+      if (startDate) updateData.startDate = new Date(startDate);
+      if (endDate) updateData.endDate = new Date(endDate);
       if (adminComment) updateData.adminComment = adminComment;
 
       const request = await storage.updateVacationRequest(id, updateData);
