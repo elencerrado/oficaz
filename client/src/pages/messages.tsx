@@ -48,16 +48,19 @@ export default function Messages() {
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  const { user, company } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [location] = useLocation();
+  const companyAlias = company?.companyAlias || 'test';
+  
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-  const { user, company } = useAuth();
-  const { toast } = useToast();
-  const [location] = useLocation();
-  const companyAlias = company?.companyAlias || 'test';
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
@@ -238,6 +241,245 @@ export default function Messages() {
     return <PageLoading />;
   }
 
+  // Admin view with light theme
+  if (isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
+              <MessageCircle className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Mensajería</h1>
+              <p className="text-gray-600 text-sm">
+                Comunícate con empleados y gestiona mensajes
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+            {/* Employee List */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg border border-gray-200 h-full">
+                <div className="p-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-medium text-gray-900">Empleados</h2>
+                    <Button
+                      variant={isGroupMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setIsGroupMode(!isGroupMode);
+                        setSelectedEmployees([]);
+                      }}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Grupal
+                    </Button>
+                  </div>
+                  
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Buscar empleado..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-gray-50 border-gray-200"
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-20rem)]">
+                  {filteredEmployees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className={`p-3 rounded-lg cursor-pointer border transition-colors ${
+                        selectedChat === employee.id
+                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                          : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                      }`}
+                      onClick={() => !isGroupMode && setSelectedChat(employee.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {isGroupMode && (
+                          <input
+                            type="checkbox"
+                            checked={selectedEmployees.includes(employee.id)}
+                            onChange={() => toggleEmployeeSelection(employee.id)}
+                            className="rounded"
+                          />
+                        )}
+                        
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          selectedChat === employee.id
+                            ? 'bg-white/20 text-white'
+                            : 'bg-oficaz-primary text-white'
+                        }`}>
+                          <span className="text-sm font-medium">
+                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium truncate ${
+                            selectedChat === employee.id ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {employee.fullName}
+                          </p>
+                          <p className={`text-xs truncate ${
+                            selectedChat === employee.id ? 'text-white/70' : 'text-gray-500'
+                          }`}>
+                            Empleado
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Group messaging controls */}
+                {isGroupMode && (
+                  <div className="p-4 border-t border-gray-200 bg-gray-50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-600">
+                        {selectedEmployees.length} empleados seleccionados
+                      </span>
+                      <div className="space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedEmployees(filteredEmployees.map(e => e.id))}
+                        >
+                          Todos
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedEmployees([])}
+                        >
+                          Ninguno
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Escribe tu mensaje grupal..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        className="resize-none"
+                      />
+                      <Button
+                        onClick={sendGroupMessage}
+                        disabled={selectedEmployees.length === 0 || !newMessage.trim()}
+                        className="w-full"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Enviar a {selectedEmployees.length} empleados
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="lg:col-span-2">
+              {selectedChat ? (
+                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium">
+                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                        </h3>
+                        <p className="text-sm text-gray-500">Empleado</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    <div className="space-y-4">
+                      {getChatMessages(selectedChat).length > 0 ? (
+                        getChatMessages(selectedChat).map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                message.senderId === user?.id
+                                  ? 'bg-oficaz-primary text-white'
+                                  : 'bg-gray-100 text-gray-900'
+                              }`}
+                            >
+                              <p className="text-sm">{message.content}</p>
+                              <p className={`text-xs mt-1 ${
+                                message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                              }`}>
+                                {format(new Date(message.createdAt), 'HH:mm')}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No hay mensajes aún</p>
+                          <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="p-4 border-t border-gray-200">
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Escribe tu mensaje..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim()}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border border-gray-200 h-full flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">Selecciona un empleado</h3>
+                    <p>Elige un empleado de la lista para comenzar a chatear</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Employee view (keep existing dark theme)
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {!selectedChat ? (
