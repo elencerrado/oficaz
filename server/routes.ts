@@ -289,7 +289,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         user: { ...user, password: undefined },
-        company,
+        company: company ? {
+          ...company,
+          // Ensure all configuration fields are included and properly typed
+          employeeTimeEditPermission: company.employeeTimeEditPermission || 'validation',
+          workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
+          defaultVacationDays: Number(company.defaultVacationDays) || 30,
+          vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5
+        } : null,
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

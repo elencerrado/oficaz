@@ -46,19 +46,38 @@ export default function Settings() {
 
   // Company configuration data
   const [companyData, setCompanyData] = useState({
-    name: company?.name || '',
-    cif: company?.cif || '',
-    email: company?.email || '',
-    contactName: company?.contactName || '',
-    phone: company?.phone || '',
-    address: company?.address || '',
-    province: company?.province || '',
+    name: '',
+    cif: '',
+    email: '',
+    contactName: '',
+    phone: '',
+    address: '',
+    province: '',
     // Configuration settings
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
     workingHoursPerDay: 8,
     employeeTimeEditPermission: 'validation' as 'yes' | 'no' | 'validation'
   });
+
+  // Initialize form data when company data loads
+  useEffect(() => {
+    if (company) {
+      setCompanyData({
+        name: company.name || '',
+        cif: company.cif || '',
+        email: company.email || '',
+        contactName: company.contactName || '',
+        phone: company.phone || '',
+        address: company.address || '',
+        province: company.province || '',
+        employeeTimeEditPermission: company.employeeTimeEditPermission || 'validation',
+        workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
+        defaultVacationDays: Number(company.defaultVacationDays) || 30,
+        vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
+      });
+    }
+  }, [company]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
