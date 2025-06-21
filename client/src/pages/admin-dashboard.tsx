@@ -334,203 +334,47 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar - Large and Enhanced */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto h-full">
-                <div className="w-full h-full">
+              {/* Calendar - Simple and Compact */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="p-4">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     locale={es}
-                    showWeekNumber={true}
-                    className="w-full h-full"
-                    classNames={{
-                      months: "flex flex-col w-full h-full",
-                      month: "w-full h-full min-w-0 flex flex-col",
-                      caption: "flex justify-center pt-4 relative items-center mb-4 px-4",
-                      caption_label: "text-lg font-bold text-gray-800",
-                      nav: "space-x-1 flex items-center",
-                      nav_button: "h-8 w-8 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center shadow-sm",
-                      nav_button_previous: "absolute left-0 top-2",
-                      nav_button_next: "absolute right-0 top-2",
-                      table: "w-full border-collapse flex-1 px-4",
-                      head_row: "flex mb-2 w-full",
-                      head_cell: "text-gray-600 h-10 font-semibold text-sm flex items-center justify-center uppercase tracking-wide flex-1",
-                      row: "flex w-full mb-2",
-                      weeknumber: "w-12 h-24 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-2 bg-gray-50 flex-shrink-0",
-                      cell: "relative h-24 text-center text-sm p-0 focus-within:relative focus-within:z-20 flex-1",
-                      day: "w-full h-24 p-2 font-medium flex flex-col items-start justify-start hover:bg-blue-50 transition-all duration-200 text-sm relative border border-gray-100",
-                      day_selected: "bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold border border-blue-300",
-                      day_today: "bg-blue-50 text-blue-800 font-bold ring-1 ring-blue-300 ring-inset",
-                      day_outside: "text-gray-300",
-                      day_disabled: "text-gray-200 cursor-not-allowed",
-                      day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
-                      day_hidden: "invisible",
-                    }}
-                    components={{
-                      Day: ({ date, ...props }) => {
-                        const dateVacations = getVacationDetailsForDate(date);
-                        const approvedCount = dateVacations.filter(v => v.status === 'approved').length;
-                        const pendingCount = dateVacations.filter(v => v.status === 'pending').length;
-                        const nationalHoliday = nationalHolidays.find(h => isSameDay(parseISO(h.date), date));
-                        const customHoliday = customHolidays.find(h => isSameDay(parseISO(h.date), date));
-                        
-                        // Determinar el fondo del día
-                        let dayStyle = {};
-                        if (nationalHoliday) {
-                          dayStyle = { backgroundColor: '#fee2e2', color: '#dc2626' };
-                        } else if (customHoliday) {
-                          dayStyle = { backgroundColor: '#fed7aa', color: '#d97706' };
-                        } else if (approvedCount > 0) {
-                          dayStyle = { backgroundColor: '#dcfce7', color: '#16a34a' };
-                        } else if (pendingCount > 0) {
-                          dayStyle = { backgroundColor: '#fef3c7', color: '#d97706' };
-                        }
-                        
-                        // Determinar la nota del evento
-                        let eventNote = '';
-                        if (nationalHoliday) {
-                          eventNote = 'Festivo';
-                        } else if (customHoliday) {
-                          eventNote = 'Festivo';
-                        } else if (approvedCount > 0) {
-                          eventNote = `${approvedCount} de vacaciones`;
-                        } else if (pendingCount > 0) {
-                          eventNote = `${pendingCount} pendiente${pendingCount > 1 ? 's' : ''}`;
-                        }
-                        
-                        return (
-                          <button 
-                            {...props} 
-                            style={dayStyle}
-                            className={`${props.className} flex flex-col items-start justify-start h-24 p-2 relative w-full border border-gray-100`}
-                          >
-                            <span className="font-bold text-base mb-1">{format(date, 'd')}</span>
-                            {eventNote && (
-                              <span className="text-xs opacity-75 leading-tight text-left mt-auto max-w-full overflow-hidden">
-                                {eventNote}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      }
-                    }}
+                    className="w-full mx-auto"
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date))
+                      customHoliday: customHolidays.map(h => parseISO(h.date)),
+                      approvedVacation: approvedVacations.map(v => {
+                        const dates = [];
+                        const start = parseISO(v.startDate);
+                        const end = parseISO(v.endDate);
+                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+                          dates.push(new Date(date));
+                        }
+                        return dates;
+                      }).flat()
                     }}
                     modifiersStyles={{
                       nationalHoliday: { 
                         backgroundColor: '#fee2e2', 
                         color: '#dc2626', 
-                        fontWeight: '600',
-                        borderRadius: '0px',
-                        border: 'none'
+                        fontWeight: '600'
                       },
                       customHoliday: { 
                         backgroundColor: '#fed7aa', 
                         color: '#d97706', 
-                        fontWeight: '600',
-                        borderRadius: '0px',
-                        border: 'none'
+                        fontWeight: '600'
                       },
                       approvedVacation: { 
                         backgroundColor: '#dcfce7', 
                         color: '#16a34a', 
-                        fontWeight: '600',
-                        borderRadius: '0px',
-                        border: 'none'
-                      },
-                      pendingVacation: { 
-                        backgroundColor: '#fef3c7', 
-                        color: '#d97706', 
-                        fontWeight: '600',
-                        borderRadius: '0px',
-                        border: 'none'
+                        fontWeight: '600'
                       }
                     }}
                   />
                 </div>
-
-                {/* Event Details Panel */}
-                {selectedDate && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4" />
-                      {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
-                    </h4>
-                    {(() => {
-                      const events = getDateEvents(selectedDate);
-                      const vacations = getVacationDetailsForDate(selectedDate);
-                      
-                      if (events.length === 0 && vacations.length === 0) {
-                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
-                      }
-                      
-                      return (
-                        <div className="space-y-3">
-                          {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded-lg border">
-                              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                                <p className="text-xs text-red-600">
-                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {vacations.length > 0 && (
-                            <div className="space-y-2">
-                              {vacations.filter(v => v.status === 'approved').length > 0 && (
-                                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    <span className="text-sm font-semibold text-green-800">
-                                      {vacations.filter(v => v.status === 'approved').length} empleado{vacations.filter(v => v.status === 'approved').length > 1 ? 's' : ''} de vacaciones
-                                    </span>
-                                  </div>
-                                  <div className="space-y-1">
-                                    {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                                      <div key={idx} className="text-sm text-green-700 ml-5">
-                                        • {vacation.userName}
-                                        <span className="text-xs text-gray-500 ml-2">
-                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {vacations.filter(v => v.status === 'pending').length > 0 && (
-                                <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                    <span className="text-sm font-semibold text-orange-800">
-                                      {vacations.filter(v => v.status === 'pending').length} solicitud{vacations.filter(v => v.status === 'pending').length > 1 ? 'es' : ''} pendiente{vacations.filter(v => v.status === 'pending').length > 1 ? 's' : ''}
-                                    </span>
-                                  </div>
-                                  <div className="space-y-1">
-                                    {vacations.filter(v => v.status === 'pending').map((vacation: any, idx: number) => (
-                                      <div key={idx} className="text-sm text-orange-700 ml-5">
-                                        • {vacation.userName}
-                                        <span className="text-xs text-gray-500 ml-2">
-                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
               </div>
 
               {/* Pending Requests Section */}
