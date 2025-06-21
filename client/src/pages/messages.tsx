@@ -521,10 +521,10 @@ export default function Messages() {
           </div>
         </>
       ) : (
-        // Chat View - Full screen
-        <div className="flex flex-col h-screen">
+        // Chat View - Full screen with viewport height
+        <div className="flex flex-col" style={{ height: '100vh', height: '100dvh' }}>
           {/* Chat Header - Fixed */}
-          <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 sticky top-0 z-10 border-b border-white/20">
+          <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 flex-shrink-0 border-b border-white/20">
             <Button
               variant="ghost"
               size="sm"
@@ -559,7 +559,7 @@ export default function Messages() {
           </div>
 
           {/* Messages - Scrollable area */}
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto min-h-0">
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto" style={{ minHeight: 0 }}>
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
