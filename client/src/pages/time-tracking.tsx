@@ -527,7 +527,13 @@ export default function TimeTracking() {
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setDateFilter('today')}
+                  onClick={() => {
+                    setDateFilter('today');
+                    setSelectedStartDate(null);
+                    setSelectedEndDate(null);
+                    setStartDate('');
+                    setEndDate('');
+                  }}
                   className="h-10 text-sm font-normal"
                 >
                   Hoy
@@ -539,6 +545,10 @@ export default function TimeTracking() {
                     if (date) {
                       setCurrentDate(date);
                       setDateFilter('day');
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                      setStartDate('');
+                      setEndDate('');
                     }
                   }}
                   buttonText={dateFilter === 'day' 
@@ -575,6 +585,10 @@ export default function TimeTracking() {
                               setCurrentMonth(monthDate);
                               setDateFilter('month');
                               setIsMonthDialogOpen(false);
+                              setSelectedStartDate(null);
+                              setSelectedEndDate(null);
+                              setStartDate('');
+                              setEndDate('');
                             }}
                           >
                             {format(monthDate, 'MMMM yyyy', { locale: es })}
@@ -603,7 +617,7 @@ export default function TimeTracking() {
                     }
                   }}
                   className={cn(
-                    "h-10 text-xs font-normal w-[120px]",
+                    "h-10 text-sm font-normal w-[120px]",
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
