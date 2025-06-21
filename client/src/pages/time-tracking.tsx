@@ -626,7 +626,7 @@ export default function TimeTracking() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-h-[400px]">
+            <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
@@ -687,9 +687,9 @@ export default function TimeTracking() {
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200">
-                          <td colSpan={6} className="py-3 px-4 text-center">
-                            <div className="font-semibold text-blue-800 capitalize">
+                        <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200 h-10">
+                          <td colSpan={6} className="py-1 px-4 text-center">
+                            <div className="font-semibold text-blue-800 capitalize text-sm">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -700,9 +700,9 @@ export default function TimeTracking() {
                     if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300">
-                          <td colSpan={6} className="py-2 px-4 text-center">
-                            <div className="font-medium text-gray-700">
+                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300 h-10">
+                          <td colSpan={6} className="py-1 px-4 text-center">
+                            <div className="font-medium text-gray-700 text-sm">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -714,8 +714,8 @@ export default function TimeTracking() {
                     const isEditing = editingSession === session.id;
                     
                     result.push(
-                      <tr key={session.id} className="hover:bg-gray-50 border-b border-gray-100">
-                        <td className="py-3 px-4">
+                      <tr key={session.id} className="hover:bg-gray-50 border-b border-gray-100 h-12">
+                        <td className="py-2 px-4">
                           <div className="font-medium text-gray-900">
                             {session.userName || 'Usuario Desconocido'}
                           </div>
@@ -837,17 +837,17 @@ export default function TimeTracking() {
                 })()}
                 
                 {filteredSessions.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center">
-                      <div className="flex flex-col items-center justify-center space-y-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Users className="w-6 h-6 text-gray-400" />
+                  <tr className="h-32">
+                    <td colSpan={6} className="py-8 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                          <Users className="w-5 h-5 text-gray-400" />
                         </div>
-                        <div className="text-gray-500 font-medium">
+                        <div className="text-gray-500 font-medium text-sm">
                           No hay fichajes en este período
                         </div>
-                        <div className="text-gray-400 text-sm">
-                          Prueba seleccionando un rango de fechas diferente o cambia los filtros
+                        <div className="text-gray-400 text-xs">
+                          Prueba seleccionando un rango de fechas diferente
                         </div>
                       </div>
                     </td>
