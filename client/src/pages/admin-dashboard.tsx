@@ -365,35 +365,7 @@ export default function AdminDashboard() {
                       boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
                     }
                   }}
-                  components={{
-                    Day: ({ date, ...props }) => {
-                      const vacations = getVacationDetailsForDate(date);
-                      const hasVacations = vacations.length > 0;
-                      
-                      return (
-                        <div className="relative group">
-                          <button {...props} />
-                          {hasVacations && (
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
-                          )}
-                          {hasVacations && (
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
-                              <div className="font-semibold mb-1">{vacations.length} empleado{vacations.length > 1 ? 's' : ''} de vacaciones:</div>
-                              {vacations.slice(0, 3).map((vacation: any, idx: number) => (
-                                <div key={idx} className="text-green-300">
-                                  • {vacation.userName || 'Empleado'}
-                                </div>
-                              ))}
-                              {vacations.length > 3 && (
-                                <div className="text-gray-300">+{vacations.length - 3} más...</div>
-                              )}
-                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                  }}
+
                 />
               </div>
 
