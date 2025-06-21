@@ -90,6 +90,15 @@ export default function VacationRequests() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'approved': return <Check className="w-3 h-3" />;
+      case 'denied': return <X className="w-3 h-3" />;
+      case 'pending': return <Clock className="w-3 h-3" />;
+      default: return null;
+    }
+  };
+
   const calculateDays = (startDate: string, endDate: string) => {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
@@ -559,10 +568,10 @@ export default function VacationRequests() {
       <div className="px-6 mb-6 flex-1">
         <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
           {/* Table Header */}
-          <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
+          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-white/10 py-3 px-4">
             <div className="text-sm font-semibold text-center">Período</div>
             <div className="text-sm font-semibold text-center">Días</div>
-            <div className="text-sm font-semibold text-left pl-4">Estado</div>
+            <div className="text-sm font-semibold text-left pl-2">Estado</div>
             <div className="text-sm font-semibold text-center">Fecha</div>
           </div>
 
