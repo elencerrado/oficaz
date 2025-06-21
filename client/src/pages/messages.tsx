@@ -113,9 +113,7 @@ export default function Messages() {
     }
   });
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedChat]);
+  // Removed auto-scroll to prevent unwanted page scrolling when opening chats
 
   useEffect(() => {
     if (selectedChat && messages) {
