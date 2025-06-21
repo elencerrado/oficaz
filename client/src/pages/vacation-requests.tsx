@@ -584,15 +584,15 @@ export default function VacationRequests() {
                     <div className="text-sm text-center font-mono text-white/90">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
-                    <div className="flex justify-start items-center pl-4">
+                    <div className="flex justify-start items-center pl-4 pr-2">
                       {request.status !== 'pending' && request.adminComment ? (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <div className="flex items-center gap-1 cursor-pointer">
-                              <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)} hover:opacity-80`}>
+                            <div className="flex items-center gap-1 cursor-pointer max-w-full">
+                              <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0`}>
                                 {getStatusText(request.status)}
                               </Badge>
-                              <MessageCircle className="w-3 h-3 text-white/40" />
+                              <MessageCircle className="w-3 h-3 text-white/40 flex-shrink-0" />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 max-w-[80vw] p-3" side="top" sideOffset={5} align="start" avoidCollisions={true}>
