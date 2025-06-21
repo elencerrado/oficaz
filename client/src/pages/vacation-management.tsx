@@ -559,7 +559,7 @@ export default function VacationManagement() {
         }
         setShowRequestModal(open);
       }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
@@ -606,7 +606,7 @@ export default function VacationManagement() {
                           {editDates.startDate ? format(new Date(editDates.startDate), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-2 max-w-sm" align="start" side="bottom" sideOffset={4}>
                         <Calendar
                           mode="single"
                           selected={editDates.startDate ? new Date(editDates.startDate) : undefined}
@@ -621,6 +621,7 @@ export default function VacationManagement() {
                           }}
                           disabled={(date) => date < new Date()}
                           initialFocus
+                          className="rounded-md border-0"
                         />
                       </PopoverContent>
                     </Popover>
@@ -639,7 +640,7 @@ export default function VacationManagement() {
                           {editDates.endDate ? format(new Date(editDates.endDate), "dd/MM/yyyy", { locale: es }) : "Seleccionar fecha"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-2 max-w-sm" align="start" side="bottom" sideOffset={4}>
                         <Calendar
                           mode="single"
                           selected={editDates.endDate ? new Date(editDates.endDate) : undefined}
@@ -657,6 +658,7 @@ export default function VacationManagement() {
                             return date < startDate;
                           }}
                           initialFocus
+                          className="rounded-md border-0"
                         />
                       </PopoverContent>
                     </Popover>
