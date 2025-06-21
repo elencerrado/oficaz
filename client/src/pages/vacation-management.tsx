@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -207,7 +207,7 @@ export default function VacationManagement() {
 
   const stats = getVacationStats();
 
-  const openRequestModal = (request: VacationRequest, action: 'approve' | 'deny' | 'edit') => {
+  const openRequestModal = (request: VacationRequest, action: 'approve' | 'deny' | 'edit' | 'revert') => {
     setSelectedRequest(request);
     setModalAction(action);
     setEditDates({
@@ -223,7 +223,10 @@ export default function VacationManagement() {
 
     const updateData: any = {
       id: selectedRequest.id,
-      status: modalAction === 'approve' ? 'approved' : modalAction === 'deny' ? 'denied' : selectedRequest.status
+      status: modalAction === 'approve' ? 'approved' : 
+              modalAction === 'deny' ? 'denied' : 
+              modalAction === 'revert' ? 'pending' : 
+              selectedRequest.status
     };
 
     if (modalAction === 'edit' && editDates.startDate && editDates.endDate) {
@@ -471,9 +474,22 @@ export default function VacationManagement() {
                             </Button>
                           </>
                         ) : (
-                          <Badge variant="outline" className="text-xs">
-                            {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
-                          </Badge>
+                          <div className="flex gap-2">
+                            {request.status === 'approved' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openRequestModal(request, 'revert')}
+                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                              >
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                Revertir
+                              </Button>
+                            )}
+                            <Badge variant="outline" className="text-xs">
+                              {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                            </Badge>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -716,6 +732,8 @@ export default function VacationManagement() {
                       ? "bg-green-600 hover:bg-green-700"
                       : modalAction === 'deny'
                       ? "bg-red-600 hover:bg-red-700"
+                      : modalAction === 'revert'
+                      ? "bg-orange-600 hover:bg-orange-700"
                       : "bg-blue-600 hover:bg-blue-700"
                   }
                 >
@@ -726,10 +744,12 @@ export default function VacationManagement() {
                       {modalAction === 'approve' && <Check className="w-4 h-4 mr-1" />}
                       {modalAction === 'deny' && <X className="w-4 h-4 mr-1" />}
                       {modalAction === 'edit' && <Edit className="w-4 h-4 mr-1" />}
+                      {modalAction === 'revert' && <RotateCcw className="w-4 h-4 mr-1" />}
                       
                       {modalAction === 'approve' && 'Aprobar'}
                       {modalAction === 'deny' && 'Denegar'}
                       {modalAction === 'edit' && 'Modificar'}
+                      {modalAction === 'revert' && 'Revertir a Pendiente'}
                     </>
                   )}
                 </Button>

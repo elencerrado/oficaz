@@ -461,7 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('PATCH vacation-requests:', { id, status, startDate, endDate, adminComment });
 
-      if (!['approved', 'denied'].includes(status)) {
+      if (!['approved', 'denied', 'pending'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
 
