@@ -1,7 +1,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,20 @@ export default function EmployeeDashboard() {
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
   });
+
+  // Get vacation requests to check if user is on vacation
+  const { data: vacationRequests = [] } = useQuery({
+    queryKey: ['/api/vacation-requests'],
+    enabled: !!user,
+  });
+
+  // Check if user is currently on vacation
+  const today = new Date().toISOString().split('T')[0];
+  const isOnVacation = vacationRequests.some((request: any) => 
+    request.status === 'approved' &&
+    request.startDate.split('T')[0] <= today &&
+    request.endDate.split('T')[0] >= today
+  );
 
   // Check for pending notifications and new documents
   const hasDocumentRequests = (documentNotifications as any[] || []).length > 0;
@@ -271,21 +285,35 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* Clock Button - Positioned for thumb accessibility */}
+        {/* Clock Button or Vacation Message - Positioned for thumb accessibility */}
         <div className="flex-1 flex items-center justify-center px-6 pb-6 min-h-[200px]">
-          <Button
-            onClick={handleClockAction}
-            disabled={clockInMutation.isPending || clockOutMutation.isPending}
-            className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-          >
-            {clockInMutation.isPending || clockOutMutation.isPending ? (
-              <LoadingSpinner size="lg" className="text-white scale-150" />
-            ) : (
-              <>
-                {activeSession ? 'SALIR' : 'FICHAR'}
-              </>
-            )}
-          </Button>
+          {isOnVacation ? (
+            <div className="text-center">
+              <div className="w-36 h-36 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg">
+                <Palmtree className="w-16 h-16 text-white" />
+              </div>
+              <p className="text-lg font-medium text-white mb-2">
+                ¡Disfruta de tus vacaciones,
+              </p>
+              <p className="text-lg font-medium text-white">
+                te las has ganado!
+              </p>
+            </div>
+          ) : (
+            <Button
+              onClick={handleClockAction}
+              disabled={clockInMutation.isPending || clockOutMutation.isPending}
+              className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
+            >
+              {clockInMutation.isPending || clockOutMutation.isPending ? (
+                <LoadingSpinner size="lg" className="text-white scale-150" />
+              ) : (
+                <>
+                  {activeSession ? 'SALIR' : 'FICHAR'}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
