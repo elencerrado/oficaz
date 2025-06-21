@@ -429,7 +429,7 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto z-[1000]">
             <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-white">
                 Solicitar Vacaciones
