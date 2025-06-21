@@ -47,8 +47,9 @@ export default function VacationRequests() {
   useEffect(() => {
     if (!requests?.length) return;
     
-    // Use a fixed recent timestamp to catch recent approvals/denials
-    const cutoffDate = new Date('2025-06-21T10:55:00.000Z');
+    // Use lastVacationCheck from localStorage or recent timestamp
+    const lastCheckTime = localStorage.getItem('lastVacationCheck');
+    const cutoffDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:55:00.000Z');
     
     console.log('🔍 Vacation request page - checking highlights:', {
       requestsCount: requests.length,
@@ -104,14 +105,10 @@ export default function VacationRequests() {
     };
   }, []);
 
-  // Handle click on highlighted request to remove highlight
+  // Click handler disabled - highlights only removed when leaving page
   const handleRequestClick = (requestId: number) => {
-    if (highlightedRequests.has(requestId)) {
-      const newHighlighted = new Set(highlightedRequests);
-      newHighlighted.delete(requestId);
-      setHighlightedRequests(newHighlighted);
-      console.log(`Removed highlight from request ${requestId}`);
-    }
+    // No action - highlights persist until user leaves page
+    console.log(`Clicked request ${requestId} - highlight remains active`);
   };
 
 
@@ -680,7 +677,7 @@ export default function VacationRequests() {
                       key={request.id} 
                       className={`grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] transition-colors duration-300 ${
                         isHighlighted 
-                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50 cursor-pointer' 
+                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50' 
                           : 'hover:bg-white/5'
                       }`}
                       style={isHighlighted ? {
