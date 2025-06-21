@@ -280,52 +280,56 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar */}
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                locale={es}
-                className="rounded-md border-0"
-                classNames={{
-                  months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                  month: "space-y-4",
-                  caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-medium",
-                  nav: "space-x-1 flex items-center",
-                  nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                  nav_button_previous: "absolute left-1",
-                  nav_button_next: "absolute right-1",
-                  table: "w-full border-collapse space-y-1",
-                  head_row: "flex",
-                  head_cell: "text-gray-500 rounded-md w-8 font-normal text-[0.8rem]",
-                  row: "flex w-full mt-2",
-                  cell: "relative h-8 w-8 text-center text-sm p-0 [&:has([aria-selected])]:bg-oficaz-primary [&:has([aria-selected])]:text-white first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                  day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-oficaz-primary/10 rounded-md",
-                  day_selected: "bg-oficaz-primary text-white hover:bg-oficaz-primary hover:text-white focus:bg-oficaz-primary focus:text-white",
-                  day_today: "bg-oficaz-primary/20 text-oficaz-primary font-semibold",
-                  day_outside: "text-gray-400 opacity-50",
-                  day_disabled: "text-gray-400 opacity-50",
-                  day_range_middle: "aria-selected:bg-oficaz-primary/50 aria-selected:text-white",
-                  day_hidden: "invisible",
-                }}
-                modifiers={{
-                  holiday: holidays.map(h => parseISO(h.date)),
-                  vacation: approvedVacations?.flatMap((req: any) => {
-                    const start = parseISO(req.startDate);
-                    const end = parseISO(req.endDate);
-                    const dates = [];
-                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                      dates.push(new Date(d));
-                    }
-                    return dates;
-                  }) || []
-                }}
-                modifiersStyles={{
-                  holiday: { backgroundColor: '#ef4444', color: 'white' },
-                  vacation: { backgroundColor: '#3b82f6', color: 'white' }
-                }}
-              />
+              {/* Calendar - Larger and More Stylized */}
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  locale={es}
+                  className="rounded-md border-0 w-full"
+                  classNames={{
+                    months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                    month: "space-y-6",
+                    caption: "flex justify-center pt-2 pb-4 relative items-center",
+                    caption_label: "text-lg font-semibold text-gray-900",
+                    nav: "space-x-1 flex items-center",
+                    nav_button: "h-8 w-8 bg-white border border-gray-200 rounded-full p-0 opacity-70 hover:opacity-100 hover:bg-gray-50 shadow-sm",
+                    nav_button_previous: "absolute left-1",
+                    nav_button_next: "absolute right-1",
+                    table: "w-full border-collapse space-y-2",
+                    head_row: "flex",
+                    head_cell: "text-gray-600 rounded-md w-12 h-8 font-medium text-sm flex items-center justify-center",
+                    row: "flex w-full mt-3",
+                    cell: "relative h-12 w-12 text-center text-sm p-0 [&:has([aria-selected])]:bg-oficaz-primary [&:has([aria-selected])]:text-white first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-12 w-12 p-0 font-medium aria-selected:opacity-100 hover:bg-oficaz-primary/10 rounded-lg transition-colors",
+                    day_selected: "bg-oficaz-primary text-white hover:bg-oficaz-primary hover:text-white focus:bg-oficaz-primary focus:text-white",
+                    day_today: "bg-oficaz-primary/20 text-oficaz-primary font-bold border-2 border-oficaz-primary",
+                    day_outside: "text-gray-400 opacity-50",
+                    day_disabled: "text-gray-400 opacity-50",
+                    day_range_middle: "aria-selected:bg-oficaz-primary/50 aria-selected:text-white",
+                    day_hidden: "invisible",
+                  }}
+                  modifiers={{
+                    nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
+                    customHoliday: customHolidays.map(h => parseISO(h.date)),
+                    vacation: approvedVacations?.flatMap((req: any) => {
+                      const start = parseISO(req.startDate);
+                      const end = parseISO(req.endDate);
+                      const dates = [];
+                      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                        dates.push(new Date(d));
+                      }
+                      return dates;
+                    }) || []
+                  }}
+                  modifiersStyles={{
+                    nationalHoliday: { backgroundColor: '#ef4444', color: 'white', fontWeight: 'bold' },
+                    customHoliday: { backgroundColor: '#f59e0b', color: 'white', fontWeight: 'bold' },
+                    vacation: { backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' }
+                  }}
+                />
+              </div>
 
               {/* Pending Requests Section */}
               {pendingVacations.length > 0 && (
@@ -381,28 +385,45 @@ export default function AdminDashboard() {
                   </Button>
                 </div>
                 <div className="space-y-2">
-                  {holidays.slice(0, 3).map((holiday, idx) => {
-                    const holidayDate = parseISO(holiday.date);
-                    const today = new Date();
-                    if (holidayDate > today) {
+                  {allHolidays
+                    .filter(holiday => {
+                      const holidayDate = parseISO(holiday.date);
+                      const today = new Date();
+                      return holidayDate > today;
+                    })
+                    .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+                    .slice(0, 4)
+                    .map((holiday, idx) => {
+                      const holidayDate = parseISO(holiday.date);
+                      const isCustom = holiday.type === 'custom';
+                      
                       return (
                         <div key={idx} className="flex items-center gap-3 py-2">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium text-blue-600">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            isCustom 
+                              ? 'bg-amber-100 text-amber-600' 
+                              : 'bg-red-100 text-red-600'
+                          }`}>
+                            <span className="text-xs font-medium">
                               {format(holidayDate, 'dd')}
                             </span>
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">
                               {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
                             </p>
-                            <p className="text-xs text-gray-500">{holiday.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-gray-500">{holiday.name}</p>
+                              {isCustom && (
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                  Personalizado
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
-                    }
-                    return null;
-                  }).filter(Boolean)}
+                    })}
                 </div>
               </div>
             </CardContent>
