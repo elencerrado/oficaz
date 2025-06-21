@@ -13,7 +13,7 @@ export const companies = pgTable("companies", {
   phone: text("phone"),
   address: text("address"),
   province: text("province"),
-  employeeTimeEditPermission: text("employee_time_edit_permission").default("validation"),
+  employeeTimeEditPermission: text("employee_time_edit_permission").default("no"),
   workingHoursPerDay: integer("working_hours_per_day").default(8),
   defaultVacationDays: integer("default_vacation_days").default(30),
   vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"),

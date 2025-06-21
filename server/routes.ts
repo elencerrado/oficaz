@@ -292,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company: company ? {
           ...company,
           // Ensure all configuration fields are included and properly typed
-          employeeTimeEditPermission: company.employeeTimeEditPermission || 'validation',
+          employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
           workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
           defaultVacationDays: Number(company.defaultVacationDays) || 30,
           vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5

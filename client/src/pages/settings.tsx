@@ -57,7 +57,7 @@ export default function Settings() {
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
     workingHoursPerDay: 8,
-    employeeTimeEditPermission: 'validation' as 'yes' | 'no' | 'validation'
+    employeeTimeEditPermission: 'no' as 'yes' | 'no'
   });
 
   // Initialize form data when company data loads
@@ -71,7 +71,7 @@ export default function Settings() {
         phone: company.phone || '',
         address: company.address || '',
         province: company.province || '',
-        employeeTimeEditPermission: company.employeeTimeEditPermission || 'validation',
+        employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
         workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
         vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
@@ -584,7 +584,7 @@ export default function Settings() {
                     <Label htmlFor="timeEditPermission">Los empleados pueden editar sus horas</Label>
                     <Select 
                       value={companyData.employeeTimeEditPermission} 
-                      onValueChange={(value: 'yes' | 'no' | 'validation') => 
+                      onValueChange={(value: 'yes' | 'no') => 
                         setCompanyData(prev => ({ ...prev, employeeTimeEditPermission: value }))
                       }
                     >
@@ -592,14 +592,12 @@ export default function Settings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="yes">Sí, libremente</SelectItem>
-                        <SelectItem value="validation">Con validación del manager</SelectItem>
-                        <SelectItem value="no">No, solo admin/manager</SelectItem>
+                        <SelectItem value="yes">Sí</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-gray-500 mt-1">
-                      {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar libremente sus horarios registrados'}
-                      {companyData.employeeTimeEditPermission === 'validation' && 'Los empleados pueden solicitar cambios que requieren aprobación'}
+                      {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar sus horarios registrados'}
                       {companyData.employeeTimeEditPermission === 'no' && 'Solo administradores y managers pueden modificar horarios'}
                     </p>
                   </div>

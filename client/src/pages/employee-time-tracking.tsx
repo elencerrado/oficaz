@@ -52,10 +52,8 @@ export default function EmployeeTimeTracking() {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       setEditingSession(null);
       toast({
-        title: company?.employeeTimeEditPermission === 'validation' ? 'Solicitud enviada' : 'Fichaje actualizado',
-        description: company?.employeeTimeEditPermission === 'validation' 
-          ? 'Tu solicitud de cambio ha sido enviada para aprobación.' 
-          : 'Los horarios han sido modificados correctamente.',
+        title: 'Fichaje actualizado',
+        description: 'Los horarios han sido modificados correctamente.',
       });
     },
     onError: (error: any) => {
@@ -75,8 +73,7 @@ export default function EmployeeTimeTracking() {
   });
 
   // Check if user can edit time entries based on company configuration
-  const canEditTime = company?.employeeTimeEditPermission === 'yes' || 
-                     company?.employeeTimeEditPermission === 'validation';
+  const canEditTime = company?.employeeTimeEditPermission === 'yes';
 
 
 
@@ -572,10 +569,12 @@ export default function EmployeeTimeTracking() {
                             <div className={`text-sm text-center font-mono font-semibold ${opacity}`}>
                               {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
                             </div>
-                            {/* Edit indicator - centered */}
-                            <div className="absolute inset-0 flex items-center justify-end pr-2 pointer-events-none">
-                              <Edit3 className="h-3 w-3 text-white/20" />
-                            </div>
+                            {/* Edit indicator - only show if editing is allowed */}
+                            {canEditTime && (
+                              <div className="absolute inset-0 flex items-center justify-end pr-2 pointer-events-none">
+                                <Edit3 className="h-3 w-3 text-white/20" />
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
