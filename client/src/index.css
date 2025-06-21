@@ -328,7 +328,8 @@ body::after {
 
 /* Calendar fixed size and centering */
 .rdp {
-  width: 320px !important;
+  width: 100% !important;
+  max-width: 400px !important;
   height: 360px !important;
   min-height: 360px !important;
   max-height: 360px !important;
@@ -357,7 +358,8 @@ body::after {
 }
 
 .rdp-table {
-  width: 280px !important;
+  width: 100% !important;
+  max-width: 360px !important;
   height: 280px !important;
   table-layout: fixed !important;
   margin: 0 auto !important;
@@ -377,16 +379,16 @@ body::after {
 
 .rdp-cell {
   height: 40px !important;
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
+  width: 14.28% !important;
+  min-width: auto !important;
+  max-width: none !important;
   text-align: center !important;
   vertical-align: middle !important;
 }
 
 .rdp-head_cell {
   text-align: center !important;
-  width: 40px !important;
+  width: 14.28% !important;
   height: 40px !important;
 }
 
@@ -529,35 +531,4 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   opacity: 0.6;
 }
 
-/* Calendar styling for wider display */
-.calendario-amplio .rdp {
-  margin: 0 !important;
-  width: 100% !important;
-}
 
-.calendario-amplio .rdp-table {
-  width: 100% !important;
-  max-width: none !important;
-  table-layout: fixed !important;
-}
-
-.calendario-amplio .rdp-cell {
-  width: 14.28% !important;
-  text-align: center !important;
-  padding: 0.25rem !important;
-}
-
-.calendario-amplio .rdp-day {
-  width: 100% !important;
-  height: 2.5rem !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.calendario-amplio .rdp-head_cell {
-  width: 14.28% !important;
-  text-align: center !important;
-  padding: 0.5rem 0.25rem !important;
-}
