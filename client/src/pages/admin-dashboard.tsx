@@ -375,6 +375,65 @@ export default function AdminDashboard() {
                     }}
                   />
                 </div>
+
+                {/* Event Details for Selected Date */}
+                {selectedDate && (
+                  <div className="border-t border-gray-200 p-4 bg-gray-50">
+                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4" />
+                      {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
+                    </h4>
+                    {(() => {
+                      const events = getDateEvents(selectedDate);
+                      const vacations = getVacationDetailsForDate(selectedDate);
+                      
+                      if (events.length === 0 && vacations.length === 0) {
+                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                      }
+                      
+                      return (
+                        <div className="space-y-3">
+                          {/* Festivos */}
+                          {events.filter(event => event.type === 'holiday').map((event, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded-lg border">
+                              <div className={`w-3 h-3 rounded-full ${
+                                event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
+                              }`}></div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
+                                <p className="text-xs text-gray-600">
+                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Vacaciones aprobadas */}
+                          {vacations.filter(v => v.status === 'approved').length > 0 && (
+                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm font-semibold text-green-800">
+                                  {vacations.filter(v => v.status === 'approved').length} empleado{vacations.filter(v => v.status === 'approved').length > 1 ? 's' : ''} de vacaciones
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
+                                  <div key={idx} className="text-sm text-green-700 ml-5">
+                                    • {vacation.userName}
+                                    <span className="text-xs text-gray-500 ml-2">
+                                      ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
 
               {/* Pending Requests Section */}
