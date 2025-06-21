@@ -367,48 +367,27 @@ export default function AdminDashboard() {
                       day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
                       day_hidden: "invisible",
                     }}
-                    components={{
-                      Day: ({ date, ...props }) => {
-                        const dateVacations = getVacationDetailsForDate(date);
-                        const approvedCount = dateVacations.filter(v => v.status === 'approved').length;
-                        const pendingCount = dateVacations.filter(v => v.status === 'pending').length;
-                        const hasHoliday = nationalHolidays.some(h => isSameDay(parseISO(h.date), date)) || 
-                                         customHolidays.some(h => isSameDay(parseISO(h.date), date));
-                        
-                        // Determinar el color del borde izquierdo basado en prioridad
-                        let leftBorderColor = '';
-                        if (hasHoliday) leftBorderColor = 'border-l-red-400';
-                        else if (approvedCount > 0) leftBorderColor = 'border-l-green-400';
-                        else if (pendingCount > 0) leftBorderColor = 'border-l-orange-400';
-                        
-                        return (
-                          <div className="relative group">
-                            <button 
-                              {...props} 
-                              className={`${props.className} ${leftBorderColor} ${leftBorderColor ? 'border-l-4' : ''}`}
-                            />
-                            
-                            {/* Tooltip discreto con información detallada */}
-                            {(dateVacations.length > 0 || hasHoliday) && (
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
-                                {hasHoliday && (
-                                  <div className="text-red-300">Día festivo</div>
-                                )}
-                                {approvedCount > 0 && (
-                                  <div className="text-green-300">{approvedCount} de vacaciones</div>
-                                )}
-                                {pendingCount > 0 && (
-                                  <div className="text-orange-300">{pendingCount} pendiente{pendingCount > 1 ? 's' : ''}</div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-                    }}
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date))
+                      customHoliday: customHolidays.map(h => parseISO(h.date)),
+                      approvedVacation: approvedVacations?.flatMap((req: any) => {
+                        const start = startOfDay(parseISO(req.startDate));
+                        const end = startOfDay(parseISO(req.endDate));
+                        const dates = [];
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                          dates.push(new Date(d));
+                        }
+                        return dates;
+                      }) || [],
+                      pendingVacation: pendingVacations?.flatMap((req: any) => {
+                        const start = startOfDay(parseISO(req.startDate));
+                        const end = startOfDay(parseISO(req.endDate));
+                        const dates = [];
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                          dates.push(new Date(d));
+                        }
+                        return dates;
+                      }) || []
                     }}
                     modifiersStyles={{
                       nationalHoliday: { 
