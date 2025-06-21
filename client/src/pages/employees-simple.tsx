@@ -146,6 +146,34 @@ export default function EmployeesSimple() {
     });
   };
 
+  // Function to handle creating new employee
+  const handleCreateEmployee = () => {
+    if (!newEmployee.fullName.trim() || !newEmployee.dni.trim()) {
+      toast({
+        title: 'Campos Obligatorios',
+        description: 'El nombre completo y el DNI son obligatorios.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    createEmployeeMutation.mutate({
+      fullName: newEmployee.fullName,
+      dni: newEmployee.dni,
+      companyEmail: newEmployee.companyEmail,
+      companyPhone: newEmployee.companyPhone,
+      position: newEmployee.position,
+      startDate: newEmployee.startDate || new Date().toISOString().split('T')[0],
+      status: newEmployee.status,
+      role: newEmployee.role,
+      personalEmail: newEmployee.personalEmail,
+      personalPhone: newEmployee.personalPhone,
+      postalAddress: newEmployee.address,
+      emergencyContactName: newEmployee.emergencyContactName,
+      emergencyContactPhone: newEmployee.emergencyContactPhone,
+    });
+  };
+
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager')
