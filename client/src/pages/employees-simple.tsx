@@ -148,23 +148,40 @@ export default function EmployeesSimple() {
   // Helper function to translate status
   const translateStatus = (status: string) => {
     const translations: Record<string, string> = {
-      'active': 'activo',
-      'inactive': 'inactivo', 
-      'on_leave': 'de baja',
-      'vacation': 'de vacaciones'
+      'active': 'Activo',
+      'inactive': 'Inactivo', 
+      'on_leave': 'De baja',
+      'on_vacation': 'De vacaciones',
+      'vacation': 'De vacaciones',
+      // Spanish versions (in case they exist)
+      'activo': 'Activo',
+      'inactivo': 'Inactivo',
+      'de baja': 'De baja',
+      'de vacaciones': 'De vacaciones'
     };
-    return translations[status] || status || 'activo';
+    return translations[status] || status || 'Activo';
   };
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
-    const translatedStatus = translateStatus(status);
-    switch (translatedStatus) {
-      case 'activo': return 'bg-green-100 text-green-800';
-      case 'inactivo': return 'bg-gray-100 text-gray-800';
-      case 'de baja': return 'bg-red-100 text-red-800';
-      case 'de vacaciones': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-green-100 text-green-800';
+    // Check both original status and translated status
+    const normalizedStatus = status?.toLowerCase();
+    switch (normalizedStatus) {
+      case 'active':
+      case 'activo': 
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+      case 'inactivo': 
+        return 'bg-gray-100 text-gray-800';
+      case 'on_leave':
+      case 'de baja': 
+        return 'bg-red-100 text-red-800';
+      case 'on_vacation':
+      case 'vacation':
+      case 'de vacaciones': 
+        return 'bg-blue-100 text-blue-800';
+      default: 
+        return 'bg-green-100 text-green-800';
     }
   };
 
