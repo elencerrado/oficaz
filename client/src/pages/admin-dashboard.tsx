@@ -312,7 +312,13 @@ export default function AdminDashboard() {
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={setSelectedDate}
+                    onSelect={(date) => {
+                      // Si es el mismo día, mantener la selección
+                      if (selectedDate && date && isSameDay(selectedDate, date)) {
+                        return;
+                      }
+                      setSelectedDate(date);
+                    }}
                     locale={es}
                     showWeekNumber={true}
                     className="w-full overflow-visible"
@@ -389,17 +395,8 @@ export default function AdminDashboard() {
                       const events = getDateEvents(selectedDate);
                       const vacations = getVacationDetailsForDate(selectedDate);
                       
-
-                      
                       if (events.length === 0 && vacations.length === 0) {
-                        return (
-                          <div>
-                            <p className="text-sm text-gray-500 mb-2">No hay eventos programados</p>
-                            <p className="text-xs text-gray-400">
-                              Debug: {approvedVacations?.length || 0} vacaciones aprobadas en total
-                            </p>
-                          </div>
-                        );
+                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
                       }
                       
                       return (
