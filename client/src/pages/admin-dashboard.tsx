@@ -270,71 +270,141 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Right Column - Pending Requests */}
+        {/* Right Column - Calendar with Events */}
         <div>
           <Card className="h-fit">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-orange-500" />
-                Solicitudes Pendientes
+                <CalendarDays className="h-5 w-5" />
+                Calendario
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {pendingVacations.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-gray-600">
-                      {pendingVacations.length} solicitud{pendingVacations.length > 1 ? 'es' : ''} pendiente{pendingVacations.length > 1 ? 's' : ''}
-                    </span>
+              {/* Calendar */}
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                locale={es}
+                className="rounded-md border-0"
+                classNames={{
+                  months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                  month: "space-y-4",
+                  caption: "flex justify-center pt-1 relative items-center",
+                  caption_label: "text-sm font-medium",
+                  nav: "space-x-1 flex items-center",
+                  nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                  nav_button_previous: "absolute left-1",
+                  nav_button_next: "absolute right-1",
+                  table: "w-full border-collapse space-y-1",
+                  head_row: "flex",
+                  head_cell: "text-gray-500 rounded-md w-8 font-normal text-[0.8rem]",
+                  row: "flex w-full mt-2",
+                  cell: "relative h-8 w-8 text-center text-sm p-0 [&:has([aria-selected])]:bg-oficaz-primary [&:has([aria-selected])]:text-white first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 hover:bg-oficaz-primary/10 rounded-md",
+                  day_selected: "bg-oficaz-primary text-white hover:bg-oficaz-primary hover:text-white focus:bg-oficaz-primary focus:text-white",
+                  day_today: "bg-oficaz-primary/20 text-oficaz-primary font-semibold",
+                  day_outside: "text-gray-400 opacity-50",
+                  day_disabled: "text-gray-400 opacity-50",
+                  day_range_middle: "aria-selected:bg-oficaz-primary/50 aria-selected:text-white",
+                  day_hidden: "invisible",
+                }}
+                modifiers={{
+                  holiday: holidays.map(h => parseISO(h.date)),
+                  vacation: approvedVacations?.flatMap((req: any) => {
+                    const start = parseISO(req.startDate);
+                    const end = parseISO(req.endDate);
+                    const dates = [];
+                    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                      dates.push(new Date(d));
+                    }
+                    return dates;
+                  }) || []
+                }}
+                modifiersStyles={{
+                  holiday: { backgroundColor: '#ef4444', color: 'white' },
+                  vacation: { backgroundColor: '#3b82f6', color: 'white' }
+                }}
+              />
+
+              {/* Pending Requests Section */}
+              {pendingVacations.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                      Pendientes de Aprobación
+                    </h4>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => {
                         const companyAlias = 'test';
                         window.location.href = `/${companyAlias}/vacaciones`;
                       }}
-                      className="text-xs"
+                      className="text-xs text-blue-600 hover:text-blue-700"
                     >
-                      Ver todas
+                      ver más
                     </Button>
                   </div>
-                  
                   <div className="space-y-2">
-                    {pendingVacations.map((request: any) => (
+                    {pendingVacations.slice(0, 3).map((request: any) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center justify-between p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors border border-orange-200"
+                        className="flex items-center gap-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md"
                         onClick={() => {
                           const companyAlias = 'test';
                           window.location.href = `/${companyAlias}/vacaciones`;
                         }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {request.userName || 'Empleado'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatDate(request.startDate)} - {formatDate(request.endDate)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-orange-600 font-medium">
-                            Pendiente
-                          </p>
-                        </div>
+                        <Coffee className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm text-gray-900">
+                          Vacaciones de {request.userName || 'Empleado'}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No hay solicitudes pendientes</p>
-                </div>
               )}
+
+              {/* Upcoming Events Section */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                    Próximos Eventos
+                  </h4>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    ver más
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {holidays.slice(0, 3).map((holiday, idx) => {
+                    const holidayDate = parseISO(holiday.date);
+                    const today = new Date();
+                    if (holidayDate > today) {
+                      return (
+                        <div key={idx} className="flex items-center gap-3 py-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-medium text-blue-600">
+                              {format(holidayDate, 'dd')}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
+                            </p>
+                            <p className="text-xs text-gray-500">{holiday.name}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }).filter(Boolean)}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
