@@ -296,8 +296,8 @@ export default function EmployeeDashboard() {
                 <button
                   onClick={() => {
                     if (item.title === 'Vacaciones' && hasVacationUpdates) {
-                      setHasVacationUpdates(false);
-                      localStorage.removeItem('hasVacationUpdates');
+                      // Update last check time when user visits vacations page
+                      localStorage.setItem('lastVacationCheck', new Date().toISOString());
                     }
                     handleNavigation(item.route);
                   }}
