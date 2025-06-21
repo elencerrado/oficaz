@@ -217,18 +217,18 @@ export default function EmployeeDashboard() {
       notification: false 
     },
     { 
-      icon: FileText, 
-      title: 'Documentos', 
-      route: `/${companyAlias}/documentos`,
-      notification: hasDocumentRequests || hasNewDocuments,
-      notificationType: hasDocumentRequests ? 'red' : 'green'
-    },
-    { 
       icon: Calendar, 
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
       notification: hasVacationUpdates,
       notificationType: 'red'
+    },
+    { 
+      icon: FileText, 
+      title: 'Documentos', 
+      route: `/${companyAlias}/documentos`,
+      notification: hasDocumentRequests || hasNewDocuments,
+      notificationType: hasDocumentRequests ? 'red' : 'green'
     },
     { 
       icon: Bell, 
