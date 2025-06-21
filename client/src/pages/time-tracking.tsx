@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { DatePickerPeriod } from '@/components/ui/date-picker';
 import { 
   Search, 
   Edit, 
@@ -19,6 +20,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -583,87 +585,30 @@ export default function TimeTracking() {
                   </SelectContent>
                 </Select>
 
-                <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={dateFilter === 'custom' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-10"
-                    >
-                      Rango
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-4" align="end" side="bottom" avoidCollisions={true}>
-                    <div className="space-y-4">
-                      <div className="text-sm font-medium text-center">
-                        Seleccionar rango de fechas
-                      </div>
-                      <div className="text-xs text-gray-500 text-center">
-                        Haz clic en una fecha de inicio y luego en una fecha de fin
-                      </div>
-                      <Calendar
-                        mode="range"
-                        selected={{
-                          from: selectedStartDate || undefined,
-                          to: selectedEndDate || undefined
-                        }}
-                        onSelect={(range) => {
-                          if (range?.from) {
-                            setSelectedStartDate(range.from);
-                            setStartDate(format(range.from, 'yyyy-MM-dd'));
-                          }
-                          if (range?.to) {
-                            setSelectedEndDate(range.to);
-                            setEndDate(format(range.to, 'yyyy-MM-dd'));
-                          }
-                          if (!range) {
-                            setSelectedStartDate(null);
-                            setSelectedEndDate(null);
-                            setStartDate('');
-                            setEndDate('');
-                          }
-                        }}
-                        className="rounded-md border"
-                        numberOfMonths={1}
-                        showOutsideDays={false}
-                      />
-                      {(selectedStartDate || selectedEndDate) && (
-                        <div className="text-xs text-center text-gray-600">
-                          {selectedStartDate && (
-                            <div>Desde: {format(selectedStartDate, 'dd/MM/yyyy', { locale: es })}</div>
-                          )}
-                          {selectedEndDate && (
-                            <div>Hasta: {format(selectedEndDate, 'dd/MM/yyyy', { locale: es })}</div>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => {
-                            setDateFilter('custom');
-                            setIsRangeDialogOpen(false);
-                          }}
-                          className="flex-1"
-                          disabled={!selectedStartDate}
-                        >
-                          Aplicar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setStartDate('');
-                            setEndDate('');
-                            setSelectedStartDate(null);
-                            setSelectedEndDate(null);
-                          }}
-                          className="flex-1"
-                        >
-                          Limpiar
-                        </Button>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <div className="relative">
+                  <DatePickerPeriod
+                    startDate={selectedStartDate}
+                    endDate={selectedEndDate}
+                    onStartDateChange={(date) => {
+                      setSelectedStartDate(date || null);
+                      setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (date && selectedEndDate) {
+                        setDateFilter('custom');
+                      }
+                    }}
+                    onEndDateChange={(date) => {
+                      setSelectedEndDate(date || null);
+                      setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (selectedStartDate && date) {
+                        setDateFilter('custom');
+                      }
+                    }}
+                    className={cn(
+                      "h-10",
+                      dateFilter === 'custom' && "bg-primary text-primary-foreground hover:bg-primary/90"
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </div>
