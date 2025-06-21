@@ -6,13 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -594,9 +595,33 @@ export default function VacationRequests() {
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
                     <div className="flex justify-center">
-                      <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
-                        {getStatusText(request.status)}
-                      </Badge>
+                      {request.status !== 'pending' && request.adminComment ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <div className="flex items-center gap-1 cursor-pointer">
+                              <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)} hover:opacity-80`}>
+                                {getStatusText(request.status)}
+                              </Badge>
+                              <MessageCircle className="w-3 h-3 text-white/40" />
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 p-3" align="center">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <MessageCircle className="w-4 h-4 text-blue-600" />
+                                <span className="text-sm font-medium text-gray-700">Comentario del administrador</span>
+                              </div>
+                              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                {request.adminComment}
+                              </p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
+                          {getStatusText(request.status)}
+                        </Badge>
+                      )}
                     </div>
                     <div className="text-sm text-center text-white/70">
                       {formatDate(request.createdAt)}
