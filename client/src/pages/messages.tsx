@@ -248,9 +248,9 @@ export default function Messages() {
   // Admin view with light theme
   if (isAdmin) {
     return (
-      <div className="h-[calc(100vh-4rem)] bg-gray-50 flex flex-col overflow-hidden">
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center space-x-4">
             <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
               <MessageCircle className="h-6 w-6 text-white" />
@@ -265,8 +265,8 @@ export default function Messages() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 overflow-hidden">
-          <div className="grid lg:grid-cols-3 gap-6 h-full">
+        <div className="p-6">
+          <div className="grid lg:grid-cols-3 gap-6" style={{ height: 'calc(100vh - 10rem)' }}>
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
@@ -414,7 +414,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4">
+                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100vh - 22rem)' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
