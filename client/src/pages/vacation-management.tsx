@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePickerPeriod } from "@/components/ui/date-picker";
 import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -583,29 +583,13 @@ export default function VacationManagement() {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Nueva fecha de inicio
+                      Nuevo período de vacaciones
                     </label>
-                    <DatePicker
-                      value={editDates.startDate}
-                      onChange={(date) => setEditDates(prev => ({ ...prev, startDate: date || null }))}
-                      placeholder="Seleccionar fecha de inicio"
-                      disabled={(date) => date < new Date()}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Nueva fecha de fin
-                    </label>
-                    <DatePicker
-                      value={editDates.endDate}
-                      onChange={(date) => setEditDates(prev => ({ ...prev, endDate: date || null }))}
-                      placeholder="Seleccionar fecha de fin"
-                      disabled={(date) => {
-                        if (editDates.startDate) {
-                          return date < editDates.startDate;
-                        }
-                        return date < new Date();
-                      }}
+                    <DatePickerPeriod
+                      startDate={editDates.startDate}
+                      endDate={editDates.endDate}
+                      onStartDateChange={(date) => setEditDates(prev => ({ ...prev, startDate: date || null }))}
+                      onEndDateChange={(date) => setEditDates(prev => ({ ...prev, endDate: date || null }))}
                     />
                   </div>
                 </div>
