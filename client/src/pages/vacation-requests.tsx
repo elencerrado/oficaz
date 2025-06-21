@@ -68,7 +68,7 @@ export default function VacationRequests() {
     }
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:30:00.000Z'); // Set to before recent approvals
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     console.log('🔍 Checking for highlighted requests (notification active):', {
       lastCheckTime,
