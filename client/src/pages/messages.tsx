@@ -521,10 +521,10 @@ export default function Messages() {
           </div>
         </>
       ) : (
-        // Chat View - Full screen with viewport height
-        <div className="flex flex-col h-screen">
-          {/* Chat Header - Fixed at top */}
-          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
+        // Chat View - Full screen with proper mobile layout
+        <div className="flex flex-col min-h-screen bg-employee-gradient">
+          {/* Chat Header - Sticky at top */}
+          <div className="sticky top-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-10">
             <Button
               variant="ghost"
               size="sm"
@@ -558,8 +558,8 @@ export default function Messages() {
             })()}
           </div>
 
-          {/* Messages - Scrollable area with top padding for fixed header */}
-          <div className="flex-1 pt-20 p-4 space-y-4 overflow-y-auto" style={{ minHeight: 0 }}>
+          {/* Messages - Scrollable area */}
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto">
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
@@ -596,12 +596,10 @@ export default function Messages() {
               </div>
             ))}
             <div ref={messagesEndRef} />
-            {/* Bottom padding for fixed input */}
-            <div className="pb-20"></div>
           </div>
 
-          {/* Message Input - Fixed at bottom with keyboard handling */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-50">
+          {/* Message Input - Sticky at bottom with keyboard handling */}
+          <div className="sticky bottom-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
@@ -616,29 +614,15 @@ export default function Messages() {
                   }
                 }}
                 onFocus={() => {
-                  // Better mobile keyboard handling
+                  // Mobile keyboard handling
                   setTimeout(() => {
                     if (messageInputRef.current) {
-                      // Scroll the entire viewport to bring input into view
-                      window.scrollTo({
-                        top: document.body.scrollHeight,
-                        behavior: 'smooth'
-                      });
-                      
-                      // Alternative approach for iOS Safari
                       messageInputRef.current.scrollIntoView({ 
                         behavior: 'smooth', 
-                        block: 'nearest',
-                        inline: 'nearest'
+                        block: 'center'
                       });
                     }
                   }, 300);
-                }}
-                onBlur={() => {
-                  // Reset scroll position when keyboard closes
-                  setTimeout(() => {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }, 100);
                 }}
               />
               <Button
