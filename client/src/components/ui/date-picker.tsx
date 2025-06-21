@@ -162,36 +162,43 @@ export function DatePickerPeriod({
             mode="range"
             selected={{
               from: startDate || undefined,
-              to: isSelectingStart ? undefined : (endDate || undefined)
+              to: endDate || undefined
             }}
             defaultMonth={startDate || new Date()}
             onSelect={(range) => {
-              if (!range?.from) {
+              if (!range) {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
                 setIsSelectingStart(true);
                 return;
               }
 
-              if (isSelectingStart) {
-                // Primer click: establecer fecha de inicio y limpiar fecha de fin
+              if (range.from && range.to) {
+                // Si se selecciona un rango completo de una vez
+                if (startDate && endDate) {
+                  // Si ya había un rango, iniciar uno nuevo
+                  onStartDateChange(range.from);
+                  onEndDateChange(undefined);
+                  setIsSelectingStart(false);
+                } else {
+                  // Completar el rango
+                  if (range.to < range.from) {
+                    onStartDateChange(range.to);
+                    onEndDateChange(range.from);
+                  } else {
+                    onStartDateChange(range.from);
+                    onEndDateChange(range.to);
+                  }
+                  setTimeout(() => {
+                    setIsModalOpen(false);
+                    setIsSelectingStart(true);
+                  }, 300);
+                }
+              } else if (range.from) {
+                // Solo se seleccionó fecha de inicio
                 onStartDateChange(range.from);
                 onEndDateChange(undefined);
                 setIsSelectingStart(false);
-              } else if (range.to) {
-                // Segundo click: establecer fecha de fin
-                if (startDate && range.to < startDate) {
-                  // Si la fecha seleccionada es anterior al inicio, intercambiar
-                  onEndDateChange(startDate);
-                  onStartDateChange(range.to);
-                } else {
-                  onEndDateChange(range.to);
-                }
-                // Cerrar el modal automáticamente cuando se completa el rango
-                setTimeout(() => {
-                  setIsModalOpen(false);
-                  setIsSelectingStart(true); // Reset para próxima vez
-                }, 300);
               }
             }}
             className="rounded-md border"
