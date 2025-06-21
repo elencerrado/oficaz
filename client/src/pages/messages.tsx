@@ -522,9 +522,9 @@ export default function Messages() {
         </>
       ) : (
         // Chat View - Full screen with proper mobile layout
-        <div className="flex flex-col min-h-screen bg-employee-gradient relative">
+        <div className="flex flex-col h-screen bg-employee-gradient">
           {/* Chat Header - Fixed position */}
-          <div className="absolute top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-30">
+          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -559,7 +559,7 @@ export default function Messages() {
           </div>
 
           {/* Messages - Scrollable area with top padding */}
-          <div className="flex-1 pt-20 p-4 space-y-4 overflow-y-auto pb-24">
+          <div className="flex-1 pt-20 p-4 space-y-4 overflow-y-auto pb-20">
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
@@ -598,8 +598,8 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Message Input - Absolute at bottom with keyboard handling */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-30">
+          {/* Message Input - Sticky at bottom with keyboard handling */}
+          <div className="sticky bottom-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-10">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
