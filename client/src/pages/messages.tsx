@@ -265,8 +265,8 @@ export default function Messages() {
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
+        <div className="p-6 h-[calc(100vh-8rem)]">
+          <div className="grid lg:grid-cols-3 gap-6 h-full">
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
@@ -298,7 +298,7 @@ export default function Messages() {
                   </div>
                 </div>
                 
-                <div className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-20rem)]">
+                <div className="p-4 space-y-2 overflow-y-auto flex-1">
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
@@ -393,11 +393,11 @@ export default function Messages() {
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 flex flex-col">
               {selectedChat ? (
                 <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200">
+                  {/* Chat Header - Fixed */}
+                  <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-lg">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
                         <span className="text-white font-medium">
@@ -413,8 +413,8 @@ export default function Messages() {
                     </div>
                   </div>
 
-                  {/* Messages */}
-                  <div className="flex-1 p-4 overflow-y-auto">
+                  {/* Messages - Scrollable */}
+                  <div className="flex-1 overflow-y-auto p-4 min-h-0">
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
@@ -445,13 +445,15 @@ export default function Messages() {
                           <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
                   </div>
 
-                  {/* Message Input */}
-                  <div className="p-4 border-t border-gray-200">
+                  {/* Message Input - Fixed */}
+                  <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white rounded-b-lg">
                     <div className="flex space-x-2">
                       <Input
+                        ref={messageInputRef}
                         placeholder="Escribe tu mensaje..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
