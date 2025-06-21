@@ -407,7 +407,11 @@ export default function VacationManagement() {
                             {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                           <p>
-                            <span className="font-medium">Días:</span> {request.days || "N/A"}
+                            <span className="font-medium">Días:</span> {
+                              request.startDate && request.endDate 
+                                ? calculateDays(request.startDate, request.endDate)
+                                : request.days || "N/A"
+                            }
                           </p>
                           {request.reason && (
                             <p>
@@ -613,7 +617,11 @@ export default function VacationManagement() {
                   {selectedRequest.endDate ? format(new Date(selectedRequest.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Días:</span> {selectedRequest.days || "N/A"}
+                  <span className="font-medium">Días:</span> {
+                    selectedRequest.startDate && selectedRequest.endDate 
+                      ? calculateDays(selectedRequest.startDate, selectedRequest.endDate)
+                      : selectedRequest.days || "N/A"
+                  }
                 </p>
                 {selectedRequest.reason && (
                   <p className="text-sm text-gray-600">
