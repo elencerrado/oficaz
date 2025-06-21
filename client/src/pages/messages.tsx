@@ -563,7 +563,7 @@ export default function Messages() {
         // Chat View - Fixed header layout
         <div className="h-screen bg-employee-gradient">
           {/* Chat Header - Fixed at top */}
-          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
+          <div className="fixed top-0 left-0 right-0 bg-[#323A46] p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -638,7 +638,7 @@ export default function Messages() {
           </div>
 
           {/* Message Input - Fixed at bottom */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-50">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#323A46] border-t border-white/20 z-50">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
