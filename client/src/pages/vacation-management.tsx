@@ -117,22 +117,29 @@ export default function VacationManagement() {
       if (endDate) updateData.endDate = endDate;
       if (adminComment) updateData.adminComment = adminComment;
       
+      console.log('Updating vacation request:', { id, updateData });
+      
       return apiRequest(`/api/vacation-requests/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(updateData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Update successful:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
       setShowRequestModal(false);
       setSelectedRequest(null);
       setAdminComment("");
       toast({ title: "Solicitud actualizada correctamente" });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Update failed:', error);
       toast({ 
         title: "Error", 
-        description: "No se pudo actualizar la solicitud",
+        description: `No se pudo actualizar la solicitud: ${error.message}`,
         variant: "destructive" 
       });
     },
