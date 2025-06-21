@@ -298,33 +298,33 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Large and Enhanced */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-6">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-visible">
+                <div className="p-4 overflow-visible">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     locale={es}
                     showWeekNumber={true}
-                    className="w-full"
+                    className="w-full overflow-visible"
                     classNames={{
                       months: "flex flex-col space-y-4 w-full",
-                      month: "space-y-4 w-full",
+                      month: "space-y-4 w-full min-w-0",
                       caption: "flex justify-center pt-2 relative items-center mb-4",
-                      caption_label: "text-xl font-bold text-gray-800",
+                      caption_label: "text-lg font-bold text-gray-800",
                       nav: "space-x-1 flex items-center",
-                      nav_button: "h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-xl p-0 transition-colors flex items-center justify-center shadow-sm",
+                      nav_button: "h-8 w-8 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center shadow-sm",
                       nav_button_previous: "absolute left-0 top-2",
                       nav_button_next: "absolute right-0 top-2",
-                      table: "w-full border-collapse",
-                      head_row: "flex mb-3",
-                      head_cell: "text-gray-600 w-12 h-8 font-semibold text-sm flex items-center justify-center uppercase tracking-wide",
+                      table: "w-full border-collapse table-fixed",
+                      head_row: "flex mb-2 w-full",
+                      head_cell: "text-gray-600 flex-1 h-8 font-semibold text-xs flex items-center justify-center uppercase tracking-wide min-w-0",
                       row: "flex w-full mb-1",
-                      weeknumber: "w-8 h-12 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50",
-                      cell: "relative w-12 h-12 text-center text-sm p-0 focus-within:relative focus-within:z-20",
-                      day: "w-12 h-12 p-0 font-medium flex items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200",
+                      weeknumber: "w-6 h-10 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
+                      cell: "relative flex-1 h-10 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-0",
+                      day: "w-full h-10 p-0 font-medium flex items-center justify-center rounded-md hover:bg-blue-50 transition-all duration-200 text-xs",
                       day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-lg",
-                      day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset shadow-md",
+                      day_today: "bg-blue-100 text-blue-900 font-bold ring-1 ring-blue-500 ring-inset shadow-md",
                       day_outside: "text-gray-300",
                       day_disabled: "text-gray-200 cursor-not-allowed",
                       day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
@@ -348,22 +348,22 @@ export default function AdminDashboard() {
                         backgroundColor: '#dc2626', 
                         color: 'white', 
                         fontWeight: '700',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)'
+                        borderRadius: '6px',
+                        boxShadow: '0 1px 3px rgba(220, 38, 38, 0.3)'
                       },
                       customHoliday: { 
                         backgroundColor: '#d97706', 
                         color: 'white', 
                         fontWeight: '700',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 4px rgba(217, 119, 6, 0.3)'
+                        borderRadius: '6px',
+                        boxShadow: '0 1px 3px rgba(217, 119, 6, 0.3)'
                       },
                       vacation: { 
                         backgroundColor: '#16a34a', 
                         color: 'white', 
                         fontWeight: '700',
-                        borderRadius: '8px',
-                        boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
+                        borderRadius: '6px',
+                        boxShadow: '0 1px 3px rgba(22, 163, 74, 0.3)'
                       }
                     }}
                   />
