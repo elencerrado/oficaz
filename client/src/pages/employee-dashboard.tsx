@@ -288,14 +288,14 @@ export default function EmployeeDashboard() {
         {/* Clock Button or Vacation Message - Positioned for thumb accessibility */}
         <div className="flex-1 flex items-center justify-center px-6 pb-6 min-h-[200px]">
           {isOnVacation ? (
-            <div className="text-center">
+            <div className="flex flex-col items-center">
               <div className="w-36 h-36 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg">
                 <Palmtree className="w-16 h-16 text-white" />
               </div>
-              <p className="text-lg font-medium text-white mb-2">
+              <p className="text-lg font-medium text-white mb-2 text-center">
                 ¡Disfruta de tus vacaciones,
               </p>
-              <p className="text-lg font-medium text-white">
+              <p className="text-lg font-medium text-white text-center">
                 te las has ganado!
               </p>
             </div>
