@@ -76,6 +76,11 @@ export interface IStorage {
   createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
   markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
 
+  // Custom Holidays
+  getCustomHolidaysByCompany(companyId: number): Promise<CustomHoliday[]>;
+  createCustomHoliday(holiday: InsertCustomHoliday): Promise<CustomHoliday>;
+  deleteCustomHoliday(id: number): Promise<boolean>;
+
   // Super Admin operations
   getSuperAdminByEmail(email: string): Promise<SuperAdmin | undefined>;
   createSuperAdmin(admin: InsertSuperAdmin): Promise<SuperAdmin>;

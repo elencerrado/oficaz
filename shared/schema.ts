@@ -281,6 +281,7 @@ export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type SystemNotification = typeof systemNotifications.$inferSelect;
 export type DocumentNotification = typeof documentNotifications.$inferSelect;
+export type CustomHoliday = typeof customHolidays.$inferSelect;
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type InsertCompanyConfig = z.infer<typeof insertCompanyConfigSchema>;
@@ -291,6 +292,7 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
+export type InsertCustomHoliday = z.infer<typeof insertCustomHolidaySchema>;
 export type InsertSuperAdmin = z.infer<typeof insertSuperAdminSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 

@@ -90,19 +90,27 @@ export default function AdminDashboard() {
     },
   });
 
-  // Spanish holidays 2025
-  const holidays = [
-    { date: '2025-01-01', name: 'Año Nuevo' },
-    { date: '2025-01-06', name: 'Reyes Magos' },
-    { date: '2025-04-18', name: 'Viernes Santo' },
-    { date: '2025-05-01', name: 'Día del Trabajo' },
-    { date: '2025-08-15', name: 'Asunción de la Virgen' },
-    { date: '2025-10-12', name: 'Fiesta Nacional' },
-    { date: '2025-11-01', name: 'Todos los Santos' },
-    { date: '2025-12-06', name: 'Día de la Constitución' },
-    { date: '2025-12-08', name: 'Inmaculada Concepción' },
-    { date: '2025-12-25', name: 'Navidad' },
+  // Spanish national holidays 2025
+  const nationalHolidays = [
+    { name: "Año Nuevo", date: "2025-01-01", type: "national" },
+    { name: "Día de Reyes", date: "2025-01-06", type: "national" },
+    { name: "Viernes Santo", date: "2025-04-18", type: "national" },
+    { name: "Día del Trabajo", date: "2025-05-01", type: "national" },
+    { name: "Asunción de la Virgen", date: "2025-08-15", type: "national" },
+    { name: "Día de la Hispanidad", date: "2025-10-12", type: "national" },
+    { name: "Todos los Santos", date: "2025-11-01", type: "national" },
+    { name: "Día de la Constitución", date: "2025-12-06", type: "national" },
+    { name: "Inmaculada Concepción", date: "2025-12-08", type: "national" },
+    { name: "Navidad", date: "2025-12-25", type: "national" }
   ];
+
+  // Fetch custom holidays from database
+  const { data: customHolidays = [] } = useQuery({
+    queryKey: ['/api/holidays/custom'],
+    select: (data: any[]) => data?.map((h: any) => ({ ...h, type: 'custom' })) || [],
+  });
+
+  const allHolidays = [...nationalHolidays, ...customHolidays];
 
   const formatTime = (date: Date) => {
     return format(date, 'HH:mm', { locale: es });
