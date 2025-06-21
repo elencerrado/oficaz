@@ -594,15 +594,15 @@ export default function VacationRequests() {
                     <div className="text-sm text-center font-mono text-white/90">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-center">
                       {request.status !== 'pending' && request.adminComment ? (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <div className="flex items-center gap-1 cursor-pointer">
+                            <div className="flex items-center justify-center gap-1 cursor-pointer">
                               <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)} hover:opacity-80`}>
                                 {getStatusText(request.status)}
                               </Badge>
-                              <MessageCircle className="w-3 h-3 text-white/40" />
+                              <MessageCircle className="w-3 h-3 text-white/40 flex-shrink-0" />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-80 p-3" align="center">
@@ -618,9 +618,11 @@ export default function VacationRequests() {
                           </PopoverContent>
                         </Popover>
                       ) : (
-                        <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
-                          {getStatusText(request.status)}
-                        </Badge>
+                        <div className="flex justify-center">
+                          <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
+                            {getStatusText(request.status)}
+                          </Badge>
+                        </div>
                       )}
                     </div>
                     <div className="text-sm text-center text-white/70">
