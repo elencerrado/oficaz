@@ -171,12 +171,14 @@ export default function VacationManagement() {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const employeesOnVacation = employees.filter((emp: Employee) => {
     // Verificar si tiene alguna solicitud aprobada que incluya hoy
-    const hasActiveVacation = vacationRequests.some((request: VacationRequest) => 
-      request.userId === emp.id && 
-      request.status === 'approved' &&
-      request.startDate <= today &&
-      request.endDate >= today
-    );
+    const hasActiveVacation = vacationRequests.some((request: VacationRequest) => {
+      if (request.userId !== emp.id || request.status !== 'approved') return false;
+      
+      const startDate = request.startDate.split('T')[0]; // Formato YYYY-MM-DD
+      const endDate = request.endDate.split('T')[0];
+      
+      return startDate <= today && endDate >= today;
+    });
     return hasActiveVacation;
   });
 

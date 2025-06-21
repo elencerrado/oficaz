@@ -108,11 +108,20 @@ export default function VacationRequests() {
 
   // Calculate vacation days
   const totalDays = parseFloat(user?.totalVacationDays || '22');
-  const usedDays = parseFloat(user?.usedVacationDays || '0');
-  const pendingDays = (requests as any[])
-    .filter((r: any) => r.status === 'pending')
+  
+  // Días usados = vacaciones pasadas ya disfrutadas (aprobadas y finalizadas)
+  const today = new Date().toISOString().split('T')[0];
+  const usedDays = (requests as any[])
+    .filter((r: any) => r.status === 'approved' && r.endDate.split('T')[0] < today)
     .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
-  const availableDays = totalDays - usedDays; // Available = Total - Used (pending doesn't reduce available)
+  
+  // Días pendientes = solicitudes pendientes + aprobadas futuras/actuales
+  const pendingDays = (requests as any[])
+    .filter((r: any) => r.status === 'pending' || (r.status === 'approved' && r.endDate.split('T')[0] >= today))
+    .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
+  
+  // Días disponibles = total - comprometidos (usados + pendientes)
+  const availableDays = Math.max(0, totalDays - usedDays - pendingDays);
   const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
 
   // Create vacation explanation message
