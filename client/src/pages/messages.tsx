@@ -232,6 +232,16 @@ export default function Messages() {
     return <PageLoading />;
   }
 
+  // Reset scroll when returning from chat
+  useEffect(() => {
+    if (!selectedChat) {
+      // Ensure we're at the top when showing message list
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [selectedChat]);
+
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
       {!selectedChat ? (
@@ -569,8 +579,12 @@ export default function Messages() {
               size="sm"
               onClick={() => {
                 setSelectedChat(null);
-                // Scroll to top when returning to chat list
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Force scroll to top immediately and smooth for good UX
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'auto' });
+                  document.documentElement.scrollTop = 0;
+                  document.body.scrollTop = 0;
+                }, 50);
               }}
               className="text-white hover:bg-white/20 p-2 rounded-lg"
             >
