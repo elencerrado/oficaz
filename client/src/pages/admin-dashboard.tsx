@@ -338,9 +338,9 @@ export default function AdminDashboard() {
                       row: "flex w-full mb-1",
                       weeknumber: "w-6 h-10 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
                       cell: "relative flex-1 h-10 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-0",
-                      day: "w-full h-10 p-0 font-medium flex items-center justify-center rounded-md hover:bg-blue-50 transition-all duration-200 text-xs",
-                      day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-lg",
-                      day_today: "bg-blue-100 text-blue-900 font-bold ring-1 ring-blue-500 ring-inset shadow-md",
+                      day: "w-full h-10 p-0 font-medium flex items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200 text-xs",
+                      day_selected: "bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold border border-blue-300",
+                      day_today: "bg-blue-50 text-blue-800 font-bold ring-1 ring-blue-300 ring-inset",
                       day_outside: "text-gray-300",
                       day_disabled: "text-gray-200 cursor-not-allowed",
                       day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
@@ -361,25 +361,25 @@ export default function AdminDashboard() {
                     }}
                     modifiersStyles={{
                       nationalHoliday: { 
-                        backgroundColor: '#dc2626', 
-                        color: 'white', 
-                        fontWeight: '700',
-                        borderRadius: '6px',
-                        boxShadow: '0 1px 3px rgba(220, 38, 38, 0.3)'
+                        backgroundColor: '#fecaca', 
+                        color: '#dc2626', 
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        border: '1px solid #fca5a5'
                       },
                       customHoliday: { 
-                        backgroundColor: '#d97706', 
-                        color: 'white', 
-                        fontWeight: '700',
-                        borderRadius: '6px',
-                        boxShadow: '0 1px 3px rgba(217, 119, 6, 0.3)'
+                        backgroundColor: '#fed7aa', 
+                        color: '#d97706', 
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        border: '1px solid #fdba74'
                       },
                       vacation: { 
-                        backgroundColor: '#16a34a', 
-                        color: 'white', 
-                        fontWeight: '700',
-                        borderRadius: '6px',
-                        boxShadow: '0 1px 3px rgba(22, 163, 74, 0.3)'
+                        backgroundColor: '#bbf7d0', 
+                        color: '#16a34a', 
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        border: '1px solid #86efac'
                       }
                     }}
                   />
