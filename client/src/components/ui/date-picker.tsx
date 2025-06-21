@@ -113,9 +113,26 @@ export function DatePickerPeriod({
 }: DatePickerPeriodProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSelectingStart, setIsSelectingStart] = useState(true);
+  
+  // Reset del estado cuando se abre el modal
+  const handleModalOpen = (open: boolean) => {
+    setIsModalOpen(open);
+    if (open) {
+      // Si ya hay un rango completo, preparar para nueva selección
+      if (startDate && endDate) {
+        setIsSelectingStart(true);
+      } else if (startDate && !endDate) {
+        // Si solo hay fecha de inicio, continuar con selección de fin
+        setIsSelectingStart(false);
+      } else {
+        // Si no hay nada seleccionado, empezar desde el inicio
+        setIsSelectingStart(true);
+      }
+    }
+  };
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+    <Dialog open={isModalOpen} onOpenChange={handleModalOpen}>
       <DialogTrigger asChild>
         <Button
           variant="outline"
@@ -153,6 +170,14 @@ export function DatePickerPeriod({
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
                 setIsSelectingStart(true);
+                return;
+              }
+
+              // Si hay un rango completo y hacemos click en una nueva fecha, iniciar nuevo rango
+              if (startDate && endDate && range.from && !range.to) {
+                onStartDateChange(range.from);
+                onEndDateChange(undefined);
+                setIsSelectingStart(false);
                 return;
               }
 
