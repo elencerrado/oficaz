@@ -125,6 +125,7 @@ export default function VacationManagement() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updateData),
+        credentials: 'include',
       });
 
       if (!response.ok) {
