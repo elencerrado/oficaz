@@ -627,7 +627,7 @@ export default function TimeTracking() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-h-[400px]">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
@@ -836,6 +836,24 @@ export default function TimeTracking() {
                   
                   return result;
                 })()}
+                
+                {filteredSessions.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                          <Users className="w-6 h-6 text-gray-400" />
+                        </div>
+                        <div className="text-gray-500 font-medium">
+                          No hay fichajes en este período
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          Prueba seleccionando un rango de fechas diferente o cambia los filtros
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
