@@ -560,10 +560,10 @@ export default function Messages() {
           </div>
         </>
       ) : (
-        // Chat View - Full screen with proper mobile layout
-        <div className="relative flex flex-col h-screen bg-employee-gradient overflow-hidden">
-          {/* Chat Header - Always at top */}
-          <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
+        // Chat View - Fixed header layout
+        <div className="h-screen bg-employee-gradient">
+          {/* Chat Header - Fixed at top */}
+          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -597,8 +597,8 @@ export default function Messages() {
             })()}
           </div>
 
-          {/* Messages - Scrollable area */}
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto pb-20">
+          {/* Messages - Scrollable area with fixed header/footer */}
+          <div className="pt-20 pb-20 p-4 space-y-4 overflow-y-auto h-screen">
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
@@ -638,7 +638,7 @@ export default function Messages() {
           </div>
 
           {/* Message Input - Fixed at bottom */}
-          <div className="flex-shrink-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-10">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-50">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
