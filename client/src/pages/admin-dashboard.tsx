@@ -402,19 +402,15 @@ export default function AdminDashboard() {
                       
                       return (
                         <div className="space-y-3">
-                          {events.map((event, idx) => (
+                          {events.filter(event => event.type === 'holiday').map((event, idx) => (
                             <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded-lg border">
-                              {event.type === 'holiday' ? (
-                                <>
-                                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                                    <p className="text-xs text-red-600">
-                                      {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
-                                    </p>
-                                  </div>
-                                </>
-                              ) : null}
+                              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
+                                <p className="text-xs text-red-600">
+                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
+                                </p>
+                              </div>
                             </div>
                           ))}
                           
