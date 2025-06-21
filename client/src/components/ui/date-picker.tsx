@@ -173,8 +173,8 @@ export function DatePickerPeriod({
                 return;
               }
 
-              // Si hay un rango completo y hacemos click en una nueva fecha, iniciar nuevo rango
-              if (startDate && endDate && range.from && !range.to) {
+              // Si hay un rango completo y hacemos click, siempre iniciar nuevo rango
+              if (startDate && endDate) {
                 onStartDateChange(range.from);
                 onEndDateChange(undefined);
                 setIsSelectingStart(false);
