@@ -522,9 +522,9 @@ export default function Messages() {
         </>
       ) : (
         // Chat View - Full screen with viewport height
-        <div className="flex flex-col" style={{ height: '100vh', height: '100dvh' }}>
-          {/* Chat Header - Fixed */}
-          <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 flex-shrink-0 border-b border-white/20">
+        <div className="flex flex-col h-screen">
+          {/* Chat Header - Fixed at top */}
+          <div className="fixed top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50">
             <Button
               variant="ghost"
               size="sm"
@@ -558,8 +558,8 @@ export default function Messages() {
             })()}
           </div>
 
-          {/* Messages - Scrollable area */}
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto" style={{ minHeight: 0 }}>
+          {/* Messages - Scrollable area with top padding for fixed header */}
+          <div className="flex-1 pt-20 p-4 space-y-4 overflow-y-auto" style={{ minHeight: 0 }}>
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
@@ -596,10 +596,12 @@ export default function Messages() {
               </div>
             ))}
             <div ref={messagesEndRef} />
+            {/* Bottom padding for fixed input */}
+            <div className="pb-20"></div>
           </div>
 
           {/* Message Input - Fixed at bottom with keyboard handling */}
-          <div className="p-4 bg-white/10 backdrop-blur-sm flex-shrink-0 border-t border-white/20">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/10 backdrop-blur-sm border-t border-white/20 z-50">
             <div className="flex space-x-2">
               <Input
                 ref={messageInputRef}
