@@ -748,7 +748,17 @@ startxref
   app.get('/api/messages', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const messages = await storage.getMessagesByUser(req.user!.id);
-      res.json(messages);
+      
+      // Add sender names to messages
+      const messagesWithNames = await Promise.all(messages.map(async (message: any) => {
+        const sender = await storage.getUser(message.senderId);
+        return {
+          ...message,
+          senderName: sender?.fullName || 'Usuario desconocido'
+        };
+      }));
+      
+      res.json(messagesWithNames);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

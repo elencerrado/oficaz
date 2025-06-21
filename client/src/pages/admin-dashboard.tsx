@@ -46,10 +46,22 @@ export default function AdminDashboard() {
     select: (data: any[]) => data?.slice(0, 5) || [],
   });
 
-  // Fetch recent messages
+  // Fetch recent messages - one per employee
   const { data: messages } = useQuery({
     queryKey: ['/api/messages'],
-    select: (data: any[]) => data?.slice(0, 4) || [],
+    select: (data: any[]) => {
+      if (!data?.length) return [];
+      
+      // Group messages by sender and get the latest one for each
+      const messagesBySender = data.reduce((acc, message) => {
+        if (!acc[message.senderId] || new Date(message.createdAt) > new Date(acc[message.senderId].createdAt)) {
+          acc[message.senderId] = message;
+        }
+        return acc;
+      }, {});
+      
+      return Object.values(messagesBySender).slice(0, 4);
+    },
   });
 
   // Fetch vacation requests for calendar
@@ -149,9 +161,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Quick Actions & Lists */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           
           {/* Quick Clock In/Out */}
           <Card>
@@ -164,9 +176,6 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatTime(currentTime)}
-                  </p>
                   <p className="text-sm text-gray-500">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
@@ -205,21 +214,16 @@ export default function AdminDashboard() {
               <div className="space-y-3">
                 {recentSessions?.length > 0 ? (
                   recentSessions.map((session: any) => (
-                    <div key={session.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{session.userName}</p>
-                          <p className="text-sm text-gray-500">
-                            {session.clockOut ? 'Salida' : 'Entrada'} - {formatDateTime(session.clockOut || session.clockIn)}
-                          </p>
-                        </div>
+                    <div key={session.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-blue-600" />
                       </div>
-                      <Badge variant={session.clockOut ? 'default' : 'secondary'}>
-                        {session.clockOut ? 'Completado' : 'Activo'}
-                      </Badge>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{session.userName}</p>
+                        <p className="text-sm text-gray-500">
+                          {session.clockOut ? 'Salida' : 'Entrada'} - {formatDateTime(session.clockOut || session.clockIn)}
+                        </p>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -246,9 +250,9 @@ export default function AdminDashboard() {
                         <MessageSquare className="h-4 w-4 text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{message.subject}</p>
+                        <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>
                         <p className="text-sm text-gray-500 truncate">{message.content}</p>
-                        <p className="text-xs text-gray-400">{formatDateTime(message.createdAt)}</p>
+                        <p className="text-xs text-gray-400">{formatTime(parseISO(message.createdAt))}</p>
                       </div>
                       {!message.isRead && (
                         <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -264,7 +268,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column - Calendar */}
-        <div className="lg:col-span-1">
+        <div>
           <Card className="h-fit">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
