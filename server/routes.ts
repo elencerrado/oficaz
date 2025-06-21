@@ -457,22 +457,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/vacation-requests/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { status } = req.body;
+      const { status, startDate, endDate, adminComment } = req.body;
+
+      console.log('PATCH vacation-requests:', { id, status, startDate, endDate, adminComment });
 
       if (!['approved', 'denied'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status' });
       }
 
-      const request = await storage.updateVacationRequest(id, {
-        status,
-      });
+      const updateData: any = { status };
+      if (startDate) updateData.startDate = startDate;
+      if (endDate) updateData.endDate = endDate;
+      if (adminComment) updateData.adminComment = adminComment;
+
+      const request = await storage.updateVacationRequest(id, updateData);
 
       if (!request) {
         return res.status(404).json({ message: 'Vacation request not found' });
       }
 
+      console.log('Update successful:', request);
       res.json(request);
     } catch (error: any) {
+      console.error('Error updating vacation request:', error);
       res.status(500).json({ message: error.message });
     }
   });
