@@ -207,91 +207,111 @@ export default function VacationManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6 py-4">
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Gestión de Vacaciones</h1>
-          <p className="text-sm text-gray-600 mt-1">
-            Administra solicitudes, empleados de vacaciones y días festivos
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-500 rounded-lg">
-                  <Clock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-yellow-700 font-medium">Solicitudes Pendientes</p>
-                  <p className="text-lg font-bold text-yellow-800">{stats.pending}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500 rounded-lg">
-                  <Check className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-green-700 font-medium">Solicitudes Aprobadas</p>
-                  <p className="text-lg font-bold text-green-800">{stats.approved}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500 rounded-lg">
-                  <Plane className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-blue-700 font-medium">Empleados de Vacaciones</p>
-                  <p className="text-lg font-bold text-blue-800">{stats.onVacation}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500 rounded-lg">
-                  <CalendarDays className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-purple-700 font-medium">Días Festivos 2025</p>
-                  <p className="text-lg font-bold text-purple-800">{spanishHolidays2025.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Vacaciones</h1>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="requests">Solicitudes</TabsTrigger>
-          <TabsTrigger value="employees">Empleados de Vacaciones</TabsTrigger>
-          <TabsTrigger value="holidays">Días Festivos</TabsTrigger>
-        </TabsList>
+        {/* Stats Cards with Navigation */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveTab('requests')}
+          >
+            <CardContent className="flex items-center p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Solicitudes Pendientes</p>
+                  <p className="text-xl font-semibold text-gray-900">{stats.pending}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Vacation Requests Tab */}
-        <TabsContent value="requests" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-4">
-              <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <CardTitle className="text-lg font-medium">Solicitudes de Vacaciones</CardTitle>
-                <div className="flex gap-2">
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveTab('requests')}
+          >
+            <CardContent className="flex items-center p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Check className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Solicitudes Aprobadas</p>
+                  <p className="text-xl font-semibold text-gray-900">{stats.approved}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveTab('employees')}
+          >
+            <CardContent className="flex items-center p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Plane className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Empleados de Vacaciones</p>
+                  <p className="text-xl font-semibold text-gray-900">{stats.onVacation}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setActiveTab('holidays')}
+          >
+            <CardContent className="flex items-center p-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <CalendarDays className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Días Festivos 2025</p>
+                  <p className="text-xl font-semibold text-gray-900">{spanishHolidays2025.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Content based on active tab */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              {activeTab === 'requests' && (
+                <>
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                  <span>Solicitudes de Vacaciones</span>
+                </>
+              )}
+              {activeTab === 'employees' && (
+                <>
+                  <Users className="w-5 h-5 text-blue-600" />
+                  <span>Empleados de Vacaciones</span>
+                </>
+              )}
+              {activeTab === 'holidays' && (
+                <>
+                  <CalendarDays className="w-5 h-5 text-purple-600" />
+                  <span>Días Festivos 2025</span>
+                </>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {activeTab === 'requests' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
                   <Input
                     placeholder="Buscar empleado..."
                     value={searchTerm}
@@ -310,9 +330,6 @@ export default function VacationManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
               {loadingRequests ? (
                 <div className="flex justify-center py-8">
                   <LoadingSpinner />
@@ -397,20 +414,11 @@ export default function VacationManagement() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </div>
+            )}
 
-        {/* Employees on Vacation Tab */}
-        <TabsContent value="employees" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Empleados de Vacaciones
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            {activeTab === 'employees' && (
+              <div className="space-y-4">
               {loadingEmployees ? (
                 <div className="flex justify-center py-8">
                   <LoadingSpinner />
@@ -441,20 +449,12 @@ export default function VacationManagement() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </div>
+            )}
 
-        {/* Holidays Tab */}
-        <TabsContent value="holidays" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <CalendarDays className="w-5 h-5" />
-                  Días Festivos de España 2025
-                </CardTitle>
-                <div className="flex gap-2 items-center">
+            {activeTab === 'holidays' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
                   <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                     <SelectTrigger className="w-48">
                       <SelectValue />
@@ -514,10 +514,8 @@ export default function VacationManagement() {
                     </DialogContent>
                   </Dialog>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
                 {spanishHolidays2025.map((holiday, index) => (
                   <Card key={index} className="border-green-200 bg-green-50">
                     <CardContent className="p-4">
@@ -540,11 +538,11 @@ export default function VacationManagement() {
                     </CardContent>
                   </Card>
                 ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            )}
+          </CardContent>
+        </Card>
 
       {/* Request Management Modal */}
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
