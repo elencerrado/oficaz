@@ -145,17 +145,29 @@ export default function AdminDashboard() {
 
   // Get vacation details for a specific date
   const getVacationDetailsForDate = (date: Date) => {
-    return approvedVacations?.filter((req: any) => {
-      // Parse dates and normalize to date-only comparison
+    const approved = approvedVacations?.filter((req: any) => {
       const startDate = startOfDay(parseISO(req.startDate));
       const endDate = startOfDay(parseISO(req.endDate));
       const targetDate = startOfDay(date);
-      
       return targetDate >= startDate && targetDate <= endDate;
     }).map((req: any) => ({
       ...req,
-      userName: req.userName || req.fullName || 'Empleado'
+      userName: req.userName || req.fullName || 'Empleado',
+      status: 'approved'
     })) || [];
+
+    const pending = pendingVacations?.filter((req: any) => {
+      const startDate = startOfDay(parseISO(req.startDate));
+      const endDate = startOfDay(parseISO(req.endDate));
+      const targetDate = startOfDay(date);
+      return targetDate >= startDate && targetDate <= endDate;
+    }).map((req: any) => ({
+      ...req,
+      userName: req.userName || req.fullName || 'Empleado',
+      status: 'pending'
+    })) || [];
+
+    return [...approved, ...pending];
   };
 
   // Check if date has events
@@ -169,18 +181,27 @@ export default function AdminDashboard() {
       events.push({ type: 'holiday', name: holiday.name });
     }
 
-    // Check employee vacations (only approved ones)
-    const vacations = approvedVacations?.filter((req: any) => {
-      // Parse dates and normalize to date-only comparison
+    // Check employee vacations (approved and pending)
+    const approvedVacs = approvedVacations?.filter((req: any) => {
       const startDate = startOfDay(parseISO(req.startDate));
       const endDate = startOfDay(parseISO(req.endDate));
       const targetDate = startOfDay(date);
-      
       return targetDate >= startDate && targetDate <= endDate;
     });
 
-    if (vacations?.length) {
-      events.push({ type: 'vacation', count: vacations.length });
+    const pendingVacs = pendingVacations?.filter((req: any) => {
+      const startDate = startOfDay(parseISO(req.startDate));
+      const endDate = startOfDay(parseISO(req.endDate));
+      const targetDate = startOfDay(date);
+      return targetDate >= startDate && targetDate <= endDate;
+    });
+
+    if (approvedVacs?.length) {
+      events.push({ type: 'vacation', count: approvedVacs.length, subtype: 'approved' });
+    }
+
+    if (pendingVacs?.length) {
+      events.push({ type: 'vacation', count: pendingVacs.length, subtype: 'pending' });
     }
 
     return events;
@@ -357,6 +378,15 @@ export default function AdminDashboard() {
                           dates.push(new Date(d));
                         }
                         return dates;
+                      }) || [],
+                      pendingVacation: pendingVacations?.flatMap((req: any) => {
+                        const start = startOfDay(parseISO(req.startDate));
+                        const end = startOfDay(parseISO(req.endDate));
+                        const dates = [];
+                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                          dates.push(new Date(d));
+                        }
+                        return dates;
                       }) || []
                     }}
                     modifiersStyles={{
@@ -380,6 +410,13 @@ export default function AdminDashboard() {
                         fontWeight: '600',
                         borderRadius: '8px',
                         border: '1px solid #86efac'
+                      },
+                      pendingVacation: { 
+                        backgroundColor: '#fed7aa', 
+                        color: '#ea580c', 
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        border: '1px solid #fdba74'
                       }
                     }}
                   />
@@ -415,23 +452,48 @@ export default function AdminDashboard() {
                           ))}
                           
                           {vacations.length > 0 && (
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm font-semibold text-green-800">
-                                  {vacations.length} empleado{vacations.length > 1 ? 's' : ''} de vacaciones
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                {vacations.map((vacation: any, idx: number) => (
-                                  <div key={idx} className="text-sm text-green-700 ml-5">
-                                    • {vacation.userName || vacation.fullName || `Usuario ${vacation.userId}`}
-                                    <span className="text-xs text-gray-500 ml-2">
-                                      ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
+                            <div className="space-y-2">
+                              {vacations.filter(v => v.status === 'approved').length > 0 && (
+                                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span className="text-sm font-semibold text-green-800">
+                                      {vacations.filter(v => v.status === 'approved').length} empleado{vacations.filter(v => v.status === 'approved').length > 1 ? 's' : ''} de vacaciones
                                     </span>
                                   </div>
-                                ))}
-                              </div>
+                                  <div className="space-y-1">
+                                    {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
+                                      <div key={idx} className="text-sm text-green-700 ml-5">
+                                        • {vacation.userName}
+                                        <span className="text-xs text-gray-500 ml-2">
+                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {vacations.filter(v => v.status === 'pending').length > 0 && (
+                                <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                    <span className="text-sm font-semibold text-orange-800">
+                                      {vacations.filter(v => v.status === 'pending').length} solicitud{vacations.filter(v => v.status === 'pending').length > 1 ? 'es' : ''} pendiente{vacations.filter(v => v.status === 'pending').length > 1 ? 's' : ''}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {vacations.filter(v => v.status === 'pending').map((vacation: any, idx: number) => (
+                                      <div key={idx} className="text-sm text-orange-700 ml-5">
+                                        • {vacation.userName}
+                                        <span className="text-xs text-gray-500 ml-2">
+                                          ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
