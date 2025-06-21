@@ -163,11 +163,14 @@ export default function VacationManagement() {
     return matchesStatus && matchesSearch;
   });
 
+  const pendingRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'pending');
+  const approvedRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'approved');
+
   const employeesOnVacation = employees.filter((emp: Employee) => emp.status === 'de_vacaciones');
 
   const getVacationStats = () => {
-    const pending = vacationRequests.filter((r: VacationRequest) => r.status === 'pending').length;
-    const approved = vacationRequests.filter((r: VacationRequest) => r.status === 'approved').length;
+    const pending = pendingRequests.length;
+    const approved = approvedRequests.length;
     const onVacation = employeesOnVacation.length;
     return { pending, approved, onVacation };
   };
@@ -214,70 +217,98 @@ export default function VacationManagement() {
       </div>
 
         {/* Stats Cards with Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setActiveTab('requests')}
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-yellow-200"
+            onClick={() => {
+              setActiveTab('requests');
+              setSelectedStatus('pending');
+              setSearchTerm('');
+            }}
           >
-            <CardContent className="flex items-center p-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Clock className="w-5 h-5 text-yellow-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-yellow-500 rounded-xl shadow-sm">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
+                    <p className="text-xs text-gray-500">Pendientes</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Solicitudes Pendientes</p>
-                  <p className="text-xl font-semibold text-gray-900">{stats.pending}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => setActiveTab('requests')}
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-green-200"
+            onClick={() => {
+              setActiveTab('requests');
+              setSelectedStatus('approved');
+              setSearchTerm('');
+            }}
           >
-            <CardContent className="flex items-center p-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-green-500 rounded-xl shadow-sm">
+                    <Check className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
+                    <p className="text-xs text-gray-500">Aprobadas</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Solicitudes Aprobadas</p>
-                  <p className="text-xl font-semibold text-gray-900">{stats.approved}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200"
             onClick={() => setActiveTab('employees')}
           >
-            <CardContent className="flex items-center p-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Plane className="w-5 h-5 text-blue-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-blue-500 rounded-xl shadow-sm">
+                    <Plane className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Empleados</p>
+                    <p className="text-xs text-gray-500">De Vacaciones</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Empleados de Vacaciones</p>
-                  <p className="text-xl font-semibold text-gray-900">{stats.onVacation}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">{stats.onVacation}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-purple-200"
             onClick={() => setActiveTab('holidays')}
           >
-            <CardContent className="flex items-center p-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <CalendarDays className="w-5 h-5 text-purple-600" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-purple-500 rounded-xl shadow-sm">
+                    <CalendarDays className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">Días Festivos</p>
+                    <p className="text-xs text-gray-500">2025</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Días Festivos 2025</p>
-                  <p className="text-xl font-semibold text-gray-900">{spanishHolidays2025.length}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-purple-600">{spanishHolidays2025.length}</p>
                 </div>
               </div>
             </CardContent>
