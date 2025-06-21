@@ -288,34 +288,36 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar - Larger and More Stylized */}
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              {/* Calendar - Clean and Professional */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   locale={es}
-                  className="rounded-md border-0 w-full"
+                  showWeekNumber={true}
+                  className="w-full"
                   classNames={{
-                    months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                    month: "space-y-6",
-                    caption: "flex justify-center pt-2 pb-4 relative items-center",
-                    caption_label: "text-lg font-semibold text-gray-900",
+                    months: "flex flex-col space-y-4",
+                    month: "space-y-4 p-4",
+                    caption: "flex justify-center pt-1 relative items-center mb-4",
+                    caption_label: "text-lg font-semibold text-gray-800",
                     nav: "space-x-1 flex items-center",
-                    nav_button: "h-8 w-8 bg-white border border-gray-200 rounded-full p-0 opacity-70 hover:opacity-100 hover:bg-gray-50 shadow-sm",
-                    nav_button_previous: "absolute left-1",
-                    nav_button_next: "absolute right-1",
-                    table: "w-full border-collapse space-y-2",
-                    head_row: "flex",
-                    head_cell: "text-gray-600 rounded-md w-12 h-8 font-medium text-sm flex items-center justify-center",
-                    row: "flex w-full mt-3",
-                    cell: "relative h-12 w-12 text-center text-sm p-0 [&:has([aria-selected])]:bg-oficaz-primary [&:has([aria-selected])]:text-white first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                    day: "h-12 w-12 p-0 font-medium aria-selected:opacity-100 hover:bg-oficaz-primary/10 rounded-lg transition-colors",
-                    day_selected: "bg-oficaz-primary text-white hover:bg-oficaz-primary hover:text-white focus:bg-oficaz-primary focus:text-white",
-                    day_today: "bg-oficaz-primary/20 text-oficaz-primary font-bold border-2 border-oficaz-primary",
-                    day_outside: "text-gray-400 opacity-50",
-                    day_disabled: "text-gray-400 opacity-50",
-                    day_range_middle: "aria-selected:bg-oficaz-primary/50 aria-selected:text-white",
+                    nav_button: "h-9 w-9 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center",
+                    nav_button_previous: "absolute left-4 top-1",
+                    nav_button_next: "absolute right-4 top-1",
+                    table: "w-full border-collapse mt-2",
+                    head_row: "flex mb-2",
+                    head_cell: "text-gray-500 w-10 h-8 font-medium text-xs flex items-center justify-center uppercase tracking-wide",
+                    row: "flex w-full mb-1",
+                    weeknumber: "w-8 h-10 text-xs text-gray-400 flex items-center justify-center font-medium border-r border-gray-100 mr-1",
+                    cell: "relative w-10 h-10 text-center text-sm p-0 focus-within:relative focus-within:z-20",
+                    day: "w-10 h-10 p-0 font-normal flex items-center justify-center rounded-md hover:bg-blue-50 transition-colors",
+                    day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-medium",
+                    day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset",
+                    day_outside: "text-gray-300",
+                    day_disabled: "text-gray-200 cursor-not-allowed",
+                    day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
                     day_hidden: "invisible",
                   }}
                   modifiers={{
@@ -332,9 +334,24 @@ export default function AdminDashboard() {
                     }) || []
                   }}
                   modifiersStyles={{
-                    nationalHoliday: { backgroundColor: '#ef4444', color: 'white', fontWeight: 'bold' },
-                    customHoliday: { backgroundColor: '#f59e0b', color: 'white', fontWeight: 'bold' },
-                    vacation: { backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' }
+                    nationalHoliday: { 
+                      backgroundColor: '#dc2626', 
+                      color: 'white', 
+                      fontWeight: '600',
+                      borderRadius: '6px'
+                    },
+                    customHoliday: { 
+                      backgroundColor: '#d97706', 
+                      color: 'white', 
+                      fontWeight: '600',
+                      borderRadius: '6px'
+                    },
+                    vacation: { 
+                      backgroundColor: '#2563eb', 
+                      color: 'white', 
+                      fontWeight: '600',
+                      borderRadius: '6px'
+                    }
                   }}
                 />
               </div>
