@@ -146,6 +146,7 @@ export function DatePickerPeriod({
               from: startDate || undefined,
               to: endDate || undefined
             }}
+            defaultMonth={startDate || new Date()}
             onSelect={(range) => {
               if (range?.from) {
                 onStartDateChange(range.from);
