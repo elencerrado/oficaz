@@ -305,7 +305,7 @@ export default function EmployeeDashboard() {
                 >
                   <item.icon className="h-12 w-12 text-white" />
                   {item.notification && (
-                    <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white animate-pulse ${
+                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white animate-pulse ${
                       (item as any).notificationType === 'red' ? 'bg-red-500' : 
                       (item as any).notificationType === 'green' ? 'bg-green-500' : 'bg-red-500'
                     }`}></div>
