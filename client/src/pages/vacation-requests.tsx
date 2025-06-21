@@ -577,11 +577,11 @@ export default function VacationRequests() {
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((request: any) => (
-                  <div key={request.id} className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5">
-                    <div className="text-sm text-center text-white/90">
+                  <div key={request.id} className="grid grid-cols-4 py-3 px-4 border-b border-white/10 hover:bg-white/5 items-center min-h-[48px]">
+                    <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
-                    <div className="text-sm text-center font-mono text-white/90">
+                    <div className="text-sm text-center font-mono text-white/90 flex items-center justify-center">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
                     <div className="flex justify-start items-center pl-4 pr-2">
@@ -613,7 +613,7 @@ export default function VacationRequests() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-sm text-center text-white/70">
+                    <div className="text-sm text-center text-white/70 flex items-center justify-center">
                       {formatDate(request.createdAt)}
                     </div>
                   </div>
