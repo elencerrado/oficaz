@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 interface DatePickerDayProps {
@@ -110,11 +111,11 @@ export function DatePickerPeriod({
   className,
   buttonText
 }: DatePickerPeriodProps) {
-  const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <Popover open={isRangeDialogOpen} onOpenChange={setIsRangeDialogOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogTrigger asChild>
         <Button
           variant="outline"
           className={cn(
@@ -131,21 +132,14 @@ export function DatePickerPeriod({
           </div>
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-auto p-3 z-[9999]" 
-        align="center"
-        side="bottom"
-        sideOffset={4}
-        avoidCollisions={true}
-        collisionPadding={20}
-        sticky="always"
-        onOpenAutoFocus={(e) => e.preventDefault()}
-      >
-        <div className="space-y-3">
-          <div className="text-sm font-medium text-center">
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center">
             Seleccionar rango de fechas
-          </div>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center space-y-4 p-4">
           <Calendar
             mode="range"
             selected={{
@@ -158,34 +152,40 @@ export function DatePickerPeriod({
               }
               if (range?.to) {
                 onEndDateChange(range.to);
-                // Cerrar el popup automáticamente cuando se selecciona el rango completo
-                setTimeout(() => setIsRangeDialogOpen(false), 100);
+                // Cerrar el modal automáticamente cuando se selecciona el rango completo
+                setTimeout(() => setIsModalOpen(false), 300);
               }
               if (!range) {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
               }
             }}
-            className="rounded-md"
+            className="rounded-md border"
             numberOfMonths={1}
             showOutsideDays={false}
             locale={es}
           />
 
-          <div className="flex justify-center">
+          <div className="flex gap-3 w-full">
             <Button
               variant="outline"
               onClick={() => {
                 onStartDateChange(undefined);
                 onEndDateChange(undefined);
               }}
-              size="sm"
+              className="flex-1"
             >
               Limpiar fechas
             </Button>
+            <Button
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1"
+            >
+              Cerrar
+            </Button>
           </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
