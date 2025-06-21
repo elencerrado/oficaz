@@ -28,6 +28,13 @@ export default function AdminDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
+  // Función para manejar clics en días del calendario
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
   // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -312,13 +319,7 @@ export default function AdminDashboard() {
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={(date) => {
-                      // Si es el mismo día, mantener la selección
-                      if (selectedDate && date && isSameDay(selectedDate, date)) {
-                        return;
-                      }
-                      setSelectedDate(date);
-                    }}
+                    onSelect={handleDateSelect}
                     locale={es}
                     showWeekNumber={true}
                     className="w-full overflow-visible"
