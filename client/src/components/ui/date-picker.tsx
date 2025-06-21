@@ -46,13 +46,13 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-1 max-w-[280px] z-50" 
-        align={align} 
-        side={autoPosition ? undefined : side}
+        className="w-[260px] p-2 z-50" 
+        align="center" 
+        side="bottom"
         sideOffset={4}
         avoidCollisions={true}
-        collisionPadding={16}
-        collisionBoundary={typeof window !== 'undefined' ? document.querySelector('body') : undefined}
+        collisionPadding={20}
+        sticky="always"
       >
         <Calendar
           mode="single"
@@ -66,20 +66,20 @@ export function DatePicker({
           locale={es}
           className="rounded-md border-0"
           classNames={{
-            months: "flex flex-col space-y-2",
-            month: "space-y-2",
-            caption: "flex justify-center pt-1 relative items-center",
-            caption_label: "text-sm font-medium",
+            months: "flex flex-col space-y-3",
+            month: "space-y-3 w-full",
+            caption: "flex justify-center pt-2 relative items-center w-full",
+            caption_label: "text-sm font-medium text-center",
             nav: "space-x-1 flex items-center",
-            nav_button: "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100 text-xs",
+            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
             nav_button_previous: "absolute left-1",
             nav_button_next: "absolute right-1",
-            table: "w-full border-collapse",
-            head_row: "flex",
-            head_cell: "text-muted-foreground rounded-md w-7 font-normal text-[0.7rem] p-0",
+            table: "w-full border-collapse table-fixed",
+            head_row: "flex w-full",
+            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-xs flex-1 text-center",
             row: "flex w-full mt-1",
-            cell: "text-center text-xs p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-            day: "h-7 w-7 p-0 font-normal aria-selected:opacity-100 text-xs",
+            cell: "text-center text-sm p-0 relative flex-1 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+            day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 text-sm mx-auto flex items-center justify-center",
             day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
             day_today: "bg-accent text-accent-foreground",
             day_outside: "text-muted-foreground opacity-50",

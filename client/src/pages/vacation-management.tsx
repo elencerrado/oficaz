@@ -548,7 +548,7 @@ export default function VacationManagement() {
 
       {/* Request Management Modal */}
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
