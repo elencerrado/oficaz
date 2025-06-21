@@ -411,7 +411,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable middle section */}
-                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: 'calc(100% - 140px)' }}>
+                  <div className="overflow-y-auto p-4" style={{ height: '400px' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
