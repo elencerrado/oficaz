@@ -43,22 +43,31 @@ export default function VacationRequests() {
     refetchIntervalInBackground: true,
   });
 
-  // Detect newly processed requests and highlight them
+  // Detect newly processed requests and highlight them - only when coming from notification
   useEffect(() => {
     if (!requests?.length) return;
     
-    // For testing: use a recent timestamp to detect changes from today
-    const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:20:00.000Z');
+    // Check if user has vacation updates notification active in dashboard
+    const hasVacationUpdates = localStorage.getItem('hasVacationUpdates') === 'true';
     
-    console.log('🔍 Checking for highlighted requests:', {
+    if (!hasVacationUpdates) {
+      // No notification active, don't highlight anything
+      setHighlightedRequests(new Set());
+      return;
+    }
+    
+    const lastCheckTime = localStorage.getItem('lastVacationCheck');
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    console.log('🔍 Checking for highlighted requests (notification active):', {
       requestsCount: requests.length,
+      hasVacationUpdates,
       lastCheckTime,
       lastCheckDate: lastCheckDate.toISOString()
     });
     
     const newlyProcessedRequests = requests.filter((request: any) => {
-      if (!request.reviewedAt) return false; // Only consider requests with reviewedAt
+      if (!request.reviewedAt) return false;
       
       const reviewDate = new Date(request.reviewedAt);
       const isProcessed = request.status === 'approved' || request.status === 'denied';
@@ -81,28 +90,21 @@ export default function VacationRequests() {
       setHighlightedRequests(newHighlighted);
       console.log('✨ Highlighting processed requests:', Array.from(newHighlighted));
     } else {
+      setHighlightedRequests(new Set());
       console.log('No requests to highlight');
-      // If no highlights and we have approved/denied requests, show all recent ones for testing
-      const recentProcessed = requests.filter((r: any) => 
-        (r.status === 'approved' || r.status === 'denied') && r.reviewedAt
-      );
-      if (recentProcessed.length > 0) {
-        const testHighlighted = new Set(recentProcessed.map((r: any) => r.id));
-        setHighlightedRequests(testHighlighted);
-        console.log('🧪 Test highlighting all processed requests:', Array.from(testHighlighted));
-      }
     }
   }, [requests]);
 
-  // Clear highlights when leaving the page
+  // Clear highlights when leaving the page - this clears the notification
   useEffect(() => {
     return () => {
-      if (highlightedRequests.size > 0) {
-        localStorage.setItem('lastVacationCheck', new Date().toISOString());
-        setHighlightedRequests(new Set());
-      }
+      // Clear vacation notification when leaving the page
+      localStorage.setItem('lastVacationCheck', new Date().toISOString());
+      localStorage.removeItem('hasVacationUpdates');
+      setHighlightedRequests(new Set());
+      console.log('🧹 Cleared vacation notifications on page exit');
     };
-  }, [highlightedRequests]);
+  }, []);
 
   // Handle click on highlighted request to remove highlight
   const handleRequestClick = (requestId: number) => {
@@ -112,9 +114,11 @@ export default function VacationRequests() {
       setHighlightedRequests(newHighlighted);
       console.log(`Removed highlight from request ${requestId}`);
       
-      // If no more highlights, update last check time
+      // If no more highlights, clear the vacation notification completely
       if (newHighlighted.size === 0) {
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        localStorage.removeItem('hasVacationUpdates');
+        console.log('🧹 All highlights cleared - notification removed');
       }
     }
   };
