@@ -136,6 +136,15 @@ export default function AdminDashboard() {
     return 'No hay fichajes recientes';
   };
 
+  // Get vacation details for a specific date
+  const getVacationDetailsForDate = (date: Date) => {
+    return approvedVacations?.filter((req: any) => {
+      const startDate = parseISO(req.startDate);
+      const endDate = parseISO(req.endDate);
+      return date >= startDate && date <= endDate;
+    }) || [];
+  };
+
   // Check if date has events
   const getDateEvents = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -288,33 +297,33 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar - Clean and Professional */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[400px]">
+              {/* Calendar - Large and Enhanced */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[480px]">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   locale={es}
                   showWeekNumber={true}
-                  className="w-full px-4 pt-4 pb-2"
+                  className="w-full px-6 pt-6 pb-3"
                   classNames={{
-                    months: "flex flex-col space-y-4",
-                    month: "space-y-4 w-full min-h-[340px]",
-                    caption: "flex justify-center pt-1 relative items-center mb-4",
-                    caption_label: "text-lg font-semibold text-gray-800",
+                    months: "flex flex-col space-y-6",
+                    month: "space-y-6 w-full min-h-[400px]",
+                    caption: "flex justify-center pt-2 relative items-center mb-6",
+                    caption_label: "text-xl font-bold text-gray-800",
                     nav: "space-x-1 flex items-center",
-                    nav_button: "h-9 w-9 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center",
-                    nav_button_previous: "absolute left-0 top-1",
-                    nav_button_next: "absolute right-0 top-1",
+                    nav_button: "h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-xl p-0 transition-colors flex items-center justify-center shadow-sm",
+                    nav_button_previous: "absolute left-0 top-2",
+                    nav_button_next: "absolute right-0 top-2",
                     table: "w-full border-collapse",
-                    head_row: "flex mb-2",
-                    head_cell: "text-gray-500 w-10 h-8 font-medium text-xs flex items-center justify-center uppercase tracking-wide",
-                    row: "flex w-full mb-1",
-                    weeknumber: "w-8 h-10 text-xs text-gray-400 flex items-center justify-center font-medium border-r border-gray-100 mr-1",
-                    cell: "relative w-10 h-10 text-center text-sm p-0 focus-within:relative focus-within:z-20",
-                    day: "w-10 h-10 p-0 font-normal flex items-center justify-center rounded-md hover:bg-blue-50 transition-colors",
-                    day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-medium",
-                    day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset",
+                    head_row: "flex mb-3",
+                    head_cell: "text-gray-600 w-14 h-10 font-semibold text-sm flex items-center justify-center uppercase tracking-wide",
+                    row: "flex w-full mb-2",
+                    weeknumber: "w-10 h-14 text-sm text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-2",
+                    cell: "relative w-14 h-14 text-center text-base p-0 focus-within:relative focus-within:z-20",
+                    day: "w-14 h-14 p-0 font-medium flex items-center justify-center rounded-xl hover:bg-blue-50 transition-all duration-200 relative",
+                    day_selected: "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-lg",
+                    day_today: "bg-blue-100 text-blue-900 font-bold ring-2 ring-blue-500 ring-inset shadow-md",
                     day_outside: "text-gray-300",
                     day_disabled: "text-gray-200 cursor-not-allowed",
                     day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
@@ -337,20 +346,52 @@ export default function AdminDashboard() {
                     nationalHoliday: { 
                       backgroundColor: '#dc2626', 
                       color: 'white', 
-                      fontWeight: '600',
-                      borderRadius: '6px'
+                      fontWeight: '700',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 4px rgba(220, 38, 38, 0.3)'
                     },
                     customHoliday: { 
                       backgroundColor: '#d97706', 
                       color: 'white', 
-                      fontWeight: '600',
-                      borderRadius: '6px'
+                      fontWeight: '700',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 4px rgba(217, 119, 6, 0.3)'
                     },
                     vacation: { 
-                      backgroundColor: '#2563eb', 
+                      backgroundColor: '#16a34a', 
                       color: 'white', 
-                      fontWeight: '600',
-                      borderRadius: '6px'
+                      fontWeight: '700',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
+                    }
+                  }}
+                  components={{
+                    Day: ({ date, ...props }) => {
+                      const vacations = getVacationDetailsForDate(date);
+                      const hasVacations = vacations.length > 0;
+                      
+                      return (
+                        <div className="relative group">
+                          <button {...props} />
+                          {hasVacations && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+                          )}
+                          {hasVacations && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                              <div className="font-semibold mb-1">{vacations.length} empleado{vacations.length > 1 ? 's' : ''} de vacaciones:</div>
+                              {vacations.slice(0, 3).map((vacation: any, idx: number) => (
+                                <div key={idx} className="text-green-300">
+                                  • {vacation.userName || 'Empleado'}
+                                </div>
+                              ))}
+                              {vacations.length > 3 && (
+                                <div className="text-gray-300">+{vacations.length - 3} más...</div>
+                              )}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          )}
+                        </div>
+                      );
                     }
                   }}
                 />
