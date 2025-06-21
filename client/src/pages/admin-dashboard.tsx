@@ -475,17 +475,10 @@ export default function AdminDashboard() {
 
               {/* Upcoming Events Section */}
               <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-3">
+                <div className="mb-3">
                   <h4 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
                     Próximos Eventos
                   </h4>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-xs text-blue-600 hover:text-blue-700"
-                  >
-                    ver más
-                  </Button>
                 </div>
                 <div className="space-y-3">
                   {allHolidays
