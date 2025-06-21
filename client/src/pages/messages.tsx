@@ -261,9 +261,9 @@ export default function Messages() {
             </div>
           </div>
         </div>
-        {/* Content */}
-        <div className="flex-1 p-6 min-h-0">
-          <div className="grid lg:grid-cols-3 gap-6" style={{ height: '70vh' }}>
+        {/* Content - Fixed height without overflow */}
+        <div className="p-6 overflow-hidden">
+          <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
             {/* Employee List */}
             <div className="lg:col-span-1 h-full">
               <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
@@ -295,7 +295,7 @@ export default function Messages() {
                   </div>
                 </div>
                 
-                <div className="p-4 space-y-2 overflow-y-auto" style={{ maxHeight: '50vh' }}>
+                <div className="p-4 space-y-2 overflow-y-auto" style={{ height: '55vh' }}>
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
@@ -411,7 +411,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: '50vh' }}>
+                  <div className="flex-1 overflow-y-auto p-4" style={{ height: '55vh' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
