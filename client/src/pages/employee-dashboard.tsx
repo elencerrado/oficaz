@@ -30,37 +30,46 @@ export default function EmployeeDashboard() {
     queryKey: ['/api/work-sessions/active'],
   });
 
-  // Get unread messages count
+  // Get unread messages count with real-time updates
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
-    refetchInterval: 30000,
+    enabled: !!user,
+    refetchInterval: 10000, // Check every 10 seconds
+    refetchIntervalInBackground: true,
+    staleTime: 0, // Always fetch fresh data
   });
 
-  // Get document notifications
+  // Get document notifications with real-time updates
   const { data: documents } = useQuery({
     queryKey: ['/api/documents'],
-    refetchInterval: 60000,
+    enabled: !!user,
+    refetchInterval: 15000, // Check every 15 seconds
+    refetchIntervalInBackground: true,
   });
 
-  // Get real document notifications from database
+  // Get real document notifications from database with real-time updates
   const { data: documentNotifications } = useQuery({
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
+    refetchInterval: 15000, // Check every 15 seconds
+    refetchIntervalInBackground: true,
   });
 
-  // Get vacation requests to check if user is on vacation
+  // Get vacation requests with real-time updates for notifications
   const { data: vacationRequests = [] } = useQuery({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
-    refetchInterval: 30000, // Check every 30 seconds for updates
+    refetchInterval: 10000, // Check every 10 seconds for vacation updates
+    refetchIntervalInBackground: true,
+    staleTime: 0, // Always fetch fresh data for vacation notifications
   });
 
-  // Check for vacation updates - using reviewedAt timestamp
+  // Check for vacation updates - using reviewedAt timestamp with real-time detection
   useEffect(() => {
     if (!vacationRequests?.length) return;
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(0);
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000); // Default to 24h ago
     
     // Find processed requests (approved/denied) that were reviewed after last check
     const newlyProcessedRequests = vacationRequests.filter((request: any) => {
@@ -69,22 +78,31 @@ export default function EmployeeDashboard() {
       const reviewDate = request.reviewedAt ? new Date(request.reviewedAt) : new Date(request.createdAt);
       const isNew = reviewDate > lastCheckDate;
       
-      console.log('Checking vacation request:', {
+      console.log('Real-time vacation check:', {
         id: request.id,
         status: request.status,
         reviewedAt: request.reviewedAt,
         reviewDate: reviewDate.toISOString(),
         lastCheck: lastCheckDate.toISOString(),
-        isNew
+        isNew,
+        currentTime: new Date().toISOString()
       });
       
       return isNew;
     });
     
     if (newlyProcessedRequests.length > 0) {
-      console.log('Found newly processed vacation requests:', newlyProcessedRequests.length);
+      console.log('🔔 NEW vacation updates detected:', newlyProcessedRequests.length, 'requests');
       setHasVacationUpdates(true);
       localStorage.setItem('hasVacationUpdates', 'true');
+      
+      // Show browser notification if supported
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Oficaz - Vacaciones', {
+          body: `Tienes ${newlyProcessedRequests.length} solicitud(es) de vacaciones procesada(s)`,
+          icon: '/favicon.ico'
+        });
+      }
     }
   }, [vacationRequests]);
 
@@ -248,10 +266,26 @@ export default function EmployeeDashboard() {
 
   const currentYear = new Date().getFullYear();
 
-  // Ensure page always starts at top
+  // Initialize notifications and page setup
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Request notification permission for real-time alerts
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
+
+  // Log real-time notification status for debugging
+  useEffect(() => {
+    console.log('🔔 Real-time notifications status:', {
+      hasVacationUpdates,
+      hasDocumentRequests,
+      hasNewDocuments,
+      unreadMessages: unreadCount?.count || 0,
+      timestamp: new Date().toISOString()
+    });
+  }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, unreadCount]);
 
   return (
     <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
