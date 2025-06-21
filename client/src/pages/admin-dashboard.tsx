@@ -395,7 +395,7 @@ export default function AdminDashboard() {
                         <div className="space-y-3">
                           {/* Festivos */}
                           {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-2 bg-white rounded-lg border">
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
                               <div className={`w-3 h-3 rounded-full ${
                                 event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
                               }`}></div>
@@ -409,26 +409,19 @@ export default function AdminDashboard() {
                           ))}
                           
                           {/* Vacaciones aprobadas */}
-                          {vacations.filter(v => v.status === 'approved').length > 0 && (
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-sm font-semibold text-green-800">
-                                  {vacations.filter(v => v.status === 'approved').length} empleado{vacations.filter(v => v.status === 'approved').length > 1 ? 's' : ''} de vacaciones
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                                  <div key={idx} className="text-sm text-green-700 ml-5">
-                                    • {vacation.userName}
-                                    <span className="text-xs text-gray-500 ml-2">
-                                      ({format(parseISO(vacation.startDate), 'dd/MM')} - {format(parseISO(vacation.endDate), 'dd/MM')})
-                                    </span>
-                                  </div>
-                                ))}
+                          {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {vacation.userName} - Vacaciones
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
+                                </p>
                               </div>
                             </div>
-                          )}
+                          ))}
                         </div>
                       );
                     })()}
