@@ -55,22 +55,32 @@ export default function EmployeeDashboard() {
 
   // Check for vacation status changes
   useEffect(() => {
-    if (vacationRequests.length > 0 && lastVacationCheck.length > 0) {
+    if (vacationRequests.length > 0) {
+      // Initialize on first load
+      if (lastVacationCheck.length === 0) {
+        setLastVacationCheck(vacationRequests);
+        return;
+      }
+
+      // Check for status changes
       const hasChanges = vacationRequests.some((current: any) => {
         const previous = lastVacationCheck.find((prev: any) => prev.id === current.id);
-        return previous && previous.status !== current.status && 
-               (current.status === 'approved' || current.status === 'denied');
+        if (previous && previous.status !== current.status) {
+          console.log(`Status change detected for request ${current.id}: ${previous.status} -> ${current.status}`);
+          return current.status === 'approved' || current.status === 'denied';
+        }
+        return false;
       });
       
       if (hasChanges) {
+        console.log('Setting vacation updates to true');
         setHasVacationUpdates(true);
       }
-    }
-    
-    if (vacationRequests.length > 0) {
+      
+      // Update the check array
       setLastVacationCheck(vacationRequests);
     }
-  }, [vacationRequests, lastVacationCheck]);
+  }, [vacationRequests]);
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
@@ -213,7 +223,7 @@ export default function EmployeeDashboard() {
       icon: Calendar, 
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
-      notification: false 
+      notification: hasVacationUpdates 
     },
     { 
       icon: Bell, 
