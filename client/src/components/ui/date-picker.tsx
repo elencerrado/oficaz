@@ -174,16 +174,7 @@ export function DatePickerPeriod({
             showOutsideDays={false}
             locale={es}
           />
-          {(startDate || endDate) && (
-            <div className="text-xs text-center text-gray-600">
-              {startDate && (
-                <div>Desde: {format(startDate, 'dd/MM/yyyy', { locale: es })}</div>
-              )}
-              {endDate && (
-                <div>Hasta: {format(endDate, 'dd/MM/yyyy', { locale: es })}</div>
-              )}
-            </div>
-          )}
+
           <div className="flex gap-2">
             <Button
               onClick={() => {
