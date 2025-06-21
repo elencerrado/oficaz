@@ -353,13 +353,13 @@ export default function AdminDashboard() {
                       nav_button: "h-8 w-8 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center shadow-sm",
                       nav_button_previous: "absolute left-0 top-2",
                       nav_button_next: "absolute right-0 top-2",
-                      table: "w-full border-collapse table-fixed",
+                      table: "w-full border-collapse table-fixed min-w-[1000px]",
                       head_row: "flex mb-2 w-full",
-                      head_cell: "text-gray-600 flex-1 h-8 font-semibold text-xs flex items-center justify-center uppercase tracking-wide min-w-0",
+                      head_cell: "text-gray-600 flex-1 h-8 font-semibold text-sm flex items-center justify-center uppercase tracking-wide min-w-[140px]",
                       row: "flex w-full mb-1",
-                      weeknumber: "w-6 h-16 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
-                      cell: "relative flex-1 h-16 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-0",
-                      day: "w-full h-16 p-1 font-medium flex flex-col items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200 text-sm",
+                      weeknumber: "w-8 h-20 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
+                      cell: "relative flex-1 h-20 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-[140px]",
+                      day: "w-full h-20 p-2 font-medium flex flex-col items-start justify-start rounded-lg hover:bg-blue-50 transition-all duration-200 text-sm relative",
                       day_selected: "bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold border border-blue-300",
                       day_today: "bg-blue-50 text-blue-800 font-bold ring-1 ring-blue-300 ring-inset",
                       day_outside: "text-gray-300",
@@ -403,11 +403,11 @@ export default function AdminDashboard() {
                           <button 
                             {...props} 
                             style={dayStyle}
-                            className={`${props.className} flex flex-col items-center justify-center h-16 p-1`}
+                            className={`${props.className} flex flex-col items-start justify-start h-20 p-2 relative w-full`}
                           >
-                            <span className="font-medium text-sm">{format(date, 'd')}</span>
+                            <span className="font-bold text-lg mb-1">{format(date, 'd')}</span>
                             {eventNote && (
-                              <span className="text-xs opacity-75 leading-tight text-center mt-0.5 max-w-full overflow-hidden">
+                              <span className="text-xs opacity-75 leading-tight text-left mt-auto max-w-full overflow-hidden">
                                 {eventNote}
                               </span>
                             )}
