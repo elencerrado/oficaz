@@ -393,22 +393,30 @@ export default function AdminDashboard() {
                       nationalHoliday: { 
                         backgroundColor: '#fee2e2', 
                         color: '#dc2626', 
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        borderRadius: '0px',
+                        border: 'none'
                       },
                       customHoliday: { 
                         backgroundColor: '#fed7aa', 
                         color: '#d97706', 
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        borderRadius: '0px',
+                        border: 'none'
                       },
                       approvedVacation: { 
                         backgroundColor: '#dcfce7', 
                         color: '#16a34a', 
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        borderRadius: '0px',
+                        border: 'none'
                       },
                       pendingVacation: { 
                         backgroundColor: '#fef3c7', 
                         color: '#d97706', 
-                        fontWeight: '600'
+                        fontWeight: '600',
+                        borderRadius: '0px',
+                        border: 'none'
                       }
                     }}
                   />
