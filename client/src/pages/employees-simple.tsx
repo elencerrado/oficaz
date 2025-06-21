@@ -627,6 +627,23 @@ export default function EmployeesSimple() {
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div>
+                        <Label htmlFor="role" className="text-sm font-medium text-gray-700">Tipo de Usuario</Label>
+                        <Select 
+                          value={editEmployee.role}
+                          onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
+                        >
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="employee">Empleado</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </div>
