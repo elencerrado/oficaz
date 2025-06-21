@@ -226,20 +226,15 @@ export default function AdminDashboard() {
           
           {/* Quick Clock In/Out */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Fichaje Rápido
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between min-h-[60px]">
-                <div className="flex items-center">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 gap-4 items-center min-h-[80px]">
+                <div className="flex flex-col justify-center">
+                  <h3 className="font-medium text-gray-900 mb-1">Fichaje Rápido</h3>
                   <p className="text-sm text-gray-500">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <div className="flex items-center">
+                <div className="flex justify-center items-center h-full">
                   <Button
                     size="default"
                     onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
