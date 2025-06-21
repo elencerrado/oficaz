@@ -167,7 +167,18 @@ export default function VacationManagement() {
   const pendingRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'pending');
   const approvedRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'approved');
 
-  const employeesOnVacation = employees.filter((emp: Employee) => emp.status === 'de_vacaciones');
+  // Empleados actualmente de vacaciones (tienen solicitud aprobada que incluye hoy)
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const employeesOnVacation = employees.filter((emp: Employee) => {
+    // Verificar si tiene alguna solicitud aprobada que incluya hoy
+    const hasActiveVacation = vacationRequests.some((request: VacationRequest) => 
+      request.userId === emp.id && 
+      request.status === 'approved' &&
+      request.startDate <= today &&
+      request.endDate >= today
+    );
+    return hasActiveVacation;
+  });
 
   const getVacationStats = () => {
     const pending = pendingRequests.length;
