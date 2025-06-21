@@ -69,7 +69,7 @@ export default function EmployeeDashboard() {
     if (!vacationRequests?.length) return;
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:45:00.000Z');
+    const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     // Find processed requests (approved/denied) that were reviewed after last check
     const newlyProcessedRequests = vacationRequests.filter((request: any) => {
@@ -110,15 +110,14 @@ export default function EmployeeDashboard() {
     }
   }, [vacationRequests]);
 
-  // Clear vacation highlights when returning to dashboard
+  // Clear vacation notifications when returning to dashboard
   useEffect(() => {
-    // When user returns to dashboard, clear vacation highlights and notifications
     if (hasVacationUpdates) {
       const timer = setTimeout(() => {
         console.log('Dashboard: clearing vacation notifications after viewing dashboard');
         setHasVacationUpdates(false);
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
-      }, 2000); // Clear after 2 seconds on dashboard
+      }, 2000);
 
       return () => clearTimeout(timer);
     }

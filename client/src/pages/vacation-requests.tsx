@@ -27,7 +27,7 @@ export default function VacationRequests() {
   const [reason, setReason] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [highlightedRequests, setHighlightedRequests] = useState<Set<number>>(new Set());
+
   const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,73 +43,11 @@ export default function VacationRequests() {
     refetchIntervalInBackground: true,
   });
 
-  // Detect newly processed requests and highlight them - simplified approach
-  useEffect(() => {
-    if (!requests?.length) return;
-    
-    // Use lastVacationCheck from localStorage or recent timestamp
-    const lastCheckTime = localStorage.getItem('lastVacationCheck');
-    const cutoffDate = lastCheckTime ? new Date(lastCheckTime) : new Date('2025-06-21T10:55:00.000Z');
-    
-    console.log('🔍 Vacation request page - checking highlights:', {
-      requestsCount: requests.length,
-      cutoffDate: cutoffDate.toISOString(),
-      now: new Date().toISOString(),
-      requests: requests.map(r => ({
-        id: r.id,
-        status: r.status,
-        reviewedAt: r.reviewedAt
-      }))
-    });
-    
-    const recentlyProcessedRequests = requests.filter((request: any) => {
-      if (!request.reviewedAt) return false;
-      
-      const reviewDate = new Date(request.reviewedAt);
-      const isProcessed = request.status === 'approved' || request.status === 'denied';
-      const isRecent = reviewDate > cutoffDate;
-      
-      console.log(`🔍 Request ${request.id}:`, {
-        status: request.status,
-        reviewedAt: request.reviewedAt,
-        reviewDate: reviewDate.toISOString(),
-        cutoffDate: cutoffDate.toISOString(),
-        isProcessed,
-        isRecent,
-        shouldHighlight: isProcessed && isRecent
-      });
-      
-      return isProcessed && isRecent;
-    });
-    
-    console.log('📋 Recently processed requests found:', recentlyProcessedRequests.map(r => r.id));
-    
-    if (recentlyProcessedRequests.length > 0) {
-      const newHighlighted = new Set(recentlyProcessedRequests.map((req: any) => req.id));
-      setHighlightedRequests(newHighlighted);
-      console.log('✨ Highlighting processed requests:', Array.from(newHighlighted));
-    } else {
-      setHighlightedRequests(new Set());
-      console.log('❌ No requests to highlight - no recent changes');
-    }
-  }, [requests]);
 
-  // Clear highlights when leaving the page
-  useEffect(() => {
-    return () => {
-      // Update cutoff date to current time when leaving
-      const now = new Date().toISOString();
-      localStorage.setItem('lastVacationCheck', now);
-      setHighlightedRequests(new Set());
-      console.log('🧹 Updated lastVacationCheck on page exit to:', now);
-    };
-  }, []);
 
-  // Click handler disabled - highlights only removed when leaving page
-  const handleRequestClick = (requestId: number) => {
-    // No action - highlights persist until user leaves page
-    console.log(`Clicked request ${requestId} - highlight remains active`);
-  };
+
+
+
 
 
 
@@ -669,22 +607,10 @@ export default function VacationRequests() {
             {(requests as any[]).length > 0 ? (
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((request: any) => {
-                  const isHighlighted = highlightedRequests.has(request.id);
-                  console.log(`Rendering request ${request.id}: highlighted=${isHighlighted}`);
-                  return (
+                .map((request: any) => (
                     <div 
                       key={request.id} 
-                      className={`grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] transition-colors duration-300 ${
-                        isHighlighted 
-                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50' 
-                          : 'hover:bg-white/5'
-                      }`}
-                      style={isHighlighted ? {
-                        backgroundColor: 'rgba(96, 165, 250, 0.25)',
-                        borderColor: 'rgba(96, 165, 250, 0.4)'
-                      } : {}}
-                      onClick={() => handleRequestClick(request.id)}
+                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] hover:bg-white/5"
                     >
                     <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
@@ -727,8 +653,7 @@ export default function VacationRequests() {
                       {formatDate(request.createdAt)}
                     </div>
                     </div>
-                  );
-                })
+                ))
             ) : (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center text-white/60">
