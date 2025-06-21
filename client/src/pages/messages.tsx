@@ -121,6 +121,7 @@ export default function Messages() {
       apiRequest('PATCH', `/api/messages/${messageId}/read`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
     }
   });
 
