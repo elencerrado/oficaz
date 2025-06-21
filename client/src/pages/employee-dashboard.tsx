@@ -20,7 +20,9 @@ interface WorkSession {
 export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { toast } = useToast();
-  const [hasVacationUpdates, setHasVacationUpdates] = useState(false);
+  const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
+    return localStorage.getItem('hasVacationUpdates') === 'true';
+  });
   const [lastVacationCheck, setLastVacationCheck] = useState<any[]>([]);
 
   // Get active work session
@@ -75,6 +77,8 @@ export default function EmployeeDashboard() {
       if (hasChanges) {
         console.log('Setting vacation updates to true');
         setHasVacationUpdates(true);
+        // Store the change in localStorage to persist between sessions
+        localStorage.setItem('hasVacationUpdates', 'true');
       }
       
       // Update the check array
@@ -223,7 +227,8 @@ export default function EmployeeDashboard() {
       icon: Calendar, 
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
-      notification: hasVacationUpdates 
+      notification: hasVacationUpdates,
+      notificationType: 'red'
     },
     { 
       icon: Bell, 
@@ -289,16 +294,21 @@ export default function EmployeeDashboard() {
             {menuItems.map((item, index) => (
               <div key={index} className="flex flex-col items-center">
                 <button
-                  onClick={() => handleNavigation(item.route)}
+                  onClick={() => {
+                    if (item.title === 'Vacaciones' && hasVacationUpdates) {
+                      setHasVacationUpdates(false);
+                      localStorage.removeItem('hasVacationUpdates');
+                    }
+                    handleNavigation(item.route);
+                  }}
                   className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   <item.icon className="h-12 w-12 text-white" />
                   {item.notification && (
-                    <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${
-                      (item as any).notificationType === 'red' ? 'bg-red-500' : 'bg-green-500'
-                    }`}>
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
+                    <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white animate-pulse ${
+                      (item as any).notificationType === 'red' ? 'bg-red-500' : 
+                      (item as any).notificationType === 'green' ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
                   )}
                 </button>
                 <span className="text-xs font-medium text-center text-white/90 leading-tight">
