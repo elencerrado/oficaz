@@ -80,6 +80,15 @@ export default function VacationManagement() {
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
     staleTime: 5 * 60 * 1000,
+    select: (data) => {
+      // Ensure data consistency and handle missing fields
+      return data.map((request: any) => ({
+        ...request,
+        days: request.days || 0,
+        requestDate: request.requestDate || request.createdAt || new Date().toISOString(),
+        user: request.user || { fullName: "Usuario desconocido", email: "" }
+      }));
+    }
   });
 
   // Fetch employees for vacation overview
@@ -280,11 +289,11 @@ export default function VacationManagement() {
                         <div className="text-sm text-gray-600 space-y-1">
                           <p>
                             <span className="font-medium">Fechas:</span>{" "}
-                            {format(new Date(request.startDate), "dd/MM/yyyy", { locale: es })} -{" "}
-                            {format(new Date(request.endDate), "dd/MM/yyyy", { locale: es })}
+                            {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
+                            {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                           <p>
-                            <span className="font-medium">Días:</span> {request.days}
+                            <span className="font-medium">Días:</span> {request.days || "N/A"}
                           </p>
                           {request.reason && (
                             <p>
@@ -293,7 +302,7 @@ export default function VacationManagement() {
                           )}
                           <p>
                             <span className="font-medium">Solicitado:</span>{" "}
-                            {format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es })}
+                            {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                         </div>
                       </div>

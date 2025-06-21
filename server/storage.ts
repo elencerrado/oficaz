@@ -252,7 +252,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getVacationRequestsByCompany(companyId: number): Promise<VacationRequest[]> {
-    return db.select({
+    const result = await db.select({
       id: schema.vacationRequests.id,
       userId: schema.vacationRequests.userId,
       startDate: schema.vacationRequests.startDate,
@@ -262,10 +262,33 @@ export class DrizzleStorage implements IStorage {
       reviewedBy: schema.vacationRequests.reviewedBy,
       reviewedAt: schema.vacationRequests.reviewedAt,
       createdAt: schema.vacationRequests.createdAt,
+      // User information
+      userFullName: schema.users.fullName,
+      userEmail: schema.users.companyEmail
     }).from(schema.vacationRequests)
       .innerJoin(schema.users, eq(schema.vacationRequests.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
       .orderBy(desc(schema.vacationRequests.createdAt));
+    
+    // Transform the result to include user object and handle missing fields
+    return result.map(request => ({
+      id: request.id,
+      userId: request.userId,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      days: 0, // Calculate or default
+      reason: request.reason,
+      status: request.status,
+      requestDate: request.createdAt || new Date().toISOString(), // Use createdAt as requestDate
+      approvedBy: request.reviewedBy,
+      approvedDate: request.reviewedAt,
+      createdAt: request.createdAt,
+      updatedAt: request.createdAt,
+      user: {
+        fullName: request.userFullName,
+        email: request.userEmail
+      }
+    })) as any;
   }
 
   async updateVacationRequest(id: number, updates: Partial<InsertVacationRequest>): Promise<VacationRequest | undefined> {
