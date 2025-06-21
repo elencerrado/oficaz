@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 21, 2025. Página de gestión de vacaciones para admin implementada con diseño consistente
+  - Nueva vista separada para admin/manager en /vacaciones con gestión completa
+  - 3 pestañas: Solicitudes, Empleados de Vacaciones, Días Festivos
+  - Estadísticas visuales: pendientes, aprobadas, empleados de vacaciones, días festivos
+  - Gestión de solicitudes: aprobar/denegar con botones de acción directa
+  - Vista de empleados actualmente de vacaciones con tarjetas informativas
+  - Calendario de días festivos de España 2025 con selector de región
+  - Mismo diseño y colores que página de fichajes admin para consistencia
+  - Empleados mantienen su vista actual de vacaciones sin cambios
 - June 20, 2025. Sistema completo de super admin implementado para gestión multi-empresa
   - Nueva URL separada: /super-admin/login con autenticación independiente
   - Dashboard con estadísticas globales: empresas activas, usuarios totales, ingresos MRR

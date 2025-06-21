@@ -19,6 +19,7 @@ import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";
 import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
+import VacationManagement from "@/pages/vacation-management";
 import Documents from "@/pages/documents";
 import Messages from "@/pages/messages";
 import EmployeesSimple from "@/pages/employees-simple";
@@ -191,7 +192,11 @@ function Router() {
       <Route path="/:companyAlias/vacaciones">
         <ProtectedRoute>
           <AppLayout>
-            <VacationRequests />
+            {user && (user.role === 'admin' || user.role === 'manager') ? (
+              <VacationManagement />
+            ) : (
+              <VacationRequests />
+            )}
           </AppLayout>
         </ProtectedRoute>
       </Route>
