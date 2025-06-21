@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
+import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 interface MobileHeaderProps {
   onMenuClick: () => void;
@@ -36,15 +37,26 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-      <div className="flex items-center">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center">
+      {/* Left Section */}
+      <div className="flex items-center justify-start">
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="text-gray-600" size={20} />
         </Button>
         <h1 className="text-lg font-semibold text-gray-900 ml-2 lg:ml-0">{company?.name || 'Oficaz'}</h1>
       </div>
       
-      <div className="flex items-center space-x-4">
+      {/* Center Section - Logo */}
+      <div className="flex justify-center">
+        <img 
+          src={oficazLogo} 
+          alt="Oficaz" 
+          className="h-8 w-auto"
+        />
+      </div>
+      
+      {/* Right Section */}
+      <div className="flex items-center justify-end space-x-4">
         {/* Date and Time */}
         <div className="text-sm text-gray-600 font-medium hidden md:block">
           {formatDate(currentTime)}
