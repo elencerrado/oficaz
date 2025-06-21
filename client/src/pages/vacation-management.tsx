@@ -82,6 +82,13 @@ export default function VacationManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Calculate days function
+  const calculateDays = (startDate: string, endDate: string) => {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    return differenceInDays(end, start) + 1;
+  };
+
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
