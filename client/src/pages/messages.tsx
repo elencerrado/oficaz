@@ -265,8 +265,8 @@ export default function Messages() {
         </div>
 
         {/* Content */}
-        <div className="p-6 h-[calc(100vh-8rem)]">
-          <div className="grid lg:grid-cols-3 gap-6 h-full">
+        <div className="p-6">
+          <div className="grid lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
             {/* Employee List */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg border border-gray-200 h-full">
@@ -393,9 +393,9 @@ export default function Messages() {
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-2 flex flex-col">
+            <div className="lg:col-span-2">
               {selectedChat ? (
-                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col overflow-hidden">
                   {/* Chat Header - Fixed */}
                   <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white rounded-t-lg">
                     <div className="flex items-center space-x-3">
@@ -414,7 +414,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable */}
-                  <div className="flex-1 overflow-y-auto p-4 min-h-0">
+                  <div className="flex-1 overflow-y-auto p-4 max-h-[calc(100vh-16rem)]">
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
