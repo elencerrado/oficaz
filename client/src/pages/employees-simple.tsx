@@ -524,10 +524,6 @@ export default function EmployeesSimple() {
                         <IdCard className="h-3 w-3" />
                         <span>{selectedEmployee.dni}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        <span className="truncate">{selectedEmployee.companyEmail}</span>
-                      </div>
                     </div>
                   </div>
                   <div>
@@ -643,6 +639,16 @@ export default function EmployeesSimple() {
                         <p className="mt-1 text-gray-900 text-wrap break-words">
                           {selectedEmployee.address || 'No especificada'}
                         </p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Persona de Contacto</Label>
+                        <p className="mt-1 text-gray-900">{selectedEmployee.emergencyContactName || 'No especificada'}</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <Label className="text-xs text-gray-500 uppercase tracking-wide">Teléfono de Contacto</Label>
+                        <p className="mt-1 text-gray-900">{selectedEmployee.emergencyContactPhone || 'No especificado'}</p>
                       </div>
                     </div>
                   </div>
