@@ -588,11 +588,12 @@ export default function VacationRequests() {
                       {request.status !== 'pending' && request.adminComment ? (
                         <Popover>
                           <PopoverTrigger asChild>
-                            <div className="flex items-center gap-0.5 cursor-pointer overflow-hidden">
-                              <Badge className={`text-xs px-1.5 py-0.5 ${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0 truncate`}>
-                                {getStatusText(request.status)}
+                            <div className="flex items-center gap-1 cursor-pointer">
+                              <Badge className={`${getStatusColor(request.status)} hover:opacity-80 flex-shrink-0 px-1.5 py-1 flex items-center gap-1`}>
+                                {getStatusIcon(request.status)}
+                                <span className="hidden sm:inline text-xs">{getStatusText(request.status)}</span>
                               </Badge>
-                              <MessageCircle className="w-2.5 h-2.5 text-white/40 flex-shrink-0 ml-0.5" />
+                              <MessageCircle className="w-3 h-3 text-white/40 flex-shrink-0" />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 max-w-[80vw] p-3" side="top" sideOffset={5} align="start" avoidCollisions={true}>
@@ -608,8 +609,9 @@ export default function VacationRequests() {
                           </PopoverContent>
                         </Popover>
                       ) : (
-                        <Badge className={`text-xs px-2 py-1 ${getStatusColor(request.status)}`}>
-                          {getStatusText(request.status)}
+                        <Badge className={`${getStatusColor(request.status)} px-1.5 py-1 flex items-center gap-1`}>
+                          {getStatusIcon(request.status)}
+                          <span className="hidden sm:inline text-xs">{getStatusText(request.status)}</span>
                         </Badge>
                       )}
                     </div>
