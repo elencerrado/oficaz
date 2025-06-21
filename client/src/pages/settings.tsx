@@ -111,13 +111,18 @@ export default function Settings() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Empresa actualizada',
         description: 'La información de la empresa ha sido guardada correctamente.',
       });
       setIsEditingCompany(false);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Force refresh of company data to sync UI
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      }, 100);
     },
     onError: () => {
       toast({
