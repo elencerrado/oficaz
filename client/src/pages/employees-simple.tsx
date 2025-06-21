@@ -211,17 +211,18 @@ export default function EmployeesSimple() {
                 className="pl-10"
               />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="activos">Activos</option>
-              <option value="inactivos">Inactivos</option>
-              <option value="de baja">De baja</option>
-              <option value="de vacaciones">De vacaciones</option>
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos los estados</SelectItem>
+                <SelectItem value="activos">Activos</SelectItem>
+                <SelectItem value="inactivos">Inactivos</SelectItem>
+                <SelectItem value="de baja">De baja</SelectItem>
+                <SelectItem value="de vacaciones">De vacaciones</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-3">
@@ -574,16 +575,20 @@ export default function EmployeesSimple() {
                       
                       <div>
                         <Label htmlFor="status" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
-                        <select 
-                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        <Select 
                           value={editEmployee.status}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, status: e.target.value })}
+                          onValueChange={(value) => setEditEmployee({ ...editEmployee, status: value })}
                         >
-                          <option value="active">Activo</option>
-                          <option value="inactive">Inactivo</option>
-                          <option value="on_leave">De baja</option>
-                          <option value="on_vacation">De vacaciones</option>
-                        </select>
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Activo</SelectItem>
+                            <SelectItem value="inactive">Inactivo</SelectItem>
+                            <SelectItem value="on_leave">De baja</SelectItem>
+                            <SelectItem value="on_vacation">De vacaciones</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
