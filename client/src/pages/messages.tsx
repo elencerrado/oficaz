@@ -82,20 +82,27 @@ export default function Messages() {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: (data: { receiverId: number; subject: string; content: string }) => 
-      apiRequest('POST', '/api/messages', data),
+    mutationFn: async (data: { receiverId: number; subject: string; content: string }) => {
+      return apiRequest('POST', '/api/messages', data);
+    },
     onSuccess: () => {
       setNewMessage('');
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-    },
-    onError: () => {
       toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje",
-        variant: "destructive",
+        title: 'Mensaje enviado',
+        description: 'Tu mensaje ha sido enviado correctamente.',
       });
-    }
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo enviar el mensaje',
+        variant: 'destructive',
+      });
+    },
   });
+
+
 
   const markAsReadMutation = useMutation({
     mutationFn: (messageId: number) => 
@@ -179,19 +186,17 @@ export default function Messages() {
     return subject;
   };
 
-  const handleSendMessage = (receiverId: number) => {
-    if (!newMessage.trim()) return;
+  const sendMessage = () => {
+    if (!newMessage.trim() || !selectedChat) return;
     
     sendMessageMutation.mutate({
-      receiverId,
+      receiverId: selectedChat,
       subject: user?.role === 'employee' ? 'Mensaje del empleado' : 'Mensaje del administrador',
       content: newMessage.trim()
     });
-    
-    setNewMessage('');
   };
 
-  const handleSendGroupMessage = () => {
+  const sendGroupMessage = () => {
     if (!newMessage.trim() || selectedEmployees.length === 0) return;
     
     selectedEmployees.forEach(employeeId => {
@@ -216,7 +221,6 @@ export default function Messages() {
   };
 
   const filteredEmployees = (employees as any[] || [])
-    .filter(emp => emp.role === 'employee')
     .filter(emp => emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const getChatMessages = (otherUserId: number) => {
