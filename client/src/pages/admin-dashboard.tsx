@@ -289,24 +289,24 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Clean and Professional */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   locale={es}
                   showWeekNumber={true}
-                  className="w-full"
+                  className="w-full p-4"
                   classNames={{
                     months: "flex flex-col space-y-4",
-                    month: "space-y-4 p-4",
+                    month: "space-y-4 w-full",
                     caption: "flex justify-center pt-1 relative items-center mb-4",
                     caption_label: "text-lg font-semibold text-gray-800",
                     nav: "space-x-1 flex items-center",
                     nav_button: "h-9 w-9 bg-gray-100 hover:bg-gray-200 rounded-lg p-0 transition-colors flex items-center justify-center",
-                    nav_button_previous: "absolute left-4 top-1",
-                    nav_button_next: "absolute right-4 top-1",
-                    table: "w-full border-collapse mt-2",
+                    nav_button_previous: "absolute left-0 top-1",
+                    nav_button_next: "absolute right-0 top-1",
+                    table: "w-full border-collapse",
                     head_row: "flex mb-2",
                     head_cell: "text-gray-500 w-10 h-8 font-medium text-xs flex items-center justify-center uppercase tracking-wide",
                     row: "flex w-full mb-1",
