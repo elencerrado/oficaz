@@ -104,6 +104,21 @@ export default function VacationRequests() {
     };
   }, [highlightedRequests]);
 
+  // Handle click on highlighted request to remove highlight
+  const handleRequestClick = (requestId: number) => {
+    if (highlightedRequests.has(requestId)) {
+      const newHighlighted = new Set(highlightedRequests);
+      newHighlighted.delete(requestId);
+      setHighlightedRequests(newHighlighted);
+      console.log(`Removed highlight from request ${requestId}`);
+      
+      // If no more highlights, update last check time
+      if (newHighlighted.size === 0) {
+        localStorage.setItem('lastVacationCheck', new Date().toISOString());
+      }
+    }
+  };
+
 
 
   const createRequestMutation = useMutation({
@@ -670,13 +685,14 @@ export default function VacationRequests() {
                       key={request.id} 
                       className={`grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] transition-colors duration-300 ${
                         isHighlighted 
-                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50' 
+                          ? 'bg-blue-400/30 hover:bg-blue-400/40 border-blue-300/50 cursor-pointer' 
                           : 'hover:bg-white/5'
                       }`}
                       style={isHighlighted ? {
                         backgroundColor: 'rgba(96, 165, 250, 0.25)',
                         borderColor: 'rgba(96, 165, 250, 0.4)'
                       } : {}}
+                      onClick={() => handleRequestClick(request.id)}
                     >
                     <div className="text-sm text-center text-white/90 flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
