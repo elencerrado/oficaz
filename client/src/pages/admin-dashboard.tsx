@@ -357,9 +357,9 @@ export default function AdminDashboard() {
                       head_row: "flex mb-2 w-full",
                       head_cell: "text-gray-600 flex-1 h-8 font-semibold text-xs flex items-center justify-center uppercase tracking-wide min-w-0",
                       row: "flex w-full mb-1",
-                      weeknumber: "w-6 h-10 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
-                      cell: "relative flex-1 h-10 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-0",
-                      day: "w-full h-10 p-0 font-medium flex items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200 text-xs",
+                      weeknumber: "w-6 h-16 text-xs text-gray-500 flex items-center justify-center font-semibold border-r border-gray-200 mr-1 bg-gray-50 flex-shrink-0",
+                      cell: "relative flex-1 h-16 text-center text-sm p-0 focus-within:relative focus-within:z-20 min-w-0",
+                      day: "w-full h-16 p-1 font-medium flex flex-col items-center justify-center rounded-lg hover:bg-blue-50 transition-all duration-200 text-sm",
                       day_selected: "bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold border border-blue-300",
                       day_today: "bg-blue-50 text-blue-800 font-bold ring-1 ring-blue-300 ring-inset",
                       day_outside: "text-gray-300",
@@ -367,27 +367,57 @@ export default function AdminDashboard() {
                       day_range_middle: "aria-selected:bg-blue-50 aria-selected:text-blue-900",
                       day_hidden: "invisible",
                     }}
+                    components={{
+                      Day: ({ date, ...props }) => {
+                        const dateVacations = getVacationDetailsForDate(date);
+                        const approvedCount = dateVacations.filter(v => v.status === 'approved').length;
+                        const pendingCount = dateVacations.filter(v => v.status === 'pending').length;
+                        const nationalHoliday = nationalHolidays.find(h => isSameDay(parseISO(h.date), date));
+                        const customHoliday = customHolidays.find(h => isSameDay(parseISO(h.date), date));
+                        
+                        // Determinar el fondo del día
+                        let dayStyle = {};
+                        if (nationalHoliday) {
+                          dayStyle = { backgroundColor: '#fee2e2', color: '#dc2626' };
+                        } else if (customHoliday) {
+                          dayStyle = { backgroundColor: '#fed7aa', color: '#d97706' };
+                        } else if (approvedCount > 0) {
+                          dayStyle = { backgroundColor: '#dcfce7', color: '#16a34a' };
+                        } else if (pendingCount > 0) {
+                          dayStyle = { backgroundColor: '#fef3c7', color: '#d97706' };
+                        }
+                        
+                        // Determinar la nota del evento
+                        let eventNote = '';
+                        if (nationalHoliday) {
+                          eventNote = 'Festivo';
+                        } else if (customHoliday) {
+                          eventNote = 'Festivo';
+                        } else if (approvedCount > 0) {
+                          eventNote = `${approvedCount} de vacaciones`;
+                        } else if (pendingCount > 0) {
+                          eventNote = `${pendingCount} pendiente${pendingCount > 1 ? 's' : ''}`;
+                        }
+                        
+                        return (
+                          <button 
+                            {...props} 
+                            style={dayStyle}
+                            className={`${props.className} flex flex-col items-center justify-center h-16 p-1`}
+                          >
+                            <span className="font-medium text-sm">{format(date, 'd')}</span>
+                            {eventNote && (
+                              <span className="text-xs opacity-75 leading-tight text-center mt-0.5 max-w-full overflow-hidden">
+                                {eventNote}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      }
+                    }}
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date)),
-                      approvedVacation: approvedVacations?.flatMap((req: any) => {
-                        const start = startOfDay(parseISO(req.startDate));
-                        const end = startOfDay(parseISO(req.endDate));
-                        const dates = [];
-                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                          dates.push(new Date(d));
-                        }
-                        return dates;
-                      }) || [],
-                      pendingVacation: pendingVacations?.flatMap((req: any) => {
-                        const start = startOfDay(parseISO(req.startDate));
-                        const end = startOfDay(parseISO(req.endDate));
-                        const dates = [];
-                        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                          dates.push(new Date(d));
-                        }
-                        return dates;
-                      }) || []
+                      customHoliday: customHolidays.map(h => parseISO(h.date))
                     }}
                     modifiersStyles={{
                       nationalHoliday: { 
