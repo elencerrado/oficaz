@@ -109,19 +109,18 @@ export default function VacationRequests() {
   // Calculate vacation days
   const totalDays = parseFloat(user?.totalVacationDays || '22');
   
-  // Días usados = vacaciones pasadas ya disfrutadas (aprobadas y finalizadas)
-  const today = new Date().toISOString().split('T')[0];
+  // Días usados = todas las vacaciones aprobadas (pasadas, actuales y futuras)
   const usedDays = (requests as any[])
-    .filter((r: any) => r.status === 'approved' && r.endDate.split('T')[0] < today)
+    .filter((r: any) => r.status === 'approved')
     .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
   
-  // Días pendientes = solicitudes pendientes + aprobadas futuras/actuales
+  // Días disponibles = total - usados
+  const availableDays = Math.max(0, totalDays - usedDays);
+  
+  // Solo para mostrar en la leyenda (no afecta cálculos)
   const pendingDays = (requests as any[])
-    .filter((r: any) => r.status === 'pending' || (r.status === 'approved' && r.endDate.split('T')[0] >= today))
+    .filter((r: any) => r.status === 'pending')
     .reduce((sum: number, r: any) => sum + calculateDays(r.startDate, r.endDate), 0);
-  
-  // Días disponibles = total - comprometidos (usados + pendientes)
-  const availableDays = Math.max(0, totalDays - usedDays - pendingDays);
   const usagePercentage = totalDays > 0 ? (usedDays / totalDays) * 100 : 0;
 
   // Create vacation explanation message
@@ -355,7 +354,7 @@ export default function VacationRequests() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-light text-orange-300 mb-1">{usedDays}</div>
-              <div className="text-xs text-white/60 uppercase tracking-wider">Usados</div>
+              <div className="text-xs text-white/60 uppercase tracking-wider">Aprobados</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-light text-emerald-300 mb-1">{availableDays}</div>
@@ -386,19 +385,7 @@ export default function VacationRequests() {
                 </div>
               </div>
               
-              {/* Pending days overlay if any */}
-              {pendingDays > 0 && (
-                <div 
-                  className="absolute top-0 bg-gradient-to-r from-amber-400 via-orange-400 to-orange-500 h-6 rounded-2xl opacity-80 shadow-lg"
-                  style={{ 
-                    left: `${Math.min(usagePercentage, 100)}%`,
-                    width: `${Math.min((pendingDays / totalDays) * 100, 100 - usagePercentage)}%`
-                  }}
-                >
-                  {/* Pending shimmer effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
-                </div>
-              )}
+
               
               {/* Subtle glow effect */}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-blue-600/20 blur-sm -z-10"></div>
@@ -409,16 +396,10 @@ export default function VacationRequests() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Utilizados</span>
+                  <span>Aprobados</span>
                 </div>
-                {pendingDays > 0 && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <span>Pendientes ({pendingDays}d)</span>
-                  </div>
-                )}
               </div>
-              <span className="text-white/40">{availableDays} días restantes</span>
+              <span className="text-white/40">{availableDays} días disponibles</span>
             </div>
           </div>
         </div>
