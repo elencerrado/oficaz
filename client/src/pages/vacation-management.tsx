@@ -119,21 +119,7 @@ export default function VacationManagement() {
       
       console.log('Updating vacation request:', { id, updateData });
       
-      const response = await fetch(`/api/vacation-requests/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
-        throw new Error(errorData.message || `Error ${response.status}`);
-      }
-
-      return await response.json();
+      return apiRequest('PATCH', `/api/vacation-requests/${id}`, updateData);
     },
     onSuccess: (data) => {
       console.log('Update successful:', data);
