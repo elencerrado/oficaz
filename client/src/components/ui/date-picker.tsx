@@ -162,7 +162,7 @@ export function DatePickerPeriod({
             mode="range"
             selected={{
               from: startDate || undefined,
-              to: endDate || undefined
+              to: isSelectingStart ? undefined : (endDate || undefined)
             }}
             defaultMonth={startDate || new Date()}
             onSelect={(range) => {
