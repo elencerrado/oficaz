@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { DatePickerPeriod } from '@/components/ui/date-picker';
+import { DatePickerPeriod, DatePickerDay } from '@/components/ui/date-picker';
 import { 
   Search, 
   Edit, 
@@ -602,7 +602,10 @@ export default function TimeTracking() {
                       setDateFilter('custom');
                     }
                   }}
-                  className="h-10 text-sm font-normal"
+                  className={cn(
+                    "h-10 text-sm font-normal",
+                    dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                  )}
                 />
               </div>
             </div>
