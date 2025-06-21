@@ -26,6 +26,7 @@ export default function VacationRequests() {
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [reason, setReason] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -158,6 +159,8 @@ export default function VacationRequests() {
 
   // Calendar logic
   const handleDateClick = (date: Date) => {
+    setErrorMessage(null); // Clear any previous error
+    
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
       // Starting new selection
       setSelectedStartDate(date);
@@ -171,10 +174,7 @@ export default function VacationRequests() {
       if (daysBetween <= availableDays) {
         setSelectedEndDate(date);
       } else {
-        toast({
-          description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
-          variant: 'destructive',
-        });
+        setErrorMessage(`Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`);
       }
     }
   };
@@ -190,11 +190,7 @@ export default function VacationRequests() {
     }
 
     if (exceedsAvailable) {
-      toast({
-        title: 'Días insuficientes',
-        description: `Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`,
-        variant: 'destructive',
-      });
+      setErrorMessage(`Ojalá pudiéramos darte más… pero ahora mismo solo tienes ${availableDays} días.`);
       return;
     }
 
@@ -419,7 +415,16 @@ export default function VacationRequests() {
 
       {/* Request button */}
       <div className="px-6 mb-6">
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog open={isModalOpen} onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) {
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
+            setReason('');
+            setCalendarDate(new Date());
+            setErrorMessage(null);
+          }
+        }}>
           <DialogTrigger asChild>
             <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">
               <CalendarPlus className="mr-2 h-5 w-5" />
@@ -434,6 +439,13 @@ export default function VacationRequests() {
               <p className="text-sm text-gray-300 text-center">
                 Tienes {availableDays} días disponibles
               </p>
+              {errorMessage && (
+                <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 mt-2">
+                  <p className="text-red-300 text-sm text-center font-medium">
+                    {errorMessage}
+                  </p>
+                </div>
+              )}
             </DialogHeader>
             
             <div className="space-y-4">
