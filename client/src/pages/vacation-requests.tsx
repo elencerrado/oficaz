@@ -571,7 +571,7 @@ export default function VacationRequests() {
           <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-white/10 py-3 px-4">
             <div className="text-sm font-semibold text-center">Período</div>
             <div className="text-sm font-semibold text-center">Días</div>
-            <div className="text-sm font-semibold text-left pl-2">Estado</div>
+            <div className="text-sm font-semibold text-center">Estado</div>
             <div className="text-sm font-semibold text-center">Fecha</div>
           </div>
 
@@ -593,7 +593,7 @@ export default function VacationRequests() {
                     <div className="text-sm text-center font-mono text-white/90 flex items-center justify-center">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
-                    <div className="flex justify-start items-center pl-2 pr-1 overflow-hidden">
+                    <div className="flex justify-center items-center px-2">
                       {request.status !== 'pending' && request.adminComment ? (
                         <Popover>
                           <PopoverTrigger asChild>
