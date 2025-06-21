@@ -52,6 +52,22 @@ export default function EmployeesSimple() {
     emergencyContactPhone: '',
   });
 
+  const [newEmployee, setNewEmployee] = useState({
+    fullName: '',
+    dni: '',
+    companyEmail: '',
+    companyPhone: '',
+    position: '',
+    startDate: '',
+    status: 'active',
+    role: 'employee',
+    personalEmail: '',
+    personalPhone: '',
+    address: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+  });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -70,6 +86,41 @@ export default function EmployeesSimple() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el empleado.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Mutation for creating employee
+  const createEmployeeMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('POST', '/api/users', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      toast({
+        title: 'Empleado Creado',
+        description: 'El nuevo empleado se ha creado exitosamente.',
+      });
+      setShowCreateModal(false);
+      setNewEmployee({
+        fullName: '',
+        dni: '',
+        companyEmail: '',
+        companyPhone: '',
+        position: '',
+        startDate: '',
+        status: 'active',
+        role: 'employee',
+        personalEmail: '',
+        personalPhone: '',
+        address: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo crear el empleado.',
         variant: 'destructive',
       });
     },
@@ -495,21 +546,225 @@ export default function EmployeesSimple() {
 
       {/* Create User Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Usuario</DialogTitle>
+        <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-hidden">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Crear Nuevo Empleado
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Input placeholder="Nombre completo" />
-            <Input placeholder="DNI/NIE" />
-            <Input placeholder="Email empresarial" type="email" />
-            <Input placeholder="Teléfono" type="tel" />
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1">
+          
+          <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
+            {/* Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left Column - Required & Corporate Fields */}
+              <div className="space-y-4">
+                {/* Required Fields */}
+                <div className="bg-white border border-red-200 rounded-xl p-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
+                      <AlertCircle className="h-3 w-3 text-red-600" />
+                    </div>
+                    Campos Obligatorios
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="newFullName" className="text-sm font-medium text-gray-700">Nombre Completo *</Label>
+                      <Input
+                        id="newFullName"
+                        value={newEmployee.fullName}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, fullName: e.target.value })}
+                        placeholder="Juan José Ramírez Martín"
+                        className="mt-1"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newDni" className="text-sm font-medium text-gray-700">DNI/NIE *</Label>
+                      <Input
+                        id="newDni"
+                        value={newEmployee.dni}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, dni: e.target.value })}
+                        placeholder="12345678A"
+                        className="mt-1"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Corporate Fields */}
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Shield className="h-3 w-3 text-blue-600" />
+                    </div>
+                    Información Corporativa
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="newCompanyEmail" className="text-sm font-medium text-gray-700">Email Corporativo</Label>
+                      <Input
+                        id="newCompanyEmail"
+                        type="email"
+                        value={newEmployee.companyEmail}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, companyEmail: e.target.value })}
+                        placeholder="empleado@empresa.com"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newCompanyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
+                      <Input
+                        id="newCompanyPhone"
+                        value={newEmployee.companyPhone}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, companyPhone: e.target.value })}
+                        placeholder="666 666 666"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newPosition" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
+                      <Input
+                        id="newPosition"
+                        value={newEmployee.position}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
+                        placeholder="Administrativo, Técnico, etc."
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
+                      <Input
+                        id="newStartDate"
+                        type="date"
+                        value={newEmployee.startDate}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, startDate: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newStatus" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
+                      <Select 
+                        value={newEmployee.status}
+                        onValueChange={(value) => setNewEmployee({ ...newEmployee, status: value })}
+                      >
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Seleccionar estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Activo</SelectItem>
+                          <SelectItem value="inactive">Inactivo</SelectItem>
+                          <SelectItem value="on_leave">De baja</SelectItem>
+                          <SelectItem value="on_vacation">De vacaciones</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="newRole" className="text-sm font-medium text-gray-700">Tipo de Usuario</Label>
+                      <Select 
+                        value={newEmployee.role}
+                        onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
+                      >
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="employee">Empleado</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Personal Info */}
+              <div className="space-y-4">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
+                      <User className="h-3 w-3 text-green-600" />
+                    </div>
+                    Información Personal
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="newPersonalEmail" className="text-sm font-medium text-gray-700">Email Personal</Label>
+                      <Input
+                        id="newPersonalEmail"
+                        type="email"
+                        value={newEmployee.personalEmail}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, personalEmail: e.target.value })}
+                        placeholder="email@personal.com"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newPersonalPhone" className="text-sm font-medium text-gray-700">Teléfono Personal</Label>
+                      <Input
+                        id="newPersonalPhone"
+                        value={newEmployee.personalPhone}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, personalPhone: e.target.value })}
+                        placeholder="+34 666 666 666"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newAddress" className="text-sm font-medium text-gray-700">Dirección</Label>
+                      <Input
+                        id="newAddress"
+                        value={newEmployee.address}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, address: e.target.value })}
+                        placeholder="Calle, número, ciudad..."
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newEmergencyContactName" className="text-sm font-medium text-gray-700">Persona de Contacto</Label>
+                      <Input
+                        id="newEmergencyContactName"
+                        value={newEmployee.emergencyContactName}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, emergencyContactName: e.target.value })}
+                        placeholder="Nombre del contacto de emergencia"
+                        className="mt-1"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="newEmergencyContactPhone" className="text-sm font-medium text-gray-700">Teléfono de Contacto</Label>
+                      <Input
+                        id="newEmergencyContactPhone"
+                        value={newEmployee.emergencyContactPhone}
+                        onChange={(e) => setNewEmployee({ ...newEmployee, emergencyContactPhone: e.target.value })}
+                        placeholder="+34 666 666 666"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
+              <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={createEmployeeMutation.isPending}>
                 Cancelar
               </Button>
-              <Button className="flex-1">
-                Crear Usuario
+              <Button onClick={handleCreateEmployee} disabled={createEmployeeMutation.isPending}>
+                {createEmployeeMutation.isPending ? 'Creando...' : 'Crear Empleado'}
               </Button>
             </div>
           </div>
