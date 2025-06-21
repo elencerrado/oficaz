@@ -117,7 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 21, 2025. Componentes DatePicker finalizados con modal centrado y navegación inteligente
+- June 21, 2025. Página de fichajes admin optimizada y documentada completamente
+  - Código reorganizado con secciones claras y comentarios descriptivos
+  - Imports agrupados por categoría (hooks, componentes UI, iconos)
+  - Funciones documentadas con propósito específico de cada una
+  - Estados organizados por función (filtros, fechas, UI, edición)
+  - Altura de filas normalizada: h-12 para fichajes, h-10 para resúmenes
+  - Tabla compacta sin altura mínima fija para mejor UX
+  - Componentes DatePicker finalizados con modal centrado y navegación inteligente
   - DatePickerPeriod: modal centrado en pantalla, no dropdown
   - Navegación automática: abre en fecha del período existente o mes actual
   - defaultMonth configurado para mostrar fechas relevantes al abrir
