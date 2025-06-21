@@ -122,23 +122,42 @@ export default function Messages() {
     }
   }, [selectedChat, messages, user?.id]);
 
-  // Detect keyboard open/close for mobile
+  // Detect keyboard open/close for mobile with multiple methods
   useEffect(() => {
-    const handleResize = () => {
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const windowHeight = window.screen.height;
-      const keyboardThreshold = windowHeight * 0.75;
+    let initialViewportHeight = window.innerHeight;
+    
+    const handleViewportChange = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const heightDifference = initialViewportHeight - currentHeight;
       
-      setIsKeyboardOpen(viewportHeight < keyboardThreshold);
+      // Keyboard is open if viewport shrunk by more than 150px
+      setIsKeyboardOpen(heightDifference > 150);
     };
 
+    const handleWindowResize = () => {
+      const currentHeight = window.innerHeight;
+      const heightDifference = initialViewportHeight - currentHeight;
+      
+      // Keyboard is open if window shrunk significantly
+      setIsKeyboardOpen(heightDifference > 150);
+    };
+
+    // Use Visual Viewport API if available (modern browsers)
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
-    } else {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
     }
+    
+    // Fallback for older browsers
+    window.addEventListener('resize', handleWindowResize);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
+      }
+      window.removeEventListener('resize', handleWindowResize);
+    };
   }, []);
 
   const getMessageIcon = (type: string) => {
@@ -542,9 +561,9 @@ export default function Messages() {
         </>
       ) : (
         // Chat View - Full screen with proper mobile layout
-        <div className="flex flex-col h-screen bg-employee-gradient">
-          {/* Chat Header - Fixed position with keyboard detection */}
-          <div className={`${isKeyboardOpen ? 'absolute' : 'fixed'} top-0 left-0 right-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50`}>
+        <div className="flex flex-col bg-employee-gradient" style={{ height: isKeyboardOpen ? 'auto' : '100vh', minHeight: '100vh' }}>
+          {/* Chat Header - Always sticky for better mobile compatibility */}
+          <div className="sticky top-0 bg-white/10 backdrop-blur-sm p-4 flex items-center space-x-3 border-b border-white/20 z-50" style={{ position: isKeyboardOpen ? 'sticky' : 'fixed', top: 0 }}>
             <Button
               variant="ghost"
               size="sm"
@@ -578,8 +597,11 @@ export default function Messages() {
             })()}
           </div>
 
-          {/* Messages - Scrollable area with top padding */}
-          <div className="flex-1 pt-20 p-4 space-y-4 overflow-y-auto pb-20">
+          {/* Messages - Scrollable area with dynamic padding */}
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto" style={{ 
+            paddingTop: isKeyboardOpen ? '0px' : '80px',
+            paddingBottom: isKeyboardOpen ? '80px' : '100px'
+          }}>
             {getChatMessages(selectedChat).map(msg => (
               <div
                 key={msg.id}
