@@ -262,7 +262,7 @@ export default function Messages() {
           </div>
         </div>
         {/* Content */}
-        <div className="flex-1 p-6 min-h-0">
+        <div className="flex-1 px-6 pt-6 pb-6 min-h-0">
           <div className="grid lg:grid-cols-3 gap-6" style={{ height: '70vh' }}>
             {/* Employee List */}
             <div className="lg:col-span-1 h-full">
