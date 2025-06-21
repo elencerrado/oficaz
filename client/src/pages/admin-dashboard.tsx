@@ -289,17 +289,17 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Clean and Professional */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[420px]">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm min-h-[400px]">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   locale={es}
                   showWeekNumber={true}
-                  className="w-full p-4"
+                  className="w-full px-4 pt-4 pb-2"
                   classNames={{
                     months: "flex flex-col space-y-4",
-                    month: "space-y-4 w-full min-h-[360px]",
+                    month: "space-y-4 w-full min-h-[340px]",
                     caption: "flex justify-center pt-1 relative items-center mb-4",
                     caption_label: "text-lg font-semibold text-gray-800",
                     nav: "space-x-1 flex items-center",
