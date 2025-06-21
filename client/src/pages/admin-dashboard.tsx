@@ -67,8 +67,11 @@ export default function AdminDashboard() {
   // Fetch vacation requests for calendar
   const { data: vacationRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
-    select: (data: any[]) => data?.filter((req: any) => req.status === 'approved') || [],
+    select: (data: any[]) => data || [],
   });
+
+  const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
+  const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
 
   // Clock in/out mutation
   const clockMutation = useMutation({
@@ -136,8 +139,8 @@ export default function AdminDashboard() {
       events.push({ type: 'holiday', name: holiday.name });
     }
 
-    // Check employee vacations
-    const vacations = vacationRequests?.filter((req: any) => {
+    // Check employee vacations (only approved ones)
+    const vacations = approvedVacations?.filter((req: any) => {
       const startDate = parseISO(req.startDate);
       const endDate = parseISO(req.endDate);
       return date >= startDate && date <= endDate;
@@ -307,7 +310,7 @@ export default function AdminDashboard() {
                 }}
                 modifiers={{
                   holiday: holidays.map(h => parseISO(h.date)),
-                  vacation: vacationRequests?.flatMap((req: any) => {
+                  vacation: approvedVacations?.flatMap((req: any) => {
                     const start = parseISO(req.startDate);
                     const end = parseISO(req.endDate);
                     const dates = [];
@@ -352,6 +355,56 @@ export default function AdminDashboard() {
                       </div>
                     ));
                   })()}
+                </div>
+              )}
+
+              {/* Pending Vacation Requests Section */}
+              {pendingVacations.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-orange-500" />
+                      Solicitudes Pendientes ({pendingVacations.length})
+                    </h4>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const companyAlias = 'test'; // Use actual company alias from context
+                        window.location.href = `/${companyAlias}/vacaciones`;
+                      }}
+                      className="text-xs"
+                    >
+                      Ver todas
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {pendingVacations.slice(0, 3).map((request: any) => (
+                      <div 
+                        key={request.id} 
+                        className="flex items-center justify-between p-2 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                        onClick={() => {
+                          const companyAlias = 'test';
+                          window.location.href = `/${companyAlias}/vacaciones`;
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-900">
+                            {request.userName || 'Empleado'}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                        </span>
+                      </div>
+                    ))}
+                    {pendingVacations.length > 3 && (
+                      <p className="text-xs text-gray-500 text-center">
+                        +{pendingVacations.length - 3} solicitudes más
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

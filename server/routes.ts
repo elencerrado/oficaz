@@ -458,7 +458,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/vacation-requests/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const requests = await storage.getVacationRequestsByCompany(req.user!.companyId);
-      res.json(requests);
+      
+      // Add user names to vacation requests
+      const requestsWithNames = await Promise.all(requests.map(async (request: any) => {
+        const user = await storage.getUser(request.userId);
+        return {
+          ...request,
+          userName: user?.fullName || 'Usuario desconocido'
+        };
+      }));
+      
+      res.json(requestsWithNames);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
