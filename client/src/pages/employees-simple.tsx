@@ -103,7 +103,10 @@ export default function EmployeesSimple() {
     else if (statusFilter === 'de vacaciones') statusToMatch = 'on_vacation';
     
     const employeeStatus = employee.status || 'active'; // Default to 'active' if no status
-    const matchesStatus = statusFilter === 'todos' || employeeStatus === statusToMatch;
+    
+    // Handle both Spanish and English status values for compatibility
+    const normalizedEmployeeStatus = employeeStatus === 'activo' ? 'active' : employeeStatus;
+    const matchesStatus = statusFilter === 'todos' || normalizedEmployeeStatus === statusToMatch;
     
     return matchesSearch && matchesStatus;
   });
