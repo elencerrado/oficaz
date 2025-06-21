@@ -358,7 +358,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {/* Pending Vacation Requests Section */}
+              {/* Pending Vacation Requests Section - Just List */}
               {pendingVacations.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between mb-3">
@@ -370,7 +370,7 @@ export default function AdminDashboard() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        const companyAlias = 'test'; // Use actual company alias from context
+                        const companyAlias = 'test';
                         window.location.href = `/${companyAlias}/vacaciones`;
                       }}
                       className="text-xs"
