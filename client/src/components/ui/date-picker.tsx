@@ -104,21 +104,21 @@ export function DatePickerPeriod({
   onEndDateChange,
   className
 }: DatePickerPeriodProps) {
-  const [activeCalendar, setActiveCalendar] = useState<'start' | 'end' | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const formatDateRange = () => {
     if (startDate && endDate) {
-      return `${format(startDate, "dd/MM/yyyy", { locale: es })} - ${format(endDate, "dd/MM/yyyy", { locale: es })}`;
+      return `${format(startDate, "d MMM", { locale: es })} - ${format(endDate, "d MMM yyyy", { locale: es })}`;
     } else if (startDate) {
-      return `Desde ${format(startDate, "dd/MM/yyyy", { locale: es })}`;
+      return `Desde ${format(startDate, "d MMM yyyy", { locale: es })}`;
     } else if (endDate) {
-      return `Hasta ${format(endDate, "dd/MM/yyyy", { locale: es })}`;
+      return `Hasta ${format(endDate, "d MMM yyyy", { locale: es })}`;
     }
-    return "Seleccionar período";
+    return "Seleccionar rango de fechas";
   };
 
   return (
-    <Popover open={activeCalendar !== null} onOpenChange={(open) => !open && setActiveCalendar(null)}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -127,7 +127,6 @@ export function DatePickerPeriod({
             !startDate && !endDate && "text-gray-500",
             className
           )}
-          onClick={() => setActiveCalendar('start')}
         >
           <div className="flex items-center">
             <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
@@ -142,94 +141,76 @@ export function DatePickerPeriod({
         side="bottom"
         sideOffset={4}
       >
-        <div className="p-3">
-          <div className="flex gap-2 mb-3">
-            <Button
-              variant={activeCalendar === 'start' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setActiveCalendar('start')}
-              className="flex-1"
-            >
-              Fecha inicio
-            </Button>
-            <Button
-              variant={activeCalendar === 'end' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setActiveCalendar('end')}
-              className="flex-1"
-            >
-              Fecha fin
-            </Button>
-          </div>
-          
-          <Calendar
-            mode="single"
-            selected={activeCalendar === 'start' ? startDate : endDate}
-            onSelect={(date) => {
-              if (activeCalendar === 'start') {
-                onStartDateChange(date);
-                if (date && (!endDate || date <= endDate)) {
-                  setTimeout(() => setActiveCalendar('end'), 300);
+        <div className="p-4">
+          <div className="flex flex-col items-center space-y-4">
+            <Calendar
+              mode="range"
+              selected={{
+                from: startDate || undefined,
+                to: endDate || undefined,
+              }}
+              onSelect={(range) => {
+                if (range?.from) {
+                  onStartDateChange(range.from);
                 }
-              } else if (activeCalendar === 'end') {
-                onEndDateChange(date);
-                if (date) {
-                  setTimeout(() => setActiveCalendar(null), 300);
-                }
-              }
-            }}
-            disabled={(date) => {
-              if (activeCalendar === 'start' && endDate) {
-                return date > endDate;
-              }
-              if (activeCalendar === 'end' && startDate) {
-                return date < startDate;
-              }
-              return false;
-            }}
-            initialFocus
-            locale={es}
-            className="rounded-md"
-            classNames={{
-              months: "flex flex-col space-y-4",
-              month: "space-y-4",
-              caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-medium",
-              nav: "space-x-1 flex items-center",
-              nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              table: "w-full border-collapse space-y-1",
-              head_row: "flex",
-              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-              row: "flex w-full mt-2",
-              cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-              day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
-              day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-              day_today: "bg-accent text-accent-foreground",
-              day_outside: "text-muted-foreground opacity-50",
-              day_disabled: "text-muted-foreground opacity-50",
-              day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-              day_hidden: "invisible",
-            }}
-          />
-          
-          {(startDate || endDate) && (
-            <div className="mt-3 pt-3 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  onStartDateChange(undefined);
+                if (range?.to) {
+                  onEndDateChange(range.to);
+                  setTimeout(() => setIsOpen(false), 300);
+                } else if (range?.from && !range?.to) {
                   onEndDateChange(undefined);
-                  setActiveCalendar(null);
-                }}
-                className="w-full text-gray-600 hover:text-gray-800"
-              >
-                Limpiar fechas
-              </Button>
-            </div>
-          )}
+                }
+              }}
+              numberOfMonths={1}
+              locale={es}
+              className="rounded-md"
+              classNames={{
+                months: "flex flex-col space-y-4",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: "text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                day_range_end: "day-range-end",
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
+              }}
+            />
+            
+            {(startDate || endDate) && (
+              <div className="flex gap-2 w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onStartDateChange(undefined);
+                    onEndDateChange(undefined);
+                  }}
+                  className="flex-1 text-gray-600 hover:text-gray-800"
+                >
+                  Limpiar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="flex-1"
+                >
+                  Cerrar
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
