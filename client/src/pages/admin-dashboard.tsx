@@ -348,13 +348,13 @@ export default function AdminDashboard() {
             <CardContent>
               {/* Calendar - Simple and Compact */}
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="p-6">
+                <div className="p-6 overflow-x-auto">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     locale={es}
-                    className="w-full mx-auto [&_table]:w-full [&_td]:w-14 [&_td]:h-12 [&_th]:w-14 [&_th]:text-center"
+                    className="w-full mx-auto min-w-[320px]"
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
                       customHoliday: customHolidays.map(h => parseISO(h.date)),
