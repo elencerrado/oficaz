@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
@@ -443,10 +445,7 @@ export default function AdminDashboard() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => {
-                        const companyAlias = 'test';
-                        window.location.href = `/${companyAlias}/vacaciones`;
-                      }}
+                      onClick={() => setLocation('/test/vacaciones')}
                       className="text-xs text-blue-600 hover:text-blue-700"
                     >
                       ver más
@@ -457,10 +456,7 @@ export default function AdminDashboard() {
                       <div 
                         key={request.id} 
                         className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => {
-                          const companyAlias = 'test';
-                          window.location.href = `/${companyAlias}/vacaciones`;
-                        }}
+                        onClick={() => setLocation('/test/vacaciones')}
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div>
