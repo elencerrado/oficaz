@@ -386,7 +386,7 @@ export default function AdminDocuments() {
           ...item, 
           employee,
           // Update suggested clean filename
-          suggestedName: employee ? generateCleanFileName(item.file.name, employee) : undefined
+          suggestedName: employee ? generateCleanFileName(item.file.name, employee, item.documentType) : undefined
         };
       }
       return item;
