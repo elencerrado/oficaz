@@ -104,25 +104,7 @@ export default function Messages() {
     },
   });
 
-  // All useEffects
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatParam = urlParams.get('chat');
-    if (chatParam && user) {
-      const chatId = parseInt(chatParam);
-      setSelectedChat(chatId);
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [user]);
-
-  // Auto scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [chatMessages]);
-
-  // All useMemo/useCallback
+  // All useMemo/useCallback FIRST
   const contactList = useMemo(() => {
     if (!user) return [];
     return user.role === 'employee' ? (managers || []) : (employees || []);
@@ -141,6 +123,24 @@ export default function Messages() {
       (msg.receiverId === user.id && msg.senderId === selectedChat)
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [selectedChat, messages, user]);
+
+  // All useEffects AFTER
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatParam = urlParams.get('chat');
+    if (chatParam && user) {
+      const chatId = parseInt(chatParam);
+      setSelectedChat(chatId);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [user]);
+
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
 
   const selectedChatUser = useMemo(() => {
     if (!selectedChat) return null;
