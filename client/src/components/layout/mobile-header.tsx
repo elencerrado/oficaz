@@ -36,6 +36,20 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
     return `${dayName}, ${day} de ${month} de ${year} | ${hours}:${minutes}`;
   };
 
+  const formatDateMobile = (date: Date) => {
+    const daysShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const monthsShort = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+    const dayName = daysShort[date.getDay()];
+    const day = date.getDate();
+    const monthName = monthsShort[date.getMonth()];
+    const year = date.getFullYear().toString().slice(-2);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    
+    return `${dayName}, ${day} ${monthName} ${year} | ${hours}:${minutes}`;
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center">
       {/* Left Section */}
