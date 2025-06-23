@@ -139,10 +139,11 @@ export default function Documents() {
       // Mark request as completed if active
       if (activeRequest && pendingRequest) {
         try {
+          const authData = JSON.parse(localStorage.getItem('authData') || '{}');
           const response = await fetch(`/api/document-notifications/${pendingRequest.id}/complete`, {
             method: 'PATCH',
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Authorization': `Bearer ${authData.token}`,
               'Content-Type': 'application/json',
             },
           });
