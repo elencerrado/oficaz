@@ -116,11 +116,30 @@ export default function Messages() {
   });
 
   // Auto-scroll chat to bottom when opening chat or new messages arrive
-  useEffect(() => {
-    if (selectedChat && messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+  const scrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
     }
-  }, [selectedChat, messages]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedChat) {
+      scrollToBottom();
+    }
+  }, [selectedChat, scrollToBottom]);
+
+  useEffect(() => {
+    if (selectedChat && messages) {
+      const chatMessages = getChatMessages(selectedChat);
+      if (chatMessages.length > 0) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, selectedChat, scrollToBottom]);
 
   useEffect(() => {
     if (selectedChat && messages) {
