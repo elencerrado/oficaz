@@ -543,13 +543,18 @@ export default function Employees() {
                         }, 200);
                       }
                       
-                      if (Math.abs(diff) > 100) {
-                        // Swipe action triggered
+                      console.log(`Touch end: diff=${diff}, timeDiff=${timeDiff}`); // Debug
+                      
+                      if (Math.abs(diff) > 50 && timeDiff < 1000) {
+                        // Swipe action triggered - reduced threshold and added time limit
+                        console.log('Swipe action triggered'); // Debug
                         if (diff < 0 && phone) {
-                          // Swipe left - Call (reveals left side)
+                          // Swipe left - Call
+                          console.log('Triggering call'); // Debug
                           window.location.href = `tel:${phone}`;
                         } else if (diff > 0) {
-                          // Swipe right - Message (navigate to specific chat)
+                          // Swipe right - Message
+                          console.log('Triggering message navigation'); // Debug
                           localStorage.setItem('selectedChatId', employee.id.toString());
                           navigate('/test/mensajes');
                         }
