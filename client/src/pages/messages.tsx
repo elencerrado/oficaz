@@ -184,31 +184,22 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Auto-scroll que FUNCIONA para empleado
+  // COPIADO DIRECTO de donde funciona - NO TOCAR MÁS
   useEffect(() => {
-    if (selectedChat) {
+    if (messagesEndRef.current && selectedChat) {
       setTimeout(() => {
-        // Employee scroll - usar el selector específico de empleado
-        const employeeScroll = document.querySelector('[style*="background: radial-gradient"]');
-        if (employeeScroll) {
-          employeeScroll.scrollTop = employeeScroll.scrollHeight;
-          return;
-        }
-        
-        // Desktop scroll
-        const desktop = document.querySelector('[class*="overflow-y-auto"][class*="bg-gray-50"]');
-        if (desktop) {
-          desktop.scrollTop = desktop.scrollHeight;
-        }
-        
-        // Mobile scroll
-        const mobile = document.querySelector('[style*="touchAction"][style*="pan-y"]');
-        if (mobile) {
-          mobile.scrollTop = mobile.scrollHeight;
-        }
-      }, 200);
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      }, 100);
     }
-  }, [selectedChat, messages]);
+  }, [selectedChat]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [messages]);
 
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
@@ -1002,7 +993,7 @@ export default function Messages() {
                             )}
                           </div>
                           <div className="text-white/70 text-xs mt-1">
-                            {getRoleDisplay(manager)}
+                            {manager.jobTitle || manager.position || 'Sin cargo definido'}
                           </div>
                         </div>
                         
