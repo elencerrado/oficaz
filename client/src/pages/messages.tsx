@@ -252,46 +252,51 @@ export default function Messages() {
   // Admin view with light theme
   if (isAdmin) {
     return (
-      <div className="h-screen bg-gray-50 flex flex-col">
+      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-oficaz-primary rounded-xl flex items-center justify-center shadow-sm">
-                <MessageCircle className="icon-lg text-white" />
-              </div>
-              <div>
-                <h1 className="heading-1">Mensajería</h1>
-                <p className="caption-text">
-                  Comunícate con empleados y gestiona mensajes
-                </p>
-              </div>
-            </div>
-            
-            {/* Stats Cards */}
-            <div className="flex space-x-4">
-              <div className="card-oficaz px-4 py-3 min-w-[120px]">
-                <div className="text-center">
-                  <div className="heading-3 text-oficaz-primary">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Mensajería</h1>
+          <p className="text-gray-500 mt-1">
+            Comunícate con empleados y gestiona mensajes
+          </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Sin leer</p>
+                  <p className="text-xl font-semibold text-gray-900">
                     {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length}
-                  </div>
-                  <div className="caption-text">Sin leer</div>
+                  </p>
                 </div>
               </div>
-              <div className="card-oficaz px-4 py-3 min-w-[120px]">
-                <div className="text-center">
-                  <div className="heading-3 text-oficaz-primary">
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Empleados</p>
+                  <p className="text-xl font-semibold text-gray-900">
                     {filteredEmployees.length}
-                  </div>
-                  <div className="caption-text">Empleados</div>
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
         {/* Content */}
-        <div className="flex-1 p-6">
-          <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
+        <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
             {/* Employee List */}
             <div className="lg:col-span-1 h-full">
               <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
@@ -505,7 +510,6 @@ export default function Messages() {
                 </div>
               )}
             </div>
-          </div>
         </div>
       </div>
     );
