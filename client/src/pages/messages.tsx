@@ -148,12 +148,12 @@ export default function Messages() {
     });
   }, []);
 
-  // Effects for auto-scroll - Enhanced for mobile
+  // Effects for auto-scroll - Enhanced for mobile fullscreen
   useEffect(() => {
     if (selectedChat) {
       // Force scroll immediately on chat selection
       const scrollMobileChat = () => {
-        const container = document.querySelector('.lg\\:hidden .overflow-y-auto');
+        const container = document.querySelector('.z-\\[60\\] .overflow-y-auto');
         if (container) {
           container.scrollTop = container.scrollHeight;
         }
@@ -172,7 +172,7 @@ export default function Messages() {
       const chatMessages = getChatMessages(selectedChat);
       if (chatMessages.length > 0) {
         const scrollMobileChat = () => {
-          const container = document.querySelector('.lg\\:hidden .overflow-y-auto');
+          const container = document.querySelector('.z-\\[60\\] .overflow-y-auto');
           if (container) {
             container.scrollTop = container.scrollHeight;
           }
@@ -546,10 +546,10 @@ export default function Messages() {
               </div>
             </div>
           ) : (
-            /* Chat View */
-            <div className="fixed inset-0 top-20 bg-white z-30 flex flex-col">
+            /* Chat View - Full screen overlay */
+            <div className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden">
               {/* Chat Header with Back Button - Fixed at top */}
-              <div className="fixed top-20 left-0 right-0 flex items-center space-x-3 p-4 border-b border-gray-200 bg-white z-40 lg:hidden">
+              <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -571,20 +571,13 @@ export default function Messages() {
                 </div>
               </div>
 
-              {/* Messages - Single scroll area */}
-              <div 
-                className="flex-1 overflow-y-auto px-4 pt-20 pb-4"
-                style={{ 
-                  marginTop: '80px', /* Header height */
-                  marginBottom: '80px' /* Input height */
-                }}
-              >
+              {/* Messages - Scrollable area */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
                 <div className="space-y-4">
                   {getChatMessages(selectedChat).length > 0 ? (
-                    getChatMessages(selectedChat).map((message, index, array) => (
+                    getChatMessages(selectedChat).map((message) => (
                       <div
                         key={message.id}
-
                         className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
@@ -611,13 +604,13 @@ export default function Messages() {
                     </div>
                   )}
                   {/* Spacer to ensure scroll goes to the very bottom */}
-                  <div style={{ height: '20px', width: '100%' }} />
+                  <div style={{ height: '80px', width: '100%' }} />
                 </div>
               </div>
 
               {/* Message Input - Fixed at bottom */}
               <div 
-                className="fixed bottom-0 left-0 right-0 flex space-x-2 p-4 border-t border-gray-200 bg-white z-50 lg:hidden"
+                className="flex space-x-2 p-4 border-t border-gray-200 bg-white flex-shrink-0"
                 style={{
                   paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
                 }}
