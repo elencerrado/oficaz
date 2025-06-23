@@ -571,7 +571,7 @@ export default function Messages() {
               </div>
 
               {/* Message Input - Fixed at bottom */}
-              <div className="flex space-x-2 pt-4 border-t border-gray-200 bg-white flex-shrink-0">
+              <div className="flex space-x-2 pt-4 border-t border-gray-200 bg-white flex-shrink-0 sticky bottom-0">
                 <Input
                   ref={messageInputRef}
                   placeholder="Escribe tu mensaje..."
@@ -579,11 +579,15 @@ export default function Messages() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   className="input-oficaz flex-1"
+                  style={{ 
+                    fontSize: '16px',
+                    minHeight: '44px'
+                  }}
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="btn-oficaz-primary"
+                  className="btn-oficaz-primary min-h-[44px]"
                 >
                   <Send className="icon-sm" />
                 </Button>
