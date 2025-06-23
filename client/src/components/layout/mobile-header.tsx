@@ -57,7 +57,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="text-gray-600" size={20} />
         </Button>
-        <h1 className="text-lg font-semibold text-gray-900 ml-2 lg:ml-0">{company?.name || 'Oficaz'}</h1>
+        <h1 className="text-sm font-medium text-gray-900 ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
+          {company?.name || 'Oficaz'}
+        </h1>
       </div>
       
       {/* Center Section - Logo */}
@@ -65,26 +67,23 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <img 
           src={oficazLogo} 
           alt="Oficaz" 
-          className="h-6 w-auto"
+          className="h-4 w-auto lg:h-6"
         />
       </div>
       
       {/* Right Section */}
-      <div className="flex items-center justify-end space-x-4">
-        {/* Date and Time */}
+      <div className="flex items-center justify-end space-x-2 lg:space-x-4">
+        {/* Date and Time - Only desktop */}
         <div className="text-sm text-gray-600 font-medium hidden md:block">
           {formatDate(currentTime)}
-        </div>
-        <div className="text-sm text-gray-600 font-medium block md:hidden">
-          {formatDateMobile(currentTime)}
         </div>
         
         {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-lg">
-              <Avatar className="h-10 w-10 rounded-lg">
-                <AvatarFallback className="bg-oficaz-primary text-white text-sm rounded-lg">
+            <Button variant="ghost" className="relative h-9 w-9 lg:h-10 lg:w-10 rounded-lg">
+              <Avatar className="h-9 w-9 lg:h-10 lg:w-10 rounded-lg">
+                <AvatarFallback className="bg-oficaz-primary text-white text-xs lg:text-sm rounded-lg">
                   {user?.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
