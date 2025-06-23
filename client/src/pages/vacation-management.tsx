@@ -120,7 +120,7 @@ export default function VacationManagement() {
   const [activeTab, setActiveTab] = useState("requests");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("Madrid");
+  const [selectedRegion, setSelectedRegion] = useState("sevilla");
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", type: "regional" as const });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
@@ -759,11 +759,6 @@ export default function VacationManagement() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {company?.province && (
-                      <span className="text-xs text-gray-500">
-                        (Provincia de la empresa: {provinces.find(p => p.value === company.province)?.label || company.province})
-                      </span>
-                    )}
                   </div>
                   <Dialog open={showAddHoliday} onOpenChange={setShowAddHoliday}>
                     <DialogTrigger asChild>

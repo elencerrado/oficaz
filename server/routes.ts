@@ -878,7 +878,7 @@ startxref
       if (!company) {
         return res.status(404).json({ message: 'Company not found' });
       }
-      console.log('Returning company data:', company);
+
       res.json(company);
     } catch (error: any) {
       console.error('Error fetching company:', error);
