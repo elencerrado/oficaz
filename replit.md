@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Interface de documentos admin rediseñada con sistema de pestañas
+  - Convertidas tarjetas en 3 pestañas modernas: Subir Documentos, Explorador, Solicitudes
+  - Drag & drop mantenido en pestaña "Subir Documentos" con detección inteligente
+  - Pestaña "Explorador" con búsqueda y filtros para ver archivos subidos
+  - Pestaña "Solicitudes" para enviar y gestionar solicitudes de documentos
+  - Navegación visual mejorada con indicadores de pestaña activa
+  - Contador dinámico de "Subidos Hoy" en stats cards
 - June 23, 2025. Sistema de fechas corregido para mostrar hora española correcta
   - Conversión UTC a GMT+2 (hora española) en visualización de documentos
   - Documentos ahora muestran hora local real de subida (+2h de diferencia)

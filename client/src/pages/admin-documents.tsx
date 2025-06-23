@@ -649,102 +649,62 @@ export default function AdminDocuments() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Subidos Hoy</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {allDocuments.filter(doc => {
+                      const today = new Date();
+                      const docDate = new Date(doc.createdAt);
+                      return docDate.toDateString() === today.toDateString();
+                    }).length}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Send Document Request */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Send className="h-5 w-5 mr-2" />
-                Solicitar Documentos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Document Type Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Documento
-                </label>
-                <Select value={documentType} onValueChange={setDocumentType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el tipo de documento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {documentTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        <div className="flex items-center">
-                          <type.icon className="h-4 w-4 mr-2" />
-                          {type.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Message */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mensaje (opcional)
-                </label>
-                <Input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Mensaje personalizado para los empleados"
-                />
-              </div>
-
-              {/* Employee Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Empleados ({selectedEmployees.length} seleccionados)
-                </label>
-                <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1">
-                  {employees.map((employee: Employee) => (
-                    <div
-                      key={employee.id}
-                      onClick={() => toggleEmployee(employee.id)}
-                      className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
-                        selectedEmployees.includes(employee.id)
-                          ? 'bg-blue-50 border-blue-200'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
-                        selectedEmployees.includes(employee.id)
-                          ? 'bg-blue-600 border-blue-600'
-                          : 'border-gray-300'
-                      }`}>
-                        {selectedEmployees.includes(employee.id) && (
-                          <div className="w-2 h-2 bg-white rounded-sm" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{employee.fullName}</div>
-                        <div className="text-sm text-gray-600">{employee.email}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                onClick={handleSendRequest}
-                disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
-                className="w-full"
+        {/* Tabs Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('upload')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'upload'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
-              </Button>
-            </CardContent>
-          </Card>
+                <Upload className="h-4 w-4 inline mr-2" />
+                Subir Documentos
+              </button>
+              <button
+                onClick={() => setActiveTab('explorer')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'explorer'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Search className="h-4 w-4 inline mr-2" />
+                Explorador
+              </button>
+              <button
+                onClick={() => setActiveTab('requests')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === 'requests'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Send className="h-4 w-4 inline mr-2" />
+                Solicitudes
+              </button>
+            </nav>
+          </div>
+        </div>
 
-          {/* Upload Documents */}
+        {/* Tab Content */}
+        {activeTab === 'upload' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -808,128 +768,233 @@ export default function AdminDocuments() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        )}
 
-        {/* Documents Explorer */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Search className="h-5 w-5 mr-2" />
-              Explorador de Documentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <Input
-                    placeholder="Buscar por nombre de archivo o empleado..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+        {activeTab === 'explorer' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Search className="h-5 w-5 mr-2" />
+                Explorador de Documentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Filters */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                    <Input
+                      placeholder="Buscar por nombre de archivo o empleado..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
+                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los empleados</SelectItem>
+                    {employees.map((employee: Employee) => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="w-full md:w-64">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employees.map((employee: Employee) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Results count */}
-            <div className="text-sm text-gray-600">
-              Mostrando {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
-            </div>
+              {/* Results count */}
+              <div className="text-sm text-gray-600">
+                Mostrando {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
+              </div>
 
-            {/* Documents List */}
-            {filteredDocuments.length > 0 ? (
-              <div className="space-y-3">
-                {filteredDocuments.map((document: Document) => {
-                  const FileIcon = getFileIcon(document.originalName);
-                  return (
-                    <div
-                      key={document.id}
-                      className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="p-2 rounded-lg bg-gray-100 mr-4">
-                        <FileIcon className="h-6 w-6 text-gray-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">
-                          {document.originalName || document.fileName || 'Documento sin nombre'}
-                        </h3>
-                        <div className="flex items-center gap-4 mt-1">
-                          <span className="text-sm text-gray-600">
-                            {document.user?.fullName || 'Empleado desconocido'}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {formatFileSize(document.fileSize)}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {(() => {
-                              // La fecha del servidor está en UTC, convertir a hora local española
-                              const utcDate = new Date(document.createdAt);
-                              // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
-                              const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                              return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
-                            })()}
-                          </span>
+              {/* Documents List */}
+              {filteredDocuments.length > 0 ? (
+                <div className="space-y-3">
+                  {filteredDocuments.map((document: Document) => {
+                    const FileIcon = getFileIcon(document.originalName);
+                    return (
+                      <div
+                        key={document.id}
+                        className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="p-2 rounded-lg bg-gray-100 mr-4">
+                          <FileIcon className="h-6 w-6 text-gray-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 truncate">
+                            {document.originalName || document.fileName || 'Documento sin nombre'}
+                          </h3>
+                          <div className="flex items-center gap-4 mt-1">
+                            <span className="text-sm text-gray-600">
+                              {document.user?.fullName || 'Empleado desconocido'}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {formatFileSize(document.fileSize)}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {(() => {
+                                // La fecha del servidor está en UTC, convertir a hora local española
+                                const utcDate = new Date(document.createdAt);
+                                // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
+                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
+                              })()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDocument(document.id, document.originalName)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(document.id, document.originalName)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => confirmDelete(document.id, document.originalName)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewDocument(document.id, document.originalName)}
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No se encontraron documentos
+                  </h3>
+                  <p className="text-gray-600">
+                    {searchTerm || selectedEmployee !== 'all'
+                      ? 'Ajusta los filtros para ver más resultados'
+                      : 'Los documentos aparecerán aquí cuando los empleados los suban'}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'requests' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Send className="h-5 w-5 mr-2" />
+                Gestión de Solicitudes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Send New Request */}
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <h3 className="font-medium text-gray-900 mb-4">Enviar Nueva Solicitud</h3>
+                <div className="space-y-4">
+                  {/* Document Type Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tipo de Documento
+                    </label>
+                    <Select value={documentType} onValueChange={setDocumentType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el tipo de documento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {documentTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>
+                            <div className="flex items-center">
+                              <type.icon className="h-4 w-4 mr-2" />
+                              {type.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Message */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mensaje (opcional)
+                    </label>
+                    <Input
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Mensaje personalizado para los empleados"
+                    />
+                  </div>
+
+                  {/* Employee Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Empleados ({selectedEmployees.length} seleccionados)
+                    </label>
+                    <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-white">
+                      {employees.map((employee: Employee) => (
+                        <div
+                          key={employee.id}
+                          onClick={() => toggleEmployee(employee.id)}
+                          className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+                            selectedEmployees.includes(employee.id)
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'hover:bg-gray-50'
+                          }`}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(document.id, document.originalName)}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => confirmDelete(document.id, document.originalName)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                          <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
+                            selectedEmployees.includes(employee.id)
+                              ? 'bg-blue-600 border-blue-600'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedEmployees.includes(employee.id) && (
+                              <div className="w-2 h-2 bg-white rounded-sm" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{employee.fullName}</div>
+                            <div className="text-sm text-gray-600">{employee.email}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+
+                  <Button
+                    onClick={handleSendRequest}
+                    disabled={sendDocumentMutation.isPending || selectedEmployees.length === 0 || !documentType}
+                    className="w-full"
+                  >
+                    {sendDocumentMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No se encontraron documentos
-                </h3>
-                <p className="text-gray-600">
-                  {searchTerm || selectedEmployee !== 'all'
-                    ? 'Ajusta los filtros para ver más resultados'
-                    : 'Los documentos aparecerán aquí cuando los empleados los suban'}
-                </p>
+
+              {/* Sent Requests History */}
+              <div>
+                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes</h3>
+                <div className="text-center py-8 text-gray-500">
+                  <Send className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p>Funcionalidad en desarrollo</p>
+                  <p className="text-sm">Próximamente podrás ver y gestionar todas las solicitudes enviadas</p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Smart Upload Preview Dialog */}
         <Dialog open={showUploadPreview} onOpenChange={setShowUploadPreview}>
