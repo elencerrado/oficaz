@@ -139,8 +139,18 @@ export default function Documents() {
       // Mark request as completed if active
       if (activeRequest && pendingRequest) {
         try {
-          await apiRequest('PATCH', `/api/document-notifications/${pendingRequest.id}/complete`);
-          queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+          const response = await fetch(`/api/document-notifications/${pendingRequest.id}/complete`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (!response.ok) {
+            console.error('Failed to complete notification');
+          } else {
+            queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+          }
         } catch (error) {
           console.error('Error completing request:', error);
         }
