@@ -71,6 +71,7 @@ export default function Messages() {
   const [modalGroupMode, setModalGroupMode] = useState(false);
   const [modalSelectedEmployees, setModalSelectedEmployees] = useState<number[]>([]);
   const [modalMessage, setModalMessage] = useState('');
+  const [modalSearchTerm, setModalSearchTerm] = useState('');
 
   // Queries
   const { data: messages, isLoading: messagesLoading } = useQuery({
@@ -230,6 +231,7 @@ export default function Messages() {
     setModalGroupMode(false);
     setModalSelectedEmployees([]);
     setModalMessage('');
+    setModalSearchTerm('');
   };
 
   const startIndividualChat = (employeeId: number) => {
@@ -490,10 +492,26 @@ export default function Messages() {
                   </Button>
                 </div>
 
+                {/* Modal Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
+                  <Input
+                    placeholder="Buscar empleado..."
+                    value={modalSearchTerm}
+                    onChange={(e) => setModalSearchTerm(e.target.value)}
+                    className="input-oficaz bg-gray-50"
+                    style={{ paddingLeft: '2.75rem' }}
+                  />
+                </div>
+
                 {/* Employee List */}
                 <div className="max-h-64 overflow-y-auto border rounded-lg">
                   <div className="p-2 space-y-1">
-                    {filteredEmployees.map((employee) => (
+                    {filteredEmployees
+                      .filter(employee => 
+                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+                      )
+                      .map((employee) => (
                       <div
                         key={employee.id}
                         className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover:bg-gray-50 ${
@@ -542,7 +560,13 @@ export default function Messages() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => setModalSelectedEmployees(filteredEmployees.map(e => e.id))}
+                          onClick={() => setModalSelectedEmployees(
+                            filteredEmployees
+                              .filter(employee => 
+                                employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+                              )
+                              .map(e => e.id)
+                          )}
                         >
                           Todos
                         </Button>
