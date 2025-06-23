@@ -184,48 +184,18 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Initial scroll (instant) when opening chat
+  // Auto-scroll simple que funciona
   useEffect(() => {
-    if (selectedChat) {
-      setTimeout(() => {
-        const desktopContainer = document.getElementById('desktop-messages-container');
-        if (desktopContainer) {
-          desktopContainer.scrollTop = desktopContainer.scrollHeight;
-        }
-        
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
-        }
-      }, 50);
+    if (selectedChat && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
     }
   }, [selectedChat]);
 
-  // Smooth scroll for new messages only
-  const previousMessageCount = useRef(0);
   useEffect(() => {
-    if (messages && selectedChat) {
-      const currentCount = messages.length;
-      const hasNewMessages = currentCount > previousMessageCount.current;
-      
-      if (hasNewMessages && previousMessageCount.current > 0) {
-        setTimeout(() => {
-          const desktopContainer = document.getElementById('desktop-messages-container');
-          if (desktopContainer) {
-            desktopContainer.scrollTo({
-              top: desktopContainer.scrollHeight,
-              behavior: 'smooth'
-            });
-          }
-          
-          if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-          }
-        }, 100);
-      }
-      
-      previousMessageCount.current = currentCount;
+    if (messages && messages.length > 0 && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, selectedChat]);
+  }, [messages]);
 
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
@@ -524,8 +494,6 @@ export default function Messages() {
                   <div 
                     ref={messagesContainerRef} 
                     className="flex-1 overflow-y-auto p-4 bg-gray-50"
-                    id="desktop-messages-container"
-                    style={{ scrollBehavior: 'smooth' }}
                   >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
