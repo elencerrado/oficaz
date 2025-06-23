@@ -269,11 +269,42 @@ export default function AdminDocuments() {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
     
-    // Extract date info if present
-    const dateMatch = originalName.match(/(\d{4}|\d{1,2}\/\d{4}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i);
-    const dateInfo = dateMatch ? ` ${dateMatch[0]}` : '';
+    // Extract and format date info if present
+    let dateInfo = '';
     
-    // Format: "Nómina Enero 2025 - Juan José Ramírez Martín.pdf"
+    // Try to find year first
+    const yearMatch = originalName.match(/20\d{2}/);
+    const currentYear = new Date().getFullYear();
+    const year = yearMatch ? yearMatch[0] : currentYear.toString();
+    
+    // Try to find month
+    const monthMatch = originalName.match(/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})/i);
+    
+    if (monthMatch) {
+      const monthStr = monthMatch[0].toLowerCase();
+      // Convert month to proper Spanish format
+      const monthMap: { [key: string]: string } = {
+        'enero': 'Enero', 'jan': 'Enero', '01': 'Enero', '1': 'Enero',
+        'febrero': 'Febrero', 'feb': 'Febrero', '02': 'Febrero', '2': 'Febrero',
+        'marzo': 'Marzo', 'mar': 'Marzo', '03': 'Marzo', '3': 'Marzo',
+        'abril': 'Abril', 'apr': 'Abril', '04': 'Abril', '4': 'Abril',
+        'mayo': 'Mayo', 'may': 'Mayo', '05': 'Mayo', '5': 'Mayo',
+        'junio': 'Junio', 'jun': 'Junio', '06': 'Junio', '6': 'Junio',
+        'julio': 'Julio', 'jul': 'Julio', '07': 'Julio', '7': 'Julio',
+        'agosto': 'Agosto', 'aug': 'Agosto', '08': 'Agosto', '8': 'Agosto',
+        'septiembre': 'Septiembre', 'sep': 'Septiembre', '09': 'Septiembre', '9': 'Septiembre',
+        'octubre': 'Octubre', 'oct': 'Octubre', '10': 'Octubre',
+        'noviembre': 'Noviembre', 'nov': 'Noviembre', '11': 'Noviembre',
+        'diciembre': 'Diciembre', 'dec': 'Diciembre', '12': 'Diciembre'
+      };
+      
+      const cleanMonth = monthMap[monthStr] || monthStr.charAt(0).toUpperCase() + monthStr.slice(1);
+      dateInfo = ` ${cleanMonth} ${year}`;
+    } else if (yearMatch) {
+      dateInfo = ` ${year}`;
+    }
+    
+    // Format: "Nómina Junio 2025 - Juan José Ramírez Martín.pdf"
     return `${docTypeName}${dateInfo} - ${cleanEmployeeName}.${extension}`;
   };
 

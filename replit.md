@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema completo de gestión inteligente de documentos implementado
+  - Drag & drop inteligente con detección automática de empleados por nombre
+  - Detección de tipos de documento por palabras clave configurables
+  - Corrección automática de nombres: mayúsculas, fechas completas con año, nombres completos
+  - Sistema de eliminación completo: base de datos + archivos físicos del servidor
+  - Modal de preview con análisis de confianza y corrección manual antes de subir
+  - Formato estándar: "Tipo Documento Mes Año - Nombre Completo Empleado.ext"
+  - Ejemplo: "nomina junio 2025 - juan jose.pdf" → "Nómina Junio 2025 - Juan José Ramírez Martín.pdf"
+  - Seguridad por roles: admin/manager pueden eliminar documentos de su empresa
 - June 23, 2025. Títulos de páginas empleado estandarizados con formato consistente
   - Todas las páginas empleado ahora usan text-3xl font-bold text-white mb-2
   - Subtítulos descriptivos con text-white/70 text-sm unificados
