@@ -51,6 +51,10 @@ export default function Documents() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  console.log('User in documents:', user);
+  console.log('Document notifications:', documentNotifications);
+  console.log('Pending request:', pendingRequest);
+  
   // Extract company alias from URL robustly
   const [location] = useLocation();
   const urlParts = location.split('/').filter((part: string) => part.length > 0);
@@ -211,17 +215,7 @@ export default function Documents() {
     setIsUploading(true);
     
     const formData = new FormData();
-    
-    // Create proper filename based on request type and user name
-    if (activeRequest && user) {
-      const fileExtension = file.name.split('.').pop();
-      const requestType = activeRequest.type || 'Documento';
-      const customFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
-      const renamedFile = new File([file], customFileName, { type: file.type });
-      formData.append('file', renamedFile);
-    } else {
-      formData.append('file', file);
-    }
+    formData.append('file', file);
     
     uploadMutation.mutate(formData);
   };
