@@ -262,6 +262,10 @@ export default function Messages() {
     });
   };
 
+  const handleSendMessage = () => {
+    sendMessage();
+  };
+
   const getChatMessages = (chatId: number) => {
     if (!messages) return [];
     return (messages as Message[]).filter(msg => 
@@ -269,6 +273,11 @@ export default function Messages() {
       (msg.receiverId === user?.id && msg.senderId === chatId)
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   };
+
+  // Get selected chat user and messages for employee view
+  const selectedChatUser = selectedChat ? 
+    (managers?.find(m => m.id === selectedChat) || employees?.find(e => e.id === selectedChat)) : null;
+  const chatMessages = selectedChat ? getChatMessages(selectedChat) : [];
 
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
@@ -898,40 +907,41 @@ export default function Messages() {
               const unreadCount = managerMessages.filter(m => !m.isRead && m.receiverId === user?.id).length;
 
               return (
-                <Link
+                <div 
                   key={manager.id}
-                  href={`/${companyAlias}/mensajes?chat=${manager.id}`}
-                  className="block"
+                  onClick={() => {
+                    console.log('Opening chat for manager:', manager.id, manager.fullName);
+                    setSelectedChat(manager.id);
+                  }}
+                  className="bg-white/10 rounded-lg p-4 backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
                 >
-                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm hover:bg-white/20 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-white font-medium truncate">{manager.fullName}</p>
-                          {unreadCount > 0 && (
-                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full ml-2">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        {lastMessage && (
-                          <p className="text-white/70 text-sm truncate mt-1">
-                            {lastMessage.content}
-                          </p>
-                        )}
-                        {lastMessage && (
-                          <p className="text-white/50 text-xs mt-1">
-                            {format(new Date(lastMessage.createdAt), 'dd/MM/yyyy', { locale: es })}
-                          </p>
-                        )}
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-white/50" />
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-white" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-white font-medium truncate">{manager.fullName}</p>
+                        {unreadCount > 0 && (
+                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      {lastMessage && (
+                        <p className="text-white/70 text-sm truncate mt-1">
+                          {lastMessage.content}
+                        </p>
+                      )}
+                      {lastMessage && (
+                        <p className="text-white/50 text-xs mt-1">
+                          {format(new Date(lastMessage.createdAt), 'dd/MM/yyyy', { locale: es })}
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-white/50" />
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
