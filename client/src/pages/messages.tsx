@@ -1022,38 +1022,27 @@ export default function Messages() {
       ) : (
         /* Chat Interface - Employee version - PROTECTED FROM ADMIN CHANGES */
         <div className="h-screen flex flex-col bg-white overflow-hidden">
-          {/* Chat Header - EMPLOYEE FIXED VERSION FOR IPHONE */}
-          <div 
-            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200/20 flex-shrink-0"
-            style={{
-              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
-              position: 'sticky',
-              top: 0,
-              zIndex: 10
-            }}
-          >
+          {/* Chat Header - EXACT COPY FROM ADMIN MOBILE THAT WORKS */}
+          <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedChat(null)}
-              className="p-2 text-white hover:bg-white/10"
+              className="p-2"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat)?.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+            <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+              <span className="text-white font-medium">
+                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </span>
             </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium">
-                {((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat)?.fullName || 'Chat'}
-              </p>
-              <div className="text-white/70 text-xs">
-                {getRoleDisplay(((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat))}
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {selectedChatUser?.fullName}
+              </h3>
+              <div className="text-sm text-gray-500">
+                {getRoleDisplay(selectedChatUser)}
               </div>
             </div>
           </div>
