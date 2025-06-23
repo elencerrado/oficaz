@@ -140,6 +140,22 @@ export default function Messages() {
     },
   });
 
+  // Send message function for employee
+  const handleSendEmployeeMessage = useCallback(async () => {
+    if (!newMessage.trim() || !selectedChat) return;
+    
+    try {
+      await sendMessageMutation.mutateAsync({
+        receiverId: selectedChat,
+        content: newMessage.trim(),
+        subject: "Chat"
+      });
+      setNewMessage("");
+    } catch (error) {
+      console.error('Error sending employee message:', error);
+    }
+  }, [newMessage, selectedChat, sendMessageMutation]);
+
   // All effects together
   useEffect(() => {
     if (selectedChat) {
@@ -153,18 +169,21 @@ export default function Messages() {
   }, [selectedChat, user?.role, managers, employees]);
 
   useEffect(() => {
-    const chatMessages = messages as Message[] || [];
-    const unreadMessages = chatMessages.filter(msg => 
-      !msg.isRead && 
-      msg.receiverId === user?.id && 
-      selectedChat && 
-      msg.senderId === selectedChat
-    );
-    
-    unreadMessages.forEach(msg => {
-      markAsReadMutation.mutate(msg.id);
-    });
-  }, [selectedChat, messages, user?.id, markAsReadMutation]);
+    if (selectedChat && messages.length > 0 && !markAsReadMutation.isPending) {
+      const chatMessages = messages as Message[] || [];
+      const unreadMessages = chatMessages.filter(msg => 
+        !msg.isRead && 
+        msg.receiverId === user?.id && 
+        msg.senderId === selectedChat
+      );
+      
+      if (unreadMessages.length > 0) {
+        unreadMessages.forEach(msg => {
+          markAsReadMutation.mutate(msg.id);
+        });
+      }
+    }
+  }, [selectedChat, messages.length, user?.id]); // Removed markAsReadMutation from deps
 
   useEffect(() => {
     const handleKeyboardVisibility = () => {
@@ -1167,7 +1186,7 @@ export default function Messages() {
                     placeholder="Escribe tu mensaje..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
                     className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -1176,7 +1195,7 @@ export default function Messages() {
                     }}
                   />
                   <Button
-                    onClick={sendMessage}
+                    onClick={handleSendEmployeeMessage}
                     disabled={!newMessage.trim()}
                     className="bg-blue-500 hover:bg-blue-600 text-white border-0"
                   >
