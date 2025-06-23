@@ -169,24 +169,26 @@ export default function Messages() {
     }
   }, [selectedChat, employees, managers]);
 
-  // Effects for auto-scroll - Enhanced for mobile fullscreen
+  // Auto-scroll for desktop when chat changes
   useEffect(() => {
-    if (selectedChat) {
-      // Force scroll immediately on chat selection
-      const scrollMobileChat = () => {
-        const container = document.querySelector('.z-\\[60\\] .overflow-y-auto');
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      };
-      
-      // Multiple attempts with increasing delays for mobile rendering
-      setTimeout(scrollMobileChat, 50);
-      setTimeout(scrollMobileChat, 200);
-      setTimeout(scrollMobileChat, 400);
-      setTimeout(scrollMobileChat, 600);
+    if (selectedChat && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [selectedChat]);
+
+  // Auto-scroll for desktop when new messages arrive
+  useEffect(() => {
+    if (messages && messagesContainerRef.current) {
+      const shouldAutoScroll = messagesContainerRef.current.scrollTop + messagesContainerRef.current.clientHeight >= messagesContainerRef.current.scrollHeight - 50;
+      if (shouldAutoScroll) {
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      }
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (selectedChat && messages) {
@@ -476,6 +478,7 @@ export default function Messages() {
                           <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
                         </div>
                       )}
+                      <div ref={messagesEndRef} />
                     </div>
                   </div>
 
