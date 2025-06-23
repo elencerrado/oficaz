@@ -196,76 +196,63 @@ export default function Messages() {
     }
   }, [selectedChat, user?.role]);
 
-  // Auto-scroll for desktop when chat changes (instantaneous for chat opening)
-  useEffect(() => {
-    if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
-      // Instant scroll to bottom when opening a chat - no animation
-      messagesContainerRef.current.style.scrollBehavior = 'auto';
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-      // Restore smooth behavior for subsequent scrolls
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.style.scrollBehavior = 'smooth';
-        }
-      }, 50);
-    }
-  }, [selectedChat, user?.role]);
+  // Auto-scroll system optimized by view type
+  const isAdminDesktop = user?.role !== 'employee' && window.innerWidth >= 1024;
+  const isAdminMobile = user?.role !== 'employee' && window.innerWidth < 1024;
+  const isEmployeeMobile = user?.role === 'employee';
 
-  // Auto-scroll for desktop when new messages arrive
+  // Desktop admin: instant scroll on chat open, smooth on new messages
   useEffect(() => {
-    if (messages && messagesContainerRef.current && selectedChat && user?.role !== 'employee') {
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTo({
-            top: messagesContainerRef.current.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      }, 150);
-    }
-  }, [messages, selectedChat, user?.role]);
-
-  // Auto-scroll for mobile chat when messages change (smooth for new messages)
-  useEffect(() => {
-    if (messages && selectedChat) {
-      setTimeout(() => {
-        // Employee mobile view
-        const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
-        if (employeeMobileContainer) {
-          employeeMobileContainer.scrollTo({
-            top: employeeMobileContainer.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-        
-        // Admin mobile view
-        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
-        if (adminMobileContainer) {
-          adminMobileContainer.scrollTo({
-            top: adminMobileContainer.scrollHeight,
-            behavior: 'smooth'
-          });
-        }
-      }, 150);
-    }
-  }, [messages]);
-
-  // Instant scroll to bottom when opening mobile chat
-  useEffect(() => {
-    if (selectedChat) {
-      // Employee mobile view - instant scroll when opening chat
-      const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
-      if (employeeMobileContainer) {
-        employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
+    if (!isAdminDesktop || !selectedChat || !messagesContainerRef.current) return;
+    
+    messagesContainerRef.current.style.scrollBehavior = 'auto';
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.style.scrollBehavior = 'smooth';
       }
-      
-      // Admin mobile view - instant scroll when opening chat
+    }, 50);
+  }, [selectedChat, isAdminDesktop]);
+
+  useEffect(() => {
+    if (!isAdminDesktop || !messages || !selectedChat || !messagesContainerRef.current) return;
+    
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  }, [messages, isAdminDesktop]);
+
+  // Mobile views: unified scroll handler
+  useEffect(() => {
+    if (!selectedChat || isAdminDesktop) return;
+    
+    const scrollToBottom = (smooth = false) => {
+      const employeeContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
       const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
-      if (adminMobileContainer) {
-        adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+      
+      const container = isEmployeeMobile ? employeeContainer : adminMobileContainer;
+      if (container) {
+        if (smooth) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        } else {
+          container.scrollTop = container.scrollHeight;
+        }
       }
+    };
+
+    // Instant scroll on chat open
+    scrollToBottom(false);
+    
+    // Smooth scroll on new messages
+    if (messages) {
+      setTimeout(() => scrollToBottom(true), 100);
     }
-  }, [selectedChat]);
+  }, [selectedChat, messages, isAdminMobile, isEmployeeMobile]);
 
   // Mark messages as read
   useEffect(() => {
@@ -518,8 +505,8 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
                     <div className="space-y-4">
-                      {getChatMessages(selectedChat).length > 0 ? (
-                        getChatMessages(selectedChat).map((message) => (
+                      {chatMessages.length > 0 ? (
+                        chatMessages.map((message) => (
                           <div
                             key={message.id}
                             className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
@@ -579,11 +566,11 @@ export default function Messages() {
                         placeholder="Escribe tu mensaje..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                         className="input-oficaz flex-1"
                       />
                       <Button
-                        onClick={sendMessage}
+                        onClick={handleSendMessage}
                         disabled={!newMessage.trim()}
                         className="btn-oficaz-primary"
                       >
@@ -684,12 +671,12 @@ export default function Messages() {
                 </Button>
                 <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
                   <span className="text-white font-medium">
-                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </span>
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                    {selectedChatUser?.fullName}
                   </h3>
                   <p className="text-sm text-gray-500">Empleado</p>
                 </div>
@@ -709,8 +696,8 @@ export default function Messages() {
               >
                 <div className="flex-1"></div>
                 <div className="space-y-4">
-                  {getChatMessages(selectedChat).length > 0 ? (
-                    getChatMessages(selectedChat).map((message) => (
+                  {chatMessages.length > 0 ? (
+                    chatMessages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
