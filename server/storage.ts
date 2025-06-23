@@ -444,9 +444,16 @@ export class DrizzleStorage implements IStorage {
         dn.is_completed as "isCompleted",
         dn.due_date as "dueDate",
         dn.created_at as "createdAt",
-        u.full_name as "userFullName"
+        u.full_name as "userFullName",
+        d.id as "documentId",
+        d.file_name as "documentFileName",
+        d.original_name as "documentOriginalName",
+        d.created_at as "documentUploadedAt"
       FROM document_notifications dn
       LEFT JOIN users u ON dn.user_id = u.id  
+      LEFT JOIN documents d ON d.user_id = dn.user_id 
+        AND d.original_name ILIKE CONCAT('%', dn.document_type, '%')
+        AND d.created_at > dn.created_at
       WHERE u.company_id = ${companyId}
       ORDER BY dn.created_at DESC
     `);
@@ -463,7 +470,13 @@ export class DrizzleStorage implements IStorage {
         id: row.userId,
         fullName: row.userFullName || 'Empleado',
         email: ''
-      }
+      },
+      document: row.documentId ? {
+        id: row.documentId,
+        fileName: row.documentFileName,
+        originalName: row.documentOriginalName,
+        uploadedAt: row.documentUploadedAt
+      } : null
     })) as DocumentNotification[];
   }
 

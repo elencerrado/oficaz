@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Historial de solicitudes funcionando completamente con documentos recibidos
+  - Sistema de pestañas "Solicitudes" totalmente operativo mostrando historial real
+  - JOIN optimizado entre document_notifications, users y documents
+  - Muestra empleado destinatario, tipo documento, estado (pendiente/completado) y fecha
+  - Indica qué documento se subió en respuesta a cada solicitud con banner verde
+  - Query SQL directa evitando problemas de Drizzle ORM con nested selects
+  - Auto-refresh cada 3 segundos para actualizar estado de solicitudes en tiempo real
 - June 23, 2025. Interface de documentos admin rediseñada con sistema de pestañas completo
   - Convertidas tarjetas en 3 pestañas modernas: Subir Documentos, Explorador, Solicitudes
   - Drag & drop mantenido en pestaña "Subir Documentos" con detección inteligente
