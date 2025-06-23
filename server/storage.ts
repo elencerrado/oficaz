@@ -402,7 +402,6 @@ export class DrizzleStorage implements IStorage {
 
   // Document Notifications methods
   async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
-    // Usar SQL directo para empleados también
     const results = await db.execute(sql`
       SELECT 
         dn.id,
@@ -412,15 +411,13 @@ export class DrizzleStorage implements IStorage {
         dn.is_completed as "isCompleted",
         dn.due_date as "dueDate",
         dn.created_at as "createdAt",
-        u.full_name as "userFullName",
-        u.email as "userEmail"
+        u.full_name as "userFullName"
       FROM document_notifications dn
       LEFT JOIN users u ON dn.user_id = u.id  
       WHERE dn.user_id = ${userId}
       ORDER BY dn.created_at DESC
     `);
 
-    // Transformar a formato esperado
     return results.rows.map((row: any) => ({
       id: row.id,
       userId: row.userId,
@@ -432,13 +429,12 @@ export class DrizzleStorage implements IStorage {
       user: {
         id: row.userId,
         fullName: row.userFullName || 'Empleado',
-        email: row.userEmail || ''
+        email: ''
       }
     })) as DocumentNotification[];
   }
 
   async getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]> {
-    // Simplificar completamente - obtener notificaciones directamente por join
     const results = await db.execute(sql`
       SELECT 
         dn.id,
@@ -448,15 +444,13 @@ export class DrizzleStorage implements IStorage {
         dn.is_completed as "isCompleted",
         dn.due_date as "dueDate",
         dn.created_at as "createdAt",
-        u.full_name as "userFullName",
-        u.email as "userEmail"
+        u.full_name as "userFullName"
       FROM document_notifications dn
       LEFT JOIN users u ON dn.user_id = u.id  
       WHERE u.company_id = ${companyId}
       ORDER BY dn.created_at DESC
     `);
 
-    // Transformar a formato esperado
     return results.rows.map((row: any) => ({
       id: row.id,
       userId: row.userId,
@@ -468,7 +462,7 @@ export class DrizzleStorage implements IStorage {
       user: {
         id: row.userId,
         fullName: row.userFullName || 'Empleado',
-        email: row.userEmail || ''
+        email: ''
       }
     })) as DocumentNotification[];
   }
