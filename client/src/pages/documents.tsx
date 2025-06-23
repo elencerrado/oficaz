@@ -113,10 +113,7 @@ export default function Documents() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      
+    mutationFn: async (formData: FormData) => {
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
@@ -134,11 +131,13 @@ export default function Documents() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
       toast({
         title: 'Documento subido',
         description: 'Tu documento se ha subido correctamente.',
       });
       setIsUploading(false);
+      setActiveRequest(null); // Cerrar modal automáticamente
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
