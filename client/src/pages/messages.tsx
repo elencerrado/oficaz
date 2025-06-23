@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -234,6 +234,8 @@ export default function Messages() {
     setNewMessage('');
     setSelectedEmployees([]);
     setIsGroupMode(false);
+    // Scroll to bottom after sending group message
+    setTimeout(() => scrollToBottom(), 200);
   };
 
   const toggleEmployeeSelection = (employeeId: number) => {
