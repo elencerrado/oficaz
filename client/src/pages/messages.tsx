@@ -1029,26 +1029,31 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - EXACT COPY FROM ADMIN MOBILE LINE 666 */}
-              <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
+              {/* Chat Header - EMPLOYEE DARK VERSION */}
+              <div 
+                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
+                style={{
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+                }}
+              >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedChat(null)}
-                  className="p-2"
+                  className="p-2 text-white hover:bg-white/10"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-5 h-5 text-white" />
                 </Button>
-                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-medium">
                     {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-white">
                     {selectedChatUser?.fullName}
                   </h3>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-white/70">
                     {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
