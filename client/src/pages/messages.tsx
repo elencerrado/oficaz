@@ -913,8 +913,8 @@ export default function Messages() {
         {/* Managers List */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            Responsables
+            <MessageCircle className="h-5 w-5 mr-2" />
+            Conversaciones
           </h3>
           <div className="space-y-3">
             {managers?.map(manager => {
@@ -966,37 +966,7 @@ export default function Messages() {
           </div>
         </div>
 
-        {/* System Notifications */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
-            Notificaciones del Sistema
-          </h3>
-          <div className="space-y-3">
-            {(messages as Message[] || [])
-              .filter(msg => msg.subject.includes('nómina') || msg.subject.includes('documento') || msg.subject.includes('fichaje'))
-              .slice(0, 3)
-              .map(msg => (
-                <div key={msg.id} className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-                  <div className="flex items-start space-x-3">
-                    {getMessageIcon(msg.subject.includes('nómina') ? 'payroll' : 
-                                   msg.subject.includes('documento') ? 'document' : 'reminder')}
-                    <div className="flex-1">
-                      <p className="text-white font-medium">{getNotificationMessage(msg.subject)}</p>
-                      <p className="text-white/70 text-sm mt-1">{msg.content}</p>
-                      <p className="text-white/50 text-xs mt-2">
-                        {format(new Date(msg.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}
-                      </p>
-                    </div>
-                    {!msg.isRead && (
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    )}
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </div>
+
 
         {/* Chat View for Selected Manager */}
         {selectedChat && (
