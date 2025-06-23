@@ -181,6 +181,25 @@ export default function Messages() {
     }
   }, [selectedChat, employees, managers]);
 
+  // Disable body scroll when mobile chat is open (employee view only)
+  useEffect(() => {
+    if (user?.role === 'employee' && selectedChat) {
+      // Disable scroll on body and prevent touch events from propagating
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      
+      return () => {
+        // Re-enable scroll when chat closes
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+      };
+    }
+  }, [selectedChat, user?.role]);
+
   // Auto-scroll for desktop when chat changes (only for admin/manager view)
   useEffect(() => {
     if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
@@ -981,9 +1000,9 @@ export default function Messages() {
 
         {/* Chat View for Selected Manager */}
         {selectedChat && (
-          <div className="fixed inset-0 bg-employee-gradient z-[60] flex flex-col">
+          <div className="fixed inset-0 bg-employee-gradient z-[60] flex flex-col touch-pan-y">
             {/* Chat Header */}
-            <div className="flex items-center p-4 border-b border-white/10">
+            <div className="flex items-center p-4 border-b border-white/10 flex-shrink-0">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -1005,22 +1024,24 @@ export default function Messages() {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {chatMessages?.map((message) => (
-                <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
-                    <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                      {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                    </p>
+            {/* Messages Container - isolated scroll */}
+            <div className="flex-1 relative min-h-0">
+              <div className="absolute inset-0 overflow-y-auto overscroll-contain p-4 space-y-4">
+                {chatMessages?.map((message) => (
+                  <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
+                      <p className="text-sm">{message.content}</p>
+                      <p className={`text-xs mt-1 ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                        {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Message Input */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-white/10 flex-shrink-0">
               <div className="flex space-x-2">
                 <Input
                   value={newMessage}
