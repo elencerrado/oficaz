@@ -572,8 +572,8 @@ export default function Messages() {
               </div>
 
               {/* Messages - Scrollable area */}
-              <div className="flex-1 overflow-y-auto px-4 py-4 bg-gray-50">
-                <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto px-4 bg-gray-50" style={{ paddingBottom: '8px' }}>
+                <div className="space-y-4 pt-4">
                   {getChatMessages(selectedChat).length > 0 ? (
                     getChatMessages(selectedChat).map((message) => (
                       <div
@@ -603,8 +603,6 @@ export default function Messages() {
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
-                  {/* Small spacer to ensure scroll goes to the very bottom */}
-                  <div style={{ height: '16px', width: '100%' }} />
                 </div>
               </div>
 
