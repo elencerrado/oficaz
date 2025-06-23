@@ -347,12 +347,13 @@ export default function Messages() {
                 
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
                   <Input
                     placeholder="Buscar conversación..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50 pl-10 pr-4"
+                    className="input-oficaz bg-gray-50"
+                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   />
                 </div>
               </div>
@@ -689,12 +690,13 @@ export default function Messages() {
 
                 {/* Modal Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
                   <Input
                     placeholder="Buscar empleado..."
                     value={modalSearchTerm}
                     onChange={(e) => setModalSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50 pl-10 pr-4"
+                    className="input-oficaz bg-gray-50"
+                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   />
                 </div>
 
