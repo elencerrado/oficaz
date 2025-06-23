@@ -331,6 +331,28 @@ export class DrizzleStorage implements IStorage {
       .orderBy(desc(schema.documents.createdAt));
   }
 
+  async getDocumentsByCompany(companyId: number): Promise<Document[]> {
+    const documents = await db
+      .select({
+        id: schema.documents.id,
+        userId: schema.documents.userId,
+        fileName: schema.documents.fileName,
+        originalName: schema.documents.originalName,
+        fileSize: schema.documents.fileSize,
+        filePath: schema.documents.filePath,
+        createdAt: schema.documents.createdAt,
+        user: {
+          fullName: schema.users.fullName,
+        },
+      })
+      .from(schema.documents)
+      .innerJoin(schema.users, eq(schema.documents.userId, schema.users.id))
+      .where(eq(schema.users.companyId, companyId))
+      .orderBy(desc(schema.documents.createdAt));
+    
+    return documents;
+  }
+
   async getDocument(id: number): Promise<Document | undefined> {
     const [document] = await db.select().from(schema.documents).where(eq(schema.documents.id, id));
     return document;

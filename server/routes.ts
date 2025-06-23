@@ -595,6 +595,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all documents for admin/manager view
+  app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const documents = await storage.getDocumentsByCompany(req.user!.companyId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching all documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  // Admin upload documents (can specify target employee)
+  app.post('/api/documents/upload-admin', authenticateToken, requireRole(['admin', 'manager']), upload.single('file'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const targetEmployeeId = req.body.targetEmployeeId ? parseInt(req.body.targetEmployeeId) : req.user!.id;
+      
+      // Verify target employee belongs to same company
+      const targetEmployee = await storage.getUser(targetEmployeeId);
+      if (!targetEmployee || targetEmployee.companyId !== req.user!.companyId) {
+        return res.status(403).json({ message: 'Cannot upload documents for employees outside your company' });
+      }
+
+      const document = await storage.createDocument({
+        userId: targetEmployeeId,
+        fileName: req.file.filename,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        filePath: req.file.path,
+      });
+
+      res.status(201).json(document);
+    } catch (error) {
+      console.error("Error uploading admin document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  // Send document request to employees
+  app.post('/api/documents/request', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { employeeIds, documentType, message, dueDate } = req.body;
+
+      if (!employeeIds || !Array.isArray(employeeIds) || employeeIds.length === 0) {
+        return res.status(400).json({ message: 'Employee IDs required' });
+      }
+
+      if (!documentType) {
+        return res.status(400).json({ message: 'Document type required' });
+      }
+
+      // Verify all employees belong to same company
+      for (const employeeId of employeeIds) {
+        const employee = await storage.getUser(employeeId);
+        if (!employee || employee.companyId !== req.user!.companyId) {
+          return res.status(403).json({ message: 'Cannot send requests to employees outside your company' });
+        }
+      }
+
+      // Create document notifications for each employee
+      const notifications = [];
+      for (const employeeId of employeeIds) {
+        const notification = await storage.createDocumentNotification({
+          userId: employeeId,
+          documentType,
+          message: message || `Por favor, sube tu ${documentType}`,
+          dueDate: dueDate ? new Date(dueDate) : null,
+          completed: false,
+        });
+        notifications.push(notification);
+      }
+
+      res.status(201).json({ 
+        message: 'Document requests sent successfully',
+        notifications 
+      });
+    } catch (error) {
+      console.error("Error sending document request:", error);
+      res.status(500).json({ message: "Failed to send document request" });
+    }
+  });
+
   app.get('/api/documents/:id/download', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
