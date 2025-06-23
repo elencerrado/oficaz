@@ -135,6 +135,7 @@ export default function AdminDocuments() {
       return await apiRequest('POST', '/api/documents/request', data);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
       toast({
         title: 'Solicitud enviada',
         description: 'Se ha enviado la solicitud de documento a los empleados seleccionados',
