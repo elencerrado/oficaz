@@ -90,6 +90,13 @@ export default function VacationManagement() {
     return differenceInDays(end, start) + 1;
   };
 
+  // Company and user data
+  const { data: companyData } = useQuery({
+    queryKey: ['/api/companies/current']
+  });
+
+  const company = companyData as any;
+
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
@@ -104,6 +111,13 @@ export default function VacationManagement() {
       }));
     }
   });
+
+  // Update selected region when company data loads
+  useEffect(() => {
+    if (company?.province && company.province !== selectedRegion) {
+      setSelectedRegion(company.province);
+    }
+  }, [company?.province, selectedRegion]);
 
   // Fetch employees for vacation overview
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
