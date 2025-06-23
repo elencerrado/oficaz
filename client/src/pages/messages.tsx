@@ -274,10 +274,10 @@ export default function Messages() {
     return <PageLoading message="Cargando mensajes..." />;
   }
 
-  // Filter employees based on search
+  // Filter employees based on search and exclude current user
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
   const filteredEmployees = contactList.filter(person => 
-    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
   );
 
   // Admin/Manager view
@@ -509,7 +509,7 @@ export default function Messages() {
                   <div className="p-2 space-y-1">
                     {filteredEmployees
                       .filter(employee => 
-                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
                       )
                       .map((employee) => (
                       <div
@@ -567,7 +567,7 @@ export default function Messages() {
                           onClick={() => setModalSelectedEmployees(
                             filteredEmployees
                               .filter(employee => 
-                                employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase())
+                                employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
                               )
                               .map(e => e.id)
                           )}
