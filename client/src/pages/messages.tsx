@@ -208,14 +208,20 @@ export default function Messages() {
 
   // Desktop scroll - force scroll to bottom using container
   useEffect(() => {
-    if (messagesContainerRef.current && selectedChat) {
-      const container = messagesContainerRef.current;
-      const scrollToBottom = () => {
-        container.scrollTop = container.scrollHeight;
-      };
+    if (selectedChat && messages && messages.length > 0) {
+      // Try both methods for desktop auto-scroll
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 200);
+      }
       
-      const timer = setTimeout(scrollToBottom, 150);
-      return () => clearTimeout(timer);
+      if (messagesEndRef.current) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 250);
+      }
     }
   }, [messages, selectedChat]);
 
@@ -513,7 +519,11 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable middle section */}
-                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                  <div 
+                    ref={messagesContainerRef} 
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50"
+                    id="desktop-messages-container"
+                  >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
                         messagesGroupedByDate.map((group) => (
