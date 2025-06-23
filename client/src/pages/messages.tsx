@@ -214,18 +214,26 @@ export default function Messages() {
         
         [desktopContainer, mobileContainer, messagesContainerRef.current].forEach(container => {
           if (container) {
-            container.scrollTop = container.scrollHeight;
+            // Forzar scroll hasta el final máximo
+            container.scrollTop = container.scrollHeight + 100; // +100 para asegurar que llega al final
             console.log(`Scrolled container: scrollTop=${container.scrollTop}, scrollHeight=${container.scrollHeight}`);
           }
         });
 
-        // También usar messagesEndRef
+        // También usar messagesEndRef con comportamiento más agresivo
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'instant',
             block: 'end',
             inline: 'nearest'
           });
+          // Segundo intento con smooth para asegurar
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'end'
+            });
+          }, 50);
           console.log('Used messagesEndRef.scrollIntoView');
         }
       };
