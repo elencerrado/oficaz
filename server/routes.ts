@@ -700,7 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           documentType,
           message: message || `Por favor, sube tu ${documentType}`,
           dueDate: dueDate ? new Date(dueDate) : null,
-          completed: false,
+          isCompleted: false,
           createdBy: req.user!.id, // Add the admin who created the request
         });
         notifications.push(notification);
@@ -1318,9 +1318,21 @@ startxref
   // Legacy document notifications endpoints (backward compatibility)
   app.get('/api/document-notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const notifications = await storage.getDocumentNotificationsByUser(req.user!.id);
-      res.json(notifications);
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      
+      // Si es admin/manager, obtener todas las solicitudes de su empresa
+      if (userRole === 'admin' || userRole === 'manager') {
+        const companyId = req.user!.companyId;
+        const notifications = await storage.getDocumentNotificationsByCompany(companyId);
+        res.json(notifications);
+      } else {
+        // Si es empleado, solo sus notificaciones
+        const notifications = await storage.getDocumentNotificationsByUser(userId);
+        res.json(notifications);
+      }
     } catch (error: any) {
+      console.error("Error fetching document notifications:", error);
       res.status(500).json({ message: error.message });
     }
   });
