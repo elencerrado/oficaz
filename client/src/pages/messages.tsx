@@ -955,6 +955,15 @@ export default function Messages() {
               </div>
             </div>
           </div>
+          
+          {/* Page Title */}
+          <div className="px-6 pb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
+            <p className="text-white/70 text-sm">
+              Comunícate con tus responsables y mantente al día
+            </p>
+          </div>
+          
           <div className="px-4 py-6 space-y-6">
 
           {/* Managers list */}
