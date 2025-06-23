@@ -692,6 +692,7 @@ export default function Messages() {
               </div>
               {/* Messages - Scrollable area with bounce prevention */}
               <div 
+                ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 flex flex-col" 
                 style={{ 
                   paddingBottom: '20px',
@@ -765,6 +766,7 @@ export default function Messages() {
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
               {/* Message Input - Fixed at bottom */}
