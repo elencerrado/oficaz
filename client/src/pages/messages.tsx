@@ -1020,57 +1020,39 @@ export default function Messages() {
         </div>
         </>
       ) : (
-        /* Chat Interface - Employee version - SAFARI iOS COMPATIBLE */
-        <div 
-          className="h-screen flex flex-col bg-white"
-          style={{
-            height: '100vh',
-            height: '100dvh', // Modern viewport height
-            overflow: 'hidden',
-            position: 'relative',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
-          {/* Chat Header - SAFARI iOS COMPATIBLE VERSION */}
-          <div 
-            className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white"
-            style={{
-              minHeight: '60px',
-              position: 'relative',
-              zIndex: 1000,
-              backgroundColor: 'white',
-              borderBottom: '1px solid #e5e7eb',
-              flexShrink: 0,
-              WebkitTransform: 'translateZ(0)', // Force hardware acceleration
-              transform: 'translateZ(0)'
-            }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedChat(null)}
-              className="p-2"
-              style={{ flexShrink: 0 }}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
+            /* Chat View - EXACT COPY FROM ADMIN MOBILE LINE 657 */
             <div 
-              className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center"
-              style={{ flexShrink: 0 }}
+              className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
+              style={{ 
+                touchAction: 'manipulation',
+                overscrollBehavior: 'none',
+                position: 'fixed'
+              }}
             >
-              <span className="text-white font-medium">
-                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </span>
-            </div>
-            <div style={{ flexGrow: 1, minWidth: 0 }}>
-              <h3 className="font-semibold text-gray-900" style={{ margin: 0, padding: 0 }}>
-                {selectedChatUser?.fullName}
-              </h3>
-              <div className="text-sm text-gray-500" style={{ margin: 0, padding: 0 }}>
-                {getRoleDisplay(selectedChatUser)}
+              {/* Chat Header - EXACT COPY FROM ADMIN MOBILE LINE 666 */}
+              <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedChat(null)}
+                  className="p-2"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium">
+                    {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedChatUser?.fullName}
+                  </h3>
+                  <div className="text-sm text-gray-500">
+                    {getRoleDisplay(selectedChatUser)}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
           {/* Messages Area - Scrollable */}
           <div 
