@@ -62,11 +62,6 @@ export default function Documents() {
     enabled: !!user,
   });
 
-  // Debug logs
-  console.log('User in documents:', user);
-  console.log('Document notifications:', documentNotifications);
-  console.log('Pending request:', pendingRequest);
-
   // Convert notifications to DocumentRequest format
   const documentRequests: DocumentRequest[] = (documentNotifications as any[] || []).map((notification: any) => ({
     id: notification.id,
