@@ -293,6 +293,13 @@ export default function Messages() {
     );
   }, []);
 
+  // Role display for employee view - without icon, only text
+  const getRoleDisplayEmployee = useCallback((person: any) => {
+    if (!person) return null;
+    const displayText = person.jobTitle || person.position || 'Sin cargo definido';
+    return <span>{displayText}</span>;
+  }, []);
+
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
     setModalSelectedEmployees(prev => 
@@ -1047,7 +1054,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-white/70">
-                    {getRoleDisplay(selectedChatUser)}
+                    {getRoleDisplayEmployee(selectedChatUser)}
                   </div>
                 </div>
               </div>
