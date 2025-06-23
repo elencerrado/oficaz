@@ -43,7 +43,7 @@ const quickUsers: QuickUser[] = [
   {
     id: "marta-perez",
     name: "Marta Pérez García",
-    email: "juan.perez@test.com",
+    email: "marta.perez@test.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -54,7 +54,7 @@ const quickUsers: QuickUser[] = [
   {
     id: "juan-ramirez",
     name: "Juan José Ramírez Martín",
-    email: "j.ramirez@test.es",
+    email: "juanramirez2@gmail.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
