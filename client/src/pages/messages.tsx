@@ -203,28 +203,35 @@ export default function Messages() {
     }
   }, [selectedChat, user?.role]);
 
-  // Auto-scroll for desktop when new messages arrive (only for admin/manager view)
+  // Auto-scroll for desktop when new messages arrive
   useEffect(() => {
-    if (messages && messagesContainerRef.current && user?.role !== 'employee') {
+    if (messages && messagesContainerRef.current && selectedChat && user?.role !== 'employee') {
       setTimeout(() => {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
       }, 150);
     }
-  }, [messages, user?.role]);
+  }, [messages, selectedChat, user?.role]);
 
-  // Auto-scroll for mobile chat
+  // Auto-scroll for mobile chat (both admin mobile and employee views)
   useEffect(() => {
-    if (selectedChat && messages && user?.role === 'employee') {
+    if (selectedChat && messages) {
       setTimeout(() => {
-        const mobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
-        if (mobileContainer) {
-          mobileContainer.scrollTop = mobileContainer.scrollHeight;
+        // Employee mobile view
+        const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
+        if (employeeMobileContainer) {
+          employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
+        }
+        
+        // Admin mobile view
+        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
+        if (adminMobileContainer) {
+          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
         }
       }, 150);
     }
-  }, [messages, selectedChat, user?.role]);
+  }, [messages, selectedChat]);
 
   // Mark messages as read
   useEffect(() => {
