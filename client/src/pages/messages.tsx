@@ -321,7 +321,7 @@ export default function Messages() {
                     placeholder="Buscar empleado..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz pl-10 bg-gray-50"
+                    className="input-oficaz pl-12 bg-gray-50"
                   />
                 </div>
               </div>
