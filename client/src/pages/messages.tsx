@@ -520,8 +520,8 @@ export default function Messages() {
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                 message.senderId === user?.id
-                                  ? 'bg-oficaz-primary text-white'
-                                  : 'bg-white text-gray-900 border border-gray-200'
+                                  ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
+                                  : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
                               }`}
                             >
                               <p className="text-sm">{message.content}</p>
@@ -711,8 +711,8 @@ export default function Messages() {
                         <div
                           className={`max-w-xs px-4 py-2 rounded-lg ${
                             message.senderId === user?.id
-                              ? 'bg-oficaz-primary text-white'
-                              : 'bg-white text-gray-900 border border-gray-200'
+                              ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
+                              : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
@@ -1064,7 +1064,7 @@ export default function Messages() {
                 <div className="space-y-4">
                   {chatMessages?.map((message) => (
                     <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
+                      <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
                         <p className="text-sm">{message.content}</p>
                         <div className="flex items-center justify-between mt-1">
                           <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
