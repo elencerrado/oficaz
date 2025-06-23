@@ -129,9 +129,20 @@ export default function Documents() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+      
+      // Mark request as completed if active
+      if (activeRequest && pendingRequest) {
+        try {
+          await apiRequest('PATCH', `/api/document-notifications/${pendingRequest.id}/complete`);
+          queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+        } catch (error) {
+          console.error('Error completing request:', error);
+        }
+      }
+      
       toast({
         title: 'Documento subido',
         description: 'Tu documento se ha subido correctamente.',
@@ -260,8 +271,7 @@ export default function Documents() {
       return matchesSearch && getDocumentCategory(doc.originalName) === selectedCategory;
     });
 
-  // Get pending document request
-  const pendingRequest = documentRequests.find(req => !req.completed);
+  // Moved above to be accessible in uploadMutation
 
   const handleCompleteRequest = () => {
     if (activeRequest) {
