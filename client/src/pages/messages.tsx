@@ -457,6 +457,141 @@ export default function Messages() {
             </div>
         </div>
 
+        {/* Mobile Layout for Admin/Manager */}
+        <div className="lg:hidden">
+          {!selectedChat ? (
+            /* Employee List View */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Conversaciones</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openAddChatModal}
+                  className="btn-oficaz-primary"
+                >
+                  <Plus className="icon-sm mr-1" />
+                  Nuevo
+                </Button>
+              </div>
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
+                <Input
+                  placeholder="Buscar empleado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-oficaz bg-gray-50 pl-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                {filteredEmployees.map((employee) => (
+                  <div
+                    key={employee.id}
+                    className="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+                    onClick={() => setSelectedChat(employee.id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-sm">
+                          {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {employee.fullName}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          Empleado
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Chat View */
+            <div className="space-y-4">
+              {/* Chat Header with Back Button */}
+              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedChat(null)}
+                  className="p-2"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium">
+                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                  </h3>
+                  <p className="text-sm text-gray-500">Empleado</p>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="space-y-4 min-h-[400px] max-h-[400px] overflow-y-auto">
+                {getChatMessages(selectedChat).length > 0 ? (
+                  getChatMessages(selectedChat).map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs px-4 py-2 rounded-lg ${
+                          message.senderId === user?.id
+                            ? 'bg-oficaz-primary text-white'
+                            : 'bg-white text-gray-900 border border-gray-200'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        <p className={`text-xs mt-1 ${
+                          message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                        }`}>
+                          {format(new Date(message.createdAt), 'HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No hay mensajes aún</p>
+                    <p className="text-sm">Envía el primer mensaje para comenzar</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="flex space-x-2 pt-4 border-t border-gray-200">
+                <Input
+                  ref={messageInputRef}
+                  placeholder="Escribe tu mensaje..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  className="input-oficaz flex-1"
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                  className="btn-oficaz-primary"
+                >
+                  <Send className="icon-sm" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Add Chat Modal */}
         <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
             <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
