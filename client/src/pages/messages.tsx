@@ -526,7 +526,11 @@ export default function Messages() {
                             <input
                               type="checkbox"
                               checked={modalSelectedEmployees.includes(employee.id)}
-                              onChange={() => toggleModalEmployeeSelection(employee.id)}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleModalEmployeeSelection(employee.id);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
                               className="rounded"
                             />
                           )}
