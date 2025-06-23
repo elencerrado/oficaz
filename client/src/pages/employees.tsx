@@ -639,8 +639,11 @@ export default function Employees() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium text-gray-900 truncate pr-2">{employee.fullName}</p>
+                            <div className="flex items-start justify-between mb-1">
+                              <div className="flex-1 min-w-0 pr-3">
+                                <p className="font-medium text-gray-900 truncate mb-1">{employee.fullName}</p>
+                                <p className="text-sm text-gray-500 truncate">{employee.position || 'Sin cargo especificado'}</p>
+                              </div>
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
                                   {employee.role === 'admin' ? 'A' : 
@@ -651,7 +654,6 @@ export default function Employees() {
                                 </Badge>
                               </div>
                             </div>
-                            <p className="text-sm text-gray-500 truncate">{employee.position || 'Sin cargo especificado'}</p>
                             <div className="space-y-1 mt-1">
                               <div className="flex items-center gap-1 text-sm text-gray-500">
                                 <Mail className="h-3 w-3" />
