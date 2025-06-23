@@ -468,10 +468,12 @@ export default function AdminDocuments() {
       return;
     }
 
+    const documentTypeName = documentTypes.find(t => t.id === documentType)?.name || documentType;
+    
     sendDocumentMutation.mutate({
       employeeIds: selectedEmployees,
-      documentType,
-      message: message || `Por favor, sube tu ${documentTypes.find(t => t.id === documentType)?.name}`,
+      documentType: documentTypeName,
+      message: message || `Por favor, sube tu ${documentTypeName.toLowerCase()}`,
     });
   };
 

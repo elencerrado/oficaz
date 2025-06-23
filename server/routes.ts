@@ -685,6 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: message || `Por favor, sube tu ${documentType}`,
           dueDate: dueDate ? new Date(dueDate) : null,
           completed: false,
+          createdBy: req.user!.id, // Add the admin who created the request
         });
         notifications.push(notification);
       }
