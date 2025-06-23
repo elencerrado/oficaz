@@ -383,12 +383,18 @@ export default function AdminDocuments() {
           ...item, 
           employee,
           // Update suggested clean filename
-          suggestedName: employee ? generateCleanFileName(item.file.name, employee, item.documentType) : undefined
+          suggestedName: employee ? generateCleanFileName(item.file.name, employee) : undefined
         };
       }
       return item;
     }));
-  };
+  }
+
+  const updateSuggestedName = (index: number, newName: string) => {
+    setUploadAnalysis(prev => prev.map((item, i) => 
+      i === index ? { ...item, suggestedName: newName } : item
+    ));
+  };;
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
