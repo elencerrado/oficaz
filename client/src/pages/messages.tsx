@@ -1011,11 +1011,12 @@ export default function Messages() {
       ) : (
         /* Chat Interface - Full screen */
         <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - Same as employee-time-tracking with back button */}
+          {/* Chat Header - With chat user info */}
           <div 
-            className="flex items-center justify-between p-6 pb-8 h-20"
+            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
             style={{
-              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
             }}
           >
             <Button
@@ -1026,12 +1027,19 @@ export default function Messages() {
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="text-right">
-              <div className="text-white text-sm font-medium">
-                {company?.name || 'Test Company'}
-              </div>
+            
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium text-sm">
+                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </span>
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-medium">
+                {selectedChatUser?.fullName || 'Chat'}
+              </p>
               <div className="text-white/70 text-xs">
-                {user?.fullName}
+                {getRoleDisplay(selectedChatUser)}
               </div>
             </div>
           </div>
