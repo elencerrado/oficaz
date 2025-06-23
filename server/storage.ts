@@ -508,6 +508,12 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
+  async deleteDocumentNotification(id: number): Promise<boolean> {
+    const result = await db.delete(schema.documentNotifications)
+      .where(eq(schema.documentNotifications.id, id));
+    return result.rowCount > 0;
+  }
+
   // Unified Notifications implementation
   async getNotificationsByUser(userId: number): Promise<SystemNotification[]> {
     return await db.select().from(schema.systemNotifications)

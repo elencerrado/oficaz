@@ -243,6 +243,42 @@ export default function AdminDocuments() {
     },
   });
 
+  // Delete document request mutation
+  const deleteRequestMutation = useMutation({
+    mutationFn: async (requestId: number) => {
+      const response = await fetch(`/api/document-notifications/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar solicitud');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Force refresh the requests list
+      queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+      queryClient.refetchQueries({ queryKey: ['/api/document-notifications'] });
+      toast({
+        title: 'Solicitud eliminada',
+        description: 'La solicitud se ha eliminado correctamente',
+      });
+    },
+    onError: (error: any) => {
+      console.error('Delete request error:', error);
+      toast({
+        title: 'Error al eliminar solicitud',
+        description: error.message || 'No se pudo eliminar la solicitud',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Smart file analysis functions
   const analyzeFileName = (fileName: string) => {
     const normalizedName = fileName.toLowerCase()
@@ -592,6 +628,12 @@ export default function AdminDocuments() {
   const handleDelete = () => {
     if (deleteConfirm.docId) {
       deleteMutation.mutate(deleteConfirm.docId);
+    }
+  };
+
+  const handleDeleteRequest = (requestId: number, documentType: string) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar permanentemente la solicitud de ${documentType}? Esta acción no se puede deshacer.`)) {
+      deleteRequestMutation.mutate(requestId);
     }
   };
 
@@ -1080,7 +1122,7 @@ export default function AdminDocuments() {
                                 variant="destructive"
                                 size="sm"
                                 onClick={() => handleDeleteRequest(request.id, request.documentType)}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-white hover:text-white bg-red-600 hover:bg-red-700"
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
                                 Eliminar
