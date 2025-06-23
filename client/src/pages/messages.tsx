@@ -19,7 +19,8 @@ import {
   Search,
   Users,
   X,
-  Plus
+  Plus,
+  ChevronRight
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 import { format } from 'date-fns';
@@ -870,6 +871,62 @@ export default function Messages() {
       </div>
 
       <div className="flex-1 flex flex-col px-6">
+        {/* Managers List */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Responsables
+          </h3>
+          <div className="space-y-3">
+            {managers?.map(manager => {
+              const managerMessages = (messages as Message[] || []).filter(m => 
+                (m.senderId === manager.id && m.receiverId === user?.id) ||
+                (m.senderId === user?.id && m.receiverId === manager.id)
+              );
+              const lastMessage = managerMessages[managerMessages.length - 1];
+              const unreadCount = managerMessages.filter(m => !m.isRead && m.receiverId === user?.id).length;
+
+              return (
+                <Link
+                  key={manager.id}
+                  href={`/${companyAlias}/mensajes?chat=${manager.id}`}
+                  className="block"
+                >
+                  <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm hover:bg-white/20 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <User className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-white font-medium truncate">{manager.fullName}</p>
+                          {unreadCount > 0 && (
+                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full ml-2">
+                              {unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        {lastMessage && (
+                          <p className="text-white/70 text-sm truncate mt-1">
+                            {lastMessage.content}
+                          </p>
+                        )}
+                        {lastMessage && (
+                          <p className="text-white/50 text-xs mt-1">
+                            {format(new Date(lastMessage.createdAt), 'dd/MM/yyyy', { locale: es })}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-white/50" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* System Notifications */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
             <Bell className="h-5 w-5 mr-2" />
@@ -900,6 +957,73 @@ export default function Messages() {
             }
           </div>
         </div>
+
+        {/* Chat View for Selected Manager */}
+        {selectedChat && (
+          <div className="fixed inset-0 bg-employee-gradient z-[60] flex flex-col">
+            {/* Chat Header */}
+            <div className="flex items-center p-4 border-b border-white/10">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSelectedChat(null)}
+                className="text-white hover:bg-white/10 mr-3"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-medium">
+                    {selectedChatUser?.fullName || 'Chat'}
+                  </p>
+                  <p className="text-white/70 text-xs">Responsable</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {chatMessages?.map((message) => (
+                <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
+                    <p className="text-sm">{message.content}</p>
+                    <p className={`text-xs mt-1 ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                      {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-white/10">
+              <div className="flex space-x-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Escribe tu mensaje..."
+                  className="flex-1 bg-white/10 border-white/20 text-white placeholder-white/50"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
