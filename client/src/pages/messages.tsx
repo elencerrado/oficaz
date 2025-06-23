@@ -513,9 +513,9 @@ export default function Messages() {
             </div>
           ) : (
             /* Chat View */
-            <div className="h-screen flex flex-col">
-              {/* Chat Header with Back Button */}
-              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200 flex-shrink-0 bg-white pt-4">
+            <div className="fixed inset-0 top-20 bg-white z-30 flex flex-col">
+              {/* Chat Header with Back Button - Fixed at top */}
+              <div className="fixed top-20 left-0 right-0 flex items-center space-x-3 p-4 border-b border-gray-200 bg-white z-40 lg:hidden">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -537,40 +537,48 @@ export default function Messages() {
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 py-4 mb-20">
-                {getChatMessages(selectedChat).length > 0 ? (
-                  getChatMessages(selectedChat).map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                    >
+              {/* Messages - Single scroll area */}
+              <div 
+                className="flex-1 overflow-y-auto px-4 pt-20 pb-4"
+                style={{ 
+                  marginTop: '80px', /* Header height */
+                  marginBottom: '80px' /* Input height */
+                }}
+              >
+                <div className="space-y-4">
+                  {getChatMessages(selectedChat).length > 0 ? (
+                    getChatMessages(selectedChat).map((message) => (
                       <div
-                        className={`max-w-xs px-4 py-2 rounded-lg ${
-                          message.senderId === user?.id
-                            ? 'bg-oficaz-primary text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
-                        }`}
+                        key={message.id}
+                        className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p className="text-sm">{message.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                        }`}>
-                          {format(new Date(message.createdAt), 'HH:mm')}
-                        </p>
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-lg ${
+                            message.senderId === user?.id
+                              ? 'bg-oficaz-primary text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                          }`}>
+                            {format(new Date(message.createdAt), 'HH:mm')}
+                          </p>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No hay mensajes aún</p>
+                      <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No hay mensajes aún</p>
-                    <p className="text-sm">Envía el primer mensaje para comenzar</p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Message Input - Fixed at bottom with position fixed */}
+              {/* Message Input - Fixed at bottom */}
               <div 
                 className="fixed bottom-0 left-0 right-0 flex space-x-2 p-4 border-t border-gray-200 bg-white z-50 lg:hidden"
                 style={{
