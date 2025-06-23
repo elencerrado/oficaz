@@ -215,12 +215,40 @@ export default function AdminDocuments() {
     };
   };
 
-  const handleFileUpload = async (file: File, targetEmployeeId?: number) => {
+  const generateCleanFileName = (originalName: string, employee: Employee, docType: string) => {
+    const extension = originalName.split('.').pop()?.toLowerCase() || 'pdf';
+    
+    // Get document type name
+    const docTypeName = documentTypes.find(type => type.id === docType)?.name || 'Documento';
+    
+    // Format employee name (capitalize each word)
+    const cleanEmployeeName = employee.fullName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+    
+    // Extract date info if present
+    const dateMatch = originalName.match(/(\d{4}|\d{1,2}\/\d{4}|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)/i);
+    const dateInfo = dateMatch ? ` ${dateMatch[0]}` : '';
+    
+    // Format: "Nómina Enero 2025 - Juan José Ramírez Martín.pdf"
+    return `${docTypeName}${dateInfo} - ${cleanEmployeeName}.${extension}`;
+  };
+
+  const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string) => {
     if (!file) return;
     
     setIsUploading(true);
     const formData = new FormData();
-    formData.append('file', file);
+    
+    // Create a new file with the clean name if provided
+    if (cleanFileName) {
+      const renamedFile = new File([file], cleanFileName, { type: file.type });
+      formData.append('file', renamedFile);
+    } else {
+      formData.append('file', file);
+    }
+    
     if (targetEmployeeId) {
       formData.append('targetEmployeeId', targetEmployeeId.toString());
     }
@@ -232,12 +260,19 @@ export default function AdminDocuments() {
     setIsUploading(true);
     try {
       for (const analysis of uploadAnalysis) {
-        await handleFileUpload(analysis.file, analysis.employee?.id);
+        if (analysis.employee) {
+          const cleanFileName = generateCleanFileName(
+            analysis.file.name, 
+            analysis.employee, 
+            analysis.documentType
+          );
+          await handleFileUpload(analysis.file, analysis.employee.id, cleanFileName);
+        }
       }
       
       toast({
         title: "Documentos procesados",
-        description: `${uploadAnalysis.length} documento(s) subido(s) correctamente`,
+        description: `${uploadAnalysis.length} documento(s) subido(s) correctamente con nombres corregidos`,
       });
       
       setShowUploadPreview(false);
@@ -254,11 +289,18 @@ export default function AdminDocuments() {
   };
 
   const updateAnalysisEmployee = (index: number, employeeId: number) => {
-    setUploadAnalysis(prev => prev.map((item, i) => 
-      i === index 
-        ? { ...item, employee: employees.find(emp => emp.id === employeeId) }
-        : item
-    ));
+    setUploadAnalysis(prev => prev.map((item, i) => {
+      if (i === index) {
+        const employee = employees.find(emp => emp.id === employeeId);
+        return { 
+          ...item, 
+          employee,
+          // Update suggested clean filename
+          suggestedName: employee ? generateCleanFileName(item.file.name, employee, item.documentType) : undefined
+        };
+      }
+      return item;
+    }));
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -280,10 +322,14 @@ export default function AdminDocuments() {
     if (validFiles.length === 0) return;
     
     // Analyze all files and show preview
-    const analysisResults = validFiles.map(file => ({
-      file,
-      ...analyzeFileName(file.name)
-    }));
+    const analysisResults = validFiles.map(file => {
+      const analysis = analyzeFileName(file.name);
+      return {
+        file,
+        ...analysis,
+        suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
+      };
+    });
     
     setUploadAnalysis(analysisResults);
     setShowUploadPreview(true);
@@ -565,10 +611,14 @@ export default function AdminDocuments() {
                   onChange={(e) => {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
-                      const analysisResults = files.map(file => ({
-                        file,
-                        ...analyzeFileName(file.name)
-                      }));
+                      const analysisResults = files.map(file => {
+                        const analysis = analyzeFileName(file.name);
+                        return {
+                          file,
+                          ...analysis,
+                          suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
+                        };
+                      });
                       setUploadAnalysis(analysisResults);
                       setShowUploadPreview(true);
                     }
@@ -714,6 +764,11 @@ export default function AdminDocuments() {
                         <h3 className="font-medium text-gray-900 mb-1">
                           {analysis.file.name}
                         </h3>
+                        {analysis.suggestedName && (
+                          <p className="text-sm text-blue-600 mb-1">
+                            📝 Nombre sugerido: {analysis.suggestedName}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-500">
                           {formatFileSize(analysis.file.size)}
                         </p>
