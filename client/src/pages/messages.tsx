@@ -1124,8 +1124,8 @@ export default function Messages() {
                       <p className="text-sm">Envía tu primer mensaje</p>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
+                <div ref={messagesEndRef} />
               </div>
               {/* Message Input - Fixed at bottom - DARK THEME */}
               <div 
