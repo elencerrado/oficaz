@@ -574,7 +574,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileName: req.file.filename,
         originalName: req.file.originalname,
         fileSize: req.file.size,
-        mimeType: req.file.mimetype,
+        filePath: req.file.path,
+        mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
 
@@ -627,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalName: req.file.originalname,
         fileSize: req.file.size,
         filePath: req.file.path,
-        mimeType: req.file.mimetype,
+        mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
 

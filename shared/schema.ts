@@ -131,8 +131,9 @@ export const documents = pgTable("documents", {
   fileName: text("file_name").notNull(),
   originalName: text("original_name").notNull(),
   fileSize: integer("file_size").notNull(),
-  mimeType: text("mime_type").notNull(),
-  uploadedBy: integer("uploaded_by").references(() => users.id).notNull(),
+  mimeType: text("mime_type"),
+  filePath: text("file_path"),
+  uploadedBy: integer("uploaded_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
