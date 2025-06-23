@@ -57,23 +57,10 @@ export default function Messages() {
   const { toast } = useToast();
   const [location] = useLocation();
   const queryClient = useQueryClient();
-  const companyAlias = location.split('/')[1];
 
   // All state declarations together
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<number | null>(() => {
-    // Check URL parameters for chat selection
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatParam = urlParams.get('chat');
-    if (chatParam) {
-      const chatId = parseInt(chatParam);
-      console.log('Found chat parameter in URL:', chatId);
-      // Clean URL without triggering navigation
-      window.history.replaceState({}, '', window.location.pathname);
-      return chatId;
-    }
-    return null;
-  });
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +74,7 @@ export default function Messages() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
 
-  // Queries
+  // Queries - always run in same order
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/messages'],
     enabled: !!user,
@@ -97,15 +84,28 @@ export default function Messages() {
 
   const { data: managers } = useQuery({
     queryKey: ['/api/managers'],
-    enabled: user?.role === 'employee',
+    enabled: !!user && user.role === 'employee',
     staleTime: 60000,
   });
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
-    enabled: user?.role === 'admin' || user?.role === 'manager',
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 60000,
   });
+
+  // Initialize selected chat from URL only once after user is loaded
+  useEffect(() => {
+    if (user && selectedChat === null) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatParam = urlParams.get('chat');
+      if (chatParam) {
+        const chatId = parseInt(chatParam);
+        setSelectedChat(chatId);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [user, selectedChat]);
 
   // Mutations
   const sendMessageMutation = useMutation({
@@ -461,8 +461,15 @@ export default function Messages() {
     };
   }, [filteredEmployees]);
 
+  // Early return if no user
+  if (!user) {
+    return <PageLoading />;
+  }
+
+  const companyAlias = location.split('/')[1];
+
   // Admin/Manager view
-  if (user?.role === 'admin' || user?.role === 'manager') {
+  if (user.role === 'admin' || user.role === 'manager') {
     return (
       <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
         {/* Header */}
