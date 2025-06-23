@@ -473,17 +473,67 @@ export default function AdminDocuments() {
     return FileText; // Simplified for now
   };
 
-  const handleViewDocument = (docId: number, fileName: string) => {
-    const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
-    window.open(`/api/documents/${docId}/download?view=true&token=${token}`, '_blank');
+  const handleViewDocument = async (docId: number, fileName: string) => {
+    try {
+      const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
+      const response = await fetch(`/api/documents/${docId}/download?view=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab for preview
+      window.open(url, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 60000); // 1 minute cleanup
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        title: 'Error al ver documento',
+        description: 'No se pudo abrir el documento para vista previa',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleDownload = (docId: number, fileName: string) => {
-    const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
-    const link = document.createElement('a');
-    link.href = `/api/documents/${docId}/download?download=true&token=${token}`;
-    link.download = fileName;
-    link.click();
+  const handleDownload = async (docId: number, fileName: string) => {
+    try {
+      const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
+      const response = await fetch(`/api/documents/${docId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: 'Error al descargar',
+        description: 'No se pudo descargar el documento',
+        variant: 'destructive',
+      });
+    }
   };
 
   const confirmDelete = (docId: number, docName: string) => {
