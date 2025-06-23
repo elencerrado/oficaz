@@ -52,10 +52,42 @@ interface Document {
 }
 
 const documentTypes = [
-  { id: 'nomina', name: 'Nómina', icon: DollarSign },
-  { id: 'contrato', name: 'Contrato', icon: FileCheck },
-  { id: 'dni', name: 'DNI', icon: User },
-  { id: 'otros', name: 'Otros', icon: FileText }
+  { 
+    id: 'nomina', 
+    name: 'Nómina', 
+    icon: FileText,
+    keywords: ['nomina', 'payroll', 'salary', 'salario', 'sueldo']
+  },
+  { 
+    id: 'contrato', 
+    name: 'Contrato', 
+    icon: FileCheck,
+    keywords: ['contrato', 'contract', 'agreement', 'acuerdo']
+  },
+  { 
+    id: 'certificado', 
+    name: 'Certificado Médico', 
+    icon: Heart,
+    keywords: ['certificado', 'medico', 'medical', 'doctor', 'baja']
+  },
+  { 
+    id: 'vacaciones', 
+    name: 'Solicitud Vacaciones', 
+    icon: Plane,
+    keywords: ['vacaciones', 'vacation', 'holiday', 'permiso']
+  },
+  { 
+    id: 'dni', 
+    name: 'DNI', 
+    icon: User,
+    keywords: ['dni', 'documento', 'identidad', 'cedula', 'id']
+  },
+  { 
+    id: 'otros', 
+    name: 'Otros', 
+    icon: File,
+    keywords: []
+  }
 ];
 
 export default function AdminDocuments() {
