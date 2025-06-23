@@ -454,13 +454,97 @@ export default function VacationManagement() {
                   {filteredRequests.map((request: VacationRequest) => (
                     <div
                       key={request.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                      className="p-4 border rounded-lg hover:bg-gray-50"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                      {/* Desktop: layout horizontal */}
+                      <div className="hidden md:flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
+                            {getStatusBadge(request.status)}
+                          </div>
+                          <div className="text-sm text-gray-600 space-y-1">
+                            <p>
+                              <span className="font-medium">Fechas:</span>{" "}
+                              {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
+                              {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                            </p>
+                            <p>
+                              <span className="font-medium">Días:</span> {
+                                request.startDate && request.endDate 
+                                  ? calculateDays(request.startDate, request.endDate)
+                                  : request.days || "N/A"
+                              }
+                            </p>
+                            {request.reason && (
+                              <p>
+                                <span className="font-medium">Motivo:</span> {request.reason}
+                              </p>
+                            )}
+                            <p>
+                              <span className="font-medium">Solicitado:</span>{" "}
+                              {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
+                               request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2 ml-4">
+                          {request.status === 'pending' ? (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => openRequestModal(request, 'approve')}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Aprobar
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => openRequestModal(request, 'edit')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Edit className="w-4 h-4 mr-1" />
+                                Modificar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openRequestModal(request, 'deny')}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Denegar
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="flex gap-2">
+                              {request.status === 'approved' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openRequestModal(request, 'revert')}
+                                  className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                >
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Revertir
+                                </Button>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Mobile: layout vertical */}
+                      <div className="md:hidden space-y-3">
+                        <div className="flex items-center justify-between">
                           <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
                           {getStatusBadge(request.status)}
                         </div>
+                        
                         <div className="text-sm text-gray-600 space-y-1">
                           <p>
                             <span className="font-medium">Fechas:</span>{" "}
@@ -485,15 +569,14 @@ export default function VacationManagement() {
                              request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                         </div>
-                      </div>
-                      
-                      <div className="flex gap-2 ml-4">
+
+                        {/* Mobile action buttons */}
                         {request.status === 'pending' ? (
-                          <>
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="bg-green-600 hover:bg-green-700 text-white flex-1 min-w-0"
                             >
                               <Check className="w-4 h-4 mr-1" />
                               Aprobar
@@ -501,20 +584,21 @@ export default function VacationManagement() {
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              className="bg-blue-600 hover:bg-blue-700 text-white flex-1 min-w-0"
                             >
                               <Edit className="w-4 h-4 mr-1" />
-                              Modificar
+                              Editar
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => openRequestModal(request, 'deny')}
+                              className="flex-1 min-w-0"
                             >
                               <X className="w-4 h-4 mr-1" />
                               Denegar
                             </Button>
-                          </>
+                          </div>
                         ) : (
                           <div className="flex gap-2">
                             {request.status === 'approved' && (
@@ -528,9 +612,6 @@ export default function VacationManagement() {
                                 Revertir
                               </Button>
                             )}
-                            <Badge variant="outline" className="text-xs">
-                              {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
-                            </Badge>
                           </div>
                         )}
                       </div>
