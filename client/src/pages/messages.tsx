@@ -23,6 +23,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
+import { EmployeeHeader } from '@/components/ui/employee-header';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -924,15 +925,15 @@ export default function Messages() {
     }}>
       {!selectedChat ? (
         /* Employee Dashboard - List of managers */
-        <div className="px-4 py-6 space-y-6">
-          {/* Header with company branding */}
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 bg-white/10 rounded-xl mx-auto flex items-center justify-center mb-4">
-              <MessageCircle className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-white text-xl font-semibold">Mensajes</h1>
-            <p className="text-white/70 text-sm">Contacta con tus responsables</p>
-          </div>
+        <>
+          {/* Universal Header */}
+          <EmployeeHeader
+            title="Mensajes"
+            companyName="Test Company"
+            showLogout={true}
+          />
+          
+          <div className="px-4 py-6 space-y-6">
 
           {/* Managers list */}
           <div className="space-y-3">
@@ -990,41 +991,18 @@ export default function Messages() {
             )}
           </div>
         </div>
+        </>
       ) : (
         /* Chat Interface - Full screen */
         <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - Fixed */}
-          <div 
-            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
-            style={{
-              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
-            }}
-          >
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedChat(null)}
-              className="p-2 text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </span>
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium">
-                {selectedChatUser?.fullName || 'Chat'}
-              </p>
-              <div className="text-white/70 text-xs">
-                {getRoleDisplay(selectedChatUser)}
-              </div>
-            </div>
-          </div>
+          {/* Chat Header - Using universal component */}
+          <EmployeeHeader
+            title={selectedChatUser?.fullName || 'Chat'}
+            companyName="Test Company"
+            showBackButton={true}
+            onBackClick={() => setSelectedChat(null)}
+            showLogout={false}
+          />
 
           {/* Messages Area - Scrollable */}
           <div 
