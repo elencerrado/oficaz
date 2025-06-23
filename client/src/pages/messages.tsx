@@ -301,18 +301,50 @@ export default function Messages() {
     sendMessage();
   };
 
-  const getChatMessages = (chatId: number) => {
-    if (!messages) return [];
+  // Optimized helper functions with memoization
+  const getChatMessages = useCallback((chatId: number) => {
+    if (!messages || !user) return [];
     return (messages as Message[]).filter(msg => 
       (msg.senderId === user?.id && msg.receiverId === chatId) ||
       (msg.receiverId === user?.id && msg.senderId === chatId)
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  };
+  }, [messages, user]);
+
+  // Group messages by date for date separators
+  const getMessagesGroupedByDate = useCallback((chatId: number) => {
+    const chatMessages = getChatMessages(chatId);
+    const groups: { [date: string]: Message[] } = {};
+    
+    chatMessages.forEach(message => {
+      const dateKey = format(new Date(message.createdAt), 'yyyy-MM-dd');
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(message);
+    });
+    
+    return Object.entries(groups).map(([date, messages]) => ({
+      date,
+      messages,
+      dateFormatted: format(new Date(date), "EEEE, d 'de' MMMM yyyy", { locale: es })
+    }));
+  }, [getChatMessages]);
 
   // Get selected chat user and messages for employee view
-  const selectedChatUser = selectedChat ? 
-    (managers?.find(m => m.id === selectedChat) || employees?.find(e => e.id === selectedChat)) : null;
-  const chatMessages = selectedChat ? getChatMessages(selectedChat) : [];
+  const selectedChatUser = useMemo(() => {
+    if (!selectedChat) return null;
+    return managers?.find(m => m.id === selectedChat) || employees?.find(e => e.id === selectedChat) || null;
+  }, [selectedChat, managers, employees]);
+
+  const chatMessages = useMemo(() => 
+    selectedChat ? getChatMessages(selectedChat) : [], 
+    [selectedChat, getChatMessages]
+  );
+
+  const messagesGroupedByDate = useMemo(() => 
+    selectedChat ? getMessagesGroupedByDate(selectedChat) : [], 
+    [selectedChat, getMessagesGroupedByDate]
+  );
 
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
