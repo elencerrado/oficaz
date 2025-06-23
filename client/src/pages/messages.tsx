@@ -44,40 +44,40 @@ interface Employee {
   fullName: string;
   role: string;
   email?: string;
+  jobTitle?: string;
+  position?: string;
 }
 
 interface Manager {
   id: number;
   fullName: string;
   role: string;
+  email?: string;
+  jobTitle?: string;
+  position?: string;
 }
 
 export default function Messages() {
-  const { user, company } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [location] = useLocation();
   const queryClient = useQueryClient();
+  const [location] = useLocation();
   const companyAlias = location.split('/')[1];
 
-  // All state declarations together
+  // All state declarations together - FIXED ORDER
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<number | null>(() => {
-    // Check URL parameters for chat selection
     const urlParams = new URLSearchParams(window.location.search);
     const chatParam = urlParams.get('chat');
     if (chatParam) {
       const chatId = parseInt(chatParam);
       console.log('Found chat parameter in URL:', chatId);
-      // Clean URL without triggering navigation
       window.history.replaceState({}, '', window.location.pathname);
       return chatId;
     }
     return null;
   });
   const [newMessage, setNewMessage] = useState("");
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +87,12 @@ export default function Messages() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
 
-  // Queries
+  // All refs together
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // All queries together
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/messages'],
     enabled: !!user,
@@ -97,17 +102,17 @@ export default function Messages() {
 
   const { data: managers } = useQuery({
     queryKey: ['/api/managers'],
-    enabled: user?.role === 'employee',
+    enabled: !!user && user.role === 'employee',
     staleTime: 60000,
   });
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
-    enabled: user?.role === 'admin' || user?.role === 'manager',
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 60000,
   });
 
-  // Mutations
+  // All mutations together
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { receiverId: number; subject: string; content: string }) => {
       return apiRequest('POST', '/api/messages', data);
@@ -118,223 +123,125 @@ export default function Messages() {
     },
     onError: (error: any) => {
       toast({
-        title: 'Error',
-        description: error.message || 'No se pudo enviar el mensaje',
-        variant: 'destructive',
+        title: "Error",
+        description: "No se pudo enviar el mensaje",
+        variant: "destructive",
       });
     },
   });
 
   const markAsReadMutation = useMutation({
-    mutationFn: (messageId: number) => 
-      apiRequest('PATCH', `/api/messages/${messageId}/read`, {}),
+    mutationFn: async (messageId: number) => {
+      return apiRequest('PATCH', `/api/messages/${messageId}/read`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages/unread-count'] });
-    }
+    },
   });
 
-  // Auto-scroll functionality enhanced for mobile
-  const scrollToBottom = useCallback(() => {
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        // Target mobile chat container specifically
-        const mobileContainer = document.querySelector('.lg\\:hidden .overflow-y-auto');
-        if (mobileContainer) {
-          mobileContainer.scrollTop = mobileContainer.scrollHeight;
-        }
-        
-        // Target desktop container
-        const desktopContainer = document.querySelector('.hidden.lg\\:flex .overflow-y-auto');
-        if (desktopContainer) {
-          desktopContainer.scrollTop = desktopContainer.scrollHeight;
-        }
-      }, 100);
-    });
-  }, []);
-
-  // URL parameter detection for employee view
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatParam = urlParams.get('chat');
-    if (chatParam) {
-      const chatId = parseInt(chatParam);
-      setSelectedChat(chatId);
-      console.log('URL chat parameter detected:', chatId);
-    }
-  }, [location]);
-
-  // Debug effect to verify selected chat
+  // All effects together
   useEffect(() => {
     if (selectedChat) {
       console.log('Selected chat is now:', selectedChat);
-      const employee = (employees || managers)?.find(emp => emp.id === selectedChat);
-      if (employee) {
-        console.log('Found employee for chat:', employee.fullName);
-      } else {
-        console.log('Employee not found for chat ID:', selectedChat);
+      const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+      const selectedEmployee = contactList.find(e => e.id === selectedChat);
+      if (selectedEmployee) {
+        console.log('Found employee for chat:', selectedEmployee.fullName);
       }
     }
-  }, [selectedChat, employees, managers]);
+  }, [selectedChat, user?.role, managers, employees]);
 
-  // Disable body scroll when mobile chat is open (employee view only)
   useEffect(() => {
-    if (user?.role === 'employee' && selectedChat) {
-      // Disable scroll on body and prevent touch events from propagating
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
-      
-      return () => {
-        // Re-enable scroll when chat closes
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-        document.body.style.height = '';
-      };
-    }
-  }, [selectedChat, user?.role]);
-
-  // Auto-scroll system optimized by view type
-  const isAdminDesktop = user?.role !== 'employee' && window.innerWidth >= 1024;
-  const isAdminMobile = user?.role !== 'employee' && window.innerWidth < 1024;
-  const isEmployeeMobile = user?.role === 'employee';
-
-  // Desktop admin: instant scroll on chat open, smooth on new messages
-  useEffect(() => {
-    if (!isAdminDesktop || !selectedChat || !messagesContainerRef.current) return;
+    const chatMessages = messages as Message[] || [];
+    const unreadMessages = chatMessages.filter(msg => 
+      !msg.isRead && 
+      msg.receiverId === user?.id && 
+      selectedChat && 
+      msg.senderId === selectedChat
+    );
     
-    messagesContainerRef.current.style.scrollBehavior = 'auto';
-    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    setTimeout(() => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.style.scrollBehavior = 'smooth';
-      }
-    }, 50);
-  }, [selectedChat, isAdminDesktop]);
+    unreadMessages.forEach(msg => {
+      markAsReadMutation.mutate(msg.id);
+    });
+  }, [selectedChat, messages, user?.id, markAsReadMutation]);
 
   useEffect(() => {
-    if (!isAdminDesktop || !messages || !selectedChat || !messagesContainerRef.current) return;
-    
-    setTimeout(() => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
-    }, 100);
-  }, [messages, isAdminDesktop]);
-
-  // Mobile views: unified scroll handler
-  useEffect(() => {
-    if (!selectedChat || isAdminDesktop) return;
-    
-    const scrollToBottom = (smooth = false) => {
-      const employeeContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
-      const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
-      
-      const container = isEmployeeMobile ? employeeContainer : adminMobileContainer;
-      if (container) {
-        if (smooth) {
-          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-        } else {
-          container.scrollTop = container.scrollHeight;
+    const handleKeyboardVisibility = () => {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        const viewport = window.visualViewport;
+        if (viewport) {
+          const handleViewportChange = () => {
+            setIsKeyboardOpen(viewport.height < window.screen.height * 0.75);
+          };
+          viewport.addEventListener('resize', handleViewportChange);
+          return () => viewport.removeEventListener('resize', handleViewportChange);
         }
       }
     };
-
-    // Instant scroll on chat open
-    scrollToBottom(false);
     
-    // Smooth scroll on new messages
-    if (messages) {
-      setTimeout(() => scrollToBottom(true), 100);
-    }
-  }, [selectedChat, messages, isAdminMobile, isEmployeeMobile]);
+    return handleKeyboardVisibility();
+  }, []);
 
-  // Mark messages as read
   useEffect(() => {
-    if (selectedChat && messages) {
-      const unreadMessages = (messages as Message[]).filter(
-        msg => !msg.isRead && msg.senderId === selectedChat && msg.receiverId === user?.id
-      );
-      unreadMessages.forEach(msg => {
-        markAsReadMutation.mutate(msg.id);
-      });
+    if (messagesEndRef.current && selectedChat) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      };
+      
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
     }
-  }, [selectedChat, messages, user?.id]);
+  }, [selectedChat]);
 
-  // Utility functions
-  const getMessageIcon = (type: string) => {
-    switch (type) {
-      case 'payroll':
-        return <FileText className="h-4 w-4 text-green-400" />;
-      case 'reminder':
-        return <Clock className="h-4 w-4 text-yellow-400" />;
-      case 'document':
-        return <FileText className="h-4 w-4 text-blue-400" />;
-      default:
-        return <MessageCircle className="h-4 w-4 text-blue-400" />;
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      };
+      
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [messages]);
 
-  const getNotificationMessage = (subject: string) => {
-    if (subject.includes('nómina')) return 'Nueva nómina disponible';
-    if (subject.includes('documento')) return 'Actualizar documentación';
-    if (subject.includes('fichaje')) return 'Recordatorio de fichaje';
-    return subject;
-  };
+  // All computed values and callbacks together
+  const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+  const filteredEmployees = contactList.filter(person => 
+    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
+  );
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedChat) return;
-    
-    sendMessageMutation.mutate({
-      receiverId: selectedChat,
-      subject: user?.role === 'employee' ? 'Mensaje del empleado' : 'Mensaje del administrador',
-      content: newMessage.trim()
-    });
-  };
+  const selectedChatUser = useMemo(() => {
+    return contactList.find(person => person.id === selectedChat);
+  }, [contactList, selectedChat]);
 
-  const handleSendMessage = () => {
-    sendMessage();
-  };
+  const getChatMessages = useCallback((chatUserId: number) => {
+    const allMessages = messages as Message[] || [];
+    return allMessages
+      .filter(msg => 
+        (msg.senderId === user?.id && msg.receiverId === chatUserId) ||
+        (msg.senderId === chatUserId && msg.receiverId === user?.id)
+      )
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }, [messages, user?.id]);
 
-  // Optimized helper functions with memoization
-  const getChatMessages = useCallback((chatId: number) => {
-    if (!messages || !user) return [];
-    return (messages as Message[]).filter(msg => 
-      (msg.senderId === user?.id && msg.receiverId === chatId) ||
-      (msg.receiverId === user?.id && msg.senderId === chatId)
-    ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [messages, user]);
-
-  // Group messages by date for date separators
-  const getMessagesGroupedByDate = useCallback((chatId: number) => {
-    const chatMessages = getChatMessages(chatId);
-    const groups: { [date: string]: Message[] } = {};
-    
-    chatMessages.forEach(message => {
-      const dateKey = format(new Date(message.createdAt), 'yyyy-MM-dd');
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
+  const getMessagesGroupedByDate = useCallback((chatUserId: number) => {
+    const chatMessages = getChatMessages(chatUserId);
+    const grouped = chatMessages.reduce((groups: any, message: Message) => {
+      const date = format(new Date(message.createdAt), 'yyyy-MM-dd');
+      if (!groups[date]) {
+        groups[date] = [];
       }
-      groups[dateKey].push(message);
-    });
-    
-    return Object.entries(groups).map(([date, messages]) => ({
+      groups[date].push(message);
+      return groups;
+    }, {});
+
+    return Object.keys(grouped).map(date => ({
       date,
-      messages,
-      dateFormatted: format(new Date(date), "EEEE, d 'de' MMMM yyyy", { locale: es })
+      dateFormatted: format(new Date(date), 'EEEE, d \'de\' MMMM yyyy', { locale: es }),
+      messages: grouped[date]
     }));
   }, [getChatMessages]);
-
-  // Get selected chat user and messages for employee view
-  const selectedChatUser = useMemo(() => {
-    if (!selectedChat) return null;
-    return managers?.find(m => m.id === selectedChat) || employees?.find(e => e.id === selectedChat) || null;
-  }, [selectedChat, managers, employees]);
 
   const chatMessages = useMemo(() => 
     selectedChat ? getChatMessages(selectedChat) : [], 
@@ -347,13 +254,12 @@ export default function Messages() {
   );
 
   // Role display helper with icons - shows actual data from database
-  const getRoleDisplay = (person: any) => {
+  const getRoleDisplay = useCallback((person: any) => {
     if (!person) return null;
     
     const role = person.role || 'employee';
-    const displayText = person.jobTitle || person.position || person.role || 'Sin cargo definido';
+    const displayText = person.jobTitle || person.position || 'Sin cargo definido';
     
-    // Icon color and letter based on role
     const roleConfig = {
       admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
       manager: { color: 'bg-orange-500', letter: 'M', size: 'text-[10px]' },
@@ -370,7 +276,7 @@ export default function Messages() {
         <span>{displayText}</span>
       </div>
     );
-  };
+  }, []);
 
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
@@ -405,10 +311,8 @@ export default function Messages() {
     if (modalSelectedEmployees.length === 0 || !modalMessage.trim()) return;
     
     try {
-      // Close modal first to avoid z-index issues with toast
       closeAddChatModal();
       
-      // Send messages sequentially using the same format as individual messages
       for (const employeeId of modalSelectedEmployees) {
         await apiRequest('POST', '/api/messages', {
           receiverId: employeeId,
@@ -419,7 +323,6 @@ export default function Messages() {
       
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       
-      // Show success toast after modal is closed
       setTimeout(() => {
         toast({
           title: "Mensajes enviados",
@@ -429,7 +332,6 @@ export default function Messages() {
       
     } catch (error) {
       console.error('Error sending group message:', error);
-      // Show error toast after modal is closed
       setTimeout(() => {
         toast({
           title: "Error",
@@ -440,27 +342,30 @@ export default function Messages() {
     }
   };
 
-  // Filter employees based on search and exclude current user - moved before conditional returns
-  const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-  const filteredEmployees = contactList.filter(person => 
-    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
-  );
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedChat) return;
+    
+    sendMessageMutation.mutate({
+      receiverId: selectedChat,
+      subject: 'Mensaje',
+      content: newMessage
+    });
+  };
+
+  const sendMessage = () => {
+    if (!newMessage.trim() || !selectedChat) return;
+    
+    sendMessageMutation.mutate({
+      receiverId: selectedChat,
+      subject: 'Mensaje',
+      content: newMessage
+    });
+  };
 
   // Loading state
   if (messagesLoading) {
     return <PageLoading message="Cargando mensajes..." />;
   }
-
-  // Get employee with role for display - moved before conditional returns
-  const getEmployeeWithRole = useCallback((employeeId: number) => {
-    const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-    const employee = contactList.find(e => e.id === employeeId);
-    if (!employee) return null;
-    return {
-      ...employee,
-      role: employee.role || 'employee'
-    };
-  }, [user?.role, managers, employees]);
 
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
@@ -567,7 +472,7 @@ export default function Messages() {
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
                         </h3>
                         <div className="caption-text">
-                          {getRoleDisplay(getEmployeeWithRole(selectedChat))}
+                          {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
                         </div>
                       </div>
                     </div>
@@ -610,7 +515,6 @@ export default function Messages() {
                                       {message.senderId === user?.id && (
                                         <div className="ml-2">
                                           {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                            // Admin/Manager view: double check when read, single green when delivered
                                             message.isRead ? (
                                               <div className="flex items-center text-green-400">
                                                 <Check className="h-3 w-3" />
@@ -620,7 +524,6 @@ export default function Messages() {
                                               <Check className="h-3 w-3 text-green-400" />
                                             )
                                           ) : (
-                                            // Employee view: single check (delivered), green check (received but not opened)
                                             <Check className="h-3 w-3 text-green-400" />
                                           )}
                                         </div>
@@ -764,7 +667,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-gray-500">
-                    {getRoleDisplay(getEmployeeWithRole(selectedChat))}
+                    {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
               </div>
@@ -817,7 +720,6 @@ export default function Messages() {
                                   {message.senderId === user?.id && (
                                     <div className="ml-2">
                                       {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                        // Admin/Manager view: double check when read, single green when delivered
                                         message.isRead ? (
                                           <div className="flex items-center text-green-400">
                                             <Check className="h-3 w-3" />
@@ -827,7 +729,6 @@ export default function Messages() {
                                           <Check className="h-3 w-3 text-green-400" />
                                         )
                                       ) : (
-                                        // Employee view: single check (delivered), green check (received but not opened)
                                         <Check className="h-3 w-3 text-green-400" />
                                       )}
                                     </div>
@@ -863,15 +764,11 @@ export default function Messages() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                   className="input-oficaz flex-1"
-                  style={{ 
-                    fontSize: '16px',
-                    minHeight: '44px'
-                  }}
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={!newMessage.trim()}
-                  className="btn-oficaz-primary min-h-[44px]"
+                  className="btn-oficaz-primary"
                 >
                   <Send className="icon-sm" />
                 </Button>
@@ -880,368 +777,347 @@ export default function Messages() {
           )}
         </div>
 
-        {/* Add Chat Modal */}
+        {/* Modal for new chat - Group message functionality */}
         <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
-            <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
-              <DialogHeader>
-                <DialogTitle>Crear Nueva Conversación</DialogTitle>
-                <p id="dialog-description" className="text-sm text-gray-500">
-                  Selecciona empleados para iniciar una conversación individual o enviar un mensaje grupal
-                </p>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                {/* Toggle between individual and group mode */}
-                <div className="flex items-center justify-center">
-                  <Button
-                    variant={modalGroupMode ? "outline" : "default"}
-                    size="sm"
-                    onClick={() => {
-                      setModalGroupMode(false);
-                      setModalSelectedEmployees([]);
-                    }}
-                    className="mr-2"
-                  >
-                    Chat Individual
-                  </Button>
-                  <Button
-                    variant={modalGroupMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setModalGroupMode(true)}
-                  >
-                    <Users className="icon-sm mr-2" />
-                    Chat Grupal
-                  </Button>
-                </div>
-
-                {/* Modal Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
-                  <Input
-                    placeholder="Buscar empleado..."
-                    value={modalSearchTerm}
-                    onChange={(e) => setModalSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
-                  />
-                </div>
-
-                {/* Employee List */}
-                <div className="max-h-64 overflow-y-auto border rounded-lg">
-                  <div className="p-2 space-y-1">
-                    {filteredEmployees
-                      .filter(employee => 
-                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
-                      )
-                      .map((employee) => (
-                      <div
-                        key={employee.id}
-                        className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover:bg-gray-50 ${
-                          modalGroupMode && modalSelectedEmployees.includes(employee.id)
-                            ? 'bg-oficaz-primary/10 border-oficaz-primary'
-                            : 'border-gray-200'
-                        }`}
-                        onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          {modalGroupMode && (
-                            <input
-                              type="checkbox"
-                              checked={modalSelectedEmployees.includes(employee.id)}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                toggleModalEmployeeSelection(employee.id);
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="rounded"
-                            />
-                          )}
-                          
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-oficaz-primary text-white text-xs">
-                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate text-gray-900">
-                              {employee.fullName}
-                            </p>
-                            <div className="text-xs text-gray-500 truncate">
-                              {getRoleDisplay(employee)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Group Message Input */}
+          <DialogContent className="max-w-md mx-auto">
+            <DialogHeader>
+              <DialogTitle>Nuevo mensaje</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant={modalGroupMode ? "default" : "outline"}
+                  onClick={() => setModalGroupMode(!modalGroupMode)}
+                  className={modalGroupMode ? "btn-oficaz-primary" : ""}
+                >
+                  <Users className="w-4 h-4 mr-1" />
+                  Grupal
+                </Button>
+                
                 {modalGroupMode && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">
-                        {modalSelectedEmployees.length} empleados seleccionados
-                      </span>
-                      <div className="space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setModalSelectedEmployees(
-                            filteredEmployees
-                              .filter(employee => 
-                                employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
-                              )
-                              .map(e => e.id)
-                          )}
-                        >
-                          Todos
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setModalSelectedEmployees([])}
-                        >
-                          Ninguno
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <Input
-                      placeholder="Escribe tu mensaje grupal..."
-                      value={modalMessage}
-                      onChange={(e) => setModalMessage(e.target.value)}
-                      className="input-oficaz"
-                    />
-                    
+                  <div className="flex space-x-2">
                     <Button
-                      onClick={sendModalGroupMessage}
-                      disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim()}
-                      className="btn-oficaz-primary w-full"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setModalSelectedEmployees(
+                        filteredEmployees
+                          .filter(employee => 
+                            employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
+                          )
+                          .map(e => e.id)
+                      )}
                     >
-                      <Send className="icon-sm mr-2" />
-                      Enviar a {modalSelectedEmployees.length} empleados
+                      Todos
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setModalSelectedEmployees([])}
+                    >
+                      Ninguno
                     </Button>
                   </div>
                 )}
               </div>
-            </DialogContent>
-          </Dialog>
+              
+              <Input
+                placeholder="Escribe tu mensaje grupal..."
+                value={modalMessage}
+                onChange={(e) => setModalMessage(e.target.value)}
+                className="input-oficaz"
+                style={{ display: modalGroupMode ? 'block' : 'none' }}
+              />
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <Input
+                  placeholder="Buscar empleado..."
+                  value={modalSearchTerm}
+                  onChange={(e) => setModalSearchTerm(e.target.value)}
+                  className="input-oficaz bg-gray-50 pl-10 pr-4"
+                />
+              </div>
+
+              <div className="max-h-60 overflow-y-auto space-y-2">
+                {filteredEmployees
+                  .filter(employee => 
+                    employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
+                  )
+                  .map((employee) => (
+                    <div
+                      key={employee.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        modalGroupMode && modalSelectedEmployees.includes(employee.id)
+                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                          : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                      }`}
+                      onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {modalGroupMode && (
+                          <div className={`w-4 h-4 border-2 rounded ${
+                            modalSelectedEmployees.includes(employee.id)
+                              ? 'bg-white border-white'
+                              : 'border-gray-300'
+                          } flex items-center justify-center`}>
+                            {modalSelectedEmployees.includes(employee.id) && (
+                              <Check className="w-3 h-3 text-oficaz-primary" />
+                            )}
+                          </div>
+                        )}
+                        
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          modalGroupMode && modalSelectedEmployees.includes(employee.id)
+                            ? 'bg-white/20 text-white'
+                            : 'bg-oficaz-primary text-white'
+                        }`}>
+                          <span className="text-xs font-medium">
+                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium text-sm truncate ${
+                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-gray-900'
+                          }`}>
+                            {employee.fullName}
+                          </p>
+                          <div className={`text-xs truncate ${
+                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-gray-500'
+                          }`}>
+                            {getRoleDisplay(employee)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {modalGroupMode && (
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span className="text-sm text-gray-600">
+                    {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
+                  </span>
+                  <Button
+                    onClick={sendModalGroupMessage}
+                    disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim()}
+                    className="btn-oficaz-primary"
+                  >
+                    Enviar a todos
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
 
-  // Employee view (simplified version)
+  // Employee view - Mobile-first design
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
-      <div className="sticky top-0 bg-employee-gradient flex items-center justify-between p-6 pb-8 h-20 z-40">
-        <Link href={`/${companyAlias}/inicio`}>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <span className="font-medium">Atrás</span>
-          </Button>
-        </Link>
-        
-        <div className="flex-1 flex flex-col items-end text-right">
-          {company?.logoUrl ? (
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="w-8 h-8 mb-1 rounded-full object-cover"
-            />
-          ) : (
-            <div className="text-white text-sm font-medium mb-1">
-              {company?.name || 'Mi Empresa'}
+    <div className="min-h-screen" style={{
+      background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+      overflowX: 'hidden'
+    }}>
+      {!selectedChat ? (
+        /* Employee Dashboard - List of managers */
+        <div className="px-4 py-6 space-y-6">
+          {/* Header with company branding */}
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-white/10 rounded-xl mx-auto flex items-center justify-center mb-4">
+              <MessageCircle className="w-6 h-6 text-white" />
             </div>
-          )}
-          <div className="text-white/70 text-xs">
-            {user?.fullName}
+            <h1 className="text-white text-xl font-semibold">Mensajes</h1>
+            <p className="text-white/70 text-sm">Contacta con tus responsables</p>
           </div>
-        </div>
-      </div>
 
-      <div className="px-6 pb-6">
-        <h1 className="text-2xl font-bold text-white">Mensajes</h1>
-      </div>
-
-      <div className="flex-1 flex flex-col px-6">
-        {/* Managers List */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-            <MessageCircle className="h-5 w-5 mr-2" />
-            Conversaciones
-          </h3>
+          {/* Managers list */}
           <div className="space-y-3">
-            {managers?.map(manager => {
-              const managerMessages = (messages as Message[] || []).filter(m => 
-                (m.senderId === manager.id && m.receiverId === user?.id) ||
-                (m.senderId === user?.id && m.receiverId === manager.id)
-              );
-              const lastMessage = managerMessages[managerMessages.length - 1];
-              const unreadCount = managerMessages.filter(m => !m.isRead && m.receiverId === user?.id).length;
-
-              return (
-                <div 
-                  key={manager.id}
-                  onClick={() => {
-                    console.log('Opening chat for manager:', manager.id, manager.fullName);
-                    setSelectedChat(manager.id);
-                  }}
-                  className="bg-white/10 rounded-lg p-4 backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className="text-white font-medium truncate">{manager.fullName}</p>
-                        {unreadCount > 0 && (
-                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full ml-2">
-                            {unreadCount}
+            <h2 className="text-white/90 text-sm font-medium px-2">Responsables</h2>
+            
+            {filteredEmployees.length > 0 ? (
+              <div className="space-y-2">
+                {filteredEmployees.map((manager) => {
+                  const unreadCount = (messages as Message[] || []).filter(msg => 
+                    !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
+                  ).length;
+                  
+                  return (
+                    <div
+                      key={manager.id}
+                      className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
+                      onClick={() => setSelectedChat(manager.id)}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium">
+                            {manager.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </span>
-                        )}
-                      </div>
-                      {lastMessage && (
-                        <p className="text-white/70 text-sm truncate mt-1">
-                          {lastMessage.content}
-                        </p>
-                      )}
-                      {lastMessage && (
-                        <p className="text-white/50 text-xs mt-1">
-                          {format(new Date(lastMessage.createdAt), 'dd/MM/yyyy', { locale: es })}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-white/50" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-
-
-        {/* Chat View for Selected Manager */}
-        {selectedChat && (
-          <div className="fixed inset-0 bg-employee-gradient z-[60] flex flex-col touch-pan-y">
-            {/* Chat Header */}
-            <div className="flex items-center p-4 border-b border-white/10 flex-shrink-0">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSelectedChat(null)}
-                className="text-white hover:bg-white/10 mr-3"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <p className="text-white font-medium">
-                    {selectedChatUser?.fullName || 'Chat'}
-                  </p>
-                  <div className="text-white/70 text-xs">
-                    {getRoleDisplay(selectedChatUser)}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages Container - isolated scroll */}
-            <div className="flex-1 relative min-h-0">
-              <div className="absolute inset-0 overflow-y-auto overscroll-contain p-4 flex flex-col">
-                <div className="flex-1"></div>
-                <div className="space-y-6">
-                  {messagesGroupedByDate.length > 0 ? (
-                    messagesGroupedByDate.map((group) => (
-                      <div key={group.date} className="space-y-4">
-                        {/* Date separator */}
-                        <div className="flex items-center justify-center">
-                          <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium backdrop-blur-sm">
-                            {group.dateFormatted}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-white font-medium truncate">
+                              {manager.fullName}
+                            </p>
+                            {unreadCount > 0 && (
+                              <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
+                                {unreadCount}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-white/70 text-xs mt-1">
+                            {getRoleDisplay(manager)}
                           </div>
                         </div>
                         
-                        {/* Messages for this date */}
-                        <div className="space-y-3">
-                          {group.messages.map((message) => (
-                            <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
-                                <p className="text-sm">{message.content}</p>
-                                <div className="flex items-center justify-between mt-1">
-                                  <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                                  </p>
-                                  {message.senderId === user?.id && (
-                                    <div className="ml-2">
-                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                        // Admin/Manager view: double check when read, single green when delivered
-                                        message.isRead ? (
-                                          <div className="flex items-center text-green-400">
-                                            <Check className="h-3 w-3" />
-                                            <Check className="h-3 w-3 -ml-1" />
-                                          </div>
-                                        ) : (
-                                          <Check className="h-3 w-3 text-green-400" />
-                                        )
-                                      ) : (
-                                        // Employee view: single check (delivered), green check (received but not opened)
-                                        <Check className="h-3 w-3 text-green-400" />
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <ChevronRight className="w-5 h-5 text-white/50" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-white/70 py-8">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No hay mensajes aún</p>
-                      <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-white/10 rounded-full mx-auto flex items-center justify-center mb-4">
+                  <Users className="w-8 h-8 text-white/50" />
+                </div>
+                <p className="text-white/70">No hay responsables disponibles</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Chat Interface - Full screen */
+        <div className="h-screen flex flex-col bg-white">
+          {/* Chat Header - Fixed */}
+          <div 
+            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
+            }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedChat(null)}
+              className="p-2 text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium text-sm">
+                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+              </span>
             </div>
-
-            {/* Message Input */}
-            <div className="p-4 border-t border-white/10 flex-shrink-0">
-              <div className="flex space-x-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Escribe tu mensaje..."
-                  className="flex-1 bg-white/10 border-white/20 text-white placeholder-white/50"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+            
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-medium">
+                {selectedChatUser?.fullName || 'Chat'}
+              </p>
+              <div className="text-white/70 text-xs">
+                {getRoleDisplay(selectedChatUser)}
               </div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Messages Area - Scrollable */}
+          <div 
+            className="flex-1 overflow-y-auto px-4 py-4"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="space-y-6">
+              {messagesGroupedByDate.length > 0 ? (
+                messagesGroupedByDate.map((group) => (
+                  <div key={group.date} className="space-y-4">
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center">
+                      <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
+                        {group.dateFormatted}
+                      </div>
+                    </div>
+                    
+                    {/* Messages for this date */}
+                    <div className="space-y-3">
+                      {group.messages.map((message) => (
+                        <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
+                            <p className="text-sm">{message.content}</p>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                                {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                              </p>
+                              {message.senderId === user?.id && (
+                                <div className="ml-2">
+                                  {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                    message.isRead ? (
+                                      <div className="flex items-center text-green-400">
+                                        <Check className="h-3 w-3" />
+                                        <Check className="h-3 w-3 -ml-1" />
+                                      </div>
+                                    ) : (
+                                      <Check className="h-3 w-3 text-green-400" />
+                                    )
+                                  ) : (
+                                    <Check className="h-3 w-3 text-green-400" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-white/70 py-8">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No hay mensajes aún</p>
+                  <p className="text-sm">Envía tu primer mensaje</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Message Input - Fixed at bottom */}
+          <div 
+            className="px-4 py-3 border-t border-gray-200 bg-white"
+            style={{
+              paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
+            }}
+          >
+            <div className="flex space-x-2">
+              <Input
+                ref={messageInputRef}
+                placeholder="Escribe tu mensaje..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                className="input-oficaz flex-1"
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={!newMessage.trim()}
+                className="btn-oficaz-primary"
+              >
+                <Send className="icon-sm" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
