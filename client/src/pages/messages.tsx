@@ -457,19 +457,12 @@ export default function Messages() {
 
           {/* Add Chat Modal */}
           <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
               <DialogHeader>
-                <DialogTitle className="flex items-center justify-between">
-                  Crear Nueva Conversación
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={closeAddChatModal}
-                    className="h-6 w-6 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </DialogTitle>
+                <DialogTitle>Crear Nueva Conversación</DialogTitle>
+                <p id="dialog-description" className="text-sm text-gray-500">
+                  Selecciona empleados para iniciar una conversación individual o enviar un mensaje grupal
+                </p>
               </DialogHeader>
               
               <div className="space-y-4">
