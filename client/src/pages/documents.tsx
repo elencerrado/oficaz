@@ -379,9 +379,9 @@ export default function Documents() {
                     ref={fileInputRef}
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => {
-                      handleFileUpload(e);
+                    onChange={async (e) => {
                       if (e.target.files?.[0]) {
+                        await handleFileUpload(e);
                         handleCompleteRequest();
                       }
                     }}
