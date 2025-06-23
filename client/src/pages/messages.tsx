@@ -446,10 +446,15 @@ export default function Messages() {
   }
 
   // Filter employees based on search and exclude current user
-  const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-  const filteredEmployees = contactList.filter(person => 
-    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
-  );
+  const contactList = useMemo(() => {
+    return user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+  }, [user?.role, managers, employees]);
+  
+  const filteredEmployees = useMemo(() => {
+    return contactList.filter(person => 
+      person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
+    );
+  }, [contactList, searchTerm, user?.id]);
 
   // Get employee with role for display
   const getEmployeeWithRole = useMemo(() => 
