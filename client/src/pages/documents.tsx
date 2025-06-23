@@ -334,7 +334,7 @@ export default function Documents() {
 
       {/* Content Container */}
       <div className="flex-1 px-6 pb-6 space-y-6">
-        {/* Document Request Notification - Compact */}
+        {/* Document Request Notification - Dynamic from Admin */}
         {pendingRequest && !activeRequest && (
           <Alert className="border-orange-200 bg-orange-50 py-3">
             <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -342,8 +342,8 @@ export default function Documents() {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
-                    <span className="font-medium text-sm">DNI:</span>
-                    <span className="text-sm">{pendingRequest.message}</span>
+                    <span className="font-medium text-sm">{pendingRequest.type}:</span>
+                    <span className="text-sm">{pendingRequest.message || `Se solicita subir tu ${pendingRequest.type.toLowerCase()}`}</span>
                     {pendingRequest.dueDate && (
                       <span className="text-xs text-orange-600 flex items-center">
                         <Calendar className="h-3 w-3 mr-1" />
@@ -371,7 +371,7 @@ export default function Documents() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-blue-800 flex items-center">
                   <Upload className="h-5 w-5 mr-2" />
-                  Subiendo: {activeRequest.type}
+                  Subiendo: {activeRequest.type || 'Documento'}
                 </CardTitle>
                 <Button
                   variant="ghost"
@@ -387,7 +387,7 @@ export default function Documents() {
               <div className="flex items-center justify-center border-2 border-dashed border-blue-300 rounded-lg p-6 bg-white">
                 <div className="text-center">
                   <Upload className="mx-auto h-12 w-12 text-blue-400 mb-4" />
-                  <p className="text-sm text-blue-700 mb-4">{activeRequest.message}</p>
+                  <p className="text-sm text-blue-700 mb-4">{activeRequest.message || `Por favor, sube tu ${activeRequest.type?.toLowerCase() || 'documento'}`}</p>
                   <div className="flex flex-col items-center gap-2">
                     <Button
                       onClick={() => fileInputRef.current?.click()}
