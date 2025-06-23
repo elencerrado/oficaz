@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +22,12 @@ import {
   DollarSign,
   FileCheck,
   User,
-  Calendar
+  Calendar,
+  File,
+  Heart,
+  Plane,
+  Check,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -139,6 +145,44 @@ export default function AdminDocuments() {
     },
   });
 
+  // Smart file analysis functions
+  const analyzeFileName = (fileName: string) => {
+    const normalizedName = fileName.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // Remove accents
+    
+    // Find employee by name matching
+    const matchedEmployee = employees.find((emp: Employee) => {
+      const empName = emp.fullName.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+      
+      // Split employee name into words
+      const nameWords = empName.split(' ');
+      
+      // Check if at least 2 words from employee name appear in filename
+      const matchedWords = nameWords.filter(word => 
+        word.length > 2 && normalizedName.includes(word)
+      );
+      
+      return matchedWords.length >= 2;
+    });
+    
+    // Detect document type
+    const documentType = documentTypes.find(type => {
+      const typeKeywords = type.keywords || [];
+      return typeKeywords.some(keyword => 
+        normalizedName.includes(keyword.toLowerCase())
+      );
+    });
+    
+    return {
+      employee: matchedEmployee,
+      documentType: documentType?.id || 'otros',
+      confidence: matchedEmployee ? (documentType ? 'high' : 'medium') : 'low'
+    };
+  };
+
   const handleFileUpload = async (file: File, targetEmployeeId?: number) => {
     if (!file) return;
     
@@ -152,14 +196,65 @@ export default function AdminDocuments() {
     uploadMutation.mutate(formData);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleBatchUpload = async () => {
+    setIsUploading(true);
+    try {
+      for (const analysis of uploadAnalysis) {
+        await handleFileUpload(analysis.file, analysis.employee?.id);
+      }
+      
+      toast({
+        title: "Documentos procesados",
+        description: `${uploadAnalysis.length} documento(s) subido(s) correctamente`,
+      });
+      
+      setShowUploadPreview(false);
+      setUploadAnalysis([]);
+    } catch (error) {
+      toast({
+        title: "Error en el procesamiento",
+        description: "Algunos documentos no se pudieron subir",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const updateAnalysisEmployee = (index: number, employeeId: number) => {
+    setUploadAnalysis(prev => prev.map((item, i) => 
+      i === index 
+        ? { ...item, employee: employees.find(emp => emp.id === employeeId) }
+        : item
+    ));
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
+    const validFiles = files.filter(file => file.size <= 10 * 1024 * 1024);
+    const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+    
+    if (oversizedFiles.length > 0) {
+      toast({
+        title: "Archivos demasiado grandes",
+        description: `${oversizedFiles.length} archivo(s) exceden el límite de 10MB`,
+        variant: "destructive",
+      });
     }
+    
+    if (validFiles.length === 0) return;
+    
+    // Analyze all files and show preview
+    const analysisResults = validFiles.map(file => ({
+      file,
+      ...analyzeFileName(file.name)
+    }));
+    
+    setUploadAnalysis(analysisResults);
+    setShowUploadPreview(true);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
