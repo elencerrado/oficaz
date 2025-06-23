@@ -681,15 +681,19 @@ export default function Messages() {
                             </p>
                             {message.senderId === user?.id && (
                               <div className="ml-2">
-                                {message.isRead ? (
-                                  // Double check - Message read
-                                  <div className="flex items-center text-green-400">
-                                    <Check className="h-3 w-3" />
-                                    <Check className="h-3 w-3 -ml-1" />
-                                  </div>
+                                {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                  // Admin/Manager view: double check when read, single when delivered
+                                  message.isRead ? (
+                                    <div className="flex items-center text-green-400">
+                                      <Check className="h-3 w-3" />
+                                      <Check className="h-3 w-3 -ml-1" />
+                                    </div>
+                                  ) : (
+                                    <Check className="h-3 w-3 text-gray-400" />
+                                  )
                                 ) : (
-                                  // Single check - Message delivered but not read
-                                  <Check className="h-3 w-3 text-gray-400" />
+                                  // Employee view: single check (delivered), green check (received but not opened)
+                                  <Check className="h-3 w-3 text-green-400" />
                                 )}
                               </div>
                             )}
@@ -1023,15 +1027,19 @@ export default function Messages() {
                         </p>
                         {message.senderId === user?.id && (
                           <div className="ml-2">
-                            {message.isRead ? (
-                              // Double check - Message read
-                              <div className="flex items-center text-green-400">
-                                <Check className="h-3 w-3" />
-                                <Check className="h-3 w-3 -ml-1" />
-                              </div>
+                            {(user?.role === 'admin' || user?.role === 'manager') ? (
+                              // Admin/Manager view: double check when read, single when delivered
+                              message.isRead ? (
+                                <div className="flex items-center text-green-400">
+                                  <Check className="h-3 w-3" />
+                                  <Check className="h-3 w-3 -ml-1" />
+                                </div>
+                              ) : (
+                                <Check className="h-3 w-3 text-gray-400" />
+                              )
                             ) : (
-                              // Single check - Message delivered but not read
-                              <Check className="h-3 w-3 text-gray-400" />
+                              // Employee view: single check (delivered), green check (received but not opened)
+                              <Check className="h-3 w-3 text-green-400" />
                             )}
                           </div>
                         )}
