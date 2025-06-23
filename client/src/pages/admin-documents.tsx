@@ -785,7 +785,7 @@ export default function AdminDocuments() {
                             {formatFileSize(document.fileSize)}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {format(new Date(document.createdAt), 'd MMM yyyy', { locale: es })}
+                            {format(new Date(document.createdAt), 'd MMM yyyy HH:mm', { locale: es })}
                           </span>
                         </div>
                       </div>
