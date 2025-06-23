@@ -673,11 +673,27 @@ export default function Messages() {
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                          }`}>
-                            {format(new Date(message.createdAt), 'HH:mm')}
-                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className={`text-xs ${
+                              message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                            }`}>
+                              {format(new Date(message.createdAt), 'HH:mm')}
+                            </p>
+                            {message.senderId === user?.id && (
+                              <div className="ml-2">
+                                {message.isRead ? (
+                                  // Double check - Message read
+                                  <div className="flex items-center text-green-400">
+                                    <Check className="h-3 w-3" />
+                                    <Check className="h-3 w-3 -ml-1" />
+                                  </div>
+                                ) : (
+                                  // Single check - Message delivered but not read
+                                  <Check className="h-3 w-3 text-white/50" />
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))
@@ -1001,9 +1017,25 @@ export default function Messages() {
                   <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white' : 'bg-white/10 text-white'}`}>
                       <p className="text-sm">{message.content}</p>
-                      <p className={`text-xs mt-1 ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                        {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                          {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                        </p>
+                        {message.senderId === user?.id && (
+                          <div className="ml-2">
+                            {message.isRead ? (
+                              // Double check - Message read
+                              <div className="flex items-center text-green-400">
+                                <Check className="h-3 w-3" />
+                                <Check className="h-3 w-3 -ml-1" />
+                              </div>
+                            ) : (
+                              // Single check - Message delivered but not read
+                              <Check className="h-3 w-3 text-white/50" />
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

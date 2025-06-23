@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema de doble check (read receipts) restaurado en mensajería
+  - Check simple: mensaje entregado pero no leído (color gris/blanco transparente)
+  - Check doble: mensaje leído por el receptor (color verde)
+  - Solo visible para el emisor del mensaje en todas las vistas (desktop/móvil)
+  - Implementado en admin/manager desktop, móvil y vista empleado
+  - Indicadores de estado funcionando correctamente como WhatsApp
 - June 23, 2025. Sistema de mensajería para empleados completamente funcional implementado
   - Vista empleado restaurada: lista de responsables con contadores de mensajes no leídos
   - Chat móvil funcional: navegación por click directo en lugar de URL para mejor UX
