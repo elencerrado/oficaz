@@ -819,19 +819,45 @@ startxref
         }
       }
 
+      console.log(`Attempting to delete document ${id} for user ${user.id} (${user.role})`);
+
       const deleted = await storage.deleteDocument(id);
       if (deleted) {
-        // Delete physical file
-        const filePath = path.join(uploadDir, document.fileName);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
+        // Delete physical file if it exists
+        try {
+          if (document.filePath) {
+            const fullPath = path.resolve(document.filePath);
+            console.log(`Checking for file at: ${fullPath}`);
+            
+            if (fs.existsSync(fullPath)) {
+              fs.unlinkSync(fullPath);
+              console.log(`Physical file deleted: ${fullPath}`);
+            } else {
+              console.log(`Physical file not found: ${fullPath}`);
+            }
+          } else {
+            // Try alternative path with uploadDir
+            const altPath = path.join(uploadDir, document.fileName);
+            console.log(`Checking alternative path: ${altPath}`);
+            if (fs.existsSync(altPath)) {
+              fs.unlinkSync(altPath);
+              console.log(`Physical file deleted from uploads: ${altPath}`);
+            }
+          }
+        } catch (fileError) {
+          console.error('Error deleting physical file:', fileError);
+          // Continue anyway - database deletion was successful
         }
-        res.json({ message: 'Document deleted successfully' });
+        
+        console.log(`Document ${id} deleted successfully`);
+        res.json({ message: 'Document deleted successfully from database and storage' });
       } else {
-        res.status(404).json({ message: 'Document not found' });
+        console.error(`Failed to delete document ${id} from database`);
+        res.status(500).json({ message: 'Failed to delete document from database' });
       }
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error('Error deleting document:', error);
+      res.status(500).json({ message: 'Failed to delete document: ' + error.message });
     }
   });
 

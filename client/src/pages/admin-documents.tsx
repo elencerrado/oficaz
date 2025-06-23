@@ -186,9 +186,19 @@ export default function AdminDocuments() {
   // Delete document mutation
   const deleteMutation = useMutation({
     mutationFn: async (docId: number) => {
-      return await apiRequest(`/api/documents/${docId}`, {
+      const response = await fetch(`/api/documents/${docId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authData') ? JSON.parse(localStorage.getItem('authData')!).token : ''}`,
+        },
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar documento');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
@@ -199,11 +209,13 @@ export default function AdminDocuments() {
       setDeleteConfirm({ show: false, docId: null, docName: '' });
     },
     onError: (error: any) => {
+      console.error('Delete error:', error);
       toast({
         title: 'Error al eliminar',
         description: error.message || 'No se pudo eliminar el documento',
         variant: 'destructive',
       });
+      setDeleteConfirm({ show: false, docId: null, docName: '' });
     },
   });
 
