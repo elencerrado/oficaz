@@ -184,26 +184,48 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Smooth auto-scroll for desktop and mobile
+  // Initial scroll (instant) when opening chat
   useEffect(() => {
     if (selectedChat) {
       setTimeout(() => {
-        // Desktop: smooth scroll using container
         const desktopContainer = document.getElementById('desktop-messages-container');
         if (desktopContainer) {
-          desktopContainer.scrollTo({
-            top: desktopContainer.scrollHeight,
-            behavior: 'smooth'
-          });
+          desktopContainer.scrollTop = desktopContainer.scrollHeight;
         }
         
-        // Mobile: scroll to element
         if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
         }
-      }, 100);
+      }, 50);
     }
-  }, [selectedChat, messages]);
+  }, [selectedChat]);
+
+  // Smooth scroll for new messages only
+  const previousMessageCount = useRef(0);
+  useEffect(() => {
+    if (messages && selectedChat) {
+      const currentCount = messages.length;
+      const hasNewMessages = currentCount > previousMessageCount.current;
+      
+      if (hasNewMessages && previousMessageCount.current > 0) {
+        setTimeout(() => {
+          const desktopContainer = document.getElementById('desktop-messages-container');
+          if (desktopContainer) {
+            desktopContainer.scrollTo({
+              top: desktopContainer.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+          
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+      
+      previousMessageCount.current = currentCount;
+    }
+  }, [messages, selectedChat]);
 
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
