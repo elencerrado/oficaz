@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ArrowLeft, User, Mail, Phone, Edit3, Save, X } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EmployeeProfile() {
-  const { user, company } = useAuth();
+  const { user, company, companyAlias } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -23,7 +23,7 @@ export default function EmployeeProfile() {
   
   // Get company alias from current URL
   const urlParts = window.location.pathname.split('/').filter((part: string) => part.length > 0);
-  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
+  const currentCompanyAlias = urlParts[0] || companyAlias || 'test';
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -78,7 +78,7 @@ export default function EmployeeProfile() {
     <div className="min-h-screen bg-employee-gradient text-white">
       {/* Header - Exactly like other employee pages but without user name */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/inicio`}>
+        <Link href={`/${currentCompanyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"
