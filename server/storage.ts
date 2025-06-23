@@ -402,75 +402,75 @@ export class DrizzleStorage implements IStorage {
 
   // Document Notifications methods
   async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
-    // Simplificar query para evitar problemas con Drizzle
-    const notifications = await db
-      .select()
-      .from(schema.documentNotifications)
-      .where(eq(schema.documentNotifications.userId, userId))
-      .orderBy(desc(schema.documentNotifications.createdAt));
+    // Usar SQL directo para empleados también
+    const results = await db.execute(sql`
+      SELECT 
+        dn.id,
+        dn.user_id as "userId",
+        dn.document_type as "documentType", 
+        dn.message,
+        dn.is_completed as "isCompleted",
+        dn.due_date as "dueDate",
+        dn.created_at as "createdAt",
+        u.full_name as "userFullName",
+        u.email as "userEmail"
+      FROM document_notifications dn
+      LEFT JOIN users u ON dn.user_id = u.id  
+      WHERE dn.user_id = ${userId}
+      ORDER BY dn.created_at DESC
+    `);
 
-    // Obtener información del usuario por separado
-    const results = [];
-    for (const notification of notifications) {
-      const user = await db
-        .select({
-          id: schema.users.id,
-          fullName: schema.users.fullName,
-          email: schema.users.email
-        })
-        .from(schema.users)
-        .where(eq(schema.users.id, notification.userId))
-        .limit(1);
-
-      results.push({
-        ...notification,
-        user: user[0] || { id: notification.userId, fullName: 'Empleado', email: '' }
-      });
-    }
-
-    return results as DocumentNotification[];
+    // Transformar a formato esperado
+    return results.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.userId,
+      documentType: row.documentType,
+      message: row.message,
+      isCompleted: row.isCompleted,
+      dueDate: row.dueDate,
+      createdAt: row.createdAt,
+      user: {
+        id: row.userId,
+        fullName: row.userFullName || 'Empleado',
+        email: row.userEmail || ''
+      }
+    })) as DocumentNotification[];
   }
 
   async getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]> {
-    // Obtener todos los usuarios de la empresa primero
-    const companyUsers = await db
-      .select({ id: schema.users.id })
-      .from(schema.users)
-      .where(eq(schema.users.companyId, companyId));
+    // Simplificar completamente - obtener notificaciones directamente por join
+    const results = await db.execute(sql`
+      SELECT 
+        dn.id,
+        dn.user_id as "userId",
+        dn.document_type as "documentType", 
+        dn.message,
+        dn.is_completed as "isCompleted",
+        dn.due_date as "dueDate",
+        dn.created_at as "createdAt",
+        u.full_name as "userFullName",
+        u.email as "userEmail"
+      FROM document_notifications dn
+      LEFT JOIN users u ON dn.user_id = u.id  
+      WHERE u.company_id = ${companyId}
+      ORDER BY dn.created_at DESC
+    `);
 
-    const userIds = companyUsers.map(u => u.id);
-    
-    if (userIds.length === 0) {
-      return [];
-    }
-
-    // Obtener todas las notificaciones de estos usuarios
-    const notifications = await db
-      .select()
-      .from(schema.documentNotifications)
-      .where(sql`${schema.documentNotifications.userId} = ANY(${userIds})`)
-      .orderBy(desc(schema.documentNotifications.createdAt));
-
-    // Obtener información del usuario por separado
-    const results = [];
-    for (const notification of notifications) {
-      const user = await db
-        .select({
-          id: schema.users.id,
-          fullName: schema.users.fullName,
-          email: schema.users.email
-        })
-        .from(schema.users)
-        .where(eq(schema.users.id, notification.userId))
-        .limit(1);
-
-      results.push({
-        ...notification,
-        user: user[0] || { id: notification.userId, fullName: 'Empleado', email: '' }
-      });
-    }
-
-    return results as DocumentNotification[];
+    // Transformar a formato esperado
+    return results.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.userId,
+      documentType: row.documentType,
+      message: row.message,
+      isCompleted: row.isCompleted,
+      dueDate: row.dueDate,
+      createdAt: row.createdAt,
+      user: {
+        id: row.userId,
+        fullName: row.userFullName || 'Empleado',
+        email: row.userEmail || ''
+      }
+    })) as DocumentNotification[];
   }
 
   async createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification> {
