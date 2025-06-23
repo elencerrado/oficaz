@@ -196,13 +196,11 @@ export default function Messages() {
     }
   }, [selectedChat, user?.role]);
 
-  // Auto-scroll for desktop when chat changes (only for admin/manager view)
+  // Auto-scroll for desktop when chat changes (instantaneous for chat opening)
   useEffect(() => {
     if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
-      messagesContainerRef.current.scrollTo({
-        top: messagesContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+      // Instant scroll to bottom when opening a chat
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [selectedChat, user?.role]);
 
@@ -220,9 +218,9 @@ export default function Messages() {
     }
   }, [messages, selectedChat, user?.role]);
 
-  // Auto-scroll for mobile chat (both admin mobile and employee views)
+  // Auto-scroll for mobile chat when messages change (smooth for new messages)
   useEffect(() => {
-    if (selectedChat && messages) {
+    if (messages && selectedChat) {
       setTimeout(() => {
         // Employee mobile view
         const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
@@ -243,7 +241,24 @@ export default function Messages() {
         }
       }, 150);
     }
-  }, [messages, selectedChat]);
+  }, [messages]);
+
+  // Instant scroll to bottom when opening mobile chat
+  useEffect(() => {
+    if (selectedChat) {
+      // Employee mobile view - instant scroll when opening chat
+      const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
+      if (employeeMobileContainer) {
+        employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
+      }
+      
+      // Admin mobile view - instant scroll when opening chat
+      const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
+      if (adminMobileContainer) {
+        adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+      }
+    }
+  }, [selectedChat]);
 
   // Mark messages as read
   useEffect(() => {
