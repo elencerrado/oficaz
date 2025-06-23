@@ -184,22 +184,22 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // AUTO-SCROLL ORIGINAL RESTAURADO
+  // AUTO-SCROLL CON JAVASCRIPT DIRECTO - FUNCIONA
   useEffect(() => {
-    if (messagesEndRef.current && selectedChat) {
+    if (selectedChat && messages.length > 0) {
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+        // Método 1: Usar el ref del contenedor directamente
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
+          container.scrollTop = container.scrollHeight;
+        }
+        // Método 2: Backup con scrollIntoView
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
+        }
       }, 100);
     }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [messages]);
+  }, [selectedChat, messages]);
 
 
 
