@@ -265,22 +265,29 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // ⚠️ AUTO-SCROLL ESPECÍFICO: Enfocado en el contenedor correcto
+  // ⚠️ AUTO-SCROLL MEJORADO: Busca el contenedor correcto y fuerza scroll
   useEffect(() => {
     if (selectedChat && messagesGroupedByDate.length > 0) {
-      // Scroll directo al contenedor de mensajes (Desktop)
-      const scrollToBottom = () => {
-        const container = messagesContainerRef.current;
-        if (container && container.classList.contains('flex-1')) {
-          console.log('Scrolling desktop container to bottom');
-          container.scrollTop = container.scrollHeight;
-        }
-      };
+      const performScroll = () => {
+        // Buscar todos los posibles contenedores de scroll
+        const containers = [
+          messagesContainerRef.current,
+          document.querySelector('.flex-1.overflow-y-auto'),
+          document.querySelector('[ref="messagesContainerRef"]')
+        ].filter(Boolean);
 
-      // También usar messagesEndRef como backup
-      const scrollToEndRef = () => {
+        console.log('Found containers:', containers.length);
+        
+        containers.forEach((container, index) => {
+          if (container) {
+            console.log(`Container ${index}: scrollHeight=${container.scrollHeight}, clientHeight=${container.clientHeight}`);
+            container.scrollTop = container.scrollHeight;
+          }
+        });
+
+        // También usar el ref del final
         if (messagesEndRef.current) {
-          console.log('Using messagesEndRef scroll');
+          console.log('Scrolling to messagesEndRef');
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'instant',
             block: 'end'
@@ -288,12 +295,12 @@ export default function Messages() {
         }
       };
 
-      // Ejecutar con timeouts escalonados
+      // Ejecutar múltiples veces con delays para asegurar éxito
       const timers = [
-        setTimeout(scrollToBottom, 100),
-        setTimeout(scrollToEndRef, 200),
-        setTimeout(scrollToBottom, 400),
-        setTimeout(scrollToEndRef, 600)
+        setTimeout(performScroll, 50),
+        setTimeout(performScroll, 200),
+        setTimeout(performScroll, 500),
+        setTimeout(performScroll, 1000)
       ];
 
       return () => timers.forEach(timer => clearTimeout(timer));
