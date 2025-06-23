@@ -547,7 +547,13 @@ export default function Messages() {
             </div>
           ) : (
             /* Chat View - Full screen overlay */
-            <div className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden">
+            <div 
+              className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
+              style={{ 
+                touchAction: 'pan-y',
+                overscrollBehavior: 'contain'
+              }}
+            >
               {/* Chat Header with Back Button - Fixed at top */}
               <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
                 <Button
@@ -571,8 +577,16 @@ export default function Messages() {
                 </div>
               </div>
 
-              {/* Messages - Scrollable area */}
-              <div className="flex-1 overflow-y-auto px-4 bg-gray-50" style={{ paddingBottom: '8px' }}>
+              {/* Messages - Scrollable area with touch handling */}
+              <div 
+                className="flex-1 overflow-y-auto px-4 bg-gray-50" 
+                style={{ 
+                  paddingBottom: '8px',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 <div className="space-y-4 pt-4">
                   {getChatMessages(selectedChat).length > 0 ? (
                     getChatMessages(selectedChat).map((message) => (
