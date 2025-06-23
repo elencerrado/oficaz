@@ -27,7 +27,8 @@ import {
   Heart,
   Plane,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -174,6 +175,30 @@ export default function AdminDocuments() {
         variant: 'destructive',
       });
       setIsUploading(false);
+    },
+  });
+
+  // Delete document mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (docId: number) => {
+      return await apiRequest(`/api/documents/${docId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      toast({
+        title: 'Documento eliminado',
+        description: 'El documento se ha eliminado completamente del sistema',
+      });
+      setDeleteConfirm({ show: false, docId: null, docName: '' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al eliminar',
+        description: error.message || 'No se pudo eliminar el documento',
+        variant: 'destructive',
+      });
     },
   });
 
@@ -407,6 +432,16 @@ export default function AdminDocuments() {
     link.href = `/api/documents/${docId}/download?token=${JSON.parse(localStorage.getItem('authData') || '{}').token}`;
     link.download = fileName;
     link.click();
+  };
+
+  const confirmDelete = (docId: number, docName: string) => {
+    setDeleteConfirm({ show: true, docId, docName });
+  };
+
+  const handleDelete = () => {
+    if (deleteConfirm.docId) {
+      deleteMutation.mutate(deleteConfirm.docId);
+    }
   };
 
   return (
@@ -719,6 +754,14 @@ export default function AdminDocuments() {
                         >
                           <Download className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => confirmDelete(document.id, document.originalName)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   );
@@ -866,6 +909,49 @@ export default function AdminDocuments() {
                   disabled={isUploading || uploadAnalysis.some(a => !a.employee)}
                 >
                   {isUploading ? 'Subiendo...' : `Subir ${uploadAnalysis.length} Documento(s)`}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirm.show} onOpenChange={(open) => !open && setDeleteConfirm({ show: false, docId: null, docName: '' })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-red-600">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Confirmar Eliminación
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                ¿Estás seguro de que quieres eliminar este documento?
+              </p>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-gray-900">{deleteConfirm.docName}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  ⚠️ Esta acción no se puede deshacer. El archivo se eliminará permanentemente del sistema.
+                </p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDeleteConfirm({ show: false, docId: null, docName: '' })}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
                 </Button>
               </div>
             </div>
