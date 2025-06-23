@@ -3,7 +3,7 @@ import { LogOut, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 interface EmployeeHeaderProps {
-  title: string;
+  title?: string;
   companyName?: string;
   showBackButton?: boolean;
   onBackClick?: () => void;
@@ -17,20 +17,17 @@ export function EmployeeHeader({
   onBackClick,
   showLogout = true 
 }: EmployeeHeaderProps) {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
 
   return (
-    <div 
-      className="px-4 py-3 flex items-center justify-between border-b border-gray-200/20"
-      style={{
-        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-        paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
-      }}
-    >
+    <div className="p-4 flex items-center justify-between border-b border-gray-200/20" style={{
+      background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+      paddingTop: 'max(16px, env(safe-area-inset-top))'
+    }}>
       <div className="flex items-center space-x-3">
         {showBackButton && (
           <Button
@@ -43,9 +40,9 @@ export function EmployeeHeader({
           </Button>
         )}
         
-        <div className="text-center">
+        <div className="text-left">
           <div className="text-white text-sm font-medium">
-            {companyName || 'Test Company'}
+            {companyName || company?.name || 'Test Company'}
           </div>
           <div className="text-white/70 text-xs">
             {user?.fullName}
@@ -53,9 +50,11 @@ export function EmployeeHeader({
         </div>
       </div>
 
-      <div className="text-center flex-1">
-        <h1 className="text-white text-lg font-semibold">{title}</h1>
-      </div>
+      {title && (
+        <div className="text-center flex-1">
+          <div className="text-white text-lg font-semibold">{title}</div>
+        </div>
+      )}
 
       <div className="flex items-center">
         {showLogout && (

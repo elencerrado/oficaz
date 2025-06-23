@@ -928,8 +928,6 @@ export default function Messages() {
         <>
           {/* Universal Header */}
           <EmployeeHeader
-            title="Mensajes"
-            companyName="Test Company"
             showLogout={true}
           />
           
@@ -997,8 +995,6 @@ export default function Messages() {
         <div className="h-screen flex flex-col bg-white">
           {/* Chat Header - Using universal component */}
           <EmployeeHeader
-            title={selectedChatUser?.fullName || 'Chat'}
-            companyName="Test Company"
             showBackButton={true}
             onBackClick={() => setSelectedChat(null)}
             showLogout={false}
