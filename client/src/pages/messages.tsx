@@ -144,17 +144,17 @@ export default function Messages() {
     });
   }, []);
 
-  // Check for stored chat selection on mount
+  // Check for stored chat selection on mount and when employees data loads
   useEffect(() => {
     const storedChatId = localStorage.getItem('selectedChatId');
     console.log('Checking localStorage for selectedChatId:', storedChatId); // Debug
-    if (storedChatId) {
+    if (storedChatId && (employees || managers)) {
       const chatId = parseInt(storedChatId);
-      console.log('Auto-selecting chat:', chatId); // Debug
+      console.log('Auto-selecting chat:', chatId, 'Available employees/managers:', employees || managers); // Debug
       setSelectedChat(chatId);
       localStorage.removeItem('selectedChatId'); // Clean up
     }
-  }, []);
+  }, [employees, managers]);
 
   // Effects for auto-scroll - Enhanced for mobile fullscreen
   useEffect(() => {
