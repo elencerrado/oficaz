@@ -513,9 +513,9 @@ export default function Messages() {
             </div>
           ) : (
             /* Chat View */
-            <div className="space-y-4">
+            <div className="flex flex-col h-[calc(100vh-180px)]">
               {/* Chat Header with Back Button */}
-              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200">
+              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200 flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -538,7 +538,7 @@ export default function Messages() {
               </div>
 
               {/* Messages */}
-              <div className="space-y-4 min-h-[400px] max-h-[400px] overflow-y-auto">
+              <div className="flex-1 overflow-y-auto space-y-4 py-4">
                 {getChatMessages(selectedChat).length > 0 ? (
                   getChatMessages(selectedChat).map((message) => (
                     <div
@@ -570,8 +570,8 @@ export default function Messages() {
                 )}
               </div>
 
-              {/* Message Input */}
-              <div className="flex space-x-2 pt-4 border-t border-gray-200">
+              {/* Message Input - Fixed at bottom */}
+              <div className="flex space-x-2 pt-4 border-t border-gray-200 bg-white flex-shrink-0">
                 <Input
                   ref={messageInputRef}
                   placeholder="Escribe tu mensaje..."
