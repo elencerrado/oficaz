@@ -502,8 +502,9 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50"
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50 flex flex-col"
                   >
+                    <div className="flex-1"></div>
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
                         messagesGroupedByDate.map((group) => (
