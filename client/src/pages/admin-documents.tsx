@@ -309,9 +309,12 @@ export default function AdminDocuments() {
     // Extract special keywords for "Otros" category (like IRPF, etc.)
     let specialKeyword = '';
     if (docType === 'otros') {
+      const normalizedFileName = fileName.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
       const specialKeywords = ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'modelo'];
       const foundKeyword = specialKeywords.find(keyword => 
-        normalizedName.includes(keyword)
+        normalizedFileName.includes(keyword)
       );
       if (foundKeyword) {
         specialKeyword = ` (${foundKeyword.toUpperCase()})`;
