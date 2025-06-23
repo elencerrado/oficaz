@@ -1059,7 +1059,7 @@ export default function AdminDocuments() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            {!request.isCompleted && (
+                            {!request.isCompleted ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1074,6 +1074,16 @@ export default function AdminDocuments() {
                                 className="text-orange-600 hover:text-orange-700"
                               >
                                 Cancelar
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Eliminar
                               </Button>
                             )}
                           </div>

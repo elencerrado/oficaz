@@ -78,6 +78,7 @@ export interface IStorage {
   getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]>;
   createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
   markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
+  deleteDocumentNotification(id: number): Promise<boolean>;
 
   // Custom Holidays
   getCustomHolidaysByCompany(companyId: number): Promise<CustomHoliday[]>;

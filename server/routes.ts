@@ -1352,6 +1352,22 @@ startxref
     }
   });
 
+  app.delete('/api/document-notifications/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteDocumentNotification(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Notification not found' });
+      }
+      
+      res.json({ message: 'Document notification deleted successfully' });
+    } catch (error: any) {
+      console.error("Error deleting document notification:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Super Admin endpoints
   const authenticateSuperAdmin = (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.split(' ')[1];
