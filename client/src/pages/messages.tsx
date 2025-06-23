@@ -283,20 +283,19 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="heading-1">Mensajes</h1>
-            <p className="body-text mt-2">
-              Comunícate con empleados y gestiona mensajes
-            </p>
-          </div>
+      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
+          <p className="text-gray-500 mt-1">
+            Comunícate con empleados y gestiona mensajes
+          </p>
+        </div>
 
-          {/* Desktop Layout: Two columns side by side */}
-          <div className="hidden lg:flex gap-6 h-[calc(100vh-180px)]">
-            {/* Left Column: Employee List (1/3 width) */}
-            <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
+        {/* Desktop Layout: Two columns side by side */}
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-180px)]">
+          {/* Left Column: Employee List (1/3 width) */}
+          <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1 min-w-0">
@@ -456,10 +455,10 @@ export default function Messages() {
                 </div>
               )}
             </div>
-          </div>
+        </div>
 
-          {/* Add Chat Modal */}
-          <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
+        {/* Add Chat Modal */}
+        <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
             <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
               <DialogHeader>
                 <DialogTitle>Crear Nueva Conversación</DialogTitle>
@@ -604,7 +603,6 @@ export default function Messages() {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
       </div>
     );
   }
