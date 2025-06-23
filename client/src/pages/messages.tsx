@@ -184,7 +184,7 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // COPIADO DIRECTO de donde funciona - NO TOCAR MÁS
+  // AUTO-SCROLL ORIGINAL RESTAURADO
   useEffect(() => {
     if (messagesEndRef.current && selectedChat) {
       setTimeout(() => {
@@ -265,20 +265,7 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // ⚠️ AUTO-SCROLL SIMPLE QUE FUNCIONABA ANTES - NO MODIFICAR MÁS
-  useEffect(() => {
-    if (selectedChat && messages.length > 0) {
-      const timer = setTimeout(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: 'instant',
-            block: 'end' 
-          });
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedChat, messages.length]);
+
 
   // Role display helper with icons - shows actual data from database
   const getRoleDisplay = useCallback((person: any) => {
