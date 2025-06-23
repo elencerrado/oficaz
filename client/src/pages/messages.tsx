@@ -60,15 +60,7 @@ export default function Messages() {
 
   // All state declarations together
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<number | null>(() => {
-    // Check if we need to auto-select a chat from localStorage
-    const storedChatId = localStorage.getItem('selectedChatId');
-    if (storedChatId) {
-      localStorage.removeItem('selectedChatId'); // Clean up
-      return parseInt(storedChatId);
-    }
-    return null;
-  });
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
@@ -150,6 +142,18 @@ export default function Messages() {
         }
       }, 100);
     });
+  }, []);
+
+  // Check for stored chat selection on mount
+  useEffect(() => {
+    const storedChatId = localStorage.getItem('selectedChatId');
+    console.log('Checking localStorage for selectedChatId:', storedChatId); // Debug
+    if (storedChatId) {
+      const chatId = parseInt(storedChatId);
+      console.log('Auto-selecting chat:', chatId); // Debug
+      setSelectedChat(chatId);
+      localStorage.removeItem('selectedChatId'); // Clean up
+    }
   }, []);
 
   // Effects for auto-scroll - Enhanced for mobile fullscreen
