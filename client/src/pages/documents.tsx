@@ -74,6 +74,9 @@ export default function Documents() {
 
   // Get pending document request
   const pendingRequest = documentRequests.find((req: any) => !req.completed);
+  
+  console.log('Pending request:', pendingRequest);
+  console.log('User data:', user);
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ['/api/documents'],
@@ -219,7 +222,21 @@ export default function Documents() {
     setIsUploading(true);
     
     const formData = new FormData();
-    formData.append('file', file);
+    
+    // Si hay una solicitud activa, renombrar el archivo según el tipo solicitado
+    if (activeRequest && user) {
+      const fileExtension = file.name.split('.').pop();
+      const requestType = activeRequest.type; // DNI, Nómina, etc.
+      const newFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
+      
+      console.log('Renaming file from', file.name, 'to', newFileName);
+      
+      // Crear nuevo archivo con el nombre correcto
+      const renamedFile = new File([file], newFileName, { type: file.type });
+      formData.append('file', renamedFile);
+    } else {
+      formData.append('file', file);
+    }
     
     uploadMutation.mutate(formData);
   };
