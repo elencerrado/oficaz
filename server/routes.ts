@@ -622,15 +622,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Cannot upload documents for employees outside your company' });
       }
 
+      // Use clean filename if provided, otherwise use original
+      const originalName = req.body.cleanFileName || req.file.originalname;
+
       const document = await storage.createDocument({
         userId: targetEmployeeId,
         fileName: req.file.filename,
-        originalName: req.file.originalname,
+        originalName: originalName,
         fileSize: req.file.size,
         filePath: req.file.path,
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
+
+      console.log(`Document uploaded: ${originalName} for user ${targetEmployeeId}`);
 
       res.status(201).json(document);
     } catch (error) {

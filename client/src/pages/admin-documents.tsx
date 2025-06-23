@@ -314,16 +314,16 @@ export default function AdminDocuments() {
     setIsUploading(true);
     const formData = new FormData();
     
-    // Create a new file with the clean name if provided
-    if (cleanFileName) {
-      const renamedFile = new File([file], cleanFileName, { type: file.type });
-      formData.append('file', renamedFile);
-    } else {
-      formData.append('file', file);
-    }
+    // Don't rename the file here, just send metadata
+    formData.append('file', file);
     
     if (targetEmployeeId) {
       formData.append('targetEmployeeId', targetEmployeeId.toString());
+    }
+    
+    // Send the desired clean filename as metadata
+    if (cleanFileName) {
+      formData.append('cleanFileName', cleanFileName);
     }
     
     uploadMutation.mutate(formData);
