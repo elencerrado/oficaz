@@ -523,7 +523,7 @@ export default function TimeTracking() {
             {/* Right side - Date Filters */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
@@ -621,6 +621,24 @@ export default function TimeTracking() {
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDateFilter('all');
+                    setSelectedEmployee('all');
+                    setSelectedStartDate(null);
+                    setSelectedEndDate(null);
+                    setStartDate('');
+                    setEndDate('');
+                    setCurrentDate(new Date());
+                    setCurrentMonth(new Date());
+                  }}
+                  className="h-10 text-sm font-normal"
+                >
+                  Limpiar filtros
+                </Button>
               </div>
             </div>
           </div>
