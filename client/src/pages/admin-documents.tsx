@@ -632,8 +632,13 @@ export default function AdminDocuments() {
   };
 
   const handleDeleteRequest = (requestId: number, documentType: string) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar permanentemente la solicitud de ${documentType}? Esta acción no se puede deshacer.`)) {
-      deleteRequestMutation.mutate(requestId);
+    setDeleteRequestConfirm({ show: true, requestId, documentType });
+  };
+
+  const confirmDeleteRequest = () => {
+    if (deleteRequestConfirm.requestId) {
+      deleteRequestMutation.mutate(deleteRequestConfirm.requestId);
+      setDeleteRequestConfirm({ show: false, requestId: null, documentType: '' });
     }
   };
 
@@ -1286,13 +1291,13 @@ export default function AdminDocuments() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Document Confirmation Dialog */}
         <Dialog open={deleteConfirm.show} onOpenChange={(open) => !open && setDeleteConfirm({ show: false, docId: null, docName: '' })}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center text-red-600">
                 <Trash2 className="h-5 w-5 mr-2" />
-                Confirmar Eliminación
+                Confirmar Eliminación de Documento
               </DialogTitle>
             </DialogHeader>
             
@@ -1323,6 +1328,49 @@ export default function AdminDocuments() {
                   className="bg-red-600 hover:bg-red-700"
                 >
                   {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Request Confirmation Dialog */}
+        <Dialog open={deleteRequestConfirm.show} onOpenChange={(open) => !open && setDeleteRequestConfirm({ show: false, requestId: null, documentType: '' })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-red-600">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Confirmar Eliminación de Solicitud
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                ¿Estás seguro de que quieres eliminar permanentemente esta solicitud?
+              </p>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-gray-900">Solicitud de: {deleteRequestConfirm.documentType}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  ⚠️ Esta acción no se puede deshacer. La solicitud se eliminará permanentemente del historial.
+                </p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDeleteRequestConfirm({ show: false, requestId: null, documentType: '' })}
+                  disabled={deleteRequestMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={confirmDeleteRequest}
+                  disabled={deleteRequestMutation.isPending}
+                  className="text-white hover:text-white bg-red-600 hover:bg-red-700"
+                >
+                  {deleteRequestMutation.isPending ? 'Eliminando...' : 'Eliminar Solicitud'}
                 </Button>
               </div>
             </div>
