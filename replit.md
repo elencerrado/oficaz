@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema de fechas corregido para mostrar hora española correcta
+  - Conversión UTC a GMT+2 (hora española) en visualización de documentos
+  - Documentos ahora muestran hora local real de subida (+2h de diferencia)
+  - Formato consistente en vistas admin y empleado con zona horaria corregida
+- June 23, 2025. Sistema de renombrado automático de documentos por solicitud funcionando
+  - Archivos se renombran según tipo solicitado: "DNI - Juan José Ramirez Martín.ext"
+  - Implementación en backend evita errores "object is not constructor"
+  - Sistema de actualización automática cada 3 segundos en vista admin
+  - Invalidación inmediata tras subir, eliminar o enviar solicitudes
 - June 23, 2025. Auto-scroll mejorado en chat para mostrar último mensaje al abrir conversación
   - Implementación simple restaurada: messagesEndRef.scrollIntoView con timeout 300ms
   - Usa messages.length como dependencia en lugar de messagesGroupedByDate.length

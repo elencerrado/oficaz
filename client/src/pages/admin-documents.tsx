@@ -878,10 +878,11 @@ export default function AdminDocuments() {
                           </span>
                           <span className="text-sm text-gray-500">
                             {(() => {
-                              // Crear fecha desde string ISO y formatear en zona horaria local
-                              const date = new Date(document.createdAt);
-                              console.log('Original date:', document.createdAt, 'Parsed:', date.toString());
-                              return format(date, 'd MMM yyyy HH:mm', { locale: es });
+                              // La fecha del servidor está en UTC, convertir a hora local española
+                              const utcDate = new Date(document.createdAt);
+                              // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
+                              const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                              return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
                             })()}
                           </span>
                         </div>
