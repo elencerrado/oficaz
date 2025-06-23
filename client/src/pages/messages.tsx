@@ -115,19 +115,6 @@ export default function Messages() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       setNewMessage('');
-      
-      // Auto-scroll to bottom within message container only
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          // Desktop scroll - specific container only
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTo({
-              top: messagesContainerRef.current.scrollHeight,
-              behavior: 'smooth'
-            });
-          }
-        }, 100);
-      });
     },
     onError: (error: any) => {
       toast({
@@ -219,33 +206,25 @@ export default function Messages() {
   // Auto-scroll for desktop when new messages arrive (only for admin/manager view)
   useEffect(() => {
     if (messages && messagesContainerRef.current && user?.role !== 'employee') {
-      const shouldAutoScroll = messagesContainerRef.current.scrollTop + messagesContainerRef.current.clientHeight >= messagesContainerRef.current.scrollHeight - 50;
-      if (shouldAutoScroll) {
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          }
-        }, 100);
-      }
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 150);
     }
   }, [messages, user?.role]);
 
+  // Auto-scroll for mobile chat
   useEffect(() => {
-    if (selectedChat && messages) {
-      const chatMessages = getChatMessages(selectedChat);
-      if (chatMessages.length > 0) {
-        const scrollMobileChat = () => {
-          const container = document.querySelector('.z-\\[60\\] .overflow-y-auto');
-          if (container) {
-            container.scrollTop = container.scrollHeight;
-          }
-        };
-        
-        setTimeout(scrollMobileChat, 100);
-        setTimeout(scrollMobileChat, 300);
-      }
+    if (selectedChat && messages && user?.role === 'employee') {
+      setTimeout(() => {
+        const mobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
+        if (mobileContainer) {
+          mobileContainer.scrollTop = mobileContainer.scrollHeight;
+        }
+      }, 150);
     }
-  }, [messages, selectedChat]);
+  }, [messages, selectedChat, user?.role]);
 
   // Mark messages as read
   useEffect(() => {
