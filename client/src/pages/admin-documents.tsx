@@ -877,7 +877,12 @@ export default function AdminDocuments() {
                             {formatFileSize(document.fileSize)}
                           </span>
                           <span className="text-sm text-gray-500">
-                            {format(new Date(document.createdAt), 'd MMM yyyy HH:mm', { locale: es })}
+                            {(() => {
+                              // Crear fecha desde string ISO y formatear en zona horaria local
+                              const date = new Date(document.createdAt);
+                              console.log('Original date:', document.createdAt, 'Parsed:', date.toString());
+                              return format(date, 'd MMM yyyy HH:mm', { locale: es });
+                            })()}
                           </span>
                         </div>
                       </div>
