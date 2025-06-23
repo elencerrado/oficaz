@@ -135,12 +135,14 @@ export default function Messages() {
     }
   }, [user]);
 
-  // Auto scroll to bottom when new messages arrive
+  // Auto scroll to bottom when new messages arrive or chat changes
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && selectedChat) {
+      // Instant scroll when opening chat, smooth when new messages
+      const behavior = chatMessages.length > 0 ? 'smooth' : 'auto';
+      messagesEndRef.current.scrollIntoView({ behavior });
     }
-  }, [chatMessages]);
+  }, [chatMessages, selectedChat]);
 
   const selectedChatUser = useMemo(() => {
     if (!selectedChat) return null;
@@ -165,6 +167,32 @@ export default function Messages() {
       !msg.isRead
     ).length;
   }, [messages, user]);
+
+  // Role display helper with icons - shows actual data from database
+  const getRoleDisplay = useCallback((person: any) => {
+    if (!person) return null;
+    
+    const role = person.role || 'employee';
+    const displayText = person.jobTitle || person.position || 'Sin cargo definido';
+    
+    // Icon color and letter based on role
+    const roleConfig = {
+      admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
+      manager: { color: 'bg-orange-500', letter: 'M', size: 'text-[10px]' },
+      employee: { color: 'bg-blue-500', letter: 'E', size: 'text-[8px]' }
+    };
+    
+    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.employee;
+    
+    return (
+      <div className="flex items-center space-x-1">
+        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center`}>
+          <span className={`text-white ${config.size} font-bold`}>{config.letter}</span>
+        </div>
+        <span className="text-xs">{displayText}</span>
+      </div>
+    );
+  }, []);
 
   // EARLY RETURNS AFTER ALL HOOKS
   if (!user) {
@@ -221,7 +249,9 @@ export default function Messages() {
                     </div>
                     <div className="flex-1 ml-3 min-w-0">
                       <p className="font-medium text-sm truncate">{contact.fullName}</p>
-                      <p className="text-xs text-gray-500 capitalize">{contact.role || 'empleado'}</p>
+                      <div className="text-gray-500">
+                        {getRoleDisplay(contact)}
+                      </div>
                     </div>
                     {unreadCount > 0 && (
                       <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
@@ -244,7 +274,9 @@ export default function Messages() {
                   </div>
                   <div className="ml-3">
                     <p className="font-medium">{selectedChatUser.fullName}</p>
-                    <p className="text-sm text-gray-500 capitalize">{selectedChatUser.role || 'empleado'}</p>
+                    <div className="text-sm text-gray-500">
+                      {getRoleDisplay(selectedChatUser)}
+                    </div>
                   </div>
                 </div>
 
@@ -327,7 +359,9 @@ export default function Messages() {
                           </div>
                           <div>
                             <p className="font-medium">{contact.fullName}</p>
-                            <p className="text-sm text-gray-500 capitalize">{contact.role || 'empleado'}</p>
+                            <div className="text-sm text-gray-500">
+                              {getRoleDisplay(contact)}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -450,7 +484,9 @@ export default function Messages() {
                       </div>
                       <div>
                         <p className="text-white font-medium">{contact.fullName}</p>
-                        <p className="text-white/70 text-sm capitalize">{contact.role || 'responsable'}</p>
+                        <div className="text-white/70 text-sm">
+                          {getRoleDisplay(contact)}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -489,9 +525,10 @@ export default function Messages() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 flex flex-col">
             <div className="flex-1"></div>
-            {chatMessages.map((message) => (
+            <div className="space-y-4">
+              {chatMessages.map((message) => (
               <div key={message.id} className={`flex ${message.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] p-3 rounded-lg ${
                   message.senderId === user.id 
@@ -509,8 +546,9 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           <div className="p-4 border-t border-white/20 flex-shrink-0 bg-employee-gradient">
