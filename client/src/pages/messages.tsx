@@ -199,8 +199,15 @@ export default function Messages() {
   // Auto-scroll for desktop when chat changes (instantaneous for chat opening)
   useEffect(() => {
     if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
-      // Instant scroll to bottom when opening a chat
+      // Instant scroll to bottom when opening a chat - no animation
+      messagesContainerRef.current.style.scrollBehavior = 'auto';
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      // Restore smooth behavior for subsequent scrolls
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.style.scrollBehavior = 'smooth';
+        }
+      }, 50);
     }
   }, [selectedChat, user?.role]);
 
@@ -509,7 +516,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable middle section */}
-                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50" style={{ scrollBehavior: 'smooth' }}>
+                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
