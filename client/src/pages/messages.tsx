@@ -488,57 +488,61 @@ export default function Messages() {
         </div>
 
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden pb-20">
+        <div className="lg:hidden h-full flex flex-col">
           {!selectedChat ? (
             /* Employee List View */
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Conversaciones</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={openAddChatModal}
-                  className="btn-oficaz-primary"
-                >
-                  <Plus className="icon-sm mr-1" />
-                  Nuevo
-                </Button>
-              </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
-                <Input
-                  placeholder="Buscar empleado..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-oficaz bg-gray-50 pl-10"
-                />
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-shrink-0 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Conversaciones</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openAddChatModal}
+                    className="btn-oficaz-primary"
+                  >
+                    <Plus className="icon-sm mr-1" />
+                    Nuevo
+                  </Button>
+                </div>
+                
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
+                  <Input
+                    placeholder="Buscar empleado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input-oficaz bg-gray-50 pl-10"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                {filteredEmployees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
-                    onClick={() => setSelectedChat(employee.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium text-sm">
-                          {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
-                          {employee.fullName}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          Empleado
-                        </p>
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-2 py-4">
+                  {filteredEmployees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+                      onClick={() => setSelectedChat(employee.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium text-sm">
+                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
+                            {employee.fullName}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            Empleado
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
