@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema de seguridad multicapa reforzado para documentos
+  - Validación estricta: empleados solo acceden a sus propios documentos
+  - Admin/manager: solo documentos de empleados de su misma empresa
+  - Logging de auditoría: accesos, subidas y eliminaciones registradas
+  - Protección cross-company: imposible acceder a datos de otras empresas
+  - Validación de existencia de usuarios antes de operaciones
+  - Vista previa corregida: blob URLs temporales sin descargas automáticas
 - June 23, 2025. Sistema completo de gestión inteligente de documentos implementado
   - Drag & drop inteligente con detección automática de empleados por nombre
   - Detección de tipos de documento por palabras clave configurables

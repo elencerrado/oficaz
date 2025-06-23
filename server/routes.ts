@@ -616,11 +616,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const targetEmployeeId = req.body.targetEmployeeId ? parseInt(req.body.targetEmployeeId) : req.user!.id;
       
-      // Verify target employee belongs to same company
+      // CRITICAL SECURITY: Verify target employee belongs to same company
       const targetEmployee = await storage.getUser(targetEmployeeId);
-      if (!targetEmployee || targetEmployee.companyId !== req.user!.companyId) {
-        return res.status(403).json({ message: 'Cannot upload documents for employees outside your company' });
+      const user = req.user!;
+      
+      if (!targetEmployee) {
+        console.log(`SECURITY ERROR: User ${user.id} attempted to upload to non-existent employee ${targetEmployeeId}`);
+        return res.status(404).json({ message: 'Target employee not found' });
       }
+      
+      if (targetEmployee.companyId !== user.companyId) {
+        console.log(`SECURITY VIOLATION: User ${user.id} from company ${user.companyId} attempted to upload document for employee ${targetEmployeeId} from company ${targetEmployee.companyId}`);
+        return res.status(403).json({ message: 'Unauthorized: Cross-company upload denied' });
+      }
+      
+      // Log admin document uploads for audit
+      console.log(`ADMIN UPLOAD: User ${user.id} (${user.role}) uploaded document for employee ${targetEmployeeId} within company ${user.companyId}`);
 
       // Use clean filename if provided, otherwise use original
       const originalName = req.body.cleanFileName || req.file.originalname;
@@ -701,21 +712,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPreview = req.query.view === 'true';
       console.log(`Document ${id} request - isPreview: ${isPreview}, query:`, req.query);
 
-      // CRITICAL SECURITY: Users can ONLY access their own documents
-      // Admins and managers can only access documents of users in their company
-      if (document.userId !== req.user!.id) {
-        if (!['admin', 'manager'].includes(req.user!.role)) {
-          // Redirect to custom 403 page instead of JSON response
-          const companyAlias = req.user!.companyId === 1 ? 'test' : 'company';
-          return res.redirect(`/${companyAlias}/access-denied`);
+      // CRITICAL SECURITY: Multi-layer document access validation
+      const user = req.user!;
+      
+      // Layer 1: Users can ONLY access their own documents
+      if (document.userId !== user.id) {
+        // Layer 2: Only admin/manager can access other users' documents
+        if (!['admin', 'manager'].includes(user.role)) {
+          console.log(`SECURITY VIOLATION: User ${user.id} (${user.email}) attempted to access document ${id} belonging to user ${document.userId}`);
+          return res.status(403).json({ message: 'Unauthorized: You can only access your own documents' });
         }
         
-        // For admin/manager, verify the document belongs to someone in their company
+        // Layer 3: Admin/Manager can only access documents within their company
         const documentOwner = await storage.getUser(document.userId);
-        if (!documentOwner || documentOwner.companyId !== req.user!.companyId) {
-          const companyAlias = req.user!.companyId === 1 ? 'test' : 'company';
-          return res.redirect(`/${companyAlias}/access-denied`);
+        if (!documentOwner) {
+          console.log(`SECURITY ERROR: Document ${id} references non-existent user ${document.userId}`);
+          return res.status(404).json({ message: 'Document owner not found' });
         }
+        
+        if (documentOwner.companyId !== user.companyId) {
+          console.log(`SECURITY VIOLATION: User ${user.id} from company ${user.companyId} attempted to access document ${id} from company ${documentOwner.companyId}`);
+          return res.status(403).json({ message: 'Unauthorized: Cross-company access denied' });
+        }
+        
+        // Layer 4: Log legitimate admin/manager access for audit
+        console.log(`ADMIN ACCESS: User ${user.id} (${user.role}) accessed document ${id} belonging to user ${document.userId} within company ${user.companyId}`);
       }
 
       const filePath = path.join(uploadDir, document.fileName);
