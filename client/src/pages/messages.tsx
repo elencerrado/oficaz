@@ -185,21 +185,17 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    if (selectedChat && messagesContainerRef.current) {
+    if (selectedChat && messagesEndRef.current) {
       setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
       }, 100);
     }
   }, [selectedChat]);
 
   useEffect(() => {
-    if (messages && messagesContainerRef.current) {
+    if (messages && messagesEndRef.current) {
       setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     }
   }, [messages]);
@@ -767,8 +763,8 @@ export default function Messages() {
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
+                <div ref={messagesEndRef} />
               </div>
               {/* Message Input - Fixed at bottom */}
               <div 
