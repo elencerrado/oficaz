@@ -452,14 +452,15 @@ export default function Messages() {
   );
 
   // Get employee with role for display
-  const getEmployeeWithRole = useCallback((employeeId: number) => {
-    const employee = filteredEmployees.find(e => e.id === employeeId);
-    if (!employee) return null;
-    return {
-      ...employee,
-      role: employee.role || 'employee' // Default to employee if no role specified
-    };
-  }, [filteredEmployees]);
+  const getEmployeeWithRole = useMemo(() => 
+    (employeeId: number) => {
+      const employee = filteredEmployees.find(e => e.id === employeeId);
+      if (!employee) return null;
+      return {
+        ...employee,
+        role: employee.role || 'employee' // Default to employee if no role specified
+      };
+    }, [filteredEmployees]);
 
   // Early return if no user
   if (!user) {
