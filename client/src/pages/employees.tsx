@@ -654,7 +654,7 @@ export default function Employees() {
                                 </Badge>
                               </div>
                             </div>
-                            <div className="space-y-1 mt-1">
+                            <div className="space-y-1">
                               <div className="flex items-center gap-1 text-sm text-gray-500">
                                 <Mail className="h-3 w-3" />
                                 <span className="truncate">{employee.companyEmail || employee.personalEmail || 'Sin email'}</span>
