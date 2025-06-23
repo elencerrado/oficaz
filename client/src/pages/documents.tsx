@@ -72,6 +72,9 @@ export default function Documents() {
     completed: notification.isCompleted
   }));
 
+  // Get pending document request
+  const pendingRequest = documentRequests.find((req: any) => !req.completed);
+
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ['/api/documents'],
     enabled: !!user,
@@ -271,7 +274,7 @@ export default function Documents() {
       return matchesSearch && getDocumentCategory(doc.originalName) === selectedCategory;
     });
 
-  // Moved above to be accessible in uploadMutation
+
 
   const handleCompleteRequest = () => {
     if (activeRequest) {
