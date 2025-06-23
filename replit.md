@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Títulos de páginas empleado estandarizados con formato consistente
+  - Todas las páginas empleado ahora usan text-3xl font-bold text-white mb-2
+  - Subtítulos descriptivos con text-white/70 text-sm unificados
+  - "Control de Tiempo", "Vacaciones", "Documentos", "Mensajes" con formato idéntico
+  - Padding px-6 pb-6 consistente en todas las páginas empleado
+  - Eliminado formato anterior de employee-time-tracking para consistencia total
 - June 23, 2025. Header del chat empleado funcionando correctamente en iPhone
   - Corregida lógica para usar managers en lugar de filteredEmployees para empleados
   - Vista empleado usa (user?.role === 'employee' ? managers : employees) para encontrar contacto
