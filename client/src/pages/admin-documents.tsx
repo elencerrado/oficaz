@@ -564,38 +564,7 @@ export default function AdminDocuments() {
     return FileText; // Simplified for now
   };
 
-  const handleViewDocument = async (docId: number, fileName: string) => {
-    try {
-      const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
-      const response = await fetch(`/api/documents/${docId}/download?view=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      // Open in new tab for preview
-      window.open(url, '_blank');
-      
-      // Clean up after a delay
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 60000); // 1 minute cleanup
-    } catch (error) {
-      console.error('Error viewing document:', error);
-      toast({
-        title: 'Error al ver documento',
-        description: 'No se pudo abrir el documento para vista previa',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleDownload = async (docId: number, fileName: string) => {
     try {
@@ -645,6 +614,50 @@ export default function AdminDocuments() {
     if (deleteRequestConfirm.requestId) {
       deleteRequestMutation.mutate(deleteRequestConfirm.requestId);
       setDeleteRequestConfirm({ show: false, requestId: null, documentType: '' });
+    }
+  };
+
+  // Handle secure document viewing
+  const handleViewDocument = async (docId: number) => {
+    try {
+      const authData = localStorage.getItem('authData');
+      const token = authData ? JSON.parse(authData).token : '';
+      
+      if (!token) {
+        toast({
+          title: "Error de autenticación",
+          description: "No se pudo obtener el token de acceso",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch document with authentication and open in new tab
+      const response = await fetch(`/api/documents/${docId}/download?preview=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al acceder al documento');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Open in new tab
+      const newWindow = window.open(blobUrl, '_blank');
+      
+      // Clean up blob URL after opening
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error al visualizar",
+        description: error.message || "No se pudo abrir el documento",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1108,7 +1121,7 @@ export default function AdminDocuments() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => window.open(`/api/documents/${request.document.id}/download`, '_blank')}
+                                      onClick={() => handleViewDocument(request.document.id)}
                                       className="text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
                                     >
                                       <Eye className="h-3 w-3 mr-1" />
