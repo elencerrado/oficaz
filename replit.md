@@ -117,6 +117,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Header del chat empleado funcionando correctamente en iPhone
+  - Corregida lógica para usar managers en lugar de filteredEmployees para empleados
+  - Vista empleado usa (user?.role === 'employee' ? managers : employees) para encontrar contacto
+  - Header del chat individual empleado ahora muestra nombre y avatar correctamente
+  - Sistema blindado con comentarios protectores para evitar futuros cambios
 - June 23, 2025. Sistema completamente dinámico de roles sin datos hardcodeados implementado
   - Función getRoleDisplay refactorizada para usar solo datos reales de base de datos
   - Eliminados todos los valores hardcodeados ("Empleado", "Administrador", "Manager")

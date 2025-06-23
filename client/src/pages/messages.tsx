@@ -1041,16 +1041,16 @@ export default function Messages() {
             
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                {((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat)?.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
               </span>
             </div>
             
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium">
-                {filteredEmployees.find(e => e.id === selectedChat)?.fullName || 'Chat'}
+                {((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat)?.fullName || 'Chat'}
               </p>
               <div className="text-white/70 text-xs">
-                {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
+                {getRoleDisplay(((user?.role === 'employee' ? managers : employees) as any[] || []).find((e: any) => e.id === selectedChat))}
               </div>
             </div>
           </div>
