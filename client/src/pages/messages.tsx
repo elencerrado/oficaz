@@ -184,21 +184,24 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Force scroll to bottom - desktop and mobile
+  // Smooth auto-scroll for desktop and mobile
   useEffect(() => {
     if (selectedChat) {
       setTimeout(() => {
-        // Desktop: scroll container
+        // Desktop: smooth scroll using container
         const desktopContainer = document.getElementById('desktop-messages-container');
         if (desktopContainer) {
-          desktopContainer.scrollTop = desktopContainer.scrollHeight;
+          desktopContainer.scrollTo({
+            top: desktopContainer.scrollHeight,
+            behavior: 'smooth'
+          });
         }
         
         // Mobile: scroll to element
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 200);
+      }, 100);
     }
   }, [selectedChat, messages]);
 
@@ -500,6 +503,7 @@ export default function Messages() {
                     ref={messagesContainerRef} 
                     className="flex-1 overflow-y-auto p-4 bg-gray-50"
                     id="desktop-messages-container"
+                    style={{ scrollBehavior: 'smooth' }}
                   >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
