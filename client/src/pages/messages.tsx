@@ -169,7 +169,7 @@ export default function Messages() {
   }, [selectedChat, user?.role, managers, employees]);
 
   useEffect(() => {
-    if (selectedChat && messages.length > 0 && !markAsReadMutation.isPending) {
+    if (selectedChat && messages && messages.length > 0 && !markAsReadMutation.isPending) {
       const chatMessages = messages as Message[] || [];
       const unreadMessages = chatMessages.filter(msg => 
         !msg.isRead && 
@@ -183,7 +183,7 @@ export default function Messages() {
         });
       }
     }
-  }, [selectedChat, messages.length, user?.id]); // Removed markAsReadMutation from deps
+  }, [selectedChat, messages?.length, user?.id]); // Removed markAsReadMutation from deps
 
   useEffect(() => {
     const handleKeyboardVisibility = () => {
@@ -205,7 +205,7 @@ export default function Messages() {
 
   // AUTO-SCROLL AGRESIVO - MÚLTIPLES INTENTOS HASTA QUE FUNCIONE
   useEffect(() => {
-    if (selectedChat && messages.length > 0) {
+    if (selectedChat && messages && messages.length > 0) {
       // Función para hacer scroll hasta abajo del todo
       const scrollToBottom = () => {
         // Buscar el contenedor de mensajes correcto
@@ -249,7 +249,7 @@ export default function Messages() {
 
       return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [selectedChat, messages]);
+  }, [selectedChat, messages?.length]);
 
 
 
