@@ -300,7 +300,7 @@ export default function Messages() {
         {!selectedChat ? (
           <div className="flex-1">
             {/* Employee List */}
-            <div className="bg-white rounded-lg border border-gray-200 flex flex-col" style={{ height: 'calc(100vh - 200px)' }}>
+            <div className="bg-white rounded-lg border border-gray-200">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="heading-3">Empleados</h2>
@@ -330,7 +330,7 @@ export default function Messages() {
                   </div>
                 </div>
                 
-                <div className="p-4 space-y-2 overflow-y-auto flex-1">
+                <div className="p-4 space-y-2">
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
