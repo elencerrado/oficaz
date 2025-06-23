@@ -1178,7 +1178,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} style={{ height: '20px' }} />
               </div>
               {/* Message Input - Fixed at bottom - DARK THEME */}
               <div 
