@@ -184,46 +184,18 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
+  // Simple auto-scroll that works - copied from mobile success
   useEffect(() => {
-    if (messagesEndRef.current && selectedChat) {
-      const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-      };
-      
-      const timer = setTimeout(scrollToBottom, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      };
-      
-      const timer = setTimeout(scrollToBottom, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [messages]);
-
-  // Desktop scroll - force scroll to bottom using container
-  useEffect(() => {
-    if (selectedChat && messages && messages.length > 0) {
-      // Try both methods for desktop auto-scroll
-      if (messagesContainerRef.current) {
-        const container = messagesContainerRef.current;
-        setTimeout(() => {
-          container.scrollTop = container.scrollHeight;
-        }, 200);
-      }
-      
+    const scrollToBottom = () => {
       if (messagesEndRef.current) {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 250);
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
       }
+    };
+    
+    if (selectedChat) {
+      setTimeout(scrollToBottom, 100);
     }
-  }, [messages, selectedChat]);
+  }, [selectedChat, messages]);
 
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
@@ -586,8 +558,8 @@ export default function Messages() {
                           <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
                         </div>
                       )}
-                      <div ref={messagesEndRef} />
                     </div>
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Message Input - Fixed at bottom */}
