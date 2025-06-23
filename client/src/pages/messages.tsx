@@ -346,8 +346,11 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // Role display helper with icons
-  const getRoleDisplay = (role: string) => {
+  // Role display helper with icons - shows actual role from database
+  const getRoleDisplay = (person: any) => {
+    const role = person?.role || 'employee';
+    const jobTitle = person?.jobTitle || person?.position || '';
+    
     switch (role) {
       case 'admin':
         return (
@@ -355,7 +358,7 @@ export default function Messages() {
             <div className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
               <span className="text-white text-[10px] font-bold">A</span>
             </div>
-            <span>Administrador</span>
+            <span>{jobTitle || 'Administrador'}</span>
           </div>
         );
       case 'manager':
@@ -364,7 +367,7 @@ export default function Messages() {
             <div className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
               <span className="text-white text-[10px] font-bold">M</span>
             </div>
-            <span>Manager</span>
+            <span>{jobTitle || 'Manager'}</span>
           </div>
         );
       default:
@@ -373,7 +376,7 @@ export default function Messages() {
             <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white text-[8px] font-bold">E</span>
             </div>
-            <span>Empleado</span>
+            <span>{jobTitle || 'Empleado'}</span>
           </div>
         );
     }
@@ -573,7 +576,7 @@ export default function Messages() {
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
                         </h3>
                         <div className="caption-text">
-                          {getRoleDisplay(getEmployeeWithRole(selectedChat)?.role || 'employee')}
+                          {getRoleDisplay(getEmployeeWithRole(selectedChat))}
                         </div>
                       </div>
                     </div>
@@ -770,7 +773,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-gray-500">
-                    {getRoleDisplay(getEmployeeWithRole(selectedChat)?.role || 'employee')}
+                    {getRoleDisplay(getEmployeeWithRole(selectedChat))}
                   </div>
                 </div>
               </div>
@@ -972,7 +975,7 @@ export default function Messages() {
                               {employee.fullName}
                             </p>
                             <div className="text-xs text-gray-500 truncate">
-                              {getRoleDisplay(employee.role || 'employee')}
+                              {getRoleDisplay(employee)}
                             </div>
                           </div>
                         </div>
@@ -1154,7 +1157,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName || 'Chat'}
                   </p>
                   <div className="text-white/70 text-xs">
-                    {getRoleDisplay(selectedChatUser?.role || 'manager')}
+                    {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
               </div>
