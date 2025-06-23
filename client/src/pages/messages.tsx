@@ -350,12 +350,12 @@ export default function Messages() {
                       
                       <div className="flex-1 min-w-0">
                         <p className={`heading-4 truncate ${
-                          selectedChat === employee.id ? 'text-white' : 'text-gray-900'
+                          selectedChat === employee.id ? 'text-white font-medium' : 'text-gray-900'
                         }`}>
                           {employee.fullName}
                         </p>
                         <p className={`caption-text truncate ${
-                          selectedChat === employee.id ? 'text-white/70' : 'text-gray-500'
+                          selectedChat === employee.id ? 'text-white/90' : 'text-gray-500'
                         }`}>
                           Empleado
                         </p>
