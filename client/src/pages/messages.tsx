@@ -1056,7 +1056,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-white/70">
-                    {getRoleDisplayEmployee(selectedChatUser)}
+                    {selectedChatUser?.jobTitle || selectedChatUser?.position || 'Sin cargo definido'}
                   </div>
                 </div>
               </div>
