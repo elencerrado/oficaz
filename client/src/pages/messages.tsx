@@ -265,35 +265,35 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // ⚠️ AUTO-SCROLL ROBUSTO: Múltiples métodos para garantizar scroll al último mensaje
+  // ⚠️ AUTO-SCROLL ESPECÍFICO: Enfocado en el contenedor correcto
   useEffect(() => {
     if (selectedChat && messagesGroupedByDate.length > 0) {
-      // Método 1: messagesEndRef.scrollIntoView
-      const scrollToEnd = () => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: 'instant',
-            block: 'end',
-            inline: 'nearest'
-          });
-        }
-      };
-
-      // Método 2: messagesContainerRef.scrollTop
-      const scrollContainer = () => {
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
+      // Scroll directo al contenedor de mensajes (Desktop)
+      const scrollToBottom = () => {
+        const container = messagesContainerRef.current;
+        if (container && container.classList.contains('flex-1')) {
+          console.log('Scrolling desktop container to bottom');
           container.scrollTop = container.scrollHeight;
         }
       };
 
-      // Ejecutar ambos métodos con múltiples timeouts para asegurar éxito
+      // También usar messagesEndRef como backup
+      const scrollToEndRef = () => {
+        if (messagesEndRef.current) {
+          console.log('Using messagesEndRef scroll');
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'instant',
+            block: 'end'
+          });
+        }
+      };
+
+      // Ejecutar con timeouts escalonados
       const timers = [
-        setTimeout(scrollToEnd, 100),
-        setTimeout(scrollContainer, 150),
-        setTimeout(scrollToEnd, 300),
-        setTimeout(scrollContainer, 400),
-        setTimeout(scrollToEnd, 500)
+        setTimeout(scrollToBottom, 100),
+        setTimeout(scrollToEndRef, 200),
+        setTimeout(scrollToBottom, 400),
+        setTimeout(scrollToEndRef, 600)
       ];
 
       return () => timers.forEach(timer => clearTimeout(timer));
