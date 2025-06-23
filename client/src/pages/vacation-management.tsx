@@ -61,66 +61,17 @@ const spanishHolidays2025: Holiday[] = [
   { name: "Navidad", date: "2025-12-25", type: "national" },
 ];
 
-const provinces = [
-  { value: "alava", label: "Álava" },
-  { value: "albacete", label: "Albacete" },
-  { value: "alicante", label: "Alicante" },
-  { value: "almeria", label: "Almería" },
-  { value: "asturias", label: "Asturias" },
-  { value: "avila", label: "Ávila" },
-  { value: "badajoz", label: "Badajoz" },
-  { value: "barcelona", label: "Barcelona" },
-  { value: "burgos", label: "Burgos" },
-  { value: "caceres", label: "Cáceres" },
-  { value: "cadiz", label: "Cádiz" },
-  { value: "cantabria", label: "Cantabria" },
-  { value: "castellon", label: "Castellón" },
-  { value: "ceuta", label: "Ceuta" },
-  { value: "ciudad_real", label: "Ciudad Real" },
-  { value: "cordoba", label: "Córdoba" },
-  { value: "cuenca", label: "Cuenca" },
-  { value: "girona", label: "Girona" },
-  { value: "granada", label: "Granada" },
-  { value: "guadalajara", label: "Guadalajara" },
-  { value: "guipuzcoa", label: "Guipúzcoa" },
-  { value: "huelva", label: "Huelva" },
-  { value: "huesca", label: "Huesca" },
-  { value: "islas_baleares", label: "Islas Baleares" },
-  { value: "jaen", label: "Jaén" },
-  { value: "la_coruna", label: "La Coruña" },
-  { value: "la_rioja", label: "La Rioja" },
-  { value: "las_palmas", label: "Las Palmas" },
-  { value: "leon", label: "León" },
-  { value: "lleida", label: "Lleida" },
-  { value: "lugo", label: "Lugo" },
-  { value: "madrid", label: "Madrid" },
-  { value: "malaga", label: "Málaga" },
-  { value: "melilla", label: "Melilla" },
-  { value: "murcia", label: "Murcia" },
-  { value: "navarra", label: "Navarra" },
-  { value: "ourense", label: "Ourense" },
-  { value: "palencia", label: "Palencia" },
-  { value: "pontevedra", label: "Pontevedra" },
-  { value: "salamanca", label: "Salamanca" },
-  { value: "santa_cruz_de_tenerife", label: "Santa Cruz de Tenerife" },
-  { value: "segovia", label: "Segovia" },
-  { value: "sevilla", label: "Sevilla" },
-  { value: "soria", label: "Soria" },
-  { value: "tarragona", label: "Tarragona" },
-  { value: "teruel", label: "Teruel" },
-  { value: "toledo", label: "Toledo" },
-  { value: "valencia", label: "Valencia" },
-  { value: "valladolid", label: "Valladolid" },
-  { value: "vizcaya", label: "Vizcaya" },
-  { value: "zamora", label: "Zamora" },
-  { value: "zaragoza", label: "Zaragoza" }
+const regions = [
+  "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria",
+  "Castilla-La Mancha", "Castilla y León", "Cataluña", "Extremadura",
+  "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Valencia"
 ];
 
 export default function VacationManagement() {
   const [activeTab, setActiveTab] = useState("requests");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("sevilla");
+  const [selectedRegion, setSelectedRegion] = useState("Madrid");
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", type: "regional" as const });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
@@ -139,14 +90,6 @@ export default function VacationManagement() {
     return differenceInDays(end, start) + 1;
   };
 
-  // Company and user data
-  const { data: companyData, isLoading: loadingCompany } = useQuery({
-    queryKey: ['/api/companies/current'],
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const company = companyData as any;
-
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
@@ -161,13 +104,6 @@ export default function VacationManagement() {
       }));
     }
   });
-
-  // Update selected region when company data loads
-  useEffect(() => {
-    if (company?.province) {
-      setSelectedRegion(company.province);
-    }
-  }, [company]);
 
   // Fetch employees for vacation overview
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
@@ -748,18 +684,16 @@ export default function VacationManagement() {
             {activeTab === 'holidays' && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Seleccionar provincia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {provinces.map((province) => (
-                          <SelectItem key={province.value} value={province.value}>{province.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {regions.map((region) => (
+                        <SelectItem key={region} value={region}>{region}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Dialog open={showAddHoliday} onOpenChange={setShowAddHoliday}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">

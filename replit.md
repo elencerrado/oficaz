@@ -117,19 +117,6 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 23, 2025. Sistema de mensajería completamente funcional y depurado implementado
-  - Error crítico de React Hooks resuelto reescribiendo componente Messages completo
-  - Iconos de rol dinámicos restaurados: A (admin), M (manager), E (employee) con colores correctos
-  - Sistema getRoleDisplay muestra cargo real (jobTitle/position) o "Sin cargo definido"
-  - Scroll automático al último mensaje: inmediato al abrir chat, suave para nuevos mensajes
-  - Layout corregido con espaciadores flex para posicionamiento correcto de mensajes
-  - Vista admin desktop y móvil + vista empleado móvil funcionando perfectamente
-- June 23, 2025. Selector de provincia automático vinculado a configuración empresa implementado
-  - Sistema de días festivos ahora usa automáticamente la provincia configurada en empresa
-  - Selector se inicializa con province de company y se actualiza dinámicamente
-  - Indicador visual muestra "Provincia de la empresa: X" junto al selector
-  - useEffect sincroniza cambios de configuración empresa con selector región
-  - Eliminación completa de valores hardcodeados por defecto para provincias
 - June 23, 2025. Sistema completamente dinámico de roles sin datos hardcodeados implementado
   - Función getRoleDisplay refactorizada para usar solo datos reales de base de datos
   - Eliminados todos los valores hardcodeados ("Empleado", "Administrador", "Manager")
