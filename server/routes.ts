@@ -804,17 +804,18 @@ startxref
         return res.status(404).json({ message: 'Document not found' });
       }
 
-      // CRITICAL SECURITY: Users can ONLY delete their own documents
-      // Admins and managers can only delete documents of users in their company
-      if (document.userId !== req.user!.id) {
-        if (!['admin', 'manager'].includes(req.user!.role)) {
-          return res.status(403).json({ message: 'Access denied - not your document' });
-        }
-        
-        // For admin/manager, verify the document belongs to someone in their company
+      // Security check: Admin/Manager can delete any document in their company
+      // Employees can only delete their own documents
+      const user = req.user!;
+      if (user.role === 'employee' && document.userId !== user.id) {
+        return res.status(403).json({ message: 'You can only delete your own documents' });
+      }
+
+      // For admin/manager, ensure document belongs to their company
+      if (user.role !== 'employee') {
         const documentOwner = await storage.getUser(document.userId);
-        if (!documentOwner || documentOwner.companyId !== req.user!.companyId) {
-          return res.status(403).json({ message: 'Access denied - document not in your company' });
+        if (!documentOwner || documentOwner.companyId !== user.companyId) {
+          return res.status(403).json({ message: 'Cannot delete documents from other companies' });
         }
       }
 
