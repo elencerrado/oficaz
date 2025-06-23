@@ -296,11 +296,226 @@ export default function Messages() {
             </CardContent>
           </Card>
         </div>
-        {/* Content - Responsive design: 2 columns on large screens, single view on mobile */}
-        <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
-          {/* Employee List - Full width on mobile when no chat selected, 1/3 on desktop */}
-          <div className={`lg:col-span-1 h-full ${selectedChat ? 'hidden lg:block' : 'lg:col-span-1'}`}>
-            <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+        {/* Desktop Layout: Two columns side by side */}
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-250px)]">
+          {/* Left Column: Employee List (1/3 width) */}
+          <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="heading-3">Empleados</h2>
+                <Button
+                  variant={isGroupMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setIsGroupMode(!isGroupMode);
+                    setSelectedEmployees([]);
+                  }}
+                  className="btn-oficaz-secondary"
+                >
+                  <Users className="icon-sm mr-2" />
+                  Grupal
+                </Button>
+              </div>
+              
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
+                <Input
+                  placeholder="Buscar empleado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input-oficaz pl-10 bg-gray-50"
+                />
+              </div>
+            </div>
+            
+            <div className="p-4 space-y-2 overflow-y-auto flex-1">
+              {filteredEmployees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
+                    selectedChat === employee.id
+                      ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                  }`}
+                  onClick={() => !isGroupMode && setSelectedChat(employee.id)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {isGroupMode && (
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(employee.id)}
+                        onChange={() => toggleEmployeeSelection(employee.id)}
+                        className="rounded"
+                      />
+                    )}
+                    
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      selectedChat === employee.id
+                        ? 'bg-white/20 text-white'
+                        : 'bg-oficaz-primary text-white'
+                    }`}>
+                      <span className="text-sm font-medium">
+                        {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <p className={`heading-4 truncate ${
+                        selectedChat === employee.id ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {employee.fullName}
+                      </p>
+                      <p className={`caption-text truncate ${
+                        selectedChat === employee.id ? 'text-white/70' : 'text-gray-500'
+                      }`}>
+                        Empleado
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Group messaging controls */}
+            {isGroupMode && (
+              <div className="p-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="body-text">
+                    {selectedEmployees.length} empleados seleccionados
+                  </span>
+                  <div className="space-x-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setSelectedEmployees(filteredEmployees.map(e => e.id))}
+                      className="btn-oficaz-outline"
+                    >
+                      Todos
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setSelectedEmployees([])}
+                      className="btn-oficaz-outline"
+                    >
+                      Ninguno
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Escribe tu mensaje grupal..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="input-oficaz"
+                  />
+                  <Button
+                    onClick={sendGroupMessage}
+                    disabled={selectedEmployees.length === 0 || !newMessage.trim()}
+                    className="btn-oficaz-primary w-full"
+                  >
+                    <Send className="icon-sm mr-2" />
+                    Enviar a {selectedEmployees.length} empleados
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Chat Area (2/3 width) */}
+          <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col">
+            {selectedChat ? (
+              <>
+                {/* Chat Header */}
+                <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg flex-shrink-0">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                      <span className="text-white font-medium">
+                        {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="heading-4">
+                        {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                      </h3>
+                      <p className="caption-text">Empleado</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Messages - Scrollable middle section */}
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                  <div className="space-y-4">
+                    {getChatMessages(selectedChat).length > 0 ? (
+                      getChatMessages(selectedChat).map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                              message.senderId === user?.id
+                                ? 'bg-oficaz-primary text-white'
+                                : 'bg-white text-gray-900 border border-gray-200'
+                            }`}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                            }`}>
+                              {format(new Date(message.createdAt), 'HH:mm')}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No hay mensajes aún</p>
+                        <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Message Input - Fixed at bottom */}
+                <div className="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
+                  <div className="flex space-x-2">
+                    <Input
+                      ref={messageInputRef}
+                      placeholder="Escribe tu mensaje..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                      className="input-oficaz flex-1"
+                    />
+                    <Button
+                      onClick={sendMessage}
+                      disabled={!newMessage.trim()}
+                      className="btn-oficaz-primary"
+                    >
+                      <Send className="icon-sm" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-gray-500">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
+                  <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Layout: Single view alternating between list and chat */}
+        <div className="lg:hidden">
+          {!selectedChat ? (
+            /* Mobile Employee List */
+            <div className="bg-white rounded-lg border border-gray-200">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="heading-3">Empleados</h2>
@@ -330,15 +545,11 @@ export default function Messages() {
                 </div>
               </div>
               
-              <div className="p-4 space-y-2 overflow-y-auto flex-1">
+              <div className="p-4 space-y-2">
                 {filteredEmployees.map((employee) => (
                   <div
                     key={employee.id}
-                    className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
-                      selectedChat === employee.id
-                        ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
+                    className="p-3 rounded-lg cursor-pointer border bg-gray-50 hover:bg-gray-100 border-gray-200 transition-all duration-200 hover-lift"
                     onClick={() => !isGroupMode && setSelectedChat(employee.id)}
                   >
                     <div className="flex items-center space-x-3">
@@ -351,25 +562,17 @@ export default function Messages() {
                         />
                       )}
                       
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        selectedChat === employee.id
-                          ? 'bg-white/20 text-white'
-                          : 'bg-oficaz-primary text-white'
-                      }`}>
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-oficaz-primary text-white">
                         <span className="text-sm font-medium">
                           {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </span>
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className={`heading-4 truncate ${
-                          selectedChat === employee.id ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <p className="heading-4 truncate text-gray-900">
                           {employee.fullName}
                         </p>
-                        <p className={`caption-text truncate ${
-                          selectedChat === employee.id ? 'text-white/70' : 'text-gray-500'
-                        }`}>
+                        <p className="caption-text truncate text-gray-500">
                           Empleado
                         </p>
                       </div>
@@ -422,104 +625,92 @@ export default function Messages() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Chat Area - 2/3 on desktop, full width on mobile when chat selected */}
-          <div className={`lg:col-span-2 h-full ${!selectedChat ? 'hidden lg:flex lg:items-center lg:justify-center' : ''}`}>
-            {selectedChat ? (
-              <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col lg:relative fixed lg:inset-auto inset-0 z-50">
-                {/* Chat Header */}
-                <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg flex-shrink-0">
-                  <div className="flex items-center space-x-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedChat(null)}
-                      className="text-gray-600 hover:text-gray-900 lg:hidden"
-                    >
-                      <ArrowLeft className="h-5 w-5 mr-2" />
-                      Atrás
-                    </Button>
-                    <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="heading-4">
-                        {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
-                      </h3>
-                      <p className="caption-text">Empleado</p>
-                    </div>
+          ) : (
+            /* Mobile Chat View - Full screen */
+            <div className="fixed inset-0 bg-white z-50 flex flex-col">
+              {/* Chat Header */}
+              <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+                <div className="flex items-center space-x-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedChat(null)}
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    Atrás
+                  </Button>
+                  <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                    <span className="text-white font-medium">
+                      {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="heading-4">
+                      {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                    </h3>
+                    <p className="caption-text">Empleado</p>
                   </div>
                 </div>
+              </div>
 
-                {/* Messages - Scrollable middle section */}
-                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                  <div className="space-y-4 max-w-4xl mx-auto">
-                    {getChatMessages(selectedChat).length > 0 ? (
-                      getChatMessages(selectedChat).map((message) => (
+              {/* Messages - Scrollable middle section */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                <div className="space-y-4">
+                  {getChatMessages(selectedChat).length > 0 ? (
+                    getChatMessages(selectedChat).map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                      >
                         <div
-                          key={message.id}
-                          className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                          className={`max-w-xs px-4 py-2 rounded-lg ${
+                            message.senderId === user?.id
+                              ? 'bg-oficaz-primary text-white'
+                              : 'bg-white text-gray-900 border border-gray-200'
+                          }`}
                         >
-                          <div
-                            className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                              message.senderId === user?.id
-                                ? 'bg-oficaz-primary text-white'
-                                : 'bg-white text-gray-900 border border-gray-200'
-                            }`}
-                          >
-                            <p className="text-sm">{message.content}</p>
-                            <p className={`text-xs mt-1 ${
-                              message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                            }`}>
-                              {format(new Date(message.createdAt), 'HH:mm')}
-                            </p>
-                          </div>
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                          }`}>
+                            {format(new Date(message.createdAt), 'HH:mm')}
+                          </p>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center text-gray-500 py-8">
-                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No hay mensajes aún</p>
-                        <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No hay mensajes aún</p>
+                      <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Message Input - Fixed at bottom */}
-                <div className="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
-                  <div className="flex space-x-2 max-w-4xl mx-auto">
-                    <Input
-                      ref={messageInputRef}
-                      placeholder="Escribe tu mensaje..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      className="input-oficaz flex-1"
-                    />
-                    <Button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className="btn-oficaz-primary"
-                    >
-                      <Send className="icon-sm" />
-                    </Button>
-                  </div>
+              {/* Message Input - Fixed at bottom */}
+              <div className="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
+                <div className="flex space-x-2">
+                  <Input
+                    ref={messageInputRef}
+                    placeholder="Escribe tu mensaje..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    className="input-oficaz flex-1"
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className="btn-oficaz-primary"
+                  >
+                    <Send className="icon-sm" />
+                  </Button>
                 </div>
               </div>
-            ) : (
-              <div className="bg-white rounded-lg border border-gray-200 h-full flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
-                  <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     );
