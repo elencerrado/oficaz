@@ -118,12 +118,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 ## Changelog
 
 - June 23, 2025. Auto-scroll mejorado en chat para mostrar último mensaje al abrir conversación
-  - Auto-scroll robusto con múltiples métodos: scrollIntoView + scrollTop
-  - Timeouts escalonados (100ms, 150ms, 300ms, 400ms, 500ms) para garantizar éxito
-  - Doble implementación: messagesEndRef + messagesContainerRef para máxima compatibilidad
-  - Funciona en vista desktop y mobile del chat admin/manager
-  - Sistema optimizado para renderizado completo antes de hacer scroll
-  - Comportamiento instant para apertura de chat, smooth para nuevos mensajes
+  - Implementación simple restaurada: messagesEndRef.scrollIntoView con timeout 300ms
+  - Usa messages.length como dependencia en lugar de messagesGroupedByDate.length
+  - Comportamiento instant para apertura de chat al seleccionar conversación
+  - Sistema protegido con comentarios para prevenir modificaciones futuras
+  - ⚠️ NO MODIFICAR MÁS - implementación funcional final
 - June 23, 2025. Sistema de documentos completamente optimizado y blindado para máxima robustez
   - Código reestructurado en componentes modulares: DocumentDropZone, DocumentsList, UploadPreviewDialog, DeleteConfirmDialog
   - Componentes protegidos con React.memo para optimización de rendimiento

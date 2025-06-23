@@ -265,47 +265,20 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // ⚠️ AUTO-SCROLL MEJORADO: Busca el contenedor correcto y fuerza scroll
+  // ⚠️ AUTO-SCROLL SIMPLE QUE FUNCIONABA ANTES - NO MODIFICAR MÁS
   useEffect(() => {
-    if (selectedChat && messagesGroupedByDate.length > 0) {
-      const performScroll = () => {
-        // Buscar todos los posibles contenedores de scroll
-        const containers = [
-          messagesContainerRef.current,
-          document.querySelector('.flex-1.overflow-y-auto'),
-          document.querySelector('[ref="messagesContainerRef"]')
-        ].filter(Boolean);
-
-        console.log('Found containers:', containers.length);
-        
-        containers.forEach((container, index) => {
-          if (container) {
-            console.log(`Container ${index}: scrollHeight=${container.scrollHeight}, clientHeight=${container.clientHeight}`);
-            container.scrollTop = container.scrollHeight;
-          }
-        });
-
-        // También usar el ref del final
+    if (selectedChat && messages.length > 0) {
+      const timer = setTimeout(() => {
         if (messagesEndRef.current) {
-          console.log('Scrolling to messagesEndRef');
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'instant',
-            block: 'end'
+            block: 'end' 
           });
         }
-      };
-
-      // Ejecutar múltiples veces con delays para asegurar éxito
-      const timers = [
-        setTimeout(performScroll, 50),
-        setTimeout(performScroll, 200),
-        setTimeout(performScroll, 500),
-        setTimeout(performScroll, 1000)
-      ];
-
-      return () => timers.forEach(timer => clearTimeout(timer));
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [selectedChat, messagesGroupedByDate.length]);
+  }, [selectedChat, messages.length]);
 
   // Role display helper with icons - shows actual data from database
   const getRoleDisplay = useCallback((person: any) => {
