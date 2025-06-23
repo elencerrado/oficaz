@@ -157,6 +157,17 @@ export default function Messages() {
     });
   }, []);
 
+  // URL parameter detection for employee view
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatParam = urlParams.get('chat');
+    if (chatParam) {
+      const chatId = parseInt(chatParam);
+      setSelectedChat(chatId);
+      console.log('URL chat parameter detected:', chatId);
+    }
+  }, [location]);
+
   // Debug effect to verify selected chat
   useEffect(() => {
     if (selectedChat) {
