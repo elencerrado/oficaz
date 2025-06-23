@@ -61,6 +61,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <div className="text-sm text-gray-600 font-medium hidden md:block">
           {formatDate(currentTime)}
         </div>
+        <div className="text-sm text-gray-600 font-medium block md:hidden">
+          {formatDateMobile(currentTime)}
+        </div>
         
         {/* User Profile Dropdown */}
         <DropdownMenu>
