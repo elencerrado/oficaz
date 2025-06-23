@@ -60,9 +60,9 @@ export default function Messages() {
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const messageInputRef = useRef<HTMLInputElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const mobileMessagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: messages, isLoading } = useQuery({
     queryKey: ['/api/messages'],
@@ -95,7 +95,9 @@ export default function Messages() {
         description: 'Tu mensaje ha sido enviado correctamente.',
       });
       // Scroll to bottom after sending message
-      setTimeout(() => scrollToBottom(), 200);
+      requestAnimationFrame(() => {
+        setTimeout(() => scrollToBottom(), 100);
+      });
     },
     onError: (error: any) => {
       toast({
@@ -119,12 +121,16 @@ export default function Messages() {
 
   // Auto-scroll chat to bottom when opening chat or new messages arrive
   const scrollToBottom = useCallback(() => {
-    if (messagesContainerRef.current) {
-      setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      }, 100);
+    // Find any scrollable message container currently visible
+    const desktopContainer = document.querySelector('.lg\\:block .overflow-y-auto.bg-gray-50');
+    const mobileContainer = document.querySelector('.lg\\:hidden .overflow-y-auto.bg-gray-50');
+    
+    const activeContainer = desktopContainer || mobileContainer;
+    
+    if (activeContainer) {
+      requestAnimationFrame(() => {
+        activeContainer.scrollTop = activeContainer.scrollHeight;
+      });
     }
   }, []);
 
@@ -678,7 +684,7 @@ export default function Messages() {
               </div>
 
               {/* Messages - Scrollable middle section */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
                 <div className="space-y-4">
                   {getChatMessages(selectedChat).length > 0 ? (
                     getChatMessages(selectedChat).map((message) => (
