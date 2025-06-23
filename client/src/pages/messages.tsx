@@ -1124,10 +1124,11 @@ export default function Messages() {
             </div>
           </div>
 
-          {/* Message Input - Fixed at bottom */}
+          {/* Message Input - Fixed at bottom - DARK THEME */}
           <div 
-            className="px-4 py-3 border-t border-gray-200 bg-white"
+            className="px-4 py-3 border-t border-gray-200/20"
             style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
               paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
             }}
           >
@@ -1138,14 +1139,19 @@ export default function Messages() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                className="input-oficaz flex-1"
+                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white'
+                }}
               />
               <Button
                 onClick={sendMessage}
                 disabled={!newMessage.trim()}
-                className="btn-oficaz-primary"
+                className="bg-blue-500 hover:bg-blue-600 text-white border-0"
               >
-                <Send className="icon-sm" />
+                <Send className="w-4 h-4" />
               </Button>
             </div>
           </div>
