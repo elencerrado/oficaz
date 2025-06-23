@@ -1088,11 +1088,33 @@ export default function AdminDocuments() {
                             {/* Estado del documento */}
                             <div className="mt-3">
                               {request.document ? (
-                                <div className="flex items-center p-2 bg-green-50 border border-green-200 rounded">
-                                  <FileCheck className="h-4 w-4 mr-2 text-green-600" />
-                                  <span className="text-green-700 text-sm">
-                                    Documento recibido: {request.document.originalName}
-                                  </span>
+                                <div className="p-2 bg-green-50 border border-green-200 rounded space-y-2">
+                                  <div className="flex items-center">
+                                    <FileCheck className="h-4 w-4 mr-2 text-green-600" />
+                                    <span className="text-green-700 text-sm">
+                                      Documento recibido: {request.document.originalName}
+                                    </span>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDownload(request.document.id, request.document.originalName)}
+                                      className="text-blue-600 hover:text-blue-700 border-blue-200 hover:border-blue-300"
+                                    >
+                                      <Download className="h-3 w-3 mr-1" />
+                                      Descargar
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(`/api/documents/${request.document.id}/download`, '_blank')}
+                                      className="text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
+                                    >
+                                      <Eye className="h-3 w-3 mr-1" />
+                                      Ver
+                                    </Button>
+                                  </div>
                                 </div>
                               ) : request.isCompleted ? (
                                 <div className="flex items-center p-2 bg-red-50 border border-red-200 rounded">
@@ -1127,6 +1149,16 @@ export default function AdminDocuments() {
                                 className="text-orange-600 hover:text-orange-700"
                               >
                                 Cancelar
+                              </Button>
+                            ) : request.document ? (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteRequest(request.id, request.documentType)}
+                                className="text-white hover:text-white bg-red-600 hover:bg-red-700"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Eliminar
                               </Button>
                             ) : (
                               <Button
