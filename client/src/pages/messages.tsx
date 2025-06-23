@@ -265,29 +265,38 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // ⚠️ NUEVO: Auto-scroll mejorado al último mensaje - Desktop y Mobile
+  // ⚠️ AUTO-SCROLL ROBUSTO: Múltiples métodos para garantizar scroll al último mensaje
   useEffect(() => {
-    if (messagesEndRef.current && selectedChat && messagesGroupedByDate.length > 0) {
-      const timer = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ 
-          behavior: 'instant',
-          block: 'end' 
-        });
-      }, 250); // Timeout mayor para renderizado completo
-      return () => clearTimeout(timer);
-    }
-  }, [selectedChat, messagesGroupedByDate.length]);
+    if (selectedChat && messagesGroupedByDate.length > 0) {
+      // Método 1: messagesEndRef.scrollIntoView
+      const scrollToEnd = () => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'instant',
+            block: 'end',
+            inline: 'nearest'
+          });
+        }
+      };
 
-  // Auto-scroll para contenedor específico en mobile
-  useEffect(() => {
-    if (messagesContainerRef.current && selectedChat && messagesGroupedByDate.length > 0) {
-      const timer = setTimeout(() => {
-        const container = messagesContainerRef.current;
-        if (container) {
+      // Método 2: messagesContainerRef.scrollTop
+      const scrollContainer = () => {
+        if (messagesContainerRef.current) {
+          const container = messagesContainerRef.current;
           container.scrollTop = container.scrollHeight;
         }
-      }, 250);
-      return () => clearTimeout(timer);
+      };
+
+      // Ejecutar ambos métodos con múltiples timeouts para asegurar éxito
+      const timers = [
+        setTimeout(scrollToEnd, 100),
+        setTimeout(scrollContainer, 150),
+        setTimeout(scrollToEnd, 300),
+        setTimeout(scrollContainer, 400),
+        setTimeout(scrollToEnd, 500)
+      ];
+
+      return () => timers.forEach(timer => clearTimeout(timer));
     }
   }, [selectedChat, messagesGroupedByDate.length]);
 
