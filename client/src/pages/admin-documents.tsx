@@ -361,6 +361,9 @@ export default function AdminDocuments() {
         }
       }
       
+      // Actualizar lista inmediatamente
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      
       toast({
         title: "Documentos procesados",
         description: `${uploadAnalysis.length} documento(s) subido(s) correctamente con nombres corregidos`,
