@@ -402,61 +402,75 @@ export class DrizzleStorage implements IStorage {
 
   // Document Notifications methods
   async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
-    const results = await db
-      .select({
-        id: schema.documentNotifications.id,
-        userId: schema.documentNotifications.userId,
-        documentType: schema.documentNotifications.documentType,
-        message: schema.documentNotifications.message,
-        isCompleted: schema.documentNotifications.isCompleted,
-        dueDate: schema.documentNotifications.dueDate,
-        createdAt: schema.documentNotifications.createdAt,
-        userFullName: schema.users.fullName,
-        userEmail: schema.users.email
-      })
+    // Simplificar query para evitar problemas con Drizzle
+    const notifications = await db
+      .select()
       .from(schema.documentNotifications)
-      .leftJoin(schema.users, eq(schema.documentNotifications.userId, schema.users.id))
       .where(eq(schema.documentNotifications.userId, userId))
       .orderBy(desc(schema.documentNotifications.createdAt));
 
-    // Transform to match expected format
-    return results.map(row => ({
-      ...row,
-      user: {
-        id: row.userId,
-        fullName: row.userFullName,
-        email: row.userEmail
-      }
-    })) as DocumentNotification[];
+    // Obtener información del usuario por separado
+    const results = [];
+    for (const notification of notifications) {
+      const user = await db
+        .select({
+          id: schema.users.id,
+          fullName: schema.users.fullName,
+          email: schema.users.email
+        })
+        .from(schema.users)
+        .where(eq(schema.users.id, notification.userId))
+        .limit(1);
+
+      results.push({
+        ...notification,
+        user: user[0] || { id: notification.userId, fullName: 'Empleado', email: '' }
+      });
+    }
+
+    return results as DocumentNotification[];
   }
 
   async getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]> {
-    const results = await db
-      .select({
-        id: schema.documentNotifications.id,
-        userId: schema.documentNotifications.userId,
-        documentType: schema.documentNotifications.documentType,
-        message: schema.documentNotifications.message,
-        isCompleted: schema.documentNotifications.isCompleted,
-        dueDate: schema.documentNotifications.dueDate,
-        createdAt: schema.documentNotifications.createdAt,
-        userFullName: schema.users.fullName,
-        userEmail: schema.users.email
-      })
+    // Obtener todos los usuarios de la empresa primero
+    const companyUsers = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.companyId, companyId));
+
+    const userIds = companyUsers.map(u => u.id);
+    
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    // Obtener todas las notificaciones de estos usuarios
+    const notifications = await db
+      .select()
       .from(schema.documentNotifications)
-      .leftJoin(schema.users, eq(schema.documentNotifications.userId, schema.users.id))
-      .where(eq(schema.users.companyId, companyId))
+      .where(sql`${schema.documentNotifications.userId} = ANY(${userIds})`)
       .orderBy(desc(schema.documentNotifications.createdAt));
 
-    // Transform to match expected format
-    return results.map(row => ({
-      ...row,
-      user: {
-        id: row.userId,
-        fullName: row.userFullName,
-        email: row.userEmail
-      }
-    })) as DocumentNotification[];
+    // Obtener información del usuario por separado
+    const results = [];
+    for (const notification of notifications) {
+      const user = await db
+        .select({
+          id: schema.users.id,
+          fullName: schema.users.fullName,
+          email: schema.users.email
+        })
+        .from(schema.users)
+        .where(eq(schema.users.id, notification.userId))
+        .limit(1);
+
+      results.push({
+        ...notification,
+        user: user[0] || { id: notification.userId, fullName: 'Empleado', email: '' }
+      });
+    }
+
+    return results as DocumentNotification[];
   }
 
   async createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification> {
