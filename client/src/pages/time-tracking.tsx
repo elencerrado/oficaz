@@ -35,7 +35,7 @@ export default function TimeTracking() {
   // All useState hooks first
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
-  const [dateFilter, setDateFilter] = useState('month');
+  const [dateFilter, setDateFilter] = useState('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
@@ -149,7 +149,14 @@ export default function TimeTracking() {
       const matchesSearch = session.userName?.toLowerCase().includes(searchTerm.toLowerCase());
       
       let matchesDate = true;
-      if (dateFilter === 'day') {
+      if (dateFilter === 'today') {
+        const today = new Date();
+        const dayStart = new Date(today);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(today);
+        dayEnd.setHours(23, 59, 59, 999);
+        matchesDate = sessionDate >= dayStart && sessionDate <= dayEnd;
+      } else if (dateFilter === 'day') {
         const dayStart = new Date(currentDate);
         dayStart.setHours(0, 0, 0, 0);
         const dayEnd = new Date(currentDate);
@@ -165,6 +172,8 @@ export default function TimeTracking() {
         const filterEnd = endDate ? new Date(endDate) : new Date();
         if (endDate) filterEnd.setHours(23, 59, 59, 999);
         matchesDate = sessionDate >= filterStart && sessionDate <= filterEnd;
+      } else if (dateFilter === 'all') {
+        matchesDate = true; // No aplicar filtro de fecha
       }
       
       return matchesEmployee && matchesSearch && matchesDate;
