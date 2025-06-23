@@ -684,16 +684,23 @@ export default function VacationManagement() {
             {activeTab === 'holidays' && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
-                  <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {regions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Seleccionar provincia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map((region) => (
+                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {company?.province && (
+                      <span className="text-xs text-gray-500">
+                        (Provincia de la empresa: {company.province})
+                      </span>
+                    )}
+                  </div>
                   <Dialog open={showAddHoliday} onOpenChange={setShowAddHoliday}>
                     <DialogTrigger asChild>
                       <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
