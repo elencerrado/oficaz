@@ -300,7 +300,7 @@ export default function Documents() {
       </div>
 
       {/* Content Container */}
-      <div className="flex-1 p-6 pt-0 space-y-6">
+      <div className="flex-1 px-6 pb-6 space-y-6">
         {/* Document Request Notification - Compact */}
         {pendingRequest && !activeRequest && (
           <Alert className="border-orange-200 bg-orange-50 py-3">
