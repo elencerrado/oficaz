@@ -61,12 +61,59 @@ const spanishHolidays2025: Holiday[] = [
   { name: "Navidad", date: "2025-12-25", type: "national" },
 ];
 
-const regions = [
-  'Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga', 'Murcia', 'Palma de Mallorca',
-  'Las Palmas de Gran Canaria', 'Bilbao', 'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón',
-  'L\'Hospitalet de Llobregat', 'A Coruña', 'Granada', 'Vitoria-Gasteiz', 'Elche', 'Oviedo',
-  'Santa Cruz de Tenerife', 'Badalona', 'Cartagena', 'Terrassa', 'Jerez de la Frontera', 'Sabadell',
-  'Móstoles', 'Alcalá de Henares', 'Pamplona', 'Fuenlabrada', 'Almería', 'Leganés'
+const provinces = [
+  { value: "alava", label: "Álava" },
+  { value: "albacete", label: "Albacete" },
+  { value: "alicante", label: "Alicante" },
+  { value: "almeria", label: "Almería" },
+  { value: "asturias", label: "Asturias" },
+  { value: "avila", label: "Ávila" },
+  { value: "badajoz", label: "Badajoz" },
+  { value: "barcelona", label: "Barcelona" },
+  { value: "burgos", label: "Burgos" },
+  { value: "caceres", label: "Cáceres" },
+  { value: "cadiz", label: "Cádiz" },
+  { value: "cantabria", label: "Cantabria" },
+  { value: "castellon", label: "Castellón" },
+  { value: "ceuta", label: "Ceuta" },
+  { value: "ciudad_real", label: "Ciudad Real" },
+  { value: "cordoba", label: "Córdoba" },
+  { value: "cuenca", label: "Cuenca" },
+  { value: "girona", label: "Girona" },
+  { value: "granada", label: "Granada" },
+  { value: "guadalajara", label: "Guadalajara" },
+  { value: "guipuzcoa", label: "Guipúzcoa" },
+  { value: "huelva", label: "Huelva" },
+  { value: "huesca", label: "Huesca" },
+  { value: "islas_baleares", label: "Islas Baleares" },
+  { value: "jaen", label: "Jaén" },
+  { value: "la_coruna", label: "La Coruña" },
+  { value: "la_rioja", label: "La Rioja" },
+  { value: "las_palmas", label: "Las Palmas" },
+  { value: "leon", label: "León" },
+  { value: "lleida", label: "Lleida" },
+  { value: "lugo", label: "Lugo" },
+  { value: "madrid", label: "Madrid" },
+  { value: "malaga", label: "Málaga" },
+  { value: "melilla", label: "Melilla" },
+  { value: "murcia", label: "Murcia" },
+  { value: "navarra", label: "Navarra" },
+  { value: "ourense", label: "Ourense" },
+  { value: "palencia", label: "Palencia" },
+  { value: "pontevedra", label: "Pontevedra" },
+  { value: "salamanca", label: "Salamanca" },
+  { value: "santa_cruz_de_tenerife", label: "Santa Cruz de Tenerife" },
+  { value: "segovia", label: "Segovia" },
+  { value: "sevilla", label: "Sevilla" },
+  { value: "soria", label: "Soria" },
+  { value: "tarragona", label: "Tarragona" },
+  { value: "teruel", label: "Teruel" },
+  { value: "toledo", label: "Toledo" },
+  { value: "valencia", label: "Valencia" },
+  { value: "valladolid", label: "Valladolid" },
+  { value: "vizcaya", label: "Vizcaya" },
+  { value: "zamora", label: "Zamora" },
+  { value: "zaragoza", label: "Zaragoza" }
 ];
 
 export default function VacationManagement() {
@@ -99,8 +146,6 @@ export default function VacationManagement() {
   });
 
   const company = companyData as any;
-  
-  console.log('Company data from query:', company);
 
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
@@ -119,14 +164,8 @@ export default function VacationManagement() {
 
   // Update selected region when company data loads
   useEffect(() => {
-    console.log('useEffect triggered, company:', company);
     if (company?.province) {
-      // Capitalize first letter to match regions array
-      const capitalizedProvince = company.province.charAt(0).toUpperCase() + company.province.slice(1);
-      console.log('Setting region to company province:', capitalizedProvince);
-      setSelectedRegion(capitalizedProvince);
-    } else if (company) {
-      console.log('Company loaded but no province field:', Object.keys(company));
+      setSelectedRegion(company.province);
     }
   }, [company]);
 
@@ -715,14 +754,14 @@ export default function VacationManagement() {
                         <SelectValue placeholder="Seleccionar provincia" />
                       </SelectTrigger>
                       <SelectContent>
-                        {regions.map((region) => (
-                          <SelectItem key={region} value={region}>{region}</SelectItem>
+                        {provinces.map((province) => (
+                          <SelectItem key={province.value} value={province.value}>{province.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     {company?.province && (
                       <span className="text-xs text-gray-500">
-                        (Provincia de la empresa: {company.province})
+                        (Provincia de la empresa: {provinces.find(p => p.value === company.province)?.label || company.province})
                       </span>
                     )}
                   </div>
