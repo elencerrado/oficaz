@@ -94,6 +94,8 @@ export default function Messages() {
         title: 'Mensaje enviado',
         description: 'Tu mensaje ha sido enviado correctamente.',
       });
+      // Scroll to bottom after sending message
+      setTimeout(() => scrollToBottom(), 200);
     },
     onError: (error: any) => {
       toast({
