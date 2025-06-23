@@ -259,8 +259,8 @@ export default function AdminDocuments() {
     };
   };
 
-  const generateCleanFileName = (originalName: string, employee: Employee, docType: string) => {
-    const extension = originalName.split('.').pop()?.toLowerCase() || 'pdf';
+  const generateCleanFileName = (fileName: string, employee: Employee, docType: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
     
     // Get document type name
     const docTypeName = documentTypes.find(type => type.id === docType)?.name || 'Documento';
@@ -275,12 +275,12 @@ export default function AdminDocuments() {
     let dateInfo = '';
     
     // Try to find year first
-    const yearMatch = originalName.match(/20\d{2}/);
+    const yearMatch = fileName.match(/20\d{2}/);
     const currentYear = new Date().getFullYear();
     const year = yearMatch ? yearMatch[0] : currentYear.toString();
     
     // Try to find month
-    const monthMatch = originalName.match(/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})/i);
+    const monthMatch = fileName.match(/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})/i);
     
     if (monthMatch) {
       const monthStr = monthMatch[0].toLowerCase();
