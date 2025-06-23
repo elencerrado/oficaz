@@ -251,69 +251,61 @@ export default function VacationManagement() {
 
         {/* Stats Cards with Navigation */}
         <div className="mb-6">
-          {/* Mobile: Compact horizontal scroll */}
-          <div className="md:hidden flex gap-3 overflow-x-auto pb-2 mb-4">
+          {/* Mobile: Compact grid 2x2 */}
+          <div className="md:hidden grid grid-cols-2 gap-3 mb-4">
             <div 
-              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-yellow-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              className="bg-white rounded-lg border-2 hover:border-yellow-200 p-3 cursor-pointer transition-all duration-200"
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('pending');
                 setSearchTerm('');
               }}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center mx-auto mb-2">
                   <span className="text-sm font-bold text-white">{stats.pending}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600">Pendientes</p>
-                </div>
+                <p className="text-xs font-medium text-gray-600">Pendientes</p>
               </div>
             </div>
 
             <div 
-              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-green-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              className="bg-white rounded-lg border-2 hover:border-green-200 p-3 cursor-pointer transition-all duration-200"
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('approved');
                 setSearchTerm('');
               }}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center mx-auto mb-2">
                   <span className="text-sm font-bold text-white">{stats.approved}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600">Aprobadas</p>
-                </div>
+                <p className="text-xs font-medium text-gray-600">Aprobadas</p>
               </div>
             </div>
 
             <div 
-              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-blue-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              className="bg-white rounded-lg border-2 hover:border-blue-200 p-3 cursor-pointer transition-all duration-200"
               onClick={() => setActiveTab('employees')}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mx-auto mb-2">
                   <span className="text-sm font-bold text-white">{stats.onVacation}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600">Vacaciones</p>
-                </div>
+                <p className="text-xs font-medium text-gray-600">Vacaciones</p>
               </div>
             </div>
 
             <div 
-              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-purple-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              className="bg-white rounded-lg border-2 hover:border-purple-200 p-3 cursor-pointer transition-all duration-200"
               onClick={() => setActiveTab('holidays')}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center mx-auto mb-2">
                   <span className="text-sm font-bold text-white">{spanishHolidays2025.length}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600">Festivos</p>
-                </div>
+                <p className="text-xs font-medium text-gray-600">Festivos</p>
               </div>
             </div>
           </div>
