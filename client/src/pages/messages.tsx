@@ -184,20 +184,43 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // AUTO-SCROLL CON JAVASCRIPT DIRECTO - FUNCIONA
+  // AUTO-SCROLL AGRESIVO - MÚLTIPLES INTENTOS HASTA QUE FUNCIONE
   useEffect(() => {
     if (selectedChat && messages.length > 0) {
-      setTimeout(() => {
-        // Método 1: Usar el ref del contenedor directamente
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          container.scrollTop = container.scrollHeight;
-        }
-        // Método 2: Backup con scrollIntoView
+      // Función para hacer scroll hasta abajo del todo
+      const scrollToBottom = () => {
+        // Buscar el contenedor de mensajes correcto
+        const desktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
+        const mobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
+        
+        [desktopContainer, mobileContainer, messagesContainerRef.current].forEach(container => {
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+            console.log(`Scrolled container: scrollTop=${container.scrollTop}, scrollHeight=${container.scrollHeight}`);
+          }
+        });
+
+        // También usar messagesEndRef
         if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'instant',
+            block: 'end',
+            inline: 'nearest'
+          });
+          console.log('Used messagesEndRef.scrollIntoView');
         }
-      }, 100);
+      };
+
+      // Ejecutar múltiples veces hasta que funcione
+      const timers = [
+        setTimeout(scrollToBottom, 100),
+        setTimeout(scrollToBottom, 300),
+        setTimeout(scrollToBottom, 600),
+        setTimeout(scrollToBottom, 1000),
+        setTimeout(scrollToBottom, 1500)
+      ];
+
+      return () => timers.forEach(timer => clearTimeout(timer));
     }
   }, [selectedChat, messages]);
 
