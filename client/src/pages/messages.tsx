@@ -64,6 +64,7 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -128,36 +129,60 @@ export default function Messages() {
     }
   });
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality enhanced for mobile
   const scrollToBottom = useCallback(() => {
-    const messageContainers = document.querySelectorAll('.overflow-y-auto.bg-gray-50');
-    
-    messageContainers.forEach(container => {
-      if (container && container.scrollHeight > container.clientHeight) {
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            container.scrollTop = container.scrollHeight;
-          }, 10);
-        });
-      }
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // Target mobile chat container specifically
+        const mobileContainer = document.querySelector('.lg\\:hidden .overflow-y-auto');
+        if (mobileContainer) {
+          mobileContainer.scrollTop = mobileContainer.scrollHeight;
+        }
+        
+        // Target desktop container
+        const desktopContainer = document.querySelector('.hidden.lg\\:flex .overflow-y-auto');
+        if (desktopContainer) {
+          desktopContainer.scrollTop = desktopContainer.scrollHeight;
+        }
+      }, 100);
     });
   }, []);
 
-  // Effects for auto-scroll
+  // Effects for auto-scroll - Enhanced for mobile
   useEffect(() => {
     if (selectedChat) {
-      setTimeout(() => scrollToBottom(), 100);
+      // Force scroll immediately on chat selection
+      const scrollMobileChat = () => {
+        const container = document.querySelector('.lg\\:hidden .overflow-y-auto');
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      };
+      
+      // Multiple attempts with increasing delays for mobile rendering
+      setTimeout(scrollMobileChat, 50);
+      setTimeout(scrollMobileChat, 200);
+      setTimeout(scrollMobileChat, 400);
+      setTimeout(scrollMobileChat, 600);
     }
-  }, [selectedChat, scrollToBottom]);
+  }, [selectedChat]);
 
   useEffect(() => {
     if (selectedChat && messages) {
       const chatMessages = getChatMessages(selectedChat);
       if (chatMessages.length > 0) {
-        setTimeout(() => scrollToBottom(), 50);
+        const scrollMobileChat = () => {
+          const container = document.querySelector('.lg\\:hidden .overflow-y-auto');
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        };
+        
+        setTimeout(scrollMobileChat, 100);
+        setTimeout(scrollMobileChat, 300);
       }
     }
-  }, [messages, selectedChat, scrollToBottom]);
+  }, [messages, selectedChat]);
 
   // Mark messages as read
   useEffect(() => {
@@ -556,9 +581,10 @@ export default function Messages() {
               >
                 <div className="space-y-4">
                   {getChatMessages(selectedChat).length > 0 ? (
-                    getChatMessages(selectedChat).map((message) => (
+                    getChatMessages(selectedChat).map((message, index, array) => (
                       <div
                         key={message.id}
+
                         className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
@@ -584,6 +610,8 @@ export default function Messages() {
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
+                  {/* Spacer to ensure scroll goes to the very bottom */}
+                  <div style={{ height: '20px', width: '100%' }} />
                 </div>
               </div>
 
