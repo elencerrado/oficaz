@@ -474,12 +474,14 @@ export default function AdminDocuments() {
   };
 
   const handleViewDocument = (docId: number, fileName: string) => {
-    window.open(`/api/documents/${docId}/download?token=${JSON.parse(localStorage.getItem('authData') || '{}').token}`, '_blank');
+    const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
+    window.open(`/api/documents/${docId}/download?view=true&token=${token}`, '_blank');
   };
 
   const handleDownload = (docId: number, fileName: string) => {
+    const token = JSON.parse(localStorage.getItem('authData') || '{}').token;
     const link = document.createElement('a');
-    link.href = `/api/documents/${docId}/download?token=${JSON.parse(localStorage.getItem('authData') || '{}').token}`;
+    link.href = `/api/documents/${docId}/download?download=true&token=${token}`;
     link.download = fileName;
     link.click();
   };

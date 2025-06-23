@@ -716,6 +716,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const filePath = path.join(uploadDir, document.fileName);
       
+      // Check if it's a view request (preview) or download
+      const isPreview = req.query.view === 'true';
+      
       // If physical file doesn't exist but it's a demo document, serve a placeholder PDF
       if (!fs.existsSync(filePath) && (document.fileName.includes('nomina') || document.fileName.includes('contrato'))) {
         // Set headers for PDF viewing/downloading
