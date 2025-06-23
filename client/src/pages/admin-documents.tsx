@@ -111,6 +111,12 @@ export default function AdminDocuments() {
     docId: null,
     docName: ''
   });
+  
+  const [deleteRequestConfirm, setDeleteRequestConfirm] = useState<{
+    show: boolean;
+    requestId: number | null;
+    documentType: string;
+  }>({ show: false, requestId: null, documentType: '' });
 
   // Fetch employees
   const { data: employees = [] } = useQuery({
