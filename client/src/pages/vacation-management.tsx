@@ -114,10 +114,11 @@ export default function VacationManagement() {
 
   // Update selected region when company data loads
   useEffect(() => {
-    if (company?.province && company.province !== selectedRegion) {
+    if (company?.province) {
+      console.log('Company province loaded:', company.province);
       setSelectedRegion(company.province);
     }
-  }, [company?.province, selectedRegion]);
+  }, [company?.province]);
 
   // Fetch employees for vacation overview
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
