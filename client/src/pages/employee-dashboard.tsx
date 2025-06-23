@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { useEffect, useState } from 'react';
@@ -143,53 +143,61 @@ export default function EmployeeDashboard() {
   // Clock in/out mutations
   const clockInMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/work-sessions/clock-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Error al fichar entrada');
-      return response.json();
+      return await apiRequest('POST', '/api/work-sessions/clock-in');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       toast({ title: '¡Entrada registrada!', description: 'Has fichado correctamente la entrada.' });
     },
-    onError: () => {
-      toast({ 
-        title: 'Error', 
-        description: 'No se pudo registrar la entrada',
-        variant: 'destructive'
-      });
+    onError: (error: any) => {
+      if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
+        toast({
+          title: "Sesión expirada",
+          description: "Redirigiendo al login...",
+          variant: "destructive",
+        });
+        localStorage.removeItem('authData');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1000);
+      } else {
+        toast({ 
+          title: 'Error', 
+          description: 'No se pudo registrar la entrada',
+          variant: 'destructive'
+        });
+      }
     },
   });
 
   const clockOutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/work-sessions/clock-out', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Error al fichar salida');
-      return response.json();
+      return await apiRequest('POST', '/api/work-sessions/clock-out');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       toast({ title: '¡Salida registrada!', description: 'Has fichado correctamente la salida.' });
     },
-    onError: () => {
-      toast({ 
-        title: 'Error', 
-        description: 'No se pudo registrar la salida',
-        variant: 'destructive'
-      });
+    onError: (error: any) => {
+      if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
+        toast({
+          title: "Sesión expirada",
+          description: "Redirigiendo al login...",
+          variant: "destructive",
+        });
+        localStorage.removeItem('authData');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1000);
+      } else {
+        toast({ 
+          title: 'Error', 
+          description: 'No se pudo registrar la salida',
+          variant: 'destructive'
+        });
+      }
     },
   });
 
