@@ -184,16 +184,21 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Simple auto-scroll that works - copied from mobile success
+  // Force scroll to bottom - desktop and mobile
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      }
-    };
-    
     if (selectedChat) {
-      setTimeout(scrollToBottom, 100);
+      setTimeout(() => {
+        // Desktop: scroll container
+        const desktopContainer = document.getElementById('desktop-messages-container');
+        if (desktopContainer) {
+          desktopContainer.scrollTop = desktopContainer.scrollHeight;
+        }
+        
+        // Mobile: scroll to element
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 200);
     }
   }, [selectedChat, messages]);
 
