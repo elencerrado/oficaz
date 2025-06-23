@@ -64,6 +64,8 @@ export default function AdminDocuments() {
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
   const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
+  const [showUploadPreview, setShowUploadPreview] = useState(false);
 
   // Fetch employees
   const { data: employees = [] } = useQuery({
@@ -415,8 +417,11 @@ export default function AdminDocuments() {
                 <p className="text-lg font-medium text-gray-900 mb-2">
                   Arrastra documentos aquí
                 </p>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 mb-2">
                   o haz click para seleccionar archivos
+                </p>
+                <p className="text-xs text-blue-600 mb-4">
+                  🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
                 </p>
                 <Button
                   onClick={() => fileInputRef.current?.click()}
@@ -431,8 +436,15 @@ export default function AdminDocuments() {
                   multiple
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      const analysisResults = files.map(file => ({
+                        file,
+                        ...analyzeFileName(file.name)
+                      }));
+                      setUploadAnalysis(analysisResults);
+                      setShowUploadPreview(true);
+                    }
                   }}
                   className="hidden"
                 />
@@ -550,6 +562,133 @@ export default function AdminDocuments() {
             )}
           </CardContent>
         </Card>
+
+        {/* Smart Upload Preview Dialog */}
+        <Dialog open={showUploadPreview} onOpenChange={setShowUploadPreview}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Upload className="h-5 w-5 mr-2" />
+                Análisis Inteligente de Archivos ({uploadAnalysis.length})
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                He analizado los nombres de archivo para detectar automáticamente el empleado y tipo de documento. 
+                Puedes revisar y ajustar antes de subir.
+              </p>
+              
+              <div className="space-y-3">
+                {uploadAnalysis.map((analysis, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-1">
+                          {analysis.file.name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {formatFileSize(analysis.file.size)}
+                        </p>
+                      </div>
+                      <Badge variant={
+                        analysis.confidence === 'high' ? 'default' : 
+                        analysis.confidence === 'medium' ? 'secondary' : 'destructive'
+                      }>
+                        {analysis.confidence === 'high' ? 'Alta confianza' :
+                         analysis.confidence === 'medium' ? 'Media confianza' : 'Revisar manualmente'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Employee Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Empleado Destinatario
+                        </label>
+                        <Select 
+                          value={analysis.employee?.id?.toString() || ''} 
+                          onValueChange={(value) => updateAnalysisEmployee(index, parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar empleado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {employees.map((employee: Employee) => (
+                              <SelectItem key={employee.id} value={employee.id.toString()}>
+                                <div className="flex items-center">
+                                  <User className="h-4 w-4 mr-2" />
+                                  {employee.fullName}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {analysis.employee && (
+                          <div className="flex items-center mt-1 text-xs text-green-600">
+                            <Check className="h-3 w-3 mr-1" />
+                            Detectado automáticamente
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Document Type */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo de Documento
+                        </label>
+                        <Select value={analysis.documentType} disabled>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {documentTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                <div className="flex items-center">
+                                  <type.icon className="h-4 w-4 mr-2" />
+                                  {type.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {analysis.documentType !== 'otros' && (
+                          <div className="flex items-center mt-1 text-xs text-green-600">
+                            <Check className="h-3 w-3 mr-1" />
+                            Detectado automáticamente
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {!analysis.employee && (
+                      <div className="flex items-center p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        No se pudo detectar automáticamente el empleado. Por favor, selecciona uno manualmente.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowUploadPreview(false)}
+                  disabled={isUploading}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleBatchUpload}
+                  disabled={isUploading || uploadAnalysis.some(a => !a.employee)}
+                >
+                  {isUploading ? 'Subiendo...' : `Subir ${uploadAnalysis.length} Documento(s)`}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
     </div>
     </PageWrapper>
   );
