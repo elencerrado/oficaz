@@ -297,7 +297,7 @@ export default function Messages() {
             <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
                     <p className="text-xs text-gray-500 mt-1">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
@@ -307,10 +307,10 @@ export default function Messages() {
                     variant="outline"
                     size="sm"
                     onClick={openAddChatModal}
-                    className="btn-oficaz-primary"
+                    className="btn-oficaz-primary flex-shrink-0 ml-2"
                   >
-                    <Plus className="icon-sm mr-2" />
-                    Añadir Chat
+                    <Plus className="icon-sm mr-1" />
+                    Nuevo
                   </Button>
                 </div>
                 
