@@ -62,9 +62,11 @@ const spanishHolidays2025: Holiday[] = [
 ];
 
 const regions = [
-  "Andalucía", "Aragón", "Asturias", "Baleares", "Canarias", "Cantabria",
-  "Castilla-La Mancha", "Castilla y León", "Cataluña", "Extremadura",
-  "Galicia", "Madrid", "Murcia", "Navarra", "País Vasco", "La Rioja", "Valencia"
+  'Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga', 'Murcia', 'Palma de Mallorca',
+  'Las Palmas de Gran Canaria', 'Bilbao', 'Alicante', 'Córdoba', 'Valladolid', 'Vigo', 'Gijón',
+  'L\'Hospitalet de Llobregat', 'A Coruña', 'Granada', 'Vitoria-Gasteiz', 'Elche', 'Oviedo',
+  'Santa Cruz de Tenerife', 'Badalona', 'Cartagena', 'Terrassa', 'Jerez de la Frontera', 'Sabadell',
+  'Móstoles', 'Alcalá de Henares', 'Pamplona', 'Fuenlabrada', 'Almería', 'Leganés'
 ];
 
 export default function VacationManagement() {
@@ -119,8 +121,10 @@ export default function VacationManagement() {
   useEffect(() => {
     console.log('useEffect triggered, company:', company);
     if (company?.province) {
-      console.log('Setting region to company province:', company.province);
-      setSelectedRegion(company.province);
+      // Capitalize first letter to match regions array
+      const capitalizedProvince = company.province.charAt(0).toUpperCase() + company.province.slice(1);
+      console.log('Setting region to company province:', capitalizedProvince);
+      setSelectedRegion(capitalizedProvince);
     } else if (company) {
       console.log('Company loaded but no province field:', Object.keys(company));
     }
