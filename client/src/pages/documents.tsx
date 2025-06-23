@@ -200,17 +200,18 @@ export default function Documents() {
 
     setIsUploading(true);
     
+    const formData = new FormData();
+    
     // Create proper filename based on request type and user name
-    let customFileName = file.name;
     if (activeRequest && user) {
       const fileExtension = file.name.split('.').pop();
       const requestType = activeRequest.type || 'Documento';
-      customFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
+      const customFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
+      const renamedFile = new File([file], customFileName, { type: file.type });
+      formData.append('file', renamedFile);
+    } else {
+      formData.append('file', file);
     }
-    
-    const formData = new FormData();
-    const renamedFile = new File([file], customFileName, { type: file.type });
-    formData.append('file', renamedFile);
     
     uploadMutation.mutate(formData);
   };
