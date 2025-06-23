@@ -1022,9 +1022,9 @@ export default function Messages() {
       ) : (
         /* Chat Interface - Employee version - PROTECTED FROM ADMIN CHANGES */
         <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - EMPLOYEE STABLE VERSION - DO NOT MODIFY */}
+          {/* Chat Header - COPIED FROM ADMIN MOBILE VERSION THAT WORKS */}
           <div 
-            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200/20"
+            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
             style={{
               background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
               paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
@@ -1041,16 +1041,16 @@ export default function Messages() {
             
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </span>
             </div>
             
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium">
-                {selectedChatUser?.fullName || 'Chat'}
+                {filteredEmployees.find(e => e.id === selectedChat)?.fullName || 'Chat'}
               </p>
               <div className="text-white/70 text-xs">
-                {getRoleDisplay(selectedChatUser)}
+                {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
               </div>
             </div>
           </div>
