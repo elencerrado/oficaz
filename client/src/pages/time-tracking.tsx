@@ -180,6 +180,26 @@ export default function TimeTracking() {
     });
   }, [sessionsList, selectedEmployee, searchTerm, dateFilter, currentDate, currentMonth, startDate, endDate]);
 
+  // Generate dynamic title based on filter
+  const getFilterTitle = () => {
+    switch (dateFilter) {
+      case 'today':
+        return 'Fichajes de hoy';
+      case 'day':
+        return `Fichajes del ${format(currentDate, 'd MMMM yyyy', { locale: es })}`;
+      case 'month':
+        return `Fichajes de ${format(currentMonth, 'MMMM yyyy', { locale: es })}`;
+      case 'custom':
+        if (startDate && endDate) {
+          return `Fichajes del ${format(new Date(startDate), 'd MMM', { locale: es })} al ${format(new Date(endDate), 'd MMM yyyy', { locale: es })}`;
+        }
+        return 'Fichajes personalizados';
+      case 'all':
+      default:
+        return 'Todos los fichajes';
+    }
+  };
+
   const { employeesWithSessions, totalEmployees, averageHoursPerEmployee } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
@@ -658,7 +678,7 @@ export default function TimeTracking() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Fichajes ({filteredSessions.length})</span>
+            <span>{getFilterTitle()} ({filteredSessions.length})</span>
             <Button variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
