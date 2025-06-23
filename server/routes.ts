@@ -871,6 +871,21 @@ startxref
     }
   });
 
+  // Get current company information
+  app.get('/api/companies/current', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const company = await storage.getCompany(req.user!.companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+      console.log('Returning company data:', company);
+      res.json(company);
+    } catch (error: any) {
+      console.error('Error fetching company:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Update company information
   app.patch('/api/companies/update', authenticateToken, async (req: AuthRequest, res) => {
     try {

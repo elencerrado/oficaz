@@ -91,11 +91,14 @@ export default function VacationManagement() {
   };
 
   // Company and user data
-  const { data: companyData } = useQuery({
-    queryKey: ['/api/companies/current']
+  const { data: companyData, isLoading: loadingCompany } = useQuery({
+    queryKey: ['/api/companies/current'],
+    staleTime: 5 * 60 * 1000,
   });
 
   const company = companyData as any;
+  
+  console.log('Company data from query:', company);
 
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
@@ -114,11 +117,14 @@ export default function VacationManagement() {
 
   // Update selected region when company data loads
   useEffect(() => {
+    console.log('useEffect triggered, company:', company);
     if (company?.province) {
-      console.log('Company province loaded:', company.province);
+      console.log('Setting region to company province:', company.province);
       setSelectedRegion(company.province);
+    } else if (company) {
+      console.log('Company loaded but no province field:', Object.keys(company));
     }
-  }, [company?.province]);
+  }, [company]);
 
   // Fetch employees for vacation overview
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
