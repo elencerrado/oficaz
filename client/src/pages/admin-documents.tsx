@@ -105,6 +105,7 @@ export default function AdminDocuments() {
   const [dragOver, setDragOver] = useState(false);
   const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
   const [showUploadPreview, setShowUploadPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'explorer', 'requests'
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; docId: number | null; docName: string }>({
     show: false,
     docId: null,
