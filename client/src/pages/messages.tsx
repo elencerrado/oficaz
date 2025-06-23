@@ -59,7 +59,7 @@ interface Manager {
 }
 
 export default function Messages() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
@@ -926,10 +926,20 @@ export default function Messages() {
       {!selectedChat ? (
         /* Employee Dashboard - List of managers */
         <>
-          {/* Header - Same as employee-time-tracking */}
+          {/* Header - Exactly like vacation-requests */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
-            <div></div>
-            <div className="text-right">
+            <Link href={`/${companyAlias}/inicio`}>
+              <Button
+                variant="ghost"
+                size="lg"
+                className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                <span className="font-medium">Atrás</span>
+              </Button>
+            </Link>
+            
+            <div className="flex-1 flex flex-col items-end text-right">
               <div className="text-white text-sm font-medium">
                 {company?.name || 'Test Company'}
               </div>
