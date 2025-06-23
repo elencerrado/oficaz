@@ -206,6 +206,19 @@ export default function Messages() {
     }
   }, [messages]);
 
+  // Desktop scroll - force scroll to bottom using container
+  useEffect(() => {
+    if (messagesContainerRef.current && selectedChat) {
+      const container = messagesContainerRef.current;
+      const scrollToBottom = () => {
+        container.scrollTop = container.scrollHeight;
+      };
+      
+      const timer = setTimeout(scrollToBottom, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, selectedChat]);
+
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
   const filteredEmployees = contactList.filter(person => 
