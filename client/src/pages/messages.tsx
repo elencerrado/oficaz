@@ -23,7 +23,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
-import { EmployeeHeader } from '@/components/ui/employee-header';
+
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -926,10 +926,18 @@ export default function Messages() {
       {!selectedChat ? (
         /* Employee Dashboard - List of managers */
         <>
-          {/* Universal Header */}
-          <EmployeeHeader
-            showLogout={true}
-          />
+          {/* Header - Same as employee-time-tracking */}
+          <div className="flex items-center justify-between p-6 pb-8 h-20">
+            <div></div>
+            <div className="text-right">
+              <div className="text-white text-sm font-medium">
+                {company?.name || 'Test Company'}
+              </div>
+              <div className="text-white/70 text-xs">
+                {user?.fullName}
+              </div>
+            </div>
+          </div>
           
           <div className="px-4 py-6 space-y-6">
 
@@ -993,12 +1001,30 @@ export default function Messages() {
       ) : (
         /* Chat Interface - Full screen */
         <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - Using universal component */}
-          <EmployeeHeader
-            showBackButton={true}
-            onBackClick={() => setSelectedChat(null)}
-            showLogout={false}
-          />
+          {/* Chat Header - Same as employee-time-tracking with back button */}
+          <div 
+            className="flex items-center justify-between p-6 pb-8 h-20"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+            }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedChat(null)}
+              className="p-2 text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="text-right">
+              <div className="text-white text-sm font-medium">
+                {company?.name || 'Test Company'}
+              </div>
+              <div className="text-white/70 text-xs">
+                {user?.fullName}
+              </div>
+            </div>
+          </div>
 
           {/* Messages Area - Scrollable */}
           <div 
