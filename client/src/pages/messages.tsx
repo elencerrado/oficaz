@@ -201,6 +201,32 @@ export default function Messages() {
     }
   }, [messages]);
 
+  // ⚠️ NUEVO: Auto-scroll mejorado al último mensaje - Desktop y Mobile
+  useEffect(() => {
+    if (messagesEndRef.current && selectedChat && messagesGroupedByDate.length > 0) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ 
+          behavior: 'instant',
+          block: 'end' 
+        });
+      }, 250); // Timeout mayor para renderizado completo
+      return () => clearTimeout(timer);
+    }
+  }, [selectedChat, messagesGroupedByDate.length]);
+
+  // Auto-scroll para contenedor específico en mobile
+  useEffect(() => {
+    if (messagesContainerRef.current && selectedChat && messagesGroupedByDate.length > 0) {
+      const timer = setTimeout(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedChat, messagesGroupedByDate.length]);
+
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
   const filteredEmployees = contactList.filter(person => 
