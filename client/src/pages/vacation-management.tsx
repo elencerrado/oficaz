@@ -251,10 +251,10 @@ export default function VacationManagement() {
 
         {/* Stats Cards with Navigation */}
         <div className="mb-6">
-          {/* Mobile: Compact grid 2x2 */}
-          <div className="md:hidden grid grid-cols-2 gap-3 mb-4">
+          {/* Mobile: Single row 4 cards */}
+          <div className="md:hidden grid grid-cols-4 gap-2 mb-4">
             <div 
-              className="bg-white rounded-lg border-2 hover:border-yellow-200 p-3 cursor-pointer transition-all duration-200"
+              className="bg-white rounded-lg border-2 hover:border-yellow-200 p-2 cursor-pointer transition-all duration-200"
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('pending');
@@ -262,15 +262,15 @@ export default function VacationManagement() {
               }}
             >
               <div className="text-center">
-                <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center mx-auto mb-2">
-                  <span className="text-sm font-bold text-white">{stats.pending}</span>
+                <div className="w-6 h-6 bg-yellow-500 rounded flex items-center justify-center mx-auto mb-1">
+                  <span className="text-xs font-bold text-white">{stats.pending}</span>
                 </div>
-                <p className="text-xs font-medium text-gray-600">Pendientes</p>
+                <p className="text-[10px] font-medium text-gray-600 leading-tight">Pend.</p>
               </div>
             </div>
 
             <div 
-              className="bg-white rounded-lg border-2 hover:border-green-200 p-3 cursor-pointer transition-all duration-200"
+              className="bg-white rounded-lg border-2 hover:border-green-200 p-2 cursor-pointer transition-all duration-200"
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('approved');
@@ -278,34 +278,34 @@ export default function VacationManagement() {
               }}
             >
               <div className="text-center">
-                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center mx-auto mb-2">
-                  <span className="text-sm font-bold text-white">{stats.approved}</span>
+                <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center mx-auto mb-1">
+                  <span className="text-xs font-bold text-white">{stats.approved}</span>
                 </div>
-                <p className="text-xs font-medium text-gray-600">Aprobadas</p>
+                <p className="text-[10px] font-medium text-gray-600 leading-tight">Aprob.</p>
               </div>
             </div>
 
             <div 
-              className="bg-white rounded-lg border-2 hover:border-blue-200 p-3 cursor-pointer transition-all duration-200"
+              className="bg-white rounded-lg border-2 hover:border-blue-200 p-2 cursor-pointer transition-all duration-200"
               onClick={() => setActiveTab('employees')}
             >
               <div className="text-center">
-                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center mx-auto mb-2">
-                  <span className="text-sm font-bold text-white">{stats.onVacation}</span>
+                <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center mx-auto mb-1">
+                  <span className="text-xs font-bold text-white">{stats.onVacation}</span>
                 </div>
-                <p className="text-xs font-medium text-gray-600">Vacaciones</p>
+                <p className="text-[10px] font-medium text-gray-600 leading-tight">Vacac.</p>
               </div>
             </div>
 
             <div 
-              className="bg-white rounded-lg border-2 hover:border-purple-200 p-3 cursor-pointer transition-all duration-200"
+              className="bg-white rounded-lg border-2 hover:border-purple-200 p-2 cursor-pointer transition-all duration-200"
               onClick={() => setActiveTab('holidays')}
             >
               <div className="text-center">
-                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center mx-auto mb-2">
-                  <span className="text-sm font-bold text-white">{spanishHolidays2025.length}</span>
+                <div className="w-6 h-6 bg-purple-500 rounded flex items-center justify-center mx-auto mb-1">
+                  <span className="text-xs font-bold text-white">{spanishHolidays2025.length}</span>
                 </div>
-                <p className="text-xs font-medium text-gray-600">Festivos</p>
+                <p className="text-[10px] font-medium text-gray-600 leading-tight">Fest.</p>
               </div>
             </div>
           </div>
