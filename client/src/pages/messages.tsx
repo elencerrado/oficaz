@@ -254,16 +254,38 @@ export default function Messages() {
     return (
       <div className="h-screen bg-gray-50 flex flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-oficaz-primary rounded-lg flex items-center justify-center">
-              <MessageCircle className="h-6 w-6 text-white" />
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-oficaz-primary rounded-xl flex items-center justify-center shadow-sm">
+                <MessageCircle className="icon-lg text-white" />
+              </div>
+              <div>
+                <h1 className="heading-1">Mensajería</h1>
+                <p className="caption-text">
+                  Comunícate con empleados y gestiona mensajes
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Mensajería</h1>
-              <p className="text-gray-600 text-sm">
-                Comunícate con empleados y gestiona mensajes
-              </p>
+            
+            {/* Stats Cards */}
+            <div className="flex space-x-4">
+              <div className="card-oficaz px-4 py-3 min-w-[120px]">
+                <div className="text-center">
+                  <div className="heading-3 text-oficaz-primary">
+                    {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length}
+                  </div>
+                  <div className="caption-text">Sin leer</div>
+                </div>
+              </div>
+              <div className="card-oficaz px-4 py-3 min-w-[120px]">
+                <div className="text-center">
+                  <div className="heading-3 text-oficaz-primary">
+                    {filteredEmployees.length}
+                  </div>
+                  <div className="caption-text">Empleados</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -275,7 +297,7 @@ export default function Messages() {
               <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-gray-900">Empleados</h2>
+                    <h2 className="heading-3">Empleados</h2>
                     <Button
                       variant={isGroupMode ? "default" : "outline"}
                       size="sm"
@@ -283,20 +305,21 @@ export default function Messages() {
                         setIsGroupMode(!isGroupMode);
                         setSelectedEmployees([]);
                       }}
+                      className="btn-oficaz-secondary"
                     >
-                      <Users className="h-4 w-4 mr-2" />
+                      <Users className="icon-sm mr-2" />
                       Grupal
                     </Button>
                   </div>
                   
                   {/* Search */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
                     <Input
                       placeholder="Buscar empleado..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 bg-gray-50 border-gray-200"
+                      className="input-oficaz pl-10 bg-gray-50"
                     />
                   </div>
                 </div>
@@ -305,7 +328,7 @@ export default function Messages() {
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
-                      className={`p-3 rounded-lg cursor-pointer border transition-colors ${
+                      className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
                         selectedChat === employee.id
                           ? 'bg-oficaz-primary text-white border-oficaz-primary'
                           : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
@@ -333,12 +356,12 @@ export default function Messages() {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <p className={`font-medium truncate ${
+                          <p className={`heading-4 truncate ${
                             selectedChat === employee.id ? 'text-white' : 'text-gray-900'
                           }`}>
                             {employee.fullName}
                           </p>
-                          <p className={`text-xs truncate ${
+                          <p className={`caption-text truncate ${
                             selectedChat === employee.id ? 'text-white/70' : 'text-gray-500'
                           }`}>
                             Empleado
@@ -353,21 +376,21 @@ export default function Messages() {
                 {isGroupMode && (
                   <div className="p-4 border-t border-gray-200 bg-gray-50">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-600">
+                      <span className="body-text">
                         {selectedEmployees.length} empleados seleccionados
                       </span>
                       <div className="space-x-2">
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => setSelectedEmployees(filteredEmployees.map(e => e.id))}
+                          className="btn-oficaz-outline"
                         >
                           Todos
                         </Button>
                         <Button
-                          variant="outline"
                           size="sm"
                           onClick={() => setSelectedEmployees([])}
+                          className="btn-oficaz-outline"
                         >
                           Ninguno
                         </Button>
@@ -379,14 +402,14 @@ export default function Messages() {
                         placeholder="Escribe tu mensaje grupal..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        className="resize-none"
+                        className="input-oficaz"
                       />
                       <Button
                         onClick={sendGroupMessage}
                         disabled={selectedEmployees.length === 0 || !newMessage.trim()}
-                        className="w-full"
+                        className="btn-oficaz-primary w-full"
                       >
-                        <Send className="h-4 w-4 mr-2" />
+                        <Send className="icon-sm mr-2" />
                         Enviar a {selectedEmployees.length} empleados
                       </Button>
                     </div>
@@ -408,10 +431,10 @@ export default function Messages() {
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="heading-4">
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
                         </h3>
-                        <p className="text-sm text-gray-500">Empleado</p>
+                        <p className="caption-text">Empleado</p>
                       </div>
                     </div>
                   </div>
@@ -460,13 +483,14 @@ export default function Messages() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                        className="flex-1"
+                        className="input-oficaz flex-1"
                       />
                       <Button
                         onClick={sendMessage}
                         disabled={!newMessage.trim()}
+                        className="btn-oficaz-primary"
                       >
-                        <Send className="h-4 w-4" />
+                        <Send className="icon-sm" />
                       </Button>
                     </div>
                   </div>
@@ -475,8 +499,8 @@ export default function Messages() {
                 <div className="bg-white rounded-lg border border-gray-200 h-full flex items-center justify-center">
                   <div className="text-center text-gray-500">
                     <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium mb-2">Selecciona un empleado</h3>
-                    <p>Elige un empleado de la lista para comenzar a chatear</p>
+                    <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
+                    <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
                   </div>
                 </div>
               )}
