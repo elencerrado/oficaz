@@ -199,7 +199,10 @@ export default function Messages() {
   // Auto-scroll for desktop when chat changes (only for admin/manager view)
   useEffect(() => {
     if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [selectedChat, user?.role]);
 
@@ -208,7 +211,10 @@ export default function Messages() {
     if (messages && messagesContainerRef.current && selectedChat && user?.role !== 'employee') {
       setTimeout(() => {
         if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          messagesContainerRef.current.scrollTo({
+            top: messagesContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
         }
       }, 150);
     }
@@ -221,13 +227,19 @@ export default function Messages() {
         // Employee mobile view
         const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
         if (employeeMobileContainer) {
-          employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
+          employeeMobileContainer.scrollTo({
+            top: employeeMobileContainer.scrollHeight,
+            behavior: 'smooth'
+          });
         }
         
         // Admin mobile view
         const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
         if (adminMobileContainer) {
-          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+          adminMobileContainer.scrollTo({
+            top: adminMobileContainer.scrollHeight,
+            behavior: 'smooth'
+          });
         }
       }, 150);
     }
@@ -482,7 +494,7 @@ export default function Messages() {
                   </div>
 
                   {/* Messages - Scrollable middle section */}
-                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                  <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50" style={{ scrollBehavior: 'smooth' }}>
                     <div className="space-y-4">
                       {getChatMessages(selectedChat).length > 0 ? (
                         getChatMessages(selectedChat).map((message) => (
