@@ -115,6 +115,19 @@ export default function Messages() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       setNewMessage('');
+      
+      // Auto-scroll to bottom within message container only
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          // Desktop scroll - specific container only
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+              top: messagesContainerRef.current.scrollHeight,
+              behavior: 'smooth'
+            });
+          }
+        }, 100);
+      });
     },
     onError: (error: any) => {
       toast({
