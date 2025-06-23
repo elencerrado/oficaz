@@ -283,6 +283,32 @@ export default function EmployeesSimple() {
     }
   };
 
+  // Role display helper with icons - shows actual data from database
+  const getRoleDisplay = (person: any) => {
+    if (!person) return null;
+    
+    const role = person.role || 'employee';
+    const displayText = person.position || person.role || 'Sin cargo definido';
+    
+    // Icon color and letter based on role
+    const roleConfig = {
+      admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
+      manager: { color: 'bg-orange-500', letter: 'M', size: 'text-[10px]' },
+      employee: { color: 'bg-blue-500', letter: 'E', size: 'text-[8px]' }
+    };
+    
+    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.employee;
+    
+    return (
+      <div className="flex items-center space-x-1">
+        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center`}>
+          <span className={`text-white ${config.size} font-bold`}>{config.letter}</span>
+        </div>
+        <span>{displayText}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto p-4 lg:p-6 space-y-6">
       {/* Header */}
