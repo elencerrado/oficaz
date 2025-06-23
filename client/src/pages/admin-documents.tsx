@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -734,15 +734,59 @@ export default function AdminDocuments() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DocumentDropZone
-                onFilesSelected={handleFilesSelected}
-                dragOver={dragOver}
-                isUploading={isUploading}
-                fileInputRef={fileInputRef}
+              <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-              />
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  dragOver
+                    ? 'border-blue-400 bg-blue-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-lg font-medium text-gray-900 mb-2">
+                  Arrastra documentos aquí
+                </p>
+                <p className="text-gray-600 mb-2">
+                  o haz click para seleccionar archivos
+                </p>
+                <p className="text-xs text-blue-600 mb-4">
+                  🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
+                </p>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  variant="outline"
+                >
+                  {isUploading ? 'Subiendo...' : 'Seleccionar Archivos'}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      const analysisResults = files.map(file => {
+                        const analysis = analyzeFileName(file.name);
+                        return {
+                          file,
+                          ...analysis,
+                          suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
+                        };
+                      });
+                      setUploadAnalysis(analysisResults);
+                      setShowUploadPreview(true);
+                    }
+                  }}
+                  className="hidden"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Máximo 10MB por archivo. PDF, JPG, PNG, DOC, DOCX
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -790,438 +834,263 @@ export default function AdminDocuments() {
             </div>
 
             {/* Documents List */}
-            <DocumentsList
-              documents={filteredDocuments}
-              onView={handleViewDocument}
-              onDownload={handleDownload}
-              onDelete={confirmDelete}
-              searchTerm={searchTerm}
-              selectedEmployee={selectedEmployee}
-            />
+            {filteredDocuments.length > 0 ? (
+              <div className="space-y-3">
+                {filteredDocuments.map((document: Document) => {
+                  const FileIcon = getFileIcon(document.originalName);
+                  return (
+                    <div
+                      key={document.id}
+                      className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="p-2 rounded-lg bg-gray-100 mr-4">
+                        <FileIcon className="h-6 w-6 text-gray-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {document.originalName}
+                        </h3>
+                        <div className="flex items-center gap-4 mt-1">
+                          <span className="text-sm text-gray-600">
+                            {document.user?.fullName || 'Empleado desconocido'}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {formatFileSize(document.fileSize)}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {format(new Date(document.createdAt), 'd MMM yyyy HH:mm', { locale: es })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewDocument(document.id, document.originalName)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(document.id, document.originalName)}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => confirmDelete(document.id, document.originalName)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No se encontraron documentos
+                </h3>
+                <p className="text-gray-600">
+                  {searchTerm || selectedEmployee !== 'all'
+                    ? 'Ajusta los filtros para ver más resultados'
+                    : 'Los documentos aparecerán aquí cuando los empleados los suban'}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Smart Upload Preview Dialog */}
-        <UploadPreviewDialog
-          open={showUploadPreview}
-          onOpenChange={setShowUploadPreview}
-          uploadAnalysis={uploadAnalysis}
-          employees={employees}
-          documentTypes={documentTypes}
-          isUploading={isUploading}
-          onUpdateSuggestedName={updateSuggestedName}
-          onUpdateAnalysisEmployee={updateAnalysisEmployee}
-          onBatchUpload={handleBatchUpload}
-        />
+        <Dialog open={showUploadPreview} onOpenChange={setShowUploadPreview}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Upload className="h-5 w-5 mr-2" />
+                Análisis Inteligente de Archivos ({uploadAnalysis.length})
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                He analizado los nombres de archivo para detectar automáticamente el empleado y tipo de documento. 
+                Puedes revisar y ajustar antes de subir.
+              </p>
+              
+              <div className="space-y-3">
+                {uploadAnalysis.map((analysis, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-1">
+                          {analysis.file.name}
+                        </h3>
+                        {analysis.suggestedName && (
+                          <div className="mb-2">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              📝 Nombre sugerido (editable):
+                            </label>
+                            <input
+                              type="text"
+                              value={analysis.suggestedName}
+                              onChange={(e) => updateSuggestedName(index, e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Edita el nombre del archivo..."
+                            />
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          {formatFileSize(analysis.file.size)}
+                        </p>
+                      </div>
+                      <Badge variant={
+                        analysis.confidence === 'high' ? 'default' : 
+                        analysis.confidence === 'medium' ? 'secondary' : 'destructive'
+                      }>
+                        {analysis.confidence === 'high' ? 'Alta confianza' :
+                         analysis.confidence === 'medium' ? 'Media confianza' : 'Revisar manualmente'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Employee Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Empleado Destinatario
+                        </label>
+                        <Select 
+                          value={analysis.employee?.id?.toString() || ''} 
+                          onValueChange={(value) => updateAnalysisEmployee(index, parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar empleado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {employees.map((employee: Employee) => (
+                              <SelectItem key={employee.id} value={employee.id.toString()}>
+                                <div className="flex items-center">
+                                  <User className="h-4 w-4 mr-2" />
+                                  {employee.fullName}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {analysis.employee && (
+                          <div className="flex items-center mt-1 text-xs text-green-600">
+                            <Check className="h-3 w-3 mr-1" />
+                            Detectado automáticamente
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Document Type */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo de Documento
+                        </label>
+                        <Select value={analysis.documentType} disabled>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {documentTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                <div className="flex items-center">
+                                  <type.icon className="h-4 w-4 mr-2" />
+                                  {type.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {analysis.documentType !== 'otros' && (
+                          <div className="flex items-center mt-1 text-xs text-green-600">
+                            <Check className="h-3 w-3 mr-1" />
+                            Detectado automáticamente
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {!analysis.employee && (
+                      <div className="flex items-center p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        No se pudo detectar automáticamente el empleado. Por favor, selecciona uno manualmente.
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowUploadPreview(false)}
+                  disabled={isUploading}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleBatchUpload}
+                  disabled={isUploading || uploadAnalysis.some(a => !a.employee)}
+                >
+                  {isUploading ? 'Subiendo...' : `Subir ${uploadAnalysis.length} Documento(s)`}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Delete Confirmation Dialog */}
-        <DeleteConfirmDialog
-          open={deleteConfirm.show}
-          onOpenChange={(open) => !open && setDeleteConfirm({ show: false, docId: null, docName: '' })}
-          documentName={deleteConfirm.docName}
-          isDeleting={deleteMutation.isPending}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteConfirm({ show: false, docId: null, docName: '' })}
-        />
+        <Dialog open={deleteConfirm.show} onOpenChange={(open) => !open && setDeleteConfirm({ show: false, docId: null, docName: '' })}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-red-600">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Confirmar Eliminación
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                ¿Estás seguro de que quieres eliminar este documento?
+              </p>
+              
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-gray-900">{deleteConfirm.docName}</p>
+                <p className="text-sm text-red-600 mt-1">
+                  ⚠️ Esta acción no se puede deshacer. El archivo se eliminará permanentemente del sistema.
+                </p>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setDeleteConfirm({ show: false, docId: null, docName: '' })}
+                  disabled={deleteMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
     </div>
     </PageWrapper>
   );
 }
 
-// =================== BULLETPROOF COMPONENTS ===================
-// ⚠️ PROTECTED: These components are optimized and secured - DO NOT MODIFY
-
-interface DocumentDropZoneProps {
-  onFilesSelected: (files: File[]) => void;
-  dragOver: boolean;
-  isUploading: boolean;
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  onDrop: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: (e: React.DragEvent) => void;
-}
-
-const DocumentDropZone: React.FC<DocumentDropZoneProps> = React.memo(({
-  onFilesSelected,
-  dragOver,
-  isUploading,
-  fileInputRef,
-  onDrop,
-  onDragOver,
-  onDragLeave
-}) => {
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      onFilesSelected(files);
-    }
-  }, [onFilesSelected]);
-
-  return (
-    <div
-      onDrop={onDrop}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-        dragOver
-          ? 'border-blue-400 bg-blue-50'
-          : 'border-gray-300 hover:border-gray-400'
-      }`}
-    >
-      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-      <p className="text-lg font-medium text-gray-900 mb-2">
-        Arrastra documentos aquí
-      </p>
-      <p className="text-gray-600 mb-2">
-        o haz click para seleccionar archivos
-      </p>
-      <p className="text-xs text-blue-600 mb-4">
-        🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
-      </p>
-      <Button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-        variant="outline"
-      >
-        {isUploading ? 'Subiendo...' : 'Seleccionar Archivos'}
-      </Button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      <p className="text-xs text-gray-500 mt-2">
-        Máximo 10MB por archivo. PDF, JPG, PNG, DOC, DOCX
-      </p>
-    </div>
-  );
-});
-
-interface DocumentsListProps {
-  documents: Document[];
-  onView: (id: number, name: string) => void;
-  onDownload: (id: number, name: string) => void;
-  onDelete: (id: number, name: string) => void;
-  searchTerm: string;
-  selectedEmployee: string;
-}
-
-const DocumentsList: React.FC<DocumentsListProps> = React.memo(({
-  documents,
-  onView,
-  onDownload,
-  onDelete,
-  searchTerm,
-  selectedEmployee
-}) => {
-  if (documents.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          No se encontraron documentos
-        </h3>
-        <p className="text-gray-600">
-          {searchTerm || selectedEmployee !== 'all'
-            ? 'Ajusta los filtros para ver más resultados'
-            : 'Los documentos aparecerán aquí cuando los empleados los suban'}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {documents.map((document: Document) => {
-        const FileIcon = document.originalName ? getFileIcon(document.originalName) : FileText;
-        return (
-          <div
-            key={document.id}
-            className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
-          >
-            <div className="p-2 rounded-lg bg-gray-100 mr-4">
-              <FileIcon className="h-6 w-6 text-gray-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 truncate">
-                {document.originalName}
-              </h3>
-              <div className="flex items-center gap-4 mt-1">
-                <span className="text-sm text-gray-600">
-                  {document.user?.fullName || 'Empleado desconocido'}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {formatFileSize(document.fileSize)}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {format(new Date(document.createdAt), 'd MMM yyyy HH:mm', { locale: es })}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onView(document.id, document.originalName)}
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDownload(document.id, document.originalName)}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDelete(document.id, document.originalName)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-});
-
-interface UploadPreviewDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  uploadAnalysis: any[];
-  employees: Employee[];
-  documentTypes: any[];
-  isUploading: boolean;
-  onUpdateSuggestedName: (index: number, name: string) => void;
-  onUpdateAnalysisEmployee: (index: number, employeeId: number) => void;
-  onBatchUpload: () => void;
-}
-
-const UploadPreviewDialog: React.FC<UploadPreviewDialogProps> = React.memo(({
-  open,
-  onOpenChange,
-  uploadAnalysis,
-  employees,
-  documentTypes,
-  isUploading,
-  onUpdateSuggestedName,
-  onUpdateAnalysisEmployee,
-  onBatchUpload
-}) => {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <Upload className="h-5 w-5 mr-2" />
-            Análisis Inteligente de Archivos ({uploadAnalysis.length})
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            He analizado los nombres de archivo para detectar automáticamente el empleado y tipo de documento. 
-            Puedes revisar y ajustar antes de subir.
-          </p>
-          
-          <div className="space-y-3">
-            {uploadAnalysis.map((analysis, index) => (
-              <div key={index} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">
-                      {analysis.file.name}
-                    </h3>
-                    {analysis.suggestedName && (
-                      <div className="mb-2">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">
-                          📝 Nombre sugerido (editable):
-                        </label>
-                        <input
-                          type="text"
-                          value={analysis.suggestedName}
-                          onChange={(e) => onUpdateSuggestedName(index, e.target.value)}
-                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Edita el nombre del archivo..."
-                        />
-                      </div>
-                    )}
-                    <p className="text-sm text-gray-500">
-                      {analysis.file?.size ? formatFileSize(analysis.file.size) : 'Tamaño desconocido'}
-                    </p>
-                  </div>
-                  <Badge variant={
-                    analysis.confidence === 'high' ? 'default' : 
-                    analysis.confidence === 'medium' ? 'secondary' : 'destructive'
-                  }>
-                    {analysis.confidence === 'high' ? 'Alta confianza' :
-                     analysis.confidence === 'medium' ? 'Media confianza' : 'Revisar manualmente'}
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Employee Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Empleado Destinatario
-                    </label>
-                    <Select 
-                      value={analysis.employee?.id?.toString() || ''} 
-                      onValueChange={(value) => onUpdateAnalysisEmployee(index, parseInt(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar empleado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((employee: Employee) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            <div className="flex items-center">
-                              <User className="h-4 w-4 mr-2" />
-                              {employee.fullName}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {analysis.employee && (
-                      <div className="flex items-center mt-1 text-xs text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Detectado automáticamente
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Document Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo de Documento
-                    </label>
-                    <Select value={analysis.documentType} disabled>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {documentTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
-                            <div className="flex items-center">
-                              <type.icon className="h-4 w-4 mr-2" />
-                              {type.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {analysis.documentType !== 'otros' && (
-                      <div className="flex items-center mt-1 text-xs text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Detectado automáticamente
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {!analysis.employee && (
-                  <div className="flex items-center p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    No se pudo detectar automáticamente el empleado. Por favor, selecciona uno manualmente.
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isUploading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={onBatchUpload}
-              disabled={isUploading || uploadAnalysis.some(a => !a.employee)}
-            >
-              {isUploading ? 'Subiendo...' : `Subir ${uploadAnalysis.length} Documento(s)`}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-});
-
-interface DeleteConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  documentName: string;
-  isDeleting: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = React.memo(({
-  open,
-  onOpenChange,
-  documentName,
-  isDeleting,
-  onConfirm,
-  onCancel
-}) => {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center text-red-600">
-            <Trash2 className="h-5 w-5 mr-2" />
-            Confirmar Eliminación
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            ¿Estás seguro de que quieres eliminar este documento?
-          </p>
-          
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="font-medium text-gray-900">{documentName}</p>
-            <p className="text-sm text-red-600 mt-1">
-              ⚠️ Esta acción no se puede deshacer. El archivo se eliminará permanentemente del sistema.
-            </p>
-          </div>
-          
-          <div className="flex justify-end space-x-3">
-            <Button 
-              variant="outline" 
-              onClick={onCancel}
-              disabled={isDeleting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={onConfirm}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? 'Eliminando...' : 'Eliminar Permanentemente'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-});
-
-// Set display names for debugging
-DocumentDropZone.displayName = 'DocumentDropZone';
-DocumentsList.displayName = 'DocumentsList';
-UploadPreviewDialog.displayName = 'UploadPreviewDialog';
-DeleteConfirmDialog.displayName = 'DeleteConfirmDialog';
