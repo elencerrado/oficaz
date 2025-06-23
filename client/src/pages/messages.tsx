@@ -296,10 +296,11 @@ export default function Messages() {
             </CardContent>
           </Card>
         </div>
-        {/* Content */}
-        <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
+        {/* Content - Make responsive like employee view */}
+        {!selectedChat ? (
+          <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
             {/* Employee List */}
-            <div className="lg:col-span-1 h-full">
+            <div className="lg:col-span-3 h-full">
               <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-4">
@@ -423,95 +424,93 @@ export default function Messages() {
                 )}
               </div>
             </div>
-
-            {/* Chat Area */}
-            <div className="lg:col-span-2 h-full">
-              {selectedChat ? (
-                <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-                  {/* Chat Header - Fixed at top */}
-                  <div className="p-4 border-b border-gray-200 bg-white rounded-t-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="heading-4">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
-                        </h3>
-                        <p className="caption-text">Empleado</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Messages - Scrollable middle section */}
-                  <div ref={messagesContainerRef} className="overflow-y-auto p-4" style={{ height: 'calc(75vh - 160px)' }}>
-                    <div className="space-y-4">
-                      {getChatMessages(selectedChat).length > 0 ? (
-                        getChatMessages(selectedChat).map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                message.senderId === user?.id
-                                  ? 'bg-oficaz-primary text-white'
-                                  : 'bg-gray-100 text-gray-900'
-                              }`}
-                            >
-                              <p className="text-sm">{message.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                              }`}>
-                                {format(new Date(message.createdAt), 'HH:mm')}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No hay mensajes aún</p>
-                          <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Message Input - Fixed at bottom */}
-                  <div className="p-4 border-t border-gray-200 bg-white rounded-b-lg">
-                    <div className="flex space-x-2">
-                      <Input
-                        ref={messageInputRef}
-                        placeholder="Escribe tu mensaje..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                        className="input-oficaz flex-1"
-                      />
-                      <Button
-                        onClick={sendMessage}
-                        disabled={!newMessage.trim()}
-                        className="btn-oficaz-primary"
-                      >
-                        <Send className="icon-sm" />
-                      </Button>
-                    </div>
-                  </div>
+          </div>
+        ) : (
+          /* Chat View - Full screen like employee view */
+          <div className="h-full min-h-screen bg-gray-50 flex flex-col">
+            {/* Chat Header with back button */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedChat(null)}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  Atrás
+                </Button>
+                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium">
+                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </span>
                 </div>
-              ) : (
-                <div className="bg-white rounded-lg border border-gray-200 h-full flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
-                    <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
-                  </div>
+                <div>
+                  <h3 className="heading-4">
+                    {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                  </h3>
+                  <p className="caption-text">Empleado</p>
                 </div>
-              )}
+              </div>
             </div>
-        </div>
+
+            {/* Messages - Scrollable middle section */}
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {getChatMessages(selectedChat).length > 0 ? (
+                  getChatMessages(selectedChat).map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          message.senderId === user?.id
+                            ? 'bg-oficaz-primary text-white'
+                            : 'bg-white text-gray-900 border border-gray-200'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        <p className={`text-xs mt-1 ${
+                          message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                        }`}>
+                          {format(new Date(message.createdAt), 'HH:mm')}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No hay mensajes aún</p>
+                    <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Message Input - Fixed at bottom */}
+            <div className="bg-white border-t border-gray-200 px-4 py-3">
+              <div className="flex space-x-2 max-w-4xl mx-auto">
+                <Input
+                  ref={messageInputRef}
+                  placeholder="Escribe tu mensaje..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  className="input-oficaz flex-1"
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                  className="btn-oficaz-primary"
+                >
+                  <Send className="icon-sm" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
