@@ -185,24 +185,22 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    if (messagesEndRef.current && selectedChat) {
-      const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-      };
-      
-      const timer = setTimeout(scrollToBottom, 100);
-      return () => clearTimeout(timer);
+    if (selectedChat && messagesContainerRef.current) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
     }
   }, [selectedChat]);
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      };
-      
-      const timer = setTimeout(scrollToBottom, 100);
-      return () => clearTimeout(timer);
+    if (messages && messagesContainerRef.current) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
     }
   }, [messages]);
 
@@ -502,9 +500,8 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 flex flex-col"
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50"
                   >
-                    <div className="flex-1"></div>
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
                         messagesGroupedByDate.map((group) => (
