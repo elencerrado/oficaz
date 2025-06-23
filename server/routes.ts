@@ -697,6 +697,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Document not found' });
       }
 
+      // Check if it's a view request (preview) or download
+      const isPreview = req.query.view === 'true';
+      console.log(`Document ${id} request - isPreview: ${isPreview}, query:`, req.query);
+
       // CRITICAL SECURITY: Users can ONLY access their own documents
       // Admins and managers can only access documents of users in their company
       if (document.userId !== req.user!.id) {
@@ -715,9 +719,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const filePath = path.join(uploadDir, document.fileName);
-      
-      // Check if it's a view request (preview) or download
-      const isPreview = req.query.view === 'true';
       
       // If physical file doesn't exist but it's a demo document, serve a placeholder PDF
       if (!fs.existsSync(filePath) && (document.fileName.includes('nomina') || document.fileName.includes('contrato'))) {
@@ -803,8 +804,10 @@ startxref
       
       // Set disposition based on whether it's preview or download
       if (isPreview) {
+        console.log(`Setting inline disposition for preview: ${document.originalName}`);
         res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
       } else {
+        console.log(`Setting attachment disposition for download: ${document.originalName}`);
         res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
       }
 
