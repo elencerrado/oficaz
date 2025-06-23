@@ -117,11 +117,16 @@ export default function Documents() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      console.log('Starting upload for user:', user?.id, user?.fullName);
+      
+      const authData = JSON.parse(localStorage.getItem('authData') || '{}');
+      console.log('Auth token exists:', !!authData.token);
+      
       const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${authData.token}`,
         },
       });
 
@@ -130,7 +135,9 @@ export default function Documents() {
         throw new Error(error || 'Upload failed');
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('Upload result:', result);
+      return result;
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
