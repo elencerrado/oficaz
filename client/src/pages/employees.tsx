@@ -555,9 +555,7 @@ export default function Employees() {
                         } else if (diff > 0) {
                           // Swipe right - Message
                           console.log('Triggering message navigation for employee:', employee.fullName, 'ID:', employee.id); // Debug
-                          localStorage.setItem('selectedChatId', employee.id.toString());
-                          console.log('Set localStorage selectedChatId to:', employee.id.toString()); // Debug
-                          navigate('/test/mensajes');
+                          navigate(`/test/mensajes?chat=${employee.id}`);
                         }
                       } else if (Math.abs(diff) < 10 && timeDiff < 500) {
                         // Handle tap detection for double tap

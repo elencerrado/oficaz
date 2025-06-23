@@ -60,7 +60,19 @@ export default function Messages() {
 
   // All state declarations together
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<number | null>(null);
+  const [selectedChat, setSelectedChat] = useState<number | null>(() => {
+    // Check URL parameters for chat selection
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatParam = urlParams.get('chat');
+    if (chatParam) {
+      const chatId = parseInt(chatParam);
+      console.log('Found chat parameter in URL:', chatId);
+      // Clean URL without triggering navigation
+      window.history.replaceState({}, '', window.location.pathname);
+      return chatId;
+    }
+    return null;
+  });
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
@@ -144,17 +156,18 @@ export default function Messages() {
     });
   }, []);
 
-  // Check for stored chat selection on mount and when employees data loads
+  // Debug effect to verify selected chat
   useEffect(() => {
-    const storedChatId = localStorage.getItem('selectedChatId');
-    console.log('Checking localStorage for selectedChatId:', storedChatId); // Debug
-    if (storedChatId && (employees || managers)) {
-      const chatId = parseInt(storedChatId);
-      console.log('Auto-selecting chat:', chatId, 'Available employees/managers:', employees || managers); // Debug
-      setSelectedChat(chatId);
-      localStorage.removeItem('selectedChatId'); // Clean up
+    if (selectedChat) {
+      console.log('Selected chat is now:', selectedChat);
+      const employee = (employees || managers)?.find(emp => emp.id === selectedChat);
+      if (employee) {
+        console.log('Found employee for chat:', employee.fullName);
+      } else {
+        console.log('Employee not found for chat ID:', selectedChat);
+      }
     }
-  }, [employees, managers]);
+  }, [selectedChat, employees, managers]);
 
   // Effects for auto-scroll - Enhanced for mobile fullscreen
   useEffect(() => {
