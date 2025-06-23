@@ -262,16 +262,13 @@ export default function VacationManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-yellow-500 rounded-xl shadow-sm">
-                    <Clock className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-yellow-500 rounded-xl shadow-sm flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">{stats.pending}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
                     <p className="text-xs text-gray-500">Pendientes</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
                 </div>
               </div>
             </CardContent>
@@ -288,16 +285,13 @@ export default function VacationManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-green-500 rounded-xl shadow-sm">
-                    <Check className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-green-500 rounded-xl shadow-sm flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">{stats.approved}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
                     <p className="text-xs text-gray-500">Aprobadas</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
                 </div>
               </div>
             </CardContent>
@@ -310,16 +304,13 @@ export default function VacationManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-blue-500 rounded-xl shadow-sm">
-                    <Plane className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-blue-500 rounded-xl shadow-sm flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">{stats.onVacation}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Empleados</p>
                     <p className="text-xs text-gray-500">De Vacaciones</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-600">{stats.onVacation}</p>
                 </div>
               </div>
             </CardContent>
@@ -332,16 +323,13 @@ export default function VacationManagement() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-purple-500 rounded-xl shadow-sm">
-                    <CalendarDays className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-purple-500 rounded-xl shadow-sm flex items-center justify-center">
+                    <span className="text-2xl font-bold text-white">{spanishHolidays2025.length}</span>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Días Festivos</p>
                     <p className="text-xs text-gray-500">2025</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-purple-600">{spanishHolidays2025.length}</p>
                 </div>
               </div>
             </CardContent>
