@@ -31,11 +31,18 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  // Handle token expiration
+  // Handle token expiration or malformed tokens
   if (res.status === 403) {
-    const errorText = await res.text();
-    if (errorText.includes('Invalid or expired token')) {
-      // Clear auth data and redirect to login
+    try {
+      const errorText = await res.text();
+      if (errorText.includes('Invalid or expired token')) {
+        // Clear auth data and redirect to login
+        localStorage.removeItem('authData');
+        window.location.href = '/login';
+        return;
+      }
+    } catch (e) {
+      // If we can't read the error text, still handle as auth error
       localStorage.removeItem('authData');
       window.location.href = '/login';
       return;

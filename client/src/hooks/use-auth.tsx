@@ -47,7 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.log('Auth init error:', error);
+          // Clear corrupted auth data
           clearAuthData();
+          setUser(null);
+          setCompany(null);
+          setToken(null);
         }
       }
       setIsLoading(false);
