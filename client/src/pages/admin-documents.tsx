@@ -87,7 +87,7 @@ const documentTypes = [
     id: 'otros', 
     name: 'Otros', 
     icon: File,
-    keywords: []
+    keywords: ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
   }
 ];
 
@@ -388,7 +388,7 @@ export default function AdminDocuments() {
       }
       return item;
     }));
-  }
+  };
 
   const updateSuggestedName = (index: number, newName: string) => {
     setUploadAnalysis(prev => prev.map((item, i) => 
