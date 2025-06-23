@@ -125,6 +125,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Header empleado con tema oscuro y flecha blanca visible implementado
   - Auto-scroll restaurado en vistas admin desktop y móvil para ir al último mensaje
   - Vista empleado sin iconos de rol, solo texto de cargo para diseño limpio
+  - ⚠️ PROTEGIDO: Auto-scroll funcional NO MODIFICAR - useEffect con timeout 100ms y scrollIntoView
 - June 23, 2025. Sistema completamente dinámico de roles sin datos hardcodeados implementado
   - Función getRoleDisplay refactorizada para usar solo datos reales de base de datos
   - Eliminados todos los valores hardcodeados ("Empleado", "Administrador", "Manager")

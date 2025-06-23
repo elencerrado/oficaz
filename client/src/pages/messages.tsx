@@ -184,16 +184,25 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Auto-scroll simple que funciona
   useEffect(() => {
-    if (selectedChat && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
+    if (messagesEndRef.current && selectedChat) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      };
+      
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
     }
   }, [selectedChat]);
 
   useEffect(() => {
-    if (messages && messages.length > 0 && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      };
+      
+      const timer = setTimeout(scrollToBottom, 100);
+      return () => clearTimeout(timer);
     }
   }, [messages]);
 
