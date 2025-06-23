@@ -185,7 +185,20 @@ export default function Documents() {
     }
 
     setIsUploading(true);
-    uploadMutation.mutate(file);
+    
+    // Create proper filename based on request type and user name
+    let customFileName = file.name;
+    if (activeRequest && user) {
+      const fileExtension = file.name.split('.').pop();
+      const requestType = activeRequest.type || 'Documento';
+      customFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
+    }
+    
+    const formData = new FormData();
+    const renamedFile = new File([file], customFileName, { type: file.type });
+    formData.append('file', renamedFile);
+    
+    uploadMutation.mutate(formData);
   };
 
   const handleDownload = (id: number, filename: string) => {
@@ -378,12 +391,7 @@ export default function Documents() {
                     ref={fileInputRef}
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={async (e) => {
-                      if (e.target.files?.[0]) {
-                        await handleFileUpload(e);
-                        handleCompleteRequest();
-                      }
-                    }}
+                    onChange={(e) => handleFileUpload(e)}
                     className="hidden"
                     disabled={isUploading}
                   />
