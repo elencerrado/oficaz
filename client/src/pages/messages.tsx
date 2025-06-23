@@ -393,7 +393,6 @@ export default function Messages() {
             Comunícate con empleados y gestiona mensajes
           </p>
         </div>
-
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-180px)]">
           {/* Left Column: Employee List (1/3 width) */}
@@ -593,12 +592,11 @@ export default function Messages() {
               )}
             </div>
         </div>
-
         {/* Mobile Layout for Admin/Manager */}
         <div className="lg:hidden h-full flex flex-col">
           {!selectedChat ? (
             /* Employee List View */
-            <div className="flex-1 flex flex-col min-h-0">
+            (<div className="flex-1 flex flex-col min-h-0">
               <div className="flex-shrink-0 space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">Conversaciones</h2>
@@ -623,7 +621,6 @@ export default function Messages() {
                   />
                 </div>
               </div>
-
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-2 py-4">
                   {filteredEmployees.map((employee) => (
@@ -651,10 +648,10 @@ export default function Messages() {
                   ))}
                 </div>
               </div>
-            </div>
+            </div>)
           ) : (
             /* Chat View - Full screen overlay */
-            <div 
+            (<div 
               className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
@@ -686,7 +683,6 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-
               {/* Messages - Scrollable area with bounce prevention */}
               <div 
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 flex flex-col" 
@@ -764,7 +760,6 @@ export default function Messages() {
                   )}
                 </div>
               </div>
-
               {/* Message Input - Fixed at bottom */}
               <div 
                 className="flex space-x-2 p-4 border-t border-gray-200 bg-white flex-shrink-0"
@@ -788,10 +783,9 @@ export default function Messages() {
                   <Send className="icon-sm" />
                 </Button>
               </div>
-            </div>
+            </div>)
           )}
         </div>
-
         {/* Modal for new chat - Group message functionality */}
         <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
           <DialogContent className="max-w-md mx-auto">
@@ -936,7 +930,7 @@ export default function Messages() {
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
       {!selectedChat ? (
         /* Employee Dashboard - List of managers - STABLE VERSION */
-        <>
+        (<>
           {/* Header - Exactly like vacation-requests - DO NOT MODIFY */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
             <Link href={`/${companyAlias}/inicio`}>
@@ -959,12 +953,11 @@ export default function Messages() {
               </div>
             </div>
           </div>
-          
           <div className="px-4 py-6 space-y-6">
 
           {/* Managers list */}
           <div className="space-y-3">
-            <h2 className="text-white/90 text-sm font-medium px-2">Responsables</h2>
+            <h2 className="text-white/90 text-sm font-medium px-2">Conversaciones</h2>
             
             {filteredEmployees.length > 0 ? (
               <div className="space-y-2">
@@ -1018,10 +1011,10 @@ export default function Messages() {
             )}
           </div>
         </div>
-        </>
+        </>)
       ) : (
             /* Chat View - EXACT COPY FROM ADMIN MOBILE LINE 657 */
-            <div 
+            (<div 
               className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
@@ -1058,104 +1051,102 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-
-          {/* Messages Area - Scrollable */}
-          <div 
-            className="flex-1 overflow-y-auto px-4 py-4"
-            style={{
-              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-              touchAction: 'pan-y',
-              overscrollBehavior: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
-            <div className="space-y-6">
-              {messagesGroupedByDate.length > 0 ? (
-                messagesGroupedByDate.map((group) => (
-                  <div key={group.date} className="space-y-4">
-                    {/* Date separator */}
-                    <div className="flex items-center justify-center">
-                      <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
-                        {group.dateFormatted}
-                      </div>
-                    </div>
-                    
-                    {/* Messages for this date */}
-                    <div className="space-y-3">
-                      {group.messages.map((message) => (
-                        <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
-                            <p className="text-sm">{message.content}</p>
-                            <div className="flex items-center justify-between mt-1">
-                              <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                                {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                              </p>
-                              {message.senderId === user?.id && (
-                                <div className="ml-2">
-                                  {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                    message.isRead ? (
-                                      <div className="flex items-center text-green-400">
-                                        <Check className="h-3 w-3" />
-                                        <Check className="h-3 w-3 -ml-1" />
-                                      </div>
-                                    ) : (
-                                      <Check className="h-3 w-3 text-green-400" />
-                                    )
-                                  ) : (
-                                    <Check className="h-3 w-3 text-green-400" />
-                                  )}
-                                </div>
-                              )}
-                            </div>
+              {/* Messages Area - Scrollable */}
+              <div 
+                className="flex-1 overflow-y-auto px-4 py-4"
+                style={{
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'none',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
+                <div className="space-y-6">
+                  {messagesGroupedByDate.length > 0 ? (
+                    messagesGroupedByDate.map((group) => (
+                      <div key={group.date} className="space-y-4">
+                        {/* Date separator */}
+                        <div className="flex items-center justify-center">
+                          <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
+                            {group.dateFormatted}
                           </div>
                         </div>
-                      ))}
+                        
+                        {/* Messages for this date */}
+                        <div className="space-y-3">
+                          {group.messages.map((message) => (
+                            <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
+                                <p className="text-sm">{message.content}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                                  </p>
+                                  {message.senderId === user?.id && (
+                                    <div className="ml-2">
+                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                        message.isRead ? (
+                                          <div className="flex items-center text-green-400">
+                                            <Check className="h-3 w-3" />
+                                            <Check className="h-3 w-3 -ml-1" />
+                                          </div>
+                                        ) : (
+                                          <Check className="h-3 w-3 text-green-400" />
+                                        )
+                                      ) : (
+                                        <Check className="h-3 w-3 text-green-400" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-white/70 py-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No hay mensajes aún</p>
+                      <p className="text-sm">Envía tu primer mensaje</p>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-white/70 py-8">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No hay mensajes aún</p>
-                  <p className="text-sm">Envía tu primer mensaje</p>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* Message Input - Fixed at bottom - DARK THEME */}
-          <div 
-            className="px-4 py-3 border-t border-gray-200/20"
-            style={{
-              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-              paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
-            }}
-          >
-            <div className="flex space-x-2">
-              <Input
-                ref={messageInputRef}
-                placeholder="Escribe tu mensaje..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
+              </div>
+              {/* Message Input - Fixed at bottom - DARK THEME */}
+              <div 
+                className="px-4 py-3 border-t border-gray-200/20"
                 style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white'
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
                 }}
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={!newMessage.trim()}
-                className="bg-blue-500 hover:bg-blue-600 text-white border-0"
               >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+                <div className="flex space-x-2">
+                  <Input
+                    ref={messageInputRef}
+                    placeholder="Escribe tu mensaje..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderColor: 'rgba(255, 255, 255, 0.2)',
+                      color: 'white'
+                    }}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>)
       )}
     </div>
   );
