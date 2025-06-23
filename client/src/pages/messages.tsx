@@ -352,8 +352,8 @@ export default function Messages() {
       case 'admin':
         return (
           <div className="flex items-center space-x-1">
-            <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">A</span>
+            <div className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">A</span>
             </div>
             <span>Administrador</span>
           </div>
@@ -361,8 +361,8 @@ export default function Messages() {
       case 'manager':
         return (
           <div className="flex items-center space-x-1">
-            <div className="w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
+            <div className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">M</span>
             </div>
             <span>Manager</span>
           </div>
@@ -370,8 +370,8 @@ export default function Messages() {
       default:
         return (
           <div className="flex items-center space-x-1">
-            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">E</span>
+            <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-[8px] font-bold">E</span>
             </div>
             <span>Empleado</span>
           </div>
@@ -563,7 +563,7 @@ export default function Messages() {
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
                         </h3>
                         <div className="caption-text">
-                          {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat)?.role || 'employee')}
+                          {getRoleDisplay(getEmployeeWithRole(selectedChat)?.role || 'employee')}
                         </div>
                       </div>
                     </div>
@@ -760,7 +760,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-gray-500">
-                    {getRoleDisplay(selectedChatUser?.role || 'employee')}
+                    {getRoleDisplay(getEmployeeWithRole(selectedChat)?.role || 'employee')}
                   </div>
                 </div>
               </div>
