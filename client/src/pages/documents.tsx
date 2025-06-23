@@ -299,6 +299,14 @@ export default function Documents() {
         </div>
       </div>
 
+      {/* Title Section */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Documentos</h1>
+        <p className="text-white/70 text-sm">
+          Gestiona y descarga tus documentos laborales
+        </p>
+      </div>
+
       {/* Content Container */}
       <div className="flex-1 px-6 pb-6 space-y-6">
         {/* Document Request Notification - Compact */}
