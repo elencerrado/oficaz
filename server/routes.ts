@@ -798,7 +798,18 @@ startxref
         return res.status(404).json({ message: 'File not found on server' });
       }
 
-      res.download(filePath, document.originalName);
+      // Set content type
+      res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+      
+      // Set disposition based on whether it's preview or download
+      if (isPreview) {
+        res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+      } else {
+        res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+      }
+
+      // Send file
+      res.sendFile(filePath);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
