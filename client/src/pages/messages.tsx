@@ -304,7 +304,12 @@ export default function Messages() {
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
             <div className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="heading-3">Empleados</h2>
+                <div>
+                  <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
+                  </p>
+                </div>
                 <Button
                   variant={isGroupMode ? "default" : "outline"}
                   size="sm"
