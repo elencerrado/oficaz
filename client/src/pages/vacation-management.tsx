@@ -243,10 +243,13 @@ export default function VacationManagement() {
   };
 
   return (
-    <div className="space-y-6 px-6 py-4">
+    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Vacaciones</h1>
+        <p className="text-gray-500 mt-1">
+          Gestiona solicitudes de vacaciones y empleados
+        </p>
       </div>
 
         {/* Stats Cards with Navigation */}
@@ -572,11 +575,11 @@ export default function VacationManagement() {
 
                         {/* Mobile action buttons */}
                         {request.status === 'pending' ? (
-                          <div className="flex flex-wrap gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white flex-1 min-w-0"
+                              className="bg-green-600 hover:bg-green-700 text-white"
                             >
                               <Check className="w-4 h-4 mr-1" />
                               Aprobar
@@ -584,7 +587,7 @@ export default function VacationManagement() {
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white flex-1 min-w-0"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
                               <Edit className="w-4 h-4 mr-1" />
                               Editar
@@ -593,7 +596,6 @@ export default function VacationManagement() {
                               size="sm"
                               variant="destructive"
                               onClick={() => openRequestModal(request, 'deny')}
-                              className="flex-1 min-w-0"
                             >
                               <X className="w-4 h-4 mr-1" />
                               Denegar
