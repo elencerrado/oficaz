@@ -306,8 +306,20 @@ export default function AdminDocuments() {
       dateInfo = ` ${year}`;
     }
     
-    // Format: "Nómina Junio 2025 - Juan José Ramírez Martín.pdf"
-    return `${docTypeName}${dateInfo} - ${cleanEmployeeName}.${extension}`;
+    // Extract special keywords for "Otros" category (like IRPF, etc.)
+    let specialKeyword = '';
+    if (docType === 'otros') {
+      const specialKeywords = ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'modelo'];
+      const foundKeyword = specialKeywords.find(keyword => 
+        normalizedName.includes(keyword)
+      );
+      if (foundKeyword) {
+        specialKeyword = ` (${foundKeyword.toUpperCase()})`;
+      }
+    }
+    
+    // Format: "Nómina Junio 2025 - Juan José Ramírez Martín.pdf" or "Otros Marzo 2025 (IRPF) - Juan José Ramírez Martín.pdf"
+    return `${docTypeName}${dateInfo}${specialKeyword} - ${cleanEmployeeName}.${extension}`;
   };
 
   const handleFileUpload = async (file: File, targetEmployeeId?: number, cleanFileName?: string) => {
@@ -910,9 +922,18 @@ export default function AdminDocuments() {
                           {analysis.file.name}
                         </h3>
                         {analysis.suggestedName && (
-                          <p className="text-sm text-blue-600 mb-1">
-                            📝 Nombre sugerido: {analysis.suggestedName}
-                          </p>
+                          <div className="mb-2">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                              📝 Nombre sugerido (editable):
+                            </label>
+                            <input
+                              type="text"
+                              value={analysis.suggestedName}
+                              onChange={(e) => updateSuggestedName(index, e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Edita el nombre del archivo..."
+                            />
+                          </div>
                         )}
                         <p className="text-sm text-gray-500">
                           {formatFileSize(analysis.file.size)}
