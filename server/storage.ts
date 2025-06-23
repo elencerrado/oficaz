@@ -332,27 +332,32 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getDocumentsByCompany(companyId: number): Promise<any[]> {
-    const documents = await db
-      .select({
-        id: schema.documents.id,
-        userId: schema.documents.userId,
-        fileName: schema.documents.fileName,
-        originalName: schema.documents.originalName,
-        fileSize: schema.documents.fileSize,
-        filePath: schema.documents.filePath,
-        createdAt: schema.documents.createdAt,
-        userFullName: schema.users.fullName,
-      })
-      .from(schema.documents)
-      .innerJoin(schema.users, eq(schema.documents.userId, schema.users.id))
-      .where(eq(schema.users.companyId, companyId))
-      .orderBy(desc(schema.documents.createdAt));
+    // Simple query using SQL to avoid Drizzle issues
+    const result = await db.execute(sql`
+      SELECT 
+        d.id,
+        d.user_id as "userId",
+        d.file_name as "fileName", 
+        d.original_name as "originalName",
+        d.file_size as "fileSize",
+        d.created_at as "createdAt",
+        u.full_name as "userFullName"
+      FROM documents d 
+      LEFT JOIN users u ON d.user_id = u.id 
+      WHERE u.company_id = ${companyId}
+      ORDER BY d.created_at DESC
+    `);
     
     // Transform to expected format
-    return documents.map(doc => ({
-      ...doc,
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.userId,
+      fileName: row.fileName,
+      originalName: row.originalName,
+      fileSize: row.fileSize,
+      createdAt: row.createdAt,
       user: {
-        fullName: doc.userFullName
+        fullName: row.userFullName || 'Usuario desconocido'
       }
     }));
   }
