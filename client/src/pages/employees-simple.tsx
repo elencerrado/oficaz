@@ -495,7 +495,7 @@ export default function EmployeesSimple() {
                       </Avatar>
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
-                        <p className="text-sm text-gray-500">{employee.role === 'employee' ? 'Empleado' : employee.role === 'manager' ? 'Manager' : employee.role}</p>
+                        <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>
                         {(employee.companyEmail || employee.personalEmail) && (
                           <a 
                             href={`mailto:${employee.companyEmail || employee.personalEmail}`}
@@ -537,7 +537,7 @@ export default function EmployeesSimple() {
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>{employee.role === 'employee' ? 'Empleado' : employee.role === 'manager' ? 'Manager' : employee.role}</span>
+                          <span>{employee.position || 'Sin cargo especificado'}</span>
                           {(employee.companyEmail || employee.personalEmail) && (
                             <a 
                               href={`mailto:${employee.companyEmail || employee.personalEmail}`}
