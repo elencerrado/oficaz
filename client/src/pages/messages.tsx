@@ -689,7 +689,7 @@ export default function Messages() {
                                   </div>
                                 ) : (
                                   // Single check - Message delivered but not read
-                                  <Check className="h-3 w-3 text-white/50" />
+                                  <Check className="h-3 w-3 text-gray-400" />
                                 )}
                               </div>
                             )}
@@ -1031,7 +1031,7 @@ export default function Messages() {
                               </div>
                             ) : (
                               // Single check - Message delivered but not read
-                              <Check className="h-3 w-3 text-white/50" />
+                              <Check className="h-3 w-3 text-gray-400" />
                             )}
                           </div>
                         )}
