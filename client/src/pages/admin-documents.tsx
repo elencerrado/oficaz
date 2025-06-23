@@ -201,7 +201,9 @@ export default function AdminDocuments() {
       return response.json();
     },
     onSuccess: () => {
+      // Force refresh the documents list
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
       toast({
         title: 'Documento eliminado',
         description: 'El documento se ha eliminado completamente del sistema',
