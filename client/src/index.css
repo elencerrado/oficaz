@@ -284,8 +284,341 @@ body::after {
   }
 }
 
-/* Custom utility classes for Oficaz */
+/* OFICAZ DESIGN SYSTEM - Unified Components */
+@layer components {
+  /* Typography System */
+  .oficaz-h1 {
+    @apply text-2xl font-bold text-gray-900 leading-tight;
+  }
+  
+  .oficaz-h2 {
+    @apply text-xl font-semibold text-gray-900 leading-tight;
+  }
+  
+  .oficaz-h3 {
+    @apply text-lg font-medium text-gray-900 leading-tight;
+  }
+  
+  .oficaz-body {
+    @apply text-sm text-gray-700 leading-relaxed;
+  }
+  
+  .oficaz-caption {
+    @apply text-xs text-gray-500 leading-normal;
+  }
+
+  /* Button System - Primary */
+  .oficaz-btn-primary {
+    @apply bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+  
+  .oficaz-btn-primary-sm {
+    @apply bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium px-3 py-1.5 text-sm rounded-lg transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  /* Button System - Secondary */
+  .oficaz-btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded-xl border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+  
+  .oficaz-btn-secondary-sm {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium px-3 py-1.5 text-sm rounded-lg border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  /* Button System - Ghost */
+  .oficaz-btn-ghost {
+    @apply bg-transparent hover:bg-gray-100 text-gray-700 font-medium px-4 py-2 rounded-xl transition-all duration-200 active:scale-95;
+  }
+  
+  .oficaz-btn-ghost-sm {
+    @apply bg-transparent hover:bg-gray-100 text-gray-700 font-medium px-3 py-1.5 text-sm rounded-lg transition-all duration-200 active:scale-95;
+  }
+
+  /* Button System - Destructive */
+  .oficaz-btn-destructive {
+    @apply bg-red-500 hover:bg-red-600 text-white font-medium px-4 py-2 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95;
+  }
+
+  /* Card System */
+  .oficaz-card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+  
+  .oficaz-card-header {
+    @apply p-6 border-b border-gray-100;
+  }
+  
+  .oficaz-card-content {
+    @apply p-6;
+  }
+  
+  .oficaz-card-footer {
+    @apply p-6 border-t border-gray-100 bg-gray-50 rounded-b-xl;
+  }
+
+  /* Input System */
+  .oficaz-input {
+    @apply w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent transition-all duration-200;
+  }
+  
+  .oficaz-input-sm {
+    @apply w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-md bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent transition-all duration-200;
+  }
+
+  /* Badge System */
+  .oficaz-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .oficaz-badge-success {
+    @apply oficaz-badge bg-green-100 text-green-800;
+  }
+  
+  .oficaz-badge-warning {
+    @apply oficaz-badge bg-yellow-100 text-yellow-800;
+  }
+  
+  .oficaz-badge-error {
+    @apply oficaz-badge bg-red-100 text-red-800;
+  }
+  
+  .oficaz-badge-info {
+    @apply oficaz-badge bg-blue-100 text-blue-800;
+  }
+  
+  .oficaz-badge-neutral {
+    @apply oficaz-badge bg-gray-100 text-gray-800;
+  }
+
+  /* Table System */
+  .oficaz-table {
+    @apply w-full border-collapse;
+  }
+  
+  .oficaz-table-header {
+    @apply bg-gray-50 border-b border-gray-200;
+  }
+  
+  .oficaz-table-header-cell {
+    @apply text-left py-3 px-4 font-medium text-gray-900 text-sm;
+  }
+  
+  .oficaz-table-row {
+    @apply hover:bg-gray-50 border-b border-gray-100 transition-colors duration-150;
+  }
+  
+  .oficaz-table-cell {
+    @apply py-3 px-4 text-sm text-gray-700;
+  }
+
+  /* Icon System - Consistent sizing */
+  .oficaz-icon-xs {
+    @apply w-3 h-3;
+  }
+  
+  .oficaz-icon-sm {
+    @apply w-4 h-4;
+  }
+  
+  .oficaz-icon {
+    @apply w-5 h-5;
+  }
+  
+  .oficaz-icon-lg {
+    @apply w-6 h-6;
+  }
+  
+  .oficaz-icon-xl {
+    @apply w-8 h-8;
+  }
+
+  /* Loading States */
+  .oficaz-loading {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+  
+  .oficaz-skeleton-text {
+    @apply oficaz-loading h-4 w-3/4 mb-2;
+  }
+  
+  .oficaz-skeleton-title {
+    @apply oficaz-loading h-6 w-1/2 mb-4;
+  }
+
+  /* Hover Effects - Consistent */
+  .oficaz-hover-lift {
+    @apply transition-transform duration-200 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .oficaz-hover-glow {
+    @apply transition-shadow duration-200 hover:shadow-md;
+  }
+
+  /* Status Colors - Standardized */
+  .oficaz-status-active {
+    @apply text-green-600 bg-green-50 border border-green-200;
+  }
+  
+  .oficaz-status-inactive {
+    @apply text-gray-600 bg-gray-50 border border-gray-200;
+  }
+  
+  .oficaz-status-vacation {
+    @apply text-blue-600 bg-blue-50 border border-blue-200;
+  }
+  
+  .oficaz-status-warning {
+    @apply text-yellow-600 bg-yellow-50 border border-yellow-200;
+  }
+  
+  .oficaz-status-error {
+    @apply text-red-600 bg-red-50 border border-red-200;
+  }
+}
+
+/* Custom utility classes for Oficaz Design System */
 @layer utilities {
+  /* === TYPOGRAPHY SYSTEM === */
+  .heading-1 {
+    @apply text-2xl font-bold text-gray-900 tracking-tight;
+  }
+  
+  .heading-2 {
+    @apply text-xl font-semibold text-gray-900;
+  }
+  
+  .heading-3 {
+    @apply text-lg font-semibold text-gray-900;
+  }
+  
+  .heading-4 {
+    @apply text-base font-medium text-gray-900;
+  }
+  
+  .body-text {
+    @apply text-sm text-gray-700 leading-relaxed;
+  }
+  
+  .caption-text {
+    @apply text-xs text-gray-500;
+  }
+  
+  .label-text {
+    @apply text-sm font-medium text-gray-700;
+  }
+  
+  /* === BUTTON SYSTEM === */
+  .btn-oficaz-primary {
+    @apply bg-[#007AFF] text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-[#0056CC] focus:ring-2 focus:ring-[#007AFF]/20 active:scale-95;
+  }
+  
+  .btn-oficaz-secondary {
+    @apply bg-gray-100 text-gray-700 font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gray-200 focus:ring-2 focus:ring-gray-300/50 active:scale-95;
+  }
+  
+  .btn-oficaz-outline {
+    @apply border border-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-gray-300/50 active:scale-95;
+  }
+  
+  .btn-oficaz-danger {
+    @apply bg-red-500 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-red-600 focus:ring-2 focus:ring-red-500/20 active:scale-95;
+  }
+  
+  .btn-oficaz-success {
+    @apply bg-green-500 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:bg-green-600 focus:ring-2 focus:ring-green-500/20 active:scale-95;
+  }
+  
+  /* === ICON SYSTEM === */
+  .icon-sm {
+    @apply w-4 h-4;
+  }
+  
+  .icon-md {
+    @apply w-5 h-5;
+  }
+  
+  .icon-lg {
+    @apply w-6 h-6;
+  }
+  
+  .icon-xl {
+    @apply w-8 h-8;
+  }
+  
+  /* === CARD SYSTEM === */
+  .card-oficaz {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm;
+  }
+  
+  .card-oficaz-hover {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+  
+  .card-content {
+    @apply px-6 py-4;
+  }
+  
+  /* === INPUT SYSTEM === */
+  .input-oficaz {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-2 focus:ring-[#007AFF]/20 transition-all duration-200;
+  }
+  
+  .input-error {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-500/20;
+  }
+  
+  /* === STATUS BADGES === */
+  .badge-success {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800;
+  }
+  
+  .badge-warning {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800;
+  }
+  
+  .badge-danger {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800;
+  }
+  
+  .badge-info {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800;
+  }
+  
+  .badge-neutral {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800;
+  }
+  
+  /* === HOVER EFFECTS === */
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-0.5;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .hover-bg-oficaz {
+    @apply transition-colors duration-200 hover:bg-gray-50;
+  }
+  
+  /* === SPACING SYSTEM === */
+  .section-spacing {
+    @apply space-y-6;
+  }
+  
+  .form-spacing {
+    @apply space-y-4;
+  }
+  
+  .grid-spacing {
+    @apply gap-6;
+  }
+  
+  /* === COLOR UTILITIES === */
   .text-oficaz-primary {
     color: var(--oficaz-primary);
   }
