@@ -346,40 +346,30 @@ export default function Messages() {
     [selectedChat, getMessagesGroupedByDate]
   );
 
-  // Role display helper with icons - shows actual role from database
+  // Role display helper with icons - shows actual data from database
   const getRoleDisplay = (person: any) => {
-    const role = person?.role || 'employee';
-    const jobTitle = person?.jobTitle || person?.position || '';
+    if (!person) return null;
     
-    switch (role) {
-      case 'admin':
-        return (
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">A</span>
-            </div>
-            <span>{jobTitle || 'Administrador'}</span>
-          </div>
-        );
-      case 'manager':
-        return (
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">M</span>
-            </div>
-            <span>{jobTitle || 'Manager'}</span>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center space-x-1">
-            <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-[8px] font-bold">E</span>
-            </div>
-            <span>{jobTitle || 'Empleado'}</span>
-          </div>
-        );
-    }
+    const role = person.role || 'employee';
+    const displayText = person.jobTitle || person.position || person.role || 'Sin cargo definido';
+    
+    // Icon color and letter based on role
+    const roleConfig = {
+      admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
+      manager: { color: 'bg-orange-500', letter: 'M', size: 'text-[10px]' },
+      employee: { color: 'bg-blue-500', letter: 'E', size: 'text-[8px]' }
+    };
+    
+    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.employee;
+    
+    return (
+      <div className="flex items-center space-x-1">
+        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center`}>
+          <span className={`text-white ${config.size} font-bold`}>{config.letter}</span>
+        </div>
+        <span>{displayText}</span>
+      </div>
+    );
   };
 
   // Modal functions

@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema completamente dinámico de roles sin datos hardcodeados implementado
+  - Función getRoleDisplay refactorizada para usar solo datos reales de base de datos
+  - Eliminados todos los valores hardcodeados ("Empleado", "Administrador", "Manager")
+  - Sistema de iconos dinámico basado en configuración por rol
+  - Muestra jobTitle/position real o "Sin cargo definido" si no está configurado
+  - Configuración centralizada para colores, letras y tamaños de iconos por rol
+  - Prioriza datos reales sobre cualquier texto por defecto
 - June 23, 2025. Sistema de doble check corregido según roles en mensajería
   - Admin/Manager: check simple (gris) mensaje entregado, doble check (verde) mensaje leído
   - Empleados: check simple verde (mensaje recibido por admin pero no necesariamente leído)
