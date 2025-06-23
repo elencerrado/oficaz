@@ -458,6 +458,16 @@ export default function Messages() {
     person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
   );
 
+  // Get employee with role for display
+  const getEmployeeWithRole = useCallback((employeeId: number) => {
+    const employee = filteredEmployees.find(e => e.id === employeeId);
+    if (!employee) return null;
+    return {
+      ...employee,
+      role: employee.role || 'employee' // Default to employee if no role specified
+    };
+  }, [filteredEmployees]);
+
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
