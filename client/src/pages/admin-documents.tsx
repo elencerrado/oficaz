@@ -116,12 +116,17 @@ export default function AdminDocuments() {
     queryKey: ['/api/employees'],
   });
 
-  // Fetch all documents
+  // Fetch all documents with aggressive refresh
   const { data: allDocuments = [] } = useQuery({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
       return await apiRequest('GET', '/api/documents/all');
     },
+    refetchInterval: 3000, // Refetch cada 3 segundos
+    staleTime: 0, // Siempre considera los datos como obsoletos
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   // Send document notification mutation
@@ -135,7 +140,11 @@ export default function AdminDocuments() {
       return await apiRequest('POST', '/api/documents/request', data);
     },
     onSuccess: () => {
+      // Invalidar y refrescar inmediatamente ambas queries
       queryClient.invalidateQueries({ queryKey: ['/api/document-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
+      
       toast({
         title: 'Solicitud enviada',
         description: 'Se ha enviado la solicitud de documento a los empleados seleccionados',
@@ -167,7 +176,10 @@ export default function AdminDocuments() {
       return response.json();
     },
     onSuccess: () => {
+      // Forzar actualización inmediata tras subir
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
+      
       toast({
         title: 'Documento subido',
         description: 'El documento se ha subido correctamente',
@@ -361,8 +373,9 @@ export default function AdminDocuments() {
         }
       }
       
-      // Actualizar lista inmediatamente
+      // Forzar actualización inmediata tras batch upload
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      queryClient.refetchQueries({ queryKey: ['/api/documents/all'] });
       
       toast({
         title: "Documentos procesados",
