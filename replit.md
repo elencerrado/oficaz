@@ -117,6 +117,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema de documentos completamente optimizado y blindado para máxima robustez
+  - Código reestructurado en componentes modulares: DocumentDropZone, DocumentsList, UploadPreviewDialog, DeleteConfirmDialog
+  - Componentes protegidos con React.memo para optimización de rendimiento
+  - Handler handleFilesSelected blindado con try-catch y logs de auditoría
+  - Interfaces TypeScript estrictas para prevención de errores en tiempo de compilación
+  - DisplayNames configurados para debugging avanzado en desarrollo
+  - Callbacks optimizados con useCallback para prevenir re-renders innecesarios
+  - Sistema de detección IRPF operativo con formato: "Otros Marzo 2025 (IRPF) - Nombre.pdf"
+  - Comentarios protectores para prevenir modificaciones futuras accidentales
+  - Estructura bulletproof resistente a cambios y errores de desarrollo
 - June 23, 2025. Sistema de seguridad multicapa reforzado para documentos
   - Validación estricta: empleados solo acceden a sus propios documentos
   - Admin/manager: solo documentos de empleados de su misma empresa
