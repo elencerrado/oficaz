@@ -76,17 +76,32 @@ export default function EmployeeProfile() {
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white">
-      {/* Header con botón atrás */}
-      <div className="flex items-center p-4 pb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setLocation(`/${companyAlias}/inicio`)}
-          className="text-white hover:bg-white/10 mr-3"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-semibold">Mi Perfil</h1>
+      {/* Header - Exactly like other employee pages but without user name */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
+        <Link href={`/${companyAlias}/inicio`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
+        
+        <div className="flex-1 flex flex-col items-end text-right">
+          <div className="text-white text-sm font-medium">
+            {company?.name || 'Test Company'}
+          </div>
+        </div>
+      </div>
+      
+      {/* Page Title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
+        <p className="text-white/70 text-sm">
+          Gestiona tu información personal y de contacto
+        </p>
       </div>
 
       <div className="px-6 space-y-6">
