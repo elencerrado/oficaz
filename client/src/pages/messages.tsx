@@ -184,10 +184,17 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Auto-scroll simple que FUNCIONA
+  // Auto-scroll que FUNCIONA para empleado
   useEffect(() => {
     if (selectedChat) {
       setTimeout(() => {
+        // Employee scroll - usar el selector específico de empleado
+        const employeeScroll = document.querySelector('[style*="background: radial-gradient"]');
+        if (employeeScroll) {
+          employeeScroll.scrollTop = employeeScroll.scrollHeight;
+          return;
+        }
+        
         // Desktop scroll
         const desktop = document.querySelector('[class*="overflow-y-auto"][class*="bg-gray-50"]');
         if (desktop) {
@@ -290,12 +297,7 @@ export default function Messages() {
     );
   }, []);
 
-  // Role display for employee view - without icon, only text
-  const getRoleDisplayEmployee = useCallback((person: any) => {
-    if (!person) return null;
-    const displayText = person.jobTitle || person.position || 'Sin cargo definido';
-    return <span>{displayText}</span>;
-  }, []);
+
 
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
