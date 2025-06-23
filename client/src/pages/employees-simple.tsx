@@ -537,7 +537,7 @@ export default function EmployeesSimple() {
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>{employee.position || 'Sin cargo especificado'}</span>
+                          {getRoleDisplay(employee)}
                           {(employee.companyEmail || employee.personalEmail) && (
                             <a 
                               href={`mailto:${employee.companyEmail || employee.personalEmail}`}
