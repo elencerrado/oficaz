@@ -603,8 +603,8 @@ export default function Messages() {
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
-                  {/* Spacer to ensure scroll goes to the very bottom */}
-                  <div style={{ height: '80px', width: '100%' }} />
+                  {/* Small spacer to ensure scroll goes to the very bottom */}
+                  <div style={{ height: '16px', width: '100%' }} />
                 </div>
               </div>
 
