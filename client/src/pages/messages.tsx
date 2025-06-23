@@ -1021,13 +1021,16 @@ export default function Messages() {
         </>
       ) : (
         /* Chat Interface - Employee version - PROTECTED FROM ADMIN CHANGES */
-        <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - COPIED FROM ADMIN MOBILE VERSION THAT WORKS */}
+        <div className="h-screen flex flex-col bg-white overflow-hidden">
+          {/* Chat Header - EMPLOYEE FIXED VERSION FOR IPHONE */}
           <div 
-            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
+            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200/20 flex-shrink-0"
             style={{
               background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
+              paddingTop: 'max(12px, env(safe-area-inset-top, 12px))',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10
             }}
           >
             <Button
