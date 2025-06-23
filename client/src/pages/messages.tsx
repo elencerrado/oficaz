@@ -115,6 +115,13 @@ export default function Messages() {
     }
   }, [user]);
 
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
   // All useMemo/useCallback
   const contactList = useMemo(() => {
     if (!user) return [];
@@ -409,8 +416,8 @@ export default function Messages() {
 
   // EMPLOYEE VIEW
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
-      <div className="sticky top-0 bg-employee-gradient flex items-center justify-between p-6 pb-8 h-20 z-40">
+    <div className="fixed inset-0 bg-employee-gradient text-white flex flex-col">
+      <div className="sticky top-0 bg-employee-gradient flex items-center justify-between p-6 pb-4 h-16 z-40 border-b border-white/10">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
@@ -426,7 +433,7 @@ export default function Messages() {
       </div>
 
       {!selectedChat ? (
-        <div className="flex-1 px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             {filteredContacts.map((contact) => {
               const unreadCount = getUnreadCount(contact.id);
@@ -461,8 +468,8 @@ export default function Messages() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center border-b border-white/20">
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="bg-white/10 backdrop-blur-sm p-4 flex items-center border-b border-white/20 flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -482,7 +489,8 @@ export default function Messages() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+            <div className="flex-1"></div>
             {chatMessages.map((message) => (
               <div key={message.id} className={`flex ${message.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] p-3 rounded-lg ${
@@ -505,7 +513,7 @@ export default function Messages() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t border-white/20">
+          <div className="p-4 border-t border-white/20 flex-shrink-0 bg-employee-gradient">
             <div className="flex items-center space-x-2">
               <Input
                 placeholder="Escribe un mensaje..."
