@@ -297,42 +297,9 @@ export default function Messages() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Sin leer</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Empleados</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {filteredEmployees.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
         {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex gap-6 h-[calc(100vh-250px)]">
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-180px)]">
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
             <div className="p-4 border-b border-gray-200">
@@ -553,7 +520,12 @@ export default function Messages() {
             <div className="bg-white rounded-lg border border-gray-200">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="heading-3">Empleados</h2>
+                  <div>
+                    <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
+                    </p>
+                  </div>
                   <Button
                     variant={isGroupMode ? "default" : "outline"}
                     size="sm"
