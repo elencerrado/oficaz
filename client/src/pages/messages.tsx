@@ -458,7 +458,7 @@ export default function Messages() {
         </div>
 
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden">
+        <div className="lg:hidden pb-20">
           {!selectedChat ? (
             /* Employee List View */
             <div className="space-y-4">
@@ -513,9 +513,9 @@ export default function Messages() {
             </div>
           ) : (
             /* Chat View */
-            <div className="flex flex-col h-[calc(100vh-180px)]">
+            <div className="h-screen flex flex-col">
               {/* Chat Header with Back Button */}
-              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center space-x-3 pb-4 border-b border-gray-200 flex-shrink-0 bg-white pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -538,7 +538,7 @@ export default function Messages() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-4 py-4">
+              <div className="flex-1 overflow-y-auto space-y-4 py-4 mb-20">
                 {getChatMessages(selectedChat).length > 0 ? (
                   getChatMessages(selectedChat).map((message) => (
                     <div
@@ -570,8 +570,13 @@ export default function Messages() {
                 )}
               </div>
 
-              {/* Message Input - Fixed at bottom */}
-              <div className="flex space-x-2 pt-4 border-t border-gray-200 bg-white flex-shrink-0 sticky bottom-0">
+              {/* Message Input - Fixed at bottom with position fixed */}
+              <div 
+                className="fixed bottom-0 left-0 right-0 flex space-x-2 p-4 border-t border-gray-200 bg-white z-50 lg:hidden"
+                style={{
+                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
+                }}
+              >
                 <Input
                   ref={messageInputRef}
                   placeholder="Escribe tu mensaje..."
