@@ -550,7 +550,7 @@ export default function Messages() {
                         <div className={`truncate text-xs ${
                           selectedChat === employee.id ? 'text-white/90' : 'text-gray-500'
                         }`}>
-                          {getRoleDisplay(employee.role || 'employee')}
+                          {getRoleDisplay(employee)}
                         </div>
                       </div>
                     </div>
@@ -734,7 +734,7 @@ export default function Messages() {
                             {employee.fullName}
                           </p>
                           <div className="text-sm text-gray-500 truncate">
-                            {getRoleDisplay(employee.role || 'employee')}
+                            {getRoleDisplay(employee)}
                           </div>
                         </div>
                       </div>
