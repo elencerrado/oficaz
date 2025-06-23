@@ -424,10 +424,10 @@ export default function Messages() {
               </div>
             </div>
         ) : (
-          /* Chat View - Full screen like employee view */
-          <div className="h-full min-h-screen bg-gray-50 flex flex-col">
-            {/* Chat Header with back button */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
+          /* Chat View - Fixed layout like WhatsApp */
+          <div className="fixed inset-0 bg-gray-50 flex flex-col z-50">
+            {/* Chat Header - Fixed at top */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
               <div className="flex items-center space-x-3">
                 <Button
                   variant="ghost"
@@ -488,7 +488,7 @@ export default function Messages() {
             </div>
 
             {/* Message Input - Fixed at bottom */}
-            <div className="bg-white border-t border-gray-200 px-4 py-3">
+            <div className="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
               <div className="flex space-x-2 max-w-4xl mx-auto">
                 <Input
                   ref={messageInputRef}
