@@ -440,26 +440,27 @@ export default function Messages() {
     }
   };
 
-  // Loading state
-  if (messagesLoading) {
-    return <PageLoading message="Cargando mensajes..." />;
-  }
-
-  // Filter employees based on search and exclude current user
+  // Filter employees based on search and exclude current user - moved before conditional returns
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
   const filteredEmployees = contactList.filter(person => 
     person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
   );
 
-  // Get employee with role for display
+  // Loading state
+  if (messagesLoading) {
+    return <PageLoading message="Cargando mensajes..." />;
+  }
+
+  // Get employee with role for display - moved before conditional returns
   const getEmployeeWithRole = useCallback((employeeId: number) => {
-    const employee = filteredEmployees.find(e => e.id === employeeId);
+    const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+    const employee = contactList.find(e => e.id === employeeId);
     if (!employee) return null;
     return {
       ...employee,
-      role: employee.role || 'employee' // Default to employee if no role specified
+      role: employee.role || 'employee'
     };
-  }, [filteredEmployees]);
+  }, [user?.role, managers, employees]);
 
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
