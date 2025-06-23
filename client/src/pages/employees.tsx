@@ -36,8 +36,10 @@ import {
 import { format } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 export default function Employees() {
+  const [, navigate] = useLocation();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -547,8 +549,9 @@ export default function Employees() {
                           // Swipe left - Call (reveals left side)
                           window.location.href = `tel:${phone}`;
                         } else if (diff > 0) {
-                          // Swipe right - Message (reveals right side)
-                          window.location.href = `/test/mensajes?chat=${employee.id}`;
+                          // Swipe right - Message (navigate to specific chat)
+                          localStorage.setItem('selectedChatId', employee.id.toString());
+                          navigate('/test/mensajes');
                         }
                       } else if (Math.abs(diff) < 10 && timeDiff < 500) {
                         // Handle tap detection for double tap

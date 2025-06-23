@@ -60,7 +60,15 @@ export default function Messages() {
 
   // All state declarations together
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<number | null>(null);
+  const [selectedChat, setSelectedChat] = useState<number | null>(() => {
+    // Check if we need to auto-select a chat from localStorage
+    const storedChatId = localStorage.getItem('selectedChatId');
+    if (storedChatId) {
+      localStorage.removeItem('selectedChatId'); // Clean up
+      return parseInt(storedChatId);
+    }
+    return null;
+  });
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
