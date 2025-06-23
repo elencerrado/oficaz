@@ -212,9 +212,23 @@ export default function Messages() {
     person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
   );
 
+  // CRITICAL: selectedChatUser for EMPLOYEE chat header - DO NOT MODIFY
   const selectedChatUser = useMemo(() => {
-    return contactList.find(person => person.id === selectedChat);
-  }, [contactList, selectedChat]);
+    if (!selectedChat) return null;
+    
+    // Get the correct list based on user role
+    const list = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+    const foundUser = list.find(person => person.id === selectedChat);
+    
+    console.log('Chat user lookup:', {
+      selectedChat,
+      userRole: user?.role,
+      listLength: list.length,
+      foundUser: foundUser?.fullName
+    });
+    
+    return foundUser || null;
+  }, [selectedChat, user?.role, managers, employees]);
 
   const getChatMessages = useCallback((chatUserId: number) => {
     const allMessages = messages as Message[] || [];
