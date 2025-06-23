@@ -27,6 +27,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
 
   jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
     if (err) {
+      console.log('Token verification failed:', err.message);
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
     req.user = {
@@ -54,10 +55,12 @@ export function requireRole(roles: string[]) {
 }
 
 export function generateToken(user: { id: number; username: string; role: string; companyId: number }) {
-  return jwt.sign({
+  const token = jwt.sign({
     id: user.id,
     email: user.username, // username field now contains email
     role: user.role,
     companyId: user.companyId
-  }, JWT_SECRET, { expiresIn: '7d' });
+  }, JWT_SECRET, { expiresIn: '30d' }); // Increased to 30 days
+  console.log('Generated new token for user:', user.id);
+  return token;
 }
