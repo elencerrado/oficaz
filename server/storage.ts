@@ -54,6 +54,7 @@ export interface IStorage {
   // Documents
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByUser(userId: number): Promise<Document[]>;
+  getDocumentsByCompany(companyId: number): Promise<Document[]>;
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
 

@@ -21,6 +21,7 @@ import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
 import VacationManagement from "@/pages/vacation-management";
 import Documents from "@/pages/documents";
+import AdminDocuments from "@/pages/admin-documents";
 import Messages from "@/pages/messages";
 import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
@@ -204,7 +205,7 @@ function Router() {
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
           <AppLayout>
-            <Documents />
+            {user?.role === 'employee' ? <Documents /> : <AdminDocuments />}
           </AppLayout>
         </ProtectedRoute>
       </Route>
