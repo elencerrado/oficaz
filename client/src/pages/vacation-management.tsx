@@ -250,7 +250,76 @@ export default function VacationManagement() {
       </div>
 
         {/* Stats Cards with Navigation */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="mb-6">
+          {/* Mobile: Compact horizontal scroll */}
+          <div className="md:hidden flex gap-3 overflow-x-auto pb-2 mb-4">
+            <div 
+              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-yellow-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              onClick={() => {
+                setActiveTab('requests');
+                setSelectedStatus('pending');
+                setSearchTerm('');
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{stats.pending}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Pendientes</p>
+                </div>
+              </div>
+            </div>
+
+            <div 
+              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-green-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              onClick={() => {
+                setActiveTab('requests');
+                setSelectedStatus('approved');
+                setSearchTerm('');
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{stats.approved}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Aprobadas</p>
+                </div>
+              </div>
+            </div>
+
+            <div 
+              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-blue-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              onClick={() => setActiveTab('employees')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{stats.onVacation}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Vacaciones</p>
+                </div>
+              </div>
+            </div>
+
+            <div 
+              className="flex-shrink-0 bg-white rounded-lg border-2 hover:border-purple-200 p-3 cursor-pointer transition-all duration-200 min-w-[120px]"
+              onClick={() => setActiveTab('holidays')}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{spanishHolidays2025.length}</span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-600">Festivos</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: Original grid layout */}
+          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6">
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-yellow-200"
             onClick={() => {
@@ -326,6 +395,7 @@ export default function VacationManagement() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Content based on active tab */}
