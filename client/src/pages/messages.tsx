@@ -504,46 +504,60 @@ export default function Messages() {
 
                   {/* Messages - Scrollable middle section */}
                   <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                    <div className="space-y-4">
-                      {chatMessages.length > 0 ? (
-                        chatMessages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                message.senderId === user?.id
-                                  ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                  : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
-                              }`}
-                            >
-                              <p className="text-sm">{message.content}</p>
-                              <div className="flex items-center justify-between mt-1">
-                                <p className={`text-xs ${
-                                  message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                                }`}>
-                                  {format(new Date(message.createdAt), 'HH:mm')}
-                                </p>
-                                {message.senderId === user?.id && (
-                                  <div className="ml-2">
-                                    {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                      // Admin/Manager view: double check when read, single green when delivered
-                                      message.isRead ? (
-                                        <div className="flex items-center text-green-400">
-                                          <Check className="h-3 w-3" />
-                                          <Check className="h-3 w-3 -ml-1" />
-                                        </div>
-                                      ) : (
-                                        <Check className="h-3 w-3 text-green-400" />
-                                      )
-                                    ) : (
-                                      // Employee view: single check (delivered), green check (received but not opened)
-                                      <Check className="h-3 w-3 text-green-400" />
-                                    )}
-                                  </div>
-                                )}
+                    <div className="space-y-6">
+                      {messagesGroupedByDate.length > 0 ? (
+                        messagesGroupedByDate.map((group) => (
+                          <div key={group.date} className="space-y-4">
+                            {/* Date separator */}
+                            <div className="flex items-center justify-center">
+                              <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full font-medium">
+                                {group.dateFormatted}
                               </div>
+                            </div>
+                            
+                            {/* Messages for this date */}
+                            <div className="space-y-3">
+                              {group.messages.map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div
+                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                      message.senderId === user?.id
+                                        ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
+                                        : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
+                                    }`}
+                                  >
+                                    <p className="text-sm">{message.content}</p>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <p className={`text-xs ${
+                                        message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                                      }`}>
+                                        {format(new Date(message.createdAt), 'HH:mm')}
+                                      </p>
+                                      {message.senderId === user?.id && (
+                                        <div className="ml-2">
+                                          {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                            // Admin/Manager view: double check when read, single green when delivered
+                                            message.isRead ? (
+                                              <div className="flex items-center text-green-400">
+                                                <Check className="h-3 w-3" />
+                                                <Check className="h-3 w-3 -ml-1" />
+                                              </div>
+                                            ) : (
+                                              <Check className="h-3 w-3 text-green-400" />
+                                            )
+                                          ) : (
+                                            // Employee view: single check (delivered), green check (received but not opened)
+                                            <Check className="h-3 w-3 text-green-400" />
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         ))
@@ -695,46 +709,60 @@ export default function Messages() {
                 }}
               >
                 <div className="flex-1"></div>
-                <div className="space-y-4">
-                  {chatMessages.length > 0 ? (
-                    chatMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-xs px-4 py-2 rounded-lg ${
-                            message.senderId === user?.id
-                              ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                              : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
-                          }`}
-                        >
-                          <p className="text-sm">{message.content}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className={`text-xs ${
-                              message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                            }`}>
-                              {format(new Date(message.createdAt), 'HH:mm')}
-                            </p>
-                            {message.senderId === user?.id && (
-                              <div className="ml-2">
-                                {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                  // Admin/Manager view: double check when read, single green when delivered
-                                  message.isRead ? (
-                                    <div className="flex items-center text-green-400">
-                                      <Check className="h-3 w-3" />
-                                      <Check className="h-3 w-3 -ml-1" />
-                                    </div>
-                                  ) : (
-                                    <Check className="h-3 w-3 text-green-400" />
-                                  )
-                                ) : (
-                                  // Employee view: single check (delivered), green check (received but not opened)
-                                  <Check className="h-3 w-3 text-green-400" />
-                                )}
-                              </div>
-                            )}
+                <div className="space-y-6">
+                  {messagesGroupedByDate.length > 0 ? (
+                    messagesGroupedByDate.map((group) => (
+                      <div key={group.date} className="space-y-4">
+                        {/* Date separator */}
+                        <div className="flex items-center justify-center">
+                          <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full font-medium">
+                            {group.dateFormatted}
                           </div>
+                        </div>
+                        
+                        {/* Messages for this date */}
+                        <div className="space-y-3">
+                          {group.messages.map((message) => (
+                            <div
+                              key={message.id}
+                              className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-xs px-4 py-2 rounded-lg ${
+                                  message.senderId === user?.id
+                                    ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
+                                    : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
+                                }`}
+                              >
+                                <p className="text-sm">{message.content}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <p className={`text-xs ${
+                                    message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                                  }`}>
+                                    {format(new Date(message.createdAt), 'HH:mm')}
+                                  </p>
+                                  {message.senderId === user?.id && (
+                                    <div className="ml-2">
+                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                        // Admin/Manager view: double check when read, single green when delivered
+                                        message.isRead ? (
+                                          <div className="flex items-center text-green-400">
+                                            <Check className="h-3 w-3" />
+                                            <Check className="h-3 w-3 -ml-1" />
+                                          </div>
+                                        ) : (
+                                          <Check className="h-3 w-3 text-green-400" />
+                                        )
+                                      ) : (
+                                        // Employee view: single check (delivered), green check (received but not opened)
+                                        <Check className="h-3 w-3 text-green-400" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))
@@ -1055,37 +1083,59 @@ export default function Messages() {
             <div className="flex-1 relative min-h-0">
               <div className="absolute inset-0 overflow-y-auto overscroll-contain p-4 flex flex-col">
                 <div className="flex-1"></div>
-                <div className="space-y-4">
-                  {chatMessages?.map((message) => (
-                    <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
-                        <p className="text-sm">{message.content}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                            {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                          </p>
-                          {message.senderId === user?.id && (
-                            <div className="ml-2">
-                              {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                // Admin/Manager view: double check when read, single green when delivered
-                                message.isRead ? (
-                                  <div className="flex items-center text-green-400">
-                                    <Check className="h-3 w-3" />
-                                    <Check className="h-3 w-3 -ml-1" />
-                                  </div>
-                                ) : (
-                                  <Check className="h-3 w-3 text-green-400" />
-                                )
-                              ) : (
-                                // Employee view: single check (delivered), green check (received but not opened)
-                                <Check className="h-3 w-3 text-green-400" />
-                              )}
+                <div className="space-y-6">
+                  {messagesGroupedByDate.length > 0 ? (
+                    messagesGroupedByDate.map((group) => (
+                      <div key={group.date} className="space-y-4">
+                        {/* Date separator */}
+                        <div className="flex items-center justify-center">
+                          <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium backdrop-blur-sm">
+                            {group.dateFormatted}
+                          </div>
+                        </div>
+                        
+                        {/* Messages for this date */}
+                        <div className="space-y-3">
+                          {group.messages.map((message) => (
+                            <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                              <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
+                                <p className="text-sm">{message.content}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                                  </p>
+                                  {message.senderId === user?.id && (
+                                    <div className="ml-2">
+                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                        // Admin/Manager view: double check when read, single green when delivered
+                                        message.isRead ? (
+                                          <div className="flex items-center text-green-400">
+                                            <Check className="h-3 w-3" />
+                                            <Check className="h-3 w-3 -ml-1" />
+                                          </div>
+                                        ) : (
+                                          <Check className="h-3 w-3 text-green-400" />
+                                        )
+                                      ) : (
+                                        // Employee view: single check (delivered), green check (received but not opened)
+                                        <Check className="h-3 w-3 text-green-400" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          )}
+                          ))}
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-white/70 py-8">
+                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No hay mensajes aún</p>
+                      <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
