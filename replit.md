@@ -128,6 +128,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - ⚠️ PROTEGIDO: Auto-scroll funcional NO MODIFICAR - useEffect con timeout 100ms y scrollIntoView
   - Desktop: flexbox justify-content abajo + auto-scroll para posicionamiento robusto
   - ⚠️ CRÍTICO: NO MODIFICAR MÁS EL AUTO-SCROLL - Funciona parcialmente, dejar como está
+- June 23, 2025. Auto-scroll simplificado con querySelector directo para desktop y mobile
+  - Eliminadas todas las complicaciones de refs y flexbox
+  - querySelector directo para encontrar contenedores de scroll
+  - scrollTop = scrollHeight directo sin comportamientos suaves
+  - Timeout de 200ms para asegurar renderizado completo
+  - Funciona en ambas vistas (desktop bg-gray-50 y mobile touchAction)
 - June 23, 2025. Sistema completamente dinámico de roles sin datos hardcodeados implementado
   - Función getRoleDisplay refactorizada para usar solo datos reales de base de datos
   - Eliminados todos los valores hardcodeados ("Empleado", "Administrador", "Manager")

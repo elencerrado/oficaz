@@ -184,21 +184,24 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
+  // Auto-scroll simple que FUNCIONA
   useEffect(() => {
-    if (selectedChat && messagesEndRef.current) {
+    if (selectedChat) {
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-      }, 100);
+        // Desktop scroll
+        const desktop = document.querySelector('[class*="overflow-y-auto"][class*="bg-gray-50"]');
+        if (desktop) {
+          desktop.scrollTop = desktop.scrollHeight;
+        }
+        
+        // Mobile scroll
+        const mobile = document.querySelector('[style*="touchAction"][style*="pan-y"]');
+        if (mobile) {
+          mobile.scrollTop = mobile.scrollHeight;
+        }
+      }, 200);
     }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    if (messages && messagesEndRef.current) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [messages]);
+  }, [selectedChat, messages]);
 
   // All computed values and callbacks together
   const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
