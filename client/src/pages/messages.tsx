@@ -503,11 +503,31 @@ export default function Messages() {
                               }`}
                             >
                               <p className="text-sm">{message.content}</p>
-                              <p className={`text-xs mt-1 ${
-                                message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
-                              }`}>
-                                {format(new Date(message.createdAt), 'HH:mm')}
-                              </p>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className={`text-xs ${
+                                  message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                                }`}>
+                                  {format(new Date(message.createdAt), 'HH:mm')}
+                                </p>
+                                {message.senderId === user?.id && (
+                                  <div className="ml-2">
+                                    {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                      // Admin/Manager view: double check when read, single when delivered
+                                      message.isRead ? (
+                                        <div className="flex items-center text-green-400">
+                                          <Check className="h-3 w-3" />
+                                          <Check className="h-3 w-3 -ml-1" />
+                                        </div>
+                                      ) : (
+                                        <Check className="h-3 w-3 text-gray-400" />
+                                      )
+                                    ) : (
+                                      // Employee view: single check (delivered), green check (received but not opened)
+                                      <Check className="h-3 w-3 text-green-400" />
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))
