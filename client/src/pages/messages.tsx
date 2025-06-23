@@ -115,10 +115,26 @@ export default function Messages() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       setNewMessage('');
-      // Scroll to bottom after sending message
-      requestAnimationFrame(() => {
-        setTimeout(() => scrollToBottom(), 100);
-      });
+      
+      // Auto-scroll to bottom after sending message
+      setTimeout(() => {
+        // Desktop scroll
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Mobile admin scroll
+        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50');
+        if (adminMobileContainer) {
+          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+        }
+        
+        // Employee mobile scroll
+        const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
+        if (employeeMobileContainer) {
+          employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
+        }
+      }, 300);
     },
     onError: (error: any) => {
       toast({
@@ -279,6 +295,8 @@ export default function Messages() {
       subject: user?.role === 'employee' ? 'Mensaje del empleado' : 'Mensaje del administrador',
       content: newMessage.trim()
     });
+    
+
   };
 
   const handleSendMessage = () => {
