@@ -117,6 +117,14 @@ export default function AdminDocuments() {
     queryKey: ['/api/employees'],
   });
 
+  // Fetch document notifications (sent requests)
+  const { data: sentRequests = [] } = useQuery({
+    queryKey: ['/api/document-notifications'],
+    refetchInterval: 3000,
+    staleTime: 0,
+    gcTime: 0,
+  });
+
   // Fetch all documents with aggressive refresh
   const { data: allDocuments = [] } = useQuery({
     queryKey: ['/api/documents/all'],
@@ -986,12 +994,74 @@ export default function AdminDocuments() {
 
               {/* Sent Requests History */}
               <div>
-                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes</h3>
-                <div className="text-center py-8 text-gray-500">
-                  <Send className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <p>Funcionalidad en desarrollo</p>
-                  <p className="text-sm">Próximamente podrás ver y gestionar todas las solicitudes enviadas</p>
-                </div>
+                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes ({sentRequests.length})</h3>
+                {sentRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {sentRequests.map((request: any) => (
+                      <div key={request.id} className="border rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant={request.isCompleted ? 'default' : 'secondary'}>
+                                {request.isCompleted ? 'Completada' : 'Pendiente'}
+                              </Badge>
+                              <span className="text-sm font-medium text-gray-700">
+                                {request.documentType}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Para: <span className="font-medium">{request.user?.fullName || 'Empleado'}</span>
+                            </p>
+                            {request.message && (
+                              <p className="text-sm text-gray-600 mb-2">
+                                Mensaje: "{request.message}"
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>
+                                Enviada: {(() => {
+                                  const utcDate = new Date(request.createdAt);
+                                  const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                  return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
+                                })()}
+                              </span>
+                              {request.dueDate && (
+                                <span>
+                                  Fecha límite: {format(new Date(request.dueDate), 'd MMM yyyy', { locale: es })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {!request.isCompleted && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // TODO: Implementar cancelación de solicitud
+                                  toast({
+                                    title: "Funcionalidad pendiente",
+                                    description: "La cancelación de solicitudes estará disponible pronto",
+                                    variant: "default"
+                                  });
+                                }}
+                                className="text-orange-600 hover:text-orange-700"
+                              >
+                                Cancelar
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Send className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                    <p>No hay solicitudes enviadas</p>
+                    <p className="text-sm">Las solicitudes que envíes aparecerán aquí</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

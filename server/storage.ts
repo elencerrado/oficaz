@@ -75,6 +75,7 @@ export interface IStorage {
 
   // Document Notifications (legacy - backward compatibility) 
   getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]>;
+  getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]>;
   createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
   markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
 
@@ -402,9 +403,45 @@ export class DrizzleStorage implements IStorage {
   // Document Notifications methods
   async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
     return await db
-      .select()
+      .select({
+        id: schema.documentNotifications.id,
+        userId: schema.documentNotifications.userId,
+        documentType: schema.documentNotifications.documentType,
+        message: schema.documentNotifications.message,
+        isCompleted: schema.documentNotifications.isCompleted,
+        dueDate: schema.documentNotifications.dueDate,
+        createdAt: schema.documentNotifications.createdAt,
+        user: {
+          id: schema.users.id,
+          fullName: schema.users.fullName,
+          email: schema.users.email
+        }
+      })
       .from(schema.documentNotifications)
-      .where(and(eq(schema.documentNotifications.userId, userId), eq(schema.documentNotifications.isCompleted, false)))
+      .leftJoin(schema.users, eq(schema.documentNotifications.userId, schema.users.id))
+      .where(eq(schema.documentNotifications.userId, userId))
+      .orderBy(desc(schema.documentNotifications.createdAt));
+  }
+
+  async getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]> {
+    return await db
+      .select({
+        id: schema.documentNotifications.id,
+        userId: schema.documentNotifications.userId,
+        documentType: schema.documentNotifications.documentType,
+        message: schema.documentNotifications.message,
+        isCompleted: schema.documentNotifications.isCompleted,
+        dueDate: schema.documentNotifications.dueDate,
+        createdAt: schema.documentNotifications.createdAt,
+        user: {
+          id: schema.users.id,
+          fullName: schema.users.fullName,
+          email: schema.users.email
+        }
+      })
+      .from(schema.documentNotifications)
+      .leftJoin(schema.users, eq(schema.documentNotifications.userId, schema.users.id))
+      .where(eq(schema.users.companyId, companyId))
       .orderBy(desc(schema.documentNotifications.createdAt));
   }
 
