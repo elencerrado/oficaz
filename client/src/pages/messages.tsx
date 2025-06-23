@@ -122,29 +122,35 @@ export default function Messages() {
   // Auto-scroll chat to bottom when opening chat or new messages arrive
   const scrollToBottom = useCallback(() => {
     // Find any scrollable message container currently visible
-    const desktopContainer = document.querySelector('.lg\\:block .overflow-y-auto.bg-gray-50');
-    const mobileContainer = document.querySelector('.lg\\:hidden .overflow-y-auto.bg-gray-50');
+    const messageContainers = document.querySelectorAll('.overflow-y-auto.bg-gray-50');
     
-    const activeContainer = desktopContainer || mobileContainer;
-    
-    if (activeContainer) {
-      requestAnimationFrame(() => {
-        activeContainer.scrollTop = activeContainer.scrollHeight;
-      });
-    }
+    messageContainers.forEach(container => {
+      if (container && container.scrollHeight > container.clientHeight) {
+        // Use requestAnimationFrame and setTimeout for reliable scrolling
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+          }, 10);
+        });
+      }
+    });
   }, []);
 
+  // Scroll to bottom when opening a chat
   useEffect(() => {
     if (selectedChat) {
-      scrollToBottom();
+      // Wait for the chat to render
+      setTimeout(() => scrollToBottom(), 100);
     }
   }, [selectedChat, scrollToBottom]);
 
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (selectedChat && messages) {
       const chatMessages = getChatMessages(selectedChat);
       if (chatMessages.length > 0) {
-        scrollToBottom();
+        // Scroll after messages render
+        setTimeout(() => scrollToBottom(), 50);
       }
     }
   }, [messages, selectedChat, scrollToBottom]);
