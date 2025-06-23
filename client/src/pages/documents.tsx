@@ -51,10 +51,6 @@ export default function Documents() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  console.log('User in documents:', user);
-  console.log('Document notifications:', documentNotifications);
-  console.log('Pending request:', pendingRequest);
-  
   // Extract company alias from URL robustly
   const [location] = useLocation();
   const urlParts = location.split('/').filter((part: string) => part.length > 0);
@@ -65,6 +61,11 @@ export default function Documents() {
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
   });
+
+  // Debug logs
+  console.log('User in documents:', user);
+  console.log('Document notifications:', documentNotifications);
+  console.log('Pending request:', pendingRequest);
 
   // Convert notifications to DocumentRequest format
   const documentRequests: DocumentRequest[] = (documentNotifications as any[] || []).map((notification: any) => ({
