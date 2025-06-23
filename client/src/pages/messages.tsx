@@ -181,16 +181,16 @@ export default function Messages() {
     }
   }, [selectedChat, employees, managers]);
 
-  // Auto-scroll for desktop when chat changes
+  // Auto-scroll for desktop when chat changes (only for admin/manager view)
   useEffect(() => {
-    if (selectedChat && messagesContainerRef.current) {
+    if (selectedChat && messagesContainerRef.current && user?.role !== 'employee') {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [selectedChat]);
+  }, [selectedChat, user?.role]);
 
-  // Auto-scroll for desktop when new messages arrive
+  // Auto-scroll for desktop when new messages arrive (only for admin/manager view)
   useEffect(() => {
-    if (messages && messagesContainerRef.current) {
+    if (messages && messagesContainerRef.current && user?.role !== 'employee') {
       const shouldAutoScroll = messagesContainerRef.current.scrollTop + messagesContainerRef.current.clientHeight >= messagesContainerRef.current.scrollHeight - 50;
       if (shouldAutoScroll) {
         setTimeout(() => {
@@ -200,7 +200,7 @@ export default function Messages() {
         }, 100);
       }
     }
-  }, [messages]);
+  }, [messages, user?.role]);
 
   useEffect(() => {
     if (selectedChat && messages) {

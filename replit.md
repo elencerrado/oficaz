@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 23, 2025. Sistema de mensajería para empleados completamente funcional implementado
+  - Vista empleado restaurada: lista de responsables con contadores de mensajes no leídos
+  - Chat móvil funcional: navegación por click directo en lugar de URL para mejor UX
+  - Auto-scroll optimizado: solo funciona en vista desktop admin/manager, no interfiere con chat móvil
+  - Swipe-to-chat mantenido: funciona desde tarjetas de empleados usando parámetros URL
+  - Sistema híbrido: admin usa desktop, empleados usan móvil full-screen sin conflictos
+  - Acceso rápido super admin corregido: emails actualizados (marta.perez@test.com, juanramirez2@gmail.com)
 - June 21, 2025. Sistema completo de gestión de empleados y campo provincia implementado
   - Sistema de login actualizado: busca en company_email primero, luego en personal_email automáticamente
   - Empleados pueden hacer login con email personal si no tienen corporativo asignado
