@@ -115,26 +115,6 @@ export default function Messages() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       setNewMessage('');
-      
-      // Auto-scroll to bottom after sending message - only within chat containers
-      setTimeout(() => {
-        // Desktop scroll - use the specific messages container ref
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-        
-        // Mobile admin scroll
-        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
-        if (adminMobileContainer) {
-          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
-        }
-        
-        // Employee mobile scroll
-        const employeeMobileContainer = document.querySelector('.absolute.inset-0.overflow-y-auto.overscroll-contain');
-        if (employeeMobileContainer) {
-          employeeMobileContainer.scrollTop = employeeMobileContainer.scrollHeight;
-        }
-      }, 300);
     },
     onError: (error: any) => {
       toast({
@@ -295,8 +275,6 @@ export default function Messages() {
       subject: user?.role === 'employee' ? 'Mensaje del empleado' : 'Mensaje del administrador',
       content: newMessage.trim()
     });
-    
-
   };
 
   const handleSendMessage = () => {
@@ -398,7 +376,7 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip', overflow: 'hidden' }}>
+      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
