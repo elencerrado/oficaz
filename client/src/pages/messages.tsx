@@ -917,16 +917,13 @@ export default function Messages() {
     );
   }
 
-  // Employee view - Mobile-first design
+  // Employee view - Mobile-first design - PROTECTED FROM ADMIN CHANGES
   return (
-    <div className="min-h-screen" style={{
-      background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-      overflowX: 'hidden'
-    }}>
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
       {!selectedChat ? (
-        /* Employee Dashboard - List of managers */
+        /* Employee Dashboard - List of managers - STABLE VERSION */
         <>
-          {/* Header - Exactly like vacation-requests */}
+          {/* Header - Exactly like vacation-requests - DO NOT MODIFY */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
             <Link href={`/${companyAlias}/inicio`}>
               <Button
@@ -1009,11 +1006,11 @@ export default function Messages() {
         </div>
         </>
       ) : (
-        /* Chat Interface - Full screen */
+        /* Chat Interface - Employee version - PROTECTED FROM ADMIN CHANGES */
         <div className="h-screen flex flex-col bg-white">
-          {/* Chat Header - With chat user info */}
+          {/* Chat Header - EMPLOYEE STABLE VERSION - DO NOT MODIFY */}
           <div 
-            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200 bg-white"
+            className="px-4 py-3 flex items-center space-x-3 border-b border-gray-200/20"
             style={{
               background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
               paddingTop: 'max(12px, env(safe-area-inset-top, 12px))'
