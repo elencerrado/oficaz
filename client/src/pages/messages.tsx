@@ -243,29 +243,38 @@ export default function Messages() {
     if (modalSelectedEmployees.length === 0 || !modalMessage.trim()) return;
     
     try {
+      // Close modal first to avoid z-index issues with toast
+      closeAddChatModal();
+      
+      // Send messages sequentially using the same format as individual messages
       for (const employeeId of modalSelectedEmployees) {
-        await apiRequest('/api/messages', {
-          method: 'POST',
-          body: JSON.stringify({
-            receiverId: employeeId,
-            subject: 'Mensaje grupal',
-            content: modalMessage,
-          }),
+        await apiRequest('POST', '/api/messages', {
+          receiverId: employeeId,
+          subject: 'Mensaje grupal',
+          content: modalMessage,
         });
       }
       
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      toast({
-        title: "Mensajes enviados",
-        description: `Mensaje enviado a ${modalSelectedEmployees.length} empleados`,
-      });
-      closeAddChatModal();
+      
+      // Show success toast after modal is closed
+      setTimeout(() => {
+        toast({
+          title: "Mensajes enviados",
+          description: `Mensaje enviado a ${modalSelectedEmployees.length} empleados`,
+        });
+      }, 100);
+      
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron enviar los mensajes",
-        variant: "destructive",
-      });
+      console.error('Error sending group message:', error);
+      // Show error toast after modal is closed
+      setTimeout(() => {
+        toast({
+          title: "Error",
+          description: "No se pudieron enviar los mensajes",
+          variant: "destructive",
+        });
+      }, 100);
     }
   };
 
