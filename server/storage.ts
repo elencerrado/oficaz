@@ -332,6 +332,8 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getDocumentsByCompany(companyId: number): Promise<any[]> {
+    console.log('Getting documents for company:', companyId);
+    
     // Simple query using SQL to avoid Drizzle issues
     const result = await db.execute(sql`
       SELECT 
@@ -348,8 +350,10 @@ export class DrizzleStorage implements IStorage {
       ORDER BY d.created_at DESC
     `);
     
+    console.log('Raw SQL result:', result.rows);
+    
     // Transform to expected format
-    return result.rows.map((row: any) => ({
+    const docs = result.rows.map((row: any) => ({
       id: row.id,
       userId: row.userId,
       fileName: row.fileName,
@@ -360,6 +364,9 @@ export class DrizzleStorage implements IStorage {
         fullName: row.userFullName || 'Usuario desconocido'
       }
     }));
+    
+    console.log('Transformed documents:', docs);
+    return docs;
   }
 
   async getDocument(id: number): Promise<Document | undefined> {

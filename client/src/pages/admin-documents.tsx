@@ -851,7 +851,7 @@ export default function AdminDocuments() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-gray-900 truncate">
-                          {document.originalName}
+                          {document.originalName || document.fileName || 'Documento sin nombre'}
                         </h3>
                         <div className="flex items-center gap-4 mt-1">
                           <span className="text-sm text-gray-600">
