@@ -222,20 +222,12 @@ export default function Documents() {
     setIsUploading(true);
     
     const formData = new FormData();
+    formData.append('file', file);
     
-    // Si hay una solicitud activa, renombrar el archivo según el tipo solicitado
-    if (activeRequest && user) {
-      const fileExtension = file.name.split('.').pop();
-      const requestType = activeRequest.type; // DNI, Nómina, etc.
-      const newFileName = `${requestType} - ${user.fullName}.${fileExtension}`;
-      
-      console.log('Renaming file from', file.name, 'to', newFileName);
-      
-      // Crear nuevo archivo con el nombre correcto
-      const renamedFile = new File([file], newFileName, { type: file.type });
-      formData.append('file', renamedFile);
-    } else {
-      formData.append('file', file);
+    // Agregar información del tipo de documento solicitado para renombrado en backend
+    if (activeRequest) {
+      formData.append('requestType', activeRequest.type);
+      console.log('Adding request type to upload:', activeRequest.type);
     }
     
     uploadMutation.mutate(formData);

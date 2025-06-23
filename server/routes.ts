@@ -569,18 +569,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
+      console.log('Upload request - User ID:', req.user!.id, 'File:', req.file.originalname);
+      console.log('Request type:', req.body.requestType);
+
+      // Si hay un tipo de solicitud, renombrar el archivo
+      let finalOriginalName = req.file.originalname;
+      if (req.body.requestType && req.user) {
+        const user = await storage.getUser(req.user.id);
+        if (user) {
+          const fileExtension = req.file.originalname.split('.').pop();
+          finalOriginalName = `${req.body.requestType} - ${user.fullName}.${fileExtension}`;
+          console.log('Renamed file to:', finalOriginalName);
+        }
+      }
+
       const document = await storage.createDocument({
         userId: req.user!.id,
         fileName: req.file.filename,
-        originalName: req.file.originalname,
+        originalName: finalOriginalName,
         fileSize: req.file.size,
         filePath: req.file.path,
         mimeType: req.file.mimetype || null,
         uploadedBy: req.user!.id,
       });
 
+      console.log('Document created:', document);
       res.status(201).json(document);
     } catch (error: any) {
+      console.error('Error uploading document:', error);
       res.status(500).json({ message: error.message });
     }
   });
