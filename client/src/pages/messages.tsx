@@ -298,10 +298,9 @@ export default function Messages() {
         </div>
         {/* Content - Make responsive like employee view */}
         {!selectedChat ? (
-          <div className="grid lg:grid-cols-3 gap-6" style={{ height: '75vh' }}>
+          <div className="flex-1">
             {/* Employee List */}
-            <div className="lg:col-span-3 h-full">
-              <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
+            <div className="bg-white rounded-lg border border-gray-200 flex flex-col" style={{ height: 'calc(100vh - 200px)' }}>
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="heading-3">Empleados</h2>
@@ -331,7 +330,7 @@ export default function Messages() {
                   </div>
                 </div>
                 
-                <div className="p-4 space-y-2 overflow-y-auto" style={{ height: '55vh' }}>
+                <div className="p-4 space-y-2 overflow-y-auto flex-1">
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
@@ -424,7 +423,6 @@ export default function Messages() {
                 )}
               </div>
             </div>
-          </div>
         ) : (
           /* Chat View - Full screen like employee view */
           <div className="h-full min-h-screen bg-gray-50 flex flex-col">
