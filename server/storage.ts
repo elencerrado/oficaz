@@ -54,7 +54,7 @@ export interface IStorage {
   // Documents
   createDocument(document: InsertDocument): Promise<Document>;
   getDocumentsByUser(userId: number): Promise<Document[]>;
-  getDocumentsByCompany(companyId: number): Promise<Document[]>;
+  getDocumentsByCompany(companyId: number): Promise<any[]>;
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
 
@@ -331,7 +331,7 @@ export class DrizzleStorage implements IStorage {
       .orderBy(desc(schema.documents.createdAt));
   }
 
-  async getDocumentsByCompany(companyId: number): Promise<Document[]> {
+  async getDocumentsByCompany(companyId: number): Promise<any[]> {
     const documents = await db
       .select({
         id: schema.documents.id,
@@ -341,16 +341,20 @@ export class DrizzleStorage implements IStorage {
         fileSize: schema.documents.fileSize,
         filePath: schema.documents.filePath,
         createdAt: schema.documents.createdAt,
-        user: {
-          fullName: schema.users.fullName,
-        },
+        userFullName: schema.users.fullName,
       })
       .from(schema.documents)
       .innerJoin(schema.users, eq(schema.documents.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
       .orderBy(desc(schema.documents.createdAt));
     
-    return documents;
+    // Transform to expected format
+    return documents.map(doc => ({
+      ...doc,
+      user: {
+        fullName: doc.userFullName
+      }
+    }));
   }
 
   async getDocument(id: number): Promise<Document | undefined> {
