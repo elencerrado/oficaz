@@ -316,9 +316,12 @@ export default function VacationRequests() {
         </div>
       </div>
 
-      {/* Modern Title - Fixed height */}
-      <div className="text-center mb-8 h-12 flex items-center justify-center">
-        <h1 className="text-2xl font-light text-white/90 tracking-wide">Vacaciones</h1>
+      {/* Page Title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Vacaciones</h1>
+        <p className="text-white/70 text-sm">
+          Solicita y consulta el estado de tus vacaciones
+        </p>
       </div>
 
       {/* Compact Vacation Summary */}
