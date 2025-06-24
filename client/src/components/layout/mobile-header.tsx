@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 interface MobileHeaderProps {
@@ -12,6 +13,11 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { user, company, logout } = useAuth();
+  const { hasAccess } = useFeatureCheck();
+  
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {

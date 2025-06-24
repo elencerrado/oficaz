@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Lógica inteligente de logos implementada y corregida
+  - Corregidos todos los errores de variables no definidas en componentes
+  - Implementada lógica: mostrar logo solo si existe Y función logoUpload habilitada en super admin
+  - Test Company con plan Basic (logoUpload=false) muestra texto "Test Company" en lugar de logo
+  - Todos los componentes actualizados: sidebar, mobile-header, employee-dashboard, time-tracking, vacation, documents
+  - Sistema funcional: logos existentes solo se muestran si la función está habilitada por super admin
 - June 24, 2025. Sistema de subida de logos con restricciones por plan implementado
   - Lógica inteligente: logos existentes se mantienen independientemente del plan
   - Subida/cambio de logos restringida a planes Pro y Master (no disponible en Basic)

@@ -5,7 +5,7 @@ import { LayoutDashboard, Clock, Calendar, FileText, Mail, Users, Settings, LogO
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
-import oficazLogo from '@/assets/oficaz-logo.png';
+import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -15,6 +15,10 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, company, subscription, logout } = useAuth();
+  const { hasAccess } = useFeatureCheck();
+  
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
