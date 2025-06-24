@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de pestañas tipo slider moderno implementado globalmente
+  - Componente TabNavigation convertido a diseño slider con fondo redondeado
+  - Indicador deslizante blanco con transiciones suaves de 300ms
+  - Textos responsive: completos en desktop, abreviaciones en móvil
+  - Optimizado para móvil: padding reducido, texto más pequeño, iconos protegidos
+  - Todas las abreviaciones en español: "Archivos", "Solicitudes", "Políticas"
+  - Se aplica automáticamente en vacaciones, documentos y configuración
 - June 24, 2025. Componente TabNavigation reutilizable implementado
   - Creado componente genérico para navegación por pestañas con iconos
   - Refactorizado admin-documents.tsx para usar nuevo componente
