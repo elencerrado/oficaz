@@ -26,7 +26,7 @@ import {
   Trash2,
   ArrowLeft
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -759,6 +759,7 @@ const AccountManagement = () => {
                         <Building2 className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
+                    {/* Logo upload/change only for Pro+ plans */}
                     {isEditingCompany && hasAccess('logoUpload') && (
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2">
@@ -873,12 +874,40 @@ const AccountManagement = () => {
                         </div>
                       </div>
                     )}
-                    {!hasAccess('logoUpload') && isEditingCompany && (
+                    {/* Delete existing logo (available for all plans) */}
+                    {isEditingCompany && (logoPreview || companyData.logoUrl) && (
+                      <div className="flex-1 space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDeleteLogo}
+                          disabled={isUploading}
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Eliminar logo
+                        </Button>
+                      </div>
+                    )}
+                    {/* Restriction message for Basic plan users without logo */}
+                    {!hasAccess('logoUpload') && isEditingCompany && !companyData.logoUrl && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                           <AlertCircle className="h-4 w-4 text-amber-600" />
                           <p className="text-sm text-amber-700">
                             La subida de logos requiere el plan Pro o superior.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {/* Info for Basic plan users with existing logo */}
+                    {!hasAccess('logoUpload') && isEditingCompany && companyData.logoUrl && (
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <Info className="h-4 w-4 text-blue-600" />
+                          <p className="text-sm text-blue-700">
+                            Tu logo actual se mantiene. Para cambiar o subir un nuevo logo, actualiza al plan Pro.
                           </p>
                         </div>
                       </div>

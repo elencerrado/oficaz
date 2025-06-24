@@ -1107,6 +1107,48 @@ startxref
     }
   });
 
+  // Delete company logo
+  app.delete('/api/companies/delete-logo', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'No autorizado para eliminar logo de empresa' });
+      }
+
+      // Get current company to delete logo file
+      const company = await storage.getCompany(user.companyId);
+      if (company?.logoUrl) {
+        // Delete logo file if it exists in uploads directory
+        const logoPath = company.logoUrl.replace('/uploads/', '');
+        const fs = require('fs');
+        const path = require('path');
+        const fullPath = path.join(process.cwd(), 'uploads', logoPath);
+        
+        try {
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        } catch (error) {
+          console.log('Could not delete logo file:', error);
+        }
+      }
+      
+      // Update company in database
+      await storage.updateCompany(user.companyId, {
+        logoUrl: null
+      });
+
+      res.json({ 
+        message: 'Logo eliminado correctamente'
+      });
+    } catch (error: any) {
+      console.error('Error deleting logo:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Update company information
   app.patch('/api/companies/update', authenticateToken, async (req: AuthRequest, res) => {
     try {
