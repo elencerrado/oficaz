@@ -53,26 +53,10 @@ export function FeatureRestrictedPage({
             <h3 className="font-medium text-lg text-gray-900 mb-2">{featureName}</h3>
             <p className="text-gray-600 text-sm">{description}</p>
           </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Plan actual:</span>
-              <Badge className={`${planColors[currentPlan as keyof typeof planColors]} text-white`}>
-                {planLabels[currentPlan as keyof typeof planLabels]}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Plan requerido:</span>
-              <Badge className={`${planColors[requiredPlan.toLowerCase() as keyof typeof planColors]} text-white`}>
-                <Crown className="w-3 h-3 mr-1" />
-                {requiredPlan}
-              </Badge>
-            </div>
-          </div>
 
-          <div className="text-xs text-gray-500 p-3 bg-blue-50 rounded-lg">
-            <p>Esta funcionalidad requiere un plan {requiredPlan} o superior.</p>
-            <p className="mt-1">Contacta con tu administrador para actualizar el plan de la empresa.</p>
+          <div className="text-sm text-gray-500 p-3 bg-blue-50 rounded-lg">
+            <p>Esta funcionalidad no está disponible en tu plan actual.</p>
+            <p className="mt-1">Contacta con tu administrador para más información.</p>
           </div>
 
           <div className="flex gap-2">
