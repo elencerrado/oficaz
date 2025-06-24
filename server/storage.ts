@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql, lte, isNotNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message, DocumentNotification, SystemNotification,
