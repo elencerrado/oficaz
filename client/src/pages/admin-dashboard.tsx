@@ -309,7 +309,7 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Recent Clock-ins */}
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/test/fichajes')}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
