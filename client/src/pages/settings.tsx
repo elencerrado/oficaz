@@ -122,7 +122,7 @@ const AccountManagement = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">{usageData.current.employee_count}</p>
-                <p className="text-sm text-gray-600">Empleados</p>
+                <p className="text-sm text-gray-600">Usuarios</p>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{usageData.current.storage_used_mb} MB</p>
