@@ -503,6 +503,46 @@ const AccountManagement = () => {
     }
   });
 
+  const handleDeleteLogo = async () => {
+    setIsUploading(true);
+    try {
+      const response = await fetch('/api/companies/delete-logo', {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al eliminar el logo');
+      }
+      
+      // Update local state immediately
+      setCompanyData(prev => ({
+        ...prev,
+        logoUrl: ''
+      }));
+      
+      setLogoPreview(null);
+      setLogoFile(null);
+      
+      toast({
+        title: "Logo eliminado",
+        description: "El logo de la empresa ha sido eliminado correctamente",
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el logo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
