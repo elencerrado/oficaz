@@ -1052,6 +1052,59 @@ startxref
     }
   });
 
+  // Upload company logo
+  app.post('/api/companies/upload-logo', authenticateToken, upload.single('logo'), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'No autorizado para subir logo de empresa' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: 'No se ha subido ningún archivo' });
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: 'Tipo de archivo no permitido. Solo se permiten JPG, PNG, GIF, SVG' });
+      }
+
+      // Validate file size (2MB max)
+      if (req.file.size > 2 * 1024 * 1024) {
+        return res.status(400).json({ message: 'El archivo es demasiado grande. Máximo 2MB' });
+      }
+
+      // Get current company to potentially delete old logo
+      const company = await storage.getCompany(user.companyId);
+      if (company?.logoUrl) {
+        // Delete old logo file if it exists in uploads directory
+        const oldLogoPath = company.logoUrl.replace('/uploads/', '');
+        const fs = require('fs');
+        const path = require('path');
+        const oldFullPath = path.join(process.cwd(), 'uploads', oldLogoPath);
+        
+        try {
+          if (fs.existsSync(oldFullPath)) {
+            fs.unlinkSync(oldFullPath);
+          }
+        } catch (error) {
+          console.log('Could not delete old logo:', error);
+        }
+      }
+
+      // Generate the logo URL
+      const logoUrl = `/uploads/${req.file.filename}`;
+
+      res.json({ logoUrl });
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Update company information
   app.patch('/api/companies/update', authenticateToken, async (req: AuthRequest, res) => {
     try {

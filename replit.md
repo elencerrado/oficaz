@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema completo de subida de logos implementado
+  - Reemplazado input URL por sistema de upload de archivos
+  - Subida directa de imágenes JPG, PNG, SVG con validación de 2MB máximo
+  - Preview en tiempo real del logo seleccionado antes de guardar
+  - Eliminación automática del logo anterior al subir uno nuevo
+  - Botón eliminar para quitar logos existentes
+  - Backend con endpoint dedicado para manejo seguro de archivos
+  - Validación de tipos de archivo y tamaño con mensajes toast informativos
 - June 24, 2025. Campos adicionales de empresa agregados a configuración
   - Añadido logoUrl con preview visual del logo de la empresa
   - Añadido companyAlias para URLs personalizadas de la aplicación

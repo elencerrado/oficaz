@@ -21,7 +21,10 @@ import {
   FileText,
   Save,
   Edit,
-  X
+  X,
+  Upload,
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
 import { CreditCard, Crown, AlertCircle, CheckCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -341,6 +344,8 @@ const AccountManagement = () => {
   
   const [activeTab, setActiveTab] = useState('company');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   
   // User profile data
@@ -427,13 +432,34 @@ const AccountManagement = () => {
 
   const updateCompanyMutation = useMutation({
     mutationFn: async (data: typeof companyData) => {
+      let logoUrl = data.logoUrl;
+      
+      // Si hay un nuevo archivo de logo, súbelo primero
+      if (logoFile) {
+        const formData = new FormData();
+        formData.append('logo', logoFile);
+        
+        const uploadResponse = await fetch('/api/companies/upload-logo', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Error al subir el logo');
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        logoUrl = uploadResult.logoUrl;
+      }
+      
       const response = await fetch('/api/companies/update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders()
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ ...data, logoUrl })
       });
       
       if (!response.ok) {
@@ -448,6 +474,8 @@ const AccountManagement = () => {
         description: 'La información de la empresa ha sido guardada correctamente.',
       });
       setIsEditingCompany(false);
+      setLogoFile(null);
+      setLogoPreview(null);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       
       // Force refresh of company data to sync UI
@@ -702,9 +730,9 @@ const AccountManagement = () => {
                 <div>
                   <Label>Logo de la empresa</Label>
                   <div className="mt-2 flex items-center space-x-4">
-                    {companyData.logoUrl ? (
+                    {logoPreview || companyData.logoUrl ? (
                       <img 
-                        src={companyData.logoUrl} 
+                        src={logoPreview || companyData.logoUrl} 
                         alt="Logo de la empresa" 
                         className="w-16 h-16 object-contain border rounded-lg bg-white"
                       />
@@ -714,14 +742,75 @@ const AccountManagement = () => {
                       </div>
                     )}
                     {isEditingCompany && (
-                      <div className="flex-1">
-                        <Input
-                          placeholder="URL del logo de la empresa"
-                          value={companyData.logoUrl}
-                          onChange={(e) => setCompanyData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('logo-upload')?.click()}
+                            className="flex items-center space-x-2"
+                          >
+                            <Upload className="w-4 h-4" />
+                            <span>Subir logo</span>
+                          </Button>
+                          {(companyData.logoUrl || logoPreview) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setCompanyData(prev => ({ ...prev, logoUrl: '' }));
+                                setLogoFile(null);
+                                setLogoPreview(null);
+                              }}
+                              className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Eliminar</span>
+                            </Button>
+                          )}
+                        </div>
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              // Validate file size
+                              if (file.size > 2 * 1024 * 1024) {
+                                toast({
+                                  title: 'Archivo demasiado grande',
+                                  description: 'El logo debe ser menor a 2MB',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              
+                              // Validate file type
+                              const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
+                              if (!allowedTypes.includes(file.type)) {
+                                toast({
+                                  title: 'Formato no soportado',
+                                  description: 'Solo se permiten archivos JPG, PNG, GIF, SVG',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              
+                              setLogoFile(file);
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                setLogoPreview(e.target?.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Introduce la URL de tu logo (JPG, PNG, SVG)
+                        <p className="text-xs text-gray-500">
+                          Formatos: JPG, PNG, SVG (máx. 2MB)
                         </p>
                       </div>
                     )}
