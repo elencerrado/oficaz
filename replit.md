@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Componente StatsCard rediseñado con layout responsive
+  - Versión desktop: icono pequeño + número en fila superior, texto descriptivo abajo
+  - Versión móvil: layout centrado simplificado igual que tarjetas de vacaciones
+  - Padding reducido (p-4), altura mínima 80px, iconos y texto más pequeños
+  - Breakpoint md: para alternar entre layouts desktop/móvil automáticamente
+  - Texto móvil truncado: títulos largos se acortan con punto (ej: "Pend.")
 - June 24, 2025. Layout de filtros de time-tracking completamente blindado y optimizado
   - Botones distribuidos uniformemente: flex-1 para ocupar todo el ancho disponible
   - Tipografía consistente: text-xs font-normal text-center en todos los botones
