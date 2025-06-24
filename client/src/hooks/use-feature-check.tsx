@@ -5,7 +5,10 @@ export function useFeatureCheck() {
   const { subscription } = useAuth();
 
   const hasAccess = (feature: keyof SubscriptionFeatures): boolean => {
-    return checkFeatureAccess(subscription, feature);
+    console.log('Checking access for feature:', feature, 'with subscription:', subscription);
+    const access = checkFeatureAccess(subscription, feature);
+    console.log('Access result:', access);
+    return access;
   };
 
   const getRequiredPlan = (feature: keyof SubscriptionFeatures): string => {
