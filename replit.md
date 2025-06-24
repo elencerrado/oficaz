@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Página de gestión de cuenta "Mi Cuenta" implementada en configuración
+  - Nueva pestaña con estado de suscripción Premium y estadísticas de uso
+  - Información de registro, ID de cuenta y administrador principal
+  - Sección de facturación con direcciones fiscales y método de pago
+  - Historial de facturas descargables con estados de pago
+  - Botones de gestión: cambiar plan, método pago, exportar datos
+  - Zona de peligro para pausar o cancelar cuenta con advertencias
 - June 24, 2025. Sistema de pestañas tipo slider moderno implementado globalmente
   - Componente TabNavigation convertido a diseño slider con fondo redondeado
   - Indicador deslizante blanco con transiciones suaves de 300ms

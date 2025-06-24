@@ -23,6 +23,7 @@ import {
   Edit,
   X
 } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -875,7 +876,7 @@ export default function Settings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <CalendarIcon className="h-5 w-5" />
+                    <Calendar className="h-5 w-5" />
                     <span>Información de registro</span>
                   </CardTitle>
                   <CardDescription>
@@ -1033,7 +1034,7 @@ export default function Settings() {
                       Actualizar método de pago
                     </Button>
                     <Button variant="outline" className="justify-start">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <Calendar className="mr-2 h-4 w-4" />
                       Ver historial de facturación
                     </Button>
                     <Button variant="outline" className="justify-start">
