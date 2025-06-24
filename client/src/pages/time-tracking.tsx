@@ -515,7 +515,7 @@ export default function TimeTracking() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
             {/* Left side - Employee Filter */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Empleado</label>
@@ -550,9 +550,9 @@ export default function TimeTracking() {
             </div>
 
             {/* Right side - Date Filters */}
-            <div className="flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 lg:col-span-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="flex gap-2 items-center flex-nowrap overflow-x-auto">
+              <div className="flex gap-2 items-center flex-wrap">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
