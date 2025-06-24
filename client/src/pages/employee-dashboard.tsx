@@ -357,7 +357,7 @@ export default function EmployeeDashboard() {
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 
-                className="w-12 h-12 mx-auto rounded-full object-cover"
+                className="w-12 h-12 mx-auto object-contain bg-white/10 rounded-lg p-2"
               />
             ) : (
               <div className="text-white text-base font-medium">

@@ -127,6 +127,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Validación de tipos de archivo y tamaño con mensajes toast informativos
   - Corregido endpoint /api/auth/me para incluir logoUrl explícitamente
   - Sincronización inmediata del estado local tras subida exitosa
+  - Actualizada lógica en todos los headers: mobile-header, sidebar, employee-dashboard
+  - Logos se muestran en lugar de texto cuando están disponibles en toda la aplicación
 - June 24, 2025. Campos adicionales de empresa agregados a configuración
   - Añadido logoUrl con preview visual del logo de la empresa
   - Añadido companyAlias para URLs personalizadas de la aplicación

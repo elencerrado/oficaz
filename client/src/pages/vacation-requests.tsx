@@ -319,7 +319,7 @@ export default function VacationRequests() {
             <img 
               src={company.logoUrl} 
               alt={company.name} 
-              className="w-8 h-8 mb-1 rounded-full object-cover"
+              className="w-8 h-8 mb-1 object-contain bg-white/10 rounded p-1"
             />
           ) : (
             <div className="text-white text-sm font-medium mb-1">

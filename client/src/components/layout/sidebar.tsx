@@ -102,14 +102,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Fixed Company header */}
         <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="h-6 w-auto"
-            />
+            {company?.logoUrl ? (
+              <img 
+                src={company.logoUrl} 
+                alt={company.name} 
+                className="h-8 w-auto object-contain"
+              />
+            ) : (
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="h-6 w-auto"
+              />
+            )}
             <div>
               <h2 className="text-sm font-medium text-gray-900">
-                {company?.name || 'Oficaz'}
+                {company?.logoUrl ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
           </div>

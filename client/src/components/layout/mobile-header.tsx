@@ -57,9 +57,17 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="text-gray-600" size={20} />
         </Button>
-        <h1 className="text-sm font-medium text-gray-900 ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
-          {company?.name || 'Oficaz'}
-        </h1>
+        {company?.logoUrl ? (
+          <img 
+            src={company.logoUrl} 
+            alt={company.name} 
+            className="h-6 w-auto ml-2 lg:ml-0 lg:h-8 object-contain"
+          />
+        ) : (
+          <h1 className="text-sm font-medium text-gray-900 ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
+            {company?.name || 'Oficaz'}
+          </h1>
+        )}
       </div>
       
       {/* Center Section - Logo */}
