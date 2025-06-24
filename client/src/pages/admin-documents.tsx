@@ -112,6 +112,8 @@ export default function AdminDocuments() {
   const [uploadAnalysis, setUploadAnalysis] = useState<any[]>([]);
   const [showUploadPreview, setShowUploadPreview] = useState(false);
   const [activeTab, setActiveTab] = useState('upload'); // 'upload', 'explorer', 'requests'
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; docId: number | null; docName: string }>({
     show: false,
     docId: null,
