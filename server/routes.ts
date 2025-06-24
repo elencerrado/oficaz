@@ -1502,7 +1502,7 @@ startxref
 
       // Calculate registration date based on company creation
       const company = await storage.getCompany(companyId);
-      const registrationDate = company?.createdAt ? new Date(company.createdAt) : new Date('2024-03-01T09:00:00Z');
+      const registrationDate = company?.createdAt ? new Date(company.createdAt) : new Date('2025-06-15T10:30:00Z');
       
       const accountInfo = {
         account_id: `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
