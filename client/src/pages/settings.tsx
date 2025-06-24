@@ -354,7 +354,8 @@ export default function Settings() {
           tabs={[
             { id: 'company', label: 'Empresa', icon: Building2 },
             { id: 'policies', label: 'Políticas', icon: SettingsIcon },
-            { id: 'profile', label: 'Mi Perfil', icon: Users }
+            { id: 'profile', label: 'Mi Perfil', icon: Users },
+            { id: 'account', label: 'Mi Cuenta', icon: CreditCard }
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -796,6 +797,280 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Account Management Tab */}
+          {activeTab === 'account' && (
+            <div className="space-y-6">
+              {/* Subscription Status Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    <span>Estado de la Suscripción</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Información sobre tu plan actual de Oficaz
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Current Plan Status */}
+                  <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Crown className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-blue-900">Plan Premium</h3>
+                        <p className="text-sm text-blue-700">Usuarios ilimitados • Todas las funciones</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="font-medium text-green-700">Activo</span>
+                      </div>
+                      <p className="text-sm text-gray-600">Renovación: 24 Ene 2026</p>
+                    </div>
+                  </div>
+
+                  {/* Plan Details */}
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="font-semibold text-2xl text-blue-600">∞</div>
+                      <div className="text-sm text-gray-600">Empleados</div>
+                    </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="font-semibold text-2xl text-green-600">29,99€</div>
+                      <div className="text-sm text-gray-600">Por mes</div>
+                    </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <div className="font-semibold text-2xl text-purple-600">24/7</div>
+                      <div className="text-sm text-gray-600">Soporte</div>
+                    </div>
+                  </div>
+
+                  {/* Usage Statistics */}
+                  <div className="pt-4 border-t">
+                    <h4 className="font-medium text-gray-900 mb-3">Uso actual</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Empleados registrados</span>
+                        <span className="font-medium">12 empleados</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Almacenamiento usado</span>
+                        <span className="font-medium">2.3 GB de 50 GB</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Fichajes este mes</span>
+                        <span className="font-medium">1,247 registros</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Company Registration Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    <span>Información de registro</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Datos de alta y administración de la cuenta
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de alta
+                      </label>
+                      <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        24 de junio de 2024
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        ID de cuenta
+                      </label>
+                      <div className="p-3 bg-gray-50 border rounded-lg text-gray-900 font-mono text-sm">
+                        OFZ-2024-001234
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Administrador principal
+                      </label>
+                      <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        {user?.fullName}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email de contacto
+                      </label>
+                      <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        {user?.companyEmail}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Billing Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Información de facturación</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Datos fiscales y método de pago
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Billing Address */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Dirección de facturación</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Nombre fiscal
+                        </label>
+                        <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          {companyData.name}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          CIF/NIF
+                        </label>
+                        <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          {companyData.cif}
+                        </div>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dirección fiscal
+                        </label>
+                        <div className="p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          {companyData.address || 'No especificada'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="pt-4 border-t">
+                    <h4 className="font-medium text-gray-900 mb-3">Método de pago</h4>
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded">
+                          <CreditCard className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Visa terminada en 4242</p>
+                          <p className="text-sm text-gray-600">Caduca 12/2027</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        Cambiar
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Recent Invoices */}
+                  <div className="pt-4 border-t">
+                    <h4 className="font-medium text-gray-900 mb-3">Últimas facturas</h4>
+                    <div className="space-y-2">
+                      {[
+                        { date: '24 Dic 2024', amount: '29,99€', status: 'Pagada', invoice: 'OFZ-2024-12-001' },
+                        { date: '24 Nov 2024', amount: '29,99€', status: 'Pagada', invoice: 'OFZ-2024-11-001' },
+                        { date: '24 Oct 2024', amount: '29,99€', status: 'Pagada', invoice: 'OFZ-2024-10-001' }
+                      ].map((invoice, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div>
+                              <p className="font-medium text-gray-900">{invoice.invoice}</p>
+                              <p className="text-sm text-gray-600">{invoice.date}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-900">{invoice.amount}</p>
+                            <div className="flex items-center space-x-1">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <span className="text-sm text-green-600">{invoice.status}</span>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            Descargar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Account Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <SettingsIcon className="h-5 w-5" />
+                    <span>Gestión de cuenta</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Acciones importantes de la cuenta
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Button variant="outline" className="justify-start">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Actualizar método de pago
+                    </Button>
+                    <Button variant="outline" className="justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Ver historial de facturación
+                    </Button>
+                    <Button variant="outline" className="justify-start">
+                      <Crown className="mr-2 h-4 w-4" />
+                      Cambiar plan
+                    </Button>
+                    <Button variant="outline" className="justify-start">
+                      <Users className="mr-2 h-4 w-4" />
+                      Exportar datos
+                    </Button>
+                  </div>
+
+                  {/* Danger Zone */}
+                  <div className="pt-6 border-t">
+                    <div className="border border-red-200 rounded-lg p-4 bg-red-50">
+                      <div className="flex items-start space-x-3">
+                        <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-red-900 mb-1">Zona de peligro</h4>
+                          <p className="text-sm text-red-700 mb-3">
+                            Estas acciones son irreversibles. Procede con precaución.
+                          </p>
+                          <div className="space-y-2">
+                            <Button variant="outline" className="text-red-600 border-red-300 hover:bg-red-50">
+                              Pausar suscripción
+                            </Button>
+                            <Button variant="destructive" className="ml-2">
+                              Cancelar cuenta
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </div>
