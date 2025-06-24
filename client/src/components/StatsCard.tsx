@@ -54,9 +54,9 @@ export default function StatsCard({
       className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-4 md:min-h-[80px]">
+      <CardContent className="p-4 h-20 flex items-center justify-center">
         {/* Desktop: Layout horizontal con icono + número + texto en línea */}
-        <div className="hidden md:flex md:items-center md:space-x-3">
+        <div className="hidden md:flex md:items-center md:space-x-3 w-full">
           <div className={`w-8 h-8 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-4 h-4 text-white" />}
           </div>
@@ -70,8 +70,8 @@ export default function StatsCard({
         {/* Mobile: Layout centrado simplificado igual que vacaciones */}
         <div className="md:hidden text-center">
           <div className="flex items-center justify-center space-x-1 mb-1">
-            <div className={`w-4 h-4 ${config.bg} rounded-full flex items-center justify-center`}>
-              {Icon && <Icon className="w-2 h-2 text-white" />}
+            <div className={`w-5 h-5 ${config.bg} rounded-full flex items-center justify-center`}>
+              {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
             </div>
             <span className="text-xs font-bold text-gray-900">{value}</span>
           </div>
