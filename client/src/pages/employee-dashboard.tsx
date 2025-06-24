@@ -353,8 +353,8 @@ export default function EmployeeDashboard() {
         {/* Company Logo and Name */}
         <div className="flex justify-center mb-6">
           <div className="text-center">
-            {/* Siempre mostrar logos existentes independientemente del plan */}
-            {company?.logoUrl ? (
+            {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+            {shouldShowLogo ? (
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 

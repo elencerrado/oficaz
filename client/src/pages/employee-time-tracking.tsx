@@ -323,7 +323,8 @@ export default function EmployeeTimeTracking() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          {company?.logoUrl ? (
+          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+          {shouldShowLogo ? (
             <img 
               src={company.logoUrl} 
               alt={company.name} 

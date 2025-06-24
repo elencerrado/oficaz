@@ -102,8 +102,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Fixed Company header */}
         <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
-            {/* Siempre mostrar logos existentes independientemente del plan */}
-            {company?.logoUrl ? (
+            {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+            {shouldShowLogo ? (
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 
@@ -118,7 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-medium text-gray-900 truncate">
-                {company?.logoUrl ? company.name : (company?.name || 'Oficaz')}
+                {shouldShowLogo ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
           </div>

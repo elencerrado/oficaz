@@ -57,8 +57,8 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
           <Menu className="text-gray-600" size={20} />
         </Button>
-        {/* Siempre mostrar logos existentes independientemente del plan */}
-        {company?.logoUrl ? (
+        {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+        {shouldShowLogo ? (
           <img 
             src={company.logoUrl} 
             alt={company.name} 
