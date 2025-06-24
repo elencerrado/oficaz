@@ -75,7 +75,7 @@ export default function StatsCard({
             </div>
             <span className="text-xs font-bold text-gray-900">{value}</span>
           </div>
-          <p className="text-[10px] font-medium text-gray-600 leading-tight">{title.length > 8 ? title.substring(0, 6) + '.' : title}</p>
+          <p className="text-[10px] font-medium text-gray-600 leading-tight">{subtitle.length > 8 ? subtitle.substring(0, 6) + '.' : subtitle}</p>
         </div>
       </CardContent>
     </Card>
