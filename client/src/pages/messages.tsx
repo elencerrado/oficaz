@@ -420,7 +420,7 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="px-6 py-4 h-[calc(100vh-140px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
