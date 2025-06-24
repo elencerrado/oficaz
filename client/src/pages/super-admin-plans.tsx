@@ -164,10 +164,10 @@ export default function SuperAdminPlans() {
   }
 
   const features = [
-    { key: 'messages', label: 'Mensajes', icon: MessageSquare },
-    { key: 'documents', label: 'Documentos', icon: FileText },
-    { key: 'vacation', label: 'Vacaciones', icon: Calendar },
     { key: 'timeTracking', label: 'Fichajes', icon: Clock },
+    { key: 'vacation', label: 'Vacaciones', icon: Calendar },
+    { key: 'documents', label: 'Documentos', icon: FileText },
+    { key: 'messages', label: 'Mensajes', icon: MessageSquare },
     { key: 'reports', label: 'Reportes', icon: BarChart3 },
     { key: 'analytics', label: 'Analíticas', icon: BarChart3 },
     { key: 'customization', label: 'Personalización', icon: Settings },

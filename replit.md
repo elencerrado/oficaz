@@ -117,6 +117,10 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Orden de funcionalidades actualizado en gestión de planes
+  - Cambio en super-admin-plans.tsx: fichajes, vacaciones, documentos, mensajes
+  - Orden consistente con prioridad de uso y flujo lógico de la aplicación
+  - Todas las tablas de configuración ahora siguen el mismo orden estándar
 - June 24, 2025. Sistema de páginas de funcionalidades restringidas implementado
   - Eliminado sistema de sidebar deshabilitado por navegación limpia
   - Usuarios pueden navegar a todas las páginas sin restricción en el menú
