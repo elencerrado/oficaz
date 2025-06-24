@@ -552,8 +552,8 @@ export default function TimeTracking() {
             {/* Right side - Date Filters */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="flex flex-wrap gap-2">
-                {/* Primera línea - Filtros principales */}
+              <div className="space-y-2">
+                {/* Filtros principales en línea */}
                 <div className="flex gap-2 flex-wrap">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
@@ -652,10 +652,29 @@ export default function TimeTracking() {
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
+
+                {/* Botón limpiar visible en escritorio grande */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDateFilter('all');
+                    setSelectedEmployee('all');
+                    setSelectedStartDate(null);
+                    setSelectedEndDate(null);
+                    setStartDate('');
+                    setEndDate('');
+                    setCurrentDate(new Date());
+                    setCurrentMonth(new Date());
+                  }}
+                  className="h-10 text-sm font-normal hidden lg:block"
+                >
+                  Limpiar filtros
+                </Button>
                 </div>
 
-                {/* Segunda línea solo en móvil - Botón limpiar */}
-                <div className="w-full lg:w-auto">
+                {/* Botón limpiar en línea separada solo en pantallas pequeñas */}
+                <div className="hidden sm:flex sm:justify-start lg:hidden">
                   <Button
                     variant="outline"
                     size="sm"
@@ -669,7 +688,7 @@ export default function TimeTracking() {
                       setCurrentDate(new Date());
                       setCurrentMonth(new Date());
                     }}
-                    className="h-10 text-sm font-normal w-full lg:w-auto lg:min-w-[100px]"
+                    className="h-10 text-sm font-normal"
                   >
                     Limpiar filtros
                   </Button>
