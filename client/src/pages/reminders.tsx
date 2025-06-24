@@ -171,16 +171,25 @@ export default function Reminders() {
 
     let processedDate = null;
     if (reminderData.reminderDate && reminderData.reminderDate !== '') {
-      // The datetime-local input gives us a string like "2025-06-24T16:08"
-      // We need to treat this as local time and convert to UTC properly
-      const localDate = new Date(reminderData.reminderDate);
-      // Add timezone offset to get the actual local time in UTC
-      const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+      // Create date from datetime-local input string
+      // This should preserve the time as intended by the user
+      const inputParts = reminderData.reminderDate.split('T');
+      const datePart = inputParts[0];
+      const timePart = inputParts[1];
+      
+      // Create date explicitly in UTC to avoid timezone conversion
+      const year = parseInt(datePart.split('-')[0]);
+      const month = parseInt(datePart.split('-')[1]) - 1; // Month is 0-indexed
+      const day = parseInt(datePart.split('-')[2]);
+      const hour = parseInt(timePart.split(':')[0]);
+      const minute = parseInt(timePart.split(':')[1]);
+      
+      const utcDate = new Date(Date.UTC(year, month, day, hour, minute));
       processedDate = utcDate.toISOString();
       
-      console.log('Date processing:', {
+      console.log('Date processing (manual UTC):', {
         input: reminderData.reminderDate,
-        localDate: localDate.toString(),
+        parsedParts: { year, month: month + 1, day, hour, minute },
         utcDate: utcDate.toString(),
         finalISO: processedDate
       });
@@ -213,14 +222,19 @@ export default function Reminders() {
     let localDateTimeString = '';
     if (reminder.reminderDate) {
       const utcDate = new Date(reminder.reminderDate);
-      // Convert UTC to local time for display in datetime-local input
-      const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
-      localDateTimeString = localDate.toISOString().slice(0, 16);
+      // Extract components directly from UTC date to avoid timezone issues
+      const year = utcDate.getUTCFullYear();
+      const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(utcDate.getUTCDate()).padStart(2, '0');
+      const hour = String(utcDate.getUTCHours()).padStart(2, '0');
+      const minute = String(utcDate.getUTCMinutes()).padStart(2, '0');
       
-      console.log('Edit date conversion:', {
+      localDateTimeString = `${year}-${month}-${day}T${hour}:${minute}`;
+      
+      console.log('Edit date conversion (manual):', {
         originalUTC: reminder.reminderDate,
         utcDate: utcDate.toString(),
-        localDate: localDate.toString(),
+        extractedParts: { year, month, day, hour, minute },
         inputValue: localDateTimeString
       });
     }
