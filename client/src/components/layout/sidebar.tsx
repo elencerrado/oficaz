@@ -102,6 +102,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Fixed Company header */}
         <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
+            {/* Siempre mostrar logos existentes independientemente del plan */}
             {company?.logoUrl ? (
               <img 
                 src={company.logoUrl} 
