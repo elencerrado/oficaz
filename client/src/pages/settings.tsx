@@ -742,18 +742,20 @@ const AccountManagement = () => {
                   <Label>Logo de la empresa</Label>
                   <div className="mt-2 flex items-center space-x-4">
                     {logoPreview || companyData.logoUrl ? (
-                      <img 
-                        src={logoPreview || companyData.logoUrl} 
-                        alt="Logo de la empresa" 
-                        className="w-16 h-16 object-contain border rounded-lg bg-white"
-                        onLoad={() => console.log('Logo loaded successfully:', logoPreview || companyData.logoUrl)}
-                        onError={(e) => {
-                          console.error('Error loading logo:', logoPreview || companyData.logoUrl);
-                          console.error('Image element:', e.currentTarget);
-                        }}
-                      />
+                      <div className="w-32 h-16 border rounded-lg bg-white flex items-center justify-center p-2">
+                        <img 
+                          src={logoPreview || companyData.logoUrl} 
+                          alt="Logo de la empresa" 
+                          className="max-w-full max-h-full object-contain"
+                          onLoad={() => console.log('Logo loaded successfully:', logoPreview || companyData.logoUrl)}
+                          onError={(e) => {
+                            console.error('Error loading logo:', logoPreview || companyData.logoUrl);
+                            console.error('Image element:', e.currentTarget);
+                          }}
+                        />
+                      </div>
                     ) : (
-                      <div className="w-16 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
+                      <div className="w-32 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
                         <Building2 className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
