@@ -29,6 +29,7 @@ const PRIORITY_ICONS = {
 };
 
 export function ReminderBanner() {
+  console.log('ReminderBanner component initializing...');
   const [dismissedReminders, setDismissedReminders] = useState<number[]>([]);
   const queryClient = useQueryClient();
 
@@ -101,6 +102,8 @@ export function ReminderBanner() {
 
   
   console.log('ReminderBanner - Rendering banner with', visibleReminders?.length || 0, 'reminders');
+  console.log('ReminderBanner - Active reminders from query:', activeReminders);
+  console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
 
   if (!visibleReminders || visibleReminders.length === 0) {
     console.log('ReminderBanner - No visible reminders, returning null');

@@ -79,7 +79,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // Admin/Manager gets full layout with sidebar
   return (
     <div className="min-h-screen bg-gray-50">
-      <ReminderBanner />
+      <ReminderBannerSimple />
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 
