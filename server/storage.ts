@@ -719,6 +719,18 @@ export class DrizzleStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(schema.subscriptionPlans.id, id))
       .returning();
+    
+    // Si se actualiza un plan, también actualizamos las funcionalidades en las suscripciones de las empresas
+    if (updates.features && plan) {
+      await db
+        .update(schema.subscriptions)
+        .set({ 
+          features: updates.features,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.subscriptions.plan, plan.name));
+    }
+    
     return plan;
   }
 

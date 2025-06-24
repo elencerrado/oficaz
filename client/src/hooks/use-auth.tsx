@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [authData, setAuthData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);
+            setAuthData(data);
           } else {
             console.log('Auth verification failed, clearing data');
             clearAuthData();
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setCompany(null);
     setToken(null);
+    setAuthData(null);
     clearAuthData();
   };
 
@@ -95,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user,
       company,
+      subscription: authData?.subscription || null,
       token,
       login,
       register,

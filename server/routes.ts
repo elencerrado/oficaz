@@ -290,6 +290,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const company = await storage.getCompany(user.companyId);
       
+      const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
+
       res.json({
         user: { ...user, password: undefined },
         company: company ? {
@@ -300,6 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           defaultVacationDays: Number(company.defaultVacationDays) || 30,
           vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5
         } : null,
+        subscription
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

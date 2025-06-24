@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de restricciones por plan de suscripción implementado completamente
+  - Todas las empresas migradas del plan "free" al plan "Basic"
+  - Backend actualizado para propagar cambios de funcionalidades a empresas
+  - Hook useAuth expandido para incluir información de suscripción
+  - Sistema de restricciones de funcionalidades en sidebar implementado
+  - Elementos del menú se deshabilitan según el plan activo de la empresa
+  - Indicadores visuales para funcionalidades restringidas
+  - Librería feature-restrictions.ts para gestión centralizada de permisos
 - June 24, 2025. Sistema completo de gestión de cuenta finalizado con datos 100% auténticos
   - TODOS los datos hardcodeados eliminados definitivamente del sistema de cuenta
   - Fecha de registro usa fecha real de creación de empresa (19 junio 2025)

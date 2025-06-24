@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { checkFeatureAccess } from '@/lib/feature-restrictions';
 import { LayoutDashboard, Clock, Calendar, FileText, Mail, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,7 +14,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
-  const { user, company, logout } = useAuth();
+  const { user, company, subscription, logout } = useAuth();
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
@@ -23,19 +24,60 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const companyAlias = company?.companyAlias || 'test';
   
   const navigation = [
-    { name: 'Panel Principal', href: `/${companyAlias}/inicio`, icon: LayoutDashboard },
+    { 
+      name: 'Panel Principal', 
+      href: `/${companyAlias}/inicio`, 
+      icon: LayoutDashboard,
+      feature: 'timeTracking' as const
+    },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
-      { name: 'Fichajes', href: `/${companyAlias}/fichajes`, icon: Clock }
+      { 
+        name: 'Fichajes', 
+        href: `/${companyAlias}/fichajes`, 
+        icon: Clock,
+        feature: 'timeTracking' as const
+      }
     ] : [
-      { name: 'Control de Tiempo', href: `/${companyAlias}/horas`, icon: Clock }
+      { 
+        name: 'Control de Tiempo', 
+        href: `/${companyAlias}/horas`, 
+        icon: Clock,
+        feature: 'timeTracking' as const
+      }
     ]),
-    { name: 'Vacaciones', href: `/${companyAlias}/vacaciones`, icon: Calendar },
-    { name: 'Documentos', href: `/${companyAlias}/documentos`, icon: FileText },
-    { name: 'Mensajes', href: `/${companyAlias}/mensajes`, icon: Mail, badge: unreadCount },
+    { 
+      name: 'Vacaciones', 
+      href: `/${companyAlias}/vacaciones`, 
+      icon: Calendar,
+      feature: 'vacation' as const
+    },
+    { 
+      name: 'Documentos', 
+      href: `/${companyAlias}/documentos`, 
+      icon: FileText,
+      feature: 'documents' as const
+    },
+    { 
+      name: 'Mensajes', 
+      href: `/${companyAlias}/mensajes`, 
+      icon: Mail, 
+      badge: unreadCount,
+      feature: 'messages' as const
+    },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
-      { name: 'Empleados', href: `/${companyAlias}/empleados`, icon: Users }
+      { 
+        name: 'Empleados', 
+        href: `/${companyAlias}/empleados`, 
+        icon: Users,
+        feature: 'timeTracking' as const
+      }
     ] : []),
-    { name: 'Configuración', href: `/${companyAlias}/configuracion`, icon: Settings },
+    { 
+      name: 'Configuración', 
+      href: `/${companyAlias}/configuracion`, 
+      icon: Settings,
+      feature: 'customization' as const
+    },
   ];
 
   const handleLinkClick = () => {
@@ -83,33 +125,52 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {navigation.map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
+                const hasAccess = checkFeatureAccess(subscription, item.feature);
+                
+                const content = (
+                  <button
+                    className={`
+                      w-full flex items-center space-x-3 rounded-lg transition-colors text-left
+                      ${!hasAccess 
+                        ? 'text-gray-400 cursor-not-allowed opacity-60' 
+                        : isActive 
+                          ? 'bg-blue-50 text-oficaz-primary' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }
+                    `}
+                    style={{
+                      padding: 'clamp(0.75rem, 1.5vh, 1rem) 1rem',
+                      minHeight: 'clamp(2.5rem, 5vh, 3.5rem)'
+                    }}
+                    onClick={hasAccess ? handleLinkClick : undefined}
+                    disabled={!hasAccess}
+                  >
+                    <Icon size={20} />
+                    <div className="flex-1">
+                      <span>{item.name}</span>
+                      {!hasAccess && (
+                        <div className="text-xs text-red-500 mt-1">
+                          No disponible en tu plan
+                        </div>
+                      )}
+                    </div>
+                    {hasAccess && typeof item.badge === 'number' && item.badge > 0 && (
+                      <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
                 
                 return (
                   <div key={item.name}>
-                    <Link href={item.href}>
-                      <button
-                        className={`
-                          w-full flex items-center space-x-3 rounded-lg transition-colors text-left
-                          ${isActive 
-                            ? 'bg-blue-50 text-oficaz-primary' 
-                            : 'text-gray-700 hover:bg-gray-100'
-                          }
-                        `}
-                        style={{
-                          padding: 'clamp(0.75rem, 1.5vh, 1rem) 1rem',
-                          minHeight: 'clamp(2.5rem, 5vh, 3.5rem)'
-                        }}
-                        onClick={handleLinkClick}
-                      >
-                        <Icon size={20} />
-                        <span>{item.name}</span>
-                        {typeof item.badge === 'number' && item.badge > 0 && (
-                          <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    </Link>
+                    {hasAccess ? (
+                      <Link href={item.href}>
+                        {content}
+                      </Link>
+                    ) : (
+                      content
+                    )}
                   </div>
                 );
               })}
