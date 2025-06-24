@@ -52,7 +52,39 @@ export default function AdminDashboard() {
   // Fetch recent work sessions
   const { data: recentSessions } = useQuery({
     queryKey: ['/api/work-sessions/company'],
-    select: (data: any[]) => data?.slice(0, 5) || [],
+    select: (data: any[]) => {
+      if (!data?.length) return [];
+      
+      // Create separate events for clock-in and clock-out
+      const events: any[] = [];
+      
+      data.forEach((session: any) => {
+        // Add clock-in event
+        events.push({
+          id: `${session.id}-in`,
+          userName: session.userName,
+          type: 'entry',
+          timestamp: session.clockIn,
+          sessionId: session.id
+        });
+        
+        // Add clock-out event if exists
+        if (session.clockOut) {
+          events.push({
+            id: `${session.id}-out`,
+            userName: session.userName,
+            type: 'exit',
+            timestamp: session.clockOut,
+            sessionId: session.id
+          });
+        }
+      });
+      
+      // Sort by timestamp (most recent first) and take first 5
+      return events
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 5);
+    },
   });
 
   // Fetch recent messages - one per employee
@@ -278,15 +310,19 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="space-y-3">
                 {recentSessions?.length > 0 ? (
-                  recentSessions.map((session: any) => (
-                    <div key={session.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-blue-600" />
+                  recentSessions.map((event: any) => (
+                    <div key={event.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        event.type === 'entry' ? 'bg-green-100' : 'bg-red-100'
+                      }`}>
+                        <Clock className={`h-4 w-4 ${
+                          event.type === 'entry' ? 'text-green-600' : 'text-red-600'
+                        }`} />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{session.userName}</p>
+                        <p className="font-medium text-gray-900">{event.userName}</p>
                         <p className="text-sm text-gray-500">
-                          {session.clockOut ? 'Salida' : 'Entrada'} - {formatDateTime(session.clockOut || session.clockIn)}
+                          {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
                         </p>
                       </div>
                     </div>
