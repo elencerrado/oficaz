@@ -1484,6 +1484,10 @@ startxref
 
   // Account management endpoints
   app.get('/api/account/info', authenticateToken, async (req: AuthRequest, res) => {
+    // Disable caching for account info
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     try {
       const companyId = req.user!.companyId;
       
@@ -1505,15 +1509,18 @@ startxref
       const registrationDate = company?.createdAt ? new Date(company.createdAt) : new Date('2025-06-15T10:30:00Z');
       
       const accountInfo = {
+        id: companyId,
+        company_id: companyId,
         account_id: `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
         billing_name: req.user!.fullName,
-        billing_email: req.user!.companyEmail,
+        billing_email: req.user!.companyEmail || req.user!.personalEmail,
         billing_address: company?.address || 'Calle de la Innovación 25, 2º A',
         billing_city: company?.province || 'Madrid',
         billing_postal_code: '28020',
         billing_country: 'ES',
-        tax_id: company?.cif || `B${80000000 + companyId}78`
+        tax_id: company?.cif || `B${80000000 + companyId}78`,
+        updated_at: new Date().toISOString()
       };
 
       res.json(accountInfo);
