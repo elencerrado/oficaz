@@ -56,64 +56,24 @@ const featureLabels = {
 export default function SuperAdminPlans() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    displayName: '',
-    pricePerUser: '',
-    maxUsers: '',
-    features: {
-      messages: true,
-      documents: true,
-      vacation: true,
-      timeTracking: true,
-      reports: false,
-      analytics: false,
-      customization: false,
-      api: false,
-    }
-  });
+  const [editingPlanName, setEditingPlanName] = useState<number | null>(null);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [editingPrice, setEditingPrice] = useState<number | null>(null);
+  const [editingMaxUsers, setEditingMaxUsers] = useState<number | null>(null);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
-    retry: false,
-  });
-
-  const createPlanMutation = useMutation({
-    mutationFn: async (data: any) => {
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/subscription-plans', {
-        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
       });
-      
-      if (!response.ok) {
-        throw new Error('Error al crear el plan');
-      }
-      
+      if (!response.ok) throw new Error('Failed to fetch plans');
       return response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "Plan creado",
-        description: "El plan de suscripción ha sido creado correctamente",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-plans'] });
-      setIsDialogOpen(false);
-      resetForm();
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el plan",
-        variant: "destructive",
-      });
-    },
+    retry: false,
   });
 
   const updatePlanMutation = useMutation({
@@ -139,9 +99,7 @@ export default function SuperAdminPlans() {
         description: "El plan de suscripción ha sido actualizado correctamente",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-plans'] });
-      setIsDialogOpen(false);
-      setEditingPlan(null);
-      resetForm();
+      setEditingPlanName(null);
     },
     onError: (error: any) => {
       toast({
@@ -152,290 +110,201 @@ export default function SuperAdminPlans() {
     },
   });
 
-  const deletePlanMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/super-admin/subscription-plans/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error al eliminar el plan');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Plan eliminado",
-        description: "El plan de suscripción ha sido eliminado correctamente",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-plans'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el plan",
-        variant: "destructive",
-      });
-    },
-  });
+  const handleFeatureToggle = (planId: number, feature: string, enabled: boolean) => {
+    const plan = plans?.find((p: SubscriptionPlan) => p.id === planId);
+    if (!plan) return;
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      displayName: '',
-      pricePerUser: '',
-      maxUsers: '',
-      features: {
-        messages: true,
-        documents: true,
-        vacation: true,
-        timeTracking: true,
-        reports: false,
-        analytics: false,
-        customization: false,
-        api: false,
-      }
-    });
-  };
-
-  const handleEdit = (plan: SubscriptionPlan) => {
-    setEditingPlan(plan);
-    setFormData({
-      name: plan.name,
-      displayName: plan.displayName,
-      pricePerUser: plan.pricePerUser,
-      maxUsers: plan.maxUsers?.toString() || '',
-      features: { ...plan.features }
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const data = {
-      name: formData.name.toLowerCase(),
-      displayName: formData.displayName,
-      pricePerUser: formData.pricePerUser,
-      maxUsers: formData.maxUsers ? parseInt(formData.maxUsers) : null,
-      features: formData.features
+    const updatedFeatures = {
+      ...plan.features,
+      [feature]: enabled
     };
 
-    if (editingPlan) {
-      updatePlanMutation.mutate({ id: editingPlan.id, data });
-    } else {
-      createPlanMutation.mutate(data);
+    updatePlanMutation.mutate({
+      id: planId,
+      data: { features: updatedFeatures }
+    });
+  };
+
+  const handlePriceChange = (planId: number, newPrice: string) => {
+    if (newPrice && !isNaN(parseFloat(newPrice))) {
+      updatePlanMutation.mutate({
+        id: planId,
+        data: { pricePerUser: parseFloat(newPrice) }
+      });
     }
+    setEditingPrice(null);
+  };
+
+  const handleNameEdit = (planId: number, currentName: string) => {
+    setEditingPlanName(planId);
+    setNewDisplayName(currentName);
+  };
+
+  const saveName = (planId: number) => {
+    updatePlanMutation.mutate({
+      id: planId,
+      data: { displayName: newDisplayName }
+    });
+  };
+
+  const handleMaxUsersChange = (planId: number, maxUsers: string) => {
+    updatePlanMutation.mutate({
+      id: planId,
+      data: { maxUsers: maxUsers ? parseInt(maxUsers) : null }
+    });
+    setEditingMaxUsers(null);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Planes</h1>
-          <p className="text-gray-600 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingPlan(null); resetForm(); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Plan
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPlan ? 'Editar Plan' : 'Crear Nuevo Plan'}
-              </DialogTitle>
-              <DialogDescription>
-                Configura los detalles del plan de suscripción y las funcionalidades incluidas
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nombre interno</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="basic, pro, master"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="displayName">Nombre visible</Label>
-                  <Input
-                    id="displayName"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                    placeholder="Plan Básico"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="pricePerUser">Precio por usuario (€)</Label>
-                  <Input
-                    id="pricePerUser"
-                    type="number"
-                    step="0.01"
-                    value={formData.pricePerUser}
-                    onChange={(e) => setFormData(prev => ({ ...prev, pricePerUser: e.target.value }))}
-                    placeholder="3.00"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxUsers">Límite de usuarios</Label>
-                  <Input
-                    id="maxUsers"
-                    type="number"
-                    value={formData.maxUsers}
-                    onChange={(e) => setFormData(prev => ({ ...prev, maxUsers: e.target.value }))}
-                    placeholder="Dejar vacío para ilimitado"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label className="text-base font-medium">Funcionalidades incluidas</Label>
-                <div className="mt-3 grid grid-cols-2 gap-4">
-                  {Object.entries(featureLabels).map(([key, label]) => {
-                    const Icon = featureIcons[key as keyof typeof featureIcons];
-                    return (
-                      <div key={key} className="flex items-center space-x-3">
-                        <Switch
-                          checked={formData.features[key as keyof typeof formData.features]}
-                          onCheckedChange={(checked) =>
-                            setFormData(prev => ({
-                              ...prev,
-                              features: { ...prev.features, [key]: checked }
-                            }))
-                          }
-                        />
-                        <Icon className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm">{label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createPlanMutation.isPending || updatePlanMutation.isPending}
-                >
-                  {editingPlan ? 'Actualizar' : 'Crear'} Plan
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+  const features = [
+    { key: 'messages', label: 'Mensajes', icon: MessageSquare },
+    { key: 'documents', label: 'Documentos', icon: FileText },
+    { key: 'vacation', label: 'Vacaciones', icon: Calendar },
+    { key: 'timeTracking', label: 'Fichajes', icon: Clock },
+    { key: 'reports', label: 'Reportes', icon: BarChart3 },
+    { key: 'analytics', label: 'Analíticas', icon: BarChart3 },
+    { key: 'customization', label: 'Personalización', icon: Settings },
+    { key: 'api', label: 'API', icon: Zap },
+  ];
 
-      <div className="grid gap-6">
-        {plans?.map((plan: SubscriptionPlan) => (
-          <Card key={plan.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center space-x-2">
-                    <span>{plan.displayName}</span>
-                    <Badge variant={plan.isActive ? "default" : "secondary"}>
-                      {plan.isActive ? 'Activo' : 'Inactivo'}
-                    </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    Plan {plan.name}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(plan)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deletePlanMutation.mutate(plan.id)}
-                    disabled={deletePlanMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <Euro className="h-4 w-4 mr-2 text-green-600" />
-                    <span className="font-medium">{plan.pricePerUser}€ por usuario/mes</span>
-                  </div>
-                  <div className="flex items-center text-sm">
-                    <Users className="h-4 w-4 mr-2 text-blue-600" />
-                    <span>
-                      {plan.maxUsers ? `Máximo ${plan.maxUsers} usuarios` : 'Usuarios ilimitados'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <h4 className="font-medium text-sm text-gray-900 mb-2">Funcionalidades</h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(plan.features).map(([key, enabled]) => {
-                      const Icon = featureIcons[key as keyof typeof featureIcons];
-                      const label = featureLabels[key as keyof typeof featureLabels];
-                      
-                      if (!Icon) return null;
-                      
-                      return (
-                        <div
-                          key={key}
-                          className={`flex items-center space-x-2 text-xs ${
-                            enabled ? 'text-green-700' : 'text-gray-400'
-                          }`}
-                        >
-                          <Icon className="h-3 w-3" />
-                          <span>{label}</span>
-                          {enabled && <span className="text-green-600">✓</span>}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Gestión de Planes</h1>
+              <p className="text-white/60 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              className="text-white/80 hover:text-white hover:bg-white/10"
+              onClick={() => window.history.back()}
+            >
+              ← Volver
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Plans Configuration Table */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white">Configuración de Planes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/20">
+                    <th className="text-left py-4 px-4 text-white font-medium">Funcionalidad</th>
+                    {plans?.map((plan: SubscriptionPlan) => (
+                      <th key={plan.id} className="text-center py-4 px-4 min-w-[180px]">
+                        <div className="space-y-2">
+                          {editingPlanName === plan.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={newDisplayName}
+                                onChange={(e) => setNewDisplayName(e.target.value)}
+                                className="h-8 bg-white/10 border-white/20 text-white text-center"
+                                onBlur={() => saveName(plan.id)}
+                                onKeyDown={(e) => e.key === 'Enter' && saveName(plan.id)}
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <h3 
+                              className="text-white font-semibold text-lg cursor-pointer hover:text-white/80"
+                              onClick={() => handleNameEdit(plan.id, plan.displayName)}
+                            >
+                              {plan.displayName}
+                            </h3>
+                          )}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center gap-1">
+                              <Euro className="h-3 w-3 text-green-400" />
+                              {editingPrice === plan.id ? (
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  defaultValue={plan.pricePerUser}
+                                  className="h-7 w-16 bg-white/10 border-white/20 text-white text-center text-xs"
+                                  onBlur={(e) => handlePriceChange(plan.id, e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handlePriceChange(plan.id, e.currentTarget.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className="cursor-pointer hover:bg-white/10 px-1 rounded text-white text-xs"
+                                  onClick={() => setEditingPrice(plan.id)}
+                                >
+                                  {plan.pricePerUser}
+                                </span>
+                              )}
+                              <span className="text-white/60 text-xs">€/mes</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-1">
+                              <Users className="h-3 w-3 text-blue-400" />
+                              {editingMaxUsers === plan.id ? (
+                                <Input
+                                  type="number"
+                                  placeholder="∞"
+                                  defaultValue={plan.maxUsers || ''}
+                                  className="h-7 w-16 bg-white/10 border-white/20 text-white text-center text-xs"
+                                  onBlur={(e) => handleMaxUsersChange(plan.id, e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleMaxUsersChange(plan.id, e.currentTarget.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className="cursor-pointer hover:bg-white/10 px-1 rounded text-white text-xs"
+                                  onClick={() => setEditingMaxUsers(plan.id)}
+                                >
+                                  {plan.maxUsers || '∞'}
+                                </span>
+                              )}
+                              <span className="text-white/60 text-xs">usuarios</span>
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {features.map((feature) => (
+                    <tr key={feature.key} className="border-b border-white/10 hover:bg-white/5">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <feature.icon className="h-5 w-5 text-white/70" />
+                          <span className="text-white font-medium">{feature.label}</span>
+                        </div>
+                      </td>
+                      {plans?.map((plan: SubscriptionPlan) => (
+                        <td key={`${plan.id}-${feature.key}`} className="py-4 px-4 text-center">
+                          <Switch
+                            checked={plan.features[feature.key] || false}
+                            onCheckedChange={(enabled) => handleFeatureToggle(plan.id, feature.key, enabled)}
+                            disabled={updatePlanMutation.isPending}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
