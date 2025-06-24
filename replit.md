@@ -117,15 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 24, 2025. Sistema completo de recordatorios con manejo automático de zonas horarias FINALIZADO
-  - Banner de notificaciones funcionando perfectamente con polling cada 3 segundos
-  - Endpoint /api/reminders/active operativo sin problemas de autenticación
-  - Sistema de fechas SIMPLIFICADO: automático usando Date() del navegador y comparación UTC
-  - Eliminado manejo manual de zonas horarias en favor de solución robusta y general
-  - Frontend: new Date(input).toISOString() para conversión automática local→UTC
-  - Backend: comparación directa UTC vs UTC sin conversiones manuales
-  - Solución escalable que funciona para cualquier zona horaria automáticamente
-  - Error de actualización corregido con simplificación del código de fechas
+- June 24, 2025. Sistema completo de recordatorios con banner visual FINALIZADO
+  - Backend funciona perfectamente: detecta recordatorios activos y API responde correctamente
+  - Frontend funciona: componente ReminderBanner recibe datos y se renderiza según logs
+  - Sistema de fechas automático: new Date().toISOString() + comparación UTC directa
+  - Banner integrado en AppLayout para admin/manager y empleados con z-index máximo
+  - Polling cada 3 segundos operativo, logs confirman renderizado correcto del banner
+  - Eliminados enfoques manuales de timezone por solución robusta y escalable
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar

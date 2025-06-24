@@ -68,12 +68,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {
-    return <>{children}</>;
+    return (
+      <>
+        <ReminderBanner />
+        {children}
+      </>
+    );
   }
 
   // Admin/Manager gets full layout with sidebar
   return (
     <div className="min-h-screen bg-gray-50">
+      <ReminderBanner />
       <Sidebar 
         isOpen={isSidebarOpen} 
         onClose={() => setIsSidebarOpen(false)} 

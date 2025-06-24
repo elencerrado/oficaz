@@ -36,12 +36,14 @@ export function ReminderBanner() {
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
     queryFn: async () => {
-      const response = await fetch('/api/reminders/active');
-      if (!response.ok) {
-        console.log('Reminder fetch failed:', response.status, response.statusText);
+      try {
+        const response = await apiRequest('GET', '/api/reminders/active');
+        console.log('Banner: received reminders:', response);
+        return response;
+      } catch (error) {
+        console.log('Banner: reminder fetch failed:', error);
         return [];
       }
-      return response.json();
     },
     refetchInterval: 3000, // Check every 3 seconds for immediate testing
     retry: false,
@@ -106,7 +108,7 @@ export function ReminderBanner() {
   console.log('ReminderBanner - Rendering banner with', visibleReminders.length, 'reminders');
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-500 text-white p-4 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 shadow-lg border-b-4 border-red-600 animate-pulse">
       <div className="max-w-7xl mx-auto">
         {visibleReminders.map((reminder: ActiveReminder) => {
           const PriorityIcon = PRIORITY_ICONS[reminder.priority];
