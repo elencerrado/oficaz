@@ -215,23 +215,48 @@ export default function SuperAdminDashboard() {
           <CardHeader>
             <CardTitle className="text-white">Acciones rápidas</CardTitle>
           </CardHeader>
-          <CardContent className="flex gap-3">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/20">
-              <Building2 className="mr-2 h-4 w-4" />
-              Nueva empresa
-            </Button>
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/20">
-              <Users className="mr-2 h-4 w-4" />
-              Gestión de usuarios
-            </Button>
-            <Button 
-              variant="outline" 
-              className="border-white/20 text-white hover:bg-white/20"
-              onClick={() => setLocation('/super-admin/plans')}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Gestión de Planes
-            </Button>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Nueva empresa</p>
+                  <p className="text-xs text-white/60">Registrar nueva empresa</p>
+                </div>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                  <Users className="h-6 w-6 text-emerald-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Gestión de usuarios</p>
+                  <p className="text-xs text-white/60">Administrar usuarios</p>
+                </div>
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+                onClick={() => setLocation('/super-admin/plans')}
+              >
+                <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                  <Settings className="h-6 w-6 text-purple-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Gestión de Planes</p>
+                  <p className="text-xs text-white/60">Configurar suscripciones</p>
+                </div>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
