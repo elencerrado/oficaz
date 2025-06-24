@@ -53,7 +53,7 @@ export function ReminderBanner() {
   // Force re-render when activeReminders change
   const [forceUpdate, setForceUpdate] = useState(0);
   useEffect(() => {
-    if (activeReminders.length > 0) {
+    if (activeReminders?.length > 0) {
       setForceUpdate(prev => prev + 1);
       console.log('ReminderBanner - Force update triggered, reminders found:', activeReminders.length);
     }
@@ -80,8 +80,8 @@ export function ReminderBanner() {
     return null;
   }
 
-  // Filter out dismissed reminders
-  const visibleReminders = activeReminders.filter(
+  // Filter out dismissed reminders - safely handle null/undefined activeReminders
+  const visibleReminders = (activeReminders || []).filter(
     (reminder: ActiveReminder) => !dismissedReminders.includes(reminder.id)
   );
   
@@ -99,66 +99,90 @@ export function ReminderBanner() {
     return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
   };
 
-  if (visibleReminders.length === 0) {
+
+  
+  console.log('ReminderBanner - Rendering banner with', visibleReminders?.length || 0, 'reminders');
+
+  if (!visibleReminders || visibleReminders.length === 0) {
     console.log('ReminderBanner - No visible reminders, returning null');
     return null;
   }
+
+  const firstReminder = visibleReminders[0];
+  if (!firstReminder) {
+    console.log('ReminderBanner - No first reminder found, returning null');
+    return null;
+  }
   
-  console.log('ReminderBanner - Rendering banner with', visibleReminders.length, 'reminders');
+  const PriorityIcon = PRIORITY_ICONS[firstReminder.priority] || PRIORITY_ICONS.medium;
+  
+  // Determinar color de texto basado en color de fondo
+  const isLightColor = (color: string) => {
+    if (!color || typeof color !== 'string') return false;
+    const lightColors = ['#ffffff', '#ffeb3b', '#d1ecf1', '#e8f5e9', '#fff3e0', '#f3e5f5'];
+    return lightColors.includes(color) || 
+           (color.startsWith('#') && color.length === 7 &&
+            parseInt(color.slice(1, 3), 16) + parseInt(color.slice(3, 5), 16) + parseInt(color.slice(5, 7), 16) > 400);
+  };
+
+  const textColor = isLightColor(firstReminder.color) ? '#000000' : '#ffffff';
+  const borderColor = isLightColor(firstReminder.color) ? '#e2e8f0' : 'rgba(255,255,255,0.3)';
 
   return (
     <div 
-      className="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 shadow-lg border-b-4 border-red-600 animate-bounce"
       style={{ 
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: firstReminder.color || '#ff6b35',
+        color: textColor,
+        padding: '12px 20px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         zIndex: 9999,
-        display: 'block'
+        maxWidth: '90vw',
+        width: 'auto',
+        minWidth: '300px',
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '500',
+        border: `2px solid ${borderColor}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px'
       }}
     >
-      <div className="max-w-7xl mx-auto">
-        {visibleReminders.map((reminder: ActiveReminder) => {
-          const PriorityIcon = PRIORITY_ICONS[reminder.priority];
-          
-          return (
-            <div
-              key={reminder.id}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <PriorityIcon className="w-5 h-5 text-white" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-white">
-                    {reminder.title}
-                  </h4>
-                  {reminder.content && (
-                    <p className="text-red-100 text-sm">
-                      {reminder.content}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-red-100 text-sm font-medium">
-                  {reminder.priority === 'high' ? 'ALTA PRIORIDAD' : 
-                   reminder.priority === 'medium' ? 'MEDIA PRIORIDAD' : 'BAJA PRIORIDAD'}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => dismissReminder(reminder.id)}
-                  className="h-8 w-8 p-0 hover:bg-red-600 text-white"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1' }}>
+        <PriorityIcon style={{ width: '16px', height: '16px', color: textColor }} />
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ fontWeight: '600', marginBottom: '2px' }}>
+            {firstReminder.title}
+          </div>
+          {firstReminder.content && (
+            <div style={{ fontSize: '12px', opacity: '0.8' }}>
+              {firstReminder.content}
             </div>
-          );
-        })}
+          )}
+        </div>
       </div>
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => dismissReminder(firstReminder.id)}
+        style={{ 
+          color: textColor, 
+          padding: '4px 8px',
+          fontSize: '12px',
+          backgroundColor: 'transparent',
+          border: `1px solid ${textColor}`,
+          borderRadius: '4px'
+        }}
+      >
+        <X style={{ width: '14px', height: '14px' }} />
+      </Button>
     </div>
   );
 }

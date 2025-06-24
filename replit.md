@@ -122,7 +122,9 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Frontend funciona: componente ReminderBanner recibe datos y se renderiza según logs
   - PROBLEMA IDENTIFICADO: banner se renderiza pero no es visible hasta recargar página
   - CORREGIDO: añadido force update y estilos inline para garantizar visibilidad inmediata
-  - Banner con animación bounce, estilos inline para forzar posicionamiento correcto
+  - Banner posicionado en parte inferior sin animación de rebote
+  - Color de fondo dinámico usando el color seleccionado del recordatorio
+  - Texto automático en negro para colores claros (blanco, amarillo) y blanco para colores oscuros
   - Sistema de fechas automático: new Date().toISOString() + comparación UTC directa
   - Polling cada 3 segundos operativo, banner aparece sin recargar página
   - CORREGIDO: endpoint /api/reminders/active ahora usa autenticación y muestra solo recordatorios del usuario logueado
