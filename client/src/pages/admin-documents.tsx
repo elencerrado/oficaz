@@ -939,7 +939,7 @@ export default function AdminDocuments() {
                           <div key={employeeId} className="border rounded-lg bg-white">
                             {/* Employee Header */}
                             <div 
-                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 border-b"
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
                               onClick={() => {
                                 const newExpanded = new Set(expandedFolders);
                                 if (isEmployeeExpanded) {
