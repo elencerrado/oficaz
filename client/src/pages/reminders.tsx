@@ -188,10 +188,10 @@ export default function Reminders() {
       const madridDate = new Date(year, month, day, hour, minute);
       processedDate = madridDate.toISOString();
       
-      console.log('Date processing (manual UTC):', {
+      console.log('Date processing (Madrid timezone):', {
         input: reminderData.reminderDate,
         parsedParts: { year, month: month + 1, day, hour, minute },
-        utcDate: utcDate.toString(),
+        madridDate: madridDate.toString(),
         finalISO: processedDate
       });
     }
