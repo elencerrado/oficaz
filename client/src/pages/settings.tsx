@@ -102,16 +102,16 @@ const AccountManagement = () => {
             <div className="flex items-center space-x-3">
               <Crown className="h-6 w-6 text-blue-600" />
               <div>
-                <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'Premium'}</p>
+                <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 <p className="text-sm text-gray-600">
-                  {subscription?.endDate ? `Activo hasta: ${formatDate(subscription.endDate)}` : 'Plan activo'}
+                  {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                {subscription?.status?.toUpperCase() || 'ACTIVO'}
+                {subscription?.status?.toUpperCase()}
               </Badge>
             </div>
           </div>
@@ -155,19 +155,19 @@ const AccountManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">ID de cuenta</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.account_id || 'OFZ-2024-001234'}</p>
+              <p className="text-sm text-gray-600">{accountInfo?.account_id}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Fecha de registro</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.registration_date ? formatDate(accountInfo.registration_date) : '15 de enero de 2024'}</p>
+              <p className="text-sm text-gray-600">{formatDate(accountInfo?.registration_date)}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Administrador principal</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.billing_name || 'Admin Test'}</p>
+              <p className="text-sm text-gray-600">{accountInfo?.billing_name}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Email de facturación</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.billing_email || 'admin@testcompany.com'}</p>
+              <p className="text-sm text-gray-600">{accountInfo?.billing_email}</p>
             </div>
           </div>
         </CardContent>
@@ -191,19 +191,19 @@ const AccountManagement = () => {
             <div className="mt-2 p-4 bg-gray-50 rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="font-medium">Nombre:</span> {accountInfo?.billing_name || 'Test Company S.L.'}
+                  <span className="font-medium">Nombre:</span> {accountInfo?.billing_name}
                 </div>
                 <div>
-                  <span className="font-medium">CIF/NIF:</span> {accountInfo?.tax_id || 'B12345678'}
+                  <span className="font-medium">CIF/NIF:</span> {accountInfo?.tax_id}
                 </div>
                 <div className="md:col-span-2">
-                  <span className="font-medium">Dirección:</span> {accountInfo?.billing_address || 'Calle Mayor 123, 3º B'}
+                  <span className="font-medium">Dirección:</span> {accountInfo?.billing_address}
                 </div>
                 <div>
-                  <span className="font-medium">Ciudad:</span> {accountInfo?.billing_city || 'Madrid'}
+                  <span className="font-medium">Ciudad:</span> {accountInfo?.billing_city}
                 </div>
                 <div>
-                  <span className="font-medium">Código postal:</span> {accountInfo?.billing_postal_code || '28001'}
+                  <span className="font-medium">Código postal:</span> {accountInfo?.billing_postal_code}
                 </div>
               </div>
             </div>
@@ -219,10 +219,10 @@ const AccountManagement = () => {
                     <CreditCard className="h-5 w-5 text-blue-600" />
                     <div>
                       <p className="text-sm font-medium">
-                        {method.card_brand?.toUpperCase() || 'VISA'} **** {method.card_last_four || '4242'}
+                        {method.card_brand?.toUpperCase()} **** {method.card_last_four}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Expira: {method.card_exp_month || '12'}/{method.card_exp_year || '2026'}
+                        Expira: {method.card_exp_month}/{method.card_exp_year}
                       </p>
                     </div>
                     {method.is_default && (
@@ -270,14 +270,14 @@ const AccountManagement = () => {
               {invoices?.slice(0, 5).map((invoice: any) => (
                 <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <p className="font-medium">{invoice.invoice_number || 'OFZ-2024-001'}</p>
-                    <p className="text-sm text-gray-600">{invoice.description || 'Plan Premium'}</p>
+                    <p className="font-medium">{invoice.invoice_number}</p>
+                    <p className="text-sm text-gray-600">{invoice.description}</p>
                     <p className="text-xs text-gray-500">
-                      {invoice.created_at ? formatDate(invoice.created_at) : '1 de diciembre de 2024'}
+                      {formatDate(invoice.created_at)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatAmount(invoice.amount || '49.99')}</p>
+                    <p className="font-semibold">{formatAmount(invoice.amount)}</p>
                     <Badge 
                       variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
                       className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
