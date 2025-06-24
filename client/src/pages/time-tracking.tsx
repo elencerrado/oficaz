@@ -20,7 +20,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays } from 'date-fns';

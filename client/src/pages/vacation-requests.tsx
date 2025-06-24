@@ -31,6 +31,20 @@ export default function VacationRequests() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { user, company } = useAuth();
+  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  
+  // Check if user has access to vacation feature
+  if (!hasAccess('vacation')) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Vacaciones"
+        description="Solicitud y gestión de días de vacaciones"
+        requiredPlan={getRequiredPlan('vacation')}
+        icon={Calendar}
+      />
+    );
+  }
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();

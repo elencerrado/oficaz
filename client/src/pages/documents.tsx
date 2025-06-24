@@ -50,6 +50,20 @@ export default function Documents() {
   const [activeRequest, setActiveRequest] = useState<DocumentRequest | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, company } = useAuth();
+  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  
+  // Check if user has access to documents feature
+  if (!hasAccess('documents')) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Documentos"
+        description="Gestión y almacenamiento de documentos de la empresa"
+        requiredPlan={getRequiredPlan('documents')}
+        icon={FileText}
+      />
+    );
+  }
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
