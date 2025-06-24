@@ -318,8 +318,8 @@ export default function Messages() {
     
     return (
       <div className="flex items-center space-x-1">
-        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center`}>
-          <span className={`text-white ${config.size} font-bold`}>{config.letter}</span>
+        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center flex-shrink-0`}>
+          <span className={`text-white ${config.size} font-bold leading-none`}>{config.letter}</span>
         </div>
         <span>{displayText}</span>
       </div>
