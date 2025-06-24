@@ -393,6 +393,10 @@ const AccountManagement = () => {
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
         vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
       });
+      
+      // Clear any preview when company data changes
+      setLogoPreview(null);
+      setLogoFile(null);
     }
   }, [company]);
 
@@ -476,12 +480,18 @@ const AccountManagement = () => {
       setIsEditingCompany(false);
       setLogoFile(null);
       setLogoPreview(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       
-      // Force refresh of company data to sync UI
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      }, 100);
+      // Update company data in the local state immediately to show the logo
+      if (data.company) {
+        setCompanyData(prev => ({
+          ...prev,
+          logoUrl: data.company.logoUrl || logoUrl
+        }));
+      }
+      
+      // Force immediate refresh of auth data to update company info including logo
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
     },
     onError: () => {
       toast({

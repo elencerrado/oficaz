@@ -300,7 +300,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
           workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
           defaultVacationDays: Number(company.defaultVacationDays) || 30,
-          vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5
+          vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
+          // Explicitly include logoUrl to ensure it's returned
+          logoUrl: company.logoUrl || null
         } : null,
         subscription
       });
@@ -1150,7 +1152,13 @@ startxref
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
 
-      res.json({ company: updatedCompany });
+      res.json({ 
+        message: 'Empresa actualizada correctamente',
+        company: {
+          ...updatedCompany,
+          logoUrl: updatedCompany.logoUrl || null
+        }
+      });
     } catch (error) {
       console.error('Error updating company:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
