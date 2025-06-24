@@ -33,6 +33,9 @@ export default function VacationRequests() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
   // Check if user has access to vacation feature
   if (!hasAccess('vacation')) {
     return (
@@ -315,7 +318,8 @@ export default function VacationRequests() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          {company?.logoUrl ? (
+          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+          {shouldShowLogo ? (
             <img 
               src={company.logoUrl} 
               alt={company.name} 

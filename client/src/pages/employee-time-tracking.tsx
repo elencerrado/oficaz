@@ -27,6 +27,9 @@ export default function EmployeeTimeTracking() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
   // Check if user has access to time tracking feature
   if (!hasAccess('timeTracking')) {
     return (
