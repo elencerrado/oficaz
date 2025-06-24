@@ -326,31 +326,20 @@ export default function VacationManagement() {
           </div>
         </div>
 
+        {/* Tabs Navigation */}
+        <TabNavigation
+          tabs={[
+            { id: 'requests', label: 'Solicitudes', icon: Clock },
+            { id: 'employees', label: 'Empleados de Vacaciones', icon: Users },
+            { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+
         {/* Content based on active tab */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              {activeTab === 'requests' && (
-                <>
-                  <MessageSquare className="w-5 h-5 text-blue-600" />
-                  <span>Solicitudes de Vacaciones</span>
-                </>
-              )}
-              {activeTab === 'employees' && (
-                <>
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <span>Empleados de Vacaciones</span>
-                </>
-              )}
-              {activeTab === 'holidays' && (
-                <>
-                  <CalendarDays className="w-5 h-5 text-purple-600" />
-                  <span>Días Festivos 2025</span>
-                </>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {activeTab === 'requests' && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
