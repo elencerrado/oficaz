@@ -788,7 +788,7 @@ export default function AdminDocuments() {
         {activeTab === 'explorer' && (
           <Card>
             <CardContent className="p-6 space-y-4">
-              {/* Filters */}
+              {/* Filters and View Mode */}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                   <div className="relative">
@@ -814,6 +814,26 @@ export default function AdminDocuments() {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* View Mode Toggle */}
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="px-3"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="px-3"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Results count */}
@@ -821,69 +841,251 @@ export default function AdminDocuments() {
                 Mostrando {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
               </div>
 
-              {/* Documents List */}
+              {/* Documents Display */}
               {filteredDocuments.length > 0 ? (
-                <div className="space-y-3">
-                  {filteredDocuments.map((document: Document) => {
-                    const FileIcon = getFileIcon(document.originalName);
-                    return (
-                      <div
-                        key={document.id}
-                        className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="p-2 rounded-lg bg-gray-100 mr-4">
-                          <FileIcon className="h-6 w-6 text-gray-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 truncate">
-                            {document.originalName || document.fileName || 'Documento sin nombre'}
-                          </h3>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="text-sm text-gray-600">
-                              {document.user?.fullName || 'Empleado desconocido'}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {formatFileSize(document.fileSize)}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {(() => {
-                                // La fecha del servidor está en UTC, convertir a hora local española
-                                const utcDate = new Date(document.createdAt);
-                                // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
-                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
-                              })()}
-                            </span>
+                viewMode === 'list' ? (
+                  /* Lista tradicional */
+                  <div className="space-y-3">
+                    {filteredDocuments.map((document: Document) => {
+                      const FileIcon = getFileIcon(document.originalName);
+                      return (
+                        <div
+                          key={document.id}
+                          className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
+                        >
+                          <div className="p-2 rounded-lg bg-gray-100 mr-4">
+                            <FileIcon className="h-6 w-6 text-gray-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900 truncate">
+                              {document.originalName || document.fileName || 'Documento sin nombre'}
+                            </h3>
+                            <div className="flex items-center gap-4 mt-1">
+                              <span className="text-sm text-gray-600">
+                                {document.user?.fullName || 'Empleado desconocido'}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {formatFileSize(document.fileSize)}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {(() => {
+                                  // La fecha del servidor está en UTC, convertir a hora local española
+                                  const utcDate = new Date(document.createdAt);
+                                  // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
+                                  const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                  return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
+                                })()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocument(document.id, document.originalName)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(document.id, document.originalName)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => confirmDelete(document.id, document.originalName)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewDocument(document.id, document.originalName)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(document.id, document.originalName)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => confirmDelete(document.id, document.originalName)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Vista de cuadrícula por empleado */
+                  <div className="space-y-6">
+                    {(() => {
+                      // Agrupar documentos por empleado
+                      const documentsByEmployee = filteredDocuments.reduce((acc: any, doc: Document) => {
+                        const employeeId = doc.user?.id || 'unknown';
+                        const employeeName = doc.user?.fullName || 'Empleado desconocido';
+                        
+                        if (!acc[employeeId]) {
+                          acc[employeeId] = {
+                            name: employeeName,
+                            documents: []
+                          };
+                        }
+                        acc[employeeId].documents.push(doc);
+                        return acc;
+                      }, {});
+
+                      return Object.entries(documentsByEmployee).map(([employeeId, employeeData]: [string, any]) => {
+                        // Agrupar documentos por tipo
+                        const docsByType = employeeData.documents.reduce((acc: any, doc: Document) => {
+                          const fileName = doc.originalName?.toLowerCase() || '';
+                          let type = 'otros';
+                          
+                          if (fileName.includes('nomina') || fileName.includes('nómina')) {
+                            type = 'nominas';
+                          } else if (fileName.includes('contrato')) {
+                            type = 'contratos';
+                          }
+                          
+                          if (!acc[type]) {
+                            acc[type] = [];
+                          }
+                          acc[type].push(doc);
+                          return acc;
+                        }, {});
+
+                        const employeeFolderId = `employee-${employeeId}`;
+                        const isEmployeeExpanded = expandedFolders.has(employeeFolderId);
+
+                        return (
+                          <div key={employeeId} className="border rounded-lg bg-white">
+                            {/* Employee Header */}
+                            <div 
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 border-b"
+                              onClick={() => {
+                                const newExpanded = new Set(expandedFolders);
+                                if (isEmployeeExpanded) {
+                                  newExpanded.delete(employeeFolderId);
+                                } else {
+                                  newExpanded.add(employeeFolderId);
+                                }
+                                setExpandedFolders(newExpanded);
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                {isEmployeeExpanded ? (
+                                  <FolderOpen className="h-5 w-5 text-blue-600" />
+                                ) : (
+                                  <Folder className="h-5 w-5 text-gray-600" />
+                                )}
+                                <h3 className="font-medium text-gray-900">{employeeData.name}</h3>
+                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                  {employeeData.documents.length} documentos
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Document Types */}
+                            {isEmployeeExpanded && (
+                              <div className="p-4 space-y-4">
+                                {Object.entries(docsByType).map(([type, docs]: [string, any]) => {
+                                  const typeFolderId = `${employeeFolderId}-${type}`;
+                                  const isTypeExpanded = expandedFolders.has(typeFolderId);
+                                  
+                                  const typeNames: { [key: string]: string } = {
+                                    nominas: 'Nóminas',
+                                    contratos: 'Contratos', 
+                                    otros: 'Otros'
+                                  };
+
+                                  return (
+                                    <div key={type} className="border rounded-lg bg-gray-50">
+                                      {/* Type Header */}
+                                      <div 
+                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100"
+                                        onClick={() => {
+                                          const newExpanded = new Set(expandedFolders);
+                                          if (isTypeExpanded) {
+                                            newExpanded.delete(typeFolderId);
+                                          } else {
+                                            newExpanded.add(typeFolderId);
+                                          }
+                                          setExpandedFolders(newExpanded);
+                                        }}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          {isTypeExpanded ? (
+                                            <FolderOpen className="h-4 w-4 text-blue-600" />
+                                          ) : (
+                                            <Folder className="h-4 w-4 text-gray-600" />
+                                          )}
+                                          <span className="font-medium text-gray-800">{typeNames[type]}</span>
+                                          <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">
+                                            {docs.length}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Documents Grid */}
+                                      {isTypeExpanded && (
+                                        <div className="p-3 pt-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                          {docs.map((document: Document) => {
+                                            const FileIcon = getFileIcon(document.originalName);
+                                            return (
+                                              <div
+                                                key={document.id}
+                                                className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow"
+                                              >
+                                                <div className="flex items-start justify-between mb-2">
+                                                  <div className="p-2 rounded-lg bg-gray-100">
+                                                    <FileIcon className="h-4 w-4 text-gray-600" />
+                                                  </div>
+                                                  <div className="flex gap-1">
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => handleViewDocument(document.id, document.originalName)}
+                                                      className="h-7 w-7 p-0"
+                                                    >
+                                                      <Eye className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => handleDownload(document.id, document.originalName)}
+                                                      className="h-7 w-7 p-0"
+                                                    >
+                                                      <Download className="h-3 w-3" />
+                                                    </Button>
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={() => confirmDelete(document.id, document.originalName)}
+                                                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    >
+                                                      <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                                <h4 className="text-sm font-medium text-gray-900 truncate mb-1">
+                                                  {document.originalName || document.fileName || 'Documento sin nombre'}
+                                                </h4>
+                                                <div className="text-xs text-gray-500 space-y-1">
+                                                  <div>{formatFileSize(document.fileSize)}</div>
+                                                  <div>
+                                                    {(() => {
+                                                      const utcDate = new Date(document.createdAt);
+                                                      const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                                      return format(localDate, 'd MMM yyyy', { locale: es });
+                                                    })()}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )
               ) : (
                 <div className="text-center py-12">
                   <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
