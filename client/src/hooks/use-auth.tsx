@@ -94,6 +94,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthData();
   };
 
+  console.log('AuthProvider rendering with:', {
+    user: user?.fullName,
+    company: company?.name,
+    subscription: authData?.subscription,
+    isLoading
+  });
+
   return (
     <AuthContext.Provider value={{
       user,

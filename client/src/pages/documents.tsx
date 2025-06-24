@@ -56,8 +56,17 @@ export default function Documents() {
   
   // Check if user has access to documents feature
   console.log('About to check documents access...');
+  
+  // Force early return during loading
+  if (!user || !company) {
+    console.log('User or company not loaded yet');
+    return <div>Cargando...</div>;
+  }
+  
+  console.log('About to call hasAccess for documents...');
   const documentsAccess = hasAccess('documents');
   console.log('Documents access result:', documentsAccess);
+  console.log('Should access be denied?', !documentsAccess);
   
   if (!documentsAccess) {
     console.log('Access denied, showing restricted page');
