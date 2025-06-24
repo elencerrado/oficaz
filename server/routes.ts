@@ -1500,18 +1500,20 @@ startxref
         console.log('account_info table not found, using default data');
       }
 
-      // Return real account info based on company and user data
-      const registrationDate = new Date('2024-01-15T10:30:00Z');
+      // Calculate registration date based on company creation
+      const company = await storage.getCompany(companyId);
+      const registrationDate = company?.createdAt ? new Date(company.createdAt) : new Date('2024-03-01T09:00:00Z');
+      
       const accountInfo = {
         account_id: `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
         billing_name: req.user!.fullName,
         billing_email: req.user!.companyEmail,
-        billing_address: 'Calle Príncipe de Vergara 112, 4º B',
-        billing_city: 'Madrid',
-        billing_postal_code: '28002',
+        billing_address: company?.address || 'Calle de la Innovación 25, 2º A',
+        billing_city: company?.province || 'Madrid',
+        billing_postal_code: '28020',
         billing_country: 'ES',
-        tax_id: `B${80000000 + companyId}78`
+        tax_id: company?.cif || `B${80000000 + companyId}78`
       };
 
       res.json(accountInfo);
