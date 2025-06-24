@@ -120,19 +120,19 @@ const AccountManagement = () => {
           {usageData?.current && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{usageData.current.employeeCount}</p>
+                <p className="text-2xl font-bold text-blue-600">{usageData.current.employee_count}</p>
                 <p className="text-sm text-gray-600">Empleados</p>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{usageData.current.storageUsedMB} MB</p>
+                <p className="text-2xl font-bold text-green-600">{usageData.current.storage_used_mb} MB</p>
                 <p className="text-sm text-gray-600">Almacenamiento</p>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">{usageData.current.timeEntriesCount}</p>
+                <p className="text-2xl font-bold text-purple-600">{usageData.current.time_entries_count}</p>
                 <p className="text-sm text-gray-600">Fichajes este mes</p>
               </div>
               <div className="text-center p-3 bg-gray-50 rounded-lg">
-                <p className="text-2xl font-bold text-orange-600">{usageData.current.documentsUploaded}</p>
+                <p className="text-2xl font-bold text-orange-600">{usageData.current.documents_uploaded}</p>
                 <p className="text-sm text-gray-600">Documentos subidos</p>
               </div>
             </div>
