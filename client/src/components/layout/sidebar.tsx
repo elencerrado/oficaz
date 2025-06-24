@@ -103,11 +103,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
             {company?.logoUrl ? (
-              <img 
-                src={company.logoUrl} 
-                alt={company.name} 
-                className="h-8 w-auto object-contain"
-              />
+              <div className="flex items-center justify-center" style={{ minWidth: '1.5rem', minHeight: '1.5rem', maxWidth: '3rem', maxHeight: '2rem' }}>
+                <img 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
             ) : (
               <img 
                 src={oficazLogo} 

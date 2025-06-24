@@ -324,11 +324,13 @@ export default function EmployeeTimeTracking() {
         
         <div className="flex-1 flex flex-col items-end text-right">
           {company?.logoUrl ? (
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="w-8 h-8 mb-1 object-contain bg-white/10 rounded p-1"
-            />
+            <div className="mb-1 bg-white/10 rounded p-1 flex items-center justify-center" style={{ minWidth: '2rem', minHeight: '2rem', maxWidth: '3rem', maxHeight: '2rem' }}>
+              <img 
+                src={company.logoUrl} 
+                alt={company.name} 
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
           ) : (
             <div className="text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
