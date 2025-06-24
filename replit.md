@@ -117,15 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 24, 2025. Sistema completo de recordatorios con zona horaria Madrid FINALIZADO Y VERIFICADO
+- June 24, 2025. Sistema completo de recordatorios con manejo automático de zonas horarias FINALIZADO
   - Banner de notificaciones funcionando perfectamente con polling cada 3 segundos
   - Endpoint /api/reminders/active operativo sin problemas de autenticación
-  - Sistema de fechas funcionando: UTC en base de datos, Madrid para usuarios
-  - Recordatorio de prueba activado exitosamente a las 18:27 hora española
-  - Banner aparece automáticamente cuando llega la hora programada
-  - Sistema 100% funcional: crear, editar, eliminar recordatorios y notificaciones en banner
-  - Error de variable utcDate corregido en función de edición de recordatorios
-  - Zona horaria Madrid corregida completamente: comparación tiempo Madrid vs recordatorios Madrid
+  - Sistema de fechas SIMPLIFICADO: automático usando Date() del navegador y comparación UTC
+  - Eliminado manejo manual de zonas horarias en favor de solución robusta y general
+  - Frontend: new Date(input).toISOString() para conversión automática local→UTC
+  - Backend: comparación directa UTC vs UTC sin conversiones manuales
+  - Solución escalable que funciona para cualquier zona horaria automáticamente
+  - Error de actualización corregido con simplificación del código de fechas
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar

@@ -799,37 +799,25 @@ export class DrizzleStorage implements IStorage {
   async getActiveReminders(userId: number): Promise<any[]> {
     console.log(`Fetching active reminders for user: ${userId}`);
     
-    // Get current time in Madrid timezone
-    const nowUtc = new Date();
-    const madridNow = new Date(nowUtc.toLocaleString('en-US', { timeZone: 'Europe/Madrid' }));
+    // Simple approach: use current UTC time and compare directly
+    // Dates should be stored in UTC and compared in UTC
+    const now = new Date();
     
-    console.log(`Current UTC time: ${nowUtc.toISOString()}`);
-    console.log(`Current Madrid time: ${madridNow.toLocaleString('es-ES')}`);
+    console.log(`Current UTC time: ${now.toISOString()}`);
+    console.log(`Current Madrid time: ${now.toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}`);
     
-    // Fetch all potentially active reminders
-    const reminders = await db.select().from(schema.reminders)
+    // Query reminders that should be active (reminder_date <= current time)
+    const activeReminders = await db.select().from(schema.reminders)
       .where(
         and(
           eq(schema.reminders.userId, userId),
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
-          isNotNull(schema.reminders.reminderDate)
+          isNotNull(schema.reminders.reminderDate),
+          lte(schema.reminders.reminderDate, now)
         )
       )
-      .orderBy(desc(schema.reminders.priority), schema.reminders.reminderDate);
-    
-    // Debug and filter active reminders
-    const activeReminders = reminders.filter(reminder => {
-      if (!reminder.reminderDate) return false;
-      
-      // Since reminder dates are stored as Madrid time (but in UTC format),
-      // we need to compare with Madrid current time
-      const reminderTime = new Date(reminder.reminderDate);
-      const isActive = reminderTime <= madridNow;
-      
-      console.log(`Reminder "${reminder.title}": ${reminderTime.toISOString()} <= ${madridNow.toISOString()} = ${isActive}`);
-      return isActive;
-    });
+      .orderBy(schema.reminders.reminderDate);
     
     console.log(`Found active reminders: ${activeReminders.length}`);
     console.log('Active reminders found:', activeReminders.length);
