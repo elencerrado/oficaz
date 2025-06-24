@@ -33,12 +33,20 @@ export function ReminderBanner() {
   const queryClient = useQueryClient();
 
   // Fetch active reminders
-  const { data: activeReminders = [] } = useQuery({
+  const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 5000, // Check every 5 seconds for immediate testing
+    refetchInterval: 3000, // Check every 3 seconds for immediate testing
+    retry: false,
+    enabled: true // Ensure query runs even if other queries might be disabled
   });
 
-  console.log('ReminderBanner - Active reminders:', activeReminders);
+  console.log('ReminderBanner - Query result:', { 
+    activeReminders, 
+    isLoading, 
+    error: error?.message,
+    count: activeReminders?.length,
+    timestamp: new Date().toLocaleTimeString()
+  });
   console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
 
   // Mark reminder as shown mutation
@@ -52,6 +60,15 @@ export function ReminderBanner() {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
     },
   });
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (error) {
+    console.error('ReminderBanner - Error fetching active reminders:', error);
+    return null;
+  }
 
   // Filter out dismissed reminders
   const visibleReminders = activeReminders.filter(

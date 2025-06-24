@@ -1684,10 +1684,32 @@ startxref
     }
   });
 
-  app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
+  app.get('/api/reminders/active', async (req: AuthRequest, res) => {
     try {
-      const userId = req.user!.id;
+      // Extract token from Authorization header
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: "Access token required" });
+      }
+      
+      const token = authHeader.substring(7);
+      
+      // Verify token manually
+      let decoded: any;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      } catch (err) {
+        console.log('Token verification failed for active reminders:', err);
+        return res.status(403).json({ message: "Invalid or expired token" });
+      }
+      
+      const userId = decoded.id;
+      console.log('Fetching active reminders for user:', userId);
+      
       const activeReminders = await storage.getActiveReminders(userId);
+      console.log('Active reminders found:', activeReminders.length);
+      console.log('Reminders data:', activeReminders);
+      
       res.json(activeReminders);
     } catch (error) {
       console.error("Error fetching active reminders:", error);
