@@ -54,12 +54,18 @@ export default function StatsCard({
       className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-6 flex items-center justify-center min-h-[100px]">
-        <div className="flex items-center space-x-4 w-full">
-          <div className={`w-12 h-12 ${config.bg} rounded-lg shadow-sm flex items-center justify-center flex-shrink-0`}>
-            <span className="text-xl font-bold text-white">{value}</span>
+      <CardContent className="p-6 min-h-[100px]">
+        <div className="flex flex-col space-y-3">
+          {/* Primera fila: Icono + Número */}
+          <div className="flex items-center space-x-2">
+            <div className={`w-6 h-6 ${config.bg} rounded-md flex items-center justify-center flex-shrink-0`}>
+              {Icon && <Icon className="w-3 h-3 text-white" />}
+            </div>
+            <span className="text-xl font-bold text-gray-900">{value}</span>
           </div>
-          <div className="flex-1 min-w-0">
+          
+          {/* Segunda fila: Texto descriptivo */}
+          <div className="space-y-1">
             <p className="text-sm font-medium text-gray-600">{title}</p>
             <p className="text-xs text-gray-500">{subtitle}</p>
           </div>
