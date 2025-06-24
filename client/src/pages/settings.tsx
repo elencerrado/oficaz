@@ -854,8 +854,16 @@ const AccountManagement = () => {
                                   />
                                   <span className="text-xs text-gray-600">Ejemplo: imagotipo de Oficaz</span>
                                 </div>
+                                <div className="mt-3 p-2 bg-blue-100 rounded border">
+                                  <p className="text-xs font-medium text-blue-800 mb-1">📏 Tamaño recomendado:</p>
+                                  <p className="text-xs text-blue-700">
+                                    • <strong>Ancho:</strong> 200-400 píxeles<br/>
+                                    • <strong>Alto:</strong> 60-120 píxeles<br/>
+                                    • <strong>Formato:</strong> PNG o SVG para mejor calidad
+                                  </p>
+                                </div>
                                 <p className="text-xs text-blue-600 mt-2">
-                                  Esto asegura que tu logo se ajuste bien y sea fácil de leer en toda la aplicación.
+                                  Esto asegura que tu logo se vea nítido, se cargue rápido y se ajuste perfectamente en toda la aplicación.
                                 </p>
                               </div>
                             </div>
