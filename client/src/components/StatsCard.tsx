@@ -70,7 +70,7 @@ export default function StatsCard({
         {/* Mobile: Layout centrado simplificado igual que vacaciones */}
         <div className="md:hidden text-center">
           <div className="flex items-center justify-center space-x-1 mb-1">
-            <div className={`w-4 h-4 ${config.bg} rounded flex items-center justify-center`}>
+            <div className={`w-4 h-4 ${config.bg} rounded-full flex items-center justify-center`}>
               {Icon && <Icon className="w-2 h-2 text-white" />}
             </div>
             <span className="text-xs font-bold text-gray-900">{value}</span>
