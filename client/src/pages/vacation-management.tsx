@@ -16,6 +16,7 @@ import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import StatsCard from "@/components/StatsCard";
 
 interface VacationRequest {
   id: number;
