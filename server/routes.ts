@@ -1684,10 +1684,9 @@ startxref
     }
   });
 
-  app.get('/api/reminders/active', async (req, res) => {
+  app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // For banner notifications, hardcode user 1 temporarily
-      const userId = 1;
+      const userId = req.user!.id;
       console.log('Fetching active reminders for user:', userId);
       
       const activeReminders = await storage.getActiveReminders(userId);
