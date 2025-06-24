@@ -26,12 +26,14 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { TabNavigation } from '@/components/ui/tab-navigation';
 
 export default function Settings() {
   const { user, company } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  const [activeTab, setActiveTab] = useState('company');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   
