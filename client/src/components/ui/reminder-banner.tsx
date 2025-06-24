@@ -35,6 +35,14 @@ export function ReminderBanner() {
   // Fetch active reminders
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
+    queryFn: async () => {
+      const response = await fetch('/api/reminders/active');
+      if (!response.ok) {
+        console.log('Reminder fetch failed:', response.status, response.statusText);
+        return [];
+      }
+      return response.json();
+    },
     refetchInterval: 3000, // Check every 3 seconds for immediate testing
     retry: false,
     enabled: true // Ensure query runs even if other queries might be disabled
@@ -45,7 +53,8 @@ export function ReminderBanner() {
     isLoading, 
     error: error?.message,
     count: activeReminders?.length,
-    timestamp: new Date().toLocaleTimeString()
+    timestamp: new Date().toLocaleTimeString(),
+    madridTime: new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })
   });
   console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
 

@@ -797,8 +797,12 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveReminders(userId: number): Promise<any[]> {
+    // Get current time and convert to Madrid time for comparison
     const now = new Date();
+    console.log('Current UTC time:', now.toISOString());
+    console.log('Current Madrid time:', now.toLocaleString('es-ES', { timeZone: 'Europe/Madrid' }));
     
+    // Fetch all potentially active reminders
     const reminders = await db.select().from(schema.reminders)
       .where(
         and(
@@ -806,13 +810,22 @@ export class DrizzleStorage implements IStorage {
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
           schema.reminders.reminderDate !== null,
-          lte(schema.reminders.reminderDate, now),
           eq(schema.reminders.notificationShown, false)
         )
       )
       .orderBy(desc(schema.reminders.priority), schema.reminders.reminderDate);
     
-    return reminders;
+    // Filter reminders that should be active based on current time
+    const activeReminders = reminders.filter(reminder => {
+      if (!reminder.reminderDate) return false;
+      const reminderTime = new Date(reminder.reminderDate);
+      const isActive = reminderTime <= now;
+      console.log(`Reminder "${reminder.title}": ${reminderTime.toISOString()} <= ${now.toISOString()} = ${isActive}`);
+      return isActive;
+    });
+    
+    console.log('Found active reminders:', activeReminders.length);
+    return activeReminders;
   }
 }
 
