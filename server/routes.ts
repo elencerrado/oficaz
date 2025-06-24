@@ -1479,6 +1479,118 @@ startxref
     }
   });
 
+  // Account management endpoints
+  app.get('/api/account/info', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const result = await db.execute(sql`
+        SELECT * FROM account_info WHERE company_id = ${companyId}
+      `);
+      
+      const accountInfo = result.rows[0];
+      if (!accountInfo) {
+        return res.status(404).json({ message: 'Información de cuenta no encontrada' });
+      }
+
+      res.json(accountInfo);
+    } catch (error) {
+      console.error('Error fetching account info:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/account/subscription', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const [subscription] = await db.select()
+        .from(subscriptions)
+        .where(eq(subscriptions.companyId, companyId));
+
+      if (!subscription) {
+        return res.status(404).json({ message: 'Suscripción no encontrada' });
+      }
+
+      res.json(subscription);
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/account/payment-methods', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const result = await db.execute(sql`
+        SELECT * FROM payment_methods 
+        WHERE company_id = ${companyId} AND is_active = true
+      `);
+
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/account/invoices', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const result = await db.execute(sql`
+        SELECT * FROM invoices 
+        WHERE company_id = ${companyId}
+        ORDER BY created_at DESC
+      `);
+
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/account/usage-stats', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const historicalResult = await db.execute(sql`
+        SELECT * FROM usage_stats 
+        WHERE company_id = ${companyId}
+        ORDER BY year DESC, month DESC
+        LIMIT 12
+      `);
+
+      // Get current month stats
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      
+      const currentResult = await db.execute(sql`
+        SELECT * FROM usage_stats 
+        WHERE company_id = ${companyId} AND month = ${currentMonth} AND year = ${currentYear}
+      `);
+
+      const currentStats = currentResult.rows[0] || {
+        employeeCount: 0,
+        activeEmployees: 0,
+        timeEntriesCount: 0,
+        documentsUploaded: 0,
+        storageUsedMB: 0,
+        apiCalls: 0
+      };
+
+      res.json({
+        historical: historicalResult.rows,
+        current: currentStats
+      });
+    } catch (error) {
+      console.error('Error fetching usage stats:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -24,6 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { CreditCard, Crown, AlertCircle, CheckCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,307 @@ import { TabNavigation } from '@/components/ui/tab-navigation';
 export default function Settings() {
   const { user, company } = useAuth();
   const { toast } = useToast();
+
+// Component for Account Management
+const AccountManagement = () => {
+  const { data: accountInfo } = useQuery({
+    queryKey: ['/api/account/info'],
+    retry: false,
+  });
+
+  const { data: subscription } = useQuery({
+    queryKey: ['/api/account/subscription'],
+    retry: false,
+  });
+
+  const { data: paymentMethods } = useQuery({
+    queryKey: ['/api/account/payment-methods'],
+    retry: false,
+  });
+
+  const { data: invoices } = useQuery({
+    queryKey: ['/api/account/invoices'],
+    retry: false,
+  });
+
+  const { data: usageData } = useQuery({
+    queryKey: ['/api/account/usage-stats'],
+    retry: false,
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatAmount = (amount: string) => {
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(parseFloat(amount));
+  };
+
+  if (!accountInfo || !subscription) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Subscription Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Crown className="h-5 w-5 text-yellow-500" />
+            <span>Estado de suscripción</span>
+          </CardTitle>
+          <CardDescription>
+            Información sobre tu plan actual y características disponibles
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+            <div className="flex items-center space-x-3">
+              <Crown className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="font-semibold text-gray-900">Plan {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}</p>
+                <p className="text-sm text-gray-600">
+                  {subscription.endDate ? `Activo hasta: ${formatDate(subscription.endDate)}` : 'Plan activo'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                {subscription.status.toUpperCase()}
+              </Badge>
+            </div>
+          </div>
+          
+          {/* Usage Statistics */}
+          {usageData?.current && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{usageData.current.employeeCount}</p>
+                <p className="text-sm text-gray-600">Empleados</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{usageData.current.storageUsedMB} MB</p>
+                <p className="text-sm text-gray-600">Almacenamiento</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">{usageData.current.timeEntriesCount}</p>
+                <p className="text-sm text-gray-600">Fichajes este mes</p>
+              </div>
+              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                <p className="text-2xl font-bold text-orange-600">{usageData.current.documentsUploaded}</p>
+                <p className="text-sm text-gray-600">Documentos subidos</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Company Registration Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Calendar className="h-5 w-5" />
+            <span>Información de registro</span>
+          </CardTitle>
+          <CardDescription>
+            Detalles de la cuenta y registro en Oficaz
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium">ID de cuenta</Label>
+              <p className="text-sm text-gray-600">{accountInfo.accountId}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Fecha de registro</Label>
+              <p className="text-sm text-gray-600">{formatDate(accountInfo.registrationDate)}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Administrador principal</Label>
+              <p className="text-sm text-gray-600">{accountInfo.billingName}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Email de facturación</Label>
+              <p className="text-sm text-gray-600">{accountInfo.billingEmail}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Billing Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="h-5 w-5" />
+            <span>Información de facturación</span>
+          </CardTitle>
+          <CardDescription>
+            Direcciones fiscales y métodos de pago
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Billing Address */}
+          <div>
+            <Label className="text-sm font-semibold">Dirección fiscal</Label>
+            <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="font-medium">Nombre:</span> {accountInfo.billingName}
+                </div>
+                <div>
+                  <span className="font-medium">CIF/NIF:</span> {accountInfo.taxId || 'No especificado'}
+                </div>
+                <div className="md:col-span-2">
+                  <span className="font-medium">Dirección:</span> {accountInfo.billingAddress || 'No especificada'}
+                </div>
+                <div>
+                  <span className="font-medium">Ciudad:</span> {accountInfo.billingCity || 'No especificada'}
+                </div>
+                <div>
+                  <span className="font-medium">Código postal:</span> {accountInfo.billingPostalCode || 'No especificado'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method */}
+          <div>
+            <Label className="text-sm font-semibold">Método de pago</Label>
+            {paymentMethods && paymentMethods.length > 0 ? (
+              <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+                {paymentMethods.map((method: any) => (
+                  <div key={method.id} className="flex items-center space-x-3">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="text-sm font-medium">
+                        {method.cardBrand?.toUpperCase()} **** {method.cardLastFour}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Expira: {method.cardExpMonth}/{method.cardExpYear}
+                      </p>
+                    </div>
+                    {method.isDefault && (
+                      <Badge variant="secondary" className="text-xs">
+                        Principal
+                      </Badge>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">No hay métodos de pago configurados</p>
+            )}
+          </div>
+
+          {/* Management Actions */}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="justify-start">
+              <CreditCard className="mr-2 h-4 w-4" />
+              Actualizar método de pago
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <Calendar className="mr-2 h-4 w-4" />
+              Ver historial de facturación
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <FileText className="mr-2 h-4 w-4" />
+              Exportar datos de la cuenta
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoice History */}
+      {invoices && invoices.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de facturas</CardTitle>
+            <CardDescription>
+              Últimas facturas emitidas para tu cuenta
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {invoices.slice(0, 5).map((invoice: any) => (
+                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{invoice.invoiceNumber}</p>
+                    <p className="text-sm text-gray-600">{invoice.description}</p>
+                    <p className="text-xs text-gray-500">
+                      {formatDate(invoice.createdAt)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatAmount(invoice.amount)}</p>
+                    <Badge 
+                      variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
+                      className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                    >
+                      {invoice.status === 'paid' ? 'Pagada' : 'Pendiente'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Management Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Gestión de cuenta</CardTitle>
+          <CardDescription>
+            Opciones avanzadas para la administración de tu cuenta
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="justify-start">
+              <Crown className="mr-2 h-4 w-4" />
+              Cambiar plan de suscripción
+            </Button>
+            <Button variant="outline" className="justify-start">
+              <FileText className="mr-2 h-4 w-4" />
+              Descargar datos de la empresa
+            </Button>
+          </div>
+          
+          {/* Danger Zone */}
+          <div className="border-t pt-4 mt-6">
+            <h4 className="text-lg font-semibold text-red-600 mb-2">Zona de peligro</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              Estas acciones son permanentes y no se pueden deshacer.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="justify-start border-orange-200 text-orange-700 hover:bg-orange-50">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Pausar cuenta temporalmente
+              </Button>
+              <Button variant="outline" className="justify-start border-red-200 text-red-700 hover:bg-red-50">
+                <X className="mr-2 h-4 w-4" />
+                Cancelar cuenta permanentemente
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
   const queryClient = useQueryClient();
   
   const [activeTab, setActiveTab] = useState('company');

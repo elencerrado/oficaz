@@ -60,6 +60,74 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Account information - extends company data with account-specific details
+export const accountInfo = pgTable("account_info", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull().unique(),
+  accountId: text("account_id").notNull().unique(), // OFZ-2024-001234 format
+  registrationDate: timestamp("registration_date").defaultNow().notNull(),
+  billingEmail: text("billing_email").notNull(),
+  billingName: text("billing_name").notNull(),
+  billingAddress: text("billing_address"),
+  billingCity: text("billing_city"),
+  billingPostalCode: text("billing_postal_code"),
+  billingCountry: text("billing_country").default("ES"),
+  taxId: text("tax_id"), // CIF/NIF for billing
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payment methods
+export const paymentMethods = pgTable("payment_methods", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  stripePaymentMethodId: text("stripe_payment_method_id").notNull(),
+  type: text("type").notNull(), // card, bank_transfer, etc
+  cardBrand: text("card_brand"), // visa, mastercard, etc
+  cardLastFour: text("card_last_four"), // last 4 digits
+  cardExpMonth: integer("card_exp_month"),
+  cardExpYear: integer("card_exp_year"),
+  isDefault: boolean("is_default").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Invoices and billing history
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  invoiceNumber: text("invoice_number").notNull().unique(), // OFZ-2024-12-001
+  stripeInvoiceId: text("stripe_invoice_id"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("EUR"),
+  status: text("status").notNull(), // paid, pending, failed, cancelled
+  dueDate: timestamp("due_date"),
+  paidAt: timestamp("paid_at"),
+  description: text("description"),
+  periodStart: timestamp("period_start"),
+  periodEnd: timestamp("period_end"),
+  downloadUrl: text("download_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Usage statistics
+export const usageStats = pgTable("usage_stats", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
+  employeeCount: integer("employee_count").default(0),
+  activeEmployees: integer("active_employees").default(0),
+  timeEntriesCount: integer("time_entries_count").default(0),
+  documentsUploaded: integer("documents_uploaded").default(0),
+  storageUsedMB: decimal("storage_used_mb", { precision: 10, scale: 2 }).default("0"),
+  apiCalls: integer("api_calls").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Users table
 export const users = pgTable("users", { 
   // Identificación y acceso
@@ -244,6 +312,30 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   features: true,
 });
 
+export const insertAccountInfoSchema = createInsertSchema(accountInfo).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentMethodSchema = createInsertSchema(paymentMethods).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUsageStatsSchema = createInsertSchema(usageStats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const superAdminLoginSchema = z.object({
   email: z.string().email("Email debe ser válido"),
   password: z.string().min(1, "Password es requerido"),
@@ -308,3 +400,12 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;
 export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;
+
+export type AccountInfo = typeof accountInfo.$inferSelect;
+export type InsertAccountInfo = typeof accountInfo.$inferInsert;
+export type PaymentMethod = typeof paymentMethods.$inferSelect;
+export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+export type UsageStats = typeof usageStats.$inferSelect;
+export type InsertUsageStats = typeof usageStats.$inferInsert;
