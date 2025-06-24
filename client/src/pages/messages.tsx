@@ -14,6 +14,7 @@ import {
   User,
   Bell,
   MessageCircle,
+  MessageSquare,
   FileText,
   Clock,
   CheckCircle2,
