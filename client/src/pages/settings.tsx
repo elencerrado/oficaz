@@ -350,9 +350,9 @@ export default function Settings() {
 
         <TabNavigation
           tabs={[
-            { id: 'company', label: 'Empresa', icon: <Building2 className="h-4 w-4" /> },
-            { id: 'policies', label: 'Políticas', icon: <SettingsIcon className="h-4 w-4" /> },
-            { id: 'profile', label: 'Mi Perfil', icon: <Users className="h-4 w-4" /> }
+            { id: 'company', label: 'Empresa', icon: Building2 },
+            { id: 'policies', label: 'Políticas', icon: SettingsIcon },
+            { id: 'profile', label: 'Mi Perfil', icon: Users }
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
