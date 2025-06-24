@@ -687,9 +687,7 @@ export class DrizzleStorage implements IStorage {
     const [subscription] = await db
       .update(schema.subscriptions)
       .set({
-        plan: updates.plan,
-        maxUsers: updates.maxUsers,
-        status: updates.status,
+        ...updates,
         updatedAt: new Date()
       })
       .where(eq(schema.subscriptions.companyId, companyId))

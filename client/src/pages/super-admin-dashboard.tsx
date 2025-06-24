@@ -233,13 +233,14 @@ export default function SuperAdminDashboard() {
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+                onClick={() => setLocation('/super-admin/companies')}
               >
                 <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                   <Users className="h-6 w-6 text-emerald-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-medium">Gestión de usuarios</p>
-                  <p className="text-xs text-white/60">Administrar usuarios</p>
+                  <p className="font-medium">Gestión de Empresas</p>
+                  <p className="text-xs text-white/60">Configurar empresas</p>
                 </div>
               </Button>
               
@@ -458,8 +459,9 @@ export default function SuperAdminDashboard() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handlePlanChange(company.id, company.subscription.plan)}
+                          onClick={() => setLocation(`/super-admin/companies/${company.id}`)}
                           className="text-white/60 hover:text-white hover:bg-white/10"
+                          title="Gestionar empresa"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>

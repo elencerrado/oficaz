@@ -117,6 +117,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de gestión individual de empresas implementado completamente
+  - Nueva página de configuración personalizada por empresa individual
+  - Super admin puede cambiar plan, límites de usuarios y precio personalizado por empresa
+  - Funcionalidades pueden activarse/desactivarse independientemente del plan base
+  - Empresa con plan Basic puede tener funcionalidades de Pro/Master si el super admin lo permite
+  - Backend expandido con endpoints para gestión granular de empresas
+  - Esquema de base de datos actualizado con precios personalizados por empresa
+  - Navegación desde dashboard principal con botón "Gestión de Empresas"
 - June 24, 2025. Sistema de restricciones por plan de suscripción implementado completamente
   - Todas las empresas migradas del plan "free" al plan "Basic"
   - Backend actualizado para propagar cambios de funcionalidades a empresas
