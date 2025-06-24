@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import StatsCard from "@/components/StatsCard";
 import { useAuth } from "@/hooks/use-auth";
+import { TabNavigation } from "@/components/ui/tab-navigation";
 
 interface VacationRequest {
   id: number;

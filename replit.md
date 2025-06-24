@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Componente TabNavigation reutilizable implementado
+  - Creado componente genérico para navegación por pestañas con iconos
+  - Refactorizado admin-documents.tsx para usar nuevo componente
+  - Implementado en vacation-management.tsx con 3 pestañas consistentes
+  - Diseño uniforme: Solicitudes, Empleados de Vacaciones, Días Festivos
+  - Sistema de navegación coherente en toda la aplicación admin
 - June 24, 2025. Sistema de provincia de empresa implementado dinámicamente en vacaciones
   - Eliminado hardcodeo de "Madrid" en selector de días festivos
   - Provincia ahora se obtiene automáticamente de los datos de la empresa

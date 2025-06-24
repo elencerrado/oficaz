@@ -713,45 +713,15 @@ export default function AdminDocuments() {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('upload')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'upload'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Upload className="h-4 w-4 inline mr-2" />
-                Subir Documentos
-              </button>
-              <button
-                onClick={() => setActiveTab('explorer')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'explorer'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Search className="h-4 w-4 inline mr-2" />
-                Explorador
-              </button>
-              <button
-                onClick={() => setActiveTab('requests')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'requests'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Send className="h-4 w-4 inline mr-2" />
-                Solicitudes
-              </button>
-            </nav>
-          </div>
-        </div>
+        <TabNavigation
+          tabs={[
+            { id: 'upload', label: 'Subir Documentos', icon: Upload },
+            { id: 'explorer', label: 'Explorador', icon: Search },
+            { id: 'requests', label: 'Solicitudes', icon: Send }
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
 
         {/* Tab Content */}
         {activeTab === 'upload' && (
