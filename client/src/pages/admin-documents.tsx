@@ -721,7 +721,7 @@ export default function AdminDocuments() {
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-yellow-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">{documentRequests?.filter(req => !req.isCompleted).length || 0}</span>
+                  <span className="text-xl font-bold text-white">{sentRequests?.filter(req => !req.isCompleted).length || 0}</span>
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
