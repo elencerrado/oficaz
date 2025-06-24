@@ -745,6 +745,11 @@ const AccountManagement = () => {
                         src={logoPreview || companyData.logoUrl} 
                         alt="Logo de la empresa" 
                         className="w-16 h-16 object-contain border rounded-lg bg-white"
+                        onLoad={() => console.log('Logo loaded successfully:', logoPreview || companyData.logoUrl)}
+                        onError={(e) => {
+                          console.error('Error loading logo:', logoPreview || companyData.logoUrl);
+                          console.error('Image element:', e.currentTarget);
+                        }}
                       />
                     ) : (
                       <div className="w-16 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
