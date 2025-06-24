@@ -26,13 +26,14 @@ import {
   Trash2,
   ArrowLeft
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 export default function Settings() {
   const { user, company } = useAuth();
@@ -824,9 +825,42 @@ const AccountManagement = () => {
                             }
                           }}
                         />
-                        <p className="text-xs text-gray-500">
-                          Formatos: JPG, PNG, SVG (máx. 2MB)
-                        </p>
+                        <div className="space-y-3">
+                          <p className="text-xs text-gray-500">
+                            Formatos: JPG, PNG, SVG (máx. 2MB)
+                          </p>
+                          
+                          {/* Logo recommendations */}
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-start space-x-2 mb-2">
+                              <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <div className="text-sm">
+                                <p className="font-medium text-blue-900 mb-2">Para que tu logo se vea perfecto en la app, recomendamos usar:</p>
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="font-medium text-blue-800">• Logotipo:</span>
+                                    <span className="text-blue-700"> Solo letras, sin imágenes.</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-blue-800">• Imagotipo:</span>
+                                    <span className="text-blue-700"> Letras junto con un icono, todo en una misma línea.</span>
+                                  </div>
+                                </div>
+                                <div className="mt-3 p-2 bg-white rounded border flex items-center space-x-2">
+                                  <img 
+                                    src={oficazLogo} 
+                                    alt="Ejemplo de imagotipo" 
+                                    className="h-5 w-auto object-contain"
+                                  />
+                                  <span className="text-xs text-gray-600">Ejemplo: imagotipo de Oficaz</span>
+                                </div>
+                                <p className="text-xs text-blue-600 mt-2">
+                                  Esto asegura que tu logo se ajuste bien y sea fácil de leer en toda la aplicación.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

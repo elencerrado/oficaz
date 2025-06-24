@@ -131,6 +131,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Logos se muestran en lugar de texto cuando están disponibles en toda la aplicación
   - Logos más grandes y visibles sin contenedores restrictivos
   - Filtro de inversión de color en vistas de empleado para logos oscuros en fondos oscuros
+  - Guía educativa con recomendaciones de tipos de logo (logotipo vs imagotipo)
+  - Ejemplo visual usando el imagotipo de Oficaz como referencia de buenas prácticas
 - June 24, 2025. Campos adicionales de empresa agregados a configuración
   - Añadido logoUrl con preview visual del logo de la empresa
   - Añadido companyAlias para URLs personalizadas de la aplicación
