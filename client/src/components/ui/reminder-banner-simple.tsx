@@ -18,8 +18,12 @@ export function ReminderBannerSimple() {
   
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 2000,
-    staleTime: 0,
+    refetchInterval: 1000, // Check every second for immediate detection
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache results
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: false,
     enabled: true
   });
