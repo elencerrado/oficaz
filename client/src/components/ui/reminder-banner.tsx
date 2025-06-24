@@ -59,6 +59,15 @@ export function ReminderBanner() {
     madridTime: new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })
   });
   console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
+  
+  // Force re-render when activeReminders change
+  const [forceUpdate, setForceUpdate] = useState(0);
+  useEffect(() => {
+    if (activeReminders.length > 0) {
+      setForceUpdate(prev => prev + 1);
+      console.log('ReminderBanner - Force update triggered, reminders found:', activeReminders.length);
+    }
+  }, [activeReminders]);
 
   // Mark reminder as shown mutation
   const markAsShownMutation = useMutation({
@@ -108,7 +117,17 @@ export function ReminderBanner() {
   console.log('ReminderBanner - Rendering banner with', visibleReminders.length, 'reminders');
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 shadow-lg border-b-4 border-red-600 animate-pulse">
+    <div 
+      className="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 shadow-lg border-b-4 border-red-600 animate-bounce"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        display: 'block'
+      }}
+    >
       <div className="max-w-7xl mx-auto">
         {visibleReminders.map((reminder: ActiveReminder) => {
           const PriorityIcon = PRIORITY_ICONS[reminder.priority];

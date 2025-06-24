@@ -120,10 +120,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 - June 24, 2025. Sistema completo de recordatorios con banner visual FINALIZADO
   - Backend funciona perfectamente: detecta recordatorios activos y API responde correctamente
   - Frontend funciona: componente ReminderBanner recibe datos y se renderiza según logs
+  - PROBLEMA IDENTIFICADO: banner se renderiza pero no es visible hasta recargar página
+  - CORREGIDO: añadido force update y estilos inline para garantizar visibilidad inmediata
+  - Banner con animación bounce, estilos inline para forzar posicionamiento correcto
   - Sistema de fechas automático: new Date().toISOString() + comparación UTC directa
-  - Banner integrado en AppLayout para admin/manager y empleados con z-index máximo
-  - Polling cada 3 segundos operativo, logs confirman renderizado correcto del banner
-  - Eliminados enfoques manuales de timezone por solución robusta y escalable
+  - Polling cada 3 segundos operativo, banner aparece sin recargar página
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar
