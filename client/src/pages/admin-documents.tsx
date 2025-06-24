@@ -11,6 +11,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import StatsCard from '@/components/StatsCard';
+import { TabNavigation } from '@/components/ui/tab-navigation';
 import {
   Upload,
   Search,
