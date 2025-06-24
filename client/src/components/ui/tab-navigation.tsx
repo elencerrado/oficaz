@@ -39,14 +39,26 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex-1 py-3 px-4 font-medium text-sm transition-colors duration-200 relative z-10 flex items-center justify-center ${
+              className={`flex-1 py-3 px-2 sm:px-4 font-medium text-xs sm:text-sm transition-colors duration-200 relative z-10 flex items-center justify-center ${
                 activeTab === tab.id
                   ? 'text-blue-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <tab.icon className="h-4 w-4 mr-2" />
-              <span className="truncate">{tab.label}</span>
+              <tab.icon className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">
+                  {tab.label === 'Empleados de Vacaciones' ? 'Empleados' :
+                   tab.label === 'Días Festivos' ? 'Festivos' :
+                   tab.label === 'Mi Perfil' ? 'Perfil' :
+                   tab.label === 'Explorador' ? 'Files' :
+                   tab.label === 'Subir Documentos' ? 'Subir' :
+                   tab.label === 'Solicitudes' ? 'Requests' :
+                   tab.label === 'Políticas' ? 'Config' :
+                   tab.label}
+                </span>
+              </span>
             </button>
           ))}
         </nav>
