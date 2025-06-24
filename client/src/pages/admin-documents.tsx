@@ -30,7 +30,11 @@ import {
   Plane,
   Check,
   AlertTriangle,
-  Trash2
+  Trash2,
+  List,
+  Grid3X3,
+  Folder,
+  FolderOpen
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
