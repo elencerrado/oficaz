@@ -33,7 +33,7 @@ import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
   const { user, company } = useAuth();
