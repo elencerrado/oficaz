@@ -106,17 +106,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 
-                className="h-8 w-auto object-contain"
+                className="h-6 w-auto object-contain flex-shrink-0"
               />
             ) : (
               <img 
                 src={oficazLogo} 
                 alt="Oficaz" 
-                className="h-6 w-auto"
+                className="h-6 w-auto flex-shrink-0"
               />
             )}
-            <div>
-              <h2 className="text-sm font-medium text-gray-900">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-medium text-gray-900 truncate">
                 {company?.logoUrl ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
