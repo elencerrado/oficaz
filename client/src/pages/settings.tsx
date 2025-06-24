@@ -36,6 +36,7 @@ export default function Settings() {
 
 // Component for Account Management
 const AccountManagement = () => {
+  const { user } = useAuth();
   const { data: accountInfo } = useQuery({
     queryKey: ['/api/account/info'],
     retry: false,
@@ -163,7 +164,7 @@ const AccountManagement = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Administrador principal</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.billing_name}</p>
+              <p className="text-sm text-gray-600">{user?.fullName}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Email de facturación</Label>
@@ -191,7 +192,7 @@ const AccountManagement = () => {
             <div className="mt-2 p-4 bg-gray-50 rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="font-medium">Nombre:</span> {accountInfo?.billing_name}
+                  <span className="font-medium">Nombre:</span> {user?.fullName}
                 </div>
                 <div>
                   <span className="font-medium">CIF/NIF:</span> {accountInfo?.tax_id}
