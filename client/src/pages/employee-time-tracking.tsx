@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
@@ -23,6 +25,19 @@ interface WorkSession {
 
 export default function EmployeeTimeTracking() {
   const { user, company } = useAuth();
+  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  
+  // Check if user has access to time tracking feature
+  if (!hasAccess('timeTracking')) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Control de Tiempo"
+        description="Registro de fichajes y control horario"
+        requiredPlan={getRequiredPlan('timeTracking')}
+        icon={Clock}
+      />
+    );
+  }
   const [currentDate, setCurrentDate] = useState(new Date());
   const [location] = useLocation();
   const urlParts = location.split('/').filter(part => part.length > 0);
