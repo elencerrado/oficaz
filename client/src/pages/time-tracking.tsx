@@ -553,6 +553,8 @@ export default function TimeTracking() {
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
               <div className="flex flex-wrap gap-2">
+                {/* Primera línea - Filtros principales */}
+                <div className="flex gap-2 flex-wrap">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
@@ -650,24 +652,28 @@ export default function TimeTracking() {
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
+                </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDateFilter('all');
-                    setSelectedEmployee('all');
-                    setSelectedStartDate(null);
-                    setSelectedEndDate(null);
-                    setStartDate('');
-                    setEndDate('');
-                    setCurrentDate(new Date());
-                    setCurrentMonth(new Date());
-                  }}
-                  className="h-10 text-sm font-normal min-w-[100px]"
-                >
-                  Limpiar filtros
-                </Button>
+                {/* Segunda línea solo en móvil - Botón limpiar */}
+                <div className="w-full lg:w-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('all');
+                      setSelectedEmployee('all');
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                      setStartDate('');
+                      setEndDate('');
+                      setCurrentDate(new Date());
+                      setCurrentMonth(new Date());
+                    }}
+                    className="h-10 text-sm font-normal w-full lg:w-auto lg:min-w-[100px]"
+                  >
+                    Limpiar filtros
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
