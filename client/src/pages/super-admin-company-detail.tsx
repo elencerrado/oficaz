@@ -102,7 +102,13 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       if (!response.ok) throw new Error('Failed to update company');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Actualizar estado local con los datos del servidor
+      if (data.subscription) {
+        setUseCustomSettings(data.subscription.useCustomSettings || false);
+        setCustomFeatures(data.subscription.features || {});
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies', companyId] });
       toast({
         title: "Éxito",
@@ -113,6 +119,12 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       setEditingPrice(false);
     },
     onError: (error: any) => {
+      // Revertir cambios locales en caso de error
+      if (company) {
+        setUseCustomSettings(company.subscription.useCustomSettings || false);
+        setCustomFeatures(company.subscription.features || {});
+      }
+      
       toast({
         title: "Error",
         description: error.message,
@@ -167,7 +179,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     });
   };
 
-  const toggleCustomSettings = () => {
+  const toggleCustomSettings = async () => {
     const newCustomState = !useCustomSettings;
     setUseCustomSettings(newCustomState);
     
@@ -176,7 +188,17 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       const planFeatures = plans?.find(p => p.name === company?.subscription?.plan)?.features;
       if (planFeatures) {
         setCustomFeatures(planFeatures);
+        // Guardar inmediatamente el cambio al desactivar personalización
+        updateCompanyMutation.mutate({ 
+          features: planFeatures,
+          useCustomSettings: newCustomState
+        });
       }
+    } else {
+      // Solo actualizar el estado de personalización cuando se activa
+      updateCompanyMutation.mutate({ 
+        useCustomSettings: newCustomState
+      });
     }
   };
 
@@ -198,10 +220,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       setNewPrice(company.subscription.customPricePerUser?.toString() || company.subscription.pricePerUser?.toString() || '');
       setCustomFeatures(company.subscription.features || {});
       
-      // Detectar si usa configuración personalizada comparando con plan base
-      const planDefaults = plans?.find(p => p.name === company.subscription.plan)?.features;
-      const hasCustomConfig = planDefaults && JSON.stringify(planDefaults) !== JSON.stringify(company.subscription.features);
-      setUseCustomSettings(company.subscription.useCustomSettings || hasCustomConfig || false);
+      // Usar el estado explícito de useCustomSettings de la base de datos
+      setUseCustomSettings(company.subscription.useCustomSettings || false);
     }
   }, [company, plans]);
 
