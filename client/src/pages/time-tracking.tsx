@@ -552,7 +552,7 @@ export default function TimeTracking() {
             {/* Right side - Date Filters */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="flex gap-2 flex-wrap items-center justify-start">
+              <div className="flex gap-2 items-center flex-nowrap overflow-x-auto">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
