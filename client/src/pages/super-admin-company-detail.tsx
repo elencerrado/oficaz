@@ -52,6 +52,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const [newPlan, setNewPlan] = useState('');
   const [newMaxUsers, setNewMaxUsers] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [useCustomSettings, setUseCustomSettings] = useState(false);
+  const [customFeatures, setCustomFeatures] = useState<any>({});
 
   // Fetch company details
   const { data: company, isLoading } = useQuery({
@@ -134,7 +136,22 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
 
   const handlePlanSave = () => {
     if (!newPlan) return;
-    updateCompanyMutation.mutate({ plan: newPlan });
+    
+    // Si no usa configuración personalizada, actualizar funcionalidades automáticamente
+    let finalFeatures = customFeatures;
+    if (!useCustomSettings) {
+      const planDefaults = plans?.find(p => p.name === newPlan)?.features;
+      if (planDefaults) {
+        finalFeatures = planDefaults;
+        setCustomFeatures(planDefaults);
+      }
+    }
+
+    updateCompanyMutation.mutate({ 
+      plan: newPlan,
+      features: finalFeatures,
+      useCustomSettings
+    });
   };
 
   const handleMaxUsersSave = () => {
@@ -150,13 +167,43 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     });
   };
 
+  const toggleCustomSettings = () => {
+    const newCustomState = !useCustomSettings;
+    setUseCustomSettings(newCustomState);
+    
+    // Si desactiva personalización, resetear a configuración del plan
+    if (!newCustomState) {
+      const planFeatures = plans?.find(p => p.name === company?.subscription?.plan)?.features;
+      if (planFeatures) {
+        setCustomFeatures(planFeatures);
+      }
+    }
+  };
+
+  const saveCustomSettings = async () => {
+    try {
+      updateCompanyMutation.mutate({ 
+        features: customFeatures,
+        useCustomSettings
+      });
+    } catch (error) {
+      console.error('Error updating custom settings:', error);
+    }
+  };
+
   useEffect(() => {
     if (company) {
       setNewPlan(company.subscription.plan);
       setNewMaxUsers(company.subscription.maxUsers?.toString() || '');
       setNewPrice(company.subscription.customPricePerUser?.toString() || company.subscription.pricePerUser?.toString() || '');
+      setCustomFeatures(company.subscription.features || {});
+      
+      // Detectar si usa configuración personalizada comparando con plan base
+      const planDefaults = plans?.find(p => p.name === company.subscription.plan)?.features;
+      const hasCustomConfig = planDefaults && JSON.stringify(planDefaults) !== JSON.stringify(company.subscription.features);
+      setUseCustomSettings(company.subscription.useCustomSettings || hasCustomConfig || false);
     }
-  }, [company]);
+  }, [company, plans]);
 
   if (isLoading) {
     return (
@@ -350,33 +397,84 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Settings className="w-5 h-5" />
-                Funcionalidades Personalizadas
+                Funcionalidades
               </CardTitle>
-              <p className="text-sm text-white/60">
-                Activa funcionalidades extra independientemente del plan base
-              </p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(featureLabels).map(([feature, label]) => {
-                  const isEnabled = company.subscription.features[feature] || false;
-                  
-                  return (
-                    <div key={feature} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                      <div>
-                        <div className="font-medium text-white">{label}</div>
-                        <div className="text-xs text-white/60">
-                          {isEnabled ? 'Funcionalidad activa' : 'Funcionalidad desactivada'}
-                        </div>
-                      </div>
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={(checked) => handleFeatureToggle(feature as keyof typeof featureLabels, checked)}
-                        disabled={updateCompanyMutation.isPending}
-                      />
+            <CardContent className="space-y-6">
+              {/* Toggle para configuración personalizada */}
+              <div className="border border-white/20 rounded-lg p-4 bg-blue-500/10">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-white">Configuración Personalizada</h3>
+                    <p className="text-xs text-white/60">
+                      {useCustomSettings 
+                        ? 'Esta empresa usa configuración personalizada independiente del plan' 
+                        : 'Esta empresa sigue la configuración por defecto del plan seleccionado'
+                      }
+                    </p>
+                  </div>
+                  <Button
+                    variant={useCustomSettings ? "destructive" : "default"}
+                    size="sm"
+                    onClick={toggleCustomSettings}
+                    disabled={updateCompanyMutation.isPending}
+                  >
+                    {useCustomSettings ? 'Desactivar Personalización' : 'Activar Personalización'}
+                  </Button>
+                </div>
+                <div className="text-xs text-white/50">
+                  {useCustomSettings 
+                    ? '⚙️ Las funcionalidades se pueden modificar individualmente'
+                    : '📋 Las funcionalidades siguen automáticamente la configuración del plan'
+                  }
+                </div>
+              </div>
+
+              {/* Funcionalidades */}
+              <div>
+                {!useCustomSettings && (
+                  <div className="mb-4 p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <p className="text-sm text-white/70">
+                      🔒 Configuración automática según el plan "{company.subscription.plan}". 
+                      Activa la personalización para modificar individualmente.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  {Object.entries(customFeatures).map(([key, enabled]) => (
+                    <div key={key} className={`flex items-center justify-between p-3 bg-white/5 rounded-lg ${!useCustomSettings ? 'opacity-60' : ''}`}>
+                      <span className="text-white/80 text-sm">{featureLabels[key as keyof typeof featureLabels] || key}</span>
+                      {useCustomSettings ? (
+                        <Switch
+                          checked={enabled as boolean}
+                          onCheckedChange={(checked) => {
+                            setCustomFeatures(prev => ({
+                              ...prev,
+                              [key]: checked
+                            }));
+                          }}
+                        />
+                      ) : (
+                        <Badge variant={enabled ? "default" : "secondary"} className="text-xs">
+                          {enabled ? 'Habilitado' : 'Deshabilitado'}
+                        </Badge>
+                      )}
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+                
+                {useCustomSettings && (
+                  <div className="mt-4 flex justify-end">
+                    <Button 
+                      onClick={saveCustomSettings}
+                      disabled={updateCompanyMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Guardar Configuración Personalizada
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
