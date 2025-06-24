@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +83,24 @@ const documentTypes = [
 
 export default function AdminDocuments() {
   const { user, company } = useAuth();
+  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  
+  console.log('Admin Documents page: checking access...');
+  
+  // Check if user has access to documents feature
+  if (!hasAccess('documents')) {
+    console.log('Admin Documents: Access denied');
+    return (
+      <FeatureRestrictedPage
+        featureName="Documentos"
+        description="Gestión y almacenamiento de documentos de la empresa"
+        requiredPlan={getRequiredPlan('documents')}
+        icon={FileText}
+      />
+    );
+  }
+  
+  console.log('Admin Documents: Access granted');
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
