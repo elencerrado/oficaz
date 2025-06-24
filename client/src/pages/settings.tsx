@@ -348,6 +348,7 @@ const AccountManagement = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   // User profile data
   const [profileData, setProfileData] = useState({

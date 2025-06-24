@@ -69,6 +69,8 @@ export const subscriptions = pgTable("subscriptions", {
   endDate: timestamp("end_date"),
   maxUsers: integer("max_users").default(5).notNull(),
   features: jsonb("features").default('{}').notNull(),
+  useCustomSettings: boolean("use_custom_settings").default(false).notNull(),
+  customPricePerUser: decimal("custom_price_per_user", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -1564,22 +1564,28 @@ startxref
   app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
-      const { plan, maxUsers } = req.body;
+      const { plan, maxUsers, features, useCustomSettings, customPricePerUser } = req.body;
       
-      console.log('Updating subscription for company:', companyId, 'to plan:', plan);
+      console.log('Updating subscription for company:', companyId, 'Updates:', req.body);
       
-      // Validate plan
-      const validPlans = ['free', 'basic', 'pro', 'master'];
-      if (!validPlans.includes(plan)) {
-        return res.status(400).json({ message: 'Invalid plan type' });
+      // Validate plan if provided
+      if (plan) {
+        const validPlans = ['free', 'basic', 'pro', 'master'];
+        if (!validPlans.includes(plan)) {
+          return res.status(400).json({ message: 'Invalid plan type' });
+        }
       }
       
+      // Build update object
+      const updates: any = {};
+      if (plan) updates.plan = plan;
+      if (maxUsers !== undefined) updates.maxUsers = maxUsers;
+      if (features) updates.features = features;
+      if (useCustomSettings !== undefined) updates.useCustomSettings = useCustomSettings;
+      if (customPricePerUser !== undefined) updates.customPricePerUser = customPricePerUser;
+      
       // Update subscription
-      const updatedSubscription = await storage.updateCompanySubscription(companyId, {
-        plan,
-        maxUsers: maxUsers || (plan === 'free' ? 5 : plan === 'basic' ? 25 : plan === 'pro' ? 100 : 500),
-        status: 'active'
-      });
+      const updatedSubscription = await storage.updateCompanySubscription(companyId, updates);
       
       if (!updatedSubscription) {
         return res.status(404).json({ message: 'Company not found' });
