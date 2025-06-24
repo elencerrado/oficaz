@@ -52,8 +52,15 @@ export default function Documents() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
+  console.log('Documents page: user =', user?.fullName, 'company =', company?.name);
+  
   // Check if user has access to documents feature
-  if (!hasAccess('documents')) {
+  console.log('About to check documents access...');
+  const documentsAccess = hasAccess('documents');
+  console.log('Documents access result:', documentsAccess);
+  
+  if (!documentsAccess) {
+    console.log('Access denied, showing restricted page');
     return (
       <FeatureRestrictedPage
         featureName="Documentos"
@@ -63,6 +70,8 @@ export default function Documents() {
       />
     );
   }
+  
+  console.log('Access granted, showing documents page');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
