@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

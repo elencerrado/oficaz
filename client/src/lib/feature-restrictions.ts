@@ -24,6 +24,21 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
   return subscription.features[feature] || false;
 };
 
+export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): string => {
+  const featurePlanMap = {
+    messages: 'Basic',
+    documents: 'Basic',
+    vacation: 'Basic',
+    timeTracking: 'Basic',
+    reports: 'Pro',
+    analytics: 'Pro',
+    customization: 'Master',
+    api: 'Master'
+  };
+  
+  return featurePlanMap[feature] || 'Pro';
+};
+
 export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures): string => {
   const featureNames = {
     messages: 'Mensajes',
