@@ -284,7 +284,7 @@ export default function EmployeesSimple() {
   };
 
   return (
-    <div className="container mx-auto p-4 lg:p-6 space-y-6">
+    <div className="px-6 py-4 space-y-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Empleados</h1>
