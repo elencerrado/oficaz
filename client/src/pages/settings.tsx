@@ -245,14 +245,6 @@ const AccountManagement = () => {
               <CreditCard className="mr-2 h-4 w-4" />
               Actualizar método de pago
             </Button>
-            <Button variant="outline" className="justify-start">
-              <Calendar className="mr-2 h-4 w-4" />
-              Ver historial de facturación
-            </Button>
-            <Button variant="outline" className="justify-start">
-              <FileText className="mr-2 h-4 w-4" />
-              Exportar datos de la cuenta
-            </Button>
           </div>
         </CardContent>
       </Card>
