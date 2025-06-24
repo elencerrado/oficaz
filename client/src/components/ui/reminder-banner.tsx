@@ -29,31 +29,24 @@ const PRIORITY_ICONS = {
 };
 
 export function ReminderBanner() {
-  console.log('ReminderBanner component initializing...');
   const [dismissedReminders, setDismissedReminders] = useState<number[]>([]);
   const queryClient = useQueryClient();
 
-  // Fetch active reminders
+  // Fetch active reminders with optimized settings for real-time detection
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 2000, // Check every 2 seconds for immediate detection
+    refetchInterval: 1000, // Check every second for immediate detection
     staleTime: 0, // Always consider data stale
     gcTime: 0, // Don't cache results
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: false,
-    enabled: true // Ensure query runs even if other queries might be disabled
+    enabled: true, // Ensure query runs even if other queries might be disabled
+    refetchIntervalInBackground: true // Continue polling even when tab is not active
   });
 
-  console.log('ReminderBanner - Query result:', { 
-    activeReminders, 
-    isLoading, 
-    error: error?.message,
-    count: activeReminders?.length,
-    timestamp: new Date().toLocaleTimeString(),
-    madridTime: new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })
-  });
-  console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
+
   
 
 
@@ -83,10 +76,6 @@ export function ReminderBanner() {
     (reminder: ActiveReminder) => !dismissedReminders.includes(reminder.id)
   );
   
-  console.log('ReminderBanner - Visible reminders:', visibleReminders);
-  
-
-
   const dismissReminder = (reminderId: number) => {
     setDismissedReminders(prev => [...prev, reminderId]);
     markAsShownMutation.mutate(reminderId);
@@ -100,19 +89,12 @@ export function ReminderBanner() {
   };
 
 
-  
-  console.log('ReminderBanner - Rendering banner with', visibleReminders?.length || 0, 'reminders');
-  console.log('ReminderBanner - Active reminders from query:', activeReminders);
-  console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
-
   if (!visibleReminders || visibleReminders.length === 0) {
-    console.log('ReminderBanner - No visible reminders, returning null');
     return null;
   }
 
   const firstReminder = visibleReminders[0];
   if (!firstReminder) {
-    console.log('ReminderBanner - No first reminder found, returning null');
     return null;
   }
   

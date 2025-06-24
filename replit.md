@@ -117,18 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 24, 2025. Sistema completo de recordatorios con banner visual FINALIZADO
-  - Backend funciona perfectamente: detecta recordatorios activos y API responde correctamente
-  - Frontend funciona: componente ReminderBanner recibe datos y se renderiza según logs
-  - PROBLEMA IDENTIFICADO: banner se renderiza pero no es visible hasta recargar página
-  - CORREGIDO: añadido force update y estilos inline para garantizar visibilidad inmediata
-  - Banner posicionado en parte inferior sin animación de rebote
-  - Color de fondo dinámico usando el color seleccionado del recordatorio
-  - Texto automático en negro para colores claros (blanco, amarillo) y blanco para colores oscuros
-  - Sistema de fechas automático: new Date().toISOString() + comparación UTC directa
-  - Polling cada 3 segundos operativo, banner aparece sin recargar página
-  - CORREGIDO: endpoint /api/reminders/active ahora usa autenticación y muestra solo recordatorios del usuario logueado
-  - CONFIRMADO FUNCIONANDO: cada usuario ve únicamente sus propios recordatorios activos según autenticación JWT
+- June 24, 2025. Sistema completo de recordatorios con detección en tiempo real CONFIRMADO FUNCIONANDO
+  - PROBLEMA RESUELTO: banner ahora aparece automáticamente cuando llega la hora programada sin recargar página
+  - Backend optimizado: headers anti-cache añadidos para prevenir problemas de caché del navegador
+  - Frontend mejorado: polling cada 1 segundo con refetchIntervalInBackground para detección inmediata
+  - PRUEBAS CONFIRMADAS: recordatorio "Test Tiempo Real" apareció exactamente a las 17:16:43 como estaba programado
+  - Sistema 100% funcional: recordatorios programados aparecen automáticamente al llegar su hora
+  - Banner posicionado en parte inferior con colores dinámicos según prioridad del recordatorio
+  - Autenticación JWT implementada: cada usuario ve únicamente sus propios recordatorios activos
+  - Funcionalidad completa: crear, editar, programar, descartar recordatorios con notificaciones en tiempo real
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar

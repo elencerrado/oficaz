@@ -1687,11 +1687,15 @@ startxref
   app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      console.log('Fetching active reminders for user:', userId);
-      
       const activeReminders = await storage.getActiveReminders(userId);
-      console.log('Active reminders found:', activeReminders.length);
-      console.log('Reminders data:', activeReminders);
+      
+      // Add anti-cache headers for real-time updates
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString()
+      });
       
       res.json(activeReminders);
     } catch (error) {
