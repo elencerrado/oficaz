@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de configuración personalizada de empresas implementado
+  - Botón toggle para activar/desactivar opciones personalizadas por empresa
+  - Por defecto, empresas siguen configuración automática del plan asignado
+  - Con personalización activa, super admin puede modificar funcionalidades individualmente
+  - Campo useCustomSettings en base de datos para controlar el comportamiento
+  - Backend actualizado para aplicar configuración del plan cuando personalización está desactivada
+  - UI intuitiva que muestra estado actual y permite cambio fácil entre modos
 - June 24, 2025. Lógica inteligente de logos implementada y corregida
   - Corregidos todos los errores de variables no definidas en componentes
   - Implementada lógica: mostrar logo solo si existe Y función logoUpload habilitada en super admin
