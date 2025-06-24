@@ -420,7 +420,7 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 h-[calc(100vh-140px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
@@ -429,7 +429,7 @@ export default function Messages() {
           </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex gap-6 h-[calc(100vh-180px)]">
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-260px)]">
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
@@ -631,7 +631,7 @@ export default function Messages() {
             </div>
         </div>
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden h-full flex flex-col">
+        <div className="lg:hidden h-[calc(100vh-200px)] flex flex-col">
           {!selectedChat ? (
             /* Employee List View */
             (<div className="flex-1 flex flex-col min-h-0">
