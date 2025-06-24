@@ -233,7 +233,10 @@ export default function SuperAdminDashboard() {
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
-                onClick={() => setLocation('/super-admin/companies')}
+                onClick={() => {
+                  console.log('Navegando a gestión de empresas');
+                  setLocation('/super-admin/companies');
+                }}
               >
                 <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                   <Users className="h-6 w-6 text-emerald-400" />

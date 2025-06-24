@@ -30,6 +30,7 @@ import AccessDenied from "@/pages/access-denied";
 import SuperAdminLogin from "@/pages/super-admin-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import SuperAdminPlans from "@/pages/super-admin-plans";
+import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import QuickAccess from "@/pages/quick-access";
 
 
