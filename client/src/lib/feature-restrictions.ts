@@ -27,7 +27,7 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
 export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): string => {
   const featurePlanMap = {
     messages: 'Basic',
-    documents: 'Basic',
+    documents: 'Pro',
     vacation: 'Basic',
     timeTracking: 'Basic',
     reports: 'Pro',

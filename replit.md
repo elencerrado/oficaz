@@ -124,7 +124,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Componente FeatureRestrictedPage reutilizable para todas las funcionalidades
   - Hook useFeatureCheck para verificar acceso a funcionalidades
   - Sistema más user-friendly que permite explorar pero informa sobre limitaciones
-  - Botones para contactar administrador y ver información de planes
+  - Documentos ahora requieren plan Pro (no disponible en Basic)
+  - Plan Basic: mensajes, vacaciones, fichajes | Plan Pro: + documentos, reportes
 - June 24, 2025. Sistema de gestión individual de empresas implementado completamente
   - Nueva página de configuración personalizada por empresa individual
   - Super admin puede cambiar plan, límites de usuarios y precio personalizado por empresa
