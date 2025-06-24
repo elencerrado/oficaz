@@ -93,6 +93,13 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getSubscriptionByCompanyId(companyId: number): Promise<Subscription | undefined>;
   updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined>;
+
+  // Subscription Plans operations
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: number, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
+  deleteSubscriptionPlan(id: number): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -689,6 +696,35 @@ export class DrizzleStorage implements IStorage {
       .returning();
     
     return subscription;
+  }
+
+  // Subscription Plans operations
+  async getAllSubscriptionPlans(): Promise<any[]> {
+    return await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.pricePerUser);
+  }
+
+  async getSubscriptionPlan(id: number): Promise<any | undefined> {
+    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async createSubscriptionPlan(plan: any): Promise<any> {
+    const [newPlan] = await db.insert(schema.subscriptionPlans).values(plan).returning();
+    return newPlan;
+  }
+
+  async updateSubscriptionPlan(id: number, updates: any): Promise<any | undefined> {
+    const [plan] = await db
+      .update(schema.subscriptionPlans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.subscriptionPlans.id, id))
+      .returning();
+    return plan;
+  }
+
+  async deleteSubscriptionPlan(id: number): Promise<boolean> {
+    const result = await db.delete(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.id, id));
+    return result.rowCount > 0;
   }
 }
 

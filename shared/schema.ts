@@ -46,6 +46,19 @@ export const superAdmins = pgTable("super_admins", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Subscription plans configuration
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull(), // Basic, Pro, Master
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  pricePerUser: decimal("price_per_user", { precision: 10, scale: 2 }).notNull(), // 3.00 euros per user
+  maxUsers: integer("max_users"), // null = unlimited
+  features: jsonb("features").notNull().default({}), // {messages: true, documents: true, vacation: true, etc}
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Company subscriptions
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
