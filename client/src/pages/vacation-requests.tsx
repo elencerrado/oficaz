@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Calendar, Check, X, Clock, CalendarDays, ChevronLeft, ChevronRight, HelpCircle, MessageCircle, FileText } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';

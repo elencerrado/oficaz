@@ -32,6 +32,20 @@ import jsPDF from 'jspdf';
 
 export default function TimeTracking() {
   const { user } = useAuth();
+  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  
+  // Check if user has access to time tracking feature
+  if (!hasAccess('timeTracking')) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Fichajes"
+        description="Gestión de fichajes y control horario de empleados"
+        requiredPlan={getRequiredPlan('timeTracking')}
+        icon={Clock}
+      />
+    );
+  }
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
