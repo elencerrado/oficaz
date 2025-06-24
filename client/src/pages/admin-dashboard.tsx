@@ -360,7 +360,11 @@ export default function AdminDashboard() {
                   
                   return receivedMessages.length > 0 ? (
                     receivedMessages.map((message: any) => (
-                      <div key={message.id} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <div 
+                        key={message.id} 
+                        className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                        onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
+                      >
                         <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                           <MessageSquare className="h-4 w-4 text-purple-600" />
                         </div>
