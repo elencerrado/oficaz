@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (response.ok) {
             const data = await response.json();
-            console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name });
+            console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name, subscription: data.subscription });
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);
