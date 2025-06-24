@@ -674,79 +674,41 @@ export default function AdminDocuments() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200"
+          <StatsCard
+            title="Total Documentos"
+            subtitle="En sistema"
+            value={allDocuments.length}
+            color="blue"
             onClick={() => setActiveTab('explorer')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">{allDocuments.length}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Total Documentos</p>
-                  <p className="text-xs text-gray-500">En sistema</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-green-200"
+          />
+
+          <StatsCard
+            title="Subidos Hoy"
+            subtitle="Nuevos archivos"
+            value={allDocuments.filter(doc => {
+              const today = new Date();
+              const docDate = new Date(doc.createdAt);
+              return docDate.toDateString() === today.toDateString();
+            }).length}
+            color="green"
             onClick={() => setActiveTab('upload')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">
-                    {allDocuments.filter(doc => {
-                      const today = new Date();
-                      const docDate = new Date(doc.createdAt);
-                      return docDate.toDateString() === today.toDateString();
-                    }).length}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Subidos Hoy</p>
-                  <p className="text-xs text-gray-500">Nuevos archivos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          />
 
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-yellow-200"
+          <StatsCard
+            title="Solicitudes"
+            subtitle="Pendientes"
+            value={sentRequests?.filter(req => !req.isCompleted).length || 0}
+            color="yellow"
             onClick={() => setActiveTab('requests')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-yellow-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">{sentRequests?.filter(req => !req.isCompleted).length || 0}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
-                  <p className="text-xs text-gray-500">Pendientes</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          />
 
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-purple-200"
+          <StatsCard
+            title="Empleados"
+            subtitle="Total activos"
+            value={employees.length}
+            color="purple"
             onClick={() => setActiveTab('explorer')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-purple-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-bold text-white">{employees.length}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Empleados</p>
-                  <p className="text-xs text-gray-500">Total activos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          />
         </div>
 
         {/* Tabs Navigation */}
