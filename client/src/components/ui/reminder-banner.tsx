@@ -35,7 +35,11 @@ export function ReminderBanner() {
   // Fetch active reminders
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 3000, // Check every 3 seconds for immediate testing
+    refetchInterval: 2000, // Check every 2 seconds for immediate detection
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache results
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     retry: false,
     enabled: true // Ensure query runs even if other queries might be disabled
   });
@@ -50,14 +54,7 @@ export function ReminderBanner() {
   });
   console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
   
-  // Force re-render when activeReminders change
-  const [forceUpdate, setForceUpdate] = useState(0);
-  useEffect(() => {
-    if (activeReminders?.length > 0) {
-      setForceUpdate(prev => prev + 1);
-      console.log('ReminderBanner - Force update triggered, reminders found:', activeReminders.length);
-    }
-  }, [activeReminders]);
+
 
   // Mark reminder as shown mutation
   const markAsShownMutation = useMutation({
@@ -86,6 +83,8 @@ export function ReminderBanner() {
   );
   
   console.log('ReminderBanner - Visible reminders:', visibleReminders);
+  
+
 
   const dismissReminder = (reminderId: number) => {
     setDismissedReminders(prev => [...prev, reminderId]);
