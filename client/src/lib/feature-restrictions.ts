@@ -8,6 +8,7 @@ export interface SubscriptionFeatures {
   reports: boolean;
   analytics: boolean;
   customization: boolean;
+  logoUpload: boolean;
   api: boolean;
 }
 
@@ -44,6 +45,7 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     reports: 'Pro',
     analytics: 'Pro',
     customization: 'Master',
+    logoUpload: 'Pro',
     api: 'Master'
   };
   

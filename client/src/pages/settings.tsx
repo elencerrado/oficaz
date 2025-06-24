@@ -759,7 +759,7 @@ const AccountManagement = () => {
                         <Building2 className="w-6 h-6 text-gray-400" />
                       </div>
                     )}
-                    {isEditingCompany && (
+                    {isEditingCompany && hasAccess('logoUpload') && (
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2">
                           <Button
@@ -870,6 +870,16 @@ const AccountManagement = () => {
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    )}
+                    {!hasAccess('logoUpload') && isEditingCompany && (
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-amber-600" />
+                          <p className="text-sm text-amber-700">
+                            La subida de logos requiere el plan Pro o superior.
+                          </p>
                         </div>
                       </div>
                     )}

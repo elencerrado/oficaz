@@ -117,6 +117,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de subida de logos con restricciones por plan implementado
+  - Subida de logos restringida a planes Pro y Master (no disponible en Basic)
+  - Nueva sub-funcionalidad "logoUpload" dentro de personalización en super admin
+  - Mensaje informativo para usuarios con plan Basic sobre la restricción
+  - Base de datos actualizada con nueva funcionalidad en todos los planes
 - June 24, 2025. Sistema completo de subida de logos implementado y corregido
   - Reemplazado input URL por sistema de upload de archivos
   - Subida directa de imágenes JPG, PNG, SVG con validación de 2MB máximo
