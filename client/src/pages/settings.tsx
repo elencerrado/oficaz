@@ -37,6 +37,21 @@ export default function Settings() {
 // Component for Account Management
 const AccountManagement = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  // Force refresh of account data when component mounts (one time only)
+  useEffect(() => {
+    const hasRefreshed = sessionStorage.getItem('account-data-refreshed');
+    if (!hasRefreshed) {
+      queryClient.invalidateQueries({ queryKey: ['/api/account/info'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/usage-stats'] });
+      sessionStorage.setItem('account-data-refreshed', 'true');
+    }
+  }, []);
+  
   const { data: accountInfo } = useQuery({
     queryKey: ['/api/account/info'],
     retry: false,
