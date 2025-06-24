@@ -60,40 +60,22 @@ interface Document {
 
 const documentTypes = [
   { 
-    id: 'nomina', 
-    name: 'Nómina', 
-    icon: FileText,
-    keywords: ['nomina', 'payroll', 'salary', 'salario', 'sueldo']
-  },
-  { 
-    id: 'contrato', 
-    name: 'Contrato', 
-    icon: FileCheck,
-    keywords: ['contrato', 'contract', 'agreement', 'acuerdo']
-  },
-  { 
-    id: 'certificado', 
-    name: 'Certificado Médico', 
-    icon: Heart,
-    keywords: ['certificado', 'medico', 'medical', 'doctor', 'baja']
-  },
-  { 
-    id: 'vacaciones', 
-    name: 'Solicitud Vacaciones', 
-    icon: Plane,
-    keywords: ['vacaciones', 'vacation', 'holiday', 'permiso']
-  },
-  { 
     id: 'dni', 
     name: 'DNI', 
     icon: User,
     keywords: ['dni', 'documento', 'identidad', 'cedula', 'id']
   },
   { 
+    id: 'justificante', 
+    name: 'Justificante', 
+    icon: FileCheck,
+    keywords: ['justificante', 'certificado', 'comprobante', 'vacaciones', 'vacation', 'holiday', 'permiso', 'baja', 'medico']
+  },
+  { 
     id: 'otros', 
     name: 'Otros', 
     icon: File,
-    keywords: ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
+    keywords: ['nomina', 'nómina', 'contrato', 'irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
   }
 ];
 
