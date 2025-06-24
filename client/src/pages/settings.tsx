@@ -1104,78 +1104,7 @@ const AccountManagement = () => {
 
           {/* Account Management Tab */}
           {activeTab === 'account' && (
-            <div className="space-y-6">
-              {/* Subscription Status Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Crown className="h-5 w-5 text-yellow-500" />
-                    <span>Estado de la Suscripción</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Información sobre tu plan actual de Oficaz
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Current Plan Status */}
-                  <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Crown className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-blue-900">Plan Premium</h3>
-                        <p className="text-sm text-blue-700">Usuarios ilimitados • Todas las funciones</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        <span className="font-medium text-green-700">Activo</span>
-                      </div>
-                      <p className="text-sm text-gray-600">Renovación: 24 Ene 2026</p>
-                    </div>
-                  </div>
-
-                  {/* Plan Details */}
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="font-semibold text-2xl text-blue-600">∞</div>
-                      <div className="text-sm text-gray-600">Empleados</div>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="font-semibold text-2xl text-green-600">29,99€</div>
-                      <div className="text-sm text-gray-600">Por mes</div>
-                    </div>
-                    <div className="text-center p-4 border rounded-lg">
-                      <div className="font-semibold text-2xl text-purple-600">24/7</div>
-                      <div className="text-sm text-gray-600">Soporte</div>
-                    </div>
-                  </div>
-
-                  {/* Usage Statistics */}
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium text-gray-900 mb-3">Uso actual</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Empleados registrados</span>
-                        <span className="font-medium">12 empleados</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Almacenamiento usado</span>
-                        <span className="font-medium">2.3 GB de 50 GB</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Fichajes este mes</span>
-                        <span className="font-medium">1,247 registros</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-
-            </div>
+            <AccountManagement />
           )}
         </div>
       </div>
