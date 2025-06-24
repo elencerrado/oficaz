@@ -15,22 +15,38 @@ interface TabNavigationProps {
 }
 
 export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: TabNavigationProps) {
+  const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
+  
   return (
     <div className={`mb-6 ${className}`}>
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map((tab) => (
+      <div className="bg-gray-100 rounded-xl p-1 relative">
+        {/* Sliding indicator */}
+        <div 
+          className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-all duration-300 ease-in-out"
+          style={{
+            left: `${(activeIndex * 100) / tabs.length}%`,
+            width: `${100 / tabs.length}%`,
+            transform: 'translateX(0.25rem)',
+            right: 'auto',
+            marginLeft: '0',
+            marginRight: '0.25rem'
+          }}
+        />
+        
+        {/* Tab buttons */}
+        <nav className="relative flex">
+          {tabs.map((tab, index) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`flex-1 py-3 px-4 font-medium text-sm transition-colors duration-200 relative z-10 flex items-center justify-center ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'text-blue-600'
+                  : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <tab.icon className="h-4 w-4 inline mr-2" />
-              {tab.label}
+              <tab.icon className="h-4 w-4 mr-2" />
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </nav>
