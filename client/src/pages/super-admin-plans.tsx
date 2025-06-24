@@ -21,6 +21,7 @@ interface SubscriptionPlan {
     documents?: boolean;
     vacation?: boolean;
     timeTracking?: boolean;
+    timeEditingPermissions?: boolean;
     reports?: boolean;
     analytics?: boolean;
     customization?: boolean;
@@ -36,6 +37,7 @@ const featureIcons = {
   documents: FileText,
   vacation: Calendar,
   timeTracking: Clock,
+  timeEditingPermissions: Clock,
   reports: BarChart3,
   analytics: BarChart3,
   customization: Settings,
@@ -47,6 +49,7 @@ const featureLabels = {
   documents: 'Documentos',
   vacation: 'Vacaciones',
   timeTracking: 'Fichajes',
+  timeEditingPermissions: 'Editar horas empleados',
   reports: 'Reportes',
   analytics: 'Analíticas',
   customization: 'Personalización',
@@ -165,6 +168,7 @@ export default function SuperAdminPlans() {
 
   const features = [
     { key: 'timeTracking', label: 'Fichajes', icon: Clock },
+    { key: 'timeEditingPermissions', label: '└ Editar horas empleados', icon: Clock, isSubFeature: true },
     { key: 'vacation', label: 'Vacaciones', icon: Calendar },
     { key: 'documents', label: 'Documentos', icon: FileText },
     { key: 'messages', label: 'Mensajes', icon: MessageSquare },
@@ -284,9 +288,11 @@ export default function SuperAdminPlans() {
                   {features.map((feature) => (
                     <tr key={feature.key} className="border-b border-white/10 hover:bg-white/5">
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <feature.icon className="h-5 w-5 text-white/70" />
-                          <span className="text-white font-medium">{feature.label}</span>
+                        <div className={`flex items-center gap-3 ${(feature as any).isSubFeature ? 'pl-6' : ''}`}>
+                          <feature.icon className={`h-5 w-5 ${(feature as any).isSubFeature ? 'text-white/50' : 'text-white/70'}`} />
+                          <span className={`font-medium ${(feature as any).isSubFeature ? 'text-white/80 text-sm' : 'text-white'}`}>
+                            {feature.label}
+                          </span>
                         </div>
                       </td>
                       {plans?.map((plan: SubscriptionPlan) => (

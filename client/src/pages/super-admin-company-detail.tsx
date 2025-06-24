@@ -19,6 +19,7 @@ const featureLabels = {
   documents: 'Documentos',
   vacation: 'Vacaciones',
   timeTracking: 'Fichajes',
+  timeEditingPermissions: 'Editar horas empleados',
   reports: 'Reportes',
   analytics: 'Analíticas',
   customization: 'Personalización',

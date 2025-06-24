@@ -29,10 +29,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 
 export default function Settings() {
   const { user, company } = useAuth();
   const { toast } = useToast();
+  const { hasAccess } = useFeatureCheck();
 
 // Component for Account Management
 const AccountManagement = () => {
@@ -885,24 +887,40 @@ const AccountManagement = () => {
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="timeEditPermission">Los empleados pueden editar sus horas</Label>
-                    <Select 
-                      value={companyData.employeeTimeEditPermission} 
-                      onValueChange={(value: 'yes' | 'no') => 
-                        setCompanyData(prev => ({ ...prev, employeeTimeEditPermission: value }))
-                      }
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="yes">Sí</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar sus horarios registrados'}
-                      {companyData.employeeTimeEditPermission === 'no' && 'Solo administradores y managers pueden modificar horarios'}
-                    </p>
+                    {hasAccess('timeEditingPermissions') ? (
+                      <Select 
+                        value={companyData.employeeTimeEditPermission} 
+                        onValueChange={(value: 'yes' | 'no') => 
+                          setCompanyData(prev => ({ ...prev, employeeTimeEditPermission: value }))
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Sí</SelectItem>
+                          <SelectItem value="no">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="mt-1">
+                        <div className="p-3 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
+                          No disponible en tu plan
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-amber-600" />
+                          <p className="text-sm text-amber-700">
+                            Esta funcionalidad requiere el plan Pro o superior para permitir que los empleados editen sus horarios.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {hasAccess('timeEditingPermissions') && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar sus horarios registrados'}
+                        {companyData.employeeTimeEditPermission === 'no' && 'Solo administradores y managers pueden modificar horarios'}
+                      </p>
+                    )}
                   </div>
                   
                   <div>
