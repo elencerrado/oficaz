@@ -210,6 +210,31 @@ export default function SuperAdminDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Quick Actions */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white">Acciones rápidas</CardTitle>
+          </CardHeader>
+          <CardContent className="flex gap-3">
+            <Button variant="outline" className="border-white/20 text-white hover:bg-white/20">
+              <Building2 className="mr-2 h-4 w-4" />
+              Nueva empresa
+            </Button>
+            <Button variant="outline" className="border-white/20 text-white hover:bg-white/20">
+              <Users className="mr-2 h-4 w-4" />
+              Gestión de usuarios
+            </Button>
+            <Button 
+              variant="outline" 
+              className="border-white/20 text-white hover:bg-white/20"
+              onClick={() => setLocation('/super-admin/plans')}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Gestión de Planes
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">

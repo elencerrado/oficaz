@@ -29,6 +29,7 @@ import EmployeeProfile from "@/pages/employee-profile";
 import AccessDenied from "@/pages/access-denied";
 import SuperAdminLogin from "@/pages/super-admin-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
+import SuperAdminPlans from "@/pages/super-admin-plans";
 import QuickAccess from "@/pages/quick-access";
 
 
