@@ -125,6 +125,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Banner aparece automáticamente cuando llega la hora programada
   - Sistema 100% funcional: crear, editar, eliminar recordatorios y notificaciones en banner
   - Error de variable utcDate corregido en función de edición de recordatorios
+  - Zona horaria Madrid corregida completamente: comparación tiempo Madrid vs recordatorios Madrid
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar

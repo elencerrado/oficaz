@@ -177,16 +177,16 @@ export default function Reminders() {
       const datePart = inputParts[0];
       const timePart = inputParts[1];
       
-      // Create date for Madrid timezone (user input is Madrid time)
+      // User input is in Madrid timezone, store as-is (as local time)
       const year = parseInt(datePart.split('-')[0]);
       const month = parseInt(datePart.split('-')[1]) - 1; // Month is 0-indexed
       const day = parseInt(datePart.split('-')[2]);
       const hour = parseInt(timePart.split(':')[0]);
       const minute = parseInt(timePart.split(':')[1]);
       
-      // Create local Madrid time and store as is (not converting to UTC)
-      const madridDate = new Date(year, month, day, hour, minute);
-      processedDate = madridDate.toISOString();
+      // Create date representing Madrid time (stored as if it were UTC)
+      const localDate = new Date(year, month, day, hour, minute);
+      processedDate = localDate.toISOString();
       
       console.log('Date processing (Madrid timezone):', {
         input: reminderData.reminderDate,
