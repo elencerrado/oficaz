@@ -916,9 +916,17 @@ export default function AdminDocuments() {
                   /* Vista de cuadrícula por empleado */
                   <div className="space-y-6">
                     {(() => {
-                      // Agrupar documentos por empleado
+                      console.log('Filtered documents for grid view:', filteredDocuments.length);
+                      console.log('Document details:', filteredDocuments.map(d => ({ 
+                        id: d.id, 
+                        userId: d.userId, 
+                        userName: d.user?.fullName, 
+                        name: d.originalName 
+                      })));
+                      
+                      // Agrupar documentos por empleado usando userId directamente
                       const documentsByEmployee = filteredDocuments.reduce((acc: any, doc: Document) => {
-                        const employeeId = doc.user?.id || 'unknown';
+                        const employeeId = doc.userId || 'unknown';
                         const employeeName = doc.user?.fullName || 'Empleado desconocido';
                         
                         if (!acc[employeeId]) {
@@ -930,6 +938,8 @@ export default function AdminDocuments() {
                         acc[employeeId].documents.push(doc);
                         return acc;
                       }, {});
+                      
+                      console.log('Documents by employee:', Object.keys(documentsByEmployee), documentsByEmployee);
 
                       return Object.entries(documentsByEmployee).map(([employeeId, employeeData]: [string, any]) => {
                         // Agrupar documentos por tipo

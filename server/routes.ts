@@ -615,10 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all documents for admin/manager view
   app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      console.log('Fetching documents for company:', req.user!.companyId);
       const documents = await storage.getDocumentsByCompany(req.user!.companyId);
-      console.log('Documents found:', documents.length, 'documents');
-      console.log('Document details:', documents.map(d => ({ id: d.id, userId: d.userId, name: d.originalName })));
       res.json(documents);
     } catch (error) {
       console.error("Error fetching all documents:", error);
