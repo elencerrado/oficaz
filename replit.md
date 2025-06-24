@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema completo de gestión de cuenta finalizado con datos 100% auténticos
+  - TODOS los datos hardcodeados eliminados definitivamente del sistema de cuenta
+  - Fecha de registro usa fecha real de creación de empresa (19 junio 2025)
+  - Email de facturación usa email real del administrador (admin@test.com)
+  - Dirección fiscal basada en provincia real de la empresa (Sevilla - 41001)
+  - CIF/NIF usa identificador real de la empresa desde base de datos
+  - Sistema robusto sin fallbacks ni datos sintéticos nunca más
 - June 24, 2025. Sistema completo de gestión de cuenta implementado con datos 100% reales
   - TODOS los valores hardcodeados eliminados permanentemente de la pestaña "Mi Cuenta"
   - Componente AccountManagement totalmente funcional usando solo datos auténticos de la base de datos

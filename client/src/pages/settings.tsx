@@ -41,7 +41,6 @@ const AccountManagement = () => {
   
   // Force refresh of account data when component mounts
   useEffect(() => {
-    console.log('AccountManagement: Force refreshing account data...');
     queryClient.invalidateQueries({ queryKey: ['/api/account/info'] });
     queryClient.refetchQueries({ queryKey: ['/api/account/info'] });
   }, [queryClient]);
@@ -169,7 +168,7 @@ const AccountManagement = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Fecha de registro</Label>
-              <p className="text-sm text-gray-600">{formatDate(accountInfo?.registration_date)} [DEBUG: {accountInfo?.registration_date}]</p>
+              <p className="text-sm text-gray-600">{formatDate(accountInfo?.registration_date)}</p>
             </div>
             <div>
               <Label className="text-sm font-medium">Administrador principal</Label>
@@ -177,7 +176,7 @@ const AccountManagement = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Email de facturación</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.billing_email} [DEBUG EMAIL]</p>
+              <p className="text-sm text-gray-600">{accountInfo?.billing_email}</p>
             </div>
           </div>
         </CardContent>
