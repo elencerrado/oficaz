@@ -552,7 +552,7 @@ export default function TimeTracking() {
             {/* Right side - Date Filters */}
             <div className="flex flex-col space-y-2 lg:col-span-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="flex gap-2 items-center flex-wrap">
+              <div className="flex gap-1 items-center flex-nowrap">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
@@ -563,7 +563,7 @@ export default function TimeTracking() {
                     setStartDate('');
                     setEndDate('');
                   }}
-                  className="h-10 text-sm font-normal"
+                  className="h-10 text-xs font-normal px-2"
                 >
                   Hoy
                 </Button>
@@ -585,7 +585,7 @@ export default function TimeTracking() {
                     : 'Día'
                   }
                   className={cn(
-                    "h-10 text-sm font-normal whitespace-nowrap",
+                    "h-10 text-xs font-normal whitespace-nowrap px-2",
                     dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -595,7 +595,7 @@ export default function TimeTracking() {
                     <Button
                       variant={dateFilter === 'month' ? 'default' : 'outline'}
                       size="sm"
-                      className="h-10 text-sm font-normal whitespace-nowrap"
+                      className="h-10 text-xs font-normal whitespace-nowrap px-2"
                     >
                       {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
                     </Button>
@@ -646,7 +646,7 @@ export default function TimeTracking() {
                     }
                   }}
                   className={cn(
-                    "h-10 text-sm font-normal min-w-[120px] whitespace-nowrap",
+                    "h-10 text-xs font-normal min-w-[100px] whitespace-nowrap px-2",
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -664,7 +664,7 @@ export default function TimeTracking() {
                     setCurrentDate(new Date());
                     setCurrentMonth(new Date());
                   }}
-                  className="h-10 text-sm font-normal whitespace-nowrap"
+                  className="h-10 text-xs font-normal whitespace-nowrap px-2"
                 >
                   Limpiar filtros
                 </Button>
