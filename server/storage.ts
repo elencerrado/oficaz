@@ -768,9 +768,20 @@ export class DrizzleStorage implements IStorage {
   }
 
   async updateReminder(id: number, updates: any): Promise<any | undefined> {
+    // Process the updates to ensure proper date handling
+    const processedUpdates = { ...updates };
+    
+    // Convert string dates to Date objects
+    if (processedUpdates.reminderDate && typeof processedUpdates.reminderDate === 'string') {
+      processedUpdates.reminderDate = new Date(processedUpdates.reminderDate);
+    }
+    
+    // Ensure updatedAt is always a Date object
+    processedUpdates.updatedAt = new Date();
+    
     const [reminder] = await db
       .update(schema.reminders)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(processedUpdates)
       .where(eq(schema.reminders.id, id))
       .returning();
     return reminder;

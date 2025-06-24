@@ -1644,7 +1644,13 @@ startxref
         return res.status(404).json({ message: "Reminder not found" });
       }
       
-      const updatedReminder = await storage.updateReminder(reminderId, req.body);
+      // Process date fields properly
+      const updateData = { ...req.body };
+      if (updateData.reminderDate && typeof updateData.reminderDate === 'string') {
+        updateData.reminderDate = new Date(updateData.reminderDate);
+      }
+      
+      const updatedReminder = await storage.updateReminder(reminderId, updateData);
       res.json(updatedReminder);
     } catch (error) {
       console.error("Error updating reminder:", error);

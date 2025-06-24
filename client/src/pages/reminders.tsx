@@ -175,6 +175,11 @@ export default function Reminders() {
       reminderDate: reminderData.reminderDate || null
     };
 
+    // Ensure we don't send empty strings for reminderDate
+    if (submitData.reminderDate === '') {
+      submitData.reminderDate = null;
+    }
+
     if (editingReminder) {
       updateReminderMutation.mutate({ id: editingReminder.id, data: submitData });
     } else {

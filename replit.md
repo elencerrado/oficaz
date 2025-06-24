@@ -164,6 +164,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Añadido contactName para persona responsable de la empresa
   - Interfaz reorganizada con sección de logo prominente
   - Todos los campos disponibles en base de datos ahora editables
+- June 24, 2025. Sistema completo de recordatorios tipo Google Keep implementado
+  - Tabla reminders en base de datos con campos: título, contenido, fecha/hora, prioridad, color, estados
+  - Backend con endpoints CRUD completos y manejo correcto de fechas
+  - Página de gestión visual con interfaz Google Keep style: tarjetas coloridas, filtros, búsqueda
+  - Banner de notificaciones en tiempo real para recordatorios programados
+  - Botón Recordatorios agregado al sidebar para admin y empleados
+  - Funcionalidades: crear, editar, eliminar, completar, archivar, fijar recordatorios
+  - Sistema de prioridades (alta, media, baja) con iconos y colores distintivos
+  - Selección de colores personalizados para organización visual
+  - Corregido error de actualización por manejo incorrecto de fechas en Drizzle ORM
 - June 24, 2025. Sistema jerárquico de funcionalidades implementado con "timeEditingPermissions"
   - Nueva sub-funcionalidad "Editar horas empleados" dentro de Fichajes
   - Plan Basic: timeEditingPermissions=false, Plan Pro/Master: timeEditingPermissions=true
