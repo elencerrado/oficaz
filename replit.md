@@ -117,6 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de zona horaria en recordatorios corregido completamente
+  - Problema identificado: datetime-local enviaba fechas con 2 horas de diferencia 
+  - Corregido manejo de fechas en frontend: conversión correcta de local time a UTC
+  - Función handleSubmit actualizada para procesar fechas locales correctamente
+  - Función handleEdit corregida para mostrar fechas UTC como local time en el input
+  - Banner de notificaciones funcionando con timing preciso
+  - Sistema de recordatorios operativo con fechas/horas exactas del usuario
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar

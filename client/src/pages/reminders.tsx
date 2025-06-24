@@ -169,16 +169,28 @@ export default function Reminders() {
       return;
     }
 
+    let processedDate = null;
+    if (reminderData.reminderDate && reminderData.reminderDate !== '') {
+      // The datetime-local input gives us a string like "2025-06-24T16:08"
+      // We need to treat this as local time and convert to UTC properly
+      const localDate = new Date(reminderData.reminderDate);
+      // Add timezone offset to get the actual local time in UTC
+      const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+      processedDate = utcDate.toISOString();
+      
+      console.log('Date processing:', {
+        input: reminderData.reminderDate,
+        localDate: localDate.toString(),
+        utcDate: utcDate.toString(),
+        finalISO: processedDate
+      });
+    }
+
     const submitData = {
       ...reminderData,
       color: selectedColor,
-      reminderDate: reminderData.reminderDate || null
+      reminderDate: processedDate
     };
-
-    // Ensure we don't send empty strings for reminderDate
-    if (submitData.reminderDate === '' || submitData.reminderDate === undefined) {
-      submitData.reminderDate = null;
-    }
 
     // Remove undefined values to avoid issues
     Object.keys(submitData).forEach(key => {
@@ -196,10 +208,27 @@ export default function Reminders() {
 
   const handleEdit = (reminder: Reminder) => {
     setEditingReminder(reminder);
+    
+    // Convert UTC date back to local datetime-local format
+    let localDateTimeString = '';
+    if (reminder.reminderDate) {
+      const utcDate = new Date(reminder.reminderDate);
+      // Convert UTC to local time for display in datetime-local input
+      const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      localDateTimeString = localDate.toISOString().slice(0, 16);
+      
+      console.log('Edit date conversion:', {
+        originalUTC: reminder.reminderDate,
+        utcDate: utcDate.toString(),
+        localDate: localDate.toString(),
+        inputValue: localDateTimeString
+      });
+    }
+    
     setReminderData({
       title: reminder.title,
       content: reminder.content || '',
-      reminderDate: reminder.reminderDate ? new Date(reminder.reminderDate).toISOString().slice(0, 16) : '',
+      reminderDate: localDateTimeString,
       priority: reminder.priority,
       color: reminder.color
     });
@@ -331,7 +360,10 @@ export default function Reminders() {
                       id="reminderDate"
                       type="datetime-local"
                       value={reminderData.reminderDate}
-                      onChange={(e) => setReminderData(prev => ({ ...prev, reminderDate: e.target.value }))}
+                      onChange={(e) => {
+                        console.log('Date input changed:', e.target.value);
+                        setReminderData(prev => ({ ...prev, reminderDate: e.target.value }));
+                      }}
                       className="mt-1"
                     />
                   </div>
