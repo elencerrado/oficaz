@@ -124,8 +124,9 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Página de configuración/políticas: Select deshabilitado si el plan no incluye la funcionalidad
   - Indicador visual con mensaje "No disponible en tu plan" y advertencia del plan requerido
   - Sistema jerárquico: funcionalidades principales y sub-funcionalidades organizadas
-  - Lógica doble verificación: empleados requieren plan Pro Y configuración admin habilitada
+  - Verificación simplificada: empleados solo verifican configuración de empresa
   - Empresas con plan Basic forzadas a employeeTimeEditPermission='no' automáticamente
+  - Base de datos sincroniza automáticamente configuración según plan activo
 - June 24, 2025. Orden de funcionalidades actualizado en gestión de planes
   - Cambio en super-admin-plans.tsx: fichajes, vacaciones, documentos, mensajes
   - Orden consistente con prioridad de uso y flujo lógico de la aplicación
