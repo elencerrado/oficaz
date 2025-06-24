@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Sistema de provincia de empresa implementado dinámicamente en vacaciones
+  - Eliminado hardcodeo de "Madrid" en selector de días festivos
+  - Provincia ahora se obtiene automáticamente de los datos de la empresa
+  - Mapeo inteligente provincia → región para días festivos españoles
+  - Selector inicia con región correcta basada en ubicación real de la empresa
+  - Sistema dinámico usando useAuth() para obtener datos de compañía
 - June 24, 2025. Sistema unificado de tarjetas StatsCard completamente implementado
   - Eliminadas tarjetas hardcodeadas de vacaciones para usar solo StatsCard
   - Layout mobile consistente: grid-cols-4 con gap-2 en todas las páginas

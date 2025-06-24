@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import StatsCard from "@/components/StatsCard";
+import { useAuth } from "@/hooks/use-auth";
 
 interface VacationRequest {
   id: number;
@@ -69,10 +70,11 @@ const regions = [
 ];
 
 export default function VacationManagement() {
+  const { company } = useAuth();
   const [activeTab, setActiveTab] = useState("requests");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("Madrid");
+  const [selectedRegion, setSelectedRegion] = useState("");
   const [newHoliday, setNewHoliday] = useState({ name: "", date: "", type: "regional" as const });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
@@ -83,6 +85,31 @@ export default function VacationManagement() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Set initial region based on company province
+  useEffect(() => {
+    if (company?.province && !selectedRegion) {
+      // Map company province to region
+      const provinceToRegion: { [key: string]: string } = {
+        'sevilla': 'Andalucía',
+        'cordoba': 'Andalucía', 
+        'cadiz': 'Andalucía',
+        'malaga': 'Andalucía',
+        'granada': 'Andalucía',
+        'almeria': 'Andalucía',
+        'huelva': 'Andalucía',
+        'jaen': 'Andalucía',
+        'madrid': 'Madrid',
+        'barcelona': 'Cataluña',
+        'valencia': 'Valencia',
+        'bilbao': 'País Vasco',
+        'zaragoza': 'Aragón',
+        // Add more mappings as needed
+      };
+      const region = provinceToRegion[company.province.toLowerCase()] || 'Madrid';
+      setSelectedRegion(region);
+    }
+  }, [company, selectedRegion]);
 
   // Calculate days function
   const calculateDays = (startDate: string, endDate: string) => {
@@ -591,7 +618,7 @@ export default function VacationManagement() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
                   <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                     <SelectTrigger className="w-48">
-                      <SelectValue />
+                      <SelectValue placeholder="Seleccionar región" />
                     </SelectTrigger>
                     <SelectContent>
                       {regions.map((region) => (
