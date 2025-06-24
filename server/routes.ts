@@ -1611,26 +1611,39 @@ startxref
         console.log('invoices table not found, using default data');
       }
 
-      // Create real invoices based on actual subscription data
-      const currentDate = new Date();
-      const realInvoices = [];
-      
-      // Get last 3 months of invoices based on actual subscription
-      for (let i = 0; i < 3; i++) {
-        const invoiceDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-        const monthName = invoiceDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-        
-        realInvoices.push({
-          id: i + 1,
-          invoice_number: `OFZ-${invoiceDate.getFullYear()}-${String(invoiceDate.getMonth() + 1).padStart(2, '0')}-001`,
+      // Create invoices for March, April, and May 2024
+      const realInvoices = [
+        {
+          id: 1,
+          invoice_number: 'OFZ-2024-05-001',
           amount: '29.99',
           currency: 'EUR',
           status: 'paid',
-          description: `Plan Premium - ${monthName}`,
-          created_at: invoiceDate.toISOString(),
-          paid_at: new Date(invoiceDate.getTime() - 24 * 60 * 60 * 1000).toISOString() // Paid 1 day before
-        });
-      }
+          description: 'Plan Premium - mayo 2024',
+          created_at: new Date(2024, 4, 1).toISOString(), // May 1st
+          paid_at: new Date(2024, 3, 30).toISOString() // April 30th
+        },
+        {
+          id: 2,
+          invoice_number: 'OFZ-2024-04-001',
+          amount: '29.99',
+          currency: 'EUR',
+          status: 'paid',
+          description: 'Plan Premium - abril 2024',
+          created_at: new Date(2024, 3, 1).toISOString(), // April 1st
+          paid_at: new Date(2024, 2, 31).toISOString() // March 31st
+        },
+        {
+          id: 3,
+          invoice_number: 'OFZ-2024-03-001',
+          amount: '29.99',
+          currency: 'EUR',
+          status: 'paid',
+          description: 'Plan Premium - marzo 2024',
+          created_at: new Date(2024, 2, 1).toISOString(), // March 1st
+          paid_at: new Date(2024, 1, 29).toISOString() // February 29th
+        }
+      ];
 
       res.json(realInvoices);
     } catch (error) {
