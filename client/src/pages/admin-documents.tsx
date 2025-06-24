@@ -727,13 +727,7 @@ export default function AdminDocuments() {
         {/* Tab Content */}
         {activeTab === 'upload' && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Upload className="h-5 w-5 mr-2" />
-                Subir Documentos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -793,13 +787,7 @@ export default function AdminDocuments() {
 
         {activeTab === 'explorer' && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Search className="h-5 w-5 mr-2" />
-                Explorador de Documentos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               {/* Filters */}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
@@ -915,13 +903,7 @@ export default function AdminDocuments() {
 
         {activeTab === 'requests' && (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Send className="h-5 w-5 mr-2" />
-                Gestión de Solicitudes
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="p-6 space-y-6">
               {/* Send New Request */}
               <div className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="font-medium text-gray-900 mb-4">Enviar Nueva Solicitud</h3>
