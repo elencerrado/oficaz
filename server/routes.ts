@@ -1508,12 +1508,30 @@ startxref
       const company = await storage.getCompany(companyId);
       const admin = await storage.getUser(req.user!.id);
       
+      console.log('DEBUG - Company data:', { 
+        id: company?.id, 
+        name: company?.name, 
+        createdAt: company?.createdAt,
+        cif: company?.cif,
+        email: company?.email,
+        address: company?.address,
+        province: company?.province
+      });
+      
+      console.log('DEBUG - Admin data:', { 
+        id: admin?.id, 
+        fullName: admin?.fullName, 
+        companyEmail: admin?.companyEmail,
+        personalEmail: admin?.personalEmail
+      });
+      
       if (!company) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
       // Use real creation date from database
       const registrationDate = new Date(company.createdAt);
+      console.log('DEBUG - Registration date:', registrationDate.toISOString());
       
       const accountInfo = {
         id: companyId,
@@ -1529,6 +1547,8 @@ startxref
         tax_id: company.cif,
         updated_at: new Date().toISOString()
       };
+      
+      console.log('DEBUG - Final account info:', accountInfo);
 
       res.json(accountInfo);
     } catch (error) {
