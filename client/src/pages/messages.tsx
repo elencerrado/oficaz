@@ -429,7 +429,7 @@ export default function Messages() {
           </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex gap-6 h-[calc(100vh-260px)]">
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
