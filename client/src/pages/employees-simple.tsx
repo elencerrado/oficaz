@@ -287,7 +287,7 @@ export default function EmployeesSimple() {
     <div className="container mx-auto p-4 lg:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900">
           Gestión de Empleados
         </h1>
         
