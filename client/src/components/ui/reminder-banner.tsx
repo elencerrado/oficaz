@@ -35,16 +35,6 @@ export function ReminderBanner() {
   // Fetch active reminders
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    queryFn: async () => {
-      try {
-        const response = await apiRequest('GET', '/api/reminders/active');
-        console.log('Banner: received reminders:', response);
-        return response;
-      } catch (error) {
-        console.log('Banner: reminder fetch failed:', error);
-        return [];
-      }
-    },
     refetchInterval: 3000, // Check every 3 seconds for immediate testing
     retry: false,
     enabled: true // Ensure query runs even if other queries might be disabled

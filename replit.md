@@ -126,6 +126,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Sistema de fechas automático: new Date().toISOString() + comparación UTC directa
   - Polling cada 3 segundos operativo, banner aparece sin recargar página
   - CORREGIDO: endpoint /api/reminders/active ahora usa autenticación y muestra solo recordatorios del usuario logueado
+  - CONFIRMADO FUNCIONANDO: cada usuario ve únicamente sus propios recordatorios activos según autenticación JWT
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar
