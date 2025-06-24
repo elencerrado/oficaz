@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree } from 'lucide-react';
@@ -19,6 +20,7 @@ interface WorkSession {
 
 export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
     return localStorage.getItem('hasVacationUpdates') === 'true';
@@ -253,39 +255,45 @@ export default function EmployeeDashboard() {
       icon: Clock, 
       title: 'Fichajes', 
       route: `/${companyAlias}/horas`,
-      notification: false 
+      notification: false,
+      feature: 'timeTracking'
     },
     { 
       icon: User, 
       title: 'Usuario', 
       route: `/${companyAlias}/usuario`,
-      notification: false 
+      notification: false,
+      feature: null
     },
     { 
       icon: Calendar, 
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
       notification: hasVacationUpdates,
-      notificationType: 'red'
+      notificationType: 'red',
+      feature: 'vacation'
     },
     { 
       icon: FileText, 
       title: 'Documentos', 
       route: `/${companyAlias}/documentos`,
       notification: hasDocumentRequests || hasNewDocuments,
-      notificationType: hasDocumentRequests ? 'red' : 'green'
+      notificationType: hasDocumentRequests ? 'red' : 'green',
+      feature: 'documents'
     },
     { 
       icon: Bell, 
       title: 'Recordatorios', 
       route: `/${companyAlias}/notificaciones`,
-      notification: false 
+      notification: false,
+      feature: null
     },
     { 
       icon: MessageSquare, 
       title: 'Mensajes', 
       route: `/${companyAlias}/mensajes`,
-      notification: (unreadCount?.count || 0) > 0 
+      notification: (unreadCount?.count || 0) > 0,
+      feature: 'messages'
     },
   ];
 
@@ -311,6 +319,16 @@ export default function EmployeeDashboard() {
       timestamp: new Date().toISOString()
     });
   }, [hasVacationUpdates, hasDocumentRequests, hasNewDocuments, unreadCount]);
+
+  // Log feature access for debugging
+  useEffect(() => {
+    console.log('Employee dashboard feature access:', {
+      documents: hasAccess('documents'),
+      messages: hasAccess('messages'),
+      vacation: hasAccess('vacation'),
+      timeTracking: hasAccess('timeTracking')
+    });
+  }, [hasAccess]);
 
   return (
     <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
@@ -352,35 +370,52 @@ export default function EmployeeDashboard() {
         {/* Menu Grid - iPhone style with compact icons */}
         <div className="px-6 mb-6">
           <div className="grid grid-cols-3 gap-6">
-            {menuItems.map((item, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <button
-                  onClick={() => {
-                    if (item.title === 'Vacaciones') {
-                      // Update last check time and clear notification when user visits vacations page
-                      localStorage.setItem('lastVacationCheck', new Date().toISOString());
-                      if (hasVacationUpdates) {
-                        setHasVacationUpdates(false);
-                        localStorage.removeItem('hasVacationUpdates');
+            {menuItems.map((item, index) => {
+              const isFeatureDisabled = item.feature && !hasAccess(item.feature);
+              
+              return (
+                <div key={index} className="flex flex-col items-center">
+                  <button
+                    onClick={() => {
+                      if (isFeatureDisabled) {
+                        return; // Do nothing if feature is disabled
                       }
-                    }
-                    handleNavigation(item.route);
-                  }}
-                  className="relative w-24 h-24 bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  <item.icon className="h-12 w-12 text-white" />
-                  {item.notification && (
-                    <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white animate-pulse ${
-                      (item as any).notificationType === 'red' ? 'bg-red-500' : 
-                      (item as any).notificationType === 'green' ? 'bg-green-500' : 'bg-red-500'
-                    }`}></div>
-                  )}
-                </button>
-                <span className="text-xs font-medium text-center text-white/90 leading-tight">
-                  {item.title}
-                </span>
-              </div>
-            ))}
+                      
+                      if (item.title === 'Vacaciones') {
+                        // Update last check time and clear notification when user visits vacations page
+                        localStorage.setItem('lastVacationCheck', new Date().toISOString());
+                        if (hasVacationUpdates) {
+                          setHasVacationUpdates(false);
+                          localStorage.removeItem('hasVacationUpdates');
+                        }
+                      }
+                      handleNavigation(item.route);
+                    }}
+                    className={`relative w-24 h-24 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg ${
+                      isFeatureDisabled 
+                        ? 'bg-gray-400 cursor-not-allowed opacity-50' 
+                        : 'bg-blue-500 hover:bg-blue-600 hover:shadow-xl transform hover:scale-105'
+                    }`}
+                    disabled={isFeatureDisabled}
+                  >
+                    <item.icon className={`h-12 w-12 ${
+                      isFeatureDisabled ? 'text-gray-300' : 'text-white'
+                    }`} />
+                    {item.notification && !isFeatureDisabled && (
+                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white animate-pulse ${
+                        (item as any).notificationType === 'red' ? 'bg-red-500' : 
+                        (item as any).notificationType === 'green' ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+                    )}
+                  </button>
+                  <span className={`text-xs font-medium text-center leading-tight ${
+                    isFeatureDisabled ? 'text-white/40' : 'text-white/90'
+                  }`}>
+                    {item.title}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
