@@ -203,51 +203,15 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // AUTO-SCROLL AGRESIVO - MÚLTIPLES INTENTOS HASTA QUE FUNCIONE
+  // Auto-scroll simple y seguro - solo dentro del contenedor
   useEffect(() => {
-    if (selectedChat && messages && messages.length > 0) {
-      // Función para hacer scroll hasta abajo del todo
-      const scrollToBottom = () => {
-        // Buscar el contenedor de mensajes correcto
-        const desktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
-        const mobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
-        
-        [desktopContainer, mobileContainer, messagesContainerRef.current].forEach(container => {
-          if (container) {
-            // Forzar scroll hasta el final máximo
-            container.scrollTop = container.scrollHeight + 100; // +100 para asegurar que llega al final
-            console.log(`Scrolled container: scrollTop=${container.scrollTop}, scrollHeight=${container.scrollHeight}`);
-          }
-        });
-
-        // También usar messagesEndRef con comportamiento más agresivo
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: 'instant',
-            block: 'end',
-            inline: 'nearest'
-          });
-          // Segundo intento con smooth para asegurar
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ 
-              behavior: 'smooth',
-              block: 'end'
-            });
-          }, 50);
-          console.log('Used messagesEndRef.scrollIntoView');
+    if (selectedChat && messages && messages.length > 0 && messagesContainerRef.current) {
+      setTimeout(() => {
+        const container = messagesContainerRef.current;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
         }
-      };
-
-      // Ejecutar múltiples veces hasta que funcione
-      const timers = [
-        setTimeout(scrollToBottom, 100),
-        setTimeout(scrollToBottom, 300),
-        setTimeout(scrollToBottom, 600),
-        setTimeout(scrollToBottom, 1000),
-        setTimeout(scrollToBottom, 1500)
-      ];
-
-      return () => timers.forEach(timer => clearTimeout(timer));
+      }, 100);
     }
   }, [selectedChat, messages?.length]);
 
