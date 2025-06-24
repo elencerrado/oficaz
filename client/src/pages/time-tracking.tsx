@@ -552,9 +552,7 @@ export default function TimeTracking() {
             {/* Right side - Date Filters */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="space-y-2">
-                {/* Filtros principales en línea */}
-                <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap items-center">
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
@@ -653,7 +651,6 @@ export default function TimeTracking() {
                   )}
                 />
 
-                {/* Botón limpiar visible en escritorio grande */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -667,32 +664,10 @@ export default function TimeTracking() {
                     setCurrentDate(new Date());
                     setCurrentMonth(new Date());
                   }}
-                  className="h-10 text-sm font-normal hidden lg:block"
+                  className="h-10 text-sm font-normal"
                 >
                   Limpiar filtros
                 </Button>
-                </div>
-
-                {/* Botón limpiar en línea separada solo en pantallas pequeñas */}
-                <div className="hidden sm:flex sm:justify-start lg:hidden">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setDateFilter('all');
-                      setSelectedEmployee('all');
-                      setSelectedStartDate(null);
-                      setSelectedEndDate(null);
-                      setStartDate('');
-                      setEndDate('');
-                      setCurrentDate(new Date());
-                      setCurrentMonth(new Date());
-                    }}
-                    className="h-10 text-sm font-normal"
-                  >
-                    Limpiar filtros
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
