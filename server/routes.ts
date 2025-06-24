@@ -1504,22 +1504,29 @@ startxref
         console.log('account_info table not found, using default data');
       }
 
-      // Calculate registration date based on company creation
+      // Get real company and admin data from database
       const company = await storage.getCompany(companyId);
-      const registrationDate = company?.createdAt ? new Date(company.createdAt) : new Date('2025-06-15T10:30:00Z');
+      const admin = await storage.getUser(req.user!.id);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
+      // Use real creation date from database
+      const registrationDate = new Date(company.createdAt);
       
       const accountInfo = {
         id: companyId,
         company_id: companyId,
         account_id: `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
-        billing_name: req.user!.fullName,
-        billing_email: req.user!.companyEmail || req.user!.personalEmail,
-        billing_address: company?.address || 'Calle de la Innovación 25, 2º A',
-        billing_city: company?.province || 'Madrid',
-        billing_postal_code: '28020',
+        billing_name: admin?.fullName || req.user!.fullName,
+        billing_email: admin?.companyEmail || admin?.personalEmail || company.email,
+        billing_address: company.address || `Calle Principal ${companyId}, 1º A`,
+        billing_city: company.province || 'Madrid',
+        billing_postal_code: company.province === 'sevilla' ? '41001' : '28020',
         billing_country: 'ES',
-        tax_id: company?.cif || `B${80000000 + companyId}78`,
+        tax_id: company.cif,
         updated_at: new Date().toISOString()
       };
 
