@@ -169,12 +169,19 @@ export default function AdminDashboard() {
 
   const getLastClockInTime = () => {
     if (activeSession?.clockIn) {
-      return format(parseISO(activeSession.clockIn), "'hoy a las' HH:mm", { locale: es });
+      const clockDate = parseISO(activeSession.clockIn);
+      const today = new Date();
+      const isToday = clockDate.toDateString() === today.toDateString();
+      
+      if (isToday) {
+        return format(clockDate, "'hoy a las' HH:mm", { locale: es });
+      } else {
+        return format(clockDate, "'el' dd/MM 'a las' HH:mm", { locale: es });
+      }
     }
     if (recentSessions?.length > 0) {
-      const lastSession = recentSessions[0];
-      const clockTime = lastSession.clockOut || lastSession.clockIn;
-      return format(parseISO(clockTime), "'el' dd/MM 'a las' HH:mm", { locale: es });
+      const lastEvent = recentSessions[0];
+      return format(parseISO(lastEvent.timestamp), "'el' dd/MM 'a las' HH:mm", { locale: es });
     }
     return 'No hay fichajes recientes';
   };
