@@ -916,14 +916,6 @@ export default function AdminDocuments() {
                   /* Vista de cuadrícula por empleado */
                   <div className="space-y-6">
                     {(() => {
-                      console.log('Filtered documents for grid view:', filteredDocuments.length);
-                      console.log('Document details:', filteredDocuments.map(d => ({ 
-                        id: d.id, 
-                        userId: d.userId, 
-                        userName: d.user?.fullName, 
-                        name: d.originalName 
-                      })));
-                      
                       // Agrupar documentos por empleado usando userId directamente
                       const documentsByEmployee = filteredDocuments.reduce((acc: any, doc: Document) => {
                         const employeeId = doc.userId || 'unknown';
@@ -938,8 +930,6 @@ export default function AdminDocuments() {
                         acc[employeeId].documents.push(doc);
                         return acc;
                       }, {});
-                      
-                      console.log('Documents by employee:', Object.keys(documentsByEmployee), documentsByEmployee);
 
                       return Object.entries(documentsByEmployee).map(([employeeId, employeeData]: [string, any]) => {
                         // Agrupar documentos por tipo
@@ -947,10 +937,10 @@ export default function AdminDocuments() {
                           const fileName = doc.originalName?.toLowerCase() || '';
                           let type = 'otros';
                           
-                          if (fileName.includes('nomina') || fileName.includes('nómina')) {
-                            type = 'nominas';
-                          } else if (fileName.includes('contrato')) {
-                            type = 'contratos';
+                          if (fileName.includes('dni') || fileName.includes('documento') || fileName.includes('identidad')) {
+                            type = 'dni';
+                          } else if (fileName.includes('justificante') || fileName.includes('certificado') || fileName.includes('comprobante') || fileName.includes('vacaciones') || fileName.includes('baja') || fileName.includes('permiso')) {
+                            type = 'justificante';
                           }
                           
                           if (!acc[type]) {
@@ -999,8 +989,8 @@ export default function AdminDocuments() {
                                   const isTypeExpanded = expandedFolders.has(typeFolderId);
                                   
                                   const typeNames: { [key: string]: string } = {
-                                    nominas: 'Nóminas',
-                                    contratos: 'Contratos', 
+                                    dni: 'DNI',
+                                    justificante: 'Justificantes',
                                     otros: 'Otros'
                                   };
 
