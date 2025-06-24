@@ -1716,6 +1716,75 @@ startxref
     }
   });
 
+  // Super Admin - Subscription Plans Management
+  app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const { name, displayName, pricePerUser, maxUsers, features } = req.body;
+      
+      const plan = await storage.createSubscriptionPlan({
+        name,
+        displayName,
+        pricePerUser: parseFloat(pricePerUser),
+        maxUsers: maxUsers || null,
+        features: features || {},
+        isActive: true
+      });
+      
+      res.status(201).json(plan);
+    } catch (error) {
+      console.error('Error creating subscription plan:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      if (updates.pricePerUser) {
+        updates.pricePerUser = parseFloat(updates.pricePerUser);
+      }
+      
+      const plan = await storage.updateSubscriptionPlan(planId, updates);
+      
+      if (!plan) {
+        return res.status(404).json({ message: 'Plan no encontrado' });
+      }
+      
+      res.json(plan);
+    } catch (error) {
+      console.error('Error updating subscription plan:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      const success = await storage.deleteSubscriptionPlan(planId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Plan no encontrado' });
+      }
+      
+      res.json({ message: 'Plan eliminado correctamente' });
+    } catch (error) {
+      console.error('Error deleting subscription plan:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
