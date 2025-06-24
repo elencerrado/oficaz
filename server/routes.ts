@@ -1490,19 +1490,7 @@ startxref
     res.set('Expires', '0');
     try {
       const companyId = req.user!.companyId;
-      
-      // Try to get from account_info table, if not exists use default data
-      try {
-        const result = await db.execute(sql`
-          SELECT * FROM account_info WHERE company_id = ${companyId}
-        `);
-        
-        if (result.rows[0]) {
-          return res.json(result.rows[0]);
-        }
-      } catch (dbError) {
-        console.log('account_info table not found, using default data');
-      }
+      console.log('DEBUG - Account info request for company:', companyId, 'user:', req.user!.id);
 
       // Get real company and admin data from database
       const company = await storage.getCompany(companyId);
