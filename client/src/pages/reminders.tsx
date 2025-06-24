@@ -176,9 +176,16 @@ export default function Reminders() {
     };
 
     // Ensure we don't send empty strings for reminderDate
-    if (submitData.reminderDate === '') {
+    if (submitData.reminderDate === '' || submitData.reminderDate === undefined) {
       submitData.reminderDate = null;
     }
+
+    // Remove undefined values to avoid issues
+    Object.keys(submitData).forEach(key => {
+      if (submitData[key] === undefined) {
+        delete submitData[key];
+      }
+    });
 
     if (editingReminder) {
       updateReminderMutation.mutate({ id: editingReminder.id, data: submitData });
@@ -284,7 +291,7 @@ export default function Reminders() {
                   Nuevo Recordatorio
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingReminder ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}
@@ -294,7 +301,7 @@ export default function Reminders() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-4 py-4">
                   <div>
                     <Label htmlFor="title">Título *</Label>
                     <Input

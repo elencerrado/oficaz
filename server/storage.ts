@@ -771,9 +771,13 @@ export class DrizzleStorage implements IStorage {
     // Process the updates to ensure proper date handling
     const processedUpdates = { ...updates };
     
-    // Convert string dates to Date objects
-    if (processedUpdates.reminderDate && typeof processedUpdates.reminderDate === 'string') {
-      processedUpdates.reminderDate = new Date(processedUpdates.reminderDate);
+    // Handle reminder date conversion and null values
+    if (processedUpdates.reminderDate !== undefined) {
+      if (processedUpdates.reminderDate === null || processedUpdates.reminderDate === '') {
+        processedUpdates.reminderDate = null;
+      } else if (typeof processedUpdates.reminderDate === 'string') {
+        processedUpdates.reminderDate = new Date(processedUpdates.reminderDate);
+      }
     }
     
     // Ensure updatedAt is always a Date object

@@ -1649,6 +1649,9 @@ startxref
       if (updateData.reminderDate && typeof updateData.reminderDate === 'string') {
         updateData.reminderDate = new Date(updateData.reminderDate);
       }
+      if (updateData.reminderDate === null || updateData.reminderDate === '') {
+        updateData.reminderDate = null;
+      }
       
       const updatedReminder = await storage.updateReminder(reminderId, updateData);
       res.json(updatedReminder);
