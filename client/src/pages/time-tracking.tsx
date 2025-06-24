@@ -563,7 +563,7 @@ export default function TimeTracking() {
                     setStartDate('');
                     setEndDate('');
                   }}
-                  className="h-10 text-xs font-normal flex-1"
+                  className="h-10 text-xs font-normal flex-1 text-center"
                 >
                   Hoy
                 </Button>
@@ -585,7 +585,7 @@ export default function TimeTracking() {
                     : 'Día'
                   }
                   className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1",
+                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
                     dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -595,7 +595,7 @@ export default function TimeTracking() {
                     <Button
                       variant={dateFilter === 'month' ? 'default' : 'outline'}
                       size="sm"
-                      className="h-10 text-xs font-normal whitespace-nowrap flex-1"
+                      className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
                     >
                       {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
                     </Button>
@@ -646,7 +646,7 @@ export default function TimeTracking() {
                     }
                   }}
                   className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1",
+                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -664,7 +664,7 @@ export default function TimeTracking() {
                     setCurrentDate(new Date());
                     setCurrentMonth(new Date());
                   }}
-                  className="h-10 text-xs font-normal whitespace-nowrap flex-1"
+                  className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
                 >
                   Limpiar filtros
                 </Button>
