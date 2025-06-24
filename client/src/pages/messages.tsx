@@ -655,7 +655,7 @@ export default function Messages() {
                     placeholder="Buscar conversación..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50 pl-10 pr-4"
+                    className="input-oficaz bg-gray-50 pl-11 pr-4"
                   />
                 </div>
               </div>
@@ -885,7 +885,7 @@ export default function Messages() {
                   placeholder="Buscar empleado..."
                   value={modalSearchTerm}
                   onChange={(e) => setModalSearchTerm(e.target.value)}
-                  className="input-oficaz bg-gray-50 pl-10 pr-4"
+                  className="input-oficaz bg-gray-50 pl-11 pr-4"
                 />
               </div>
 
