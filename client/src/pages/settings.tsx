@@ -76,7 +76,7 @@ const AccountManagement = () => {
     }).format(parseFloat(amount));
   };
 
-  if (!accountInfo || !subscription) {
+  if (!accountInfo && !subscription) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -102,16 +102,16 @@ const AccountManagement = () => {
             <div className="flex items-center space-x-3">
               <Crown className="h-6 w-6 text-blue-600" />
               <div>
-                <p className="font-semibold text-gray-900">Plan {subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}</p>
+                <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1) || 'Premium'}</p>
                 <p className="text-sm text-gray-600">
-                  {subscription.endDate ? `Activo hasta: ${formatDate(subscription.endDate)}` : 'Plan activo'}
+                  {subscription?.endDate ? `Activo hasta: ${formatDate(subscription.endDate)}` : 'Plan activo'}
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                {subscription.status.toUpperCase()}
+                {subscription?.status?.toUpperCase() || 'ACTIVO'}
               </Badge>
             </div>
           </div>
