@@ -15,7 +15,9 @@ import {
   LogOut,
   Coffee,
   Plane,
-  PartyPopper
+  PartyPopper,
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
