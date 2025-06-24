@@ -1788,6 +1788,89 @@ startxref
     }
   });
 
+  // Super admin route to get individual company details
+  app.get('/api/super-admin/companies/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const { id } = req.params;
+      const companyId = parseInt(id);
+      
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      const subscription = await storage.getSubscriptionByCompanyId(companyId);
+      const users = await storage.getUsersByCompany(companyId);
+      
+      const activeUsers = users.filter(user => user.isActive).length;
+      
+      res.json({
+        ...company,
+        subscription: subscription || {
+          plan: 'free',
+          status: 'active',
+          features: {},
+          maxUsers: null,
+          pricePerUser: 0,
+          customPricePerUser: null
+        },
+        userCount: users.length,
+        activeUsers
+      });
+    } catch (error: any) {
+      console.error('Error fetching company details:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Super admin route to update company subscription
+  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const { id } = req.params;
+      const companyId = parseInt(id);
+      const updates = req.body;
+      
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      let subscription = await storage.getSubscriptionByCompanyId(companyId);
+      
+      if (!subscription) {
+        // Create subscription if it doesn't exist
+        subscription = await storage.createSubscription({
+          companyId,
+          plan: updates.plan || 'free',
+          status: 'active',
+          features: updates.features || {},
+          maxUsers: updates.maxUsers || null,
+          pricePerUser: updates.pricePerUser || 0,
+          customPricePerUser: updates.customPricePerUser || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      } else {
+        // Update existing subscription
+        const updateData: any = {
+          updatedAt: new Date()
+        };
+        
+        if (updates.plan) updateData.plan = updates.plan;
+        if (updates.features) updateData.features = updates.features;
+        if (updates.maxUsers !== undefined) updateData.maxUsers = updates.maxUsers;
+        if (updates.customPricePerUser !== undefined) updateData.customPricePerUser = updates.customPricePerUser;
+        
+        subscription = await storage.updateCompanySubscription(companyId, updateData);
+      }
+      
+      res.json(subscription);
+    } catch (error: any) {
+      console.error('Error updating company subscription:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
