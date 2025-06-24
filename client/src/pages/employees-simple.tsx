@@ -286,11 +286,14 @@ export default function EmployeesSimple() {
   return (
     <div className="container mx-auto p-4 lg:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Gestión de Empleados
-        </h1>
-        
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Empleados</h1>
+        <p className="text-gray-500 mt-1">
+          Administra usuarios y gestiona información de empleados
+        </p>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">{/* Moved button section below header */}
         {/* Desktop: Button and count side by side */}
         <div className="hidden sm:flex items-center gap-3">
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
