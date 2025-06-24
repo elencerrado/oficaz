@@ -138,7 +138,7 @@ export function DatePickerPeriod({
             className
           )}
         >
-          <span className="truncate text-sm">
+          <span className="truncate text-xs">
             {buttonText || (startDate && endDate
               ? (startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear()
                 ? `${format(startDate, 'd', { locale: es })}-${format(endDate, 'd MMM', { locale: es })}`
