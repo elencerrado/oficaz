@@ -1598,6 +1598,94 @@ startxref
     }
   });
 
+  // Reminders endpoints
+  app.post('/api/reminders', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { title, content, reminderDate, priority, color } = req.body;
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      
+      const reminder = await storage.createReminder({
+        userId,
+        companyId,
+        title,
+        content,
+        reminderDate: reminderDate ? new Date(reminderDate) : null,
+        priority: priority || 'medium',
+        color: color || '#ffffff'
+      });
+      
+      res.json(reminder);
+    } catch (error) {
+      console.error("Error creating reminder:", error);
+      res.status(500).json({ message: "Failed to create reminder" });
+    }
+  });
+
+  app.get('/api/reminders', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const reminders = await storage.getRemindersByUser(userId);
+      res.json(reminders);
+    } catch (error) {
+      console.error("Error fetching reminders:", error);
+      res.status(500).json({ message: "Failed to fetch reminders" });
+    }
+  });
+
+  app.patch('/api/reminders/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if reminder belongs to user
+      const existingReminder = await storage.getReminder(reminderId);
+      if (!existingReminder || existingReminder.userId !== userId) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      const updatedReminder = await storage.updateReminder(reminderId, req.body);
+      res.json(updatedReminder);
+    } catch (error) {
+      console.error("Error updating reminder:", error);
+      res.status(500).json({ message: "Failed to update reminder" });
+    }
+  });
+
+  app.delete('/api/reminders/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if reminder belongs to user
+      const existingReminder = await storage.getReminder(reminderId);
+      if (!existingReminder || existingReminder.userId !== userId) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      const deleted = await storage.deleteReminder(reminderId);
+      if (deleted) {
+        res.json({ message: "Reminder deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Reminder not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting reminder:", error);
+      res.status(500).json({ message: "Failed to delete reminder" });
+    }
+  });
+
+  app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const activeReminders = await storage.getActiveReminders(userId);
+      res.json(activeReminders);
+    } catch (error) {
+      console.error("Error fetching active reminders:", error);
+      res.status(500).json({ message: "Failed to fetch active reminders" });
+    }
+  });
+
   // Account management endpoints
   app.get('/api/account/info', authenticateToken, async (req: AuthRequest, res) => {
     // Disable caching for account info

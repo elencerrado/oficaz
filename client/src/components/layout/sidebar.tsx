@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { LayoutDashboard, Clock, Calendar, FileText, Mail, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
@@ -67,6 +67,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Mail, 
       badge: unreadCount,
       feature: 'messages' as const
+    },
+    { 
+      name: 'Recordatorios', 
+      href: `/${companyAlias}/recordatorios`, 
+      icon: Bell,
+      feature: null // Available for all users
     },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 

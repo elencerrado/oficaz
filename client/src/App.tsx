@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
+import { ReminderBanner } from "@/components/ui/reminder-banner";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import VacationManagement from "@/pages/vacation-management";
 import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
 import Messages from "@/pages/messages";
+import Reminders from "@/pages/reminders";
 import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
@@ -223,6 +225,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <Messages />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/recordatorios">
+        <ProtectedRoute>
+          <AppLayout>
+            <Reminders />
           </AppLayout>
         </ProtectedRoute>
       </Route>

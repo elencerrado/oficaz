@@ -263,6 +263,25 @@ export const documentNotifications = pgTable("document_notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Reminders table - Google Keep style reminders
+export const reminders = pgTable("reminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  title: text("title").notNull(),
+  content: text("content"),
+  reminderDate: timestamp("reminder_date"),
+  priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
+  color: text("color").default('#ffffff'), // Hex color for the reminder
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  isArchived: boolean("is_archived").default(false).notNull(),
+  isPinned: boolean("is_pinned").default(false).notNull(),
+  notificationShown: boolean("notification_shown").default(false).notNull(),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -312,6 +331,12 @@ export const insertNotificationSchema = createInsertSchema(systemNotifications).
 export const insertDocumentNotificationSchema = createInsertSchema(documentNotifications).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertReminderSchema = createInsertSchema(reminders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertSuperAdminSchema = createInsertSchema(superAdmins).omit({
@@ -411,6 +436,10 @@ export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
 export type SuperAdmin = typeof superAdmins.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type Reminder = typeof reminders.$inferSelect;
+export type InsertReminder = z.infer<typeof insertReminderSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;

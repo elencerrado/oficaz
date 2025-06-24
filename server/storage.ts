@@ -85,6 +85,14 @@ export interface IStorage {
   createCustomHoliday(holiday: InsertCustomHoliday): Promise<CustomHoliday>;
   deleteCustomHoliday(id: number): Promise<boolean>;
 
+  // Reminders
+  createReminder(reminder: InsertReminder): Promise<Reminder>;
+  getRemindersByUser(userId: number): Promise<Reminder[]>;
+  getReminder(id: number): Promise<Reminder | undefined>;
+  updateReminder(id: number, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
+  deleteReminder(id: number): Promise<boolean>;
+  getActiveReminders(userId: number): Promise<Reminder[]>;
+
   // Super Admin operations
   getSuperAdminByEmail(email: string): Promise<SuperAdmin | undefined>;
   createSuperAdmin(admin: InsertSuperAdmin): Promise<SuperAdmin>;
@@ -735,6 +743,57 @@ export class DrizzleStorage implements IStorage {
   async deleteSubscriptionPlan(id: number): Promise<boolean> {
     const result = await db.delete(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.id, id));
     return result.rowCount > 0;
+  }
+
+  // Reminders operations
+  async createReminder(reminder: any): Promise<any> {
+    const [newReminder] = await db.insert(schema.reminders).values({
+      ...reminder,
+      createdBy: reminder.userId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    return newReminder;
+  }
+
+  async getRemindersByUser(userId: number): Promise<any[]> {
+    return await db.select().from(schema.reminders)
+      .where(eq(schema.reminders.userId, userId))
+      .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+  }
+
+  async getReminder(id: number): Promise<any | undefined> {
+    const [reminder] = await db.select().from(schema.reminders).where(eq(schema.reminders.id, id));
+    return reminder;
+  }
+
+  async updateReminder(id: number, updates: any): Promise<any | undefined> {
+    const [reminder] = await db
+      .update(schema.reminders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.reminders.id, id))
+      .returning();
+    return reminder;
+  }
+
+  async deleteReminder(id: number): Promise<boolean> {
+    const result = await db.delete(schema.reminders).where(eq(schema.reminders.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getActiveReminders(userId: number): Promise<any[]> {
+    const now = new Date();
+    return await db.select().from(schema.reminders)
+      .where(
+        and(
+          eq(schema.reminders.userId, userId),
+          eq(schema.reminders.isCompleted, false),
+          eq(schema.reminders.isArchived, false),
+          lte(schema.reminders.reminderDate, now),
+          eq(schema.reminders.notificationShown, false)
+        )
+      )
+      .orderBy(desc(schema.reminders.priority), schema.reminders.reminderDate);
   }
 }
 
