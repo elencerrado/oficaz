@@ -358,9 +358,11 @@ const AccountManagement = () => {
     cif: '',
     email: '',
     contactName: '',
+    companyAlias: '',
     phone: '',
     address: '',
     province: '',
+    logoUrl: '',
     // Configuration settings
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
@@ -376,9 +378,11 @@ const AccountManagement = () => {
         cif: company.cif || '',
         email: company.email || '',
         contactName: company.contactName || '',
+        companyAlias: company.companyAlias || '',
         phone: company.phone || '',
         address: company.address || '',
         province: company.province || '',
+        logoUrl: company.logoUrl || '',
         employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
         workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
@@ -694,6 +698,36 @@ const AccountManagement = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Logo Section */}
+                <div>
+                  <Label>Logo de la empresa</Label>
+                  <div className="mt-2 flex items-center space-x-4">
+                    {companyData.logoUrl ? (
+                      <img 
+                        src={companyData.logoUrl} 
+                        alt="Logo de la empresa" 
+                        className="w-16 h-16 object-contain border rounded-lg bg-white"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-gray-400" />
+                      </div>
+                    )}
+                    {isEditingCompany && (
+                      <div className="flex-1">
+                        <Input
+                          placeholder="URL del logo de la empresa"
+                          value={companyData.logoUrl}
+                          onChange={(e) => setCompanyData(prev => ({ ...prev, logoUrl: e.target.value }))}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Introduce la URL de tu logo (JPG, PNG, SVG)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="companyName">Nombre de la empresa</Label>
@@ -712,6 +746,25 @@ const AccountManagement = () => {
                   </div>
                   
                   <div>
+                    <Label htmlFor="companyAlias">Alias de la empresa</Label>
+                    {isEditingCompany ? (
+                      <Input
+                        id="companyAlias"
+                        value={companyData.companyAlias}
+                        onChange={(e) => setCompanyData(prev => ({ ...prev, companyAlias: e.target.value }))}
+                        placeholder="mi-empresa"
+                      />
+                    ) : (
+                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        {companyData.companyAlias || 'No especificado'}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Usado en las URLs de la aplicación
+                    </p>
+                  </div>
+                  
+                  <div>
                     <Label htmlFor="companyCif">CIF</Label>
                     {isEditingCompany ? (
                       <Input
@@ -723,6 +776,22 @@ const AccountManagement = () => {
                     ) : (
                       <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
                         {companyData.cif || 'No especificado'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="contactName">Persona de contacto</Label>
+                    {isEditingCompany ? (
+                      <Input
+                        id="contactName"
+                        value={companyData.contactName}
+                        onChange={(e) => setCompanyData(prev => ({ ...prev, contactName: e.target.value }))}
+                        placeholder="Juan Pérez"
+                      />
+                    ) : (
+                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                        {companyData.contactName || 'No especificado'}
                       </div>
                     )}
                   </div>

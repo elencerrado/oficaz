@@ -117,6 +117,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 24, 2025. Campos adicionales de empresa agregados a configuración
+  - Añadido logoUrl con preview visual del logo de la empresa
+  - Añadido companyAlias para URLs personalizadas de la aplicación
+  - Añadido contactName para persona responsable de la empresa
+  - Interfaz reorganizada con sección de logo prominente
+  - Todos los campos disponibles en base de datos ahora editables
 - June 24, 2025. Sistema jerárquico de funcionalidades implementado con "timeEditingPermissions"
   - Nueva sub-funcionalidad "Editar horas empleados" dentro de Fichajes
   - Plan Basic: timeEditingPermissions=false, Plan Pro/Master: timeEditingPermissions=true
