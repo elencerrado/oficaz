@@ -316,13 +316,11 @@ export default function VacationRequests() {
         
         <div className="flex-1 flex flex-col items-end text-right">
           {company?.logoUrl ? (
-            <div className="mb-1 bg-white/10 rounded p-1 flex items-center justify-center" style={{ minWidth: '2rem', minHeight: '2rem', maxWidth: '3rem', maxHeight: '2rem' }}>
-              <img 
-                src={company.logoUrl} 
-                alt={company.name} 
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+            />
           ) : (
             <div className="text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}

@@ -58,13 +58,11 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
           <Menu className="text-gray-600" size={20} />
         </Button>
         {company?.logoUrl ? (
-          <div className="ml-2 lg:ml-0 flex items-center" style={{ minWidth: '1.5rem', minHeight: '1.5rem', maxWidth: '4rem', maxHeight: '2rem' }}>
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="max-w-full max-h-full object-contain"
-            />
-          </div>
+          <img 
+            src={company.logoUrl} 
+            alt={company.name} 
+            className="h-6 lg:h-8 w-auto ml-2 lg:ml-0 object-contain"
+          />
         ) : (
           <h1 className="text-sm font-medium text-gray-900 ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
             {company?.name || 'Oficaz'}

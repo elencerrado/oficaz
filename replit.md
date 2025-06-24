@@ -129,7 +129,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Sincronización inmediata del estado local tras subida exitosa
   - Actualizada lógica en todos los headers: mobile-header, sidebar, employee-dashboard
   - Logos se muestran en lugar de texto cuando están disponibles en toda la aplicación
-  - Contenedores de logo adaptables que se ajustan al aspecto del logo (rectangular para logos horizontales)
+  - Logos más grandes y visibles sin contenedores restrictivos
+  - Filtro de inversión de color en vistas de empleado para logos oscuros en fondos oscuros
 - June 24, 2025. Campos adicionales de empresa agregados a configuración
   - Añadido logoUrl con preview visual del logo de la empresa
   - Añadido companyAlias para URLs personalizadas de la aplicación

@@ -354,13 +354,11 @@ export default function EmployeeDashboard() {
         <div className="flex justify-center mb-6">
           <div className="text-center">
             {company?.logoUrl ? (
-              <div className="mx-auto bg-white/10 rounded-lg p-2 flex items-center justify-center" style={{ minWidth: '3rem', minHeight: '3rem', maxWidth: '5rem', maxHeight: '3rem' }}>
-                <img 
-                  src={company.logoUrl} 
-                  alt={company.name} 
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
+              <img 
+                src={company.logoUrl} 
+                alt={company.name} 
+                className="h-16 w-auto mx-auto object-contain filter brightness-0 invert"
+              />
             ) : (
               <div className="text-white text-base font-medium">
                 {company?.name || 'Mi Empresa'}
