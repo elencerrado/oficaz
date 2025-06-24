@@ -905,20 +905,24 @@ const AccountManagement = () => {
                     ) : (
                       <div className="mt-1">
                         <div className="p-3 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
-                          No disponible en tu plan
+                          No - No disponible en tu plan
                         </div>
                         <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                           <AlertCircle className="h-4 w-4 text-amber-600" />
                           <p className="text-sm text-amber-700">
-                            Esta funcionalidad requiere el plan Pro o superior para permitir que los empleados editen sus horarios.
+                            Esta funcionalidad requiere el plan Pro o superior. Los empleados no pueden editar sus horarios.
                           </p>
                         </div>
                       </div>
                     )}
-                    {hasAccess('timeEditingPermissions') && (
+                    {hasAccess('timeEditingPermissions') ? (
                       <p className="text-sm text-gray-500 mt-1">
                         {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar sus horarios registrados'}
                         {companyData.employeeTimeEditPermission === 'no' && 'Solo administradores y managers pueden modificar horarios'}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Solo administradores y managers pueden modificar horarios
                       </p>
                     )}
                   </div>

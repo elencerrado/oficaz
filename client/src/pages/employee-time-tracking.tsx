@@ -87,8 +87,8 @@ export default function EmployeeTimeTracking() {
     staleTime: 30000, // Cache for 30 seconds to reduce API calls
   });
 
-  // Check if user can edit time entries based on company configuration
-  const canEditTime = company?.employeeTimeEditPermission === 'yes';
+  // Check if user can edit time entries based on company configuration AND plan permissions
+  const canEditTime = hasAccess('timeEditingPermissions') && company?.employeeTimeEditPermission === 'yes';
 
 
 
