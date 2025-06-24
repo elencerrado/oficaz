@@ -798,17 +798,21 @@ export class DrizzleStorage implements IStorage {
 
   async getActiveReminders(userId: number): Promise<any[]> {
     const now = new Date();
-    return await db.select().from(schema.reminders)
+    
+    const reminders = await db.select().from(schema.reminders)
       .where(
         and(
           eq(schema.reminders.userId, userId),
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
+          schema.reminders.reminderDate !== null,
           lte(schema.reminders.reminderDate, now),
           eq(schema.reminders.notificationShown, false)
         )
       )
       .orderBy(desc(schema.reminders.priority), schema.reminders.reminderDate);
+    
+    return reminders;
   }
 }
 

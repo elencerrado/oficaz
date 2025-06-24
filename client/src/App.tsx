@@ -284,6 +284,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <ReminderBanner />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

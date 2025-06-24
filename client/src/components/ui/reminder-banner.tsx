@@ -35,8 +35,11 @@ export function ReminderBanner() {
   // Fetch active reminders
   const { data: activeReminders = [] } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 60000, // Check every minute
+    refetchInterval: 5000, // Check every 5 seconds for immediate testing
   });
+
+  console.log('ReminderBanner - Active reminders:', activeReminders);
+  console.log('ReminderBanner - Dismissed reminders:', dismissedReminders);
 
   // Mark reminder as shown mutation
   const markAsShownMutation = useMutation({
@@ -54,6 +57,8 @@ export function ReminderBanner() {
   const visibleReminders = activeReminders.filter(
     (reminder: ActiveReminder) => !dismissedReminders.includes(reminder.id)
   );
+  
+  console.log('ReminderBanner - Visible reminders:', visibleReminders);
 
   const dismissReminder = (reminderId: number) => {
     setDismissedReminders(prev => [...prev, reminderId]);
@@ -68,64 +73,55 @@ export function ReminderBanner() {
   };
 
   if (visibleReminders.length === 0) {
+    console.log('ReminderBanner - No visible reminders, returning null');
     return null;
   }
+  
+  console.log('ReminderBanner - Rendering banner with', visibleReminders.length, 'reminders');
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-3 max-w-sm">
-      {visibleReminders.map((reminder: ActiveReminder) => {
-        const PriorityIcon = PRIORITY_ICONS[reminder.priority];
-        
-        return (
-          <div
-            key={reminder.id}
-            className={`
-              rounded-lg border shadow-lg p-4 animate-in slide-in-from-bottom-2 duration-300
-              ${PRIORITY_COLORS[reminder.priority]}
-            `}
-            style={{ backgroundColor: reminder.color !== '#ffffff' ? reminder.color : undefined }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-2 flex-1">
-                <PriorityIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm truncate">
+    <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-500 text-white p-4 shadow-lg">
+      <div className="max-w-7xl mx-auto">
+        {visibleReminders.map((reminder: ActiveReminder) => {
+          const PriorityIcon = PRIORITY_ICONS[reminder.priority];
+          
+          return (
+            <div
+              key={reminder.id}
+              className="flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <PriorityIcon className="w-5 h-5 text-white" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-white">
                     {reminder.title}
                   </h4>
                   {reminder.content && (
-                    <p className="text-xs mt-1 line-clamp-2 opacity-90">
+                    <p className="text-red-100 text-sm">
                       {reminder.content}
                     </p>
                   )}
-                  {reminder.reminderDate && (
-                    <div className="flex items-center gap-1 mt-2">
-                      <Clock className="w-3 h-3" />
-                      <span className="text-xs font-medium">
-                        {formatReminderDate(reminder.reminderDate)}
-                      </span>
-                    </div>
-                  )}
-                  <Badge 
-                    variant="secondary" 
-                    className="text-xs mt-2"
-                  >
-                    {reminder.priority === 'high' ? 'Alta' : 
-                     reminder.priority === 'medium' ? 'Media' : 'Baja'}
-                  </Badge>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => dismissReminder(reminder.id)}
-                className="h-6 w-6 p-0 hover:bg-black/10"
-              >
-                <X className="w-3 h-3" />
-              </Button>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-red-100 text-sm font-medium">
+                  {reminder.priority === 'high' ? 'ALTA PRIORIDAD' : 
+                   reminder.priority === 'medium' ? 'MEDIA PRIORIDAD' : 'BAJA PRIORIDAD'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => dismissReminder(reminder.id)}
+                  className="h-8 w-8 p-0 hover:bg-red-600 text-white"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

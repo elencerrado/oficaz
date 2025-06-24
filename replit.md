@@ -174,6 +174,9 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Sistema de prioridades (alta, media, baja) con iconos y colores distintivos
   - Selección de colores personalizados para organización visual
   - Corregido error de actualización por manejo incorrecto de fechas en Drizzle ORM
+  - Sistema de banner de notificaciones implementado y funcionando
+  - Componente ReminderBanner integrado en App.tsx con polling cada 5 segundos
+  - Endpoint /api/reminders/active configurado para mostrar recordatorios programados
 - June 24, 2025. Sistema jerárquico de funcionalidades implementado con "timeEditingPermissions"
   - Nueva sub-funcionalidad "Editar horas empleados" dentro de Fichajes
   - Plan Basic: timeEditingPermissions=false, Plan Pro/Master: timeEditingPermissions=true
