@@ -673,64 +673,76 @@ export default function AdminDocuments() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200"
+            onClick={() => setActiveTab('explorer')}
+          >
             <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-blue-100">
-                  <FileText className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-bold text-white">{allDocuments.length}</span>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Documentos</p>
-                  <p className="text-2xl font-bold text-gray-900">{allDocuments.length}</p>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Documentos</p>
+                  <p className="text-xs text-gray-500">En sistema</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-green-200"
+            onClick={() => setActiveTab('upload')}
+          >
             <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-green-100">
-                  <Users className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Empleados</p>
-                  <p className="text-2xl font-bold text-gray-900">{employees.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-orange-100">
-                  <Send className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Solicitudes Activas</p>
-                  <p className="text-2xl font-bold text-gray-900">0</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-lg bg-purple-100">
-                  <Upload className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Subidos Hoy</p>
-                  <p className="text-2xl font-bold text-gray-900">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-green-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-bold text-white">
                     {allDocuments.filter(doc => {
                       const today = new Date();
                       const docDate = new Date(doc.createdAt);
                       return docDate.toDateString() === today.toDateString();
                     }).length}
-                  </p>
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Subidos Hoy</p>
+                  <p className="text-xs text-gray-500">Nuevos archivos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-yellow-200"
+            onClick={() => setActiveTab('requests')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-yellow-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-bold text-white">{documentRequests?.filter(req => !req.isCompleted).length || 0}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Solicitudes</p>
+                  <p className="text-xs text-gray-500">Pendientes</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-purple-200"
+            onClick={() => setActiveTab('explorer')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-purple-500 rounded-lg shadow-sm flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-bold text-white">{employees.length}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Empleados</p>
+                  <p className="text-xs text-gray-500">Total activos</p>
                 </div>
               </div>
             </CardContent>
