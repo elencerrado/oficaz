@@ -348,24 +348,20 @@ export default function Settings() {
           <p className="text-gray-600">Gestiona la configuración de tu empresa y perfil</p>
         </div>
 
-        <Tabs defaultValue="company" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="company" className="flex items-center space-x-2">
-              <Building2 className="h-4 w-4" />
-              <span>Empresa</span>
-            </TabsTrigger>
-            <TabsTrigger value="policies" className="flex items-center space-x-2">
-              <SettingsIcon className="h-4 w-4" />
-              <span>Políticas</span>
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span>Mi Perfil</span>
-            </TabsTrigger>
-          </TabsList>
+        <TabNavigation
+          tabs={[
+            { id: 'company', label: 'Empresa', icon: <Building2 className="h-4 w-4" /> },
+            { id: 'policies', label: 'Políticas', icon: <SettingsIcon className="h-4 w-4" /> },
+            { id: 'profile', label: 'Mi Perfil', icon: <Users className="h-4 w-4" /> }
+          ]}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+
+        <div className="mt-6">
 
           {/* Company Information Tab */}
-          <TabsContent value="company">
+          {activeTab === 'company' && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -564,10 +560,10 @@ export default function Settings() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
           {/* Company Policies Tab */}
-          <TabsContent value="policies">
+          {activeTab === 'policies' && (
             <div className="space-y-6">
               <Card>
                 <CardHeader>
@@ -687,10 +683,10 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
-          </TabsContent>
+          )}
 
           {/* Personal Profile Tab */}
-          <TabsContent value="profile">
+          {activeTab === 'profile' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -798,8 +794,8 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );
