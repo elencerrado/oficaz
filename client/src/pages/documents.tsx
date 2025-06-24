@@ -52,24 +52,11 @@ export default function Documents() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
-  console.log('Documents page: user =', user?.fullName, 'company =', company?.name);
+  // For employees, they shouldn't reach this page if feature is disabled
+  // (they see disabled sidebar icon). Only admins/managers see restriction page.
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
   
-  // Check if user has access to documents feature
-  console.log('About to check documents access...');
-  
-  // Force early return during loading
-  if (!user || !company) {
-    console.log('User or company not loaded yet');
-    return <div>Cargando...</div>;
-  }
-  
-  console.log('About to call hasAccess for documents...');
-  const documentsAccess = hasAccess('documents');
-  console.log('Documents access result:', documentsAccess);
-  console.log('Should access be denied?', !documentsAccess);
-  
-  if (!documentsAccess) {
-    console.log('Access denied, showing restricted page');
+  if (isAdmin && !hasAccess('documents')) {
     return (
       <FeatureRestrictedPage
         featureName="Documentos"
@@ -79,8 +66,6 @@ export default function Documents() {
       />
     );
   }
-  
-  console.log('Access granted, showing documents page');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
