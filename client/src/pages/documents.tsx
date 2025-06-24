@@ -52,6 +52,9 @@ export default function Documents() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
   // For employees, they shouldn't reach this page if feature is disabled
   // (they see disabled sidebar icon). Only admins/managers see restriction page.
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';

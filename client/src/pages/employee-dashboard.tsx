@@ -22,6 +22,9 @@ export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
+  
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
     return localStorage.getItem('hasVacationUpdates') === 'true';
   });
