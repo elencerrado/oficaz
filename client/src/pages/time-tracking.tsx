@@ -550,9 +550,13 @@ export default function TimeTracking() {
             </div>
 
             {/* Right side - Date Filters */}
+            {/* ⚠️ CRÍTICO: NO MODIFICAR ESTE LAYOUT - IMPLEMENTACIÓN FINAL BLINDADA */}
+            {/* Layout perfecto: 5 botones uniformes en línea horizontal con distribución completa */}
+            {/* flex-1 + gap-2 + text-xs + text-center = distribución perfecta sin espacios vacíos */}
             <div className="flex flex-col space-y-2 lg:col-span-2">
               <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
               <div className="flex items-center gap-2 w-full">
+                {/* ⚠️ TODOS LOS BOTONES DEBEN MANTENER: flex-1 text-xs font-normal text-center */}
                 <Button
                   variant={dateFilter === 'today' ? 'default' : 'outline'}
                   size="sm"
@@ -563,7 +567,7 @@ export default function TimeTracking() {
                     setStartDate('');
                     setEndDate('');
                   }}
-                  className="h-10 text-xs font-normal flex-1 text-center"
+                  className="h-10 text-xs font-normal flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
                 >
                   Hoy
                 </Button>
@@ -585,7 +589,7 @@ export default function TimeTracking() {
                     : 'Día'
                   }
                   className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
                     dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -595,7 +599,7 @@ export default function TimeTracking() {
                     <Button
                       variant={dateFilter === 'month' ? 'default' : 'outline'}
                       size="sm"
-                      className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
+                      className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
                     >
                       {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
                     </Button>
@@ -646,7 +650,7 @@ export default function TimeTracking() {
                     }
                   }}
                   className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
                 />
@@ -668,6 +672,7 @@ export default function TimeTracking() {
                 >
                   Limpiar filtros
                 </Button>
+                {/* ⚠️ FIN ZONA CRÍTICA - Layout de filtros completamente optimizado y blindado */}
               </div>
             </div>
           </div>
