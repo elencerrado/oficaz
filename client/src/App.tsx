@@ -108,6 +108,10 @@ function Router() {
         <Route path="/super-admin/login" component={SuperAdminLogin} />
         <Route path="/super-admin/dashboard" component={SuperAdminDashboard} />
         <Route path="/super-admin/plans" component={SuperAdminPlans} />
+        <Route path="/super-admin/companies" component={SuperAdminDashboard} />
+        <Route path="/super-admin/companies/:id">
+          {(params) => <SuperAdminCompanyDetail companyId={params.id} />}
+        </Route>
         <Route path="/super-admin" component={SuperAdminDashboard} />
         <Route component={NotFound} />
       </Switch>
