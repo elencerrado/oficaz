@@ -118,6 +118,7 @@ export default function Messages() {
   // All state declarations together - FIXED ORDER
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [selectedChat, setSelectedChat] = useState<number | null>(() => {
+    if (!canAccess) return 2; // Demo: chat con Juan abierto
     const urlParams = new URLSearchParams(window.location.search);
     const chatParam = urlParams.get('chat');
     if (chatParam) {
@@ -137,6 +138,50 @@ export default function Messages() {
   const [modalSelectedEmployees, setModalSelectedEmployees] = useState<number[]>([]);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
+
+  // Demo employees for preview mode
+  const demoEmployees = [
+    { id: 1, fullName: "María González", role: "admin", email: "maria@empresa.com" },
+    { id: 2, fullName: "Juan Pérez", role: "employee", email: "juan@empresa.com" },
+    { id: 3, fullName: "Ana Rodríguez", role: "employee", email: "ana@empresa.com" },
+    { id: 4, fullName: "Carlos López", role: "manager", email: "carlos@empresa.com" }
+  ];
+
+  // Demo chat messages for preview mode
+  const demoChatMessages = [
+    {
+      id: 1,
+      senderId: 2,
+      receiverId: 1,
+      content: "Hola María, ¿tienes un momento para revisar mi solicitud de vacaciones?",
+      createdAt: "2025-06-25T10:30:00.000Z",
+      isRead: true
+    },
+    {
+      id: 2,
+      senderId: 1,
+      receiverId: 2,
+      content: "¡Por supuesto Juan! Ya he revisado tu solicitud y está aprobada.",
+      createdAt: "2025-06-25T10:32:00.000Z",
+      isRead: true
+    },
+    {
+      id: 3,
+      senderId: 2,
+      receiverId: 1,
+      content: "¡Perfecto! Muchas gracias. ¿Necesitas que prepare algo antes de irme?",
+      createdAt: "2025-06-25T10:35:00.000Z",
+      isRead: true
+    },
+    {
+      id: 4,
+      senderId: 1,
+      receiverId: 2,
+      content: "Solo asegúrate de que los informes estén actualizados. ¡Disfruta tus vacaciones!",
+      createdAt: "2025-06-25T10:38:00.000Z",
+      isRead: false
+    }
+  ];
 
   // All refs together
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -158,6 +203,14 @@ export default function Messages() {
     enabled: !!user && user.role === 'employee' && canAccess,
     staleTime: 60000,
   });
+
+  // Chat messages query for real mode
+  const { data: fetchedChatMessages = [] } = useQuery({
+    queryKey: ['/api/messages/chat', selectedChat],
+    enabled: !!user && !!selectedChat && canAccess,
+  });
+  
+  const chatMessages = canAccess ? fetchedChatMessages : (selectedChat ? demoChatMessages : []);
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
@@ -341,7 +394,7 @@ export default function Messages() {
     }));
   }, [getChatMessages]);
 
-  const chatMessages = useMemo(() => 
+  const finalChatMessages = useMemo(() => 
     selectedChat ? getChatMessages(selectedChat) : [], 
     [selectedChat, getChatMessages]
   );
