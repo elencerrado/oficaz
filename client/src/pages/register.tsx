@@ -240,11 +240,7 @@ export default function Register() {
         setLocation('/dashboard');
       }
     } catch (error: any) {
-      toast({
-        title: 'Error en el registro',
-        description: error.message || 'Ha ocurrido un error durante el registro',
-        variant: 'destructive',
-      });
+      console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
     } finally {
       setValidatingStep3(false);
       setIsLoading(false);
