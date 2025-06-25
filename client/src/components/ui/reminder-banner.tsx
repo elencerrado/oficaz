@@ -65,6 +65,19 @@ export function ReminderBanner() {
     },
   });
 
+  // Mark reminder as completed mutation
+  const markAsCompletedMutation = useMutation({
+    mutationFn: async (reminderId: number) => {
+      return await apiRequest('PATCH', `/api/reminders/${reminderId}`, {
+        status: 'completed'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+    },
+  });
+
   // Don't render anything if not authenticated or still loading auth
   if (authLoading || !isAuthenticated) {
     return null;
@@ -87,6 +100,11 @@ export function ReminderBanner() {
   const dismissReminder = (reminderId: number) => {
     setDismissedReminders(prev => [...prev, reminderId]);
     markAsShownMutation.mutate(reminderId);
+  };
+
+  const completeReminder = (reminderId: number) => {
+    setDismissedReminders(prev => [...prev, reminderId]);
+    markAsCompletedMutation.mutate(reminderId);
   };
 
   const formatReminderDate = (dateString: string) => {
@@ -135,7 +153,7 @@ export function ReminderBanner() {
         zIndex: 9999,
         maxWidth: '90vw',
         width: 'auto',
-        minWidth: '300px',
+        minWidth: '350px',
         textAlign: 'center',
         fontSize: '14px',
         fontWeight: '500',
@@ -153,28 +171,53 @@ export function ReminderBanner() {
             {firstReminder.title}
           </div>
           {firstReminder.content && (
-            <div style={{ fontSize: '12px', opacity: '0.8' }}>
+            <div style={{ fontSize: '12px', opacity: '0.8', marginBottom: '2px' }}>
               {firstReminder.content}
+            </div>
+          )}
+          {firstReminder.reminderDate && (
+            <div style={{ fontSize: '11px', opacity: '0.7', fontWeight: '400' }}>
+              {formatReminderDate(firstReminder.reminderDate)}
             </div>
           )}
         </div>
       </div>
       
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => dismissReminder(firstReminder.id)}
-        style={{ 
-          color: textColor, 
-          padding: '4px 8px',
-          fontSize: '12px',
-          backgroundColor: 'transparent',
-          border: `1px solid ${textColor}`,
-          borderRadius: '4px'
-        }}
-      >
-        <X style={{ width: '14px', height: '14px' }} />
-      </Button>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => completeReminder(firstReminder.id)}
+          style={{ 
+            color: textColor, 
+            padding: '4px 8px',
+            fontSize: '11px',
+            backgroundColor: 'transparent',
+            border: `1px solid ${textColor}`,
+            borderRadius: '4px',
+            fontWeight: '500'
+          }}
+        >
+          <CheckCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
+          Hecho
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => dismissReminder(firstReminder.id)}
+          style={{ 
+            color: textColor, 
+            padding: '4px 8px',
+            fontSize: '12px',
+            backgroundColor: 'transparent',
+            border: `1px solid ${textColor}`,
+            borderRadius: '4px'
+          }}
+        >
+          <X style={{ width: '14px', height: '14px' }} />
+        </Button>
+      </div>
     </div>
   );
 }
