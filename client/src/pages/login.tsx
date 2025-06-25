@@ -54,7 +54,21 @@ export default function Login() {
     } else {
       setLoading(false);
     }
-  }, [companyAlias, setLocation]);
+
+    // Load remembered credentials
+    const remembered = localStorage.getItem('rememberedCredentials');
+    if (remembered) {
+      try {
+        const { dniOrEmail, companyAlias: savedCompanyAlias } = JSON.parse(remembered);
+        if (!companyAlias || companyAlias === savedCompanyAlias) {
+          form.setValue('dniOrEmail', dniOrEmail);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error('Error loading remembered credentials:', error);
+      }
+    }
+  }, [companyAlias, setLocation, form]);
 
   const onSubmit = async (data: LoginData) => {
     setSubmitting(true);
@@ -79,6 +93,17 @@ export default function Login() {
       };
       
       const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
+      
+      // Handle remember me functionality
+      if (rememberMe) {
+        localStorage.setItem('rememberedCredentials', JSON.stringify({
+          dniOrEmail: normalizedData.dniOrEmail,
+          companyAlias: companyAlias || (response as any)?.company?.companyAlias
+        }));
+      } else {
+        localStorage.removeItem('rememberedCredentials');
+      }
+      
       // Always use the company alias from the URL if we're in a company-specific login
       const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
       setLocation(`/${redirectAlias}/inicio`);
