@@ -324,7 +324,7 @@ export default function Register() {
               {/* Team size selection */}
               <div className="space-y-2">
                 <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {teamSizes.map((size) => {
                     const isSelected = step1Form.watch('teamSize') === size.value;
                     return (
