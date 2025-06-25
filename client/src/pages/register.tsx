@@ -258,14 +258,14 @@ export default function Register() {
                       />
                       <label
                         htmlFor={`teamSize-${size.value}`}
-                        className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
+                        className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-oficaz-primary/5 has-[:checked]:border-oficaz-primary has-[:checked]:ring-2 has-[:checked]:ring-oficaz-primary/20 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="text-xs font-medium">{size.label}</div>
                             <div className="text-xs text-gray-500">{size.description}</div>
                           </div>
-                          <div className="w-3 h-3 border border-gray-300 rounded-full peer-checked:bg-oficaz-primary peer-checked:border-oficaz-primary"></div>
+                          <div className="w-3 h-3 border border-gray-300 rounded-full has-[:checked]:bg-oficaz-primary has-[:checked]:border-oficaz-primary"></div>
                         </div>
                       </label>
                     </div>
@@ -294,7 +294,7 @@ export default function Register() {
                         />
                         <label
                           htmlFor={`feature-${feature.id}`}
-                          className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
+                          className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-oficaz-primary/5 has-[:checked]:border-oficaz-primary has-[:checked]:ring-2 has-[:checked]:ring-oficaz-primary/20 transition-all"
                         >
                           <div className="flex items-center space-x-2">
                             <Icon className="h-3 w-3 text-oficaz-primary flex-shrink-0" />
@@ -302,8 +302,8 @@ export default function Register() {
                               <div className="text-xs font-medium truncate">{feature.name}</div>
                               <div className="text-xs text-gray-500 truncate">{feature.description}</div>
                             </div>
-                            <div className="w-3 h-3 border border-gray-300 rounded peer-checked:bg-oficaz-primary peer-checked:border-oficaz-primary flex items-center justify-center flex-shrink-0">
-                              <CheckCircle className="h-2 w-2 text-white opacity-0 peer-checked:opacity-100" />
+                            <div className="w-3 h-3 border border-gray-300 rounded has-[:checked]:bg-oficaz-primary has-[:checked]:border-oficaz-primary flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="h-2 w-2 text-white opacity-0 has-[:checked]:opacity-100" />
                             </div>
                           </div>
                         </label>
@@ -671,10 +671,8 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               ¿Ya tienes una cuenta?{' '}
-              <Link href="/login">
-                <a className="font-medium text-oficaz-primary hover:text-blue-500">
-                  Iniciar sesión
-                </a>
+              <Link href="/login" className="font-medium text-oficaz-primary hover:text-blue-500">
+                Iniciar sesión
               </Link>
             </p>
           </div>
