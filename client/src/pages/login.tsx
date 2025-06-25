@@ -207,10 +207,10 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Enlace de ayuda */}
+            {/* Enlace de registro */}
             <div className="text-center mt-4">
               <Link href="/register" className="text-sm text-[#007AFF] hover:underline">
-                ¿Tienes problemas para acceder?
+                Hacer el registro de tu empresa
               </Link>
             </div>
           </form>
