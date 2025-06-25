@@ -566,18 +566,18 @@ export default function Register() {
                 </div>
               </div>
 
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => goToStep(1)} className="rounded-xl px-8">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Atrás
-                </Button>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                 <Button 
                   type="submit" 
-                  className="rounded-xl px-8"
+                  className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2"
                   disabled={validatingStep2}
                 >
                   {validatingStep2 ? 'Verificando datos...' : 'Continuar'}
                   <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+                <Button type="button" variant="outline" onClick={() => goToStep(1)} className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Atrás
                 </Button>
               </div>
             </form>
@@ -737,7 +737,11 @@ export default function Register() {
                 )}
               </div>
 
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading || validatingStep3}>
+                  {validatingStep3 ? 'Verificando datos...' : isLoading ? 'Creando cuenta...' : 'Crear empresa'}
+                  <CheckCircle className="h-4 w-4 ml-2" />
+                </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -746,15 +750,11 @@ export default function Register() {
                     setIsLoading(false);
                     goToStep(2);
                   }} 
-                  className="rounded-xl px-8"
+                  className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1"
                   disabled={isLoading || validatingStep3}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás
-                </Button>
-                <Button type="submit" className="rounded-xl px-8" disabled={isLoading || validatingStep3}>
-                  {validatingStep3 ? 'Verificando datos...' : isLoading ? 'Creando cuenta...' : 'Crear empresa'}
-                  <CheckCircle className="h-4 w-4 ml-2" />
                 </Button>
               </div>
             </form>
