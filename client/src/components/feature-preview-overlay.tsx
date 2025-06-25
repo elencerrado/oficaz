@@ -20,7 +20,7 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
 
   return (
     <div 
-      className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-50 pointer-events-auto"
+      className="fixed inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-auto"
       onClick={handleClick}
       onMouseDown={handleEvents}
       onMouseUp={handleEvents}
@@ -30,7 +30,7 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
       onSubmit={handleEvents}
       style={{ zIndex: 9999 }}
     >
-      <div className="fixed inset-0 flex items-center justify-center p-8 z-50">
+      <div className="flex items-center justify-center h-full p-8">
         <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto">
           {/* Lock icon with gradient background */}
           <div className="relative mb-6">
