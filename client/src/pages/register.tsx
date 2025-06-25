@@ -179,21 +179,24 @@ export default function Register() {
       }}
     >
       <Card className="w-full max-w-3xl shadow-2xl rounded-2xl">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex items-center justify-center mb-4">
+        <CardHeader className="space-y-4">
+          {/* Modern header with logo and title side by side */}
+          <div className="flex items-center justify-between">
             <img 
               src={oficazLogo} 
               alt="Oficaz" 
-              className="h-12 w-auto"
+              className="h-8 w-auto"
             />
+            <div className="text-right flex-1 ml-6">
+              <CardTitle className="text-xl font-semibold text-gray-900">Configurar tu empresa</CardTitle>
+              <CardDescription className="text-sm text-gray-600 mt-1">
+                Proceso rápido en 3 pasos - Solo toma un minuto
+              </CardDescription>
+            </div>
           </div>
-          <CardTitle className="text-2xl">Configurar tu empresa en Oficaz</CardTitle>
-          <CardDescription>
-            Proceso de registro rápido en 3 pasos - Solo toma un minuto
-          </CardDescription>
           
           {/* Progress bar */}
-          <div className="w-full max-w-md mx-auto mt-6">
+          <div className="w-full">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-medium text-gray-500">Paso {currentStep} de 3</span>
               <span className="text-xs font-medium text-gray-500">{Math.round(progressPercentage)}%</span>
@@ -202,25 +205,25 @@ export default function Register() {
           </div>
 
           {/* Step indicators */}
-          <div className="flex justify-center items-center space-x-8 mt-4">
+          <div className="flex justify-center items-center space-x-6">
             <div className={`flex items-center space-x-2 ${currentStep >= 1 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${
                 currentStep >= 1 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
-                {currentStep > 1 ? <CheckCircle className="h-4 w-4" /> : '1'}
+                {currentStep > 1 ? <CheckCircle className="h-3 w-3" /> : '1'}
               </div>
               <span className="text-xs font-medium hidden sm:block">Preferencias</span>
             </div>
             <div className={`flex items-center space-x-2 ${currentStep >= 2 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${
                 currentStep >= 2 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
-                {currentStep > 2 ? <CheckCircle className="h-4 w-4" /> : '2'}
+                {currentStep > 2 ? <CheckCircle className="h-3 w-3" /> : '2'}
               </div>
               <span className="text-xs font-medium hidden sm:block">Empresa</span>
             </div>
             <div className={`flex items-center space-x-2 ${currentStep >= 3 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 ${
                 currentStep >= 3 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
                 3
@@ -255,7 +258,7 @@ export default function Register() {
                       />
                       <label
                         htmlFor={`teamSize-${size.value}`}
-                        className="block p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
+                        className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div>
