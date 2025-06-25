@@ -138,6 +138,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Logging de seguridad: auditoría de logins exitosos con IP y timestamp
   - Verificación cuenta activa: bloqueo automático de cuentas desactivadas
   - UI responsive: gradiente profesional, cards limpias, logos empresa dinámicos
+- June 25, 2025. Problema crítico de autenticación DNI vs email completamente resuelto
+  - Corregida persistencia de tokens: localStorage + setAuthData + verificación inmediata
+  - Login por DNI (12345678Z) y email (admin@test.com) ahora funcionalmente idénticos
+  - Headers de autorización correctamente aplicados en todas las peticiones API
+  - Filtros protegidos contra datos null en time-tracking, admin-documents y employees-simple
+  - Sistema de debugging mejorado para rastrear problemas de autenticación
+  - Token persistence reforzado con múltiples métodos de guardado
+  - Todas las funcionalidades accesibles independientemente del método de login usado
 - June 25, 2025. Optimización móvil del wizard de registro y prevención de recargas
   - Wizard optimizado para móvil: logo centrado y más pequeño, títulos adaptados
   - Prevención de recargas accidentales en verificación de código móvil

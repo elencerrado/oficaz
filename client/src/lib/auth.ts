@@ -8,13 +8,8 @@ interface AuthData {
 }
 
 export function setAuthData(data: AuthData) {
-  console.log('setAuthData called with token:', !!data.token);
-  console.log('Data object:', data);
   try {
     localStorage.setItem('authData', JSON.stringify(data));
-    console.log('localStorage.setItem executed');
-    const verification = getAuthData();
-    console.log('Verification result:', !!verification?.token);
   } catch (error) {
     console.error('Error saving to localStorage:', error);
   }
@@ -22,18 +17,14 @@ export function setAuthData(data: AuthData) {
 
 export function getAuthData(): AuthData | null {
   const authDataStr = localStorage.getItem('authData');
-  console.log('getAuthData: localStorage content exists:', !!authDataStr);
   
   if (!authDataStr) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(authDataStr);
-    console.log('getAuthData: parsed token exists:', !!parsed?.token);
-    return parsed;
+    return JSON.parse(authDataStr);
   } catch {
-    console.log('getAuthData: parse error');
     return null;
   }
 }
@@ -44,7 +35,5 @@ export function clearAuthData() {
 
 export function getAuthHeaders(): HeadersInit {
   const authData = getAuthData();
-  const headers = authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
-  console.log('getAuthHeaders called, token exists:', !!authData?.token);
-  return headers;
+  return authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
 }

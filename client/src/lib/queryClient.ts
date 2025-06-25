@@ -23,12 +23,7 @@ export async function apiRequest(
   // Always add authorization header if token exists
   Object.assign(headers, authHeaders);
   
-  console.log('API Request:', method, url, 'with auth:', Object.keys(authHeaders).length > 0 ? 'YES' : 'NO');
-  if (Object.keys(authHeaders).length === 0) {
-    console.log('WARNING: No auth headers - checking localStorage directly');
-    const directCheck = localStorage.getItem('authData');
-    console.log('Direct localStorage check:', !!directCheck);
-  }
+  // Auth headers applied successfully
 
   const res = await fetch(url, {
     method,
@@ -66,7 +61,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const authHeaders = getAuthHeaders();
-    console.log('Query Request:', queryKey[0], 'with auth:', Object.keys(authHeaders).length > 0 ? 'YES' : 'NO');
+    // Query with auth headers
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
       headers: {

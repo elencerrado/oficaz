@@ -73,32 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
     const data = await apiRequest('POST', '/api/auth/login', loginData);
     
-    console.log('Login successful, saving auth data:', { 
-      user: data.user?.fullName, 
-      company: data.company?.name, 
-      subscription: data.subscription?.plan,
-      token: data.token ? 'present' : 'missing' 
-    });
-    
-    // FORCE SAVE to localStorage - multiple approaches
-    console.log('FORCE saving token to localStorage...');
-    
-    // Method 1: Direct localStorage
+    // Save auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
-    
-    // Method 2: setAuthData function
     setAuthData(data);
-    
-    // Method 3: Verify immediately
-    const verification = localStorage.getItem('authData');
-    console.log('localStorage verification:', !!verification);
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    
-    console.log('Token forcefully saved:', !!data.token);
     
     return data;
   };
