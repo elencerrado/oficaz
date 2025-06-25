@@ -210,7 +210,7 @@ export default function Login() {
             {/* Enlace de registro */}
             <div className="text-center mt-4">
               <Link href="/register" className="text-sm text-[#007AFF] hover:underline">
-                Hacer el registro de tu empresa
+                Registra tu empresa
               </Link>
             </div>
           </form>
