@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
@@ -67,27 +67,16 @@ export default function VerifyCode() {
       console.log('Verify response data:', result);
       
       if (response.ok) {
-        toast({
-          title: 'Código verificado',
-          description: 'Email verificado correctamente. Continúa con el registro.',
-        });
+
         
         // Redirect to registration with verification token
         setLocation(`/register?token=${result.verificationToken}`);
       } else {
-        toast({
-          title: 'Código incorrecto',
-          description: result.message || 'El código no es válido o ha expirado.',
-          variant: 'destructive',
-        });
+        console.error('Verification error:', result.message || 'El código no es válido o ha expirado.');
       }
     } catch (error: any) {
       console.error('Verify error:', error);
-      toast({
-        title: 'Error',
-        description: 'Ha ocurrido un error inesperado: ' + error.message,
-        variant: 'destructive',
-      });
+      console.error('Verification error:', 'Ha ocurrido un error inesperado: ' + error.message);
     } finally {
       setIsLoading(false);
     }

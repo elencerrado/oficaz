@@ -208,11 +208,7 @@ export default function Register() {
       setFormData(prev => ({ ...prev, ...data }));
       setCurrentStep(3);
     } catch (error) {
-      toast({
-        title: "Error de validación",
-        description: "Error al verificar los datos. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
+      console.error("Validation error:", "Error al verificar los datos. Inténtalo de nuevo.");
     } finally {
       setValidatingStep2(false);
     }
@@ -240,10 +236,7 @@ export default function Register() {
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       
       if (response.ok) {
-        toast({
-          title: 'Registro exitoso',
-          description: 'Tu empresa ha sido creada correctamente',
-        });
+
         setLocation('/dashboard');
       }
     } catch (error: any) {

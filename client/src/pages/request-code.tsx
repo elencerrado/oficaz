@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mail, ArrowRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
@@ -49,28 +49,17 @@ export default function RequestCode() {
       console.log('Response data:', result);
       
       if (response.ok) {
-        toast({
-          title: 'Código enviado',
-          description: 'Te hemos enviado un código de verificación a tu email.',
-        });
+
         
         // Redirect to verification page with secure session ID
         const sessionId = result.sessionId;
         setLocation(`/verify-code?session=${sessionId}`);
       } else {
-        toast({
-          title: 'Error',
-          description: result.message || 'No se pudo enviar el código.',
-          variant: 'destructive',
-        });
+        console.error('Request error:', result.message || 'No se pudo enviar el código.');
       }
     } catch (error: any) {
       console.error('Request error:', error);
-      toast({
-        title: 'Error',
-        description: 'Ha ocurrido un error inesperado: ' + error.message,
-        variant: 'destructive',
-      });
+      console.error('Request error:', 'Ha ocurrido un error inesperado: ' + error.message);
     } finally {
       setIsLoading(false);
     }
