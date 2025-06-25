@@ -188,7 +188,6 @@ export default function Login() {
                 }}
               />
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                <Lock className="h-4 w-4 text-gray-400" />
                 <Button
                   type="button"
                   variant="ghost"
@@ -202,6 +201,7 @@ export default function Login() {
                     <Eye className="h-4 w-4 text-gray-400" />
                   )}
                 </Button>
+                <Lock className="h-4 w-4 text-gray-400" />
               </div>
               {form.formState.errors.password && (
                 <p className="text-xs text-red-500 mt-1">
