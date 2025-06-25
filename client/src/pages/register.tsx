@@ -17,6 +17,17 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
+// Validation function for company uniqueness
+const validateCompanyField = async (field: string, value: string) => {
+  try {
+    const response = await apiRequest('POST', '/api/validate-company', { field, value });
+    return response.available;
+  } catch (error) {
+    console.error('Validation error:', error);
+    return true; // Allow if validation fails
+  }
+};
+
 // Step schemas for validation
 const step1Schema = z.object({
   teamSize: z.string().min(1, 'Selecciona el tamaño de tu equipo'),
@@ -24,10 +35,31 @@ const step1Schema = z.object({
 });
 
 const step2Schema = z.object({
-  companyName: z.string().min(2, 'El nombre de la empresa debe tener al menos 2 caracteres'),
-  cif: z.string().min(9, 'El CIF debe tener al menos 9 caracteres'),
-  companyEmail: z.string().email('Email no válido'),
-  companyAlias: z.string().min(3, 'El alias debe tener al menos 3 caracteres').regex(/^[a-z0-9-]+$/, 'Solo se permiten letras minúsculas, números y guiones'),
+  companyName: z.string()
+    .min(2, 'El nombre de la empresa debe tener al menos 2 caracteres')
+    .refine(async (value) => {
+      const isAvailable = await validateCompanyField('name', value);
+      return isAvailable;
+    }, 'Ya existe una empresa con este nombre'),
+  cif: z.string()
+    .min(9, 'El CIF debe tener al menos 9 caracteres')
+    .refine(async (value) => {
+      const isAvailable = await validateCompanyField('cif', value);
+      return isAvailable;
+    }, 'Este CIF ya está registrado'),
+  companyEmail: z.string()
+    .email('Email no válido')
+    .refine(async (value) => {
+      const isAvailable = await validateCompanyField('billingEmail', value);
+      return isAvailable;
+    }, 'Este email ya está en uso'),
+  companyAlias: z.string()
+    .min(3, 'El alias debe tener al menos 3 caracteres')
+    .regex(/^[a-z0-9-]+$/, 'Solo se permiten letras minúsculas, números y guiones')
+    .refine(async (value) => {
+      const isAvailable = await validateCompanyField('alias', value);
+      return isAvailable;
+    }, 'Este alias ya está en uso'),
   province: z.string().min(1, 'Selecciona una provincia'),
 });
 
@@ -493,8 +525,12 @@ export default function Register() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás
                 </Button>
-                <Button type="submit" className="rounded-xl px-8">
-                  Continuar
+                <Button 
+                  type="submit" 
+                  className="rounded-xl px-8"
+                  disabled={step2Form.formState.isValidating}
+                >
+                  {step2Form.formState.isValidating ? 'Verificando...' : 'Continuar'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>

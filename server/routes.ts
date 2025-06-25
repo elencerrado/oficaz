@@ -10,7 +10,7 @@ import { authenticateToken, requireRole, generateToken, AuthRequest } from './mi
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { subscriptions } from '@shared/schema';
+import { subscriptions, companies } from '@shared/schema';
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -24,6 +24,54 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Company validation endpoints
+  app.post('/api/validate-company', async (req, res) => {
+    try {
+      const { field, value } = req.body;
+      
+      if (!field || !value) {
+        return res.status(400).json({ message: 'Field and value are required' });
+      }
+
+      let existingRecord = null;
+      
+      switch (field) {
+        case 'name':
+          existingRecord = await db.select()
+            .from(companies)
+            .where(eq(companies.name, value))
+            .limit(1);
+          break;
+        case 'cif':
+          existingRecord = await db.select()
+            .from(companies)
+            .where(eq(companies.cif, value))
+            .limit(1);
+          break;
+        case 'billingEmail':
+          existingRecord = await db.select()
+            .from(companies)
+            .where(eq(companies.billingEmail, value))
+            .limit(1);
+          break;
+        case 'alias':
+          existingRecord = await db.select()
+            .from(companies)
+            .where(eq(companies.alias, value))
+            .limit(1);
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid field' });
+      }
+
+      const isAvailable = !existingRecord || existingRecord.length === 0;
+      res.json({ available: isAvailable });
+    } catch (error) {
+      console.error('Error validating company data:', error);
+      res.status(500).json({ message: 'Error validating company data' });
+    }
+  });
+
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
