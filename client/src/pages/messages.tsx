@@ -475,29 +475,46 @@ export default function Messages() {
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden relative" style={{ overflowX: 'clip' }}>
         {PreviewOverlay}
         
-        {/* Simple Chat Interface for Demo */}
-        <div className="flex h-full gap-6">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
+          <p className="text-gray-500 mt-1">
+            Comunícate con empleados y gestiona mensajes
+          </p>
+        </div>
+
+        {/* Chat Interface for Demo */}
+        <div className="flex h-[calc(100vh-200px)] gap-6">
           {/* Conversations List */}
-          <div className="w-1/3 bg-white rounded-lg shadow-sm border">
+          <div className="w-80 bg-white rounded-lg shadow-sm border flex flex-col">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-gray-900">Conversaciones</h2>
             </div>
-            <div className="space-y-1">
+            <div className="flex-1 overflow-y-auto">
               {messages.map((message) => (
-                <div key={message.id} className="p-3 hover:bg-gray-50 cursor-pointer border-b">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">
-                      {message.sender?.fullName || 'Usuario'}
+                <div key={message.id} className="p-4 hover:bg-gray-50 cursor-pointer border-b">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-medium text-blue-600">
+                        {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
+                      </span>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium text-sm text-gray-900 truncate">
+                          {message.sender?.fullName || 'Usuario'}
+                        </div>
+                        <div className="text-xs text-gray-500 ml-2">
+                          {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-600 truncate mt-1">
+                        {message.subject}
+                      </div>
+                      <div className="text-xs text-gray-500 truncate mt-1">
+                        {message.content}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-sm text-gray-600 truncate mt-1">
-                    {message.subject}
-                  </div>
-                  <div className="text-xs text-gray-500 truncate mt-1">
-                    {message.content}
                   </div>
                 </div>
               ))}
@@ -507,25 +524,22 @@ export default function Messages() {
           {/* Chat Area */}
           <div className="flex-1 bg-white rounded-lg shadow-sm border flex flex-col">
             <div className="p-4 border-b">
-              <h3 className="font-semibold text-gray-900">Chat Abierto</h3>
-              <p className="text-sm text-gray-500">Selecciona una conversación para ver los mensajes</p>
+              <h3 className="font-semibold text-gray-900">María González</h3>
+              <p className="text-sm text-gray-500">En línea</p>
             </div>
             
             {/* Messages Display */}
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
               <div className="space-y-4">
-                {messages.slice(0, 2).map((message) => (
-                  <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.senderId === user?.id 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-900'
+                {messages.slice(0, 2).map((message, index) => (
+                  <div key={message.id} className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
+                      index % 2 === 0
+                        ? 'bg-white text-gray-900 shadow-sm' 
+                        : 'bg-blue-500 text-white'
                     }`}>
-                      <div className="text-sm font-medium mb-1">
-                        {message.sender?.fullName || 'Usuario'}
-                      </div>
                       <div className="text-sm">{message.content}</div>
-                      <div className="text-xs mt-1 opacity-75">
+                      <div className="text-xs mt-2 opacity-75">
                         {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
                       </div>
                     </div>
@@ -535,25 +549,19 @@ export default function Messages() {
             </div>
             
             {/* Message Input */}
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
+            <div className="p-4 border-t bg-white">
+              <div className="flex gap-3 items-end">
                 <Input 
                   placeholder="Escribe un mensaje..." 
-                  className="flex-1"
+                  className="flex-1 rounded-full px-4 py-2"
                   disabled={!canAccess}
                 />
-                <Button disabled={!canAccess}>
+                <Button size="sm" className="rounded-full p-2" disabled={!canAccess}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           </div>
-        </div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
-          <p className="text-gray-500 mt-1">
-            Comunícate con empleados y gestiona mensajes
-          </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
