@@ -179,8 +179,8 @@ export function ReminderBanner() {
       <div style={{ 
         padding: '20px 24px', 
         display: 'grid', 
-        gridTemplateColumns: '1fr 2fr auto',
-        gap: '20px',
+        gridTemplateColumns: 'minmax(200px, 1fr) minmax(300px, 3fr) auto',
+        gap: '24px',
         alignItems: 'start'
       }}>
         {/* Columna 1: Título y fecha/hora */}
@@ -221,13 +221,16 @@ export function ReminderBanner() {
         </div>
         
         {/* Columna 2: Contenido del recordatorio */}
-        <div>
+        <div style={{ minWidth: '0', wordWrap: 'break-word' }}>
           {firstReminder.content && (
             <div style={{ 
               fontSize: '14px', 
               color: '#374151', 
-              lineHeight: '1.5',
-              fontWeight: '400'
+              lineHeight: '1.6',
+              fontWeight: '400',
+              wordWrap: 'break-word',
+              overflowWrap: 'break-word',
+              hyphens: 'auto'
             }}>
               {firstReminder.content}
             </div>
