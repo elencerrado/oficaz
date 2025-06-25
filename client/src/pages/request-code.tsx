@@ -51,7 +51,7 @@ export default function RequestCode() {
       if (response.ok) {
         toast({
           title: 'Código enviado',
-          description: 'Revisa los logs del servidor para ver tu código de verificación.',
+          description: 'Te hemos enviado un código de verificación a tu email.',
         });
         
         // Redirect to verification page with email

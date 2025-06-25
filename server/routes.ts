@@ -114,12 +114,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store verification code
       verificationCodes.set(email, { code, expires, verified: false });
 
-      // For now, just log the verification code (email setup pending)
-      console.log(`🔐 CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
-      console.log(`⏰ Expira en 10 minutos`);
-      
-      // TODO: Configure email sending once SMTP credentials are verified
-      // For development, the code is shown in server logs
+      // Send email with Nodemailer
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.hostinger.com',
+          port: 587,
+          secure: false, // STARTTLS
+          auth: {
+            user: 'soy@oficaz.es',
+            pass: 'Sanisisdro@2025',
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const mailOptions = {
+          from: '"Oficaz" <soy@oficaz.es>',
+          to: email,
+          subject: 'Código de verificación - Oficaz',
+          text: `Tu código de verificación es: ${code}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #1e40af; margin: 0;">Oficaz</h1>
+              </div>
+              <h2 style="color: #1e40af; margin-bottom: 20px;">Código de verificación</h2>
+              <p style="margin-bottom: 20px;">Has solicitado crear una nueva empresa en Oficaz.</p>
+              <p style="margin-bottom: 20px;">Tu código de verificación es:</p>
+              <div style="background: #f8fafc; border: 2px solid #e2e8f0; padding: 30px; text-align: center; margin: 30px 0; border-radius: 12px;">
+                <h1 style="color: #1e40af; font-size: 36px; margin: 0; letter-spacing: 8px; font-family: monospace;">${code}</h1>
+              </div>
+              <p style="color: #64748b; margin-bottom: 20px;">Este código expira en 10 minutos.</p>
+              <p style="color: #64748b; font-size: 14px;">Si no has solicitado este código, puedes ignorar este email.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+              <p style="color: #94a3b8; font-size: 12px; text-align: center;">Este email fue enviado automáticamente. No respondas a este mensaje.</p>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Email de verificación enviado a ${email}`);
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Still log the code as fallback
+        console.log(`🔐 CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
+        console.log(`⏰ Expira en 10 minutos`);
+      }
 
       res.json({ success: true, message: 'Código enviado correctamente' });
     } catch (error) {
