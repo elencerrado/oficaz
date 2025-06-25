@@ -159,76 +159,67 @@ export function ReminderBanner() {
         animation: 'slideInRight 0.4s ease-out'
       }}
     >
-      {/* Header colorido */}
-      <div 
-        style={{ 
-          backgroundColor: firstReminder.color || '#6366f1',
-          padding: '16px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}
-      >
-        <div 
-          style={{ 
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderRadius: '50%',
-            padding: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <PriorityIcon style={{ width: '20px', height: '20px', color: '#ffffff' }} />
-        </div>
-        <div style={{ flex: '1' }}>
-          <div style={{ 
-            fontSize: '16px', 
-            fontWeight: '700', 
-            color: '#ffffff',
-            marginBottom: '4px',
-            lineHeight: '1.2',
-            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-          }}>
-            {firstReminder.title}
-          </div>
-          {firstReminder.reminderDate && (
-            <div style={{ 
-              fontSize: '13px', 
-              color: '#ffffff', 
-              fontWeight: '600',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-            }}>
-              {formatReminderDate(firstReminder.reminderDate)}
-            </div>
-          )}
-        </div>
-
-      </div>
-
-      {/* Contenido */}
+      {/* Contenido con layout de 3 columnas */}
       <div style={{ 
         padding: '20px 24px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '20px' 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 2fr auto',
+        gap: '20px',
+        alignItems: 'start'
       }}>
-        {/* Contenido del recordatorio */}
-        <div style={{ flex: '1' }}>
+        {/* Columna 1: Título y fecha/hora */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div 
+            style={{ 
+              backgroundColor: firstReminder.color || '#6366f1',
+              borderRadius: '50%',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            <PriorityIcon style={{ width: '16px', height: '16px', color: '#ffffff' }} />
+          </div>
+          <div>
+            <div style={{ 
+              fontSize: '15px', 
+              fontWeight: '700', 
+              color: '#1f2937',
+              marginBottom: '4px',
+              lineHeight: '1.2'
+            }}>
+              {firstReminder.title}
+            </div>
+            {firstReminder.reminderDate && (
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#6b7280', 
+                fontWeight: '500'
+              }}>
+                {formatReminderTime(firstReminder.reminderDate)}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Columna 2: Contenido del recordatorio */}
+        <div>
           {firstReminder.content && (
             <div style={{ 
               fontSize: '14px', 
               color: '#374151', 
               lineHeight: '1.5',
-              fontWeight: '500'
+              fontWeight: '400'
             }}>
               {firstReminder.content}
             </div>
           )}
         </div>
         
-        {/* Botones de acción */}
-        <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+        {/* Columna 3: Botones de acción */}
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
           <Button
             variant="ghost"
             size="sm"
@@ -236,31 +227,31 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#059669',
               color: '#ffffff',
-              padding: '10px 16px',
-              fontSize: '13px',
+              padding: '8px 14px',
+              fontSize: '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)',
+              gap: '5px',
+              boxShadow: '0 1px 3px rgba(5, 150, 105, 0.3)',
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#047857';
               e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 3px 10px rgba(5, 150, 105, 0.4)';
+              e.target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.4)';
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = '#059669';
               e.target.style.transform = 'translateY(0px)';
-              e.target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.3)';
+              e.target.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
             }}
           >
-            <CheckCircle style={{ width: '16px', height: '16px' }} />
+            <CheckCircle style={{ width: '14px', height: '14px' }} />
             Hecho
           </Button>
           
@@ -271,11 +262,11 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#f3f4f6',
               color: '#6b7280',
-              padding: '10px 12px',
-              fontSize: '13px',
+              padding: '8px 10px',
+              fontSize: '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -290,7 +281,7 @@ export function ReminderBanner() {
               e.target.style.color = '#6b7280';
             }}
           >
-            <X style={{ width: '16px', height: '16px' }} />
+            <X style={{ width: '14px', height: '14px' }} />
           </Button>
         </div>
       </div>
