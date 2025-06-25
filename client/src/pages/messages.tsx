@@ -32,6 +32,43 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
 
+// Demo data for preview mode
+const demoMessages = [
+  {
+    id: 1,
+    senderId: 1,
+    receiverId: 2,
+    subject: "Reunión de equipo programada",
+    content: "Se ha programado una reunión de equipo para revisar los objetivos del próximo trimestre. Por favor confirma tu asistencia.",
+    sentAt: "2025-06-25T10:30:00Z",
+    readAt: null,
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" }
+  },
+  {
+    id: 2,
+    senderId: 2,
+    receiverId: 1,
+    subject: "Actualización de proyecto",
+    content: "El proyecto avanza según lo programado. Esperamos completar la fase 1 la próxima semana.",
+    sentAt: "2025-06-24T14:15:00Z",
+    readAt: "2025-06-24T15:20:00Z",
+    sender: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" },
+    receiver: { fullName: "María González", companyEmail: "maria@empresa.com" }
+  },
+  {
+    id: 3,
+    senderId: 1,
+    receiverId: 3,
+    subject: "Solicitud de vacaciones aprobada",
+    content: "Tu solicitud de vacaciones del 1-15 de julio ha sido aprobada. ¡Disfruta tu descanso!",
+    sentAt: "2025-06-23T09:45:00Z",
+    readAt: "2025-06-23T10:30:00Z",
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Ana Rodríguez", companyEmail: "ana@empresa.com" }
+  }
+];
+
 interface Message {
   id: number;
   senderId: number;
@@ -60,31 +97,7 @@ interface Manager {
   position?: string;
 }
 
-// Datos de demostración para preview
-const demoMessages = [
-  {
-    id: 'demo-1',
-    senderId: 1,
-    receiverId: 5,
-    subject: 'Bienvenido al equipo',
-    content: 'Nos complace darte la bienvenida a nuestro equipo. Esperamos una excelente colaboración.',
-    isRead: false,
-    createdAt: '2025-06-24T10:00:00Z',
-    sender: { fullName: 'Administrador Principal', role: 'admin' },
-    receiver: { fullName: 'Juan José García', role: 'employee' }
-  },
-  {
-    id: 'demo-2',
-    senderId: 5,
-    receiverId: 1,
-    subject: 'Consulta sobre vacaciones',
-    content: '¿Podrías confirmar las fechas disponibles para vacaciones en agosto?',
-    isRead: true,
-    createdAt: '2025-06-23T14:30:00Z',
-    sender: { fullName: 'Juan José García', role: 'employee' },
-    receiver: { fullName: 'Administrador Principal', role: 'admin' }
-  }
-];
+
 
 export default function Messages() {
   const { user, company } = useAuth();
