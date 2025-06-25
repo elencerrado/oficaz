@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Wizard de registro de empresa implementado con proceso de 3 pasos
+  - Paso 1: Preferencias de equipo (tamaño y funcionalidades de interés)
+  - Paso 2: Datos de empresa (nombre, CIF, email facturación, alias, provincia)
+  - Paso 3: Cuenta administrador (datos personales, contraseña, persona de contacto opcional)
+  - Proceso intuitivo de 1 minuto con barra de progreso e indicadores visuales
+  - Validación por pasos con navegación hacia atrás permitida
+  - Opción de persona de contacto separada del administrador
+  - Interfaz moderna con iconos y transiciones suaves
 - June 25, 2025. Alias de empresa convertido a solo lectura en configuración
   - Campo alias ahora siempre en modo solo lectura para evitar problemas con URLs
   - Mensaje explicativo actualizado indicando que no se puede modificar
