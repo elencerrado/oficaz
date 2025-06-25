@@ -80,9 +80,48 @@ const documentTypes = [
   }
 ];
 
+// Datos de demostración para preview
+const demoDocuments = [
+  {
+    id: 'demo-1',
+    filename: 'Contrato_Empleado_2025.pdf',
+    originalName: 'Contrato de Trabajo - Juan Pérez.pdf',
+    fileSize: 245678,
+    uploadedBy: 'Administrador',
+    createdAt: '2025-06-24T10:00:00Z',
+    category: 'contratos'
+  },
+  {
+    id: 'demo-2',
+    filename: 'Manual_Empresa.pdf',
+    originalName: 'Manual del Empleado.pdf',
+    fileSize: 1234567,
+    uploadedBy: 'Recursos Humanos',
+    createdAt: '2025-06-23T14:30:00Z',
+    category: 'manuales'
+  },
+  {
+    id: 'demo-3',
+    filename: 'Politica_Vacaciones.docx',
+    originalName: 'Política de Vacaciones 2025.docx',
+    fileSize: 89012,
+    uploadedBy: 'Administrador',
+    createdAt: '2025-06-22T09:15:00Z',
+    category: 'politicas'
+  }
+];
+
 export default function AdminDocuments() {
-  const { user, company } = useAuth();
-  const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { user } = useAuth();
+  
+  const { canAccess, showPreview, PreviewOverlay, data: previewData } = useFeaturePreview({
+    feature: 'documents',
+    featureName: 'Documentos',
+    description: 'Gestión completa de documentos de empresa con carga, organización y control de acceso',
+    requiredPlan: 'Pro',
+    icon: FileText,
+    demoData: demoDocuments
+  });
   
   console.log('Admin Documents page: checking access...');
   

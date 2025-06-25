@@ -227,6 +227,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Botón Recordatorios agregado al dashboard empleado apuntando a ruta correcta
   - Routing configurado para mostrar versión empleado vs admin según rol de usuario
   - Sistema de tarjetas con acciones rápidas y estados visuales con badges informativos
+- June 25, 2025. Sistema avanzado de preview con overlay para funciones restringidas implementado
+  - Hook useFeaturePreview reutilizable para centralizar toda la lógica de restricciones
+  - Overlay transparente profesional que muestra vista previa con datos de demostración
+  - Aplicado a Recordatorios, Mensajes y Documentos con datos hardcodeados realistas
+  - Queries condicionados para usar datos reales solo cuando hay acceso autorizado
+  - Botones deshabilitados en modo preview pero páginas completamente visibles
+  - Experiencia usuario: admin ve funcionalidad completa pero no puede interactuar
+  - Sistema escalable y reutilizable para futuras funcionalidades con restricciones
 - June 25, 2025. Sistema completo de recordatorios integrado en planes de suscripción
   - Funcionalidad "reminders" agregada a base de datos y configuración de planes
   - Plan Basic: recordatorios deshabilitados (reminders: false), Pro/Master: habilitados (reminders: true)
