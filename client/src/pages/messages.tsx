@@ -766,8 +766,15 @@ export default function Messages() {
                         className="input-oficaz flex-1"
                       />
                       <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
+                        onClick={(e) => {
+                          if (!canAccess) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return;
+                          }
+                          handleSendMessage();
+                        }}
+                        disabled={!newMessage.trim() || !canAccess}
                         className="btn-oficaz-primary"
                       >
                         <Send className="icon-sm" />
@@ -822,7 +829,14 @@ export default function Messages() {
                     <div
                       key={employee.id}
                       className="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
-                      onClick={() => setSelectedChat(employee.id)}
+                      onClick={(e) => {
+                        if (!canAccess) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          return;
+                        }
+                        setSelectedChat(employee.id);
+                      }}
                     >
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
@@ -1177,7 +1191,14 @@ export default function Messages() {
                     <div
                       key={conversation.id || conversation.user.id}
                       className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
-                      onClick={() => setSelectedChat(conversation.id || conversation.user.id)}
+                      onClick={(e) => {
+                        if (!canAccess) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          return;
+                        }
+                        setSelectedChat(conversation.id || conversation.user.id);
+                      }}
                     >
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
