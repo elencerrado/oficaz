@@ -61,19 +61,50 @@ export default function Reminders() {
   const { hasAccess } = useFeatureCheck();
   
   const canAccessReminders = hasAccess('reminders');
-
-  if (!canAccessReminders) {
-    return (
-      <FeatureRestrictedPage
-        featureName="Recordatorios"
-        description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
-        requiredPlan="Pro"
-      />
-    );
-  }
+  const showPreview = !canAccessReminders;
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Datos de demostración para preview
+  const demoReminders = [
+    {
+      id: 'demo-1',
+      title: 'Reunión con el equipo',
+      content: 'Revisar el progreso del proyecto y planificar las siguientes tareas',
+      color: '#e3f2fd',
+      priority: 'high' as const,
+      scheduledDate: '2025-06-25',
+      scheduledTime: '09:00',
+      status: 'active' as const,
+      isPinned: true,
+      createdAt: '2025-06-24T10:00:00Z'
+    },
+    {
+      id: 'demo-2',
+      title: 'Enviar informe mensual',
+      content: 'Preparar y enviar el informe de ventas del mes anterior',
+      color: '#fff3e0',
+      priority: 'medium' as const,
+      scheduledDate: '2025-06-26',
+      scheduledTime: '14:30',
+      status: 'active' as const,
+      isPinned: false,
+      createdAt: '2025-06-24T11:30:00Z'
+    },
+    {
+      id: 'demo-3',
+      title: 'Revisar contratos',
+      content: 'Verificar los nuevos contratos de proveedores',
+      color: '#e8f5e8',
+      priority: 'low' as const,
+      scheduledDate: null,
+      scheduledTime: null,
+      status: 'completed' as const,
+      isPinned: false,
+      createdAt: '2025-06-23T16:00:00Z'
+    }
+  ];
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
@@ -504,7 +535,8 @@ export default function Reminders() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEdit(reminder)}
+                        onClick={() => showPreview ? null : handleEdit(reminder)}
+                  disabled={showPreview}
                         className="h-6 w-6 p-0"
                       >
                         <Edit className="w-3 h-3" />
