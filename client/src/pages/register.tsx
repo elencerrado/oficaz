@@ -35,31 +35,12 @@ const step1Schema = z.object({
 });
 
 const step2Schema = z.object({
-  companyName: z.string()
-    .min(2, 'El nombre de la empresa debe tener al menos 2 caracteres')
-    .refine(async (value) => {
-      const isAvailable = await validateCompanyField('name', value);
-      return isAvailable;
-    }, 'Ya existe una empresa con este nombre'),
-  cif: z.string()
-    .min(9, 'El CIF debe tener al menos 9 caracteres')
-    .refine(async (value) => {
-      const isAvailable = await validateCompanyField('cif', value);
-      return isAvailable;
-    }, 'Este CIF ya está registrado'),
-  companyEmail: z.string()
-    .email('Email no válido')
-    .refine(async (value) => {
-      const isAvailable = await validateCompanyField('billingEmail', value);
-      return isAvailable;
-    }, 'Este email ya está en uso'),
+  companyName: z.string().min(2, 'El nombre de la empresa debe tener al menos 2 caracteres'),
+  cif: z.string().min(9, 'El CIF debe tener al menos 9 caracteres'),
+  companyEmail: z.string().email('Email no válido'),
   companyAlias: z.string()
     .min(3, 'El alias debe tener al menos 3 caracteres')
-    .regex(/^[a-z0-9-]+$/, 'Solo se permiten letras minúsculas, números y guiones')
-    .refine(async (value) => {
-      const isAvailable = await validateCompanyField('alias', value);
-      return isAvailable;
-    }, 'Este alias ya está en uso'),
+    .regex(/^[a-z0-9-]+$/, 'Solo se permiten letras minúsculas, números y guiones'),
   province: z.string().min(1, 'Selecciona una provincia'),
 });
 
@@ -93,6 +74,7 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [validatingStep2, setValidatingStep2] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -113,7 +95,6 @@ export default function Register() {
   // Step 2 form
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
-    mode: 'onBlur', // Validate on blur for better UX with async validation
     defaultValues: {
       companyName: '',
       cif: '',
@@ -398,9 +379,6 @@ export default function Register() {
                   {step2Form.formState.errors.companyName && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyName.message}</p>
                   )}
-                  {step2Form.formState.isValidating && step2Form.watch('companyName') && (
-                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
-                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -413,9 +391,6 @@ export default function Register() {
                   />
                   {step2Form.formState.errors.cif && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.cif.message}</p>
-                  )}
-                  {step2Form.formState.isValidating && step2Form.watch('cif') && (
-                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
                   )}
                 </div>
 
@@ -431,9 +406,6 @@ export default function Register() {
                   {step2Form.formState.errors.companyEmail && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyEmail.message}</p>
                   )}
-                  {step2Form.formState.isValidating && step2Form.watch('companyEmail') && (
-                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
-                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -447,9 +419,6 @@ export default function Register() {
                   <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step2Form.watch('companyAlias') || 'miempresa'}</p>
                   {step2Form.formState.errors.companyAlias && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyAlias.message}</p>
-                  )}
-                  {step2Form.formState.isValidating && step2Form.watch('companyAlias') && (
-                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
                   )}
                 </div>
 
@@ -528,9 +497,9 @@ export default function Register() {
                 <Button 
                   type="submit" 
                   className="rounded-xl px-8"
-                  disabled={step2Form.formState.isValidating}
+                  disabled={validatingStep2}
                 >
-                  {step2Form.formState.isValidating ? 'Verificando...' : 'Continuar'}
+                  {validatingStep2 ? 'Verificando datos...' : 'Continuar'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>

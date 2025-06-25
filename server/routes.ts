@@ -37,28 +37,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       switch (field) {
         case 'name':
-          existingRecord = await db.select()
-            .from(companies)
-            .where(eq(companies.name, value))
-            .limit(1);
+          existingRecord = await db.select().from(companies).where(eq(companies.name, value));
           break;
         case 'cif':
-          existingRecord = await db.select()
-            .from(companies)
-            .where(eq(companies.cif, value))
-            .limit(1);
+          existingRecord = await db.select().from(companies).where(eq(companies.cif, value));
           break;
         case 'billingEmail':
-          existingRecord = await db.select()
-            .from(companies)
-            .where(eq(companies.billingEmail, value))
-            .limit(1);
+          existingRecord = await db.select().from(companies).where(eq(companies.billingEmail, value));
           break;
         case 'alias':
-          existingRecord = await db.select()
-            .from(companies)
-            .where(eq(companies.alias, value))
-            .limit(1);
+          existingRecord = await db.select().from(companies).where(eq(companies.alias, value));
           break;
         default:
           return res.status(400).json({ message: 'Invalid field' });
