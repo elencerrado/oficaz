@@ -762,7 +762,10 @@ export default function Messages() {
                         placeholder="Escribe tu mensaje..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        onKeyPress={(e) => {
+                          if (!canAccess) return;
+                          if (e.key === 'Enter') handleSendMessage();
+                        }}
                         className="input-oficaz flex-1"
                       />
                       <Button
