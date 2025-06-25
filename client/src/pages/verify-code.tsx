@@ -44,7 +44,7 @@ export default function VerifyCode() {
   }, [sessionId, setLocation]);
 
   const handleSubmit = async (data: CodeData) => {
-    if (!email) return;
+    if (!sessionId) return;
     
     setIsLoading(true);
     try {
