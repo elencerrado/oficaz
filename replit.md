@@ -129,6 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Sistema de seguridad anti-ciberataques implementado
+  - Rate limiting por IP y usuario: máximo 5 intentos fallidos antes de bloqueo temporal de 15 minutos
+  - Headers de seguridad HTTP: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy
+  - Protección contra ataques de fuerza bruta con identificador único IP+usuario
+  - Mensajes de error específicos para rate limiting con tiempo de espera
+  - Sistema de registro de intentos con auto-limpieza tras login exitoso
+  - Funcionalidad "Recordarme" implementada con localStorage seguro
 - June 25, 2025. Optimización móvil del wizard de registro y prevención de recargas
   - Wizard optimizado para móvil: logo centrado y más pequeño, títulos adaptados
   - Prevención de recargas accidentales en verificación de código móvil

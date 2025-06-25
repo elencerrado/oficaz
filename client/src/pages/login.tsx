@@ -109,8 +109,13 @@ export default function Login() {
       setLocation(`/${redirectAlias}/inicio`);
     } catch (error: any) {
       console.error('Login failed:', error);
-      // Show user-friendly message regardless of technical error
-      setLoginError('Mmm... ese usuario o contraseña no nos suena.');
+      
+      // Handle different error types
+      if (error.message?.includes('429')) {
+        setLoginError('Demasiados intentos fallidos. Espera unos minutos antes de intentar de nuevo.');
+      } else {
+        setLoginError('Mmm... ese usuario o contraseña no nos suena.');
+      }
     } finally {
       setSubmitting(false);
     }
