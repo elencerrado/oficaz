@@ -116,18 +116,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email with Nodemailer
       try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST || 'smtp.hostinger.com',
-          port: parseInt(process.env.SMTP_PORT || '995'),
-          secure: true, // SSL/TLS
-          auth: {
-            user: process.env.SMTP_USER || 'soy@oficaz.es',
-            pass: process.env.SMTP_PASS || 'Sanisisdro@2025',
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
+        // Try port 587 first, then 465 if it fails
+        let transporter;
+        try {
+          transporter = nodemailer.createTransport({
+            host: 'smtp.hostinger.com',
+            port: 587,
+            secure: false, // STARTTLS
+            auth: {
+              user: 'soy@oficaz.es',
+              pass: 'Sanisisdro@2025',
+            },
+            tls: {
+              rejectUnauthorized: false
+            }
+          });
+        } catch (error) {
+          // Fallback to port 465
+          transporter = nodemailer.createTransport({
+            host: 'smtp.hostinger.com',
+            port: 465,
+            secure: true, // SSL
+            auth: {
+              user: 'soy@oficaz.es',
+              pass: 'Sanisisdro@2025',
+            },
+            tls: {
+              rejectUnauthorized: false
+            }
+          });
+        }
 
         const mailOptions = {
           from: `"Oficaz" <${process.env.SMTP_USER || 'soy@oficaz.es'}>`,
