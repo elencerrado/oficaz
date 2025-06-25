@@ -141,7 +141,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                  style={{ 
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
                  }}>
-              {navigation.map((item) => {
+              {navigation.filter((item) => {
+                // Filtrar elementos según el acceso a features
+                if (item.feature && !hasAccess(item.feature)) {
+                  return false;
+                }
+                return true;
+              }).map((item) => {
                 const isActive = location === item.href;
                 const Icon = item.icon;
                 
