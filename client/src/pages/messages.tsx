@@ -658,15 +658,15 @@ export default function Messages() {
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
                         <span className="text-white font-medium">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </span>
                       </div>
                       <div>
                         <h3 className="heading-4">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
+                          {selectedChatUser?.fullName}
                         </h3>
                         <div className="caption-text">
-                          {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
+                          {getRoleDisplay(selectedChatUser)}
                         </div>
                       </div>
                     </div>
