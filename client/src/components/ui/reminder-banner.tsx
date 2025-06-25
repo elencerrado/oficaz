@@ -114,6 +114,22 @@ export function ReminderBanner() {
     return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
   };
 
+  // Format just the time for display in column layout
+  const formatReminderTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return `Hoy ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    return date.toLocaleDateString('es-ES', { 
+      day: 'numeric', 
+      month: 'short'
+    }) + ` ${date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+  };
+
 
   if (!visibleReminders || visibleReminders.length === 0) {
     return null;
