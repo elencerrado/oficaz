@@ -319,13 +319,11 @@ export default function Register() {
                               <div className="text-xs font-medium truncate">{feature.name}</div>
                               <div className="text-xs text-gray-500 truncate">{feature.description}</div>
                             </div>
-                            <div className={`w-3 h-3 border rounded-full flex items-center justify-center flex-shrink-0 ${
+                            <div className={`w-3 h-3 border rounded-full ${
                               isSelected
                                 ? 'bg-oficaz-primary border-oficaz-primary'
                                 : 'border-gray-300'
-                            }`}>
-                              <div className={`w-1.5 h-1.5 bg-white rounded-full ${isSelected ? 'opacity-100' : 'opacity-0'}`}></div>
-                            </div>
+                            }`}></div>
                           </div>
                         </label>
                       </div>
