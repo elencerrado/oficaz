@@ -49,10 +49,18 @@ export default function VerifyCode() {
     setIsLoading(true);
     try {
       console.log('Verifying code:', { email, code: data.code });
-      const response = await apiRequest('POST', '/api/auth/verify-code', {
-        email,
-        code: data.code,
+      
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          code: data.code,
+        }),
       });
+      
       console.log('Verify response status:', response.status);
       
       const result = await response.json();

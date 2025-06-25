@@ -34,7 +34,15 @@ export default function RequestCode() {
     setIsLoading(true);
     try {
       console.log('Sending request to:', '/api/auth/request-verification-code', data);
-      const response = await apiRequest('POST', '/api/auth/request-verification-code', data);
+      
+      const response = await fetch('/api/auth/request-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
       console.log('Response status:', response.status);
       
       const result = await response.json();
