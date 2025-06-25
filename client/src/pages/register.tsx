@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
@@ -85,7 +85,7 @@ type FormData = Step1Data & Step2Data & Step3Data;
 export default function Register() {
   const [, setLocation] = useLocation();
   const search = useSearch();
-  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(false);
   const [validatingStep2, setValidatingStep2] = useState(false);
   const [validatingStep3, setValidatingStep3] = useState(false);
@@ -426,8 +426,8 @@ export default function Register() {
                 )}
               </div>
 
-              <div className="flex justify-end pt-4">
-                <Button type="submit" className="rounded-xl px-8">
+              <div className="flex justify-center pt-4">
+                <Button type="submit" className="w-full rounded-xl px-8">
                   Continuar
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
