@@ -483,9 +483,9 @@ export default function Messages() {
           </p>
         </div>
 
-        {/* Demo Layout similar to real interface */}
+        {/* Exact copy of the real interface layout */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
-          {/* Left Column: Employee List (1/3 width) - Similar to real layout */}
+          {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
             <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="font-semibold text-gray-900">Empleados</h3>
@@ -495,7 +495,7 @@ export default function Messages() {
                 className="btn-oficaz-primary flex-shrink-0"
                 disabled={!canAccess}
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="icon-sm mr-1" />
                 Nuevo
               </Button>
             </div>
@@ -503,10 +503,11 @@ export default function Messages() {
             {/* Search */}
             <div className="p-4 border-b border-gray-200">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
                 <Input
-                  placeholder="Buscar empleado..."
-                  className="pl-10 bg-gray-50"
+                  placeholder="Buscar conversación..."
+                  className="input-oficaz bg-gray-50"
+                  style={{ paddingLeft: '3rem', paddingRight: '1rem' }}
                   disabled={!canAccess}
                 />
               </div>
@@ -516,68 +517,67 @@ export default function Messages() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                  className="p-3 bg-gray-50 rounded-lg cursor-pointer border transition-all duration-200 hover-lift hover:bg-gray-100 border-gray-200"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                      <span className="text-white font-medium text-sm">
                         {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
+                      </span>
+                    </div>
+                    
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-gray-900 truncate">
+                      <p className="truncate font-medium text-sm text-gray-900">
                         {message.sender?.fullName || 'Usuario'}
-                      </div>
-                      <div className="text-xs text-gray-500">
+                      </p>
+                      <div className="truncate text-xs text-gray-500">
                         {message.sender?.companyEmail || 'usuario@empresa.com'}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageCircle className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs text-blue-600 font-medium">1</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          
-          {/* Right Column: Chat Area (2/3 width) - Similar to real layout */}
-          <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col">
+
+          {/* Right Column: Chat Area (2/3 width) */}
+          <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col overflow-hidden">
             {/* Chat Header */}
-            <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                    MG
-                  </AvatarFallback>
-                </Avatar>
+            <div className="p-4 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
+                  <span className="text-white font-medium text-sm">MG</span>
+                </div>
                 <div>
-                  <div className="font-semibold text-gray-900">María González</div>
-                  <div className="text-xs text-gray-500">Administradora</div>
+                  <h4 className="font-semibold text-gray-900">María González</h4>
+                  <p className="text-sm text-gray-500">Administradora</p>
                 </div>
               </div>
             </div>
-            
-            {/* Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-              <div className="space-y-4">
-                {messages.map((message, index) => (
+
+            {/* Messages Container */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Messages List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message) => (
                   <div key={message.id} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
+                    {/* Message Header */}
+                    <div className="flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-oficaz-primary rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-medium">
                           {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium text-gray-900">
+                        </span>
+                      </div>
+                      <span className="font-medium text-sm text-gray-900">
                         {message.sender?.fullName || 'Usuario'}
                       </span>
                       <span className="text-xs text-gray-500">
                         {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
                       </span>
                     </div>
-                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 ml-8">
+                    
+                    {/* Message Content */}
+                    <div className="ml-8 bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <div className="font-medium text-sm text-gray-900 mb-1">
                         {message.subject}
                       </div>
@@ -589,17 +589,20 @@ export default function Messages() {
                 ))}
               </div>
             </div>
-            
-            {/* Message Input */}
-            <div className="p-4 border-t border-gray-200 bg-white">
-              <div className="flex gap-2">
-                <Input 
+
+            {/* Message Input - Fixed at bottom */}
+            <div className="border-t border-gray-200 px-4 py-3 flex-shrink-0">
+              <div className="flex space-x-2">
+                <Input
                   placeholder="Escribe tu mensaje..."
-                  className="flex-1"
+                  className="input-oficaz flex-1"
                   disabled={!canAccess}
                 />
-                <Button disabled={!canAccess}>
-                  <Send className="w-4 h-4" />
+                <Button
+                  className="btn-oficaz-primary"
+                  disabled={!canAccess}
+                >
+                  <Send className="icon-sm" />
                 </Button>
               </div>
             </div>
