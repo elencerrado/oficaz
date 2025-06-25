@@ -373,13 +373,17 @@ export default function Messages() {
         (msg.senderId === user?.id && msg.receiverId === chatUserId) ||
         (msg.senderId === chatUserId && msg.receiverId === user?.id)
       )
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      .sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateA - dateB;
+      });
   }, [messages, user?.id]);
 
   const getMessagesGroupedByDate = useCallback((chatUserId: number) => {
     const chatMessages = getChatMessages(chatUserId);
     const grouped = chatMessages.reduce((groups: any, message: Message) => {
-      const date = format(new Date(message.createdAt), 'yyyy-MM-dd');
+      const date = message.createdAt ? format(new Date(message.createdAt), 'yyyy-MM-dd') : 'unknown';
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -389,7 +393,7 @@ export default function Messages() {
 
     return Object.keys(grouped).map(date => ({
       date,
-      dateFormatted: format(new Date(date), 'EEEE, d \'de\' MMMM yyyy', { locale: es }),
+      dateFormatted: date !== 'unknown' ? format(new Date(date), 'EEEE, d \'de\' MMMM yyyy', { locale: es }) : 'Fecha desconocida',
       messages: grouped[date]
     }));
   }, [getChatMessages]);
@@ -669,7 +673,7 @@ export default function Messages() {
                                       <p className={`text-xs ${
                                         message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
                                       }`}>
-                                        {format(new Date(message.createdAt), 'HH:mm')}
+                                        {message.createdAt ? format(new Date(message.createdAt), 'HH:mm') : ''}
                                       </p>
                                       {message.senderId === user?.id && (
                                         <div className="ml-2">
@@ -873,7 +877,7 @@ export default function Messages() {
                                   <p className={`text-xs ${
                                     message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
                                   }`}>
-                                    {format(new Date(message.createdAt), 'HH:mm')}
+                                    {message.createdAt ? format(new Date(message.createdAt), 'HH:mm') : ''}
                                   </p>
                                   {message.senderId === user?.id && (
                                     <div className="ml-2">
@@ -1238,7 +1242,7 @@ export default function Messages() {
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
                                   <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                                    {message.createdAt ? format(new Date(message.createdAt), 'HH:mm', { locale: es }) : ''}
                                   </p>
                                   {message.senderId === user?.id && (
                                     <div className="ml-2">
