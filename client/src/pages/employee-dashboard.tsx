@@ -289,7 +289,7 @@ export default function EmployeeDashboard() {
       title: 'Recordatorios', 
       route: `/${companyAlias}/recordatorios`,
       notification: false,
-      feature: null
+      feature: 'reminders'
     },
     { 
       icon: MessageSquare, 

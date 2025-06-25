@@ -72,7 +72,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Recordatorios', 
       href: `/${companyAlias}/recordatorios`, 
       icon: Bell,
-      feature: null // Available for all users
+      feature: 'reminders' as const
     },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [
       { 

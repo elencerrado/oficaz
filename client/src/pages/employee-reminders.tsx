@@ -62,19 +62,20 @@ const colorOptions = [
 
 export default function EmployeeReminders() {
   const { user, company } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { hasAccess } = useFeatureCheck('reminders');
 
   if (!hasAccess) {
     return (
       <FeatureRestrictedPage
-        title="Recordatorios no disponibles"
+        featureName="Recordatorios"
         description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
         requiredPlan="Pro"
       />
     );
   }
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

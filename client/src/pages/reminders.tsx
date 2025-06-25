@@ -63,7 +63,7 @@ export default function Reminders() {
   if (!hasAccess) {
     return (
       <FeatureRestrictedPage
-        title="Recordatorios no disponibles"
+        featureName="Recordatorios"
         description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
         requiredPlan="Pro"
       />
