@@ -64,12 +64,9 @@ export default function EmployeeReminders() {
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
-  console.log('Employee Reminders page - checking access to reminders...');
   const canAccessReminders = hasAccess('reminders');
-  console.log('Employee Reminders page - access result:', canAccessReminders);
 
   if (!canAccessReminders) {
-    console.log('Employee Reminders page - showing restricted page');
     return (
       <FeatureRestrictedPage
         featureName="Recordatorios"

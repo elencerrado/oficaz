@@ -60,12 +60,9 @@ export default function Reminders() {
   const { user } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
-  console.log('Reminders page - checking access to reminders...');
   const canAccessReminders = hasAccess('reminders');
-  console.log('Reminders page - access result:', canAccessReminders);
 
   if (!canAccessReminders) {
-    console.log('Reminders page - showing restricted page');
     return (
       <FeatureRestrictedPage
         featureName="Recordatorios"
