@@ -115,20 +115,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email with Nodemailer
       try {
-        const nodemailer = require('nodemailer');
-        
         const transporter = nodemailer.createTransporter({
-          host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_PORT === '465',
+          host: 'smtp.hostinger.com',
+          port: 465,
+          secure: true, // SSL
           auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: 'soy@oficaz.es',
+            pass: 'Sanisisdro@2025',
           },
         });
 
         const mailOptions = {
-          from: `"Oficaz" <${process.env.SMTP_USER}>`,
+          from: '"Oficaz" <soy@oficaz.es>',
           to: email,
           subject: 'Código de verificación - Oficaz',
           text: `Tu código de verificación es: ${code}`,
