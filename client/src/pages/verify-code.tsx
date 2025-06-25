@@ -194,8 +194,14 @@ export default function VerifyCode() {
           <div className="mt-6 text-center">
             <Button 
               variant="ghost" 
-              onClick={() => setLocation('/request-code')}
+              onClick={() => {
+                // Clear any loading states before navigation
+                setIsLoading(false);
+                setIsResending(false);
+                setLocation('/request-code');
+              }}
               className="text-sm text-gray-600 hover:text-gray-900"
+              disabled={isLoading || isResending}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cambiar email

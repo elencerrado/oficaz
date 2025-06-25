@@ -103,7 +103,10 @@ export default function Register() {
 
   useEffect(() => {
     if (!verificationToken) {
-      // Silently redirect without toast message
+      // Clear any loading states and redirect
+      setIsLoading(false);
+      setValidatingStep2(false);
+      setValidatingStep3(false);
       setLocation('/request-code');
     }
   }, [verificationToken, setLocation]);
@@ -735,7 +738,17 @@ export default function Register() {
               </div>
 
               <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => goToStep(2)} className="rounded-xl px-8">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setValidatingStep3(false);
+                    setIsLoading(false);
+                    goToStep(2);
+                  }} 
+                  className="rounded-xl px-8"
+                  disabled={isLoading || validatingStep3}
+                >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás
                 </Button>
