@@ -133,23 +133,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
           from: '"Oficaz" <soy@oficaz.es>',
           to: email,
           subject: 'Código de verificación - Oficaz',
-          text: `Tu código de verificación es: ${code}`,
+          text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #1e40af; margin: 0;">Oficaz</h1>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Código de verificación - Oficaz</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                
+                <!-- Header with logo and brand colors -->
+                <div style="background: linear-gradient(135deg, #323A46 0%, #232B36 100%); padding: 40px 20px; text-align: center;">
+                  <div style="background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; display: inline-block;">
+                    <h1 style="color: #ffffff; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 1px;">OFICAZ</h1>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 14px; margin: 5px 0 0 0;">Gestión empresarial inteligente</p>
+                  </div>
+                </div>
+
+                <!-- Main content -->
+                <div style="padding: 40px 30px;">
+                  <h2 style="color: #323A46; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">Verificación de email</h2>
+                  
+                  <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                    Hola,<br><br>
+                    Has solicitado crear una nueva empresa en <strong>Oficaz</strong>. Para continuar con el proceso de registro, necesitamos verificar tu dirección de email.
+                  </p>
+
+                  <!-- Verification code box -->
+                  <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 16px; padding: 40px 20px; text-align: center; margin: 40px 0; box-shadow: 0 8px 25px rgba(0, 122, 255, 0.15);">
+                    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">Tu código de verificación</p>
+                    <h1 style="color: #ffffff; font-size: 42px; font-weight: bold; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</h1>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 15px 0 0 0;">Este código expira en 10 minutos</p>
+                  </div>
+
+                  <div style="background-color: #f7fafc; border-left: 4px solid #007AFF; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                    <p style="color: #4a5568; font-size: 14px; margin: 0; line-height: 1.5;">
+                      <strong>¿No solicitaste este código?</strong><br>
+                      Si no has solicitado crear una cuenta en Oficaz, puedes ignorar este email de forma segura.
+                    </p>
+                  </div>
+
+                  <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
+                    Gracias por elegir Oficaz para la gestión de tu empresa.<br>
+                    El equipo de Oficaz
+                  </p>
+                </div>
+
+                <!-- Footer -->
+                <div style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0; line-height: 1.5;">
+                    Este email fue enviado automáticamente desde <strong>Oficaz</strong><br>
+                    No respondas a este mensaje.
+                  </p>
+                  <div style="margin-top: 20px;">
+                    <div style="display: inline-block; background-color: #323A46; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">
+                      OFICAZ © 2025
+                    </div>
+                  </div>
+                </div>
+
               </div>
-              <h2 style="color: #1e40af; margin-bottom: 20px;">Código de verificación</h2>
-              <p style="margin-bottom: 20px;">Has solicitado crear una nueva empresa en Oficaz.</p>
-              <p style="margin-bottom: 20px;">Tu código de verificación es:</p>
-              <div style="background: #f8fafc; border: 2px solid #e2e8f0; padding: 30px; text-align: center; margin: 30px 0; border-radius: 12px;">
-                <h1 style="color: #1e40af; font-size: 36px; margin: 0; letter-spacing: 8px; font-family: monospace;">${code}</h1>
-              </div>
-              <p style="color: #64748b; margin-bottom: 20px;">Este código expira en 10 minutos.</p>
-              <p style="color: #64748b; font-size: 14px;">Si no has solicitado este código, puedes ignorar este email.</p>
-              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
-              <p style="color: #94a3b8; font-size: 12px; text-align: center;">Este email fue enviado automáticamente. No respondas a este mensaje.</p>
-            </div>
+            </body>
+            </html>
           `,
         };
 
