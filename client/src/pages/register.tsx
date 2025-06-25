@@ -21,6 +21,7 @@ import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 const validateCompanyField = async (field: string, value: string) => {
   try {
     const response = await apiRequest('POST', '/api/validate-company', { field, value });
+    console.log(`Validation for ${field} with value "${value}":`, response);
     return response.available;
   } catch (error) {
     console.error('Validation error:', error);
@@ -144,9 +145,49 @@ export default function Register() {
     setCurrentStep(2);
   };
 
-  const handleStep2Submit = (data: Step2Data) => {
-    setFormData(prev => ({ ...prev, ...data }));
-    setCurrentStep(3);
+  const handleStep2Submit = async (data: Step2Data) => {
+    try {
+      setValidatingStep2(true);
+      
+      // Validate all company fields for uniqueness
+      const validations = await Promise.all([
+        validateCompanyField('name', data.companyName),
+        validateCompanyField('cif', data.cif),
+        validateCompanyField('billingEmail', data.companyEmail),
+        validateCompanyField('alias', data.companyAlias),
+      ]);
+
+      const [nameAvailable, cifAvailable, emailAvailable, aliasAvailable] = validations;
+
+      if (!nameAvailable) {
+        step2Form.setError('companyName', { message: 'Ya existe una empresa con este nombre' });
+        return;
+      }
+      if (!cifAvailable) {
+        step2Form.setError('cif', { message: 'Este CIF ya está registrado' });
+        return;
+      }
+      if (!emailAvailable) {
+        step2Form.setError('companyEmail', { message: 'Este email ya está en uso' });
+        return;
+      }
+      if (!aliasAvailable) {
+        step2Form.setError('companyAlias', { message: 'Este alias ya está en uso' });
+        return;
+      }
+
+      // All validations passed, continue to next step
+      setFormData(prev => ({ ...prev, ...data }));
+      setCurrentStep(3);
+    } catch (error) {
+      toast({
+        title: "Error de validación",
+        description: "Error al verificar los datos. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setValidatingStep2(false);
+    }
   };
 
   const handleStep3Submit = async (data: Step3Data) => {
