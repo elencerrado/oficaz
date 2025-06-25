@@ -978,20 +978,11 @@ const AccountManagement = () => {
                   
                   <div>
                     <Label htmlFor="companyAlias">Alias de la empresa</Label>
-                    {isEditingCompany ? (
-                      <Input
-                        id="companyAlias"
-                        value={companyData.companyAlias}
-                        onChange={(e) => setCompanyData(prev => ({ ...prev, companyAlias: e.target.value }))}
-                        placeholder="mi-empresa"
-                      />
-                    ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
-                        {companyData.companyAlias || 'No especificado'}
-                      </div>
-                    )}
+                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      {companyData.companyAlias || 'No especificado'}
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Usado en las URLs de la aplicación
+                      Usado en las URLs de la aplicación (no se puede modificar)
                     </p>
                   </div>
                   

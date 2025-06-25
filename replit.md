@@ -129,6 +129,10 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Alias de empresa convertido a solo lectura en configuración
+  - Campo alias ahora siempre en modo solo lectura para evitar problemas con URLs
+  - Mensaje explicativo actualizado indicando que no se puede modificar
+  - Decisión de seguridad para mantener consistencia de URLs de aplicación
 - June 25, 2025. Error de CIF duplicado corregido en configuración de empresa
   - Agregada validación previa para verificar si CIF está cambiando
   - Solo valida duplicados cuando el CIF es diferente al actual
