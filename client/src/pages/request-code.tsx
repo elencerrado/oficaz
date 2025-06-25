@@ -20,7 +20,7 @@ type EmailData = z.infer<typeof emailSchema>;
 
 export default function RequestCode() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<EmailData>({

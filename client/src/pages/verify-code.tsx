@@ -21,7 +21,7 @@ type CodeData = z.infer<typeof codeSchema>;
 export default function VerifyCode() {
   const [, setLocation] = useLocation();
   const search = useSearch();
-  const { toast } = useToast();
+
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   
