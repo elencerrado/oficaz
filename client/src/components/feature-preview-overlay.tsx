@@ -20,18 +20,20 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
 
   return (
     <div 
-      className="fixed inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-auto"
-      onClick={handleClick}
-      onMouseDown={handleEvents}
-      onMouseUp={handleEvents}
-      onTouchStart={handleEvents}
-      onTouchEnd={handleEvents}
-      onKeyDown={handleEvents}
-      onSubmit={handleEvents}
+      className="fixed inset-0 bg-white/40 backdrop-blur-[2px] pointer-events-none"
       style={{ zIndex: 9999 }}
     >
-      <div className="flex items-center justify-center h-full p-8">
-        <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto">
+      <div className="flex items-center justify-center h-full p-8 pointer-events-none">
+        <div 
+          className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto"
+          onClick={handleClick}
+          onMouseDown={handleEvents}
+          onMouseUp={handleEvents}
+          onTouchStart={handleEvents}
+          onTouchEnd={handleEvents}
+          onKeyDown={handleEvents}
+          onSubmit={handleEvents}
+        >
           {/* Lock icon with gradient background */}
           <div className="relative mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
