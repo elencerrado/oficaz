@@ -362,7 +362,7 @@ export default function Reminders() {
   });
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div className="px-6 py-4 min-h-screen bg-gray-50 relative" style={{ overflowX: 'clip' }}>
       {PreviewOverlay}
       
       {/* Header */}

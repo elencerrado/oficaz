@@ -37,7 +37,7 @@ export function FeaturePreviewOverlay({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-40 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] z-40 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg mx-auto shadow-2xl border-2 border-amber-200">
         <CardContent className="p-8 text-center space-y-6">
           {/* Icon and Title */}
@@ -53,24 +53,10 @@ export function FeaturePreviewOverlay({
             </div>
           </div>
 
-          {/* Plan Information */}
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Plan actual:</span>
-                <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${planColors[currentPlan as keyof typeof planColors]}`}>
-                  {planLabels[currentPlan as keyof typeof planLabels]}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Requiere:</span>
-                <span className={`px-3 py-1 rounded-full text-white text-sm font-medium ${planColors[requiredPlan.toLowerCase() as keyof typeof planColors]}`}>
-                  {requiredPlan}
-                </span>
-              </div>
-            </div>
-            <p className="text-amber-800 text-sm font-medium">
-              Esta es una vista previa de cómo se vería esta funcionalidad con tu plan {requiredPlan}.
+          {/* Simple Information */}
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-blue-800 text-sm font-medium text-center">
+              Vista previa con datos de demostración
             </p>
           </div>
 
@@ -92,8 +78,7 @@ export function FeaturePreviewOverlay({
 
           {/* Additional Information */}
           <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded-lg">
-            <p>Los datos mostrados son de demostración.</p>
-            <p className="mt-1">Contacta con tu administrador para actualizar el plan y acceder a todas las funcionalidades.</p>
+            <p>Contacta con tu administrador para acceder a esta funcionalidad.</p>
           </div>
         </CardContent>
       </Card>
