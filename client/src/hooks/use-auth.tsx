@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const authData = getAuthData();
       console.log('Auth init with data:', authData ? 'found' : 'none');
       
-      if (authData) {
+      if (authData && authData.token) {
         try {
           // Verify token by fetching user data
           const response = await fetch('/api/auth/me', {
@@ -42,10 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);
-            setAuthData(data);
+            setAuthData({ ...data, token: authData.token });
           } else {
             console.log('Auth verification failed, clearing data');
             clearAuthData();
+            setUser(null);
+            setCompany(null);
+            setToken(null);
+            setAuthData(null);
           }
         } catch (error) {
           console.log('Auth init error:', error);
@@ -72,17 +76,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Login successful, saving auth data:', { 
       user: data.user?.fullName, 
       company: data.company?.name, 
+      subscription: data.subscription?.plan,
       token: data.token ? 'present' : 'missing' 
     });
     
-    // Save auth data to localStorage first
+    // Save complete auth data to localStorage
     setAuthData(data);
     
-    // Update state
+    // Update state with all data including subscription
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    // Don't call setAuthData again, already called above
+    
+    console.log('Auth state updated successfully, token saved:', data.token ? 'yes' : 'no');
     
     return data;
   };

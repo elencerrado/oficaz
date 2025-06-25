@@ -4,6 +4,7 @@ interface AuthData {
   user: User;
   token: string;
   company: Company;
+  subscription?: any;
 }
 
 export function setAuthData(data: AuthData) {
