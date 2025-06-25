@@ -25,6 +25,7 @@ import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
 import Messages from "@/pages/messages";
 import Reminders from "@/pages/reminders";
+import EmployeeReminders from "@/pages/employee-reminders";
 import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
@@ -238,7 +239,7 @@ function Router() {
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
           <AppLayout>
-            <Reminders />
+            {user?.role === 'employee' ? <EmployeeReminders /> : <Reminders />}
           </AppLayout>
         </ProtectedRoute>
       </Route>

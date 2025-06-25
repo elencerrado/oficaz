@@ -117,6 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Versión móvil de recordatorios para empleados implementada
+  - Página employee-reminders.tsx creada siguiendo estética móvil de empleados (bg-employee-gradient)
+  - Diseño consistente con navigation back button, header company info y título principal
+  - Funcionalidad completa: crear, editar, eliminar, completar, archivar, fijar recordatorios
+  - Sistema de filtros por estado (activos, completados, archivados) y búsqueda
+  - Selección de colores y prioridades con iconos distintivos y preview en tiempo real
+  - Botón Recordatorios agregado al dashboard empleado apuntando a ruta correcta
+  - Routing configurado para mostrar versión empleado vs admin según rol de usuario
+  - Sistema de tarjetas con acciones rápidas y estados visuales con badges informativos
 - June 25, 2025. Sistema de recordatorios optimizado y errores de consola corregidos
   - ERRORES DE CONSOLA RESUELTOS: polling se detiene automáticamente cuando usuario no está autenticado
   - Sistema de autenticación mejorado: verificación de token antes de hacer polling de recordatorios

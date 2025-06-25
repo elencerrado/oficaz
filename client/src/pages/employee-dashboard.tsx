@@ -287,7 +287,7 @@ export default function EmployeeDashboard() {
     { 
       icon: Bell, 
       title: 'Recordatorios', 
-      route: `/${companyAlias}/notificaciones`,
+      route: `/${companyAlias}/recordatorios`,
       notification: false,
       feature: null
     },
