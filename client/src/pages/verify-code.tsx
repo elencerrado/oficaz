@@ -13,7 +13,7 @@ import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 const codeSchema = z.object({
-  code: z.string().min(6, 'El código debe tener 6 dígitos').max(6, 'El código debe tener 6 dígitos'),
+  code: z.string().length(6, 'El código debe tener exactamente 6 dígitos'),
 });
 
 type CodeData = z.infer<typeof codeSchema>;
@@ -32,6 +32,7 @@ export default function VerifyCode() {
 
   const form = useForm<CodeData>({
     resolver: zodResolver(codeSchema),
+    mode: 'onChange', // Validate on change to handle auto-fill
     defaultValues: {
       code: '',
     },
@@ -165,7 +166,11 @@ export default function VerifyCode() {
                   autoComplete="one-time-code"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  onChange={() => setErrorMessage('')} // Clear error on input change
+                  onChange={(e) => {
+                    setErrorMessage(''); // Clear error on input change
+                    // Update form value for auto-filled codes
+                    form.setValue('code', e.target.value);
+                  }}
                 />
               </div>
               {form.formState.errors.code && (
