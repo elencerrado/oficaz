@@ -69,13 +69,16 @@ export function ReminderBanner() {
   const markAsCompletedMutation = useMutation({
     mutationFn: async (reminderId: number) => {
       return await apiRequest('PATCH', `/api/reminders/${reminderId}`, {
-        status: 'completed'
+        isCompleted: true
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
     },
+    onError: (error) => {
+      console.error('Error marking reminder as completed:', error);
+    }
   });
 
   // Don't render anything if not authenticated or still loading auth
@@ -103,7 +106,9 @@ export function ReminderBanner() {
   };
 
   const completeReminder = (reminderId: number) => {
+    // Immediately hide the banner while the request processes
     setDismissedReminders(prev => [...prev, reminderId]);
+    // Mark as completed in the database
     markAsCompletedMutation.mutate(reminderId);
   };
 
