@@ -197,25 +197,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
               <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
                 
-                <!-- Header with logo -->
-                <div style="background-color: #ffffff; padding: 20px 15px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+                <!-- Compact header with logo -->
+                <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
+                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px;" />
                 </div>
 
-                <!-- Main content -->
-                <div style="padding: 40px 30px;">
-                  <h2 style="color: #323A46; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; text-align: center;">Verificación de email</h2>
+                <!-- Compact main content -->
+                <div style="padding: 15px 20px;">
+                  <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">Verificación de email</h2>
                   
-                  <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-                    Hola,<br><br>
-                    Has solicitado crear una nueva empresa en <strong>Oficaz</strong>. Para continuar con el proceso de registro, necesitamos verificar tu dirección de email.
+                  <p style="color: #4a5568; font-size: 14px; line-height: 1.4; margin-bottom: 15px; text-align: center;">
+                    Tu código de verificación para <strong>Oficaz</strong>:
                   </p>
 
-                  <!-- Verification code box -->
-                  <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 16px; padding: 40px 20px; text-align: center; margin: 40px 0; box-shadow: 0 8px 25px rgba(0, 122, 255, 0.15);">
-                    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">Tu código de verificación</p>
-                    <h1 style="color: #ffffff; font-size: 42px; font-weight: bold; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</h1>
-                    <p style="color: rgba(255,255,255,0.8); font-size: 13px; margin: 15px 0 0 0;">Este código expira en 10 minutos</p>
+                  <!-- Compact verification code box -->
+                  <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 12px; padding: 20px 15px; text-align: center; margin: 15px 0; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);">
+                    <h1 style="color: #ffffff; font-size: 36px; font-weight: bold; margin: 0; letter-spacing: 6px; font-family: 'Courier New', monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</h1>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 11px; margin: 8px 0 0 0;">Expira en 10 minutos</p>
                   </div>
 
                   <div style="background-color: #f7fafc; border-left: 4px solid #007AFF; padding: 20px; border-radius: 8px; margin: 30px 0;">
