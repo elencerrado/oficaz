@@ -154,28 +154,27 @@ export default function AdminDocuments() {
   // Fetch employees
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
+    enabled: canAccess,
   });
 
   // Fetch document notifications (sent requests)
   const { data: sentRequests = [] } = useQuery({
     queryKey: ['/api/document-notifications'],
+    enabled: canAccess,
     refetchInterval: 3000,
     staleTime: 0,
     gcTime: 0,
   });
 
-  // Fetch all documents with aggressive refresh
-  const { data: allDocuments = [] } = useQuery({
+  // Fetch documents o usar datos demo
+  const { data: fetchedDocuments = [] } = useQuery({
     queryKey: ['/api/documents/all'],
-    queryFn: async () => {
-      return await apiRequest('GET', '/api/documents/all');
-    },
-    refetchInterval: 3000, // Refetch cada 3 segundos
-    staleTime: 0, // Siempre considera los datos como obsoletos
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    enabled: !!user && canAccess,
+    staleTime: 0,
+    gcTime: 0,
   });
+
+  const documents = canAccess ? fetchedDocuments : (previewData || []);
 
   // Send document notification mutation
   const sendDocumentMutation = useMutation({
