@@ -483,37 +483,58 @@ export default function Messages() {
           </p>
         </div>
 
-        {/* Chat Interface for Demo */}
-        <div className="flex h-[calc(100vh-200px)] gap-6">
-          {/* Conversations List */}
-          <div className="w-80 bg-white rounded-lg shadow-sm border flex flex-col">
-            <div className="p-4 border-b">
-              <h2 className="font-semibold text-gray-900">Conversaciones</h2>
+        {/* Demo Layout similar to real interface */}
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
+          {/* Left Column: Employee List (1/3 width) - Similar to real layout */}
+          <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
+            <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900">Empleados</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                className="btn-oficaz-primary flex-shrink-0"
+                disabled={!canAccess}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Nuevo
+              </Button>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            
+            {/* Search */}
+            <div className="p-4 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Buscar empleado..."
+                  className="pl-10 bg-gray-50"
+                  disabled={!canAccess}
+                />
+              </div>
+            </div>
+            
+            <div className="p-4 space-y-2 overflow-y-auto flex-1">
               {messages.map((message) => (
-                <div key={message.id} className="p-4 hover:bg-gray-50 cursor-pointer border-b">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-medium text-blue-600">
+                <div
+                  key={message.id}
+                  className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                         {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
-                      </span>
-                    </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium text-sm text-gray-900 truncate">
-                          {message.sender?.fullName || 'Usuario'}
-                        </div>
-                        <div className="text-xs text-gray-500 ml-2">
-                          {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
-                        </div>
+                      <div className="font-medium text-sm text-gray-900 truncate">
+                        {message.sender?.fullName || 'Usuario'}
                       </div>
-                      <div className="text-sm text-gray-600 truncate mt-1">
-                        {message.subject}
+                      <div className="text-xs text-gray-500">
+                        {message.sender?.companyEmail || 'usuario@empresa.com'}
                       </div>
-                      <div className="text-xs text-gray-500 truncate mt-1">
-                        {message.content}
-                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs text-blue-600 font-medium">1</span>
                     </div>
                   </div>
                 </div>
@@ -521,26 +542,47 @@ export default function Messages() {
             </div>
           </div>
           
-          {/* Chat Area */}
-          <div className="flex-1 bg-white rounded-lg shadow-sm border flex flex-col">
-            <div className="p-4 border-b">
-              <h3 className="font-semibold text-gray-900">María González</h3>
-              <p className="text-sm text-gray-500">En línea</p>
+          {/* Right Column: Chat Area (2/3 width) - Similar to real layout */}
+          <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col">
+            {/* Chat Header */}
+            <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                    MG
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-semibold text-gray-900">María González</div>
+                  <div className="text-xs text-gray-500">Administradora</div>
+                </div>
+              </div>
             </div>
             
-            {/* Messages Display */}
+            {/* Messages Area */}
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
               <div className="space-y-4">
-                {messages.slice(0, 2).map((message, index) => (
-                  <div key={message.id} className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                      index % 2 === 0
-                        ? 'bg-white text-gray-900 shadow-sm' 
-                        : 'bg-blue-500 text-white'
-                    }`}>
-                      <div className="text-sm">{message.content}</div>
-                      <div className="text-xs mt-2 opacity-75">
+                {messages.map((message, index) => (
+                  <div key={message.id} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarFallback className="bg-gray-200 text-gray-600 text-xs">
+                          {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-gray-900">
+                        {message.sender?.fullName || 'Usuario'}
+                      </span>
+                      <span className="text-xs text-gray-500">
                         {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 ml-8">
+                      <div className="font-medium text-sm text-gray-900 mb-1">
+                        {message.subject}
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        {message.content}
                       </div>
                     </div>
                   </div>
@@ -549,14 +591,14 @@ export default function Messages() {
             </div>
             
             {/* Message Input */}
-            <div className="p-4 border-t bg-white">
-              <div className="flex gap-3 items-end">
+            <div className="p-4 border-t border-gray-200 bg-white">
+              <div className="flex gap-2">
                 <Input 
-                  placeholder="Escribe un mensaje..." 
-                  className="flex-1 rounded-full px-4 py-2"
+                  placeholder="Escribe tu mensaje..."
+                  className="flex-1"
                   disabled={!canAccess}
                 />
-                <Button size="sm" className="rounded-full p-2" disabled={!canAccess}>
+                <Button disabled={!canAccess}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
