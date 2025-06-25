@@ -19,7 +19,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
   
   return (
     <div className={`mb-6 ${className}`}>
-      <div className="bg-gray-100 rounded-xl p-1 relative">
+      <div className="bg-gray-100 rounded-lg p-1 relative">
         {/* Sliding indicator */}
         <div 
           className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-all duration-300 ease-in-out"
