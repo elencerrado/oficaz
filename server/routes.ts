@@ -118,14 +118,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST || 'smtp.hostinger.com',
-          port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+          port: parseInt(process.env.SMTP_PORT || '995'),
+          secure: true, // SSL/TLS
           auth: {
             user: process.env.SMTP_USER || 'soy@oficaz.es',
             pass: process.env.SMTP_PASS || 'Sanisisdro@2025',
           },
           tls: {
-            rejectUnauthorized: false // For development
+            rejectUnauthorized: false
           }
         });
 
