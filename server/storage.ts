@@ -810,7 +810,7 @@ export class DrizzleStorage implements IStorage {
           lte(schema.reminders.reminderDate, now)
         )
       )
-      .orderBy(desc(schema.reminders.priority), asc(schema.reminders.reminderDate));
+      .orderBy(schema.reminders.reminderDate);
     
     return activeReminders;
   }

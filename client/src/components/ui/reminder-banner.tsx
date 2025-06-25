@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ActiveReminder {
   id: number;
@@ -31,19 +32,21 @@ const PRIORITY_ICONS = {
 export function ReminderBanner() {
   const [dismissedReminders, setDismissedReminders] = useState<number[]>([]);
   const queryClient = useQueryClient();
+  const { user, token, isLoading: authLoading } = useAuth();
+  const isAuthenticated = !!(user && token);
 
   // Fetch active reminders with optimized settings for real-time detection
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: 1000, // Check every second for immediate detection
-    staleTime: 0, // Always consider data stale
-    gcTime: 0, // Don't cache results
+    refetchInterval: isAuthenticated ? 3000 : false, // Only poll if authenticated, every 3 seconds
+    staleTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    retry: false,
-    enabled: true, // Ensure query runs even if other queries might be disabled
-    refetchIntervalInBackground: true // Continue polling even when tab is not active
+    retry: false, // Don't retry to avoid auth error spam
+    enabled: isAuthenticated && !authLoading, // Only run if authenticated
+    refetchIntervalInBackground: false
   });
 
 
@@ -62,12 +65,17 @@ export function ReminderBanner() {
     },
   });
 
+  // Don't render anything if not authenticated or still loading auth
+  if (authLoading || !isAuthenticated) {
+    return null;
+  }
+
   if (isLoading) {
     return null;
   }
 
   if (error) {
-    console.error('ReminderBanner - Error fetching active reminders:', error);
+    // Silently fail for authentication errors to avoid console spam
     return null;
   }
 

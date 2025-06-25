@@ -117,15 +117,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 24, 2025. Sistema completo de recordatorios con detección en tiempo real CONFIRMADO FUNCIONANDO
-  - PROBLEMA RESUELTO: banner ahora aparece automáticamente cuando llega la hora programada sin recargar página
-  - Backend optimizado: headers anti-cache añadidos para prevenir problemas de caché del navegador
-  - Frontend mejorado: polling cada 1 segundo con refetchIntervalInBackground para detección inmediata
-  - PRUEBAS CONFIRMADAS: recordatorio "Test Tiempo Real" apareció exactamente a las 17:16:43 como estaba programado
-  - Sistema 100% funcional: recordatorios programados aparecen automáticamente al llegar su hora
-  - Banner posicionado en parte inferior con colores dinámicos según prioridad del recordatorio
-  - Autenticación JWT implementada: cada usuario ve únicamente sus propios recordatorios activos
-  - Funcionalidad completa: crear, editar, programar, descartar recordatorios con notificaciones en tiempo real
+- June 25, 2025. Sistema de recordatorios optimizado y errores de consola corregidos
+  - ERRORES DE CONSOLA RESUELTOS: polling se detiene automáticamente cuando usuario no está autenticado
+  - Sistema de autenticación mejorado: verificación de token antes de hacer polling de recordatorios
+  - Polling optimizado: reducido a 3 segundos para balance entre tiempo real y rendimiento
+  - Headers anti-cache mantenidos para actualizaciones inmediatas cuando usuario está logueado
+  - Sistema funcional sin spam de errores: recordatorios aparecen automáticamente al llegar su hora
+  - Funcionalidad completa: crear, editar, programar, descartar recordatorios con notificaciones silenciosas
 - June 24, 2025. Sistema de configuración personalizada de empresas corregido y optimizado
   - Corregido problema de persistencia del estado useCustomSettings
   - Toggle button ahora guarda correctamente el estado al activar/desactivar
