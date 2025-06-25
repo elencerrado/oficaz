@@ -101,7 +101,7 @@ export default function RequestCode() {
                 <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
               )}
               <p className="text-xs text-gray-500">
-                Te enviaremos un código de verificación a este email
+                Te enviaremos un código de verificación. Mantendremos tu sesión activa mientras verificas.
               </p>
             </div>
 

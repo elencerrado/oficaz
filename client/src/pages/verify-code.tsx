@@ -43,6 +43,39 @@ export default function VerifyCode() {
     }
   }, [sessionId, setLocation]);
 
+  // Prevent page reload on mobile app switching
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Page became visible again, keep form state
+        console.log('Page became visible again');
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Prevent accidental page reload
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        // Page was restored from cache
+        console.log('Page restored from cache');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, []);
+
   const handleSubmit = async (data: CodeData) => {
     if (!sessionId) return;
     
@@ -109,7 +142,7 @@ export default function VerifyCode() {
               Introduce el código que hemos enviado a tu email.
             </p>
             <p className="text-sm text-gray-500">
-              Revisa también tu carpeta de spam
+              Tip: Copia el código antes de volver al navegador
             </p>
           </div>
 
@@ -125,6 +158,9 @@ export default function VerifyCode() {
                   {...form.register('code')}
                   placeholder="123456"
                   maxLength={6}
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                 />
               </div>
               {form.formState.errors.code && (

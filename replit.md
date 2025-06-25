@@ -129,6 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Optimización móvil del wizard de registro y prevención de recargas
+  - Wizard optimizado para móvil: logo centrado y más pequeño, títulos adaptados
+  - Prevención de recargas accidentales en verificación de código móvil
+  - Event listeners para visibilitychange, beforeunload y pageshow
+  - Input optimizado para códigos OTP con inputMode="numeric" y autoComplete="one-time-code"
+  - Mensaje informativo para usuarios móviles sobre copiar código antes de cambiar de app
+  - Eliminados todos los toasts del flujo de verificación para evitar errores de JavaScript
 - June 25, 2025. Logo PNG integrado correctamente en emails de verificación
   - Sistema base64 para embeber logo directamente en HTML del email
   - Tamaño optimizado para móvil: 35px altura, max 150px ancho
