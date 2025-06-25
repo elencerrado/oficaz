@@ -31,19 +31,40 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
       style={{ zIndex: 9999 }}
     >
       <div className="absolute inset-0 flex items-center justify-center p-8">
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-8 max-w-md w-full mx-auto text-center pointer-events-auto">
-          <div className="mb-4">
-            {Icon && <Icon className="w-12 h-12 text-gray-400 mx-auto mb-4" />}
+        <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-50 rounded-2xl shadow-2xl border border-gray-200/50 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto backdrop-blur-sm overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl"></div>
+          
+          {/* Lock icon with gradient background */}
+          <div className="relative mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            {Icon && (
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-gray-100">
+                <Icon className="w-4 h-4 text-gray-600" />
+              </div>
+            )}
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Funcionalidad no disponible
+          
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 bg-clip-text text-transparent mb-3">
+            Funcionalidad Premium
           </h3>
-          <p className="text-gray-600 mb-4">
-            Esta funcionalidad no está incluida en tu plan actual.
+          <p className="text-gray-700 mb-6 leading-relaxed">
+            Esta función está disponible en planes superiores. Mejora tu experiencia con funcionalidades avanzadas.
           </p>
-          <p className="text-sm text-gray-500">
-            Para acceder a esta función, contacta con tu administrador o actualiza tu plan.
-          </p>
+          
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50 mb-4">
+            <p className="text-sm text-gray-600 flex items-center justify-center">
+              <svg className="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Contacta con tu administrador para más información
+            </p>
+          </div>
         </div>
       </div>
     </div>
