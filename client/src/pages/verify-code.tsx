@@ -25,9 +25,9 @@ export default function VerifyCode() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   
-  // Get email from URL params
+  // Get sessionId from URL params
   const params = new URLSearchParams(search);
-  const email = params.get('email');
+  const sessionId = params.get('session');
 
   const form = useForm<CodeData>({
     resolver: zodResolver(codeSchema),
@@ -94,7 +94,8 @@ export default function VerifyCode() {
   };
 
   const handleResendCode = async () => {
-    if (!email) return;
+    // Need to redirect back to request-code page since we don't have the email
+    setLocation('/request-code');
     
     setIsResending(true);
     try {
@@ -191,21 +192,29 @@ export default function VerifyCode() {
             </div>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <Button 
               variant="ghost" 
               onClick={() => {
-                // Clear any loading states before navigation
                 setIsLoading(false);
-                setIsResending(false);
                 setLocation('/request-code');
               }}
               className="text-sm text-gray-600 hover:text-gray-900"
-              disabled={isLoading || isResending}
+              disabled={isLoading}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cambiar email
             </Button>
+            <div className="text-sm text-gray-500">
+              ¿No has recibido el código?{' '}
+              <Button 
+                variant="link" 
+                onClick={() => setLocation('/request-code')}
+                className="p-0 h-auto text-blue-600 hover:text-blue-800"
+              >
+                Solicitar nuevo código
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 text-center">

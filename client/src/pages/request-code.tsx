@@ -54,8 +54,9 @@ export default function RequestCode() {
           description: 'Te hemos enviado un código de verificación a tu email.',
         });
         
-        // Redirect to verification page with email
-        setLocation(`/verify-code?email=${encodeURIComponent(data.email)}`);
+        // Redirect to verification page with secure session ID
+        const sessionId = result.sessionId;
+        setLocation(`/verify-code?session=${sessionId}`);
       } else {
         toast({
           title: 'Error',

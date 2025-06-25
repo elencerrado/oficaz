@@ -90,30 +90,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email verification system
-  const verificationCodes = new Map<string, { code: string, expires: number, verified: boolean }>();
-  const verificationTokens = new Map<string, { email: string, expires: number }>();
+  // Secure verification system
+  const generateSecureToken = (): string => crypto.randomBytes(32).toString('hex');
+  
+  const verificationSessions = new Map<string, { 
+    emailHash: string; 
+    code: string; 
+    expires: number; 
+    verified: boolean;
+    attempts: number;
+  }>();
+  
+  const verificationTokens = new Map<string, { 
+    emailHash: string; 
+    expires: number; 
+    used: boolean 
+  }>();
 
   app.post('/api/auth/request-verification-code', async (req, res) => {
     try {
       const { email } = req.body;
       
-      if (!email) {
-        return res.status(400).json({ message: 'Email es requerido' });
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: 'Email válido requerido' });
       }
 
       // Check if email is already registered
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: 'Este email ya está registrado' });
+        return res.status(400).json({ error: 'Este email ya está registrado' });
       }
 
-      // Generate 6-digit code
+      // Rate limiting: max 3 attempts per email per hour
+      const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+      const now = Date.now();
+      
+      // Clean up expired sessions
+      for (const [sessionId, session] of verificationSessions.entries()) {
+        if (session.expires < now) {
+          verificationSessions.delete(sessionId);
+        }
+      }
+
+      // Check rate limiting
+      let recentAttempts = 0;
+      const oneHourAgo = now - 60 * 60 * 1000;
+      
+      for (const session of verificationSessions.values()) {
+        if (session.emailHash === emailHash && session.expires > oneHourAgo) {
+          recentAttempts++;
+        }
+      }
+
+      if (recentAttempts >= 3) {
+        return res.status(429).json({ 
+          error: 'Demasiados intentos. Espera una hora antes de intentar de nuevo.' 
+        });
+      }
+
+      // Generate secure session and verification code
+      const sessionId = generateSecureToken();
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-      // Store verification code
-      verificationCodes.set(email, { code, expires, verified: false });
+      // Store session with hashed data
+      verificationSessions.set(sessionId, { 
+        emailHash, 
+        code: crypto.createHash('sha256').update(code).digest('hex'), // Hash the code
+        expires, 
+        verified: false,
+        attempts: 0
+      });
 
       // Send email with corrected Hostinger credentials
       try {
@@ -211,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: 'Código enviado correctamente',
-        sessionId // Return secure session ID instead of email
+        sessionId
       });
     } catch (error) {
       console.error('Error sending verification code:', error);
@@ -221,34 +268,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/verify-code', async (req, res) => {
     try {
-      const { email, code } = req.body;
+      const { sessionId, code } = req.body;
       
-      if (!email || !code) {
-        return res.status(400).json({ message: 'Email y código son requeridos' });
+      if (!sessionId || !code) {
+        return res.status(400).json({ error: 'Sesión y código requeridos' });
       }
 
-      const verification = verificationCodes.get(email);
-      if (!verification) {
-        return res.status(400).json({ message: 'No se encontró un código para este email' });
+      const session = verificationSessions.get(sessionId);
+      
+      if (!session) {
+        return res.status(400).json({ error: 'Sesión no encontrada o expirada' });
       }
 
-      if (Date.now() > verification.expires) {
-        verificationCodes.delete(email);
-        return res.status(400).json({ message: 'El código ha expirado' });
+      if (Date.now() > session.expires) {
+        verificationSessions.delete(sessionId);
+        return res.status(400).json({ error: 'Código expirado' });
       }
 
-      if (verification.code !== code) {
-        return res.status(400).json({ message: 'Código incorrecto' });
+      // Rate limiting: max 5 attempts per session
+      if (session.attempts >= 5) {
+        verificationSessions.delete(sessionId);
+        return res.status(429).json({ error: 'Demasiados intentos. Solicita un nuevo código.' });
+      }
+
+      // Increment attempts
+      session.attempts++;
+
+      // Verify code (compare hashes)
+      const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+      if (session.code !== codeHash) {
+        return res.status(400).json({ error: 'Código incorrecto' });
       }
 
       // Mark as verified
-      verification.verified = true;
+      session.verified = true;
       
-      // Generate verification token
-      const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      // Generate secure verification token (valid for 30 minutes)
+      const verificationToken = generateSecureToken();
       const tokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+      
+      verificationTokens.set(verificationToken, {
+        emailHash: session.emailHash,
+        expires: tokenExpires,
+        used: false
+      });
 
-      verificationTokens.set(verificationToken, { email, expires: tokenExpires });
+      // Clean up the session
+      verificationSessions.delete(sessionId);
 
       res.json({ 
         success: true, 
