@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <nav className={`
-        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
+        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
         {/* Fixed Company header */}
