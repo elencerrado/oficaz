@@ -81,6 +81,7 @@ export default function Register() {
   // Step 2 form
   const step2Form = useForm<Step2Data>({
     resolver: zodResolver(step2Schema),
+    mode: 'onBlur', // Validate on blur for better UX with async validation
     defaultValues: {
       companyName: '',
       cif: '',
@@ -365,6 +366,9 @@ export default function Register() {
                   {step2Form.formState.errors.companyName && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyName.message}</p>
                   )}
+                  {step2Form.formState.isValidating && step2Form.watch('companyName') && (
+                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -377,6 +381,9 @@ export default function Register() {
                   />
                   {step2Form.formState.errors.cif && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.cif.message}</p>
+                  )}
+                  {step2Form.formState.isValidating && step2Form.watch('cif') && (
+                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
                   )}
                 </div>
 
@@ -392,6 +399,9 @@ export default function Register() {
                   {step2Form.formState.errors.companyEmail && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyEmail.message}</p>
                   )}
+                  {step2Form.formState.isValidating && step2Form.watch('companyEmail') && (
+                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -402,9 +412,12 @@ export default function Register() {
                     {...step2Form.register('companyAlias')}
                     placeholder="miempresa"
                   />
-                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/miempresa</p>
+                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step2Form.watch('companyAlias') || 'miempresa'}</p>
                   {step2Form.formState.errors.companyAlias && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyAlias.message}</p>
+                  )}
+                  {step2Form.formState.isValidating && step2Form.watch('companyAlias') && (
+                    <p className="text-sm text-blue-600">Verificando disponibilidad...</p>
                   )}
                 </div>
 

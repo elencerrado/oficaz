@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Sistema de validación de unicidad implementado en wizard de registro
+  - Validaciones en tiempo real para prevenir duplicados en empresa
+  - Verificación de unicidad: nombre empresa, CIF, email facturación, alias empresa
+  - Endpoint backend /api/validate-company para validaciones asíncronas
+  - Indicadores visuales "Verificando disponibilidad..." durante validación
+  - Botón submit deshabilitado mientras se validan campos
+  - Validación onBlur para mejor experiencia de usuario con async validation
+  - Preview dinámico de URL en campo alias que actualiza en tiempo real
 - June 25, 2025. Wizard de registro de empresa implementado con proceso de 3 pasos
   - Paso 1: Preferencias de equipo (tamaño y funcionalidades de interés)
   - Paso 2: Datos de empresa (nombre, CIF, email facturación, alias, provincia)
