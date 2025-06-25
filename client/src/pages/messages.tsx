@@ -459,8 +459,9 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden relative" style={{ overflowX: 'clip' }}>
-        {PreviewOverlay}
+      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
+        <div className="relative h-full">
+          {PreviewOverlay}
         
         {/* Header */}
         <div className="mb-6">
@@ -1238,8 +1239,10 @@ export default function Messages() {
                   </Button>
                 </div>
               </div>
-            </div>)
-      )}
-    </div>
-  );
-}
+            </div>
+          )}
+        </div>
+        </div>
+      </div>
+    );
+  }
