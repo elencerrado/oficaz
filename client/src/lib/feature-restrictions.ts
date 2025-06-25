@@ -10,6 +10,7 @@ export interface SubscriptionFeatures {
   customization: boolean;
   logoUpload: boolean;
   api: boolean;
+  reminders: boolean;
 }
 
 export interface Subscription {
@@ -46,7 +47,8 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     analytics: 'Pro',
     customization: 'Master',
     logoUpload: 'Pro',
-    api: 'Master'
+    api: 'Master',
+    reminders: 'Pro'
   };
   
   return featurePlanMap[feature] || 'Pro';
@@ -62,7 +64,8 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     reports: 'Reportes',
     analytics: 'Analíticas',
     customization: 'Personalización',
-    api: 'API'
+    api: 'API',
+    reminders: 'Recordatorios'
   };
 
   return `La funcionalidad de ${featureNames[feature]} no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción.`;

@@ -78,3 +78,5 @@ export function FeatureRestrictedPage({
     </div>
   );
 }
+
+export default FeatureRestrictedPage;

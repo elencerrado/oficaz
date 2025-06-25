@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Plus, Trash2, Euro, Users, Settings, MessageSquare, FileText, Calendar, Clock, BarChart3, Zap, Upload } from 'lucide-react';
+import { Pencil, Plus, Trash2, Euro, Users, Settings, MessageSquare, FileText, Calendar, Clock, BarChart3, Zap, Upload, Bell } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: number;
@@ -27,6 +27,7 @@ interface SubscriptionPlan {
     customization?: boolean;
     logoUpload?: boolean;
     api?: boolean;
+    reminders?: boolean;
   };
   isActive: boolean;
   createdAt: string;
@@ -44,6 +45,7 @@ const featureIcons = {
   customization: Settings,
   logoUpload: Upload,
   api: Zap,
+  reminders: Bell,
 };
 
 const featureLabels = {
@@ -175,6 +177,7 @@ export default function SuperAdminPlans() {
     { key: 'vacation', label: 'Vacaciones', icon: Calendar },
     { key: 'documents', label: 'Documentos', icon: FileText },
     { key: 'messages', label: 'Mensajes', icon: MessageSquare },
+    { key: 'reminders', label: 'Recordatorios', icon: Bell },
     { key: 'customization', label: 'Personalización', icon: Settings },
     { key: 'logoUpload', label: '└ Subir logo', icon: Upload, isSubFeature: true },
     { key: 'reports', label: 'Reportes', icon: BarChart3 },

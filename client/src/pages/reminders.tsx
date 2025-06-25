@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
+import FeatureRestrictedPage from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -56,6 +58,18 @@ const REMINDER_COLORS = [
 
 export default function Reminders() {
   const { user } = useAuth();
+  const { hasAccess } = useFeatureCheck('reminders');
+
+  if (!hasAccess) {
+    return (
+      <FeatureRestrictedPage
+        title="Recordatorios no disponibles"
+        description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
+        requiredPlan="Pro"
+      />
+    );
+  }
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
