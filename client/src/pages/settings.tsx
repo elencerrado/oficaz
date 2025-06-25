@@ -733,14 +733,13 @@ const AccountManagement = () => {
 
   // Admin/Manager configuration view
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Configuración</h1>
-          <p className="text-gray-500 mt-1">Gestiona la configuración de tu empresa y perfil</p>
-        </div>
+    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Configuración</h1>
+        <p className="text-gray-500 mt-1">Gestiona la configuración de tu empresa y perfil</p>
+      </div>
 
-        <TabNavigation
+      <TabNavigation
           tabs={[
             { id: 'company', label: 'Empresa', icon: Building2 },
             { id: 'policies', label: 'Políticas', icon: SettingsIcon },
@@ -749,12 +748,11 @@ const AccountManagement = () => {
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-        />
+      />
 
-        <div className="mt-6">
-
-          {/* Company Information Tab */}
-          {activeTab === 'company' && (
+      <div className="mt-6">
+        {/* Company Information Tab */}
+        {activeTab === 'company' && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1423,10 +1421,9 @@ const AccountManagement = () => {
           )}
 
           {/* Account Management Tab */}
-          {activeTab === 'account' && (
-            <AccountManagement />
-          )}
-        </div>
+        {activeTab === 'account' && (
+          <AccountManagement />
+        )}
       </div>
     </div>
   );

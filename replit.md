@@ -129,6 +129,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Header estándar aplicado a página de configuración corregido
+  - Eliminado contenedor max-w-4xl mx-auto que no sigue el estándar
+  - Aplicado patrón exacto de time-tracking: px-6 py-4 + overflowX: 'clip'
+  - Header simple sin contenedores extra: h1 text-2xl + p text-gray-500 mt-1
+  - Márgenes ahora consistentes con todas las páginas admin principales
 - June 25, 2025. Armonía visual mejorada en TabNavigation slider
   - Cambiado rounded-xl a rounded-lg en contenedor exterior para mejor armonía con indicador slider
   - Ambos elementos ahora usan rounded-lg para apariencia visual más consistente
