@@ -180,9 +180,10 @@ export function ReminderBanner() {
       <div style={{ 
         padding: '20px 24px', 
         display: 'grid', 
-        gridTemplateColumns: 'minmax(200px, 1fr) minmax(300px, 3fr) auto',
+        gridTemplateColumns: 'minmax(180px, 1fr) minmax(280px, 2fr) minmax(120px, auto)',
         gap: '24px',
-        alignItems: 'start'
+        alignItems: 'start',
+        justifyItems: 'stretch'
       }}>
         {/* Columna 1: Título y fecha/hora */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -239,7 +240,7 @@ export function ReminderBanner() {
         </div>
         
         {/* Columna 3: Botones de acción */}
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignSelf: 'start' }}>
           <Button
             variant="ghost"
             size="sm"
