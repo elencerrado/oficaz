@@ -37,7 +37,7 @@ export function FeaturePreviewOverlay({
   };
 
   return (
-    <div className="absolute top-20 left-0 right-0 bottom-0 bg-white/80 backdrop-blur-[1px] z-40 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] z-40 flex items-center justify-center p-4">
       <Card className="w-full max-w-lg mx-auto shadow-2xl border-2 border-amber-200">
         <CardContent className="p-8 text-center space-y-6">
           {/* Icon and Title */}

@@ -363,6 +363,8 @@ export default function Reminders() {
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50 relative" style={{ overflowX: 'clip' }}>
+      {PreviewOverlay}
+      
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Recordatorios</h1>
@@ -371,11 +373,7 @@ export default function Reminders() {
         </p>
       </div>
 
-      {/* Content Area with Overlay */}
-      <div className="relative">
-        {PreviewOverlay}
-        
-        <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-6">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90">
@@ -625,7 +623,6 @@ export default function Reminders() {
             ))}
           </div>
         )}
-        </div>
     </div>
   );
 }

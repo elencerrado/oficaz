@@ -460,6 +460,8 @@ export default function Messages() {
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden relative" style={{ overflowX: 'clip' }}>
+        {PreviewOverlay}
+        
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
@@ -467,34 +469,8 @@ export default function Messages() {
             Comunícate con empleados y gestiona mensajes
           </p>
         </div>
-        
-        {/* Content Area with Overlay */}
-        <div className="relative h-full">
-          {PreviewOverlay}
-          
-          {/* Simple Demo Content */}
-          <div className="p-6 text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Vista previa de Mensajes</h3>
-            <p className="text-gray-600">Aquí aparecerían las conversaciones con empleados</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Employee view simplified
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 flex flex-col lg:flex-row">
-      <div className="flex-1 flex flex-col">
-        <div className="p-6 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Mensajes</h3>
-          <p className="text-gray-600">Vista de empleado</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
+        {/* Desktop Layout: Two columns side by side */}
+        <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
               <div className="p-4 border-b border-gray-200">
@@ -1127,9 +1103,10 @@ export default function Messages() {
             )}
           </div>
         </div>
-        </>
+        </>)
       ) : (
-            <div 
+            /* Chat View - EXACT COPY FROM ADMIN MOBILE LINE 657 */
+            (<div 
               className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
@@ -1261,9 +1238,8 @@ export default function Messages() {
                   </Button>
                 </div>
               </div>
-            </div>
-        )}
-        </div>
-      </div>
-    );
-  }
+            </div>)
+      )}
+    </div>
+  );
+}

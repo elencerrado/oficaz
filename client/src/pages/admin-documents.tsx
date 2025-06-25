@@ -696,6 +696,8 @@ export default function AdminDocuments() {
   return (
     <PageWrapper>
       <div className="px-6 py-4 min-h-screen bg-gray-50 relative" style={{ overflowX: 'clip' }}>
+        {PreviewOverlay}
+        
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Gestión de Documentos</h1>
@@ -704,11 +706,7 @@ export default function AdminDocuments() {
           </p>
         </div>
 
-        {/* Content Area with Overlay */}
-        <div className="relative">
-          {PreviewOverlay}
-          
-          {/* Stats Cards */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
           <StatsCard
             title="Total Documentos"
@@ -948,7 +946,7 @@ export default function AdminDocuments() {
                   <div className="space-y-6">
                     {(() => {
                       // Agrupar documentos por empleado usando userId directamente
-                      const documentsByEmployee = (filteredDocuments || []).reduce((acc: any, doc: Document) => {
+                      const documentsByEmployee = filteredDocuments.reduce((acc: any, doc: Document) => {
                         const employeeId = doc.userId || 'unknown';
                         const employeeName = doc.user?.fullName || 'Empleado desconocido';
                         
@@ -1594,8 +1592,7 @@ export default function AdminDocuments() {
             </div>
           </DialogContent>
         </Dialog>
-        </div>
-      </div>
+    </div>
     </PageWrapper>
   );
 }
