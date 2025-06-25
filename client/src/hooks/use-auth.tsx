@@ -80,15 +80,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token: data.token ? 'present' : 'missing' 
     });
     
-    // Save complete auth data to localStorage
+    // FORCE SAVE to localStorage - multiple approaches
+    console.log('FORCE saving token to localStorage...');
+    
+    // Method 1: Direct localStorage
+    localStorage.setItem('authData', JSON.stringify(data));
+    
+    // Method 2: setAuthData function
     setAuthData(data);
     
-    // Update state with all data including subscription
+    // Method 3: Verify immediately
+    const verification = localStorage.getItem('authData');
+    console.log('localStorage verification:', !!verification);
+    
+    // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
     
-    console.log('Auth state updated successfully, token saved:', data.token ? 'yes' : 'no');
+    console.log('Token forcefully saved:', !!data.token);
     
     return data;
   };

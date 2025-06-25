@@ -24,6 +24,11 @@ export async function apiRequest(
   Object.assign(headers, authHeaders);
   
   console.log('API Request:', method, url, 'with auth:', Object.keys(authHeaders).length > 0 ? 'YES' : 'NO');
+  if (Object.keys(authHeaders).length === 0) {
+    console.log('WARNING: No auth headers - checking localStorage directly');
+    const directCheck = localStorage.getItem('authData');
+    console.log('Direct localStorage check:', !!directCheck);
+  }
 
   const res = await fetch(url, {
     method,

@@ -22,14 +22,18 @@ export function setAuthData(data: AuthData) {
 
 export function getAuthData(): AuthData | null {
   const authDataStr = localStorage.getItem('authData');
+  console.log('getAuthData: localStorage content exists:', !!authDataStr);
   
   if (!authDataStr) {
     return null;
   }
 
   try {
-    return JSON.parse(authDataStr);
+    const parsed = JSON.parse(authDataStr);
+    console.log('getAuthData: parsed token exists:', !!parsed?.token);
+    return parsed;
   } catch {
+    console.log('getAuthData: parse error');
     return null;
   }
 }
