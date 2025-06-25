@@ -69,12 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
     const data = await apiRequest('POST', '/api/auth/login', loginData);
     
+    console.log('Login successful, saving auth data:', { 
+      user: data.user?.fullName, 
+      company: data.company?.name, 
+      token: data.token ? 'present' : 'missing' 
+    });
+    
     // Save auth data to localStorage
     setAuthData(data);
     
+    // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
+    setAuthData(data);
     
     return data;
   };

@@ -282,8 +282,8 @@ export default function Reminders() {
     }
   };
 
-  // Filter reminders
-  const filteredReminders = reminders.filter((reminder: Reminder) => {
+  // Filter reminders - protect against null data
+  const filteredReminders = (reminders || []).filter((reminder: Reminder) => {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reminder.content?.toLowerCase().includes(searchTerm.toLowerCase());
     

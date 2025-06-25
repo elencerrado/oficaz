@@ -187,8 +187,8 @@ export default function EmployeeReminders() {
     return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
   };
 
-  // Filter reminders
-  const filteredReminders = reminders.filter(reminder => {
+  // Filter reminders - protect against null data
+  const filteredReminders = (reminders || []).filter(reminder => {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || reminder.status === statusFilter;
