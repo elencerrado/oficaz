@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import nodemailer from 'nodemailer';
 import path from 'path';
 import fs from 'fs';
 import { storage } from "./storage";
