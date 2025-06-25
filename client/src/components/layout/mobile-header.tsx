@@ -57,7 +57,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center">
       {/* Left Section */}
       <div className="flex items-center justify-start">
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
