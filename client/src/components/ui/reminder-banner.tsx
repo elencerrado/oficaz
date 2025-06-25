@@ -179,14 +179,20 @@ export function ReminderBanner() {
       {/* Contenido con layout de 3 columnas */}
       <div style={{ 
         padding: '20px 24px', 
-        display: 'grid', 
-        gridTemplateColumns: 'minmax(180px, 1fr) minmax(280px, 2fr) minmax(120px, auto)',
-        gap: '24px',
-        alignItems: 'start',
-        justifyItems: 'stretch'
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '20px',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         {/* Columna 1: Título y fecha/hora */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          flexBasis: '200px',
+          flexShrink: 0
+        }}>
           <div 
             style={{ 
               backgroundColor: firstReminder.color || '#6366f1',
@@ -223,7 +229,12 @@ export function ReminderBanner() {
         </div>
         
         {/* Columna 2: Contenido del recordatorio */}
-        <div style={{ minWidth: '0', wordWrap: 'break-word' }}>
+        <div style={{ 
+          minWidth: '0', 
+          wordWrap: 'break-word',
+          flex: '1',
+          marginRight: '16px'
+        }}>
           {firstReminder.content && (
             <div style={{ 
               fontSize: '14px', 
@@ -240,7 +251,13 @@ export function ReminderBanner() {
         </div>
         
         {/* Columna 3: Botones de acción */}
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignSelf: 'start' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          flexShrink: 0,
+          alignSelf: 'flex-start',
+          minWidth: '140px'
+        }}>
           <Button
             variant="ghost"
             size="sm"
