@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send email with Nodemailer
       try {
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
           host: 'smtp.hostinger.com',
           port: 465,
           secure: true, // SSL
