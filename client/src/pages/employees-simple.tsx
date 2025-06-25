@@ -181,7 +181,7 @@ export default function EmployeesSimple() {
   });
 
   const employeeList = employees as any[];
-  const filteredEmployees = employeeList.filter((employee: any) => {
+  const filteredEmployees = (employeeList || []).filter((employee: any) => {
     // First check if it's not an admin
     const notAdmin = employee.role !== 'admin';
     if (!notAdmin) return false;
@@ -209,7 +209,7 @@ export default function EmployeesSimple() {
     return matchesSearch && matchesStatus;
   });
 
-  const totalUsers = employeeList.filter((employee: any) => employee.role !== 'admin').length;
+  const totalUsers = (employeeList || []).filter((employee: any) => employee.role !== 'admin').length;
 
   // Function to adjust vacation days
   const adjustVacationDays = (amount: number) => {

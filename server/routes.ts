@@ -521,6 +521,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       recordLoginAttempt(identifier, true);
 
       const company = await storage.getCompany(user.companyId);
+      const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
 
       const token = generateToken({
         id: user.id,
@@ -536,7 +537,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Inicio de sesión exitoso",
         user: { ...user, password: undefined },
         token,
-        company,
+        company: company ? {
+          ...company,
+          employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
+          workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
+          defaultVacationDays: Number(company.defaultVacationDays) || 30,
+          vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
+          logoUrl: company.logoUrl || null
+        } : null,
+        subscription
       });
     } catch (error: any) {
       console.error(`[SECURITY] Login error: ${error.message}`);
