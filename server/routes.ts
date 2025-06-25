@@ -60,6 +60,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User validation endpoints
+  app.post('/api/validate-user', async (req, res) => {
+    try {
+      const { field, value } = req.body;
+      
+      if (!field || !value) {
+        return res.status(400).json({ message: 'Field and value are required' });
+      }
+
+      let existingRecord = null;
+      
+      switch (field) {
+        case 'email':
+          existingRecord = await storage.getUserByEmail(value);
+          break;
+        case 'dni':
+          existingRecord = await storage.getUserByDni?.(value);
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid field' });
+      }
+
+      const isAvailable = !existingRecord;
+      res.json({ available: isAvailable });
+    } catch (error) {
+      console.error('Error validating user data:', error);
+      res.status(500).json({ message: 'Error validating user data' });
+    }
+  });
+
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {

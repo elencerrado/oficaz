@@ -29,6 +29,18 @@ const validateCompanyField = async (field: string, value: string) => {
   }
 };
 
+// Validation function for user uniqueness
+const validateUserField = async (field: string, value: string) => {
+  try {
+    const response = await apiRequest('POST', '/api/validate-user', { field, value });
+    console.log(`User validation for ${field} with value "${value}":`, response);
+    return response.available;
+  } catch (error) {
+    console.error('User validation error:', error);
+    return true; // Allow if validation fails
+  }
+};
+
 // Step schemas for validation
 const step1Schema = z.object({
   teamSize: z.string().min(1, 'Selecciona el tamaño de tu equipo'),
@@ -47,28 +59,28 @@ const step2Schema = z.object({
 
 const step3Schema = z.object({
   adminFullName: z.string().min(2, 'El nombre completo debe tener al menos 2 caracteres'),
-  adminDni: z.string().min(8, 'El DNI/NIE debe tener al menos 8 caracteres'),
-  corporatePhone: z.string().optional(),
-  personalPhone: z.string().optional(),
-  corporateEmail: z.string().email('Email corporativo no válido').optional().or(z.literal('')),
-  personalEmail: z.string().email('Email personal no válido').optional().or(z.literal('')),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  confirmPassword: z.string().min(6, 'Confirma la contraseña'),
-  sameAsAdmin: z.boolean(),
+  adminDni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres'),
+  adminEmail: z.string().email('Email no válido'),
+  password: z.string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[a-z]/, 'Debe contener al menos una minúscula') 
+    .regex(/[0-9]/, 'Debe contener al menos un número')
+    .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
+  confirmPassword: z.string().min(8, 'Confirma tu contraseña'),
+  sameAsAdmin: z.boolean().default(true),
   contactName: z.string().optional(),
   contactPhone: z.string().optional(),
-  contactEmail: z.string().email('Email de contacto no válido').optional().or(z.literal('')),
+  contactEmail: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-}).refine((data) => data.corporateEmail || data.personalEmail, {
-  message: "Debe proporcionar al menos un email (corporativo o personal)",
-  path: ["corporateEmail"],
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
+
 type FormData = Step1Data & Step2Data & Step3Data;
 
 export default function Register() {
@@ -76,13 +88,14 @@ export default function Register() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [validatingStep2, setValidatingStep2] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [validatingStep3, setValidatingStep3] = useState(false);
   const [formData, setFormData] = useState<Partial<FormData>>({
     interestedFeatures: [],
     sameAsAdmin: true,
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Step 1 form
   const step1Form = useForm<Step1Data>({
@@ -111,10 +124,7 @@ export default function Register() {
     defaultValues: {
       adminFullName: '',
       adminDni: '',
-      corporatePhone: '',
-      personalPhone: '',
-      corporateEmail: '',
-      personalEmail: '',
+      adminEmail: '',
       password: '',
       confirmPassword: '',
       sameAsAdmin: true,
@@ -191,33 +201,46 @@ export default function Register() {
   };
 
   const handleStep3Submit = async (data: Step3Data) => {
-    setIsLoading(true);
     try {
+      setValidatingStep3(true);
+      
+      // Validate admin user fields for uniqueness
+      const validations = await Promise.all([
+        validateUserField('email', data.adminEmail),
+        validateUserField('dni', data.adminDni),
+      ]);
+
+      const [emailAvailable, dniAvailable] = validations;
+
+      if (!emailAvailable) {
+        step3Form.setError('adminEmail', { message: 'Este email ya está registrado' });
+        return;
+      }
+      if (!dniAvailable) {
+        step3Form.setError('adminDni', { message: 'Este DNI ya está registrado' });
+        return;
+      }
+
+      // All validations passed, proceed with registration
+      setIsLoading(true);
       const finalData = { ...formData, ...data };
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       
       if (response.ok) {
         toast({
           title: 'Registro exitoso',
-          description: 'Tu empresa y cuenta de administrador han sido creadas correctamente.',
+          description: 'Tu empresa ha sido creada correctamente',
         });
-        
-        setLocation('/login');
-      } else {
-        const error = await response.json();
-        toast({
-          title: 'Error en el registro',
-          description: error.message || 'Ha ocurrido un error durante el registro.',
-          variant: 'destructive',
-        });
+        setLocation('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: 'Error',
-        description: 'Ha ocurrido un error inesperado.',
+        title: 'Error en el registro',
+        description: error.message || 'Ha ocurrido un error durante el registro',
         variant: 'destructive',
       });
     } finally {
+      setValidatingStep3(false);
       setIsLoading(false);
     }
   };
@@ -584,52 +607,21 @@ export default function Register() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="corporatePhone">Teléfono corporativo</Label>
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="adminEmail">Email de administrador *</Label>
                   <Input
-                    id="corporatePhone"
-                    className="rounded-xl"
-                    {...step3Form.register('corporatePhone')}
-                    placeholder="+34 900 000 000"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="personalPhone">Teléfono personal</Label>
-                  <Input
-                    id="personalPhone"
-                    className="rounded-xl"
-                    {...step3Form.register('personalPhone')}
-                    placeholder="+34 600 000 000"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="corporateEmail">Email corporativo</Label>
-                  <Input
-                    id="corporateEmail"
+                    id="adminEmail"
                     type="email"
                     className="rounded-xl"
-                    {...step3Form.register('corporateEmail')}
+                    {...step3Form.register('adminEmail')}
                     placeholder="admin@miempresa.com"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="personalEmail">Email personal</Label>
-                  <Input
-                    id="personalEmail"
-                    type="email"
-                    className="rounded-xl"
-                    {...step3Form.register('personalEmail')}
-                    placeholder="juan@gmail.com"
-                  />
+                  <p className="text-xs text-gray-500">Este será tu email para iniciar sesión</p>
+                  {step3Form.formState.errors.adminEmail && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminEmail.message}</p>
+                  )}
                 </div>
               </div>
-
-              {step3Form.formState.errors.corporateEmail && (
-                <p className="text-sm text-red-600">Debe proporcionar al menos un email (corporativo o personal)</p>
-              )}
 
               {/* Password section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -641,7 +633,7 @@ export default function Register() {
                       className="rounded-xl"
                       type={showPassword ? 'text' : 'password'}
                       {...step3Form.register('password')}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres con mayúscula, número y símbolo"
                     />
                     <Button
                       type="button"
@@ -738,8 +730,8 @@ export default function Register() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás
                 </Button>
-                <Button type="submit" className="rounded-xl px-8" disabled={isLoading}>
-                  {isLoading ? 'Creando cuenta...' : 'Crear empresa'}
+                <Button type="submit" className="rounded-xl px-8" disabled={isLoading || validatingStep3}>
+                  {validatingStep3 ? 'Verificando datos...' : isLoading ? 'Creando cuenta...' : 'Crear empresa'}
                   <CheckCircle className="h-4 w-4 ml-2" />
                 </Button>
               </div>
