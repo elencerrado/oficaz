@@ -24,6 +24,7 @@ export default function VerifyCode() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
@@ -80,6 +81,7 @@ export default function VerifyCode() {
     if (!sessionId) return;
     
     setIsLoading(true);
+    setErrorMessage(''); // Clear previous errors
     try {
       console.log('Verifying code:', { sessionId, code: data.code });
       
@@ -105,9 +107,11 @@ export default function VerifyCode() {
         // Redirect to registration with verification token
         setLocation(`/register?token=${result.verificationToken}`);
       } else {
+        setErrorMessage(result.message || 'El código no es válido o ha expirado.');
         console.error('Verification error:', result.message || 'El código no es válido o ha expirado.');
       }
     } catch (error: any) {
+      setErrorMessage('Ha ocurrido un error inesperado. Inténtalo de nuevo.');
       console.error('Verify error:', error);
       console.error('Verification error:', 'Ha ocurrido un error inesperado: ' + error.message);
     } finally {
@@ -161,10 +165,14 @@ export default function VerifyCode() {
                   autoComplete="one-time-code"
                   inputMode="numeric"
                   pattern="[0-9]*"
+                  onChange={() => setErrorMessage('')} // Clear error on input change
                 />
               </div>
               {form.formState.errors.code && (
                 <p className="text-sm text-red-600">{form.formState.errors.code.message}</p>
+              )}
+              {errorMessage && (
+                <p className="text-sm text-red-600">{errorMessage}</p>
               )}
             </div>
 
