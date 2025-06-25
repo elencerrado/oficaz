@@ -1184,9 +1184,12 @@ startxref
       if (cif && cif !== currentCompany.cif) {
         const existingCompany = await storage.getCompanyByCif(cif);
         if (existingCompany && existingCompany.id !== user.companyId) {
+          console.log(`CIF conflict: Trying to change from "${currentCompany.cif}" to "${cif}", but "${cif}" is already used by company ID ${existingCompany.id} (${existingCompany.name})`);
           return res.status(400).json({ 
-            message: 'El CIF ya está registrado por otra empresa',
-            field: 'cif'
+            message: `El CIF "${cif}" ya está registrado por otra empresa: ${existingCompany.name}`,
+            field: 'cif',
+            currentCif: currentCompany.cif,
+            conflictingCompany: existingCompany.name
           });
         }
       }

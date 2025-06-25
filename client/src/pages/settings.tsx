@@ -496,10 +496,14 @@ const AccountManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      const errorMessage = error.message.includes('CIF') 
+        ? error.message 
+        : 'No se pudo actualizar la empresa. Inténtalo de nuevo.';
+      
       toast({
-        title: 'Error',
-        description: 'No se pudo actualizar la empresa. Inténtalo de nuevo.',
+        title: 'Error al actualizar empresa',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
