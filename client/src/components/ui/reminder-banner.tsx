@@ -203,71 +203,94 @@ export function ReminderBanner() {
             </div>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => dismissReminder(firstReminder.id)}
-          style={{ 
-            color: '#ffffff', 
-            padding: '8px',
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            borderRadius: '50%',
-            minWidth: 'unset',
-            height: 'unset'
-          }}
-        >
-          <X style={{ width: '16px', height: '16px' }} />
-        </Button>
+
       </div>
 
       {/* Contenido */}
-      <div style={{ padding: '24px' }}>
-        {firstReminder.content && (
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#374151', 
-            lineHeight: '1.6',
-            marginBottom: '24px',
-            fontWeight: '500'
-          }}>
-            {firstReminder.content}
-          </div>
-        )}
+      <div style={{ 
+        padding: '20px 24px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '20px' 
+      }}>
+        {/* Contenido del recordatorio */}
+        <div style={{ flex: '1' }}>
+          {firstReminder.content && (
+            <div style={{ 
+              fontSize: '14px', 
+              color: '#374151', 
+              lineHeight: '1.5',
+              fontWeight: '500'
+            }}>
+              {firstReminder.content}
+            </div>
+          )}
+        </div>
         
-        <div style={{ display: 'flex', gap: '12px' }}>
+        {/* Botones de acción */}
+        <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => completeReminder(firstReminder.id)}
             style={{ 
-              flex: '1',
               backgroundColor: '#059669',
               color: '#ffffff',
-              padding: '14px 20px',
-              fontSize: '14px',
-              fontWeight: '700',
+              padding: '10px 16px',
+              fontSize: '13px',
+              fontWeight: '600',
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
-              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
-              transition: 'all 0.2s ease'
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(5, 150, 105, 0.3)',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#047857';
               e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.4)';
+              e.target.style.boxShadow = '0 3px 10px rgba(5, 150, 105, 0.4)';
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = '#059669';
               e.target.style.transform = 'translateY(0px)';
-              e.target.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.3)';
+              e.target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.3)';
             }}
           >
-            <CheckCircle style={{ width: '18px', height: '18px' }} />
-            Marcar como hecho
+            <CheckCircle style={{ width: '16px', height: '16px' }} />
+            Hecho
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => dismissReminder(firstReminder.id)}
+            style={{ 
+              backgroundColor: '#f3f4f6',
+              color: '#6b7280',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#e5e7eb';
+              e.target.style.color = '#374151';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#f3f4f6';
+              e.target.style.color = '#6b7280';
+            }}
+          >
+            <X style={{ width: '16px', height: '16px' }} />
           </Button>
         </div>
       </div>

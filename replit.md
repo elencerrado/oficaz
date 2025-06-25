@@ -117,15 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 25, 2025. Banner de recordatorios optimizado para mejor legibilidad y posicionamiento
-  - Reposicionado: esquina inferior derecha (bottom: 20px, right: 20px) más accesible
-  - Ancho expandido a 420px para layout más alargado y cómodo de leer
-  - Contraste mejorado: texto blanco con text-shadow para legibilidad sobre fondos claros
-  - Tipografía reforzada: títulos font-weight 700, fecha font-weight 600 con sombras
-  - Contenido con color #374151 (gris oscuro) para máximo contraste sobre fondo blanco
-  - Botón verde optimizado: #059669 con hover effects, padding aumentado (14px 20px)
-  - Sombras más profundas (0 12px 40px) para mayor presencia visual
-  - Padding interno aumentado (24px) para mejor espaciado y comfort visual
+- June 25, 2025. Banner de recordatorios con layout horizontal optimizado
+  - Layout horizontal: contenido del recordatorio a la izquierda, botones a la derecha
+  - Distribución flex: contenido flexible (flex: 1) y botones con ancho fijo (flexShrink: 0)
+  - Botones compactos: "Hecho" verde con icono y "Cerrar" gris neutro lado a lado
+  - Espaciado optimizado: gap 20px entre contenido y botones, gap 10px entre botones
+  - Texto botón "Hecho" simplificado sin "Marcar como" para mejor legibilidad
+  - Hover effects refinados en ambos botones con transiciones suaves
+  - Botón cerrar movido del header al área de contenido para mejor accesibilidad
+  - Eliminado botón X duplicado del header para diseño más limpio
 - June 25, 2025. Versión móvil de recordatorios para empleados implementada
   - Página employee-reminders.tsx creada siguiendo estética móvil de empleados (bg-employee-gradient)
   - Diseño consistente con navigation back button, header company info y título principal
