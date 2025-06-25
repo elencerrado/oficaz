@@ -48,7 +48,7 @@ export default function VerifyCode() {
     
     setIsLoading(true);
     try {
-      console.log('Verifying code:', { email, code: data.code });
+      console.log('Verifying code:', { sessionId, code: data.code });
       
       const response = await fetch('/api/auth/verify-code', {
         method: 'POST',
@@ -56,7 +56,7 @@ export default function VerifyCode() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email,
+          sessionId,
           code: data.code,
         }),
       });
@@ -93,35 +93,9 @@ export default function VerifyCode() {
     }
   };
 
-  const handleResendCode = async () => {
-    // Need to redirect back to request-code page since we don't have the email
+  const handleResendCode = () => {
+    // Redirect to request-code page for new verification
     setLocation('/request-code');
-    
-    setIsResending(true);
-    try {
-      const response = await apiRequest('POST', '/api/auth/request-verification-code', { email });
-      
-      if (response.ok) {
-        toast({
-          title: 'Código reenviado',
-          description: 'Te hemos enviado un nuevo código de verificación.',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: 'No se pudo reenviar el código.',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Ha ocurrido un error inesperado.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsResending(false);
-    }
   };
 
   if (!email) {
@@ -143,10 +117,10 @@ export default function VerifyCode() {
               Verificar email
             </h1>
             <p className="text-gray-600 mb-2">
-              Introduce el código que hemos enviado a:
+              Introduce el código que hemos enviado a tu email.
             </p>
-            <p className="text-sm font-medium text-blue-600">
-              {email}
+            <p className="text-sm text-gray-500">
+              Revisa también tu carpeta de spam
             </p>
           </div>
 
@@ -184,9 +158,9 @@ export default function VerifyCode() {
                 variant="outline"
                 className="w-full rounded-xl"
                 onClick={handleResendCode}
-                disabled={isResending}
+                disabled={isLoading}
               >
-                {isResending ? 'Reenviando...' : 'Reenviar código'}
+                Solicitar nuevo código
                 <RotateCcw className="h-4 w-4 ml-2" />
               </Button>
             </div>
