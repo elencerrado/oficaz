@@ -142,15 +142,15 @@ export function ReminderBanner() {
     <div 
       style={{ 
         position: 'fixed',
-        top: '20px',
+        bottom: '20px',
         right: '20px',
         backgroundColor: '#ffffff',
         color: '#1a1a1a',
         padding: '0px',
         borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)',
         zIndex: 9999,
-        width: '380px',
+        width: '420px',
         maxWidth: 'calc(100vw - 40px)',
         fontSize: '14px',
         fontWeight: '500',
@@ -184,18 +184,20 @@ export function ReminderBanner() {
         <div style={{ flex: '1' }}>
           <div style={{ 
             fontSize: '16px', 
-            fontWeight: '600', 
+            fontWeight: '700', 
             color: '#ffffff',
             marginBottom: '4px',
-            lineHeight: '1.2'
+            lineHeight: '1.2',
+            textShadow: '0 1px 2px rgba(0,0,0,0.3)'
           }}>
             {firstReminder.title}
           </div>
           {firstReminder.reminderDate && (
             <div style={{ 
               fontSize: '13px', 
-              color: 'rgba(255,255,255,0.9)', 
-              fontWeight: '500'
+              color: '#ffffff', 
+              fontWeight: '600',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)'
             }}>
               {formatReminderDate(firstReminder.reminderDate)}
             </div>
@@ -219,13 +221,14 @@ export function ReminderBanner() {
       </div>
 
       {/* Contenido */}
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '24px' }}>
         {firstReminder.content && (
           <div style={{ 
             fontSize: '14px', 
-            color: '#64748b', 
-            lineHeight: '1.5',
-            marginBottom: '20px'
+            color: '#374151', 
+            lineHeight: '1.6',
+            marginBottom: '24px',
+            fontWeight: '500'
           }}>
             {firstReminder.content}
           </div>
@@ -238,20 +241,32 @@ export function ReminderBanner() {
             onClick={() => completeReminder(firstReminder.id)}
             style={{ 
               flex: '1',
-              backgroundColor: '#10b981',
+              backgroundColor: '#059669',
               color: '#ffffff',
-              padding: '12px 16px',
+              padding: '14px 20px',
               fontSize: '14px',
-              fontWeight: '600',
+              fontWeight: '700',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '8px'
+              gap: '10px',
+              boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#047857';
+              e.target.style.transform = 'translateY(-1px)';
+              e.target.style.boxShadow = '0 4px 12px rgba(5, 150, 105, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#059669';
+              e.target.style.transform = 'translateY(0px)';
+              e.target.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.3)';
             }}
           >
-            <CheckCircle style={{ width: '16px', height: '16px' }} />
+            <CheckCircle style={{ width: '18px', height: '18px' }} />
             Marcar como hecho
           </Button>
         </div>
