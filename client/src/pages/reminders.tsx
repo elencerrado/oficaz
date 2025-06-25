@@ -58,9 +58,14 @@ const REMINDER_COLORS = [
 
 export default function Reminders() {
   const { user } = useAuth();
-  const { hasAccess } = useFeatureCheck('reminders');
+  const { hasAccess } = useFeatureCheck();
+  
+  console.log('Reminders page - checking access to reminders...');
+  const canAccessReminders = hasAccess('reminders');
+  console.log('Reminders page - access result:', canAccessReminders);
 
-  if (!hasAccess) {
+  if (!canAccessReminders) {
+    console.log('Reminders page - showing restricted page');
     return (
       <FeatureRestrictedPage
         featureName="Recordatorios"

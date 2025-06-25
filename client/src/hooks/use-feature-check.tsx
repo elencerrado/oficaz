@@ -7,7 +7,10 @@ export function useFeatureCheck() {
   const hasAccess = (feature: keyof SubscriptionFeatures): boolean => {
     console.log('Checking access for feature:', feature, 'with subscription:', subscription);
     const access = checkFeatureAccess(subscription, feature);
-    console.log('Access result:', access);
+    console.log('Access result for', feature, ':', access);
+    if (feature === 'reminders') {
+      console.log('REMINDERS ACCESS CHECK:', { feature, subscription: subscription?.features, hasAccess: access });
+    }
     return access;
   };
 
