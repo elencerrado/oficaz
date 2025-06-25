@@ -247,29 +247,40 @@ export default function Register() {
               <div className="space-y-2">
                 <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {teamSizes.map((size) => (
-                    <div key={size.value} className="relative">
-                      <input
-                        type="radio"
-                        id={`teamSize-${size.value}`}
-                        value={size.value}
-                        {...step1Form.register('teamSize')}
-                        className="sr-only peer"
-                      />
-                      <label
-                        htmlFor={`teamSize-${size.value}`}
-                        className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-oficaz-primary/5 has-[:checked]:border-oficaz-primary has-[:checked]:ring-2 has-[:checked]:ring-oficaz-primary/20 transition-all"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-xs font-medium">{size.label}</div>
-                            <div className="text-xs text-gray-500">{size.description}</div>
+                  {teamSizes.map((size) => {
+                    const isSelected = step1Form.watch('teamSize') === size.value;
+                    return (
+                      <div key={size.value} className="relative">
+                        <input
+                          type="radio"
+                          id={`teamSize-${size.value}`}
+                          value={size.value}
+                          {...step1Form.register('teamSize')}
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor={`teamSize-${size.value}`}
+                          className={`block p-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
+                            isSelected
+                              ? 'bg-oficaz-primary/5 border-oficaz-primary ring-2 ring-oficaz-primary/20'
+                              : 'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-xs font-medium">{size.label}</div>
+                              <div className="text-xs text-gray-500">{size.description}</div>
+                            </div>
+                            <div className={`w-3 h-3 border rounded-full ${
+                              isSelected
+                                ? 'bg-oficaz-primary border-oficaz-primary'
+                                : 'border-gray-300'
+                            }`}></div>
                           </div>
-                          <div className="w-3 h-3 border border-gray-300 rounded-full has-[:checked]:bg-oficaz-primary has-[:checked]:border-oficaz-primary"></div>
-                        </div>
-                      </label>
-                    </div>
-                  ))}
+                        </label>
+                      </div>
+                    );
+                  })}
                 </div>
                 {step1Form.formState.errors.teamSize && (
                   <p className="text-sm text-red-600">{step1Form.formState.errors.teamSize.message}</p>
@@ -283,6 +294,8 @@ export default function Register() {
                 <div className="grid grid-cols-2 gap-2">
                   {features.map((feature) => {
                     const Icon = feature.icon;
+                    const selectedFeatures = step1Form.watch('interestedFeatures') || [];
+                    const isSelected = selectedFeatures.includes(feature.id);
                     return (
                       <div key={feature.id} className="relative">
                         <input
@@ -290,11 +303,15 @@ export default function Register() {
                           id={`feature-${feature.id}`}
                           value={feature.id}
                           {...step1Form.register('interestedFeatures')}
-                          className="sr-only peer"
+                          className="sr-only"
                         />
                         <label
                           htmlFor={`feature-${feature.id}`}
-                          className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:bg-oficaz-primary/5 has-[:checked]:border-oficaz-primary has-[:checked]:ring-2 has-[:checked]:ring-oficaz-primary/20 transition-all"
+                          className={`block p-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all ${
+                            isSelected
+                              ? 'bg-oficaz-primary/5 border-oficaz-primary ring-2 ring-oficaz-primary/20'
+                              : 'bg-white border-gray-200'
+                          }`}
                         >
                           <div className="flex items-center space-x-2">
                             <Icon className="h-3 w-3 text-oficaz-primary flex-shrink-0" />
@@ -302,8 +319,12 @@ export default function Register() {
                               <div className="text-xs font-medium truncate">{feature.name}</div>
                               <div className="text-xs text-gray-500 truncate">{feature.description}</div>
                             </div>
-                            <div className="w-3 h-3 border border-gray-300 rounded has-[:checked]:bg-oficaz-primary has-[:checked]:border-oficaz-primary flex items-center justify-center flex-shrink-0">
-                              <CheckCircle className="h-2 w-2 text-white opacity-0 has-[:checked]:opacity-100" />
+                            <div className={`w-3 h-3 border rounded flex items-center justify-center flex-shrink-0 ${
+                              isSelected
+                                ? 'bg-oficaz-primary border-oficaz-primary'
+                                : 'border-gray-300'
+                            }`}>
+                              <CheckCircle className={`h-2 w-2 text-white ${isSelected ? 'opacity-100' : 'opacity-0'}`} />
                             </div>
                           </div>
                         </label>
