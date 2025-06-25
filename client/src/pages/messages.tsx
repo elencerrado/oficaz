@@ -377,14 +377,26 @@ export default function Messages() {
 
 
   // All computed values and callbacks together
-  const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-  const filteredEmployees = contactList.filter(person => 
-    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
-  );
+  const contactList = useMemo(() => {
+    if (!canAccess) {
+      return demoEmployees;
+    }
+    return user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
+  }, [canAccess, demoEmployees, user?.role, managers, employees]);
+
+  const filteredEmployees = useMemo(() => {
+    return contactList.filter(person => 
+      person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
+    );
+  }, [contactList, searchTerm, user?.id]);
 
   // CRITICAL: selectedChatUser for EMPLOYEE chat header - DO NOT MODIFY
   const selectedChatUser = useMemo(() => {
     if (!selectedChat) return null;
+    
+    if (!canAccess) {
+      return demoEmployees.find(emp => emp.id === selectedChat) || null;
+    }
     
     // Get the correct list based on user role
     const list = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
@@ -393,12 +405,11 @@ export default function Messages() {
     console.log('Chat user lookup:', {
       selectedChat,
       userRole: user?.role,
-      listLength: list.length,
-      foundUser: foundUser?.fullName
+      listLength: list.length
     });
     
     return foundUser || null;
-  }, [selectedChat, user?.role, managers, employees]);
+  }, [selectedChat, user?.role, managers, employees, canAccess, demoEmployees]);
 
   const getChatMessages = useCallback((chatUserId: number) => {
     const allMessages = messages as Message[] || [];
@@ -1157,37 +1168,37 @@ export default function Messages() {
             
             {filteredEmployees.length > 0 ? (
               <div className="space-y-2">
-                {filteredEmployees.map((manager) => {
-                  const unreadCount = (messages as Message[] || []).filter(msg => 
-                    !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
-                  ).length;
-                  
+                {(!canAccess ? demoConversations : filteredEmployees.map(manager => {
+                  const lastMessage = getLastMessage(manager.id);
+                  const unreadCount = getUnreadCount(manager.id);
+                  return { id: manager.id, user: manager, lastMessage, unreadCount };
+                })).map((conversation) => {
                   return (
                     <div
-                      key={manager.id}
+                      key={conversation.id || conversation.user.id}
                       className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
-                      onClick={() => setSelectedChat(manager.id)}
+                      onClick={() => setSelectedChat(conversation.id || conversation.user.id)}
                     >
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                           <span className="text-white font-medium">
-                            {manager.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            {conversation.user.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </span>
                         </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className="text-white font-medium truncate">
-                              {manager.fullName}
+                              {conversation.user.fullName}
                             </p>
-                            {unreadCount > 0 && (
+                            {conversation.unreadCount > 0 && (
                               <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
-                                {unreadCount}
+                                {conversation.unreadCount}
                               </div>
                             )}
                           </div>
                           <div className="text-white/70 text-xs mt-1">
-                            {manager.jobTitle || manager.position || 'Sin cargo definido'}
+                            {conversation.user.jobTitle || conversation.user.position || 'Sin cargo definido'}
                           </div>
                         </div>
                         
