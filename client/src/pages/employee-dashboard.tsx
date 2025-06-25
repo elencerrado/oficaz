@@ -374,13 +374,7 @@ export default function EmployeeDashboard() {
         {/* Menu Grid - iPhone style with compact icons */}
         <div className="px-6 mb-6">
           <div className="grid grid-cols-3 gap-6">
-            {menuItems.filter((item) => {
-              // Filtrar elementos según el acceso a features
-              if (item.feature && !hasAccess(item.feature)) {
-                return false;
-              }
-              return true;
-            }).map((item, index) => {
+            {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
               return (
