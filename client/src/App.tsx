@@ -145,6 +145,18 @@ function Router() {
         </PublicRoute>
       </Route>
 
+      <Route path="/request-code">
+        <PublicRoute>
+          <RequestCode />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/verify-code">
+        <PublicRoute>
+          <VerifyCode />
+        </PublicRoute>
+      </Route>
+
       <Route path="/register">
         <PublicRoute>
           <Register />
