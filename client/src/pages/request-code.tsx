@@ -35,19 +35,20 @@ export default function RequestCode() {
     try {
       const response = await apiRequest('POST', '/api/auth/request-verification-code', data);
       
+      const result = await response.json();
+      
       if (response.ok) {
         toast({
           title: 'Código enviado',
-          description: 'Te hemos enviado un código de verificación a tu email.',
+          description: 'Revisa los logs del servidor para ver tu código de verificación.',
         });
         
         // Redirect to verification page with email
         setLocation(`/verify-code?email=${encodeURIComponent(data.email)}`);
       } else {
-        const error = await response.json();
         toast({
           title: 'Error',
-          description: error.message || 'No se pudo enviar el código.',
+          description: result.message || 'No se pudo enviar el código.',
           variant: 'destructive',
         });
       }

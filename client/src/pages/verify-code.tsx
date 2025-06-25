@@ -53,8 +53,9 @@ export default function VerifyCode() {
         code: data.code,
       });
       
+      const result = await response.json();
+      
       if (response.ok) {
-        const result = await response.json();
         toast({
           title: 'Código verificado',
           description: 'Email verificado correctamente. Continúa con el registro.',
@@ -63,10 +64,9 @@ export default function VerifyCode() {
         // Redirect to registration with verification token
         setLocation(`/register?token=${result.verificationToken}`);
       } else {
-        const error = await response.json();
         toast({
           title: 'Código incorrecto',
-          description: error.message || 'El código no es válido o ha expirado.',
+          description: result.message || 'El código no es válido o ha expirado.',
           variant: 'destructive',
         });
       }
