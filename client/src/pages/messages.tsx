@@ -141,10 +141,44 @@ export default function Messages() {
 
   // Demo employees for preview mode
   const demoEmployees = [
-    { id: 1, fullName: "María González", role: "admin", email: "maria@empresa.com" },
-    { id: 2, fullName: "Juan Pérez", role: "employee", email: "juan@empresa.com" },
-    { id: 3, fullName: "Ana Rodríguez", role: "employee", email: "ana@empresa.com" },
-    { id: 4, fullName: "Carlos López", role: "manager", email: "carlos@empresa.com" }
+    { id: 1, fullName: "María González", role: "admin", email: "maria@empresa.com", jobTitle: "Administradora" },
+    { id: 2, fullName: "Juan Pérez", role: "employee", email: "juan@empresa.com", jobTitle: "Empleado" },
+    { id: 3, fullName: "Ana Rodríguez", role: "employee", email: "ana@empresa.com", jobTitle: "Empleada" },
+    { id: 4, fullName: "Carlos López", role: "manager", email: "carlos@empresa.com", jobTitle: "Manager" }
+  ];
+
+  // Demo conversations with last messages for preview mode  
+  const demoConversations = [
+    {
+      id: 2,
+      user: demoEmployees[1], // Juan Pérez
+      lastMessage: {
+        content: "¡Perfecto! Muchas gracias. ¿Necesitas que prepare algo antes de irme?",
+        createdAt: "2025-06-25T10:35:00.000Z",
+        isRead: true
+      },
+      unreadCount: 0
+    },
+    {
+      id: 3,
+      user: demoEmployees[2], // Ana Rodríguez
+      lastMessage: {
+        content: "Buenos días, ¿podrías revisar el informe que envié ayer?",
+        createdAt: "2025-06-25T09:15:00.000Z",
+        isRead: false
+      },
+      unreadCount: 1
+    },
+    {
+      id: 4,
+      user: demoEmployees[3], // Carlos López
+      lastMessage: {
+        content: "La reunión está confirmada para las 15:00",
+        createdAt: "2025-06-25T08:30:00.000Z",
+        isRead: true
+      },
+      unreadCount: 0
+    }
   ];
 
   // Demo chat messages for preview mode
