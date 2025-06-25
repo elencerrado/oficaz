@@ -129,7 +129,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 25, 2025. Sistema de verificación por email completamente funcional
+- June 25, 2025. Sistema de verificación por email completamente funcional y seguro
   - Flujo de 3 pasos: request-code → verify-code → register  
   - Códigos de 6 dígitos con expiración de 10 minutos
   - Tokens de verificación temporales (30 minutos)
@@ -139,6 +139,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Sistema de limpieza automática de códigos expirados
   - Frontend con fetch nativo para mayor confiabilidad
   - Navegación optimizada para evitar estados de carga bloqueantes
+  - SEGURIDAD MEJORADA: URLs sin emails, sesiones cifradas, rate limiting, códigos hasheados
 - June 25, 2025. Sistema de validación de unicidad implementado en wizard de registro
   - Validaciones en tiempo real para prevenir duplicados en empresa
   - Verificación de unicidad: nombre empresa, CIF, email facturación, alias empresa

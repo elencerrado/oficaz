@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         const mailOptions = {
-          from: '"Oficaz" <soy@oficaz.es>',
+          from: '"Oficaz" <noreply@oficaz.es>', // Use noreply instead of personal email
           to: email,
           subject: 'Código de verificación - Oficaz',
           text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
@@ -207,7 +207,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`⏰ Expira en 10 minutos`);
       }
 
-      res.json({ success: true, message: 'Código enviado correctamente' });
+      res.json({ 
+        success: true, 
+        message: 'Código enviado correctamente',
+        sessionId: sessionId // Return secure session ID instead of email
+      });
     } catch (error) {
       console.error('Error sending verification code:', error);
       res.status(500).json({ message: 'Error interno del servidor' });

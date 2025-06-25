@@ -38,10 +38,10 @@ export default function VerifyCode() {
 
   // Redirect if no email provided
   useEffect(() => {
-    if (!email) {
+    if (!sessionId) {
       setLocation('/request-code');
     }
-  }, [email, setLocation]);
+  }, [sessionId, setLocation]);
 
   const handleSubmit = async (data: CodeData) => {
     if (!email) return;
