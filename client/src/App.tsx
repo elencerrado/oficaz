@@ -15,6 +15,8 @@ import { useState } from "react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import RequestCode from "@/pages/request-code";
+import VerifyCode from "@/pages/verify-code";
 import AdminDashboard from "@/pages/admin-dashboard";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";

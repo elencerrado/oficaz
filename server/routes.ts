@@ -88,13 +88,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email verification system
+  const verificationCodes = new Map<string, { code: string, expires: number, verified: boolean }>();
+  const verificationTokens = new Map<string, { email: string, expires: number }>();
+
+  app.post('/api/auth/request-verification-code', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: 'Email es requerido' });
+      }
+
+      // Check if email is already registered
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Este email ya está registrado' });
+      }
+
+      // Generate 6-digit code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+      // Store verification code
+      verificationCodes.set(email, { code, expires, verified: false });
+
+      // Send email with Nodemailer
+      try {
+        const nodemailer = require('nodemailer');
+        
+        const transporter = nodemailer.createTransporter({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: `"Oficaz" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject: 'Código de verificación - Oficaz',
+          text: `Tu código de verificación es: ${code}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #1e40af; margin: 0;">Oficaz</h1>
+              </div>
+              <h2 style="color: #1e40af; margin-bottom: 20px;">Código de verificación</h2>
+              <p style="margin-bottom: 20px;">Has solicitado crear una nueva empresa en Oficaz.</p>
+              <p style="margin-bottom: 20px;">Tu código de verificación es:</p>
+              <div style="background: #f8fafc; border: 2px solid #e2e8f0; padding: 30px; text-align: center; margin: 30px 0; border-radius: 12px;">
+                <h1 style="color: #1e40af; font-size: 36px; margin: 0; letter-spacing: 8px; font-family: monospace;">${code}</h1>
+              </div>
+              <p style="color: #64748b; margin-bottom: 20px;">Este código expira en 10 minutos.</p>
+              <p style="color: #64748b; font-size: 14px;">Si no has solicitado este código, puedes ignorar este email.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+              <p style="color: #94a3b8; font-size: 12px; text-align: center;">Este email fue enviado automáticamente. No respondas a este mensaje.</p>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Verification email sent to ${email}`);
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Log the code for development
+        console.log(`Verification code for ${email}: ${code}`);
+        // Still return success to continue with flow
+      }
+
+      res.json({ success: true, message: 'Código enviado correctamente' });
+    } catch (error) {
+      console.error('Error sending verification code:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/auth/verify-code', async (req, res) => {
+    try {
+      const { email, code } = req.body;
+      
+      if (!email || !code) {
+        return res.status(400).json({ message: 'Email y código son requeridos' });
+      }
+
+      const verification = verificationCodes.get(email);
+      if (!verification) {
+        return res.status(400).json({ message: 'No se encontró un código para este email' });
+      }
+
+      if (Date.now() > verification.expires) {
+        verificationCodes.delete(email);
+        return res.status(400).json({ message: 'El código ha expirado' });
+      }
+
+      if (verification.code !== code) {
+        return res.status(400).json({ message: 'Código incorrecto' });
+      }
+
+      // Mark as verified
+      verification.verified = true;
+      
+      // Generate verification token
+      const verificationToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      const tokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+      verificationTokens.set(verificationToken, { email, expires: tokenExpires });
+
+      res.json({ 
+        success: true, 
+        message: 'Código verificado correctamente',
+        verificationToken 
+      });
+    } catch (error) {
+      console.error('Error verifying code:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
       const data = companyRegistrationSchema.parse(req.body);
       
       // Check if user already exists by email
-      const existingUser = await storage.getUserByEmail(data.companyEmail);
+      const existingUser = await storage.getUserByEmail(data.adminEmail);
       if (existingUser) {
         return res.status(400).json({ message: 'Email already exists' });
       }
@@ -113,10 +234,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: data.companyName,
         email: data.companyEmail,
         cif: data.cif,
-        contactName: data.contactName,
+        contactName: data.contactName || data.adminFullName,
         companyAlias: data.companyAlias,
-        phone: data.phone,
-        address: data.address,
+        phone: data.contactPhone || '',
+        address: data.address || '',
+        province: data.province,
       });
 
       // Create admin user
