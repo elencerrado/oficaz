@@ -175,7 +175,40 @@ export default function Login() {
               )}
             </div>
 
-
+            {/* Password Field */}
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                {...form.register('password')}
+                placeholder="Contraseña"
+                className="rounded-xl border-gray-300 py-3 px-4 pr-16 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                onChange={(e) => {
+                  form.setValue('password', e.target.value);
+                  setLoginError(null);
+                }}
+              />
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                <Lock className="h-4 w-4 text-gray-400" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </Button>
+              </div>
+              {form.formState.errors.password && (
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
 
             {/* Remember Me */}
             <div className="flex items-center space-x-2">
