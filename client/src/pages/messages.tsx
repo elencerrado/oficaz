@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
-import { FeaturePreviewOverlay } from '@/components/feature-preview-overlay';
+import { useFeaturePreview } from '@/hooks/use-feature-preview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,12 +60,43 @@ interface Manager {
   position?: string;
 }
 
+// Datos de demostración para preview
+const demoMessages = [
+  {
+    id: 'demo-1',
+    senderId: 1,
+    receiverId: 5,
+    subject: 'Bienvenido al equipo',
+    content: 'Nos complace darte la bienvenida a nuestro equipo. Esperamos una excelente colaboración.',
+    isRead: false,
+    createdAt: '2025-06-24T10:00:00Z',
+    sender: { fullName: 'Administrador Principal', role: 'admin' },
+    receiver: { fullName: 'Juan José García', role: 'employee' }
+  },
+  {
+    id: 'demo-2',
+    senderId: 5,
+    receiverId: 1,
+    subject: 'Consulta sobre vacaciones',
+    content: '¿Podrías confirmar las fechas disponibles para vacaciones en agosto?',
+    isRead: true,
+    createdAt: '2025-06-23T14:30:00Z',
+    sender: { fullName: 'Juan José García', role: 'employee' },
+    receiver: { fullName: 'Administrador Principal', role: 'admin' }
+  }
+];
+
 export default function Messages() {
   const { user, company } = useAuth();
-  const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
-  const canAccessMessages = hasAccess('messages');
-  const showPreview = !canAccessMessages;
+  const { canAccess, showPreview, PreviewOverlay, data: previewData } = useFeaturePreview({
+    feature: 'messages',
+    featureName: 'Mensajes',
+    description: 'Comunicación interna entre empleados y administradores con historial completo',
+    requiredPlan: 'Pro',
+    icon: MessageSquare,
+    demoData: demoMessages
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
@@ -102,22 +131,24 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // All queries together
-  const { data: messages, isLoading: messagesLoading } = useQuery({
+  const { data: fetchedMessages, isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/messages'],
-    enabled: !!user,
+    enabled: !!user && canAccess,
     staleTime: 30000,
     refetchInterval: 10000,
   });
 
+  const messages = canAccess ? (fetchedMessages || []) : (previewData || []);
+
   const { data: managers } = useQuery({
     queryKey: ['/api/managers'],
-    enabled: !!user && user.role === 'employee',
+    enabled: !!user && user.role === 'employee' && canAccess,
     staleTime: 60000,
   });
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager') && canAccess,
     staleTime: 60000,
   });
 

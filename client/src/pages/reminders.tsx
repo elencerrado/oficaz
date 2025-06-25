@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useFeatureCheck } from '@/hooks/use-feature-check';
-import FeatureRestrictedPage from '@/components/feature-restricted-page';
-import { FeaturePreviewOverlay } from '@/components/feature-preview-overlay';
+import { useFeaturePreview } from '@/hooks/use-feature-preview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,55 +55,60 @@ const REMINDER_COLORS = [
   '#fef7e0', '#e8f5e8', '#e1f5fe', '#fce4ec', '#f3e5f5', '#e0f2f1'
 ];
 
+// Datos de demostración para preview
+const demoReminders = [
+  {
+    id: 'demo-1',
+    title: 'Reunión con el equipo',
+    content: 'Revisar el progreso del proyecto y planificar las siguientes tareas',
+    color: '#e3f2fd',
+    priority: 'high' as const,
+    scheduledDate: '2025-06-25',
+    scheduledTime: '09:00',
+    status: 'active' as const,
+    isPinned: true,
+    createdAt: '2025-06-24T10:00:00Z'
+  },
+  {
+    id: 'demo-2',
+    title: 'Enviar informe mensual',
+    content: 'Preparar y enviar el informe de ventas del mes anterior',
+    color: '#fff3e0',
+    priority: 'medium' as const,
+    scheduledDate: '2025-06-26',
+    scheduledTime: '14:30',
+    status: 'active' as const,
+    isPinned: false,
+    createdAt: '2025-06-24T11:30:00Z'
+  },
+  {
+    id: 'demo-3',
+    title: 'Revisar contratos',
+    content: 'Verificar los nuevos contratos de proveedores',
+    color: '#e8f5e8',
+    priority: 'low' as const,
+    scheduledDate: null,
+    scheduledTime: null,
+    status: 'completed' as const,
+    isPinned: false,
+    createdAt: '2025-06-23T16:00:00Z'
+  }
+];
+
 export default function Reminders() {
   const { user } = useAuth();
-  const { hasAccess } = useFeatureCheck();
   
-  const canAccessReminders = hasAccess('reminders');
-  const showPreview = !canAccessReminders;
+  const { canAccess, showPreview, PreviewOverlay, data: previewData } = useFeaturePreview({
+    feature: 'reminders',
+    featureName: 'Recordatorios',
+    description: 'Sistema completo de recordatorios con programación, prioridades y notificaciones automáticas',
+    requiredPlan: 'Pro',
+    icon: Bell,
+    demoData: demoReminders
+  });
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Datos de demostración para preview
-  const demoReminders = [
-    {
-      id: 'demo-1',
-      title: 'Reunión con el equipo',
-      content: 'Revisar el progreso del proyecto y planificar las siguientes tareas',
-      color: '#e3f2fd',
-      priority: 'high' as const,
-      scheduledDate: '2025-06-25',
-      scheduledTime: '09:00',
-      status: 'active' as const,
-      isPinned: true,
-      createdAt: '2025-06-24T10:00:00Z'
-    },
-    {
-      id: 'demo-2',
-      title: 'Enviar informe mensual',
-      content: 'Preparar y enviar el informe de ventas del mes anterior',
-      color: '#fff3e0',
-      priority: 'medium' as const,
-      scheduledDate: '2025-06-26',
-      scheduledTime: '14:30',
-      status: 'active' as const,
-      isPinned: false,
-      createdAt: '2025-06-24T11:30:00Z'
-    },
-    {
-      id: 'demo-3',
-      title: 'Revisar contratos',
-      content: 'Verificar los nuevos contratos de proveedores',
-      color: '#e8f5e8',
-      priority: 'low' as const,
-      scheduledDate: null,
-      scheduledTime: null,
-      status: 'completed' as const,
-      isPinned: false,
-      createdAt: '2025-06-23T16:00:00Z'
-    }
-  ];
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
@@ -121,11 +124,14 @@ export default function Reminders() {
     color: '#ffffff'
   });
 
-  // Fetch reminders
-  const { data: reminders = [], isLoading } = useQuery({
+  // Fetch reminders o usar datos demo
+  const { data: fetchedReminders = [], isLoading } = useQuery({
     queryKey: ['/api/reminders'],
+    enabled: !!user && canAccess,
     retry: false,
   });
+
+  const reminders = canAccess ? fetchedReminders : (previewData || []);
 
   // Create reminder mutation
   const createReminderMutation = useMutation({
