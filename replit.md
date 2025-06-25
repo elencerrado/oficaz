@@ -129,6 +129,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Error de CIF duplicado corregido en configuración de empresa
+  - Agregada validación previa para verificar si CIF está cambiando
+  - Solo valida duplicados cuando el CIF es diferente al actual
+  - Mensaje de error específico para conflictos de CIF existentes
+  - Backend ahora maneja correctamente actualizaciones sin cambio de CIF
 - June 25, 2025. Header estándar aplicado a página de configuración corregido
   - Eliminado contenedor max-w-4xl mx-auto que no sigue el estándar
   - Aplicado patrón exacto de time-tracking: px-6 py-4 + overflowX: 'clip'

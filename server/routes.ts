@@ -1174,6 +1174,23 @@ startxref
         return res.status(403).json({ message: 'No autorizado para actualizar información de empresa' });
       }
 
+      // Get current company data to check if CIF is changing
+      const currentCompany = await storage.getCompany(user.companyId);
+      if (!currentCompany) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      // Check if CIF is changing and if the new CIF already exists
+      if (cif && cif !== currentCompany.cif) {
+        const existingCompany = await storage.getCompanyByCif(cif);
+        if (existingCompany && existingCompany.id !== user.companyId) {
+          return res.status(400).json({ 
+            message: 'El CIF ya está registrado por otra empresa',
+            field: 'cif'
+          });
+        }
+      }
+
       const updatedCompany = await storage.updateCompany(user.companyId, {
         name,
         cif,

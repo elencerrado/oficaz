@@ -469,7 +469,8 @@ const AccountManagement = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Error al actualizar la empresa');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al actualizar la empresa');
       }
       
       return response.json();
