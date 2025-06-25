@@ -32,6 +32,43 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
 
+// Demo data for preview mode
+const demoMessages = [
+  {
+    id: 1,
+    senderId: 1,
+    receiverId: 2,
+    subject: "Reunión de equipo programada",
+    content: "Se ha programado una reunión de equipo para revisar los objetivos del próximo trimestre. Por favor confirma tu asistencia.",
+    sentAt: "2025-06-25T10:30:00Z",
+    readAt: null,
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" }
+  },
+  {
+    id: 2,
+    senderId: 2,
+    receiverId: 1,
+    subject: "Actualización de proyecto",
+    content: "El proyecto avanza según lo programado. Esperamos completar la fase 1 la próxima semana.",
+    sentAt: "2025-06-24T14:15:00Z",
+    readAt: "2025-06-24T15:20:00Z",
+    sender: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" },
+    receiver: { fullName: "María González", companyEmail: "maria@empresa.com" }
+  },
+  {
+    id: 3,
+    senderId: 1,
+    receiverId: 3,
+    subject: "Solicitud de vacaciones aprobada",
+    content: "Tu solicitud de vacaciones del 1-15 de julio ha sido aprobada. ¡Disfruta tu descanso!",
+    sentAt: "2025-06-23T09:45:00Z",
+    readAt: "2025-06-23T10:30:00Z",
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Ana Rodríguez", companyEmail: "ana@empresa.com" }
+  }
+];
+
 interface Message {
   id: number;
   senderId: number;
@@ -61,43 +98,6 @@ interface Manager {
 }
 
 
-
-// Demo data for messages preview
-const demoMessages = [
-  {
-    id: 1,
-    senderId: 1,
-    receiverId: 2,
-    subject: "Reunión de equipo programada",
-    content: "Se ha programado una reunión de equipo para revisar los objetivos del próximo trimestre. Por favor confirma tu asistencia.",
-    sentAt: "2025-06-25T10:30:00Z",
-    isRead: false,
-    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
-    receiver: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" }
-  },
-  {
-    id: 2,
-    senderId: 2,
-    receiverId: 1,
-    subject: "Actualización de proyecto",
-    content: "El proyecto avanza según lo programado. Esperamos completar la fase 1 la próxima semana.",
-    sentAt: "2025-06-24T14:15:00Z",
-    isRead: true,
-    sender: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" },
-    receiver: { fullName: "María González", companyEmail: "maria@empresa.com" }
-  },
-  {
-    id: 3,
-    senderId: 1,
-    receiverId: 3,
-    subject: "Solicitud de vacaciones aprobada",
-    content: "Tu solicitud de vacaciones del 1-15 de julio ha sido aprobada. ¡Disfruta tu descanso!",
-    sentAt: "2025-06-23T09:45:00Z",
-    isRead: true,
-    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
-    receiver: { fullName: "Ana Rodríguez", companyEmail: "ana@empresa.com" }
-  }
-];
 
 export default function Messages() {
   const { user, company } = useAuth();
@@ -481,132 +481,6 @@ export default function Messages() {
           <p className="text-gray-500 mt-1">
             Comunícate con empleados y gestiona mensajes
           </p>
-        </div>
-
-        {/* Exact copy of the real interface layout */}
-        <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
-          {/* Left Column: Employee List (1/3 width) */}
-          <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
-            <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="font-semibold text-gray-900">Empleados</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                className="btn-oficaz-primary flex-shrink-0"
-                disabled={!canAccess}
-              >
-                <Plus className="icon-sm mr-1" />
-                Nuevo
-              </Button>
-            </div>
-            
-            {/* Search */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 icon-sm" />
-                <Input
-                  placeholder="Buscar conversación..."
-                  className="input-oficaz bg-gray-50"
-                  style={{ paddingLeft: '3rem', paddingRight: '1rem' }}
-                  disabled={!canAccess}
-                />
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-2 overflow-y-auto flex-1">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className="p-3 bg-gray-50 rounded-lg cursor-pointer border transition-all duration-200 hover-lift hover:bg-gray-100 border-gray-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium text-sm">
-                        {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium text-sm text-gray-900">
-                        {message.sender?.fullName || 'Usuario'}
-                      </p>
-                      <div className="truncate text-xs text-gray-500">
-                        {message.sender?.companyEmail || 'usuario@empresa.com'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Column: Chat Area (2/3 width) */}
-          <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col overflow-hidden">
-            {/* Chat Header */}
-            <div className="p-4 border-b border-gray-200 flex-shrink-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">MG</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">María González</h4>
-                  <p className="text-sm text-gray-500">Administradora</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Messages Container */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Messages List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((message) => (
-                  <div key={message.id} className="space-y-2">
-                    {/* Message Header */}
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-oficaz-primary rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-medium">
-                          {message.sender?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
-                        </span>
-                      </div>
-                      <span className="font-medium text-sm text-gray-900">
-                        {message.sender?.fullName || 'Usuario'}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
-                      </span>
-                    </div>
-                    
-                    {/* Message Content */}
-                    <div className="ml-8 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <div className="font-medium text-sm text-gray-900 mb-1">
-                        {message.subject}
-                      </div>
-                      <div className="text-sm text-gray-700">
-                        {message.content}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Message Input - Fixed at bottom */}
-            <div className="border-t border-gray-200 px-4 py-3 flex-shrink-0">
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Escribe tu mensaje..."
-                  className="input-oficaz flex-1"
-                  disabled={!canAccess}
-                />
-                <Button
-                  className="btn-oficaz-primary"
-                  disabled={!canAccess}
-                >
-                  <Send className="icon-sm" />
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
