@@ -123,22 +123,7 @@ export default function AdminDocuments() {
     demoData: demoDocuments
   });
   
-  console.log('Admin Documents page: checking access...');
-  
-  // Check if user has access to documents feature
-  if (!hasAccess('documents')) {
-    console.log('Admin Documents: Access denied');
-    return (
-      <FeatureRestrictedPage
-        featureName="Documentos"
-        description="Gestión y almacenamiento de documentos de la empresa"
-        requiredPlan={getRequiredPlan('documents')}
-        icon={FileText}
-      />
-    );
-  }
-  
-  console.log('Admin Documents: Access granted');
+
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
