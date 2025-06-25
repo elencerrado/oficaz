@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
+import { FeaturePreviewOverlay } from '@/components/feature-preview-overlay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,17 +66,8 @@ export default function Messages() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
-  // Check if user has access to messages feature
-  if (!hasAccess('messages')) {
-    return (
-      <FeatureRestrictedPage
-        featureName="Mensajes"
-        description="Comunicación interna entre empleados y administradores"
-        requiredPlan={getRequiredPlan('messages')}
-        icon={MessageSquare}
-      />
-    );
-  }
+  const canAccessMessages = hasAccess('messages');
+  const showPreview = !canAccessMessages;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();

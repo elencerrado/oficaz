@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
+import { FeaturePreviewOverlay } from '@/components/feature-preview-overlay';
 import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
