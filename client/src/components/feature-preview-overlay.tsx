@@ -9,14 +9,12 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation();
     return false;
   };
 
   const handleEvents = (e: React.SyntheticEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation();
     return false;
   };
 

@@ -1186,9 +1186,7 @@ export default function Messages() {
             {filteredEmployees.length > 0 ? (
               <div className="space-y-2">
                 {(!canAccess ? demoConversations : filteredEmployees.map(manager => {
-                  const lastMessage = getLastMessage(manager.id);
-                  const unreadCount = getUnreadCount(manager.id);
-                  return { id: manager.id, user: manager, lastMessage, unreadCount };
+                  return { id: manager.id, user: manager, lastMessage: null, unreadCount: 0 };
                 })).map((conversation) => {
                   return (
                     <div
@@ -1222,7 +1220,7 @@ export default function Messages() {
                             )}
                           </div>
                           <div className="text-white/70 text-xs mt-1">
-                            {conversation.user.jobTitle || conversation.user.position || 'Sin cargo definido'}
+                            {conversation.user.jobTitle || 'Sin cargo definido'}
                           </div>
                         </div>
                         
