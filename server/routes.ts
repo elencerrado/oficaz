@@ -177,8 +177,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
 
+        // Read logo file and convert to base64
+        const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+
         const mailOptions = {
-          from: '"Oficaz" <soy@oficaz.es>', // Keep original email for now
+          from: '"Oficaz" <soy@oficaz.es>',
           to: email,
           subject: 'Código de verificación - Oficaz',
           text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
@@ -195,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 <!-- Header with logo -->
                 <div style="background-color: #ffffff; padding: 30px 20px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                  <img src="cid:oficaz-logo" alt="Oficaz" style="height: 50px; width: auto; max-width: 200px;" />
+                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 50px; width: auto; max-width: 200px;" />
                 </div>
 
                 <!-- Main content -->
