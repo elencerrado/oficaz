@@ -139,7 +139,7 @@ export default function TimeTracking() {
   // All useMemo hooks
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
     const allEmployees = employees as any[];
-    const filteredEmployees = allEmployees.filter((emp: any) => emp.role !== 'admin');
+    const filteredEmployees = (allEmployees || []).filter((emp: any) => emp.role !== 'admin');
     const filteredSessions = (sessions as any[]).filter((session: any) => {
       const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
       return sessionUser?.role !== 'admin';
@@ -159,7 +159,7 @@ export default function TimeTracking() {
   }, [employees, sessions]);
 
   const filteredSessions = useMemo(() => {
-    return sessionsList.filter((session: any) => {
+    return (sessionsList || []).filter((session: any) => {
       const sessionDate = new Date(session.clockIn);
       
       const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
@@ -442,12 +442,12 @@ export default function TimeTracking() {
       createEmployeePage(employee, filteredSessions, true);
     } else {
       // Multiple employees - one page per employee
-      const employeesWithSessions = employeesList.filter(employee => 
-        filteredSessions.some(session => session.userId === employee.id)
+      const employeesWithSessions = (employeesList || []).filter(employee => 
+        (filteredSessions || []).some(session => session.userId === employee.id)
       );
       
       employeesWithSessions.forEach((employee, index) => {
-        const employeeSessions = filteredSessions.filter(session => session.userId === employee.id);
+        const employeeSessions = (filteredSessions || []).filter(session => session.userId === employee.id);
         createEmployeePage(employee, employeeSessions, index === 0);
       });
     }
@@ -553,7 +553,7 @@ export default function TimeTracking() {
                     </div>
                   </div>
                   <SelectItem value="all">Todos los empleados</SelectItem>
-                  {employeesList
+                  {(employeesList || [])
                     .filter((employee: any) => 
                       employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
                     )
@@ -732,7 +732,7 @@ export default function TimeTracking() {
                   let previousMonth: string | null = null;
                   
                   const calculateWeekTotal = (weekStart: Date) => 
-                    sortedSessions
+                    (sortedSessions || [])
                       .filter(session => {
                         const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                         return sessionWeekStart.getTime() === weekStart.getTime();
@@ -740,7 +740,7 @@ export default function TimeTracking() {
                       .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
                   
                   const calculateMonthTotal = (monthKey: string) => 
-                    sortedSessions
+                    (sortedSessions || [])
                       .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
                       .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
                   

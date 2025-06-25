@@ -75,14 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token: data.token ? 'present' : 'missing' 
     });
     
-    // Save auth data to localStorage
+    // Save auth data to localStorage first
     setAuthData(data);
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    setAuthData(data);
+    // Don't call setAuthData again, already called above
     
     return data;
   };
