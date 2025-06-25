@@ -234,16 +234,16 @@ export default function Register() {
           {/* Step 1: Team preferences */}
           {currentStep === 1 && (
             <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
-              <div className="text-center mb-6">
-                <Users className="h-12 w-12 text-oficaz-primary mx-auto mb-3" />
-                <h3 className="text-lg font-semibold mb-1">Cuéntanos sobre tu equipo</h3>
-                <p className="text-sm text-gray-600">Esto nos ayudará a personalizar la experiencia</p>
+              <div className="text-center mb-4">
+                <Users className="h-8 w-8 text-oficaz-primary mx-auto mb-2" />
+                <h3 className="text-base font-semibold mb-1">Cuéntanos sobre tu equipo</h3>
+                <p className="text-xs text-gray-600">Esto nos ayudará a personalizar la experiencia</p>
               </div>
 
               {/* Team size selection */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">¿Cuántas personas van a usar la aplicación?</Label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
+                <div className="grid grid-cols-2 gap-2">
                   {teamSizes.map((size) => (
                     <div key={size.value} className="relative">
                       <input
@@ -259,7 +259,7 @@ export default function Register() {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-sm font-medium">{size.label}</div>
+                            <div className="text-xs font-medium">{size.label}</div>
                             <div className="text-xs text-gray-500">{size.description}</div>
                           </div>
                           <div className="w-3 h-3 border border-gray-300 rounded-full peer-checked:bg-oficaz-primary peer-checked:border-oficaz-primary"></div>
@@ -274,10 +274,10 @@ export default function Register() {
               </div>
 
               {/* Features selection */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">¿En qué funcionalidades estás más interesado?</Label>
-                <p className="text-xs text-gray-600">Selecciona todas las que te interesen</p>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">¿En qué funcionalidades estás más interesado?</Label>
+                <p className="text-xs text-gray-500">Selecciona todas las que te interesen</p>
+                <div className="grid grid-cols-2 gap-2">
                   {features.map((feature) => {
                     const Icon = feature.icon;
                     return (
@@ -291,16 +291,16 @@ export default function Register() {
                         />
                         <label
                           htmlFor={`feature-${feature.id}`}
-                          className="block p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
+                          className="block p-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 peer-checked:bg-oficaz-primary/5 peer-checked:border-oficaz-primary peer-checked:ring-2 peer-checked:ring-oficaz-primary/20 transition-all"
                         >
                           <div className="flex items-center space-x-2">
-                            <Icon className="h-4 w-4 text-oficaz-primary flex-shrink-0" />
+                            <Icon className="h-3 w-3 text-oficaz-primary flex-shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{feature.name}</div>
+                              <div className="text-xs font-medium truncate">{feature.name}</div>
                               <div className="text-xs text-gray-500 truncate">{feature.description}</div>
                             </div>
-                            <div className="w-4 h-4 border border-gray-300 rounded peer-checked:bg-oficaz-primary peer-checked:border-oficaz-primary flex items-center justify-center flex-shrink-0">
-                              <CheckCircle className="h-2.5 w-2.5 text-white opacity-0 peer-checked:opacity-100" />
+                            <div className="w-3 h-3 border border-gray-300 rounded peer-checked:bg-oficaz-primary peer-checked:border-oficaz-primary flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="h-2 w-2 text-white opacity-0 peer-checked:opacity-100" />
                             </div>
                           </div>
                         </label>
