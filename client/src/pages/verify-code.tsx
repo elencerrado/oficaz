@@ -36,7 +36,7 @@ export default function VerifyCode() {
     },
   });
 
-  // Redirect if no email provided
+  // Redirect if no sessionId provided
   useEffect(() => {
     if (!sessionId) {
       setLocation('/request-code');

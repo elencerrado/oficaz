@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import { storage } from "./storage";
@@ -130,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         const mailOptions = {
-          from: '"Oficaz" <noreply@oficaz.es>', // Use noreply instead of personal email
+          from: '"Oficaz" <soy@oficaz.es>', // Keep original email for now
           to: email,
           subject: 'Código de verificación - Oficaz',
           text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
@@ -210,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: 'Código enviado correctamente',
-        sessionId: sessionId // Return secure session ID instead of email
+        sessionId // Return secure session ID instead of email
       });
     } catch (error) {
       console.error('Error sending verification code:', error);
