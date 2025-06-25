@@ -131,7 +131,7 @@ export default function Reminders() {
     retry: false,
   });
 
-  const reminders = canAccess ? fetchedReminders : (previewData || []);
+  const reminders = canAccess ? fetchedReminders : demoReminders;
 
   // Create reminder mutation
   const createReminderMutation = useMutation({

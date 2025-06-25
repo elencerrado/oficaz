@@ -174,7 +174,7 @@ export default function AdminDocuments() {
     gcTime: 0,
   });
 
-  const documents = canAccess ? fetchedDocuments : (previewData || []);
+  const documents = canAccess ? fetchedDocuments : demoDocuments;
 
   // Send document notification mutation
   const sendDocumentMutation = useMutation({
