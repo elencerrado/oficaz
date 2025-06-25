@@ -48,12 +48,15 @@ export default function VerifyCode() {
     
     setIsLoading(true);
     try {
+      console.log('Verifying code:', { email, code: data.code });
       const response = await apiRequest('POST', '/api/auth/verify-code', {
         email,
         code: data.code,
       });
+      console.log('Verify response status:', response.status);
       
       const result = await response.json();
+      console.log('Verify response data:', result);
       
       if (response.ok) {
         toast({
@@ -71,9 +74,10 @@ export default function VerifyCode() {
         });
       }
     } catch (error: any) {
+      console.error('Verify error:', error);
       toast({
         title: 'Error',
-        description: 'Ha ocurrido un error inesperado.',
+        description: 'Ha ocurrido un error inesperado: ' + error.message,
         variant: 'destructive',
       });
     } finally {

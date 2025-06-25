@@ -33,9 +33,12 @@ export default function RequestCode() {
   const handleSubmit = async (data: EmailData) => {
     setIsLoading(true);
     try {
+      console.log('Sending request to:', '/api/auth/request-verification-code', data);
       const response = await apiRequest('POST', '/api/auth/request-verification-code', data);
+      console.log('Response status:', response.status);
       
       const result = await response.json();
+      console.log('Response data:', result);
       
       if (response.ok) {
         toast({
@@ -53,9 +56,10 @@ export default function RequestCode() {
         });
       }
     } catch (error: any) {
+      console.error('Request error:', error);
       toast({
         title: 'Error',
-        description: 'Ha ocurrido un error inesperado.',
+        description: 'Ha ocurrido un error inesperado: ' + error.message,
         variant: 'destructive',
       });
     } finally {
