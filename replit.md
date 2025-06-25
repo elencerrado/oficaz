@@ -117,13 +117,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 25, 2025. Banner de recordatorios mejorado con botones de acción y fecha
-  - Botón "Hecho" agregado para marcar recordatorios como completados directamente desde banner
-  - Botón "Cerrar" (X) mantiene funcionalidad de descartar notificación
-  - Fecha y hora del recordatorio ahora visible en banner con formato amigable
-  - Ancho del banner aumentado para acomodar botones adicionales (350px mínimo)
-  - Sistema de mutaciones para completar recordatorios con invalidación de cache
-  - Mejor distribución visual con fecha en línea separada y botones agrupados
+- June 25, 2025. Banner de recordatorios rediseñado con estilo moderno y posicionamiento lateral
+  - Nuevo diseño moderno: posicionado en esquina superior derecha (más discreto y profesional)
+  - Header colorido con icono en círculo y botón X integrado elegantemente
+  - Fondo blanco con sombras sutiles (0 8px 32px) para efecto elevado moderno
+  - Animación slideInRight suave (0.4s) para entrada natural desde la derecha
+  - Botón "Marcar como hecho" verde prominente con icono CheckCircle integrado
+  - Tipografía mejorada: título 16px bold, fecha 13px, contenido 14px con espaciado optimizado
+  - Ancho fijo 380px para consistencia, responsive en móviles (calc(100vw - 40px))
+  - Border radius 16px y bordes sutiles #e2e8f0 para estética moderna
 - June 25, 2025. Versión móvil de recordatorios para empleados implementada
   - Página employee-reminders.tsx creada siguiendo estética móvil de empleados (bg-employee-gradient)
   - Diseño consistente con navigation back button, header company info y título principal

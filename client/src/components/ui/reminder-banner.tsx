@@ -142,81 +142,119 @@ export function ReminderBanner() {
     <div 
       style={{ 
         position: 'fixed',
-        bottom: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: firstReminder.color || '#ff6b35',
-        color: textColor,
-        padding: '12px 20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        top: '20px',
+        right: '20px',
+        backgroundColor: '#ffffff',
+        color: '#1a1a1a',
+        padding: '0px',
+        borderRadius: '16px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)',
         zIndex: 9999,
-        maxWidth: '90vw',
-        width: 'auto',
-        minWidth: '350px',
-        textAlign: 'center',
+        width: '380px',
+        maxWidth: 'calc(100vw - 40px)',
         fontSize: '14px',
         fontWeight: '500',
-        border: `2px solid ${borderColor}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px'
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        animation: 'slideInRight 0.4s ease-out'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1' }}>
-        <PriorityIcon style={{ width: '16px', height: '16px', color: textColor }} />
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ fontWeight: '600', marginBottom: '2px' }}>
+      {/* Header colorido */}
+      <div 
+        style={{ 
+          backgroundColor: firstReminder.color || '#6366f1',
+          padding: '16px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}
+      >
+        <div 
+          style={{ 
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderRadius: '50%',
+            padding: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <PriorityIcon style={{ width: '20px', height: '20px', color: '#ffffff' }} />
+        </div>
+        <div style={{ flex: '1' }}>
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: '600', 
+            color: '#ffffff',
+            marginBottom: '4px',
+            lineHeight: '1.2'
+          }}>
             {firstReminder.title}
           </div>
-          {firstReminder.content && (
-            <div style={{ fontSize: '12px', opacity: '0.8', marginBottom: '2px' }}>
-              {firstReminder.content}
-            </div>
-          )}
           {firstReminder.reminderDate && (
-            <div style={{ fontSize: '11px', opacity: '0.7', fontWeight: '400' }}>
+            <div style={{ 
+              fontSize: '13px', 
+              color: 'rgba(255,255,255,0.9)', 
+              fontWeight: '500'
+            }}>
               {formatReminderDate(firstReminder.reminderDate)}
             </div>
           )}
         </div>
-      </div>
-      
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => completeReminder(firstReminder.id)}
-          style={{ 
-            color: textColor, 
-            padding: '4px 8px',
-            fontSize: '11px',
-            backgroundColor: 'transparent',
-            border: `1px solid ${textColor}`,
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
-        >
-          <CheckCircle style={{ width: '12px', height: '12px', marginRight: '4px' }} />
-          Hecho
-        </Button>
-        
         <Button
           variant="ghost"
           size="sm"
           onClick={() => dismissReminder(firstReminder.id)}
           style={{ 
-            color: textColor, 
-            padding: '4px 8px',
-            fontSize: '12px',
-            backgroundColor: 'transparent',
-            border: `1px solid ${textColor}`,
-            borderRadius: '4px'
+            color: '#ffffff', 
+            padding: '8px',
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderRadius: '50%',
+            minWidth: 'unset',
+            height: 'unset'
           }}
         >
-          <X style={{ width: '14px', height: '14px' }} />
+          <X style={{ width: '16px', height: '16px' }} />
         </Button>
+      </div>
+
+      {/* Contenido */}
+      <div style={{ padding: '20px' }}>
+        {firstReminder.content && (
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#64748b', 
+            lineHeight: '1.5',
+            marginBottom: '20px'
+          }}>
+            {firstReminder.content}
+          </div>
+        )}
+        
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => completeReminder(firstReminder.id)}
+            style={{ 
+              flex: '1',
+              backgroundColor: '#10b981',
+              color: '#ffffff',
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: 'none',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            <CheckCircle style={{ width: '16px', height: '16px' }} />
+            Marcar como hecho
+          </Button>
+        </div>
       </div>
     </div>
   );
