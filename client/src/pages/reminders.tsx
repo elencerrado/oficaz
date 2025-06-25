@@ -265,8 +265,10 @@ export default function Reminders() {
 
   const formatReminderDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isToday(date)) return 'Hoy';
-    if (isTomorrow(date)) return 'Mañana';
+    const timeStr = format(date, 'HH:mm', { locale: es });
+    
+    if (isToday(date)) return `Hoy ${timeStr}`;
+    if (isTomorrow(date)) return `Mañana ${timeStr}`;
     if (isPast(date)) return `Hace ${formatDistanceToNow(date, { locale: es })}`;
     return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
   };
