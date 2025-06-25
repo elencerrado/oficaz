@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -84,6 +84,7 @@ type FormData = Step1Data & Step2Data & Step3Data;
 
 export default function Register() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [validatingStep2, setValidatingStep2] = useState(false);
@@ -95,6 +96,21 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+
+  // Check for verification token
+  const params = new URLSearchParams(search);
+  const verificationToken = params.get('token');
+
+  useEffect(() => {
+    if (!verificationToken) {
+      toast({
+        title: 'Acceso denegado',
+        description: 'Necesitas verificar tu email antes de registrarte.',
+        variant: 'destructive',
+      });
+      setLocation('/request-code');
+    }
+  }, [verificationToken, toast, setLocation]);
 
   // Step 1 form
   const step1Form = useForm<Step1Data>({
@@ -212,7 +228,11 @@ export default function Register() {
 
       // All validations passed, proceed with registration
       setIsLoading(true);
-      const finalData = { ...formData, ...data };
+      const finalData = { 
+        ...formData, 
+        ...data,
+        verificationToken 
+      };
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       
       if (response.ok) {
