@@ -32,43 +32,6 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
 
-// Demo data for preview mode
-const demoMessages = [
-  {
-    id: 1,
-    senderId: 1,
-    receiverId: 2,
-    subject: "Reunión de equipo programada",
-    content: "Se ha programado una reunión de equipo para revisar los objetivos del próximo trimestre. Por favor confirma tu asistencia.",
-    sentAt: "2025-06-25T10:30:00Z",
-    readAt: null,
-    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
-    receiver: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" }
-  },
-  {
-    id: 2,
-    senderId: 2,
-    receiverId: 1,
-    subject: "Actualización de proyecto",
-    content: "El proyecto avanza según lo programado. Esperamos completar la fase 1 la próxima semana.",
-    sentAt: "2025-06-24T14:15:00Z",
-    readAt: "2025-06-24T15:20:00Z",
-    sender: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" },
-    receiver: { fullName: "María González", companyEmail: "maria@empresa.com" }
-  },
-  {
-    id: 3,
-    senderId: 1,
-    receiverId: 3,
-    subject: "Solicitud de vacaciones aprobada",
-    content: "Tu solicitud de vacaciones del 1-15 de julio ha sido aprobada. ¡Disfruta tu descanso!",
-    sentAt: "2025-06-23T09:45:00Z",
-    readAt: "2025-06-23T10:30:00Z",
-    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
-    receiver: { fullName: "Ana Rodríguez", companyEmail: "ana@empresa.com" }
-  }
-];
-
 interface Message {
   id: number;
   senderId: number;
@@ -98,6 +61,43 @@ interface Manager {
 }
 
 
+
+// Demo data for messages preview
+const demoMessages = [
+  {
+    id: 1,
+    senderId: 1,
+    receiverId: 2,
+    subject: "Reunión de equipo programada",
+    content: "Se ha programado una reunión de equipo para revisar los objetivos del próximo trimestre. Por favor confirma tu asistencia.",
+    sentAt: "2025-06-25T10:30:00Z",
+    isRead: false,
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" }
+  },
+  {
+    id: 2,
+    senderId: 2,
+    receiverId: 1,
+    subject: "Actualización de proyecto",
+    content: "El proyecto avanza según lo programado. Esperamos completar la fase 1 la próxima semana.",
+    sentAt: "2025-06-24T14:15:00Z",
+    isRead: true,
+    sender: { fullName: "Juan Pérez", companyEmail: "juan@empresa.com" },
+    receiver: { fullName: "María González", companyEmail: "maria@empresa.com" }
+  },
+  {
+    id: 3,
+    senderId: 1,
+    receiverId: 3,
+    subject: "Solicitud de vacaciones aprobada",
+    content: "Tu solicitud de vacaciones del 1-15 de julio ha sido aprobada. ¡Disfruta tu descanso!",
+    sentAt: "2025-06-23T09:45:00Z",
+    isRead: true,
+    sender: { fullName: "María González", companyEmail: "maria@empresa.com" },
+    receiver: { fullName: "Ana Rodríguez", companyEmail: "ana@empresa.com" }
+  }
+];
 
 export default function Messages() {
   const { user, company } = useAuth();
@@ -475,7 +475,80 @@ export default function Messages() {
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden relative" style={{ overflowX: 'clip' }}>
         {PreviewOverlay}
         
-        {/* Header */}
+        {/* Simple Chat Interface for Demo */}
+        <div className="flex h-full gap-6">
+          {/* Conversations List */}
+          <div className="w-1/3 bg-white rounded-lg shadow-sm border">
+            <div className="p-4 border-b">
+              <h2 className="font-semibold text-gray-900">Conversaciones</h2>
+            </div>
+            <div className="space-y-1">
+              {messages.map((message) => (
+                <div key={message.id} className="p-3 hover:bg-gray-50 cursor-pointer border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-sm">
+                      {message.sender?.fullName || 'Usuario'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600 truncate mt-1">
+                    {message.subject}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate mt-1">
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Chat Area */}
+          <div className="flex-1 bg-white rounded-lg shadow-sm border flex flex-col">
+            <div className="p-4 border-b">
+              <h3 className="font-semibold text-gray-900">Chat Abierto</h3>
+              <p className="text-sm text-gray-500">Selecciona una conversación para ver los mensajes</p>
+            </div>
+            
+            {/* Messages Display */}
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {messages.slice(0, 2).map((message) => (
+                  <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                      message.senderId === user?.id 
+                        ? 'bg-blue-500 text-white' 
+                        : 'bg-gray-100 text-gray-900'
+                    }`}>
+                      <div className="text-sm font-medium mb-1">
+                        {message.sender?.fullName || 'Usuario'}
+                      </div>
+                      <div className="text-sm">{message.content}</div>
+                      <div className="text-xs mt-1 opacity-75">
+                        {format(new Date(message.sentAt || message.createdAt), 'HH:mm', { locale: es })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Message Input */}
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Escribe un mensaje..." 
+                  className="flex-1"
+                  disabled={!canAccess}
+                />
+                <Button disabled={!canAccess}>
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
           <p className="text-gray-500 mt-1">
