@@ -119,22 +119,22 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ### Design Standards
 - **Header Layout**: Always use consistent header format across admin pages:
-  - White background with border-bottom
-  - max-w-7xl container with proper padding (px-4 sm:px-6 lg:px-8)
-  - h-16 height with flex items-center justify-between
-  - h1 with text-xl font-semibold and w-5 h-5 icons
-  - Main content in separate container with py-8 padding
+  - Simple header with mb-6 margin (NO white background container)
+  - px-6 py-4 min-h-screen bg-gray-50 with overflowX: 'clip'
+  - h1 with text-2xl font-semibold text-gray-900 (simple title)
+  - p with text-gray-500 mt-1 (descriptive subtitle)
+  - Follow exact time-tracking.tsx pattern for consistency
 - **User expects consistency**: Header and margins must follow the same pattern as time-tracking and other admin pages
-- **No custom margins/layouts**: Always follow the established design system
+- **No custom containers**: Always follow the px-6 py-4 pattern, never use max-w-7xl containers with border-bottom
 
 ## Changelog
 
-- June 25, 2025. Header estándar aplicado a página de recordatorios
-  - Cambiado de encabezado personalizado a formato estándar de la aplicación
-  - Estructura consistente: white bg + border-bottom + max-w-7xl + h-16
-  - Título reducido de text-2xl a text-xl y iconos de w-6 h-6 a w-5 h-5
-  - Eliminado subtítulo para seguir patrón de otras páginas admin
-  - Contenido principal ahora en contenedor separado con py-8
+- June 25, 2025. Header estándar aplicado a página de recordatorios corregido definitivamente
+  - Seguido patrón exacto de time-tracking.tsx: px-6 py-4 + overflowX: 'clip'
+  - Header simple con mb-6: h1 text-2xl + p text-gray-500 mt-1
+  - Eliminado contenedor bg-white border-bottom que no corresponde al estándar
+  - Botón "Nuevo Recordatorio" posicionado correctamente fuera del header
+  - Estructura final: igual a fichajes y otras páginas admin principales
 - June 25, 2025. Banner de recordatorios adaptativo con ancho inteligente
   - Ancho adaptativo: minWidth 480px, maxWidth 70vw, width fit-content para adaptarse al contenido
   - Layout CSS Grid responsive: minmax(200px, 1fr) minmax(300px, 3fr) auto

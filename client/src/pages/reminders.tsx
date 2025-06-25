@@ -308,25 +308,24 @@ export default function Reminders() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Recordatorios
-              </h1>
-            </div>
-            
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Recordatorio
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Recordatorios</h1>
+        <p className="text-gray-500 mt-1">
+          Organiza tus tareas y recordatorios para mantenerte al día.
+        </p>
+      </div>
+
+      <div className="flex justify-end mb-6">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90">
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Recordatorio
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
                     {editingReminder ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}
@@ -423,14 +422,11 @@ export default function Reminders() {
                     {editingReminder ? 'Actualizar' : 'Crear'}
                   </Button>
                 </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters and Search */}
+      {/* Filters and Search */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -570,7 +566,6 @@ export default function Reminders() {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }
