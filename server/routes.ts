@@ -117,17 +117,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email with Nodemailer
       try {
         const transporter = nodemailer.createTransport({
-          host: 'smtp.hostinger.com',
-          port: 465,
-          secure: true, // SSL
+          host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
           auth: {
-            user: 'soy@oficaz.es',
-            pass: 'Sanisisdro@2025',
+            user: process.env.SMTP_USER || 'soy@oficaz.es',
+            pass: process.env.SMTP_PASS || 'Sanisisdro@2025',
           },
+          tls: {
+            rejectUnauthorized: false // For development
+          }
         });
 
         const mailOptions = {
-          from: '"Oficaz" <soy@oficaz.es>',
+          from: `"Oficaz" <${process.env.SMTP_USER || 'soy@oficaz.es'}>`,
           to: email,
           subject: 'Código de verificación - Oficaz',
           text: `Tu código de verificación es: ${code}`,
