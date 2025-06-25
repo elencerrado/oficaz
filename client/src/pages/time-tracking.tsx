@@ -140,12 +140,12 @@ export default function TimeTracking() {
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
     const allEmployees = employees as any[];
     const filteredEmployees = (allEmployees || []).filter((emp: any) => emp.role !== 'admin');
-    const filteredSessions = (sessions as any[]).filter((session: any) => {
+    const filteredSessions = (sessions || []).filter((session: any) => {
       const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
       return sessionUser?.role !== 'admin';
     });
 
-    const months = filteredSessions.reduce((acc: string[], session: any) => {
+    const months = (filteredSessions || []).reduce((acc: string[], session: any) => {
       const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
       if (!acc.includes(monthKey)) acc.push(monthKey);
       return acc;

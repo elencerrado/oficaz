@@ -20,9 +20,10 @@ export async function apiRequest(
     headers["Content-Type"] = "application/json";
   }
   
-  if ('Authorization' in authHeaders) {
-    headers.Authorization = authHeaders.Authorization as string;
-  }
+  // Always add authorization header if token exists
+  Object.assign(headers, authHeaders);
+  
+  console.log('API Request:', method, url, 'with auth:', Object.keys(authHeaders).length > 0 ? 'YES' : 'NO');
 
   const res = await fetch(url, {
     method,
@@ -60,9 +61,14 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const authHeaders = getAuthHeaders();
+    console.log('Query Request:', queryKey[0], 'with auth:', Object.keys(authHeaders).length > 0 ? 'YES' : 'NO');
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
-      headers: authHeaders,
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        ...authHeaders,
+      },
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

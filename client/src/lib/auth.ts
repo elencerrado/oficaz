@@ -31,5 +31,7 @@ export function clearAuthData() {
 
 export function getAuthHeaders(): HeadersInit {
   const authData = getAuthData();
-  return authData ? { Authorization: `Bearer ${authData.token}` } : {};
+  const headers = authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
+  console.log('getAuthHeaders called, token exists:', !!authData?.token);
+  return headers;
 }
