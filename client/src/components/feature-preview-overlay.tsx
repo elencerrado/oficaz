@@ -30,12 +30,8 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
       onSubmit={handleEvents}
       style={{ zIndex: 9999 }}
     >
-      <div className="absolute inset-0 flex items-center justify-center p-8">
-        <div className="relative bg-gradient-to-br from-white via-blue-50 to-indigo-50 rounded-2xl shadow-2xl border border-gray-200/50 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto backdrop-blur-sm overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-2xl"></div>
-          
+      <div className="fixed inset-0 flex items-center justify-center p-8 z-50">
+        <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 max-w-lg w-full mx-auto text-center pointer-events-auto">
           {/* Lock icon with gradient background */}
           <div className="relative mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -57,7 +53,7 @@ export function FeaturePreviewOverlay({ Icon }: FeaturePreviewOverlayProps) {
             Esta función está disponible en planes superiores. Mejora tu experiencia con funcionalidades avanzadas.
           </p>
           
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50 mb-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-4">
             <p className="text-sm text-gray-600 flex items-center justify-center">
               <svg className="w-4 h-4 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
