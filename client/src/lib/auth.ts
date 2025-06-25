@@ -9,8 +9,15 @@ interface AuthData {
 
 export function setAuthData(data: AuthData) {
   console.log('setAuthData called with token:', !!data.token);
-  localStorage.setItem('authData', JSON.stringify(data));
-  console.log('localStorage set, verifying:', !!getAuthData()?.token);
+  console.log('Data object:', data);
+  try {
+    localStorage.setItem('authData', JSON.stringify(data));
+    console.log('localStorage.setItem executed');
+    const verification = getAuthData();
+    console.log('Verification result:', !!verification?.token);
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
 }
 
 export function getAuthData(): AuthData | null {
