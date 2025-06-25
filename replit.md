@@ -129,6 +129,10 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Armonía visual mejorada en TabNavigation slider
+  - Cambiado rounded-xl a rounded-lg en contenedor exterior para mejor armonía con indicador slider
+  - Ambos elementos ahora usan rounded-lg para apariencia visual más consistente
+  - Componente TabNavigation ahora tiene curvas perfectamente alineadas
 - June 25, 2025. Header estándar aplicado a página de recordatorios corregido definitivamente
   - Seguido patrón exacto de time-tracking.tsx: px-6 py-4 + overflowX: 'clip'
   - Header simple con mb-6: h1 text-2xl + p text-gray-500 mt-1
