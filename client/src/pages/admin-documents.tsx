@@ -695,9 +695,8 @@ export default function AdminDocuments() {
 
   return (
     <PageWrapper>
-      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
-        <div className="relative">
-          {PreviewOverlay}
+      <div className="px-6 py-4 min-h-screen bg-gray-50 relative" style={{ overflowX: 'clip' }}>
+        {PreviewOverlay}
         
         {/* Header */}
         <div className="mb-6">
@@ -1593,8 +1592,7 @@ export default function AdminDocuments() {
             </div>
           </DialogContent>
         </Dialog>
-        </div>
-      </div>
+    </div>
     </PageWrapper>
   );
 }
