@@ -576,7 +576,7 @@ export default function AdminDocuments() {
     });
   };
 
-  const filteredDocuments = allDocuments.filter((doc: Document) => {
+  const filteredDocuments = documents.filter((doc: Document) => {
     const matchesSearch = doc.originalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.user?.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesEmployee = selectedEmployee === 'all' || doc.userId.toString() === selectedEmployee;
@@ -696,6 +696,8 @@ export default function AdminDocuments() {
   return (
     <PageWrapper>
       <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+        {PreviewOverlay}
+        
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Gestión de Documentos</h1>
@@ -709,7 +711,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Total Documentos"
             subtitle="En sistema"
-            value={(allDocuments || []).length}
+            value={(documents || []).length}
             color="blue"
             onClick={() => setActiveTab('explorer')}
           />
@@ -717,7 +719,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Subidos Hoy"
             subtitle="Nuevos archivos"
-            value={(allDocuments || []).filter(doc => {
+            value={(documents || []).filter(doc => {
               const today = new Date();
               const docDate = new Date(doc.createdAt);
               return docDate.toDateString() === today.toDateString();
@@ -779,8 +781,11 @@ export default function AdminDocuments() {
                   🤖 Detección inteligente: Los archivos se asignarán automáticamente al empleado correcto
                 </p>
                 <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
+                  onClick={() => {
+                    if (showPreview) return;
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={isUploading || showPreview}
                   variant="outline"
                 >
                   {isUploading ? 'Subiendo...' : 'Seleccionar Archivos'}
