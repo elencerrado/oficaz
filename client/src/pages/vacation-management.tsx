@@ -194,21 +194,21 @@ export default function VacationManagement() {
     );
   };
 
-  const filteredRequests = vacationRequests.filter((request: VacationRequest) => {
+  const filteredRequests = (vacationRequests || []).filter((request: VacationRequest) => {
     const matchesStatus = selectedStatus === "all" || request.status === selectedStatus;
     const matchesSearch = searchTerm === "" || 
       (request.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     return matchesStatus && matchesSearch;
   });
 
-  const pendingRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'pending');
-  const approvedRequests = vacationRequests.filter((r: VacationRequest) => r.status === 'approved');
+  const pendingRequests = (vacationRequests || []).filter((r: VacationRequest) => r.status === 'pending');
+  const approvedRequests = (vacationRequests || []).filter((r: VacationRequest) => r.status === 'approved');
 
   // Empleados actualmente de vacaciones (tienen solicitud aprobada que incluye hoy)
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const employeesOnVacation = employees.filter((emp: Employee) => {
+  const employeesOnVacation = (employees || []).filter((emp: Employee) => {
     // Verificar si tiene alguna solicitud aprobada que incluya hoy
-    const hasActiveVacation = vacationRequests.some((request: VacationRequest) => {
+    const hasActiveVacation = (vacationRequests || []).some((request: VacationRequest) => {
       if (request.userId !== emp.id || request.status !== 'approved') return false;
       
       const startDate = request.startDate.split('T')[0]; // Formato YYYY-MM-DD

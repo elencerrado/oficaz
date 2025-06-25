@@ -8,6 +8,9 @@ import path from "path";
 
 const app = express();
 
+// Trust proxy for rate limiting (required for Replit)
+app.set('trust proxy', 1);
+
 // Security middleware - Professional SaaS level
 app.use(helmet({
   contentSecurityPolicy: {

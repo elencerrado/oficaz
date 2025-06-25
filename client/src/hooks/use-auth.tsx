@@ -69,10 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
     const data = await apiRequest('POST', '/api/auth/login', loginData);
     
+    // Save auth data to localStorage
+    setAuthData(data);
+    
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    setAuthData(data);
     
     return data;
   };
