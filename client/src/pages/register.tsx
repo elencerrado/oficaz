@@ -103,14 +103,10 @@ export default function Register() {
 
   useEffect(() => {
     if (!verificationToken) {
-      toast({
-        title: 'Acceso denegado',
-        description: 'Necesitas verificar tu email antes de registrarte.',
-        variant: 'destructive',
-      });
+      // Silently redirect without toast message
       setLocation('/request-code');
     }
-  }, [verificationToken, toast, setLocation]);
+  }, [verificationToken, setLocation]);
 
   // Don't render if no token
   if (!verificationToken) {
