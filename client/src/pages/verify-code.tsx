@@ -98,7 +98,7 @@ export default function VerifyCode() {
     setLocation('/request-code');
   };
 
-  if (!email) {
+  if (!sessionId) {
     return null; // Will redirect
   }
 
