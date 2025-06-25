@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 <!-- Header with logo -->
                 <div style="background-color: #ffffff; padding: 30px 20px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                  <img src="https://github.com/user-attachments/assets/oficaz-logo.png" alt="Oficaz" style="height: 40px; width: auto;" />
+                  <div style="font-size: 32px; font-weight: bold; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: #007AFF; letter-spacing: -1px;">OFICAZ</div>
                 </div>
 
                 <!-- Main content -->
