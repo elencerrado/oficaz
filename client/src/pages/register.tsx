@@ -112,6 +112,11 @@ export default function Register() {
     }
   }, [verificationToken, toast, setLocation]);
 
+  // Don't render if no token
+  if (!verificationToken) {
+    return null;
+  }
+
   // Step 1 form
   const step1Form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
