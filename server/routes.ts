@@ -75,9 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'email':
           existingRecord = await storage.getUserByEmail(value);
           break;
-        case 'dni':
-          existingRecord = await storage.getUserByDni?.(value);
-          break;
+
         default:
           return res.status(400).json({ message: 'Invalid field' });
       }

@@ -59,7 +59,6 @@ const step2Schema = z.object({
 
 const step3Schema = z.object({
   adminFullName: z.string().min(2, 'El nombre completo debe tener al menos 2 caracteres'),
-  adminDni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres'),
   adminEmail: z.string().email('Email no válido'),
   password: z.string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
@@ -123,7 +122,6 @@ export default function Register() {
     resolver: zodResolver(step3Schema),
     defaultValues: {
       adminFullName: '',
-      adminDni: '',
       adminEmail: '',
       password: '',
       confirmPassword: '',
@@ -205,19 +203,10 @@ export default function Register() {
       setValidatingStep3(true);
       
       // Validate admin user fields for uniqueness
-      const validations = await Promise.all([
-        validateUserField('email', data.adminEmail),
-        validateUserField('dni', data.adminDni),
-      ]);
-
-      const [emailAvailable, dniAvailable] = validations;
+      const emailAvailable = await validateUserField('email', data.adminEmail);
 
       if (!emailAvailable) {
         step3Form.setError('adminEmail', { message: 'Este email ya está registrado' });
-        return;
-      }
-      if (!dniAvailable) {
-        step3Form.setError('adminDni', { message: 'Este DNI ya está registrado' });
         return;
       }
 
@@ -595,19 +584,6 @@ export default function Register() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adminDni">DNI/NIE *</Label>
-                  <Input
-                    id="adminDni"
-                    className="rounded-xl"
-                    {...step3Form.register('adminDni')}
-                    placeholder="12345678A"
-                  />
-                  {step3Form.formState.errors.adminDni && (
-                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminDni.message}</p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="adminEmail">Email de administrador *</Label>
                   <Input
                     id="adminEmail"
@@ -623,6 +599,18 @@ export default function Register() {
                 </div>
               </div>
 
+              {/* Password requirements */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-sm font-medium text-blue-900 mb-2">Requisitos de contraseña:</p>
+                <ul className="text-xs text-blue-700 space-y-1">
+                  <li>• Al menos 8 caracteres</li>
+                  <li>• Una letra mayúscula (A-Z)</li>
+                  <li>• Una letra minúscula (a-z)</li>
+                  <li>• Un número (0-9)</li>
+                  <li>• Un carácter especial (!@#$%^&*)</li>
+                </ul>
+              </div>
+
               {/* Password section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -633,7 +621,7 @@ export default function Register() {
                       className="rounded-xl"
                       type={showPassword ? 'text' : 'password'}
                       {...step3Form.register('password')}
-                      placeholder="Mínimo 8 caracteres con mayúscula, número y símbolo"
+                      placeholder="Crea una contraseña segura"
                     />
                     <Button
                       type="button"
