@@ -687,7 +687,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Total Documentos"
             subtitle="En sistema"
-            value={allDocuments.length}
+            value={(allDocuments || []).length}
             color="blue"
             onClick={() => setActiveTab('explorer')}
           />
@@ -695,7 +695,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Subidos Hoy"
             subtitle="Nuevos archivos"
-            value={allDocuments.filter(doc => {
+            value={(allDocuments || []).filter(doc => {
               const today = new Date();
               const docDate = new Date(doc.createdAt);
               return docDate.toDateString() === today.toDateString();
@@ -707,7 +707,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Solicitudes"
             subtitle="Pendientes"
-            value={sentRequests?.filter(req => !req.isCompleted).length || 0}
+            value={(sentRequests || []).filter(req => !req.isCompleted).length}
             color="yellow"
             onClick={() => setActiveTab('requests')}
           />
@@ -715,7 +715,7 @@ export default function AdminDocuments() {
           <StatsCard
             title="Empleados"
             subtitle="Total activos"
-            value={employees.length}
+            value={(employees || []).length}
             color="purple"
             onClick={() => setActiveTab('explorer')}
           />
@@ -846,11 +846,11 @@ export default function AdminDocuments() {
 
               {/* Results count */}
               <div className="text-sm text-gray-600">
-                Mostrando {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
+                Mostrando {(filteredDocuments || []).length} documento{(filteredDocuments || []).length !== 1 ? 's' : ''}
               </div>
 
               {/* Documents Display */}
-              {filteredDocuments.length > 0 ? (
+              {(filteredDocuments || []).length > 0 ? (
                 viewMode === 'list' ? (
                   /* Lista tradicional */
                   <div className="space-y-3">
@@ -1198,8 +1198,8 @@ export default function AdminDocuments() {
 
               {/* Sent Requests History */}
               <div>
-                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes ({sentRequests.length})</h3>
-                {sentRequests.length > 0 ? (
+                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes ({(sentRequests || []).length})</h3>
+                {(sentRequests || []).length > 0 ? (
                   <div className="space-y-3">
                     {sentRequests.map((request: any) => (
                       <div key={request.id} className="border rounded-lg p-4 bg-white">
