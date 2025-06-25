@@ -198,8 +198,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
                 
                 <!-- Header with logo -->
-                <div style="background-color: #ffffff; padding: 30px 20px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 50px; width: auto; max-width: 200px;" />
+                <div style="background-color: #ffffff; padding: 20px 15px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
                 </div>
 
                 <!-- Main content -->

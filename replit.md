@@ -129,6 +129,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Logo PNG integrado correctamente en emails de verificación
+  - Sistema base64 para embeber logo directamente en HTML del email
+  - Tamaño optimizado para móvil: 35px altura, max 150px ancho
+  - Compatible con todos los clientes de email sin attachments
+  - Logo corporativo de Oficaz funcionando en template de verificación
 - June 25, 2025. Sistema de verificación por email completamente funcional y seguro
   - Flujo de 3 pasos: request-code → verify-code → register  
   - Códigos de 6 dígitos con expiración de 10 minutos
