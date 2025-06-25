@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
+import rateLimit from 'express-rate-limit';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
@@ -393,10 +394,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/login', async (req, res) => {
+  // Rate limiting for login attempts
+  const loginAttempts = new Map<string, { count: number; lastAttempt: number; blockedUntil?: number }>();
+  
+  const isRateLimited = (identifier: string): { blocked: boolean; remainingTime?: number } => {
+    const now = Date.now();
+    const attempts = loginAttempts.get(identifier);
+    
+    if (!attempts) return { blocked: false };
+    
+    // If blocked, check if block period has expired
+    if (attempts.blockedUntil && now < attempts.blockedUntil) {
+      return { blocked: true, remainingTime: Math.ceil((attempts.blockedUntil - now) / 1000) };
+    }
+    
+    // Reset if block period expired
+    if (attempts.blockedUntil && now >= attempts.blockedUntil) {
+      loginAttempts.delete(identifier);
+      return { blocked: false };
+    }
+    
+    return { blocked: false };
+  };
+  
+  const recordLoginAttempt = (identifier: string, success: boolean) => {
+    const now = Date.now();
+    const attempts = loginAttempts.get(identifier) || { count: 0, lastAttempt: now };
+    
+    if (success) {
+      // Reset on successful login
+      loginAttempts.delete(identifier);
+      return;
+    }
+    
+    // Increment failed attempts
+    attempts.count++;
+    attempts.lastAttempt = now;
+    
+    // Block after 5 failed attempts for 15 minutes
+    if (attempts.count >= 5) {
+      attempts.blockedUntil = now + 15 * 60 * 1000; // 15 minutes
+    }
+    
+    loginAttempts.set(identifier, attempts);
+  };
+
+  // Login rate limiter - more restrictive for login endpoint
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // limit each IP to 20 login attempts per windowMs
+    message: { error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+  });
+
+  app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
       const data = loginSchema.parse(req.body);
       const { companyAlias } = req.body;
+      const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+      const identifier = `${data.dniOrEmail.toLowerCase()}:${clientIP}`;
+
+      // Check rate limiting per user+IP
+      const rateLimitCheck = isRateLimited(identifier);
+      if (rateLimitCheck.blocked) {
+        return res.status(429).json({ 
+          message: `Demasiados intentos fallidos. Intenta de nuevo en ${rateLimitCheck.remainingTime} segundos.`,
+          retryAfter: rateLimitCheck.remainingTime
+        });
+      }
       
       let targetCompanyId = null;
       
@@ -404,13 +471,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (companyAlias) {
         const company = await storage.getCompanyByAlias?.(companyAlias);
         if (!company) {
+          recordLoginAttempt(identifier, false);
           return res.status(404).json({ message: 'Empresa no encontrada' });
         }
         targetCompanyId = company.id;
       }
       
+      // Normalize email/DNI input
+      const normalizedInput = data.dniOrEmail.includes('@') 
+        ? data.dniOrEmail.toLowerCase().trim()
+        : data.dniOrEmail.toUpperCase().trim();
+      
       // Try to find user by company email first, then by DNI
-      let user = await storage.getUserByEmail(data.dniOrEmail);
+      let user = await storage.getUserByEmail(normalizedInput);
       
       // If company-specific login, verify user belongs to that company
       if (user && targetCompanyId && user.companyId !== targetCompanyId) {
@@ -420,42 +493,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         // Try to find by DNI
         if (targetCompanyId) {
-          user = await storage.getUserByDniAndCompany(data.dniOrEmail, targetCompanyId);
+          user = await storage.getUserByDniAndCompany(normalizedInput, targetCompanyId);
         } else {
-          user = await storage.getUserByDni(data.dniOrEmail);
+          user = await storage.getUserByDni(normalizedInput);
         }
       }
       
       if (!user) {
+        recordLoginAttempt(identifier, false);
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
-      // Only validate password if we haven't already validated it during multi-user check
-      let validPassword = true;
-      if (!user.password) {
-        // If password validation was done during multi-user check, user object might not have password
-        // In this case, we already validated the password
-        validPassword = true;
-      } else {
-        validPassword = await bcrypt.compare(data.password, user.password);
-      }
-      
-      if (!validPassword) {
-        return res.status(401).json({ message: 'Credenciales inválidas' });
-      }
-
+      // Check if user account is active
       if (!user.isActive) {
-        return res.status(401).json({ message: 'Cuenta inactiva' });
+        recordLoginAttempt(identifier, false);
+        return res.status(401).json({ message: 'Cuenta desactivada. Contacta con tu administrador.' });
       }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(data.password, user.password);
+      if (!isValidPassword) {
+        recordLoginAttempt(identifier, false);
+        return res.status(401).json({ message: 'Credenciales inválidas' });
+      }
+
+      // Record successful login
+      recordLoginAttempt(identifier, true);
 
       const company = await storage.getCompany(user.companyId);
 
       const token = generateToken({
         id: user.id,
-        username: user.companyEmail, // Use company email as username in JWT
+        username: user.companyEmail,
         role: user.role,
         companyId: user.companyId,
       });
+
+      // Log successful login for security audit
+      console.log(`[SECURITY] Successful login: User ${user.id} (${user.companyEmail}) from IP ${clientIP} at ${new Date().toISOString()}`);
 
       res.json({
         message: "Inicio de sesión exitoso",
@@ -464,7 +539,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company,
       });
     } catch (error: any) {
-      res.status(400).json({ message: error.message });
+      console.error(`[SECURITY] Login error: ${error.message}`);
+      res.status(400).json({ message: 'Error en el inicio de sesión' });
     }
   });
 

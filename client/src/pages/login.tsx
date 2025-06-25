@@ -2,16 +2,23 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useRoute } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginData } from '@shared/schema';
+import { z } from 'zod';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Eye, EyeOff, User, Lock } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, AlertCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@/assets/oficaz-logo.png';
+
+// Secure login schema
+const loginSchema = z.object({
+  dniOrEmail: z.string().min(1, 'DNI/Email requerido').trim(),
+  password: z.string().min(1, 'Contraseña requerida'),
+});
+
+type LoginData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -28,10 +35,7 @@ export default function Login() {
 
   const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      dniOrEmail: '',
-      password: '',
-    },
+    defaultValues: { dniOrEmail: '', password: '' },
   });
 
   const { login } = useAuth();
@@ -70,31 +74,22 @@ export default function Login() {
     }
   }, [companyAlias, setLocation, form]);
 
-  const onSubmit = async (data: LoginData) => {
+  const handleSubmit = async (data: LoginData) => {
     setSubmitting(true);
     setLoginError(null);
     
     try {
-      // Normalize email/DNI case - lowercase for emails, uppercase last char for DNI/NIE
-      const trimmed = data.dniOrEmail.trim();
-      let normalizedDniOrEmail = trimmed;
-      
-      // If it contains @ it's an email, convert to lowercase
-      if (trimmed.includes('@')) {
-        normalizedDniOrEmail = trimmed.toLowerCase();
-      } else {
-        // For DNI/NIE, normalize: numbers lowercase, last letter uppercase
-        normalizedDniOrEmail = trimmed.toLowerCase().replace(/([a-z])$/, (match) => match.toUpperCase());
-      }
-      
+      // Normalize input
       const normalizedData = {
         ...data,
-        dniOrEmail: normalizedDniOrEmail
+        dniOrEmail: data.dniOrEmail.includes('@') 
+          ? data.dniOrEmail.toLowerCase().trim()
+          : data.dniOrEmail.toUpperCase().trim()
       };
       
       const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
       
-      // Handle remember me functionality
+      // Handle remember me
       if (rememberMe) {
         localStorage.setItem('rememberedCredentials', JSON.stringify({
           dniOrEmail: normalizedData.dniOrEmail,
@@ -104,17 +99,19 @@ export default function Login() {
         localStorage.removeItem('rememberedCredentials');
       }
       
-      // Always use the company alias from the URL if we're in a company-specific login
+      // Redirect
       const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
       setLocation(`/${redirectAlias}/inicio`);
+      
     } catch (error: any) {
       console.error('Login failed:', error);
       
-      // Handle different error types
       if (error.message?.includes('429')) {
-        setLoginError('Demasiados intentos fallidos. Espera unos minutos antes de intentar de nuevo.');
+        setLoginError('Demasiados intentos. Espera unos minutos antes de intentar de nuevo.');
+      } else if (error.message?.includes('desactivada')) {
+        setLoginError('Tu cuenta está desactivada. Contacta con tu administrador.');
       } else {
-        setLoginError('Mmm... ese usuario o contraseña no nos suena.');
+        setLoginError('Usuario o contraseña incorrectos.');
       }
     } finally {
       setSubmitting(false);
@@ -122,36 +119,52 @@ export default function Login() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center py-12 px-8 sm:px-16 lg:px-24"
-      style={{
-        background: `radial-gradient(circle at center, #323A46, #232B36)`,
-      }}
-    >
-      <Card className="w-full max-w-sm shadow-2xl rounded-3xl border-0 bg-white">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+      <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
         <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="h-10 w-auto"
-            />
+            {companyInfo?.logoUrl ? (
+              <img 
+                src={companyInfo.logoUrl} 
+                alt={companyInfo.name}
+                className="h-10 w-auto max-w-32 object-contain"
+              />
+            ) : (
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="h-10 w-auto"
+              />
+            )}
           </div>
-          <p className="text-gray-600 text-sm font-medium">
-            Inicia sesión para continuar
+          {companyInfo && (
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              {companyInfo.name}
+            </h1>
+          )}
+          <p className="text-gray-600 text-sm">
+            Accede a tu cuenta
           </p>
         </CardHeader>
+
         <CardContent className="px-8 pb-8">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Campo DNI/Email con icono */}
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Error Message */}
+            {loginError && (
+              <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{loginError}</span>
+              </div>
+            )}
+            {/* Email/DNI Field */}
             <div className="relative">
               <Input
                 {...form.register('dniOrEmail')}
-                placeholder="Introduce tu DNI/NIE o email"
-                className="rounded-xl border border-gray-300 py-3 px-4 pr-12 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
+                placeholder="DNI/NIE o email"
+                className="rounded-xl border-gray-300 py-3 px-4 pr-12 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => {
                   form.setValue('dniOrEmail', e.target.value);
-                  if (loginError) setLoginError(null);
+                  setLoginError(null);
                 }}
               />
               <User className="absolute right-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -162,84 +175,40 @@ export default function Login() {
               )}
             </div>
 
-            {/* Campo Contraseña con iconos */}
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                {...form.register('password')}
-                placeholder="Introduce tu contraseña"
-                className="rounded-xl border border-gray-300 py-3 px-4 pr-16 text-sm placeholder:text-gray-400 focus:border-[#007AFF] focus:ring-1 focus:ring-[#007AFF]"
-                onChange={(e) => {
-                  form.setValue('password', e.target.value);
-                  if (loginError) setLoginError(null);
-                }}
+
+
+            {/* Remember Me */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                className="rounded border-gray-300"
               />
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                <Lock className="h-4 w-4 text-gray-400" />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="p-0 h-auto hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </Button>
-              </div>
-              {form.formState.errors.password && (
-                <p className="text-xs text-red-500 mt-1">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
+              <label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                Recordarme
+              </label>
             </div>
 
-            {/* Error message */}
-            {loginError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mt-4">
-                <p className="text-red-600 text-sm text-center">{loginError}</p>
-              </div>
-            )}
-
-            {/* Botón ENTRAR */}
+            {/* Submit Button */}
             <Button 
               type="submit" 
+              className="w-full rounded-xl py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               disabled={submitting}
-              className="w-full rounded-xl bg-[#007AFF] hover:bg-[#0056CC] text-white font-medium py-3 mt-6 text-sm disabled:opacity-100 disabled:cursor-not-allowed"
             >
               {submitting ? (
-                <div className="flex items-center justify-center">
-                  <LoadingSpinner size="sm" className="text-white" />
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  Iniciando sesión...
                 </div>
               ) : (
-                'ENTRAR'
+                'Iniciar sesión'
               )}
             </Button>
 
-            {/* Checkbox Recordarme */}
-            <div className="flex items-center justify-center mt-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  className="rounded border-gray-300 data-[state=checked]:bg-[#007AFF] data-[state=checked]:border-[#007AFF]"
-                />
-                <label 
-                  htmlFor="remember" 
-                  className="text-sm text-gray-600 cursor-pointer"
-                >
-                  Recordarme
-                </label>
-              </div>
-            </div>
-
-            {/* Enlace de registro */}
-            <div className="text-center mt-4">
-              <Link href="/register" className="text-sm text-[#007AFF] hover:underline">
+            {/* Register Link */}
+            <div className="text-center mt-6">
+              <Link href="/register" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
                 Registra tu empresa
               </Link>
             </div>
