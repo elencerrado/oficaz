@@ -145,12 +145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
               <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
                 
-                <!-- Header with logo and brand colors -->
-                <div style="background: linear-gradient(135deg, #323A46 0%, #232B36 100%); padding: 40px 20px; text-align: center;">
-                  <div style="background-color: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; display: inline-block;">
-                    <h1 style="color: #ffffff; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 1px;">OFICAZ</h1>
-                    <p style="color: rgba(255,255,255,0.8); font-size: 14px; margin: 5px 0 0 0;">Gestión empresarial inteligente</p>
-                  </div>
+                <!-- Header with logo -->
+                <div style="background-color: #ffffff; padding: 30px 20px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                  <img src="https://github.com/user-attachments/assets/oficaz-logo.png" alt="Oficaz" style="height: 40px; width: auto;" />
                 </div>
 
                 <!-- Main content -->
