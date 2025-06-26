@@ -37,7 +37,7 @@ export default function LandingMinimal() {
       </header>
 
       {/* Hero */}
-      <section className="py-20 px-4 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+      <section className="px-4 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 min-h-screen flex items-center">
         {/* Background decorative elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl"></div>
