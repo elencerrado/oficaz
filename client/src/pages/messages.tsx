@@ -584,7 +584,7 @@ export default function Messages() {
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden relative" style={{ overflowX: 'clip' }}>
-        {PreviewOverlay}
+        {showPreview && PreviewOverlay}
         
         {/* Header */}
         <div className="mb-6">
@@ -1151,7 +1151,8 @@ export default function Messages() {
 
   // Employee view - Mobile-first design - PROTECTED FROM ADMIN CHANGES
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll relative">
+      {showPreview && PreviewOverlay}
       {!selectedChat ? (
         /* Employee Dashboard - List of managers - STABLE VERSION */
         (<>

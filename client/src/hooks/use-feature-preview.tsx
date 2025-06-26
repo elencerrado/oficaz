@@ -24,12 +24,14 @@ export function useFeaturePreview({
   const canAccess = hasAccess(feature);
   const showPreview = !canAccess;
 
+  console.log(`useFeaturePreview for ${feature}:`, { canAccess, showPreview, featureName });
+
   const PreviewOverlay = showPreview ? (
     <FeaturePreviewOverlay
       featureName={featureName}
       description={description}
       requiredPlan={requiredPlan}
-      icon={icon}
+      Icon={icon}
     />
   ) : null;
 
