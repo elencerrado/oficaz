@@ -268,77 +268,145 @@ export default function TimeTracking() {
       
       // Helper function to add header to new page
       const addPageHeader = () => {
-        // Company info (right aligned with proper margins) - Using real company data
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text(company?.name || 'Empresa', 190, 20, { align: 'right' });
-        
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        if (company?.cif) {
-          doc.text(`CIF: ${company.cif}`, 190, 26, { align: 'right' });
-        }
-        if (company?.address) {
-          doc.text(company.address, 190, 31, { align: 'right' });
-        }
-        if (company?.phone) {
-          doc.text(company.phone, 190, 36, { align: 'right' });
-        }
-        
-        // Report title (left aligned)
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 122, 255);
-        doc.text('INFORME CONTROL HORARIO', 20, 25);
-        
-        // Employee info
+        // Company info (right aligned with elegant styling) - Using real company data
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(employee?.fullName || 'Empleado Desconocido', 20, 42);
+        doc.setTextColor(31, 51, 71); // Elegant dark blue
+        doc.text(company?.name || 'Empresa', 190, 20, { align: 'right' });
+        
+        // Subtle divider line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(140, 24, 190, 24);
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(85, 85, 85); // Professional gray
+        let yPos = 28;
+        
+        if (company?.cif) {
+          doc.text(`CIF: ${company.cif}`, 190, yPos, { align: 'right' });
+          yPos += 4;
+        }
+        if (company?.address) {
+          doc.text(company.address, 190, yPos, { align: 'right' });
+          yPos += 4;
+        }
+        if (company?.province) {
+          doc.text(company.province, 190, yPos, { align: 'right' });
+          yPos += 4;
+        }
+        if (company?.phone) {
+          doc.text(`Tel: ${company.phone}`, 190, yPos, { align: 'right' });
+        }
+        
+        // Modern report title with elegant styling
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 51, 71); // Professional dark blue
+        doc.text('INFORME DE CONTROL HORARIO', 20, 25);
+        
+        // Elegant accent line under title
+        doc.setDrawColor(0, 122, 255);
+        doc.setLineWidth(1.5);
+        doc.line(20, 29, 120, 29);
+        
+        // Employee info with modern styling
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 51, 71);
+        doc.text('EMPLEADO', 20, 40);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(85, 85, 85);
+        doc.text(employee?.fullName || 'Empleado Desconocido', 20, 46);
         
         if (employee?.dni) {
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
-          doc.setTextColor(102, 102, 102);
-          doc.text(`DNI: ${employee.dni}`, 20, 48);
+          doc.setTextColor(128, 128, 128);
+          doc.text(`DNI: ${employee.dni}`, 20, 51);
         }
         
-        // Period info
+        // Period info with elegant layout
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(31, 51, 71);
+        doc.text('PERÍODO', 120, 40);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(85, 85, 85);
+        doc.text(periodText, 120, 46);
+        
+        // Generation date
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 120, 51);
+        
+        // Modern table header with background
+        const headerY = 62;
+        const headerHeight = 8;
+        
+        // Header background with subtle gradient effect
+        doc.setFillColor(240, 248, 255); // Very light blue
+        doc.rect(tableStartX, headerY, colWidths.reduce((sum, width) => sum + width, 0), headerHeight, 'F');
+        
+        // Header border
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.5);
+        doc.rect(tableStartX, headerY, colWidths.reduce((sum, width) => sum + width, 0), headerHeight);
+        
+        // Header text with professional styling
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 122, 255);
-        doc.text(`Período: ${periodText}`, 120, 42);
+        doc.setTextColor(31, 51, 71);
+        doc.text('FECHA', colPositions[0], headerY + 5.5);
+        doc.text('ENTRADA', colPositions[1], headerY + 5.5);
+        doc.text('SALIDA', colPositions[2], headerY + 5.5);
+        doc.text('HORAS', colPositions[3], headerY + 5.5);
         
-        // Table header
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 122, 255);
-        doc.text('Fecha', colPositions[0], 65);
-        doc.text('Entrada', colPositions[1], 65);
-        doc.text('Salida', colPositions[2], 65);
-        doc.text('Horas', colPositions[3], 65);
-        
-        return 73; // Return starting Y position for content
+        return headerY + headerHeight + 3; // Return starting Y position for content
       };
       
-      // Helper function to add footer
+      // Helper function to add modern footer
       const addFooter = () => {
         const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
         const pageHeight = doc.internal.pageSize.height;
         
-        // Footer line matching table width
-        const footerLineStartX = tableStartX;
-        const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
+        // Modern footer background
+        doc.setFillColor(248, 250, 252); // Very light gray
+        doc.rect(0, pageHeight - 25, 210, 25, 'F');
         
-        doc.setDrawColor(0, 122, 255);
-        doc.setLineWidth(0.3);
-        doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
+        // Footer top line
+        doc.setDrawColor(31, 51, 71);
+        doc.setLineWidth(0.8);
+        doc.line(20, pageHeight - 25, 190, pageHeight - 25);
         
+        // Company and generation info with elegant layout
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(85, 85, 85);
+        doc.text(`${company?.name || 'Oficaz'} - Sistema de Control Horario`, 20, pageHeight - 18);
+        
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Generado: ${reportDate}`, 190, pageHeight - 18, { align: 'right' });
+        
+        // Oficaz branding
         doc.setFontSize(7);
-        doc.setTextColor(120, 120, 120);
-        doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
-        doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 122, 255);
+        doc.text('Powered by Oficaz', 105, pageHeight - 10, { align: 'center' });
+        
+        // Page number with elegant styling
+        const pageCount = doc.getNumberOfPages();
+        if (pageCount > 1) {
+          doc.setFontSize(8);
+          doc.setTextColor(85, 85, 85);
+          doc.text(`Página ${doc.getCurrentPageInfo().pageNumber} de ${pageCount}`, 190, pageHeight - 10, { align: 'right' });
+        }
       };
       
       // Table setup for individual employee (no employee column needed)
