@@ -131,13 +131,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 - June 26, 2025. Fondo 3D del hero optimizado para máxima legibilidad del texto
   - Opacidad reducida a 3% para perfecta lectura del texto principal
-  - Gradiente radial fuerte: centro 70% opaco, progresivo hasta 95% en bordes
+  - Gradiente radial perfeccionado: centro 75% opaco, degradado hacia bordes (30% medio, 10% exterior)
   - Grid expandido a 6-8 columnas con iconos más pequeños (w-24 h-24) y compactos
   - 4 filas completas de iconos para crear sensación de infinito sin huecos
   - 32 iconos totales con animaciones pulse escalonadas para efecto dinámico
   - Centrado perfecto en pantallas grandes con contenedor responsive
-  - Texto principal ahora completamente legible sobre fondo oscurecido
-  - Balance perfecto entre efectos visuales y legibilidad del contenido
+  - Texto principal completamente legible con fondo oscurecido en el centro
+  - Balance perfecto: efectos visuales preservados en bordes, legibilidad garantizada en centro
 - June 26, 2025. Hero section mejorado con diseño premium y efectos visuales avanzados
   - Tipografía mejorada: text-8xl con font-black y tracking-tight para mayor impacto
   - Título dividido en 3 líneas con gradientes diferentes por línea para efecto visual dinámico
