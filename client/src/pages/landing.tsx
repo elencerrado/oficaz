@@ -167,8 +167,8 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section - Compact Version */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 py-20">
+      {/* Hero Section - Full Window */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center" style={{ height: 'calc(100vh - 4rem)' }}>
         {/* Spectacular 3D Grid Background with Function Icons */}
         <div className="absolute inset-0 opacity-15">
           <div className="absolute inset-0" style={{ perspective: '1200px' }}>
@@ -251,9 +251,9 @@ export default function Landing() {
           <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
         </div>
         
-        <div className="relative max-w-6xl mx-auto px-6 text-center">
+        <div className="relative max-w-5xl mx-auto px-6 text-center">
           {/* Main Content */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             
             {/* Compact Badge */}
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2">
@@ -262,7 +262,7 @@ export default function Landing() {
             </div>
             
             {/* Compact Heading */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight">
                 Para empresas que lo quieren
                 <span className="block bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent">
@@ -276,7 +276,7 @@ export default function Landing() {
             </div>
 
             {/* Compact CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/request-code">
                 <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl w-full sm:w-auto">
                   Empezar Gratis
@@ -290,7 +290,7 @@ export default function Landing() {
             </div>
 
             {/* Compact Trust Indicators */}
-            <div className="pt-6">
+            <div className="pt-4">
               <div className="flex items-center justify-center gap-6 text-slate-400 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
