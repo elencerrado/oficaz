@@ -321,7 +321,7 @@ export default function Landing() {
               </h1>
               <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
                 La plataforma de gestión empresarial <span className="text-white font-semibold">más intuitiva</span> del mercado.
-                Diseñada para empresas que buscan eficiencia sin complicaciones.
+                <span className="block mt-2">Diseñada para empresas que buscan eficiencia sin complicaciones.</span>
               </p>
             </div>
 
