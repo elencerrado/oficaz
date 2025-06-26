@@ -20,11 +20,6 @@ import {
   Globe
 } from 'lucide-react';
 
-// Importar capturas de pantalla de los assets
-import adminEmployeesScreenshot from '@assets/IMG_7825_1750671040095.png';
-import registrationWizardScreenshot from '@assets/IMG_7839_1750858861306.png';
-import emailVerificationScreenshot from '@assets/IMG_7841_1750860342805.png';
-import adminDashboardScreenshot from '@assets/IMG_7842_1750860874559.png';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
@@ -426,7 +421,7 @@ export default function Landing() {
 
       </section>
 
-      {/* Screenshots Section - Modern Admin Interface */}
+      {/* Interface Preview Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative overflow-hidden">
         {/* Modern Background Pattern */}
         <div className="absolute inset-0 opacity-40">
@@ -445,83 +440,184 @@ export default function Landing() {
           <div className="text-center mb-16 md:mb-20">
             <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-6 py-3 mb-8">
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-[#007AFF] font-semibold">Panel de Administración</span>
+              <span className="text-[#007AFF] font-semibold">Interface en Acción</span>
             </div>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
-              Gestión
-              <span className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent"> profesional</span>
+              Diseño
+              <span className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent"> intuitivo</span>
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              Interface moderna diseñada para administradores que buscan <span className="text-gray-900 font-semibold">control total</span>
+              Cada elemento pensado para <span className="text-gray-900 font-semibold">máxima productividad</span>
             </p>
           </div>
           
-          {/* Modern Grid Layout */}
+          {/* Interactive Dashboard Preview */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             
-            {/* Employee Management Card */}
+            {/* Employee Dashboard Preview */}
             <div className="group relative">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25">
                     <Users className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Gestión de Equipos</h3>
-                    <p className="text-[#007AFF] font-medium">Vista 360° de empleados</p>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Panel de Empleados</h3>
+                    <p className="text-[#007AFF] font-medium">Vista en tiempo real</p>
                   </div>
                 </div>
-                <div className="relative overflow-hidden rounded-2xl">
-                  <img 
-                    src={adminEmployeesScreenshot} 
-                    alt="Panel de gestión de empleados" 
-                    className="w-full h-auto shadow-lg group-hover:scale-105 transition-transform duration-700" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-transparent"></div>
-                  <div className="absolute top-4 right-4">
-                    <div className="bg-green-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                      En tiempo real
+                
+                {/* Employee Status List */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        JR
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Juan Ramírez</div>
+                        <div className="text-sm text-gray-500">Empleado</div>
+                      </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        MP
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Marta Pérez</div>
+                        <div className="text-sm text-gray-500">Manager</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                      <span className="text-sm text-orange-600 font-medium">Pausado</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        AT
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Admin Test</div>
+                        <div className="text-sm text-gray-500">Administrador</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                      <span className="text-sm text-gray-600 font-medium">Desconectado</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-gradient-to-r from-[#007AFF]/10 to-blue-500/10 rounded-xl border border-[#007AFF]/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Total horas hoy</span>
+                    <span className="text-lg font-bold text-[#007AFF]">24h 30m</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Registration Process Card */}
+            {/* Time Tracking Preview */}
             <div className="group relative">
-              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
-                    <Settings className="w-7 h-7 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                    <Clock className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-purple-500 transition-colors">Setup Intuitivo</h3>
-                    <p className="text-purple-500 font-medium">3 pasos, 1 minuto</p>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-emerald-500 transition-colors">Control de Fichajes</h3>
+                    <p className="text-emerald-500 font-medium">Automático y preciso</p>
                   </div>
                 </div>
-                <div className="relative overflow-hidden rounded-2xl">
-                  <img 
-                    src={registrationWizardScreenshot} 
-                    alt="Proceso de configuración" 
-                    className="w-full h-auto shadow-lg group-hover:scale-105 transition-transform duration-700" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-transparent"></div>
-                  <div className="absolute top-4 right-4">
-                    <div className="bg-purple-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Wizard guiado
+                
+                {/* Mock Time Entries */}
+                <div className="space-y-3">
+                  <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Hoy, 26 Junio</span>
+                      <span className="text-sm text-emerald-600 font-medium">8h 32m</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Entrada: 09:00</span>
+                      <span>Salida: 17:32</span>
                     </div>
                   </div>
+                  
+                  <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Ayer, 25 Junio</span>
+                      <span className="text-sm text-gray-600 font-medium">8h 00m</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Entrada: 09:15</span>
+                      <span>Salida: 17:15</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">24 Junio</span>
+                      <span className="text-sm text-gray-600 font-medium">7h 45m</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Entrada: 09:30</span>
+                      <span>Salida: 17:15</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex gap-3">
+                  <button className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg">
+                    Fichar Entrada
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Pausar
+                  </button>
                 </div>
               </div>
             </div>
 
           </div>
 
-          {/* Bottom Feature Showcase */}
+          {/* Feature Cards Row */}
           <div className="mt-16 lg:mt-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              {/* Email Verification Feature */}
+              {/* Analytics Card */}
+              <div className="group relative">
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-200/50 hover:border-indigo-300/50 transition-all duration-500">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
+                      <Calendar className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Análisis Inteligente</h4>
+                      <p className="text-indigo-600 text-sm font-medium">Reportes automáticos</p>
+                    </div>
+                  </div>
+                  <div className="bg-indigo-100/50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-700">Productividad</span>
+                      <span className="text-sm font-bold text-indigo-700">+12%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full w-3/4"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notifications Card */}
               <div className="group relative">
                 <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 border border-cyan-200/50 hover:border-cyan-300/50 transition-all duration-500">
                   <div className="flex items-center gap-3 mb-4">
@@ -529,21 +625,28 @@ export default function Landing() {
                       <MessageSquare className="w-5 h-5 text-cyan-600" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Verificación Automática</h4>
-                      <p className="text-cyan-600 text-sm font-medium">Emails inteligentes</p>
+                      <h4 className="text-lg font-bold text-gray-900">Notificaciones Smart</h4>
+                      <p className="text-cyan-600 text-sm font-medium">Solo lo importante</p>
                     </div>
                   </div>
-                  <div className="relative overflow-hidden rounded-xl">
-                    <img 
-                      src={emailVerificationScreenshot} 
-                      alt="Sistema de verificación por email" 
-                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+                      <span className="text-gray-700">3 solicitudes pendientes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                      <span className="text-gray-700">Backup completado</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                      <span className="text-gray-700">Actualización disponible</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Security & Compliance */}
+              {/* Security Card */}
               <div className="group relative">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200/50 hover:border-emerald-300/50 transition-all duration-500">
                   <div className="flex items-center gap-3 mb-4">
