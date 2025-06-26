@@ -120,7 +120,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
-      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+      <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
         <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
             {companyInfo?.logoUrl ? (
@@ -240,12 +240,9 @@ export default function Login() {
             </Button>
 
             {/* Register Link */}
-            <div className="text-center mt-6 space-y-2">
-              <Link href="/register" className="block text-sm text-blue-600 hover:text-blue-700 hover:underline">
+            <div className="text-center mt-6">
+              <Link href="/register" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
                 Registra tu empresa
-              </Link>
-              <Link href="/" className="block text-sm text-gray-500 hover:text-gray-700 hover:underline">
-                ← Volver al inicio
               </Link>
             </div>
           </form>

@@ -48,46 +48,30 @@ export function NotificationSystem() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['/api/notifications'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return [];
-      
       const response = await fetch('/api/notifications', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         }
       });
-      if (!response.ok) {
-        if (response.status === 401) return [];
-        throw new Error('Failed to fetch notifications');
-      }
+      if (!response.ok) throw new Error('Failed to fetch notifications');
       return response.json();
-    },
-    retry: false,
-    refetchOnWindowFocus: false
+    }
   });
 
   // Fetch unread count
   const { data: unreadData } = useQuery({
     queryKey: ['/api/notifications/unread-count'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return { count: 0 };
-      
       const response = await fetch('/api/notifications/unread-count', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         }
       });
-      if (!response.ok) {
-        if (response.status === 401) return { count: 0 };
-        throw new Error('Failed to fetch unread count');
-      }
+      if (!response.ok) throw new Error('Failed to fetch unread count');
       return response.json();
     },
-    retry: false,
-    refetchOnWindowFocus: false,
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 

@@ -13,7 +13,6 @@ import { useState } from "react";
 
 // Pages
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing-minimal";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RequestCode from "@/pages/request-code";
@@ -39,8 +38,6 @@ import SuperAdminPlans from "@/pages/super-admin-plans";
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
 import QuickAccess from "@/pages/quick-access";
-import PrivacyPolicy from "@/pages/privacy-policy";
-import TermsOfService from "@/pages/terms-of-service";
 
 
 function DashboardRouter() {
@@ -166,10 +163,6 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Legal pages */}
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/terms-of-service" component={TermsOfService} />
-
       {/* Company-specific routes */}
       <Route path="/:companyAlias/login">
         <PublicRoute>
@@ -294,9 +287,9 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Root route - show landing page for non-authenticated users */}
+      {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Landing />}
+        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}

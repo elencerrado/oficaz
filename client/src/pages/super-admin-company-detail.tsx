@@ -60,20 +60,14 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     queryKey: ['/api/super-admin/companies', companyId],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
-      if (!token) return null;
-      
       const response = await fetch(`/api/super-admin/companies/${companyId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        if (response.status === 401) return null;
-        throw new Error('Failed to fetch company');
-      }
+      if (!response.ok) throw new Error('Failed to fetch company');
       return response.json();
     },
-    refetchOnWindowFocus: false,
     retry: false,
   });
 
@@ -82,21 +76,15 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
-      if (!token) return [];
-      
       const response = await fetch('/api/super-admin/subscription-plans', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) {
-        if (response.status === 401) return [];
-        throw new Error('Failed to fetch plans');
-      }
+      if (!response.ok) throw new Error('Failed to fetch plans');
       return response.json();
     },
     retry: false,
-    refetchOnWindowFocus: false,
   });
 
   // Update company subscription mutation

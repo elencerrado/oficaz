@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-
+import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -36,7 +36,17 @@ export default function VacationRequests() {
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
-  // Vacation is available in Basic plan - no restriction needed
+  // Check if user has access to vacation feature
+  if (!hasAccess('vacation')) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Vacaciones"
+        description="Solicitud y gestión de días de vacaciones"
+        requiredPlan={getRequiredPlan('vacation')}
+        icon={Calendar}
+      />
+    );
+  }
   
   const { toast } = useToast();
   const queryClient = useQueryClient();

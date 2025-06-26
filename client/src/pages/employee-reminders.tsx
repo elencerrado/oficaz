@@ -1,22 +1,518 @@
-import { useFeatureCheck } from "@/hooks/use-feature-check";
-import FeatureUnavailable from "@/components/feature-unavailable";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
+import FeatureRestrictedPage from '@/components/feature-restricted-page';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
+import { 
+  ArrowLeft, 
+  Plus, 
+  Clock, 
+  AlertCircle, 
+  Edit, 
+  Trash2, 
+  Archive,
+  Star,
+  CheckCircle
+} from 'lucide-react';
+import { format, isToday, isTomorrow, isPast } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { apiRequest } from '@/lib/queryClient';
+
+interface Reminder {
+  id: number;
+  title: string;
+  content?: string;
+  reminderDate?: string;
+  priority: 'low' | 'medium' | 'high';
+  color: string;
+  status: 'active' | 'completed' | 'archived';
+  isPinned: boolean;
+  createdAt: string;
+}
+
+const priorityIcons = {
+  low: CheckCircle,
+  medium: Clock,
+  high: AlertCircle
+};
+
+const priorityColors = {
+  low: 'text-green-400',
+  medium: 'text-yellow-400', 
+  high: 'text-red-400'
+};
+
+const colorOptions = [
+  { value: '#ffffff', name: 'Blanco' },
+  { value: '#fef3c7', name: 'Amarillo' },
+  { value: '#dbeafe', name: 'Azul' },
+  { value: '#d1fae5', name: 'Verde' },
+  { value: '#fce7f3', name: 'Rosa' },
+  { value: '#e0e7ff', name: 'Púrpura' },
+  { value: '#fed7d7', name: 'Rojo' },
+];
 
 export default function EmployeeReminders() {
+  const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
-  const canAccess = hasAccess('reminders');
+  
+  const canAccessReminders = hasAccess('reminders');
 
-  if (!canAccess) {
-    return <FeatureUnavailable feature="reminders" />;
+  if (!canAccessReminders) {
+    return (
+      <FeatureRestrictedPage
+        featureName="Recordatorios"
+        description="Tu plan actual no incluye la funcionalidad de recordatorios. Contacta con el administrador para actualizar tu plan."
+        requiredPlan="Pro"
+      />
+    );
   }
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'archived'>('active');
 
-  // Placeholder for when reminders are enabled
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    reminderDate: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    color: '#ffffff'
+  });
+
+  // Get all reminders
+  const { data: reminders = [], isLoading } = useQuery<Reminder[]>({
+    queryKey: ['/api/reminders'],
+    enabled: !!user,
+  });
+
+  // Create/Update reminder mutation
+  const createReminderMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (editingReminder) {
+        return await apiRequest('PATCH', `/api/reminders/${editingReminder.id}`, data);
+      }
+      return await apiRequest('POST', '/api/reminders', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      setIsDialogOpen(false);
+      setEditingReminder(null);
+      setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff' });
+      toast({
+        title: editingReminder ? "Recordatorio actualizado" : "Recordatorio creado",
+        description: editingReminder ? "El recordatorio se ha actualizado correctamente" : "Se ha creado un nuevo recordatorio",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al procesar el recordatorio",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete reminder mutation
+  const deleteReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest('DELETE', `/api/reminders/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      toast({
+        title: "Recordatorio eliminado",
+        description: "El recordatorio se ha eliminado correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al eliminar el recordatorio",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      return await apiRequest('PATCH', `/api/reminders/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+    },
+  });
+
+  // Toggle pin mutation
+  const togglePinMutation = useMutation({
+    mutationFn: async ({ id, isPinned }: { id: number; isPinned: boolean }) => {
+      return await apiRequest('PATCH', `/api/reminders/${id}`, { isPinned });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      toast({
+        title: "Error",
+        description: "El título es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createReminderMutation.mutate(formData);
+  };
+
+  const handleEdit = (reminder: Reminder) => {
+    setEditingReminder(reminder);
+    setFormData({
+      title: reminder.title,
+      content: reminder.content || '',
+      reminderDate: reminder.reminderDate ? reminder.reminderDate.slice(0, 16) : '',
+      priority: reminder.priority,
+      color: reminder.color
+    });
+    setIsDialogOpen(true);
+  };
+
+  const formatReminderDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isToday(date)) return 'Hoy';
+    if (isTomorrow(date)) return 'Mañana';
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: es });
+  };
+
+  // Filter reminders - protect against null data
+  const filteredReminders = (reminders || []).filter(reminder => {
+    const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || reminder.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Sort reminders: pinned first, then by date
+  const sortedReminders = [...filteredReminders].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    
+    if (a.reminderDate && b.reminderDate) {
+      return new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime();
+    }
+    if (a.reminderDate && !b.reminderDate) return -1;
+    if (!a.reminderDate && b.reminderDate) return 1;
+    
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const companyAlias = company?.alias || 'test';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-700 via-slate-600 to-slate-700 flex items-center justify-center">
-      <div className="text-center p-6">
-        <h2 className="text-2xl font-semibold text-white mb-2">Recordatorios Habilitado</h2>
-        <p className="text-white/70">
-          La funcionalidad completa de recordatorios estará disponible aquí.
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+      {/* Header - Following employee mobile pattern */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
+        <Link href={`/${companyAlias}/inicio`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
+        
+        <div className="flex-1 flex flex-col items-end text-right">
+          <div className="text-white text-sm font-medium">
+            {company?.name || 'Test Company'}
+          </div>
+          <div className="text-white/70 text-xs">
+            {user?.fullName}
+          </div>
+        </div>
+      </div>
+
+      {/* Page Title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Recordatorios</h1>
+        <p className="text-white/70 text-sm">
+          Gestiona tus recordatorios personales
         </p>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="px-6 pb-4 space-y-3">
+        <Input
+          placeholder="Buscar recordatorios..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+        />
+        
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+            <SelectTrigger className="bg-white/10 border-white/20 text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="active">Activos</SelectItem>
+              <SelectItem value="completed">Completados</SelectItem>
+              <SelectItem value="archived">Archivados</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-white/20 hover:bg-white/30 text-white border-white/20"
+                onClick={() => {
+                  setEditingReminder(null);
+                  setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff' });
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-900 border-gray-700 text-white">
+              <DialogHeader>
+                <DialogTitle className="text-white">
+                  {editingReminder ? 'Editar Recordatorio' : 'Nuevo Recordatorio'}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    placeholder="Título del recordatorio"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="bg-gray-800 border-gray-600 text-white"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Textarea
+                    placeholder="Contenido (opcional)"
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    className="bg-gray-800 border-gray-600 text-white min-h-[80px]"
+                  />
+                </div>
+                
+                <div>
+                  <Input
+                    type="datetime-local"
+                    value={formData.reminderDate}
+                    onChange={(e) => setFormData({ ...formData, reminderDate: e.target.value })}
+                    className="bg-gray-800 border-gray-600 text-white"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                      <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Baja</SelectItem>
+                        <SelectItem value="medium">Media</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Select value={formData.color} onValueChange={(value) => setFormData({ ...formData, color: value })}>
+                      <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-4 h-4 rounded border"
+                              style={{ backgroundColor: formData.color }}
+                            />
+                            Color
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {colorOptions.map((color) => (
+                          <SelectItem key={color.value} value={color.value}>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded border"
+                                style={{ backgroundColor: color.value }}
+                              />
+                              {color.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={createReminderMutation.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    {createReminderMutation.isPending ? 'Guardando...' : (editingReminder ? 'Actualizar' : 'Crear')}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Reminders List */}
+      <div className="flex-1 px-6 pb-6">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="text-white/70">Cargando recordatorios...</div>
+          </div>
+        ) : sortedReminders.length === 0 ? (
+          <div className="text-center py-8">
+            <Clock className="h-12 w-12 text-white/30 mx-auto mb-4" />
+            <div className="text-white/70 mb-2">No hay recordatorios</div>
+            <div className="text-white/50 text-sm">
+              {statusFilter === 'all' ? 'Crea tu primer recordatorio' : `No hay recordatorios ${statusFilter === 'active' ? 'activos' : statusFilter === 'completed' ? 'completados' : 'archivados'}`}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sortedReminders.map((reminder) => {
+              const PriorityIcon = priorityIcons[reminder.priority];
+              const isOverdue = reminder.reminderDate && isPast(new Date(reminder.reminderDate)) && reminder.status === 'active';
+              
+              return (
+                <div
+                  key={reminder.id}
+                  className="relative rounded-lg p-4 shadow-md border border-white/10 backdrop-blur-sm"
+                  style={{ backgroundColor: `${reminder.color}15` }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {reminder.isPinned && (
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                        )}
+                        <PriorityIcon className={`h-4 w-4 ${priorityColors[reminder.priority]}`} />
+                        <h3 className="font-medium text-white text-sm">{reminder.title}</h3>
+                      </div>
+                      
+                      {reminder.content && (
+                        <p className="text-white/70 text-xs mb-2 line-clamp-2">{reminder.content}</p>
+                      )}
+                      
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {reminder.reminderDate && (
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${isOverdue ? 'border-red-400 text-red-400' : 'border-white/30 text-white/70'}`}
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatReminderDate(reminder.reminderDate)}
+                          </Badge>
+                        )}
+                        
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs border-white/30 text-white/70"
+                        >
+                          {reminder.status === 'active' ? 'Activo' : 
+                           reminder.status === 'completed' ? 'Completado' : 'Archivado'}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1 ml-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => togglePinMutation.mutate({ id: reminder.id, isPinned: !reminder.isPinned })}
+                        className="h-8 w-8 p-0 text-white/60 hover:text-yellow-400 hover:bg-white/10"
+                      >
+                        <Star className={`h-4 w-4 ${reminder.isPinned ? 'fill-current text-yellow-400' : ''}`} />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEdit(reminder)}
+                        className="h-8 w-8 p-0 text-white/60 hover:text-blue-400 hover:bg-white/10"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      {reminder.status === 'active' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => updateStatusMutation.mutate({ id: reminder.id, status: 'completed' })}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-green-400 hover:bg-white/10"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => updateStatusMutation.mutate({ id: reminder.id, status: 'archived' })}
+                        className="h-8 w-8 p-0 text-white/60 hover:text-gray-400 hover:bg-white/10"
+                      >
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteReminderMutation.mutate(reminder.id)}
+                        className="h-8 w-8 p-0 text-white/60 hover:text-red-400 hover:bg-white/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
