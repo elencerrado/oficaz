@@ -181,11 +181,7 @@ export default function Landing() {
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 h-[calc(100vh-4rem)] flex items-center">
           <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
             <div className="text-center lg:text-left">
-              {/* Badge */}
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white mb-8">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-                <span className="text-sm font-medium">Líder en gestión empresarial</span>
-              </div>
+
               
               {/* Main Headline */}
               <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
