@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Download,
   ChevronLeft,
+  CalendarDays,
+  BarChart3,
   ChevronRight,
   Check,
   X,
@@ -226,7 +228,7 @@ export default function TimeTracking() {
     }
   };
 
-  const { employeesWithSessions, totalEmployees, averageHoursPerEmployee } = useMemo(() => {
+  const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
       return total + calculateHours(session.clockIn, session.clockOut);
@@ -234,22 +236,38 @@ export default function TimeTracking() {
     
     // Calculate average hours per worker per day
     let averageHoursPerDay = 0;
+    let averageHoursWeekly = 0;
+    let averageHoursMonthly = 0;
+    
     if (filteredSessions.length > 0) {
       // Group sessions by employee and day to count unique working days
       const employeeDays = new Set();
+      const employeeWeeks = new Set();
+      const employeeMonths = new Set();
+      
       filteredSessions.forEach((session: any) => {
-        const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
+        const sessionDate = new Date(session.clockIn);
+        const dayKey = `${session.userId}-${format(sessionDate, 'yyyy-MM-dd')}`;
+        const weekKey = `${session.userId}-${format(sessionDate, 'yyyy-ww')}`;
+        const monthKey = `${session.userId}-${format(sessionDate, 'yyyy-MM')}`;
+        
         employeeDays.add(dayKey);
+        employeeWeeks.add(weekKey);
+        employeeMonths.add(monthKey);
       });
       
-      // Average = total hours / total working days across all employees
+      // Calculate averages
       averageHoursPerDay = totalHours / employeeDays.size;
+      averageHoursWeekly = totalHours / employeeWeeks.size;
+      averageHoursMonthly = totalHours / employeeMonths.size;
     }
     
     return {
       employeesWithSessions: uniqueEmployees,
       totalEmployees: employeesList.length,
-      averageHoursPerEmployee: averageHoursPerDay
+      averageHoursPerEmployee: averageHoursPerDay,
+      averageHoursPerWeek: averageHoursWeekly,
+      averageHoursPerMonth: averageHoursMonthly
     };
   }, [filteredSessions, employeesList.length, calculateHours]);
 
@@ -644,7 +662,7 @@ export default function TimeTracking() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
@@ -671,6 +689,38 @@ export default function TimeTracking() {
                 <p className="text-sm text-gray-500">Media Horas Diarias</p>
                 <p className="text-xl font-semibold text-gray-900">
                   {averageHoursPerEmployee.toFixed(1)}h
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <CalendarDays className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Media Horas Semanales</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {averageHoursPerWeek.toFixed(1)}h
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Media Horas Mensuales</p>
+                <p className="text-xl font-semibold text-gray-900">
+                  {averageHoursPerMonth.toFixed(1)}h
                 </p>
               </div>
             </div>
