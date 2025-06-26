@@ -339,15 +339,15 @@ export default function Landing() {
               <div className="flex items-center justify-center gap-6 text-slate-400 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                  <span>99.9% uptime</span>
+                  <span>Siempre disponible</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                  <span>SSL seguro</span>
+                  <span>Datos protegidos</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-purple-400 rounded-full"></div>
-                  <span>GDPR compliant</span>
+                  <span>Cumple normativas</span>
                 </div>
               </div>
             </div>

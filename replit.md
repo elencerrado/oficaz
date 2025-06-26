@@ -129,18 +129,18 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 26, 2025. Hero section optimizado con CTA único y grid mobile perfecto
+- June 26, 2025. Hero section optimizado con iconos adaptativos y lenguaje accesible
   - Opacidad reducida a 3% para perfecta lectura del texto principal
   - Gradiente radial perfeccionado: centro 75% opaco, degradado hacia bordes (30% medio, 10% exterior)
   - Grid mobile optimizado: 3 columnas en móvil, gap-6 y padding-6 para iPhone sin solapamiento
-  - Iconos grandes mantenidos: w-20 h-20 en móvil, w-24 en SM, w-28 en XL
-  - 4 filas completas de iconos para crear sensación de infinito sin huecos
+  - Desktop mejorado: iconos w-32 h-32 más grandes, gap-8 reducido para menos separación
+  - Mobile: iconos w-20 h-20 con separación óptima para no solaparse en iPhone
   - 32 iconos totales con animaciones pulse escalonadas para efecto dinámico
   - Centrado perfecto en pantallas grandes con contenedor responsive
   - Texto principal completamente legible con fondo oscurecido en el centro
   - Eliminado botón "Ver en Acción" por preferencia del usuario - solo "Empezar Gratis"
   - Frase descriptiva reubicada a sección de características para mejor contexto
-  - Balance perfecto: efectos visuales preservados, sin solapamiento en iPhone
+  - Indicadores de confianza simplificados: lenguaje accesible ("Siempre disponible", "Datos protegidos", "Cumple normativas")
 - June 26, 2025. Hero section mejorado con diseño premium y efectos visuales avanzados
   - Tipografía mejorada: text-8xl con font-black y tracking-tight para mayor impacto
   - Título dividido en 3 líneas con gradientes diferentes por línea para efecto visual dinámico
