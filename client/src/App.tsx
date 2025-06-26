@@ -12,6 +12,9 @@ import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 
 // Pages
+import Landing from "@/pages/landing";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -138,6 +141,15 @@ function Router() {
   
   return (
     <Switch>
+      {/* Legal pages */}
+      <Route path="/privacy">
+        <Privacy />
+      </Route>
+
+      <Route path="/terms">
+        <Terms />
+      </Route>
+
       {/* Public routes for authentication */}
       <Route path="/login">
         <PublicRoute>
@@ -287,9 +299,9 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Root redirect - show login for non-authenticated users */}
+      {/* Landing page - main entry point (must be last to avoid conflicts) */}
       <Route path="/">
-        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Redirect to="/login" />}
+        <Landing />
       </Route>
 
       {/* 404 fallback */}

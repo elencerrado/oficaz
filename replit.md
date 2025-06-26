@@ -129,6 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Landing page moderna y páginas legales profesionales implementadas completamente
+  - Landing page efectiva con slogan "Para empresas que lo quieren fácil" como página principal
+  - Hero section con capturas reales de la aplicación y CTA claros hacia registro gratuito
+  - Secciones completas: características, capturas, precios, testimonios, footer con enlaces
+  - Política de Privacidad profesional: cumple RGPD, LOPD, incluye DPO, contactos AEPD
+  - Términos de Servicio legales: planes SaaS, facturación, limitaciones, terminación, jurisdicción española
+  - Navegación actualizada: "/" para landing, "/privacy", "/terms", "/login", "/request-code"
+  - Diseño cohesivo con colores Oficaz (#007AFF), iconos Lucide, componentes shadcn/ui
+  - Responsive completo con grid layouts adaptativos y tipografía escalable
 - June 26, 2025. Componente StatsCard optimizado con diseño vertical compacto y iconos unificados
   - Layout vertical unificado: icono + número arriba, título y subtítulo abajo para evitar desbordamiento de texto
   - Tamaño reducido: altura h-20, padding p-3, iconos más pequeños para diseño más compacto
