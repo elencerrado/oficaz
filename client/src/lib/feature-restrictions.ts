@@ -22,17 +22,13 @@ export interface Subscription {
 }
 
 export const checkFeatureAccess = (subscription: Subscription | null, feature: keyof SubscriptionFeatures): boolean => {
-  console.log('checkFeatureAccess called with:', { subscription, feature });
   if (!subscription) {
-    console.log('No subscription found');
     return false;
   }
   if (subscription.status !== 'active') {
-    console.log('Subscription not active:', subscription.status);
     return false;
   }
   const hasFeature = subscription.features[feature] || false;
-  console.log('Feature access result:', { feature, hasFeature, features: subscription.features });
   return hasFeature;
 };
 
@@ -64,6 +60,7 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     reports: 'Reportes',
     analytics: 'Analíticas',
     customization: 'Personalización',
+    logoUpload: 'Subida de logos',
     api: 'API',
     reminders: 'Recordatorios'
   };
