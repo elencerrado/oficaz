@@ -3,9 +3,6 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Obtener el directorio base de forma compatible con ESM
-const rootDir = path.resolve(process.cwd(), "client");
-
 export default defineConfig({
   plugins: [
     react(),
@@ -21,19 +18,20 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(rootDir, "src"),
-      "@shared": path.resolve(process.cwd(), "shared"),
-      "@assets": path.resolve(process.cwd(), "attached_assets"),
+      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
-  root: rootDir,
+  root: path.resolve(import.meta.dirname, "client"),
   build: {
-    outDir: path.resolve(process.cwd(), "dist/public"),
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
   server: {
-   hmr: {
-   overlay: false,
-   },
-   },
+    fs: {
+      strict: true,
+      deny: ["**/.*"],
+    },
+  },
 });

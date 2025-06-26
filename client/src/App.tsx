@@ -13,7 +13,6 @@ import { useState } from "react";
 
 // Pages
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing-minimal";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RequestCode from "@/pages/request-code";
@@ -26,9 +25,7 @@ import VacationRequests from "@/pages/vacation-requests";
 import VacationManagement from "@/pages/vacation-management";
 import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
-import EmployeeDocuments from "@/pages/employee-documents";
 import Messages from "@/pages/messages";
-import EmployeeMessages from "@/pages/employee-messages";
 import Reminders from "@/pages/reminders";
 import EmployeeReminders from "@/pages/employee-reminders";
 import EmployeesSimple from "@/pages/employees-simple";
@@ -41,8 +38,6 @@ import SuperAdminPlans from "@/pages/super-admin-plans";
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
 import QuickAccess from "@/pages/quick-access";
-import PrivacyPolicy from "@/pages/privacy-policy";
-import TermsOfService from "@/pages/terms-of-service";
 
 
 function DashboardRouter() {
@@ -168,34 +163,11 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Legal pages */}
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/terms-of-service" component={TermsOfService} />
-
       {/* Company-specific routes */}
       <Route path="/:companyAlias/login">
         <PublicRoute>
           <Login />
         </PublicRoute>
-      </Route>
-
-      {/* Employee-specific routes */}
-      <Route path="/:companyAlias/employee/documentos">
-        <ProtectedRoute>
-          <EmployeeDocuments />
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/:companyAlias/employee/mensajes">
-        <ProtectedRoute>
-          <EmployeeMessages />
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/:companyAlias/employee/recordatorios">
-        <ProtectedRoute>
-          <EmployeeReminders />
-        </ProtectedRoute>
       </Route>
 
       {/* Employee dashboard route */}
@@ -264,31 +236,25 @@ function Router() {
 
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
-          {user?.role === 'employee' ? <EmployeeDocuments /> : (
-            <AppLayout>
-              <AdminDocuments />
-            </AppLayout>
-          )}
+          <AppLayout>
+            {user?.role === 'employee' ? <Documents /> : <AdminDocuments />}
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
-          {user?.role === 'employee' ? <EmployeeMessages /> : (
-            <AppLayout>
-              <Messages />
-            </AppLayout>
-          )}
+          <AppLayout>
+            <Messages />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
-          {user?.role === 'employee' ? <EmployeeReminders /> : (
-            <AppLayout>
-              <Reminders />
-            </AppLayout>
-          )}
+          <AppLayout>
+            {user?.role === 'employee' ? <EmployeeReminders /> : <Reminders />}
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
@@ -321,11 +287,9 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Root route - show landing page for non-authenticated users */}
+      {/* Root redirect - show login for non-authenticated users */}
       <Route path="/">
-        <PublicRoute>
-          <Landing />
-        </PublicRoute>
+        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Redirect to="/login" />}
       </Route>
 
       {/* 404 fallback */}
