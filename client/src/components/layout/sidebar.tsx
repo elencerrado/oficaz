@@ -17,8 +17,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, company, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
-  // Lógica inteligente: mostrar logo solo si existe
-  const shouldShowLogo = company?.logoUrl;
+  // Lógica inteligente: mostrar logo solo si existe Y función logoUpload habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],

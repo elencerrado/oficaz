@@ -24,8 +24,8 @@ export default function EmployeeDashboard() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   
-  // Lógica inteligente: mostrar logo solo si existe
-  const shouldShowLogo = company?.logoUrl;
+  // Lógica inteligente: mostrar logo solo si existe Y función logoUpload habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
     return localStorage.getItem('hasVacationUpdates') === 'true';
   });
