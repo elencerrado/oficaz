@@ -9,6 +9,11 @@ import {
   CheckCircle
 } from "lucide-react";
 
+// Import screenshots
+import mainScreenImg from "@assets/Main Screen - Empleado_1750328650633.jpg";
+import fichajesImg from "@assets/Fichajes - Empleado_1750329669169.jpg";
+import usuarioImg from "@assets/Usuario - Empleado_1750333758244.jpg";
+
 // Simple inline logo to avoid image loading
 const Logo = () => (
   <div className="flex items-center space-x-2">
@@ -58,6 +63,56 @@ export default function LandingMinimal() {
           <p className="text-sm text-gray-500 mt-4">
             Sin tarjeta de crédito • Configuración en 2 minutos
           </p>
+        </div>
+      </section>
+
+      {/* App Preview */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+            Así de simple es Oficaz
+          </h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            Interfaz intuitiva diseñada para que cualquier empleado pueda usarla desde el primer día
+          </p>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                <img 
+                  src={mainScreenImg} 
+                  alt="Dashboard principal de Oficaz" 
+                  className="w-full h-auto rounded-lg shadow-md"
+                />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Dashboard Principal</h3>
+              <p className="text-gray-600 text-sm">Vista general con acceso rápido a todas las funciones</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                <img 
+                  src={fichajesImg} 
+                  alt="Sistema de fichajes de Oficaz" 
+                  className="w-full h-auto rounded-lg shadow-md"
+                />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Control Horario</h3>
+              <p className="text-gray-600 text-sm">Fichar entrada y salida con un solo toque</p>
+            </div>
+            
+            <div className="text-center">
+              <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                <img 
+                  src={usuarioImg} 
+                  alt="Perfil de usuario en Oficaz" 
+                  className="w-full h-auto rounded-lg shadow-md"
+                />
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-2">Perfil Personal</h3>
+              <p className="text-gray-600 text-sm">Información personal y estadísticas de trabajo</p>
+            </div>
+          </div>
         </div>
       </section>
 
