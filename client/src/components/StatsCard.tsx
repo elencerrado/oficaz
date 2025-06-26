@@ -54,17 +54,17 @@ export default function StatsCard({
       className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} mb-4 ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-3 h-16 flex flex-col items-center justify-center text-center">
+      <CardContent className="p-3 h-20 flex flex-col justify-between items-center text-center overflow-hidden">
         {/* Layout vertical unificado: icono + número arriba, texto abajo */}
-        <div className="flex items-center justify-center space-x-1.5 mb-0.5">
+        <div className="flex items-center justify-center space-x-1.5">
           <div className={`w-5 h-5 md:w-6 md:h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />}
           </div>
           <span className="text-base md:text-lg font-bold text-gray-900">{value}</span>
         </div>
-        <div className="min-h-0">
-          <p className="text-[10px] md:text-xs font-medium text-gray-600 leading-tight">{title}</p>
-          <p className="text-[9px] md:text-[10px] text-gray-500 leading-tight">{subtitle}</p>
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-[10px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-500 leading-none">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
