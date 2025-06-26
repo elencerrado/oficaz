@@ -286,7 +286,7 @@ export default function Landing() {
           </div>
           {/* Radial fade overlay for text readability */}
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(circle at center, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.95) 85%)'
+            background: 'radial-gradient(circle at center, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.9) 90%)'
           }}></div>
         </div>
         
