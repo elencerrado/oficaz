@@ -37,14 +37,8 @@ export default function LandingMinimal() {
       </header>
 
       {/* Hero */}
-      <section className="px-4 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
-        {/* Background decorative elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl"></div>
-          <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+      <section className="px-4 py-16 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center" style={{ minHeight: 'calc(100vh - 80px)' }}>
+        <div className="max-w-5xl mx-auto text-center">
           <div className="mb-6">
             <span className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium border border-white/20">
               ✨ La gestión empresarial que realmente funciona
