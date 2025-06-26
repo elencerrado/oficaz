@@ -817,29 +817,9 @@ export default function Landing() {
           {/* Bottom Section */}
           <div className="text-center mt-16">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-4xl mx-auto">
-              <p className="text-white/90 text-lg mb-6">
-                <span className="font-bold text-white">30 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
+              <p className="text-white/90 text-lg">
+                <span className="font-bold text-white">15 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white/70">
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-10 h-10 bg-[#007AFF]/20 rounded-xl flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-[#007AFF]" />
-                  </div>
-                  <span className="font-medium">+500 empresas activas</span>
-                </div>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
-                    <Smartphone className="w-5 h-5 text-green-400" />
-                  </div>
-                  <span className="font-medium">Apps móviles incluidas</span>
-                </div>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <span className="font-medium">Soporte 24/7 en español</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

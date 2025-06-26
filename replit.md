@@ -129,15 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 26, 2025. Sección de vistas previas implementada con componentes recreados sin capturas
-  - Eliminadas todas las capturas de pantalla por preferencia del usuario
-  - Creadas vistas previas de funcionalidades como interfaces visuales reales
-  - Panel de empleados interactivo con estados variados: Juan (descanso), Marta (trabajando), Carmen (trabajando), Ana (vacaciones)
-  - Control de fichajes con datos de ejemplo y botón "Descanso" en lugar de "Pausar"
-  - Tarjetas funcionales actualizadas: Documentos Inteligentes (tiempo ahorrado 85%), Notificaciones Smart (vacaciones, mensajería, recordatorios), Reportes Automáticos (1 seg generación)
-  - Nombres realistas: Juan Ramírez, Marta Pérez, Carmen López (administradora), Ana Sánchez
-  - Efectos visuales modernos: escalado, sombras dinámicas, gradientes sofisticados
-  - Terminología amigable y funcionalidades prácticas implementadas
+- June 26, 2025. Landing page completamente optimizada con vistas previas funcionales y precios espectaculares
+  - Sección de vistas previas: 4 tarjetas principales recreando funcionalidades sin capturas
+  - Panel de empleados: estados variados (Juan descanso, Marta trabajando, Carmen trabajando, Ana vacaciones)
+  - Control de fichajes: datos realistas con botón "Descanso", terminología amigable
+  - Gestión de vacaciones: barras de progreso por empleado con días disponibles y colores diferenciados
+  - Documentos inteligentes: área drag & drop con estado de distribución automática en tiempo real
+  - Sección de precios rediseñada: fondo oscuro espectacular, glassmorphism, efectos hover avanzados
+  - Eliminado "API personalizada", cambiado a 15 días de prueba, quitados elementos promocionales
+  - Tarjetas de precios con altura uniforme usando flexbox y posicionamiento automático de botones
 - June 26, 2025. Sección de funcionalidades rediseñada como viewport completo con estética app moderna
   - Altura completa de pantalla: min-h-screen con flex items-center para centrado vertical perfecto
   - Fondo sofisticado: gradiente from-gray-50 via-white to-blue-50/30 con elementos blur sutiles
