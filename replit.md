@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Sección de screenshots rediseñada con layout espectacular y mobile responsive
+  - Layout completamente nuevo con diseño mobile-first adaptativo
+  - Tarjeta principal destacada con grid de dos columnas y contenido detallado
+  - Efectos visuales modernos: hover, zoom, gradientes y sombras de colores
+  - Fondo con patrón sutil y gradiente multi-color (slate-50 via white to blue-50)
+  - Badges con categorías "TIEMPO REAL", "Gestión", "Seguridad" para cada screenshot
+  - Transiciones suaves en hover: escala, rotación y efectos de zoom en imágenes
+  - Botón CTA con gradiente y sombras implementado al final de la sección
 - June 26, 2025. Hero section profesional y moderno implementado con efectos avanzados
   - Diseño oscuro sofisticado con gradientes slate-900 y efectos blur de colores
   - Título corregido "Para empresas que lo quieren fácil" según especificación del usuario
