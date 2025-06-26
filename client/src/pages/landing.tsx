@@ -168,47 +168,109 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-[calc(100vh-4rem)]">
-        {/* Background Effects */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 min-h-[calc(100vh-4rem)]">
+        {/* Advanced Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#007AFF]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 to-transparent"></div>
+          {/* Dynamic gradient mesh */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-40">
+            <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-[#007AFF]/50 via-purple-500/40 to-cyan-400/50 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-32 right-32 w-80 h-80 bg-gradient-to-l from-purple-600/40 via-pink-500/40 to-[#007AFF]/50 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-to-br from-cyan-400/30 via-blue-500/30 to-purple-500/30 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          </div>
+          
+          {/* Floating particles */}
+          <div className="absolute inset-0">
+            <div className="absolute top-1/4 left-1/6 w-1 h-1 bg-white/60 rounded-full animate-ping delay-300"></div>
+            <div className="absolute top-3/4 left-1/3 w-1.5 h-1.5 bg-[#007AFF]/80 rounded-full animate-pulse delay-700"></div>
+            <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-cyan-400/70 rounded-full animate-ping delay-1000"></div>
+            <div className="absolute bottom-1/3 left-2/3 w-2 h-2 bg-purple-400/60 rounded-full animate-bounce delay-1500"></div>
+          </div>
+          
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+              backgroundSize: '100px 100px'
+            }}></div>
+          </div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-16 min-h-[calc(100vh-4rem)] flex items-center">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center w-full">
-            <div className="text-center lg:text-left">
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 min-h-[calc(100vh-4rem)] flex items-center">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-20 items-center w-full">
+            <div className="text-center lg:text-left space-y-10">
+              
+              {/* Premium Badge */}
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-white/10 via-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3 shadow-2xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-green-400/60 rounded-full animate-pulse delay-200"></div>
+                  <div className="w-1 h-1 bg-green-400/40 rounded-full animate-pulse delay-400"></div>
+                </div>
+                <span className="text-white/90 font-medium text-sm tracking-wide">Gestión empresarial inteligente</span>
+                <div className="w-6 h-6 bg-gradient-to-br from-[#007AFF] to-cyan-400 rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
+              </div>
+              
+              {/* Enhanced Main Heading */}
+              <div className="space-y-6">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl xl:text-8xl font-black text-white leading-[0.9] tracking-tight">
+                  Para empresas
+                  <span className="block bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent">
+                    que lo quieren
+                  </span>
+                  <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    fácil
+                  </span>
+                </h1>
+                <div className="space-y-4">
+                  <p className="text-2xl md:text-3xl text-white font-light leading-relaxed">
+                    La plataforma de gestión empresarial
+                  </p>
+                  <p className="text-xl md:text-2xl text-slate-300 leading-relaxed">
+                    <span className="text-white font-semibold bg-gradient-to-r from-[#007AFF]/20 to-cyan-400/20 px-3 py-1 rounded-lg border border-white/10">más intuitiva</span> del mercado
+                  </p>
+                  <p className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                    Diseñada para empresas que buscan eficiencia sin complicaciones
+                  </p>
+                </div>
+              </div>
 
-              
-              {/* Main Headline */}
-              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-6 leading-tight">
-                Para empresas que lo quieren
-                <span className="block bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent">
-                  fácil
-                </span>
-              </h1>
-              
-              {/* Subtitle */}
-              <p className="text-lg md:text-xl lg:text-2xl text-slate-300 mb-8 lg:mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                La plataforma más intuitiva para gestionar tu empresa. 
-                <span className="text-white font-semibold">Sin complicaciones,</span> solo resultados que puedes ver desde el primer día.
-              </p>
-              
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
+              {/* Enhanced CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-6 pt-8">
                 <Link href="/request-code">
-                  <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white px-10 py-4 text-lg font-semibold shadow-2xl shadow-[#007AFF]/25 border-0">
-                    Comenzar Ahora
-                    <ArrowRight className="w-6 h-6 ml-2" />
+                  <Button size="lg" className="group relative bg-gradient-to-r from-[#007AFF] via-blue-600 to-cyan-500 hover:from-[#0056CC] hover:via-blue-700 hover:to-cyan-600 text-white px-10 py-5 text-xl font-bold shadow-2xl shadow-[#007AFF]/30 border-0 rounded-2xl w-full sm:w-auto transform hover:scale-105 transition-all duration-300 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                    <span className="relative flex items-center justify-center">
+                      Empezar Gratis
+                      <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
+                    </span>
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="px-10 py-4 text-lg font-semibold border-white/30 text-white hover:bg-white/10 hover:border-white/50">
-                  <Play className="w-6 h-6 mr-2" />
+                <Button variant="outline" size="lg" className="group border-2 border-white/30 text-white hover:bg-white hover:text-slate-900 px-10 py-5 text-xl font-bold rounded-2xl backdrop-blur-xl w-full sm:w-auto transition-all duration-300 hover:shadow-xl hover:shadow-white/20">
+                  <Play className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-300" />
                   Ver en Acción
                 </Button>
               </div>
 
+              {/* Trust indicators */}
+              <div className="pt-8 space-y-4">
+                <p className="text-slate-400 text-sm font-medium">Trusted by 500+ companies</p>
+                <div className="flex items-center gap-8 text-slate-500 flex-wrap justify-center lg:justify-start">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <span className="text-sm">99.9% uptime</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <span className="text-sm">SSL encryption</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                    <span className="text-sm">GDPR compliant</span>
+                  </div>
+                </div>
+              </div>
             </div>
             
             {/* Visual Elements - Only visible on desktop */}

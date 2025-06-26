@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Hero section mejorado con diseño premium y efectos visuales avanzados
+  - Tipografía mejorada: text-8xl con font-black y tracking-tight para mayor impacto
+  - Título dividido en 3 líneas con gradientes diferentes por línea para efecto visual dinámico
+  - Badge premium con partículas animadas y efectos backdrop-blur-xl
+  - Botones CTA mejorados: efectos shimmer, hover:scale-105, gradientes triples
+  - Efectos de fondo avanzados: gradient mesh, floating particles, grid overlay sutil
+  - Trust indicators con puntos de colores y espaciado responsive
+  - Conservado texto exacto "para empresas que lo quieren fácil" según especificación
 - June 26, 2025. Sección de screenshots rediseñada con layout espectacular y mobile responsive
   - Layout completamente nuevo con diseño mobile-first adaptativo
   - Tarjeta principal destacada con grid de dos columnas y contenido detallado
