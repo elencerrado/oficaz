@@ -169,20 +169,101 @@ export default function Landing() {
 
       {/* Hero Section - Compact Version */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 py-20">
-        {/* Background Image with Transparency */}
-        <div className="absolute inset-0">
-          <img 
-            src={dashboardScreenshot} 
-            alt="Dashboard background" 
-            className="w-full h-full object-cover opacity-5"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 to-gray-900/90"></div>
+        {/* 3D Grid Background with Function Icons */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 perspective-1000">
+            <div className="grid grid-cols-8 gap-8 p-8 transform rotateX-12 rotateY-6 scale-110" style={{
+              transform: 'perspective(1000px) rotateX(12deg) rotateY(6deg) scale(1.1)',
+              transformStyle: 'preserve-3d'
+            }}>
+              {/* Row 1 */}
+              <div className="w-12 h-12 bg-blue-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Clock className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="w-12 h-12 bg-green-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Users className="w-6 h-6 text-green-400" />
+              </div>
+              <div className="w-12 h-12 bg-purple-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <FileText className="w-6 h-6 text-purple-400" />
+              </div>
+              <div className="w-12 h-12 bg-orange-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <MessageSquare className="w-6 h-6 text-orange-400" />
+              </div>
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Calendar className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div className="w-12 h-12 bg-red-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Shield className="w-6 h-6 text-red-400" />
+              </div>
+              <div className="w-12 h-12 bg-yellow-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Zap className="w-6 h-6 text-yellow-400" />
+              </div>
+              <div className="w-12 h-12 bg-pink-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Building2 className="w-6 h-6 text-pink-400" />
+              </div>
+              
+              {/* Row 2 */}
+              <div className="w-12 h-12 bg-indigo-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Smartphone className="w-6 h-6 text-indigo-400" />
+              </div>
+              <div className="w-12 h-12 bg-teal-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Globe className="w-6 h-6 text-teal-400" />
+              </div>
+              <div className="w-12 h-12 bg-rose-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-6 h-6 text-rose-400" />
+              </div>
+              <div className="w-12 h-12 bg-emerald-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Star className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div className="w-12 h-12 bg-violet-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Clock className="w-6 h-6 text-violet-400" />
+              </div>
+              <div className="w-12 h-12 bg-amber-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Users className="w-6 h-6 text-amber-400" />
+              </div>
+              <div className="w-12 h-12 bg-lime-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <FileText className="w-6 h-6 text-lime-400" />
+              </div>
+              <div className="w-12 h-12 bg-sky-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <MessageSquare className="w-6 h-6 text-sky-400" />
+              </div>
+              
+              {/* Row 3 */}
+              <div className="w-12 h-12 bg-blue-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Calendar className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="w-12 h-12 bg-green-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Shield className="w-6 h-6 text-green-400" />
+              </div>
+              <div className="w-12 h-12 bg-purple-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Zap className="w-6 h-6 text-purple-400" />
+              </div>
+              <div className="w-12 h-12 bg-orange-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Building2 className="w-6 h-6 text-orange-400" />
+              </div>
+              <div className="w-12 h-12 bg-cyan-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Smartphone className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div className="w-12 h-12 bg-red-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Globe className="w-6 h-6 text-red-400" />
+              </div>
+              <div className="w-12 h-12 bg-yellow-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-6 h-6 text-yellow-400" />
+              </div>
+              <div className="w-12 h-12 bg-pink-500/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform duration-300">
+                <Star className="w-6 h-6 text-pink-400" />
+              </div>
+            </div>
+          </div>
         </div>
         
-        {/* Minimalist Background Effects */}
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/40 to-gray-900/60"></div>
+        
+        {/* Subtle Light Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-10 right-1/4 w-64 h-64 bg-[#007AFF]/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 left-1/4 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl"></div>
+          <div className="absolute top-20 right-1/3 w-32 h-32 bg-[#007AFF]/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto px-6 text-center">
