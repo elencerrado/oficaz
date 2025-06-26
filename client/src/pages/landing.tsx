@@ -8,7 +8,7 @@ import {
   FileText, 
   MessageSquare, 
   Calendar,
-  Shield,
+  Settings,
   Zap,
   CheckCircle,
   Star,
@@ -55,9 +55,9 @@ export default function Landing() {
       description: "Base de datos completa con roles, permisos y configuración flexible"
     },
     {
-      icon: Shield,
-      title: "Seguridad Avanzada",
-      description: "Encriptación de datos, autenticación segura y cumplimiento GDPR"
+      icon: Settings,
+      title: "Y mucho más",
+      description: "Recordatorios personalizados, reportes avanzados, integraciones y configuración flexible"
     }
   ];
 
@@ -195,7 +195,7 @@ export default function Landing() {
                 <Calendar className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
               </div>
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-red-400/40 via-red-500/50 to-red-700/60 rounded-2xl backdrop-blur-xl border border-red-200/30 flex items-center justify-center shadow-lg shadow-red-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '2.5s', animationDuration: '7s'}}>
-                <Shield className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
+                <Settings className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
               </div>
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-yellow-400/40 via-yellow-500/50 to-yellow-700/60 rounded-2xl backdrop-blur-xl border border-yellow-200/30 flex items-center justify-center shadow-lg shadow-yellow-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '3s', animationDuration: '7.2s'}}>
                 <Zap className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
@@ -235,7 +235,7 @@ export default function Landing() {
                 <Calendar className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
               </div>
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-green-400/40 via-green-500/50 to-green-700/60 rounded-2xl backdrop-blur-xl border border-green-200/30 flex items-center justify-center shadow-lg shadow-green-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '8.5s', animationDuration: '9.4s'}}>
-                <Shield className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
+                <Settings className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
               </div>
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-purple-400/40 via-purple-500/50 to-purple-700/60 rounded-2xl backdrop-blur-xl border border-purple-200/30 flex items-center justify-center shadow-lg shadow-purple-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '9s', animationDuration: '9.6s'}}>
                 <Zap className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
@@ -258,7 +258,7 @@ export default function Landing() {
               
               {/* Row 4 */}
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-indigo-400/40 via-indigo-500/50 to-indigo-700/60 rounded-2xl backdrop-blur-xl border border-indigo-200/30 flex items-center justify-center shadow-lg shadow-indigo-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '12s', animationDuration: '10.8s'}}>
-                <Shield className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
+                <Settings className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
               </div>
               <div className="w-20 h-20 sm:w-24 sm:h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-teal-400/40 via-teal-500/50 to-teal-700/60 rounded-2xl backdrop-blur-xl border border-teal-200/30 flex items-center justify-center shadow-lg shadow-teal-500/20 transform hover:scale-105 transition-all duration-800 animate-pulse relative overflow-hidden" style={{animationDelay: '12.5s', animationDuration: '11s'}}>
                 <Globe className="w-10 h-10 sm:w-12 sm:h-12 xl:w-16 xl:h-16 text-white/90 drop-shadow-lg relative z-10" />
@@ -528,22 +528,22 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Security Card */}
+              {/* More Features Card */}
               <div className="group relative">
                 <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-purple-400/50 transition-all duration-500 h-full">
                   <div className="p-6 md:p-8">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                        <Shield className="w-5 h-5 text-purple-400" />
+                        <Settings className="w-5 h-5 text-purple-400" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">Ultra Seguro</h3>
-                        <p className="text-purple-400 text-sm font-medium">Nivel bancario</p>
+                        <h3 className="text-xl font-bold text-white">Y mucho más</h3>
+                        <p className="text-purple-400 text-sm font-medium">Personalizable</p>
                       </div>
                     </div>
                     <img 
                       src={loginScreenshot} 
-                      alt="Acceso seguro" 
+                      alt="Configuración flexible" 
                       className="w-full h-32 md:h-40 object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" 
                     />
                   </div>
