@@ -668,7 +668,7 @@ export default function Landing() {
                     </div>
                   </div>
                   <div className="bg-emerald-100/50 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-emerald-700 mb-1">15 seg</div>
+                    <div className="text-2xl font-bold text-emerald-700 mb-1">1 seg</div>
                     <div className="text-emerald-600 text-sm">Tiempo de generación</div>
                   </div>
                 </div>
