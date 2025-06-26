@@ -531,15 +531,20 @@ export default function TimeTracking() {
         </Card>
       </div>
 
-      {/* Filters Section */}
-      <Card className="mb-4">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-            <Filter className="w-5 h-5 mr-2" />
-            Filtros
+      {/* Sessions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>{getFilterTitle()} ({filteredSessions.length})</span>
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+
+        {/* Filters Section - Integrated between header and table */}
+        <div className="px-6 py-4 border-b bg-gray-50">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
             {/* Left side - Employee Filter */}
             <div className="flex flex-col space-y-2">
@@ -701,20 +706,8 @@ export default function TimeTracking() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Sessions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{getFilterTitle()} ({filteredSessions.length})</span>
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </CardTitle>
-        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
