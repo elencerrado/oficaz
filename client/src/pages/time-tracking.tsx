@@ -266,44 +266,76 @@ export default function TimeTracking() {
         doc.addPage();
       }
       
-      // Company info (right aligned with proper margins)
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Test Company', 190, 20, { align: 'right' });
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text('CIF: B12345678', 190, 26, { align: 'right' });
-      doc.text('Calle Principal, 123, Madrid', 190, 31, { align: 'right' });
-      doc.text('+34 912 345 678', 190, 36, { align: 'right' });
-      
-      // Report title (left aligned)
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text('INFORME CONTROL HORARIO', 20, 25);
-      
-      // Employee info
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(employee?.fullName || 'Empleado Desconocido', 20, 42);
-      
-      if (employee?.dni) {
-        doc.setFontSize(9);
+      // Helper function to add header to new page
+      const addPageHeader = () => {
+        // Company info (right aligned with proper margins)
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Test Company', 190, 20, { align: 'right' });
+        
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(102, 102, 102);
-        doc.text(`DNI: ${employee.dni}`, 20, 48);
-      }
+        doc.text('CIF: B12345678', 190, 26, { align: 'right' });
+        doc.text('Calle Principal, 123, Madrid', 190, 31, { align: 'right' });
+        doc.text('+34 912 345 678', 190, 36, { align: 'right' });
+        
+        // Report title (left aligned)
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 122, 255);
+        doc.text('INFORME CONTROL HORARIO', 20, 25);
+        
+        // Employee info
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(employee?.fullName || 'Empleado Desconocido', 20, 42);
+        
+        if (employee?.dni) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(102, 102, 102);
+          doc.text(`DNI: ${employee.dni}`, 20, 48);
+        }
+        
+        // Period info
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 122, 255);
+        doc.text(`Período: ${periodText}`, 120, 42);
+        
+        // Table header
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 122, 255);
+        doc.text('Fecha', colPositions[0], 65);
+        doc.text('Entrada', colPositions[1], 65);
+        doc.text('Salida', colPositions[2], 65);
+        doc.text('Horas', colPositions[3], 65);
+        
+        return 73; // Return starting Y position for content
+      };
       
-      // Period info
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text(`Período: ${periodText}`, 120, 42);
+      // Helper function to add footer
+      const addFooter = () => {
+        const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
+        const pageHeight = doc.internal.pageSize.height;
+        
+        // Footer line matching table width
+        const footerLineStartX = tableStartX;
+        const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
+        
+        doc.setDrawColor(0, 122, 255);
+        doc.setLineWidth(0.3);
+        doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
+        
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
+        doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
+      };
       
       // Table setup for individual employee (no employee column needed)
-      let currentY = 65;
       const tableStartX = 60;
       const colWidths = [35, 25, 25, 25];
       const colPositions = [
@@ -313,16 +345,8 @@ export default function TimeTracking() {
         tableStartX + colWidths[0] + colWidths[1] + colWidths[2]
       ];
       
-      // Header row
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 122, 255);
-      doc.text('Fecha', colPositions[0], currentY);
-      doc.text('Entrada', colPositions[1], currentY);
-      doc.text('Salida', colPositions[2], currentY);
-      doc.text('Horas', colPositions[3], currentY);
-      
-      currentY += 8;
+      // Add header to first page
+      let currentY = addPageHeader();
       
       // Sort sessions by date
       const sortedSessions = [...employeeSessions].sort((a, b) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
@@ -332,6 +356,8 @@ export default function TimeTracking() {
       let monthHours = 0;
       let currentWeekStart: Date | null = null;
       let currentMonth: string | null = null;
+      const pageHeight = doc.internal.pageSize.height;
+      const maxContentY = pageHeight - 35; // Reserve space for footer
       
       const showSummaries = true; // Always show summaries for individual employees
       
@@ -346,6 +372,15 @@ export default function TimeTracking() {
           
           const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
           const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+          
+          // Check if we need a new page before adding summaries
+          if ((isNewWeek && index > 0 && currentWeekStart) || (isNewMonth && index > 0 && currentMonth)) {
+            if (currentY > maxContentY - 20) { // Need space for summary + regular row
+              addFooter();
+              doc.addPage();
+              currentY = addPageHeader();
+            }
+          }
           
           // Add week summary
           if (isNewWeek && index > 0 && currentWeekStart) {
@@ -374,6 +409,13 @@ export default function TimeTracking() {
           if (isNewWeek) currentWeekStart = weekStart;
           if (isNewMonth) currentMonth = monthKey;
           
+          // Check if we need a new page before adding regular row
+          if (currentY > maxContentY) {
+            addFooter();
+            doc.addPage();
+            currentY = addPageHeader();
+          }
+          
           // Regular row
           doc.setFontSize(8);
           doc.setFont('helvetica', 'normal');
@@ -390,6 +432,13 @@ export default function TimeTracking() {
           
           // Final summaries
           if (index === sortedSessions.length - 1) {
+            // Check if we need a new page for final summaries
+            if (currentY > maxContentY - 15) {
+              addFooter();
+              doc.addPage();
+              currentY = addPageHeader();
+            }
+            
             if (weekHours > 0) {
               doc.setFontSize(8);
               doc.setFont('helvetica', 'bold');
@@ -411,6 +460,13 @@ export default function TimeTracking() {
         });
       } else {
         sortedSessions.forEach((session: any) => {
+          // Check if we need a new page
+          if (currentY > maxContentY) {
+            addFooter();
+            doc.addPage();
+            currentY = addPageHeader();
+          }
+          
           const sessionDate = new Date(session.clockIn);
           const hours = calculateHours(session.clockIn, session.clockOut);
           
@@ -427,22 +483,8 @@ export default function TimeTracking() {
         });
       }
       
-      // Footer
-      const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
-      const pageHeight = doc.internal.pageSize.height;
-      
-      // Footer line matching table width
-      const footerLineStartX = tableStartX;
-      const footerLineEndX = tableStartX + colWidths.reduce((sum, width) => sum + width, 0);
-      
-      doc.setDrawColor(0, 122, 255);
-      doc.setLineWidth(0.3);
-      doc.line(footerLineStartX, pageHeight - 20, footerLineEndX, pageHeight - 20);
-      
-      doc.setFontSize(7);
-      doc.setTextColor(120, 120, 120);
-      doc.text('Documento generado automáticamente por Oficaz', 105, pageHeight - 14, { align: 'center' });
-      doc.text(`Generado el ${reportDate}`, 105, pageHeight - 9, { align: 'center' });
+      // Add footer to the last page of this employee
+      addFooter();
     };
 
     if (selectedEmployee !== 'all') {
