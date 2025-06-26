@@ -300,16 +300,11 @@ export default function TimeTracking() {
           doc.text(`Tel: ${company.phone}`, 190, yPos, { align: 'right' });
         }
         
-        // Modern report title with elegant styling
+        // Clean report title
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(31, 51, 71); // Professional dark blue
         doc.text('INFORME DE CONTROL HORARIO', 20, 25);
-        
-        // Elegant accent line under title
-        doc.setDrawColor(0, 122, 255);
-        doc.setLineWidth(1.5);
-        doc.line(20, 29, 120, 29);
         
         // Employee info with modern styling
         doc.setFontSize(13);
@@ -346,39 +341,25 @@ export default function TimeTracking() {
         doc.setTextColor(128, 128, 128);
         doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 120, 51);
         
-        // Modern table header with background
+        // Clean table header without background
         const headerY = 62;
-        const headerHeight = 8;
-        
-        // Header background with subtle gradient effect
-        doc.setFillColor(240, 248, 255); // Very light blue
-        doc.rect(tableStartX, headerY, colWidths.reduce((sum, width) => sum + width, 0), headerHeight, 'F');
-        
-        // Header border
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.rect(tableStartX, headerY, colWidths.reduce((sum, width) => sum + width, 0), headerHeight);
         
         // Header text with professional styling
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(31, 51, 71);
-        doc.text('FECHA', colPositions[0], headerY + 5.5);
-        doc.text('ENTRADA', colPositions[1], headerY + 5.5);
-        doc.text('SALIDA', colPositions[2], headerY + 5.5);
-        doc.text('HORAS', colPositions[3], headerY + 5.5);
+        doc.text('FECHA', colPositions[0], headerY);
+        doc.text('ENTRADA', colPositions[1], headerY);
+        doc.text('SALIDA', colPositions[2], headerY);
+        doc.text('HORAS', colPositions[3], headerY);
         
-        return headerY + headerHeight + 3; // Return starting Y position for content
+        return headerY + 5; // Return starting Y position for content
       };
       
-      // Helper function to add modern footer
+      // Helper function to add clean footer
       const addFooter = () => {
         const reportDate = format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es });
         const pageHeight = doc.internal.pageSize.height;
-        
-        // Modern footer background
-        doc.setFillColor(248, 250, 252); // Very light gray
-        doc.rect(0, pageHeight - 25, 210, 25, 'F');
         
         // Footer top line
         doc.setDrawColor(31, 51, 71);

@@ -132,12 +132,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 - June 26, 2025. PDF de control horario completamente modernizado con diseño elegante y profesional
   - Agregado campo provincia en información de empresa para PDFs completos
   - Diseño moderno implementado: colores profesionales (azul oscuro #1F3347, grises elegantes)
-  - Título actualizado a "INFORME DE CONTROL HORARIO" con línea decorativa azul
+  - Título actualizado a "INFORME DE CONTROL HORARIO" con diseño limpio sin líneas decorativas
   - Headers de empresa rediseñados con línea divisoria sutil y jerarquía visual clara
   - Información de empleado y período reorganizada con etiquetas claras (EMPLEADO, PERÍODO)
   - Fecha de generación agregada para transparencia y trazabilidad
-  - Headers de tabla con fondo azul claro y bordes elegantes para mejor legibilidad
-  - Footer completamente rediseñado con fondo gris claro, línea superior y branding Oficaz
+  - Headers de tabla limpios: solo texto en negrita sin fondos ni bordes para máxima elegancia
+  - Footer minimalista rediseñado sin fondo, solo línea superior y branding Oficaz
   - Numeración de páginas profesional cuando hay múltiples páginas
   - Mantiene funcionalidad completa: paginación mensual, datos reales de empresa, saltos inteligentes
   - Diseño coherente y profesional apto para presentaciones corporativas
