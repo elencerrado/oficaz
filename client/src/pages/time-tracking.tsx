@@ -71,15 +71,23 @@ export default function TimeTracking() {
     date: '',
   });
 
-  // All useQuery hooks
+  // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/work-sessions/company'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    staleTime: 30 * 1000, // 30 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 5 * 1000, // Poll every 5 seconds for real-time updates
+    refetchIntervalInBackground: true, // Continue polling in background
   });
 
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    staleTime: 5 * 60 * 1000, // 5 minutes for employees list
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // All useMutation hooks
