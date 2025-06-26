@@ -178,13 +178,13 @@ export default function Landing() {
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 to-transparent"></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 h-[calc(100vh-4rem)] flex items-center">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-16 min-h-[calc(100vh-4rem)] flex items-center">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center w-full">
             <div className="text-center lg:text-left">
 
               
               {/* Main Headline */}
-              <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-6 leading-tight">
                 Para empresas que lo quieren
                 <span className="block bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent">
                   fácil
@@ -192,7 +192,7 @@ export default function Landing() {
               </h1>
               
               {/* Subtitle */}
-              <p className="text-xl lg:text-2xl text-slate-300 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-lg md:text-xl lg:text-2xl text-slate-300 mb-8 lg:mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 La plataforma más avanzada para gestionar equipos. 
                 <span className="text-white font-semibold"> Tecnología española</span> que transforma la productividad empresarial.
               </p>
@@ -288,7 +288,7 @@ export default function Landing() {
             
             {/* Visual Elements - Only visible on desktop */}
             <div className="hidden lg:block lg:col-span-1 mt-16 lg:mt-0">
-              <div className="relative h-[calc(100vh-12rem)]">
+              <div className="relative min-h-[500px] xl:h-[calc(100vh-12rem)]">
                 {/* Floating Cards */}
                 <div className="absolute top-0 right-0 w-80 h-48 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                   <div className="flex items-center space-x-3 mb-4">
