@@ -129,6 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. SIMPLIFICACIÓN ARQUITECTÓNICA MAYOR: Sistema de restricciones de funcionalidades completamente rediseñado
+  - Eliminado sistema complejo de preview/overlay con datos de demostración
+  - Creado componente FeatureUnavailable moderno y limpio para funcionalidades restringidas
+  - Simplificado enfoque: early return pattern en lugar de manejo complejo de TypeScript
+  - Páginas de mensajes, documentos y recordatorios reescritas con arquitectura simple
+  - Eliminados hooks useFeaturePreview y componentes FeatureRestrictedPage complejos
+  - Filosofía: mostrar descripciones modernas de funcionalidades en lugar de datos falsos
+  - Todas las funcionalidades restringidas ahora usan FeatureUnavailable con descripciones atractivas
+  - Código más mantenible, sin errores TypeScript y experiencia usuario más clara
 - June 25, 2025. Landing page moderna y atractiva implementada como página principal
   - Nueva landing page profesional con filosofía de simplicidad "lo quieren fácil"
   - Secciones completas: hero, funciones, filosofía, testimonios, precios, CTA

@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,17 +34,7 @@ export default function TimeTracking() {
   const { user } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
-  // Check if user has access to time tracking feature
-  if (!hasAccess('timeTracking')) {
-    return (
-      <FeatureRestrictedPage
-        featureName="Fichajes"
-        description="Gestión de fichajes y control horario de empleados"
-        requiredPlan={getRequiredPlan('timeTracking')}
-        icon={Clock}
-      />
-    );
-  }
+  // Time tracking is available in all plans - no restriction needed
   
   const { toast } = useToast();
   const queryClient = useQueryClient();

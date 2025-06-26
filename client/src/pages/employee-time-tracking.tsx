@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
+
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PageLoading } from '@/components/ui/page-loading';
@@ -30,17 +30,8 @@ export default function EmployeeTimeTracking() {
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
-  // Check if user has access to time tracking feature
-  if (!hasAccess('timeTracking')) {
-    return (
-      <FeatureRestrictedPage
-        featureName="Control de Tiempo"
-        description="Registro de fichajes y control horario"
-        requiredPlan={getRequiredPlan('timeTracking')}
-        icon={Clock}
-      />
-    );
-  }
+  // Time tracking is included in Basic plan, so this page should always be accessible
+  // No restriction check needed as timeTracking is available in all plans
   const [currentDate, setCurrentDate] = useState(new Date());
   const [location] = useLocation();
   const urlParts = location.split('/').filter(part => part.length > 0);
