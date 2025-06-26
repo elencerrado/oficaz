@@ -356,7 +356,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section - Full Viewport Height */}
-      <section id="features" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden flex items-center">
+      <section id="features" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden flex items-center py-8 md:py-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#007AFF]/10 via-transparent to-purple-500/10"></div>
@@ -366,7 +366,7 @@ export default function Landing() {
 
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
           {/* Header - Más compacto */}
-          <div className="text-center mb-8 lg:mb-12">
+          <div className="text-center mb-6 lg:mb-8">
             <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-4 py-2 mb-4">
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
               <span className="text-[#007AFF] font-semibold text-xs">Funcionalidades Principales</span>
@@ -383,14 +383,14 @@ export default function Landing() {
           </div>
           
           {/* Features Grid - Altura uniforme y más compacto */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {features.map((feature, index) => (
               <div 
                 key={index} 
                 className="group relative h-full"
               >
                 {/* Feature Card con altura fija */}
-                <div className="relative bg-white rounded-2xl p-6 lg:p-8 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
                   {/* Icon Container - Más pequeño */}
                   <div className="relative mb-4">
                     <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25 group-hover:shadow-xl group-hover:shadow-[#007AFF]/30 transition-all duration-500">
@@ -420,20 +420,7 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* Bottom CTA - Más compacto */}
-          <div className="text-center mt-8 lg:mt-12">
-            <div className="inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl px-6 py-4 shadow-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-gray-700 font-medium text-sm">Más de 500 empresas ya lo usan</span>
-              </div>
-              <div className="w-px h-4 bg-gray-300"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#007AFF] rounded-full"></div>
-                <span className="text-gray-700 font-medium text-sm">Implementación en 24 horas</span>
-              </div>
-            </div>
-          </div>
+
         </div>
 
 
@@ -552,28 +539,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-16 md:mt-24">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">99.9%</div>
-              <div className="text-gray-400">Uptime</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">500+</div>
-              <div className="text-gray-400">Empresas</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">15K+</div>
-              <div className="text-gray-400">Usuarios</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-2">4.9★</div>
-              <div className="text-gray-400">Valoración</div>
-            </div>
-          </div>
-
           {/* CTA */}
-          <div className="text-center mt-16 md:mt-24">
+          <div className="text-center mt-12 md:mt-16">
             <Link href="/request-code">
               <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-12 py-6 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
                 Probar Gratis Ahora
