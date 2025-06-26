@@ -655,21 +655,21 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Security Card */}
+              {/* Reports Card */}
               <div className="group relative">
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200/50 hover:border-emerald-300/50 transition-all duration-500">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      <Calendar className="w-5 h-5 text-emerald-600" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Seguridad Total</h4>
-                      <p className="text-emerald-600 text-sm font-medium">Cumple RGPD</p>
+                      <h4 className="text-lg font-bold text-gray-900">Reportes Automáticos</h4>
+                      <p className="text-emerald-600 text-sm font-medium">PDF en un click</p>
                     </div>
                   </div>
                   <div className="bg-emerald-100/50 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-bold text-emerald-700 mb-1">99.9%</div>
-                    <div className="text-emerald-600 text-sm">Tiempo de actividad</div>
+                    <div className="text-2xl font-bold text-emerald-700 mb-1">15 seg</div>
+                    <div className="text-emerald-600 text-sm">Tiempo de generación</div>
                   </div>
                 </div>
               </div>
