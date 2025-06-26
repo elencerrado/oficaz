@@ -211,37 +211,6 @@ export default function Landing() {
                 </Button>
               </div>
               
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start space-x-3">
-                  <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">Implementación</div>
-                    <div className="text-slate-400 text-sm">En 24 horas</div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-3">
-                  <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">Seguridad</div>
-                    <div className="text-slate-400 text-sm">Nivel bancario</div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start space-x-3">
-                  <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">Disponibilidad</div>
-                    <div className="text-slate-400 text-sm">99.9% uptime</div>
-                  </div>
-                </div>
-              </div>
-              
               {/* Mobile Visual Elements */}
               <div className="lg:hidden mt-12 grid grid-cols-2 gap-4">
                 <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4">
