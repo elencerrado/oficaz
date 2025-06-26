@@ -300,42 +300,11 @@ export default function TimeTracking() {
           doc.text(`Tel: ${company.phone}`, 190, yPos, { align: 'right' });
         }
         
-        // Generate friendly title format: Employee - Time filter - Export date/time
-        const generateFriendlyTitle = () => {
-          // Employee part
-          let employeePart = 'Todos los empleados';
-          if (selectedEmployee !== 'all') {
-            const employee = employeesList?.find(emp => emp.id.toString() === selectedEmployee);
-            employeePart = employee?.fullName || 'Empleado';
-          }
-          
-          // Time filter part
-          let timePart = 'todos los fichajes';
-          if (dateFilter === 'today') {
-            timePart = 'hoy';
-          } else if (dateFilter === 'month') {
-            timePart = format(currentMonth, 'MMMM yyyy', { locale: es });
-          } else if (dateFilter === 'custom' && (startDate || endDate)) {
-            if (startDate && endDate) {
-              timePart = `${format(new Date(startDate), 'dd/MM/yyyy')} - ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-            } else if (startDate) {
-              timePart = `desde ${format(new Date(startDate), 'dd/MM/yyyy')}`;
-            } else if (endDate) {
-              timePart = `hasta ${format(new Date(endDate), 'dd/MM/yyyy')}`;
-            }
-          }
-          
-          // Export date/time part (format: DD/MM/YY - HH:MM)
-          const exportDateTime = format(new Date(), 'dd/MM/yy - HH:mm');
-          
-          return `${employeePart} - ${timePart} - ${exportDateTime}`;
-        };
-
-        // Clean report title with friendly format
+        // Clean report title
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(31, 51, 71); // Professional dark blue
-        doc.text(generateFriendlyTitle(), 20, 25);
+        doc.text('INFORME DE CONTROL HORARIO', 20, 25);
         
         // Employee info with modern styling
         doc.setFontSize(13);
@@ -596,10 +565,44 @@ export default function TimeTracking() {
       });
     }
 
-    // Save the PDF
-    const fileName = selectedEmployee !== 'all' 
-      ? `control_horario_${employeesList.find((emp: any) => emp.id.toString() === selectedEmployee)?.fullName?.replace(/\s+/g, '_') || 'empleado'}_${format(new Date(), 'yyyyMMdd')}.pdf`
-      : `control_horario_todos_empleados_${format(new Date(), 'yyyyMMdd')}.pdf`;
+    // Generate friendly filename format: Employee - Time filter - Export date/time
+    const generateFriendlyFileName = () => {
+      // Employee part
+      let employeePart = 'Todos los empleados';
+      if (selectedEmployee !== 'all') {
+        const employee = employeesList?.find(emp => emp.id.toString() === selectedEmployee);
+        employeePart = employee?.fullName || 'Empleado';
+      }
+      
+      // Time filter part
+      let timePart = 'todos los fichajes';
+      if (dateFilter === 'today') {
+        timePart = 'hoy';
+      } else if (dateFilter === 'month') {
+        timePart = format(currentMonth, 'MMMM yyyy', { locale: es });
+      } else if (dateFilter === 'custom' && (startDate || endDate)) {
+        if (startDate && endDate) {
+          timePart = `${format(new Date(startDate), 'dd-MM-yyyy')} - ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+        } else if (startDate) {
+          timePart = `desde ${format(new Date(startDate), 'dd-MM-yyyy')}`;
+        } else if (endDate) {
+          timePart = `hasta ${format(new Date(endDate), 'dd-MM-yyyy')}`;
+        }
+      }
+      
+      // Export date/time part (format: DD-MM-YY - HH-MM)
+      const exportDateTime = format(new Date(), 'dd-MM-yy - HH-mm');
+      
+      // Clean filename (replace invalid characters)
+      const cleanName = `${employeePart} - ${timePart} - ${exportDateTime}`
+        .replace(/[/\\?%*:|"<>]/g, '-')  // Replace invalid filename characters
+        .replace(/\s+/g, ' ')            // Normalize spaces
+        .trim();
+      
+      return `${cleanName}.pdf`;
+    };
+
+    const fileName = generateFriendlyFileName();
     
     doc.save(fileName);
     
