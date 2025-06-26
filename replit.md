@@ -227,15 +227,24 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Botón Recordatorios agregado al dashboard empleado apuntando a ruta correcta
   - Routing configurado para mostrar versión empleado vs admin según rol de usuario
   - Sistema de tarjetas con acciones rápidas y estados visuales con badges informativos
+- June 26, 2025. Sistema de actualizaciones en tiempo real para fichajes implementado
+  - Polling cada 3-5 segundos para actualizar estado de fichajes automáticamente
+  - Admin time-tracking: refetchInterval 5s para ver fichajes de empleados en tiempo real
+  - Employee dashboard: refetchInterval 3s para estado de sesión activa
+  - Employee time-tracking: refetchInterval 3s para sesión activa, 5s para historial
+  - staleTime reducido a 10-30 segundos para datos más frescos
+  - refetchIntervalInBackground: true para actualizaciones continuas
+  - Sistema responsive: cambios inmediatos cuando empleados fichan/salen
+- June 26, 2025. Elementos de menú con restricciones visuales implementados
+  - Sidebar: elementos restringidos con text-gray-400, opacity-60, iconos opacity-50
+  - Dashboard empleado: botones restringidos con bg-gray-300, opacity-50, iconos y texto grises
+  - Funcionalidades aparecen "menos marcadas" para indicar restricción visual
+  - Sistema visual consistente que indica restricciones sin ocultar completamente funcionalidades
 - June 25, 2025. Sistema completo de recordatorios integrado en planes de suscripción
   - Funcionalidad "reminders" agregada a base de datos y configuración de planes
   - Plan Basic: recordatorios deshabilitados (reminders: false), Pro/Master: habilitados (reminders: true)
-  - Botones aparecen en navegación pero con apariencia desactivada (gris, opacidad reducida)
-  - Al hacer clic muestran página de restricción igual que otras funcionalidades
-  - Sidebar: elementos restringidos con text-gray-400, opacity-60, iconos opacity-50
-  - Dashboard empleado: botones restringidos con bg-gray-300, opacity-50, iconos y texto grises
+  - Botones aparecen en navegación pero muestran página de restricción al hacer clic
   - Super admin puede configurar "Recordatorios" en gestión de planes con icono Bell
-  - Sistema visual consistente que indica restricciones sin ocultar completamente funcionalidades
 - June 25, 2025. Sistema de recordatorios optimizado y errores de consola corregidos
   - ERRORES DE CONSOLA RESUELTOS: polling se detiene automáticamente cuando usuario no está autenticado
   - Sistema de autenticación mejorado: verificación de token antes de hacer polling de recordatorios
