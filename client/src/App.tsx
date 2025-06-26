@@ -39,6 +39,8 @@ import SuperAdminPlans from "@/pages/super-admin-plans";
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
 import QuickAccess from "@/pages/quick-access";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import TermsOfService from "@/pages/terms-of-service";
 
 
 function DashboardRouter() {
@@ -163,6 +165,10 @@ function Router() {
           <Register />
         </PublicRoute>
       </Route>
+
+      {/* Legal pages */}
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/terms-of-service" component={TermsOfService} />
 
       {/* Company-specific routes */}
       <Route path="/:companyAlias/login">

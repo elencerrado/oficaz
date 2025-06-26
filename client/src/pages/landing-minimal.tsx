@@ -467,8 +467,8 @@ export default function LandingMinimal() {
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
               © 2025 Oficaz. Todos los derechos reservados. | 
-              <a href="#" className="hover:text-white ml-1">Política de Privacidad</a> | 
-              <a href="#" className="hover:text-white ml-1">Términos de Servicio</a>
+              <Link href="/privacy-policy" className="hover:text-white ml-1">Política de Privacidad</Link> | 
+              <Link href="/terms-of-service" className="hover:text-white ml-1">Términos de Servicio</Link>
             </p>
           </div>
         </div>
