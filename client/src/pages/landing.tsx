@@ -193,8 +193,8 @@ export default function Landing() {
               
               {/* Subtitle */}
               <p className="text-lg md:text-xl lg:text-2xl text-slate-300 mb-8 lg:mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                La plataforma más avanzada para gestionar equipos. 
-                <span className="text-white font-semibold"> Tecnología española</span> que transforma la productividad empresarial.
+                La plataforma más intuitiva para gestionar tu empresa. 
+                <span className="text-white font-semibold">Sin complicaciones,</span> solo resultados que puedes ver desde el primer día.
               </p>
               
               {/* CTA Buttons */}
