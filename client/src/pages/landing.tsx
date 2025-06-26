@@ -616,11 +616,11 @@ export default function Landing() {
                   </div>
                   <div className="bg-indigo-100/50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-700">Nóminas enviadas</span>
-                      <span className="text-sm font-bold text-indigo-700">47/50</span>
+                      <span className="text-sm text-gray-700">Tiempo ahorrado</span>
+                      <span className="text-sm font-bold text-indigo-700">85%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full w-[94%]"></div>
+                      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full w-[85%]"></div>
                     </div>
                   </div>
                 </div>
