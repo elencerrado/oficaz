@@ -397,71 +397,20 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar - Simple and Compact */}
+              {/* Calendar Replacement - Simple Grid */}
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="p-4">
-                  {(() => {
-                    try {
-                      // Validar datos antes de crear modifiers
-                      const safeNationalHolidays = Array.isArray(nationalHolidays) ? nationalHolidays.filter(h => h?.date) : [];
-                      const safeCustomHolidays = Array.isArray(customHolidays) ? customHolidays.filter(h => h?.date) : [];
-                      const safeApprovedVacations = Array.isArray(approvedVacations) ? approvedVacations.filter(v => v?.startDate && v?.endDate) : [];
-
-                      return (
-                        <Calendar
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={handleDateSelect}
-                          locale={es}
-                          className="w-full mx-auto"
-                          modifiers={{
-                            nationalHoliday: safeNationalHolidays.map(h => parseISO(h.date)),
-                            customHoliday: safeCustomHolidays.map(h => parseISO(h.date)),
-                            approvedVacation: safeApprovedVacations.map(v => {
-                              try {
-                                const dates = [];
-                                const start = parseISO(v.startDate);
-                                const end = parseISO(v.endDate);
-                                for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-                                  dates.push(new Date(date));
-                                }
-                                return dates;
-                              } catch {
-                                return [];
-                              }
-                            }).flat()
-                          }}
-                          modifiersStyles={{
-                            nationalHoliday: { 
-                              backgroundColor: '#fee2e2', 
-                              color: '#dc2626', 
-                              fontWeight: '600'
-                            },
-                            customHoliday: { 
-                              backgroundColor: '#fed7aa', 
-                              color: '#d97706', 
-                              fontWeight: '600'
-                            },
-                            approvedVacation: { 
-                              backgroundColor: '#dcfce7', 
-                              color: '#16a34a', 
-                              fontWeight: '600'
-                            }
-                          }}
-                        />
-                      );
-                    } catch (error) {
-                      console.warn('Error rendering calendar:', error);
-                      return (
-                        <div className="w-full h-64 flex items-center justify-center text-gray-500">
-                          <div className="text-center">
-                            <CalendarDays className="h-8 w-8 mx-auto mb-2" />
-                            <p>Calendario no disponible</p>
-                          </div>
-                        </div>
-                      );
-                    }
-                  })()}
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {format(new Date(), 'MMMM yyyy', { locale: es })}
+                    </h3>
+                  </div>
+                  
+                  <div className="text-center text-gray-500 py-8">
+                    <CalendarDays className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-sm">Calendario simplificado</p>
+                    <p className="text-xs mt-1">Vista de eventos disponible abajo</p>
+                  </div>
                 </div>
 
                 {/* Event Details for Selected Date */}

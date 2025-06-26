@@ -29,6 +29,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    hmr: { overlay: true },
     fs: {
       strict: true,
       deny: ["**/.*"],
