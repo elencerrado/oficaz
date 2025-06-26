@@ -170,7 +170,7 @@ export default function Landing() {
       {/* Hero Section - Compact Version */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 py-20">
         {/* Spectacular 3D Grid Background with Function Icons */}
-        <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 opacity-15">
           <div className="absolute inset-0" style={{ perspective: '1200px' }}>
             <div className="grid grid-cols-6 gap-12 p-12 animate-pulse" style={{
               transform: 'perspective(1200px) rotateX(15deg) rotateY(8deg) scale(1.2)',
@@ -178,63 +178,63 @@ export default function Landing() {
               animation: 'float 20s ease-in-out infinite'
             }}>
               {/* Row 1 */}
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500/40 to-blue-600/60 rounded-xl backdrop-blur-lg border border-blue-300/30 flex items-center justify-center shadow-2xl shadow-blue-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '0s'}}>
-                <Clock className="w-10 h-10 text-blue-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500/30 to-blue-600/40 rounded-xl backdrop-blur-lg border border-blue-300/20 flex items-center justify-center shadow-lg shadow-blue-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '0s', animationDuration: '4s'}}>
+                <Clock className="w-10 h-10 text-blue-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500/40 to-green-600/60 rounded-xl backdrop-blur-lg border border-green-300/30 flex items-center justify-center shadow-2xl shadow-green-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '0.5s'}}>
-                <Users className="w-10 h-10 text-green-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500/30 to-green-600/40 rounded-xl backdrop-blur-lg border border-green-300/20 flex items-center justify-center shadow-lg shadow-green-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '0.5s', animationDuration: '4.2s'}}>
+                <Users className="w-10 h-10 text-green-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/40 to-purple-600/60 rounded-xl backdrop-blur-lg border border-purple-300/30 flex items-center justify-center shadow-2xl shadow-purple-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '1s'}}>
-                <FileText className="w-10 h-10 text-purple-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-500/30 to-purple-600/40 rounded-xl backdrop-blur-lg border border-purple-300/20 flex items-center justify-center shadow-lg shadow-purple-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '1s', animationDuration: '4.4s'}}>
+                <FileText className="w-10 h-10 text-purple-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-500/40 to-orange-600/60 rounded-xl backdrop-blur-lg border border-orange-300/30 flex items-center justify-center shadow-2xl shadow-orange-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '1.5s'}}>
-                <MessageSquare className="w-10 h-10 text-orange-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-orange-500/30 to-orange-600/40 rounded-xl backdrop-blur-lg border border-orange-300/20 flex items-center justify-center shadow-lg shadow-orange-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '1.5s', animationDuration: '4.6s'}}>
+                <MessageSquare className="w-10 h-10 text-orange-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500/40 to-cyan-600/60 rounded-xl backdrop-blur-lg border border-cyan-300/30 flex items-center justify-center shadow-2xl shadow-cyan-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '2s'}}>
-                <Calendar className="w-10 h-10 text-cyan-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-cyan-500/30 to-cyan-600/40 rounded-xl backdrop-blur-lg border border-cyan-300/20 flex items-center justify-center shadow-lg shadow-cyan-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '2s', animationDuration: '4.8s'}}>
+                <Calendar className="w-10 h-10 text-cyan-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-red-500/40 to-red-600/60 rounded-xl backdrop-blur-lg border border-red-300/30 flex items-center justify-center shadow-2xl shadow-red-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '2.5s'}}>
-                <Shield className="w-10 h-10 text-red-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-red-500/30 to-red-600/40 rounded-xl backdrop-blur-lg border border-red-300/20 flex items-center justify-center shadow-lg shadow-red-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '2.5s', animationDuration: '5s'}}>
+                <Shield className="w-10 h-10 text-red-200 drop-shadow-sm" />
               </div>
               
               {/* Row 2 */}
-              <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/40 to-yellow-600/60 rounded-xl backdrop-blur-lg border border-yellow-300/30 flex items-center justify-center shadow-2xl shadow-yellow-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '3s'}}>
-                <Zap className="w-10 h-10 text-yellow-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/30 to-yellow-600/40 rounded-xl backdrop-blur-lg border border-yellow-300/20 flex items-center justify-center shadow-lg shadow-yellow-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '3s', animationDuration: '5.2s'}}>
+                <Zap className="w-10 h-10 text-yellow-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-pink-500/40 to-pink-600/60 rounded-xl backdrop-blur-lg border border-pink-300/30 flex items-center justify-center shadow-2xl shadow-pink-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '3.5s'}}>
-                <Building2 className="w-10 h-10 text-pink-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-pink-500/30 to-pink-600/40 rounded-xl backdrop-blur-lg border border-pink-300/20 flex items-center justify-center shadow-lg shadow-pink-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '3.5s', animationDuration: '5.4s'}}>
+                <Building2 className="w-10 h-10 text-pink-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/40 to-indigo-600/60 rounded-xl backdrop-blur-lg border border-indigo-300/30 flex items-center justify-center shadow-2xl shadow-indigo-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '4s'}}>
-                <Smartphone className="w-10 h-10 text-indigo-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500/30 to-indigo-600/40 rounded-xl backdrop-blur-lg border border-indigo-300/20 flex items-center justify-center shadow-lg shadow-indigo-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '4s', animationDuration: '5.6s'}}>
+                <Smartphone className="w-10 h-10 text-indigo-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-teal-500/40 to-teal-600/60 rounded-xl backdrop-blur-lg border border-teal-300/30 flex items-center justify-center shadow-2xl shadow-teal-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '4.5s'}}>
-                <Globe className="w-10 h-10 text-teal-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-teal-500/30 to-teal-600/40 rounded-xl backdrop-blur-lg border border-teal-300/20 flex items-center justify-center shadow-lg shadow-teal-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '4.5s', animationDuration: '5.8s'}}>
+                <Globe className="w-10 h-10 text-teal-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-rose-500/40 to-rose-600/60 rounded-xl backdrop-blur-lg border border-rose-300/30 flex items-center justify-center shadow-2xl shadow-rose-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '5s'}}>
-                <CheckCircle className="w-10 h-10 text-rose-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-rose-500/30 to-rose-600/40 rounded-xl backdrop-blur-lg border border-rose-300/20 flex items-center justify-center shadow-lg shadow-rose-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '5s', animationDuration: '6s'}}>
+                <CheckCircle className="w-10 h-10 text-rose-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/40 to-emerald-600/60 rounded-xl backdrop-blur-lg border border-emerald-300/30 flex items-center justify-center shadow-2xl shadow-emerald-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '5.5s'}}>
-                <Star className="w-10 h-10 text-emerald-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/30 to-emerald-600/40 rounded-xl backdrop-blur-lg border border-emerald-300/20 flex items-center justify-center shadow-lg shadow-emerald-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '5.5s', animationDuration: '6.2s'}}>
+                <Star className="w-10 h-10 text-emerald-200 drop-shadow-sm" />
               </div>
               
               {/* Row 3 */}
-              <div className="w-20 h-20 bg-gradient-to-br from-violet-500/40 to-violet-600/60 rounded-xl backdrop-blur-lg border border-violet-300/30 flex items-center justify-center shadow-2xl shadow-violet-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '6s'}}>
-                <Clock className="w-10 h-10 text-violet-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-violet-500/30 to-violet-600/40 rounded-xl backdrop-blur-lg border border-violet-300/20 flex items-center justify-center shadow-lg shadow-violet-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '6s', animationDuration: '6.4s'}}>
+                <Clock className="w-10 h-10 text-violet-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-500/40 to-amber-600/60 rounded-xl backdrop-blur-lg border border-amber-300/30 flex items-center justify-center shadow-2xl shadow-amber-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '6.5s'}}>
-                <Users className="w-10 h-10 text-amber-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-500/30 to-amber-600/40 rounded-xl backdrop-blur-lg border border-amber-300/20 flex items-center justify-center shadow-lg shadow-amber-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '6.5s', animationDuration: '6.6s'}}>
+                <Users className="w-10 h-10 text-amber-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-lime-500/40 to-lime-600/60 rounded-xl backdrop-blur-lg border border-lime-300/30 flex items-center justify-center shadow-2xl shadow-lime-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '7s'}}>
-                <FileText className="w-10 h-10 text-lime-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-lime-500/30 to-lime-600/40 rounded-xl backdrop-blur-lg border border-lime-300/20 flex items-center justify-center shadow-lg shadow-lime-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '7s', animationDuration: '6.8s'}}>
+                <FileText className="w-10 h-10 text-lime-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-sky-500/40 to-sky-600/60 rounded-xl backdrop-blur-lg border border-sky-300/30 flex items-center justify-center shadow-2xl shadow-sky-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '7.5s'}}>
-                <MessageSquare className="w-10 h-10 text-sky-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-sky-500/30 to-sky-600/40 rounded-xl backdrop-blur-lg border border-sky-300/20 flex items-center justify-center shadow-lg shadow-sky-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '7.5s', animationDuration: '7s'}}>
+                <MessageSquare className="w-10 h-10 text-sky-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500/40 to-blue-600/60 rounded-xl backdrop-blur-lg border border-blue-300/30 flex items-center justify-center shadow-2xl shadow-blue-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '8s'}}>
-                <Calendar className="w-10 h-10 text-blue-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500/30 to-blue-600/40 rounded-xl backdrop-blur-lg border border-blue-300/20 flex items-center justify-center shadow-lg shadow-blue-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '8s', animationDuration: '7.2s'}}>
+                <Calendar className="w-10 h-10 text-blue-200 drop-shadow-sm" />
               </div>
-              <div className="w-20 h-20 bg-gradient-to-br from-green-500/40 to-green-600/60 rounded-xl backdrop-blur-lg border border-green-300/30 flex items-center justify-center shadow-2xl shadow-green-500/25 transform hover:scale-125 hover:rotate-12 transition-all duration-500 animate-bounce" style={{animationDelay: '8.5s'}}>
-                <Shield className="w-10 h-10 text-green-100 drop-shadow-lg" />
+              <div className="w-20 h-20 bg-gradient-to-br from-green-500/30 to-green-600/40 rounded-xl backdrop-blur-lg border border-green-300/20 flex items-center justify-center shadow-lg shadow-green-500/10 transform hover:scale-105 transition-all duration-700 animate-pulse" style={{animationDelay: '8.5s', animationDuration: '7.4s'}}>
+                <Shield className="w-10 h-10 text-green-200 drop-shadow-sm" />
               </div>
             </div>
           </div>
@@ -243,17 +243,7 @@ export default function Landing() {
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/20 to-gray-900/40"></div>
         
-        {/* CSS Keyframes for floating animation */}
-        <style jsx>{`
-          @keyframes float {
-            0%, 100% { transform: perspective(1200px) rotateX(15deg) rotateY(8deg) scale(1.2) translateY(0px); }
-            50% { transform: perspective(1200px) rotateX(15deg) rotateY(8deg) scale(1.2) translateY(-10px); }
-          }
-          @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.6); }
-          }
-        `}</style>
+
         
         {/* Subtle Light Effects */}
         <div className="absolute inset-0">
