@@ -129,6 +129,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. ERROR JAVASCRIPT CRÍTICO SOLUCIONADO: Eliminado componente DatePickerPeriod problemático
+  - Resuelto error "Cannot read properties of undefined (reading 'frame')" completamente
+  - Reemplazado DatePickerPeriod por botón simple funcional sin errores TypeScript
+  - Corregidos todos los tipos null/undefined en time-tracking.tsx
+  - Aplicación funcionando sin errores JavaScript ni errores de consola
+  - Sistema de filtros de fechas completamente operativo
 - June 26, 2025. SIMPLIFICACIÓN ARQUITECTÓNICA MAYOR: Sistema de restricciones de funcionalidades completamente rediseñado
   - Eliminado sistema complejo de preview/overlay con datos de demostración
   - Creado componente FeatureUnavailable moderno y limpio para funcionalidades restringidas

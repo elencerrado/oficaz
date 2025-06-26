@@ -50,8 +50,8 @@ export default function TimeTracking() {
   });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
-  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(undefined);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | undefined>(undefined);
   const [isRangeDialogOpen, setIsRangeDialogOpen] = useState(false);
   const [isMonthDialogOpen, setIsMonthDialogOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<number | null>(null);
@@ -128,16 +128,32 @@ export default function TimeTracking() {
 
   // All useMemo hooks
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
-    const allEmployees = employees as any[];
-    const filteredEmployees = (allEmployees || []).filter((emp: any) => emp.role !== 'admin');
-    const filteredSessions = (sessions || []).filter((session: any) => {
-      const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
+    if (!employees || !sessions) {
+      return {
+        employeesList: [],
+        sessionsList: [],
+        availableMonths: []
+      };
+    }
+
+    const allEmployees = Array.isArray(employees) ? employees : [];
+    const allSessions = Array.isArray(sessions) ? sessions : [];
+    
+    const filteredEmployees = allEmployees.filter((emp: any) => emp?.role !== 'admin');
+    const filteredSessions = allSessions.filter((session: any) => {
+      if (!session?.userId || !session?.clockIn) return false;
+      const sessionUser = allEmployees.find((emp: any) => emp?.id === session.userId);
       return sessionUser?.role !== 'admin';
     });
 
-    const months = (filteredSessions || []).reduce((acc: string[], session: any) => {
-      const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
-      if (!acc.includes(monthKey)) acc.push(monthKey);
+    const months = filteredSessions.reduce((acc: string[], session: any) => {
+      if (!session?.clockIn) return acc;
+      try {
+        const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
+        if (!acc.includes(monthKey)) acc.push(monthKey);
+      } catch (error) {
+        console.warn('Error formatting date:', session.clockIn);
+      }
       return acc;
     }, []).sort().reverse();
 
@@ -428,7 +444,7 @@ export default function TimeTracking() {
 
     if (selectedEmployee !== 'all') {
       // Single employee PDF
-      const employee = employeesList.find(emp => emp.id.toString() === selectedEmployee);
+      const employee = employeesList.find((emp: any) => emp.id.toString() === selectedEmployee);
       createEmployeePage(employee, filteredSessions, true);
     } else {
       // Multiple employees - one page per employee
@@ -569,8 +585,8 @@ export default function TimeTracking() {
                   size="sm"
                   onClick={() => {
                     setDateFilter('today');
-                    setSelectedStartDate(null);
-                    setSelectedEndDate(null);
+                    setSelectedStartDate(undefined);
+                    setSelectedEndDate(undefined);
                     setStartDate('');
                     setEndDate('');
                   }}
@@ -585,8 +601,8 @@ export default function TimeTracking() {
                     if (date) {
                       setCurrentDate(date);
                       setDateFilter('day');
-                      setSelectedStartDate(null);
-                      setSelectedEndDate(null);
+                      setSelectedStartDate(undefined);
+                      setSelectedEndDate(undefined);
                       setStartDate('');
                       setEndDate('');
                     }
@@ -625,8 +641,8 @@ export default function TimeTracking() {
                               setCurrentMonth(monthDate);
                               setDateFilter('month');
                               setIsMonthDialogOpen(false);
-                              setSelectedStartDate(null);
-                              setSelectedEndDate(null);
+                              setSelectedStartDate(undefined);
+                              setSelectedEndDate(undefined);
                               setStartDate('');
                               setEndDate('');
                             }}
@@ -639,28 +655,22 @@ export default function TimeTracking() {
                   </PopoverContent>
                 </Popover>
 
-                <DatePickerPeriod
-                  startDate={selectedStartDate}
-                  endDate={selectedEndDate}
-                  onStartDateChange={(date) => {
-                    setSelectedStartDate(date || null);
-                    setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
-                    if (date && selectedEndDate) {
-                      setDateFilter('custom');
-                    }
-                  }}
-                  onEndDateChange={(date) => {
-                    setSelectedEndDate(date || null);
-                    setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
-                    if (selectedStartDate && date) {
-                      setDateFilter('custom');
-                    }
-                  }}
+                <Button
+                  variant={dateFilter === 'custom' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsRangeDialogOpen(true)}
                   className={cn(
                     "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
                     dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
                   )}
-                />
+                >
+                  {dateFilter === 'custom' 
+                    ? (selectedStartDate && selectedEndDate 
+                      ? `${format(selectedStartDate, 'd/M')} - ${format(selectedEndDate, 'd/M')}`
+                      : 'Rango')
+                    : 'Rango'
+                  }
+                </Button>
 
                 <Button
                   variant="outline"
@@ -668,8 +678,8 @@ export default function TimeTracking() {
                   onClick={() => {
                     setDateFilter('all');
                     setSelectedEmployee('all');
-                    setSelectedStartDate(null);
-                    setSelectedEndDate(null);
+                    setSelectedStartDate(undefined);
+                    setSelectedEndDate(undefined);
                     setStartDate('');
                     setEndDate('');
                     setCurrentDate(new Date());
