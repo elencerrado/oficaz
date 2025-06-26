@@ -497,7 +497,7 @@ export default function Landing() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-sm text-orange-600 font-medium">Pausado</span>
+                      <span className="text-sm text-orange-600 font-medium">En descanso</span>
                     </div>
                   </div>
                   
@@ -581,7 +581,7 @@ export default function Landing() {
                     Fichar Entrada
                   </button>
                   <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
-                    Pausar
+                    Descanso
                   </button>
                 </div>
               </div>
