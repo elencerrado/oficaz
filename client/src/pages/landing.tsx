@@ -641,15 +641,15 @@ export default function Landing() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                      <span className="text-gray-700">3 solicitudes pendientes</span>
+                      <span className="text-gray-700">Solicitud de vacaciones</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-                      <span className="text-gray-700">Backup completado</span>
+                      <span className="text-gray-700">Mensajería grupal</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-gray-700">Actualización disponible</span>
+                      <span className="text-gray-700">Recordatorios compartidos</span>
                     </div>
                   </div>
                 </div>
