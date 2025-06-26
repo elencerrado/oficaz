@@ -227,14 +227,18 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Botón Recordatorios agregado al dashboard empleado apuntando a ruta correcta
   - Routing configurado para mostrar versión empleado vs admin según rol de usuario
   - Sistema de tarjetas con acciones rápidas y estados visuales con badges informativos
+- June 26, 2025. Filtros de fichajes integrados en tabla y tiempo real completamente funcional
+  - Filtros movidos entre título y encabezados de tabla para mejor UX
+  - Fondo gris claro (bg-gray-50) con border-bottom para separación visual clara
+  - Tiempo real funcionando perfectamente: admin ve fichajes inmediatos sin recargar
+  - Polling cada 5 segundos en admin time-tracking para actualizaciones automáticas
+  - Sistema responsive: cambios aparecen inmediatamente cuando empleados fichan
 - June 26, 2025. Sistema de actualizaciones en tiempo real para fichajes implementado
-  - Polling cada 3-5 segundos para actualizar estado de fichajes automáticamente
   - Admin time-tracking: refetchInterval 5s para ver fichajes de empleados en tiempo real
   - Employee dashboard: refetchInterval 3s para estado de sesión activa
   - Employee time-tracking: refetchInterval 3s para sesión activa, 5s para historial
   - staleTime reducido a 10-30 segundos para datos más frescos
   - refetchIntervalInBackground: true para actualizaciones continuas
-  - Sistema responsive: cambios inmediatos cuando empleados fichan/salen
 - June 26, 2025. Elementos de menú con restricciones visuales implementados
   - Sidebar: elementos restringidos con text-gray-400, opacity-60, iconos opacity-50
   - Dashboard empleado: botones restringidos con bg-gray-300, opacity-50, iconos y texto grises
