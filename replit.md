@@ -130,7 +130,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 ## Changelog
 
 - June 26, 2025. Fondo 3D del hero optimizado para legibilidad y efecto infinito
-  - Opacidad reducida a 6% para mejor lectura del texto principal
+  - Opacidad reducida a 3% para perfecta lectura del texto principal
   - Grid expandido a 6-8 columnas con iconos más pequeños (w-24 h-24) y compactos
   - 4 filas completas de iconos para crear sensación de infinito sin huecos
   - 32 iconos totales con animaciones pulse escalonadas para efecto dinámico
