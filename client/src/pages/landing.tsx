@@ -170,8 +170,9 @@ export default function Landing() {
       {/* Hero Section - Full Window */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 flex items-center justify-center" style={{ height: 'calc(100vh - 4rem)' }}>
         {/* Spectacular 3D Grid Background with Function Icons */}
-        <div className="absolute inset-0 opacity-3">
-          <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '2000px' }}>
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 opacity-6">
+            <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '2000px' }}>
             <div className="grid grid-cols-6 xl:grid-cols-8 gap-8 xl:gap-12 p-4 xl:p-8 w-full h-full" style={{
               transform: 'perspective(2000px) rotateX(25deg) rotateY(12deg) scale(1.6)',
               transformStyle: 'preserve-3d',
@@ -281,7 +282,12 @@ export default function Landing() {
                 <Building2 className="w-12 h-12 xl:w-14 xl:h-14 text-white/90 drop-shadow-lg relative z-10" />
               </div>
             </div>
+            </div>
           </div>
+          {/* Radial fade overlay for text readability */}
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.8) 90%)'
+          }}></div>
         </div>
         
         {/* Gradient Overlay */}
