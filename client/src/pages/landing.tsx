@@ -21,10 +21,10 @@ import {
 } from 'lucide-react';
 
 // Importar capturas de pantalla de los assets
-import dashboardScreenshot from '@assets/Main Screen - Empleado_1750328650633.jpg';
-import timeTrackingScreenshot from '@assets/Fichajes - Empleado_1750329669169.jpg';
-import userProfileScreenshot from '@assets/Usuario - Empleado_1750333758244.jpg';
-import loginScreenshot from '@assets/Login_1750322343051.jpg';
+import adminEmployeesScreenshot from '@assets/IMG_7825_1750671040095.png';
+import registrationWizardScreenshot from '@assets/IMG_7839_1750858861306.png';
+import emailVerificationScreenshot from '@assets/IMG_7841_1750860342805.png';
+import adminDashboardScreenshot from '@assets/IMG_7842_1750860874559.png';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
@@ -426,124 +426,150 @@ export default function Landing() {
 
       </section>
 
-      {/* Screenshots Section - Bento Grid Style */}
-      <section className="py-20 md:py-32 bg-gradient-to-b from-gray-900 via-slate-800 to-gray-900 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#007AFF]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-32 right-16 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      {/* Screenshots Section - Modern Admin Interface */}
+      <section className="py-20 md:py-32 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative overflow-hidden">
+        {/* Modern Background Pattern */}
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute top-0 left-0 w-full h-full" 
+               style={{
+                 backgroundImage: `radial-gradient(circle at 25% 25%, #007AFF15 0%, transparent 50%), 
+                                  radial-gradient(circle at 75% 75%, #8B5CF615 0%, transparent 50%),
+                                  linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)`
+               }}></div>
+          <div className="absolute top-10 right-10 w-96 h-96 bg-gradient-to-r from-[#007AFF]/5 to-cyan-400/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-full blur-3xl"></div>
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Header */}
-          <div className="text-center mb-16 md:mb-24">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white/90 font-medium">En vivo desde empresas reales</span>
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-6 py-3 mb-8">
+              <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
+              <span className="text-[#007AFF] font-semibold">Panel de Administración</span>
             </div>
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-              Mira cómo 
-              <span className="bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent"> funciona</span>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
+              Gestión
+              <span className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent"> profesional</span>
             </h2>
-            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Capturas reales de empresas que ya transformaron su gestión
+            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+              Interface moderna diseñada para administradores que buscan <span className="text-gray-900 font-semibold">control total</span>
             </p>
           </div>
           
-          {/* Bento Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+          {/* Modern Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             
-            {/* Large Feature Card */}
-            <div className="md:col-span-8 group relative">
-              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-[#007AFF]/50 transition-all duration-500">
-                <div className="p-8 md:p-12">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-green-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-white">Fichajes Inteligentes</h3>
-                      <p className="text-green-400 font-medium">GPS + IA + Tiempo Real</p>
-                    </div>
+            {/* Employee Management Card */}
+            <div className="group relative">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25">
+                    <Users className="w-7 h-7 text-white" />
                   </div>
-                  <div className="relative">
-                    <img 
-                      src={timeTrackingScreenshot} 
-                      alt="Control de tiempo" 
-                      className="w-full h-auto rounded-2xl shadow-2xl border border-white/10 group-hover:scale-105 transition-transform duration-700" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-2xl"></div>
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <div className="flex items-center justify-between text-white">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="font-medium">8h 32m trabajadas hoy</span>
-                        </div>
-                        <div className="bg-green-500/20 backdrop-blur-sm px-3 py-1 rounded-full">
-                          <span className="text-green-400 font-medium">+12% eficiencia</span>
-                        </div>
-                      </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Gestión de Equipos</h3>
+                    <p className="text-[#007AFF] font-medium">Vista 360° de empleados</p>
+                  </div>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl">
+                  <img 
+                    src={adminEmployeesScreenshot} 
+                    alt="Panel de gestión de empleados" 
+                    className="w-full h-auto shadow-lg group-hover:scale-105 transition-transform duration-700" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-transparent"></div>
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-green-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                      En tiempo real
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Side Cards */}
-            <div className="md:col-span-4 space-y-6 md:space-y-8">
-              
-              {/* Profile Card */}
-              <div className="group relative">
-                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-blue-400/50 transition-all duration-500 h-full">
-                  <div className="p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                        <Users className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">Perfiles 360°</h3>
-                        <p className="text-blue-400 text-sm font-medium">Todo centralizado</p>
-                      </div>
+            {/* Registration Process Card */}
+            <div className="group relative">
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+                    <Settings className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-purple-500 transition-colors">Setup Intuitivo</h3>
+                    <p className="text-purple-500 font-medium">3 pasos, 1 minuto</p>
+                  </div>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl">
+                  <img 
+                    src={registrationWizardScreenshot} 
+                    alt="Proceso de configuración" 
+                    className="w-full h-auto shadow-lg group-hover:scale-105 transition-transform duration-700" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-transparent"></div>
+                  <div className="absolute top-4 right-4">
+                    <div className="bg-purple-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Wizard guiado
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Feature Showcase */}
+          <div className="mt-16 lg:mt-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Email Verification Feature */}
+              <div className="group relative">
+                <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 border border-cyan-200/50 hover:border-cyan-300/50 transition-all duration-500">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-cyan-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Verificación Automática</h4>
+                      <p className="text-cyan-600 text-sm font-medium">Emails inteligentes</p>
+                    </div>
+                  </div>
+                  <div className="relative overflow-hidden rounded-xl">
                     <img 
-                      src={userProfileScreenshot} 
-                      alt="Gestión de perfiles" 
-                      className="w-full h-32 md:h-40 object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" 
+                      src={emailVerificationScreenshot} 
+                      alt="Sistema de verificación por email" 
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-500" 
                     />
                   </div>
                 </div>
               </div>
 
-              {/* More Features Card */}
+              {/* Security & Compliance */}
               <div className="group relative">
-                <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-purple-400/50 transition-all duration-500 h-full">
-                  <div className="p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                        <Settings className="w-5 h-5 text-purple-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">Y mucho más</h3>
-                        <p className="text-purple-400 text-sm font-medium">Personalizable</p>
-                      </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border border-emerald-200/50 hover:border-emerald-300/50 transition-all duration-500">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <img 
-                      src={loginScreenshot} 
-                      alt="Configuración flexible" 
-                      className="w-full h-32 md:h-40 object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" 
-                    />
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-900">Seguridad Total</h4>
+                      <p className="text-emerald-600 text-sm font-medium">Cumple RGPD</p>
+                    </div>
+                  </div>
+                  <div className="bg-emerald-100/50 rounded-xl p-4 text-center">
+                    <div className="text-2xl font-bold text-emerald-700 mb-1">99.9%</div>
+                    <div className="text-emerald-600 text-sm">Tiempo de actividad</div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
 
           {/* CTA */}
-          <div className="text-center mt-12 md:mt-16">
+          <div className="text-center mt-16 md:mt-20">
             <Link href="/request-code">
               <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-12 py-6 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
-                Probar Gratis Ahora
+                Comenzar Prueba Gratis
                 <ArrowRight className="w-6 h-6 ml-3" />
               </Button>
             </Link>
