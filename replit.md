@@ -129,6 +129,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Sección de funcionalidades rediseñada como viewport completo con estética app moderna
+  - Altura completa de pantalla: min-h-screen con flex items-center para centrado vertical perfecto
+  - Fondo sofisticado: gradiente from-gray-50 via-white to-blue-50/30 con elementos blur sutiles
+  - Título espectacular: text-7xl font-black tracking-tight con gradiente "plataforma" en segunda línea
+  - Tarjetas app-style: rounded-3xl, iconos grandes (w-20 h-20) con gradientes #007AFF, sombras dinámicas
+  - Efectos hover avanzados: scale-105, -translate-y-2, glow effects, color transitions, shadow-2xl
+  - Animaciones escalonadas: fadeInUp con delays de 150ms por tarjeta para entrada secuencial
+  - Badge funcionalidades con punto pulsante y texto "Funcionalidades Principales"
+  - CTA inferior con indicadores de confianza: "500+ empresas" y "implementación 24h"
+  - Estética móvil moderna: iconos grandes, sombras suaves, backdrop-blur, bordes sutiles
 - June 26, 2025. Hero section optimizado con iconos adaptativos y lenguaje accesible
   - Opacidad reducida a 3% para perfecta lectura del texto principal
   - Gradiente radial perfeccionado: centro 75% opaco, degradado hacia bordes (30% medio, 10% exterior)
