@@ -319,67 +319,63 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Screenshots Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-[0.02]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(0,122,255,0.8) 1px, transparent 0)`,
-            backgroundSize: '60px 60px'
-          }}></div>
+      {/* Screenshots Section - Bento Grid Style */}
+      <section className="py-20 md:py-32 bg-gradient-to-b from-gray-900 via-slate-800 to-gray-900 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-[#007AFF]/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-32 right-16 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-12 md:mb-20">
-            <div className="inline-block mb-4">
-              <span className="bg-[#007AFF]/10 text-[#007AFF] px-4 py-2 rounded-full text-sm font-semibold">
-                Capturas de Pantalla Reales
-              </span>
+          {/* Header */}
+          <div className="text-center mb-16 md:mb-24">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-white/90 font-medium">En vivo desde empresas reales</span>
             </div>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
-              🚀 NUEVA SECCIÓN ACTUALIZADA 🚀
-              <span className="text-[#007AFF] block md:inline"> Ver los cambios</span>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+              Mira cómo 
+              <span className="bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent"> funciona</span>
             </h2>
-            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Interfaz moderna diseñada para ser intuitiva desde el primer uso
+            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+              Capturas reales de empresas que ya transformaron su gestión
             </p>
           </div>
           
-          {/* Mobile-first responsive grid */}
-          <div className="space-y-8 md:space-y-12">
+          {/* Bento Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
             
-            {/* First Row - Main Feature */}
-            <div className="relative group">
-              <div className="bg-white rounded-3xl shadow-2xl shadow-[#007AFF]/10 overflow-hidden transform group-hover:scale-[1.02] transition-all duration-500 border border-gray-100">
-                <div className="p-4 md:p-8 lg:p-12">
-                  <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                    <div className="order-2 lg:order-1">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                          <Clock className="w-4 h-4 text-green-500" />
+            {/* Large Feature Card */}
+            <div className="md:col-span-8 group relative">
+              <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-[#007AFF]/50 transition-all duration-500">
+                <div className="p-8 md:p-12">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-green-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-white">Fichajes Inteligentes</h3>
+                      <p className="text-green-400 font-medium">GPS + IA + Tiempo Real</p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <img 
+                      src={timeTrackingScreenshot} 
+                      alt="Control de tiempo" 
+                      className="w-full h-auto rounded-2xl shadow-2xl border border-white/10 group-hover:scale-105 transition-transform duration-700" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-2xl"></div>
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <div className="flex items-center justify-between text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="font-medium">8h 32m trabajadas hoy</span>
                         </div>
-                        <span className="text-green-600 font-semibold text-sm">TIEMPO REAL</span>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                        Control de Tiempo Inteligente
-                      </h3>
-                      <p className="text-gray-600 text-lg leading-relaxed mb-6">
-                        Fichajes automáticos con geolocalización, cálculos precisos de horas y reportes que se generan solos. Todo visible en tiempo real.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">GPS</span>
-                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">Automático</span>
-                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">Reportes</span>
-                      </div>
-                    </div>
-                    <div className="order-1 lg:order-2 relative">
-                      <div className="relative transform hover:rotate-2 transition-transform duration-300">
-                        <img 
-                          src={timeTrackingScreenshot} 
-                          alt="Control de tiempo" 
-                          className="w-full h-auto rounded-2xl shadow-xl border border-gray-200" 
-                        />
-                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+                        <div className="bg-green-500/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                          <span className="text-green-400 font-medium">+12% eficiencia</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -387,71 +383,83 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Second Row - Two Column Layout */}
-            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+            {/* Side Cards */}
+            <div className="md:col-span-4 space-y-6 md:space-y-8">
               
-              {/* Profile Management */}
-              <div className="bg-white rounded-3xl shadow-xl shadow-blue-500/10 overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={userProfileScreenshot} 
-                    alt="Gestión de perfiles" 
-                    className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-                <div className="p-6 md:p-8">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-6 h-6 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                      <Users className="w-3 h-3 text-blue-500" />
+              {/* Profile Card */}
+              <div className="group relative">
+                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-blue-400/50 transition-all duration-500 h-full">
+                  <div className="p-6 md:p-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                        <Users className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Perfiles 360°</h3>
+                        <p className="text-blue-400 text-sm font-medium">Todo centralizado</p>
+                      </div>
                     </div>
-                    <span className="text-blue-600 font-semibold text-xs uppercase tracking-wide">Gestión</span>
+                    <img 
+                      src={userProfileScreenshot} 
+                      alt="Gestión de perfiles" 
+                      className="w-full h-32 md:h-40 object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" 
+                    />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
-                    Perfiles Completos
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    Información detallada de cada empleado con datos actualizables en tiempo real
-                  </p>
                 </div>
               </div>
 
-              {/* Security */}
-              <div className="bg-white rounded-3xl shadow-xl shadow-purple-500/10 overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={loginScreenshot} 
-                    alt="Acceso seguro" 
-                    className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-105 transition-transform duration-500" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-                <div className="p-6 md:p-8">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <div className="w-6 h-6 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                      <Shield className="w-3 h-3 text-purple-500" />
+              {/* Security Card */}
+              <div className="group relative">
+                <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-lg border border-white/20 rounded-3xl overflow-hidden hover:border-purple-400/50 transition-all duration-500 h-full">
+                  <div className="p-6 md:p-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Ultra Seguro</h3>
+                        <p className="text-purple-400 text-sm font-medium">Nivel bancario</p>
+                      </div>
                     </div>
-                    <span className="text-purple-600 font-semibold text-xs uppercase tracking-wide">Seguridad</span>
+                    <img 
+                      src={loginScreenshot} 
+                      alt="Acceso seguro" 
+                      className="w-full h-32 md:h-40 object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" 
+                    />
                   </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
-                    Acceso Blindado
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    Autenticación robusta con múltiples capas de seguridad para proteger tus datos
-                  </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Bottom CTA */}
-            <div className="text-center pt-8 md:pt-12">
-              <Link href="/request-code">
-                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-2xl">
-                  Ver Demo Interactivo
-                  <Play className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-16 md:mt-24">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">99.9%</div>
+              <div className="text-gray-400">Uptime</div>
             </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">500+</div>
+              <div className="text-gray-400">Empresas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">15K+</div>
+              <div className="text-gray-400">Usuarios</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">4.9★</div>
+              <div className="text-gray-400">Valoración</div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-16 md:mt-24">
+            <Link href="/request-code">
+              <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-12 py-6 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
+                Probar Gratis Ahora
+                <ArrowRight className="w-6 h-6 ml-3" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
