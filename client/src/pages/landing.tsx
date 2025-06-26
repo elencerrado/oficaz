@@ -321,22 +321,17 @@ export default function Landing() {
               </h1>
               <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
                 La plataforma de gestión empresarial <span className="text-white font-semibold">más intuitiva</span> del mercado.
-                <span className="block mt-2">Diseñada para empresas que buscan eficiencia sin complicaciones.</span>
               </p>
             </div>
 
             {/* Compact CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex justify-center pt-4">
               <Link href="/request-code">
-                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl w-full sm:w-auto">
+                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl">
                   Empezar Gratis
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white hover:text-slate-900 px-8 py-4 text-lg font-semibold rounded-xl backdrop-blur-sm w-full sm:w-auto">
-                <Play className="w-5 h-5 mr-2" />
-                Ver en Acción
-              </Button>
             </div>
 
             {/* Compact Trust Indicators */}
@@ -368,7 +363,7 @@ export default function Landing() {
               Todo lo que necesitas en una sola plataforma
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Diseñado específicamente para empresas españolas que buscan eficiencia sin complicaciones
+              Diseñada para empresas que buscan eficiencia sin complicaciones
             </p>
           </div>
           
