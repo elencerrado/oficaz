@@ -15,8 +15,8 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { user, company, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
-  // Lógica inteligente: mostrar logo solo si existe
-  const shouldShowLogo = company?.logoUrl;
+  // Lógica inteligente: mostrar logo solo si existe Y función logoUpload habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
   const [currentTime, setCurrentTime] = useState(new Date());
 
