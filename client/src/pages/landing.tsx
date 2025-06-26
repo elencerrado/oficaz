@@ -208,49 +208,7 @@ export default function Landing() {
                   Ver en Acción
                 </Button>
               </div>
-              
-              {/* Mobile Visual Elements */}
-              <div className="lg:hidden mt-12 grid grid-cols-2 gap-4">
-                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-6 h-6 bg-green-400 rounded-lg flex items-center justify-center">
-                      <Clock className="w-3 h-3 text-white" />
-                    </div>
-                    <div className="text-white text-sm font-semibold">Control</div>
-                  </div>
-                  <div className="text-slate-300 text-xs">8h 32m hoy</div>
-                </div>
-                
-                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-6 h-6 bg-blue-400 rounded-lg flex items-center justify-center">
-                      <Users className="w-3 h-3 text-white" />
-                    </div>
-                    <div className="text-white text-sm font-semibold">Equipo</div>
-                  </div>
-                  <div className="text-slate-300 text-xs">12 activos</div>
-                </div>
-                
-                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-6 h-6 bg-purple-400 rounded-lg flex items-center justify-center">
-                      <FileText className="w-3 h-3 text-white" />
-                    </div>
-                    <div className="text-white text-sm font-semibold">Docs</div>
-                  </div>
-                  <div className="text-slate-300 text-xs">Automático</div>
-                </div>
-                
-                <div className="bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-6 h-6 bg-cyan-400 rounded-lg flex items-center justify-center">
-                      <Shield className="w-3 h-3 text-white" />
-                    </div>
-                    <div className="text-white text-sm font-semibold">Seguro</div>
-                  </div>
-                  <div className="text-slate-300 text-xs">99.9% uptime</div>
-                </div>
-              </div>
+
             </div>
             
             {/* Visual Elements - Only visible on desktop */}
