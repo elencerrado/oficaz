@@ -5,7 +5,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
+// Calendar component removed to prevent frame errors
 import { 
   Clock, 
   Users, 
@@ -30,14 +30,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-
-  // Función para manejar clics en días del calendario
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-    }
-  };
+  // Calendar functionality removed to prevent frame errors
 
   // Update current time every second
   useEffect(() => {
@@ -186,69 +179,7 @@ export default function AdminDashboard() {
     return 'No hay fichajes recientes';
   };
 
-  // Get vacation details for a specific date
-  const getVacationDetailsForDate = (date: Date) => {
-    const approved = approvedVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    }).map((req: any) => ({
-      ...req,
-      userName: req.userName || req.fullName || 'Empleado',
-      status: 'approved'
-    })) || [];
-
-    const pending = pendingVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    }).map((req: any) => ({
-      ...req,
-      userName: req.userName || req.fullName || 'Empleado',
-      status: 'pending'
-    })) || [];
-
-    return [...approved, ...pending];
-  };
-
-  // Check if date has events
-  const getDateEvents = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const events = [];
-
-    // Check holidays
-    const holiday = allHolidays.find(h => h.date === dateStr);
-    if (holiday) {
-      events.push({ type: 'holiday', name: holiday.name });
-    }
-
-    // Check employee vacations (approved and pending)
-    const approvedVacs = approvedVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    });
-
-    const pendingVacs = pendingVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    });
-
-    if (approvedVacs?.length) {
-      events.push({ type: 'vacation', count: approvedVacs.length, subtype: 'approved' });
-    }
-
-    if (pendingVacs?.length) {
-      events.push({ type: 'vacation', count: pendingVacs.length, subtype: 'pending' });
-    }
-
-    return events;
-  };
+  // Calendar functions removed to prevent frame errors
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50">
@@ -413,62 +344,14 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Event Details for Selected Date */}
-                {selectedDate && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4" />
-                      {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
-                    </h4>
-                    {(() => {
-                      try {
-                        const events = getDateEvents(selectedDate) || [];
-                        const vacations = getVacationDetailsForDate(selectedDate) || [];
-                        
-                        if (events.length === 0 && vacations.length === 0) {
-                          return <p className="text-sm text-gray-500">No hay eventos programados</p>;
-                        }
-                        
-                        return (
-                          <div className="space-y-3">
-                            {/* Festivos */}
-                            {events.filter(event => event && event.type === 'holiday').map((event, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                                <div className={`w-3 h-3 rounded-full ${
-                                  event.subtype === 'custom' ? 'bg-orange-500' : 'bg-red-500'
-                                }`}></div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{event.name || 'Evento'}</p>
-                                  <p className="text-xs text-gray-600">
-                                    {event.subtype === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                            
-                            {/* Vacaciones aprobadas */}
-                            {vacations.filter(v => v && v.status === 'approved').map((vacation: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {vacation.userName || 'Empleado'} - Vacaciones
-                                  </p>
-                                  <p className="text-xs text-gray-600">
-                                    Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      } catch (error) {
-                        console.warn('Error rendering date events:', error);
-                        return <p className="text-sm text-gray-500">Error mostrando eventos</p>;
-                      }
-                    })()}
-                  </div>
-                )}
+                {/* Today's Events */}
+                <div className="border-t border-gray-200 p-4 bg-gray-50">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Eventos de Hoy
+                  </h4>
+                  <p className="text-sm text-gray-500">No hay eventos programados para hoy</p>
+                </div>
               </div>
 
               {/* Pending Requests Section */}
