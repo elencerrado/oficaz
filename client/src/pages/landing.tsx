@@ -25,6 +25,7 @@ import dashboardScreenshot from '@assets/Main Screen - Empleado_1750328650633.jp
 import timeTrackingScreenshot from '@assets/Fichajes - Empleado_1750329669169.jpg';
 import userProfileScreenshot from '@assets/Usuario - Empleado_1750333758244.jpg';
 import loginScreenshot from '@assets/Login_1750322343051.jpg';
+import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
   const features = [
@@ -134,11 +135,8 @@ export default function Landing() {
       <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-[#007AFF] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">Oficaz</span>
+            <div className="flex items-center">
+              <img src={oficazLogo} alt="Oficaz" className="h-10 w-auto" />
             </div>
             
             <nav className="hidden md:flex items-center space-x-8">
