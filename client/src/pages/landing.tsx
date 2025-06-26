@@ -517,13 +517,6 @@ export default function Landing() {
                     </div>
                   </div>
                 </div>
-                
-                <div className="mt-6 p-4 bg-gradient-to-r from-[#007AFF]/10 to-blue-500/10 rounded-xl border border-[#007AFF]/20">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Total horas hoy</span>
-                    <span className="text-lg font-bold text-[#007AFF]">24h 30m</span>
-                  </div>
-                </div>
               </div>
             </div>
 
