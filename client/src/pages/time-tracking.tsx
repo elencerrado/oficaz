@@ -373,17 +373,34 @@ export default function TimeTracking() {
           const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
           const isNewMonth = currentMonth === null || monthKey !== currentMonth;
           
-          // Check if we need a new page before adding summaries
-          if ((isNewWeek && index > 0 && currentWeekStart) || (isNewMonth && index > 0 && currentMonth)) {
-            if (currentY > maxContentY - 20) { // Need space for summary + regular row
+          // NEW PAGE FOR EACH MONTH - Add month summary and create new page
+          if (isNewMonth && index > 0 && currentMonth) {
+            // Add previous month summary
+            const [year, month] = currentMonth.split('-');
+            const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 122, 255);
+            doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
+            doc.text(`${monthHours.toFixed(1)}h`, colPositions[3], currentY);
+            
+            // Add footer and create new page for new month
+            addFooter();
+            doc.addPage();
+            currentY = addPageHeader();
+            
+            monthHours = 0;
+          }
+          
+          // Add week summary (only if not starting a new month)
+          if (isNewWeek && index > 0 && currentWeekStart && !isNewMonth) {
+            // Check if we need a new page for week summary
+            if (currentY > maxContentY - 15) {
               addFooter();
               doc.addPage();
               currentY = addPageHeader();
             }
-          }
-          
-          // Add week summary
-          if (isNewWeek && index > 0 && currentWeekStart) {
+            
             doc.setFontSize(8);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(80, 80, 80);
@@ -393,23 +410,10 @@ export default function TimeTracking() {
             weekHours = 0;
           }
           
-          // Add month summary
-          if (isNewMonth && index > 0 && currentMonth) {
-            const [year, month] = currentMonth.split('-');
-            const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 122, 255);
-            doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
-            doc.text(`${monthHours.toFixed(1)}h`, colPositions[3], currentY);
-            currentY += 10;
-            monthHours = 0;
-          }
-          
           if (isNewWeek) currentWeekStart = weekStart;
           if (isNewMonth) currentMonth = monthKey;
           
-          // Check if we need a new page before adding regular row
+          // Check if we need a new page before adding regular row (only within same month)
           if (currentY > maxContentY) {
             addFooter();
             doc.addPage();
@@ -430,7 +434,7 @@ export default function TimeTracking() {
           weekHours += hours;
           monthHours += hours;
           
-          // Final summaries
+          // Final summaries for the last session
           if (index === sortedSessions.length - 1) {
             // Check if we need a new page for final summaries
             if (currentY > maxContentY - 15) {
@@ -439,6 +443,7 @@ export default function TimeTracking() {
               currentY = addPageHeader();
             }
             
+            // Add final week summary if exists
             if (weekHours > 0) {
               doc.setFontSize(8);
               doc.setFont('helvetica', 'bold');
@@ -447,6 +452,8 @@ export default function TimeTracking() {
               doc.text(`${weekHours.toFixed(1)}h`, colPositions[3], currentY);
               currentY += 7;
             }
+            
+            // Add final month summary
             if (monthHours > 0 && currentMonth) {
               const [year, month] = currentMonth.split('-');
               const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
