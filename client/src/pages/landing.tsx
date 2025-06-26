@@ -170,63 +170,156 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-gray-50 to-white py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
-            <div className="lg:col-span-6">
-              <Badge variant="secondary" className="mb-4 bg-[#007AFF]/10 text-[#007AFF] border-[#007AFF]/20">
-                <Zap className="w-4 h-4 mr-1" />
-                Gestión empresarial inteligente
-              </Badge>
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* Background Effects */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#007AFF]/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 to-transparent"></div>
+        </div>
+        
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-32">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+            <div className="text-center lg:text-left">
+              {/* Badge */}
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white mb-8">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+                <span className="text-sm font-medium">Líder en gestión empresarial</span>
+              </div>
               
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
-                Para empresas que lo quieren
-                <span className="text-[#007AFF] block">fácil</span>
+              {/* Main Headline */}
+              <h1 className="text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+                Para empresas
+                <span className="block bg-gradient-to-r from-[#007AFF] to-cyan-400 bg-clip-text text-transparent">
+                  que innovan
+                </span>
               </h1>
               
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl">
-                Simplifica la gestión de tu equipo con la plataforma todo-en-uno más intuitiva del mercado. 
-                Control de tiempo, vacaciones, documentos y comunicación en una sola herramienta.
+              {/* Subtitle */}
+              <p className="text-xl lg:text-2xl text-slate-300 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                La plataforma más avanzada para gestionar equipos. 
+                <span className="text-white font-semibold"> Tecnología española</span> que transforma la productividad empresarial.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
                 <Link href="/request-code">
-                  <Button size="lg" className="bg-[#007AFF] hover:bg-[#0056CC] text-white px-8">
-                    Empezar Gratis
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                  <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white px-10 py-4 text-lg font-semibold shadow-2xl shadow-[#007AFF]/25 border-0">
+                    Comenzar Ahora
+                    <ArrowRight className="w-6 h-6 ml-2" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="px-8">
-                  <Play className="w-5 h-5 mr-2" />
-                  Ver Demo
+                <Button variant="outline" size="lg" className="px-10 py-4 text-lg font-semibold border-white/30 text-white hover:bg-white/10 hover:border-white/50">
+                  <Play className="w-6 h-6 mr-2" />
+                  Ver en Acción
                 </Button>
               </div>
               
-              <div className="mt-8 flex items-center space-x-6 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Sin permanencia
+              {/* Trust Indicators */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center lg:text-left">
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div>
+                    <div className="text-white font-semibold">Implementación</div>
+                    <div className="text-slate-400 text-sm">En 24 horas</div>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Configuración en 5 minutos
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <div className="text-white font-semibold">Seguridad</div>
+                    <div className="text-slate-400 text-sm">Nivel bancario</div>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Soporte en español
+                <div className="flex items-center justify-center lg:justify-start space-x-3">
+                  <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <div className="text-white font-semibold">Disponibilidad</div>
+                    <div className="text-slate-400 text-sm">99.9% uptime</div>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="lg:col-span-6 mt-12 lg:mt-0">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#007AFF]/20 to-purple-400/20 rounded-2xl transform rotate-3"></div>
-                <div className="relative bg-white rounded-2xl shadow-2xl p-1">
-                  <img 
-                    src={dashboardScreenshot} 
-                    alt="Dashboard de Oficaz"
-                    className="w-full rounded-xl"
-                  />
+            {/* Visual Elements */}
+            <div className="lg:col-span-1 mt-16 lg:mt-0">
+              <div className="relative h-[600px] lg:h-[700px]">
+                {/* Floating Cards */}
+                <div className="absolute top-0 right-0 w-80 h-48 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-green-400 rounded-lg flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold">Control de Tiempo</div>
+                      <div className="text-slate-300 text-sm">En tiempo real</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-2 bg-green-400/30 rounded-full">
+                      <div className="h-2 bg-green-400 rounded-full w-3/4"></div>
+                    </div>
+                    <div className="text-white text-sm">8h 32m trabajadas hoy</div>
+                  </div>
+                </div>
+
+                <div className="absolute top-32 left-0 w-72 h-44 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-blue-400 rounded-lg flex items-center justify-center">
+                      <Users className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold">Equipo Activo</div>
+                      <div className="text-slate-300 text-sm">12 de 15 conectados</div>
+                    </div>
+                  </div>
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-cyan-400 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-red-400 rounded-full border-2 border-white"></div>
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">+8</div>
+                  </div>
+                </div>
+
+                <div className="absolute bottom-20 right-8 w-64 h-36 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-5 transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold">Documentos</div>
+                      <div className="text-slate-300 text-sm">Gestión automática</div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <div className="text-slate-300 text-sm">Nómina Abril.pdf</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                      <div className="text-slate-300 text-sm">Contrato Juan.pdf</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Animated Background Elements */}
+                <div className="absolute top-20 left-20 w-3 h-3 bg-[#007AFF] rounded-full animate-pulse"></div>
+                <div className="absolute bottom-40 left-8 w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+                <div className="absolute top-60 right-20 w-4 h-4 bg-purple-400 rounded-full animate-bounce"></div>
+                
+                {/* Grid Pattern */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
+                    backgroundSize: '40px 40px'
+                  }}></div>
                 </div>
               </div>
             </div>

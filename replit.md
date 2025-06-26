@@ -129,9 +129,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Hero section profesional y moderno implementado con efectos avanzados
+  - Diseño oscuro sofisticado con gradientes slate-900 y efectos blur de colores
+  - Título impactante "Para empresas que innovan" con gradiente de texto azul-cyan
+  - Elementos visuales flotantes: tarjetas glassmorphism con backdrop-blur y bordes translúcidos
+  - Animaciones hover, pulse, ping y bounce para interactividad moderna
+  - Indicadores de confianza profesionales: implementación 24h, seguridad bancaria, 99.9% uptime
+  - Botones CTA con gradientes y sombras avanzadas, tipografía bold y profesional
+  - Efectos de fondo: círculos blur, grid pattern y elementos animados distribuidos
 - June 26, 2025. Landing page moderna y páginas legales profesionales implementadas completamente
-  - Landing page efectiva con slogan "Para empresas que lo quieren fácil" como página principal
-  - Hero section con capturas reales de la aplicación y CTA claros hacia registro gratuito
+  - Landing page efectiva con slogan "Para empresas que innovan" como mensaje principal modernizado
+  - Hero section rediseñado con estilo profesional oscuro y elementos visuales sofisticados
   - Secciones completas: características, capturas, precios, testimonios, footer con enlaces
   - Política de Privacidad profesional: cumple RGPD, LOPD, incluye DPO, contactos AEPD
   - Términos de Servicio legales: planes SaaS, facturación, limitaciones, terminación, jurisdicción española
