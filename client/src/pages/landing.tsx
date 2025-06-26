@@ -320,40 +320,137 @@ export default function Landing() {
       </section>
 
       {/* Screenshots Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Diseño intuitivo que funciona
+      <section className="py-16 md:py-24 bg-gradient-to-br from-slate-50 via-white to-blue-50 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, rgba(0,122,255,0.8) 1px, transparent 0)`,
+            backgroundSize: '60px 60px'
+          }}></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-12 md:mb-20">
+            <div className="inline-block mb-4">
+              <span className="bg-[#007AFF]/10 text-[#007AFF] px-4 py-2 rounded-full text-sm font-semibold">
+                Capturas de Pantalla Reales
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
+              Diseño que
+              <span className="text-[#007AFF] block md:inline"> enamora</span>
             </h2>
-            <p className="text-xl text-gray-600">
-              Interfaz moderna optimizada para móvil y desktop
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Interfaz moderna diseñada para ser intuitiva desde el primer uso
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <img src={timeTrackingScreenshot} alt="Control de tiempo" className="w-full h-64 object-cover" />
-              <div className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Control de Tiempo</h3>
-                <p className="text-gray-600 text-sm">Fichajes rápidos y seguimiento en tiempo real</p>
+          {/* Mobile-first responsive grid */}
+          <div className="space-y-8 md:space-y-12">
+            
+            {/* First Row - Main Feature */}
+            <div className="relative group">
+              <div className="bg-white rounded-3xl shadow-2xl shadow-[#007AFF]/10 overflow-hidden transform group-hover:scale-[1.02] transition-all duration-500 border border-gray-100">
+                <div className="p-4 md:p-8 lg:p-12">
+                  <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                    <div className="order-2 lg:order-1">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                          <Clock className="w-4 h-4 text-green-500" />
+                        </div>
+                        <span className="text-green-600 font-semibold text-sm">TIEMPO REAL</span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+                        Control de Tiempo Inteligente
+                      </h3>
+                      <p className="text-gray-600 text-lg leading-relaxed mb-6">
+                        Fichajes automáticos con geolocalización, cálculos precisos de horas y reportes que se generan solos. Todo visible en tiempo real.
+                      </p>
+                      <div className="flex flex-wrap gap-3">
+                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">GPS</span>
+                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">Automático</span>
+                        <span className="bg-[#007AFF]/10 text-[#007AFF] px-3 py-1 rounded-full text-sm font-medium">Reportes</span>
+                      </div>
+                    </div>
+                    <div className="order-1 lg:order-2 relative">
+                      <div className="relative transform hover:rotate-2 transition-transform duration-300">
+                        <img 
+                          src={timeTrackingScreenshot} 
+                          alt="Control de tiempo" 
+                          className="w-full h-auto rounded-2xl shadow-xl border border-gray-200" 
+                        />
+                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <img src={userProfileScreenshot} alt="Perfil de usuario" className="w-full h-64 object-cover" />
-              <div className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Gestión de Perfiles</h3>
-                <p className="text-gray-600 text-sm">Información completa y actualizable</p>
+
+            {/* Second Row - Two Column Layout */}
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+              
+              {/* Profile Management */}
+              <div className="bg-white rounded-3xl shadow-xl shadow-blue-500/10 overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={userProfileScreenshot} 
+                    alt="Gestión de perfiles" 
+                    className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                      <Users className="w-3 h-3 text-blue-500" />
+                    </div>
+                    <span className="text-blue-600 font-semibold text-xs uppercase tracking-wide">Gestión</span>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+                    Perfiles Completos
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Información detallada de cada empleado con datos actualizables en tiempo real
+                  </p>
+                </div>
+              </div>
+
+              {/* Security */}
+              <div className="bg-white rounded-3xl shadow-xl shadow-purple-500/10 overflow-hidden group hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={loginScreenshot} 
+                    alt="Acceso seguro" 
+                    className="w-full h-48 sm:h-56 md:h-64 object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+                <div className="p-6 md:p-8">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-6 h-6 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                      <Shield className="w-3 h-3 text-purple-500" />
+                    </div>
+                    <span className="text-purple-600 font-semibold text-xs uppercase tracking-wide">Seguridad</span>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+                    Acceso Blindado
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed">
+                    Autenticación robusta con múltiples capas de seguridad para proteger tus datos
+                  </p>
+                </div>
               </div>
             </div>
-            
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <img src={loginScreenshot} alt="Login seguro" className="w-full h-64 object-cover" />
-              <div className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Acceso Seguro</h3>
-                <p className="text-gray-600 text-sm">Autenticación robusta y fácil de usar</p>
-              </div>
+
+            {/* Bottom CTA */}
+            <div className="text-center pt-8 md:pt-12">
+              <Link href="/request-code">
+                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-2xl">
+                  Ver Demo Interactivo
+                  <Play className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
