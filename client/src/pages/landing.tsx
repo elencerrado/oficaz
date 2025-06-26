@@ -17,7 +17,15 @@ import {
   Smartphone,
   Globe
 } from "lucide-react";
-import oficazLogo from "@assets/Imagotipo Oficaz_1750321812493.png";
+
+// Simple SVG logo component to avoid loading external images
+const OfficazLogo = ({ isDark = false }: { isDark?: boolean }) => (
+  <svg width="120" height="32" viewBox="0 0 120 32" className="h-8 w-auto">
+    <rect x="0" y="8" width="24" height="16" rx="4" fill="#2563eb" />
+    <rect x="6" y="14" width="12" height="4" rx="2" fill="white" />
+    <text x="32" y="22" fontSize="18" fontWeight="bold" fill={isDark ? "#f9fafb" : "#1f2937"}>Oficaz</text>
+  </svg>
+);
 
 export default function Landing() {
   const features = [
@@ -125,7 +133,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <img src={oficazLogo} alt="Oficaz" className="h-8 w-auto" />
+              <OfficazLogo />
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors">Funciones</a>
@@ -142,36 +150,34 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Badge className="mb-6 bg-blue-100 text-blue-800 hover:bg-blue-100">
-              ✨ La gestión empresarial que buscabas
-            </Badge>
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Oficaz no es para las empresas que lo quieren
-              <span className="text-blue-600 block">todo, sino para las que lo quieren fácil</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Gestiona tu equipo, tiempo y documentos en una plataforma tan simple que cualquiera puede usarla desde el primer día. Sin complicaciones, sin curvas de aprendizaje.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/register">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg">
-                  Prueba gratis 14 días
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button variant="outline" size="lg" className="px-8 py-4 text-lg">
-                  Ver demo
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-gray-500 mt-4">
-              Sin tarjeta de crédito • Configuración en 2 minutos • Soporte en español
-            </p>
+      <section className="pt-24 pb-16 bg-blue-50">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="mb-6 inline-block px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm">
+            ✨ La gestión empresarial que buscabas
           </div>
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            Oficaz no es para las empresas que lo quieren
+            <span className="text-blue-600 block">todo, sino para las que lo quieren fácil</span>
+          </h1>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Gestiona tu equipo, tiempo y documentos en una plataforma tan simple que cualquiera puede usarla desde el primer día.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3">
+                Prueba gratis 14 días
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" size="lg" className="px-6 py-3">
+                Ver demo
+              </Button>
+            </Link>
+          </div>
+          <p className="text-sm text-gray-500 mt-4">
+            Sin tarjeta de crédito • Configuración en 2 minutos
+          </p>
         </div>
       </section>
 
@@ -187,21 +193,19 @@ export default function Landing() {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <feature.icon className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <div key={index} className="text-center p-6 bg-white border rounded-lg">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <feature.icon className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  {feature.description}
+                </p>
+              </div>
             ))}
           </div>
         </div>
@@ -398,7 +402,9 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <img src={oficazLogo} alt="Oficaz" className="h-8 w-auto mb-4 brightness-0 invert" />
+              <div className="mb-4">
+                <OfficazLogo isDark={true} />
+              </div>
               <p className="text-gray-400 mb-4">
                 La gestión empresarial simple que funciona.
               </p>
