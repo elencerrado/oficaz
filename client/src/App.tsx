@@ -13,6 +13,7 @@ import { useState } from "react";
 
 // Pages
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import RequestCode from "@/pages/request-code";
@@ -287,9 +288,9 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      {/* Root redirect - show login for non-authenticated users */}
+      {/* Root route - show landing page for non-authenticated users */}
       <Route path="/">
-        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Redirect to="/login" />}
+        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Landing />}
       </Route>
 
       {/* 404 fallback */}
