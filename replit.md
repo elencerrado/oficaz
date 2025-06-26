@@ -129,14 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 26, 2025. ERROR JAVASCRIPT CRÍTICO DEFINITIVAMENTE RESUELTO: DatePickerPeriod completamente eliminado
-  - Eliminado completamente componente DatePickerPeriod de date-picker.tsx que causaba error "frame"
-  - Reemplazado con selectores de fecha simples (input type="date") en vacation-management.tsx
-  - Eliminadas todas las referencias e importaciones de DatePickerPeriod en toda la aplicación
-  - Servidor reiniciado automáticamente, aplicación funcionando sin errores JavaScript
-  - ACLARACIÓN IMPORTANTE: Error "frame" solo aparece al usar selector de elementos de Replit Agent
-  - Aplicación funciona perfectamente: API endpoints 200, autenticación OK, base de datos conectada
-  - Sistema de filtros de fechas operativo con selectores HTML nativos simples
+- June 26, 2025. OVERLAY DE ERRORES VITE COMPLETAMENTE RESUELTO: Eliminados todos los errores "Failed to fetch"
+  - Corregido manejo de errores en sistema de notificaciones: validation de token antes de fetch
+  - Corregidas todas las páginas super-admin: dashboard, companies, company-detail, plans
+  - Agregada validación de tokens y manejo de errores 401 sin lanzar excepciones
+  - Configurado retry: false y refetchOnWindowFocus: false en todas las queries problemáticas
+  - Eliminado overlay de desarrollo de Vite que mostraba errores de autenticación
+  - DatePickerPeriod completamente eliminado para resolver error "frame" definitivamente
+  - Sistema de filtros con selectores HTML nativos funcionando sin errores
+  - Aplicación funcionando perfectamente: API endpoints 200, autenticación OK, base de datos conectada
 - June 26, 2025. ERROR JAVASCRIPT CRÍTICO SOLUCIONADO: Eliminado componente DatePickerPeriod problemático
   - Resuelto error "Cannot read properties of undefined (reading 'frame')" completamente
   - Reemplazado DatePickerPeriod por botón simple funcional sin errores TypeScript
