@@ -34,19 +34,25 @@ const CookieBanner = () => {
   }, []);
 
   const applyCookieSettings = (prefs: CookiePreferences) => {
-    // Aplicar configuración de cookies según las preferencias
     if (prefs.analytics) {
-      // Habilitar Google Analytics u otras herramientas de análisis
       console.log('Analytics cookies enabled');
+    } else {
+      console.log('Analytics cookies disabled');
     }
+    
     if (prefs.marketing) {
-      // Habilitar cookies de marketing
       console.log('Marketing cookies enabled');
+    } else {
+      console.log('Marketing cookies disabled');
     }
+    
     if (prefs.functional) {
-      // Habilitar cookies funcionales
       console.log('Functional cookies enabled');
+    } else {
+      console.log('Functional cookies disabled');
     }
+    
+    console.log('Cookie preferences applied:', prefs);
   };
 
   const savePreferences = (prefs: CookiePreferences) => {
