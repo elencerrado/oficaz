@@ -17,7 +17,10 @@ import {
   ChevronRight,
   Building2,
   Smartphone,
-  Globe
+  Globe,
+  TrendingUp,
+  CreditCard,
+  Shield
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -825,59 +828,91 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Lo que dicen nuestros clientes
-            </h2>
-            <p className="text-xl text-gray-600">
-              Más de 500 empresas ya confían en Oficaz
-            </p>
+      {/* Enhanced CTA Section */}
+      <section className="py-32 md:py-40 bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl transform translate-x-32 -translate-y-32"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl transform -translate-x-20 translate-y-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+        </div>
+        
+        <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center relative z-10">
+          {/* Header Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-white font-semibold">Únete Ahora</span>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 mb-4 italic">"{testimonial.content}"</p>
-                  <div>
-                    <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-600">{testimonial.role}</p>
-                    <p className="text-sm text-[#007AFF]">{testimonial.company}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-[#007AFF]">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            ¿Listo para simplificar tu gestión empresarial?
+          {/* Main Title */}
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 tracking-tight leading-tight">
+            Transforma tu empresa
+            <span className="block bg-gradient-to-r from-cyan-200 via-white to-blue-200 bg-clip-text text-transparent">
+              en minutos
+            </span>
           </h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Únete a las empresas que ya disfrutan de una gestión sin complicaciones
+          
+          {/* Description */}
+          <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-4xl mx-auto leading-relaxed">
+            No más papeles perdidos, no más horas extras calculando nóminas, 
+            no más empleados perdidos en procesos complicados. 
+            <span className="text-white font-semibold">Oficaz lo hace simple.</span>
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          {/* Benefits Grid */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-4xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <CheckCircle className="w-6 h-6 text-green-400" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Configuración Instantánea</h3>
+              <p className="text-blue-100 text-sm">Tu empresa funcionando en menos de 5 minutos</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <Users className="w-6 h-6 text-blue-400" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Equipo Productivo</h3>
+              <p className="text-blue-100 text-sm">Empleados felices con procesos claros</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <TrendingUp className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="text-white font-semibold mb-2">Crecimiento Real</h3>
+              <p className="text-blue-100 text-sm">Más tiempo para hacer crecer tu negocio</p>
+            </div>
+          </div>
+          
+          {/* CTA Button */}
+          <div className="mb-12">
             <Link href="/request-code">
-              <Button size="lg" className="bg-white text-[#007AFF] hover:bg-gray-100 px-8">
-                Empezar Prueba Gratis
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-bold text-xl px-12 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
+                <span className="relative z-10 flex items-center gap-3">
+                  Empezar Gratis Ahora
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-white to-gray-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </button>
             </Link>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#007AFF] px-8">
-              Hablar con Ventas
-            </Button>
+          </div>
+          
+          {/* Trust Indicators */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-white/80">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-green-400" />
+              <span className="text-sm font-medium">Datos 100% seguros</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-400" />
+              <span className="text-sm font-medium">15 días gratis</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-purple-400" />
+              <span className="text-sm font-medium">Sin tarjeta de crédito</span>
+            </div>
           </div>
         </div>
       </section>
