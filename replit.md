@@ -142,6 +142,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Numeración de páginas profesional cuando hay múltiples páginas
   - Mantiene funcionalidad completa: paginación mensual, datos reales de empresa, saltos inteligentes
   - Diseño coherente y profesional apto para presentaciones corporativas
+  - Corregido cálculo "Media Horas Diarias": ahora calcula correctamente horas promedio por trabajador por día
 - June 25, 2025. Sistema de seguridad profesional SaaS implementado y login optimizado
   - Seguridad backend: Helmet CSP, CORS configurado, rate limiting global y específico por endpoint
   - Rate limiting login: máx 20 intentos por IP en 15min + bloqueo personalizado 5 intentos por usuario

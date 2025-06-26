@@ -232,10 +232,24 @@ export default function TimeTracking() {
       return total + calculateHours(session.clockIn, session.clockOut);
     }, 0);
     
+    // Calculate average hours per worker per day
+    let averageHoursPerDay = 0;
+    if (filteredSessions.length > 0) {
+      // Group sessions by employee and day to count unique working days
+      const employeeDays = new Set();
+      filteredSessions.forEach((session: any) => {
+        const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
+        employeeDays.add(dayKey);
+      });
+      
+      // Average = total hours / total working days across all employees
+      averageHoursPerDay = totalHours / employeeDays.size;
+    }
+    
     return {
       employeesWithSessions: uniqueEmployees,
       totalEmployees: employeesList.length,
-      averageHoursPerEmployee: uniqueEmployees > 0 ? totalHours / uniqueEmployees : 0
+      averageHoursPerEmployee: averageHoursPerDay
     };
   }, [filteredSessions, employeesList.length, calculateHours]);
 
