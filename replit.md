@@ -129,6 +129,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Componente StatsCard optimizado con diseño vertical compacto y margen inferior
+  - Layout vertical unificado: icono + número arriba, título y subtítulo abajo para evitar desbordamiento de texto
+  - Tamaño reducido: altura h-16, padding p-3, iconos más pequeños para diseño más compacto
+  - Margen inferior mb-4 agregado para separación visual entre filas de tarjetas
+  - Responsive mejorado: tamaños de texto e iconos adaptativos para móvil y desktop
+  - Componente flexible que acepta valores string y number para máxima compatibilidad
 - June 26, 2025. PDF de control horario completamente modernizado con diseño elegante y profesional
   - Agregado campo provincia en información de empresa para PDFs completos
   - Diseño moderno implementado: colores profesionales (azul oscuro #1F3347, grises elegantes)

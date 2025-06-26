@@ -51,20 +51,20 @@ export default function StatsCard({
   
   return (
     <Card 
-      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} ${className}`}
+      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} mb-4 ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-4 h-20 flex flex-col items-center justify-center text-center">
+      <CardContent className="p-3 h-16 flex flex-col items-center justify-center text-center">
         {/* Layout vertical unificado: icono + número arriba, texto abajo */}
-        <div className="flex items-center justify-center space-x-2 mb-1">
-          <div className={`w-6 h-6 md:w-7 md:h-7 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-            {Icon && <Icon className="w-3 h-3 md:w-4 md:h-4 text-white" />}
+        <div className="flex items-center justify-center space-x-1.5 mb-0.5">
+          <div className={`w-5 h-5 md:w-6 md:h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+            {Icon && <Icon className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />}
           </div>
-          <span className="text-lg md:text-xl font-bold text-gray-900">{value}</span>
+          <span className="text-base md:text-lg font-bold text-gray-900">{value}</span>
         </div>
         <div className="min-h-0">
-          <p className="text-xs md:text-sm font-medium text-gray-600 leading-tight">{title}</p>
-          <p className="text-[10px] md:text-xs text-gray-500 leading-tight">{subtitle}</p>
+          <p className="text-[10px] md:text-xs font-medium text-gray-600 leading-tight">{title}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-500 leading-tight">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
