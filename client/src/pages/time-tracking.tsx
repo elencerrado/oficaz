@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Calendar } from '@/components/ui/calendar';
 import { DatePickerPeriod, DatePickerDay } from '@/components/ui/date-picker';
 import { 
@@ -547,10 +548,19 @@ export default function TimeTracking() {
                 <Filter className="w-4 h-4" />
                 Filtros
               </Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Exporta en PDF la vista actual de fichajes</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </CardTitle>
         </CardHeader>
