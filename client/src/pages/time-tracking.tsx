@@ -335,12 +335,6 @@ export default function TimeTracking() {
         doc.setTextColor(85, 85, 85);
         doc.text(periodText, 120, 46);
         
-        // Generation date
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, 120, 51);
-        
         // Clean table header without background
         const headerY = 62;
         

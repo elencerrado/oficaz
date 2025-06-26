@@ -136,7 +136,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Título del PDF mantiene formato profesional: "INFORME DE CONTROL HORARIO"
   - Headers de empresa rediseñados con línea divisoria sutil y jerarquía visual clara
   - Información de empleado y período reorganizada con etiquetas claras (EMPLEADO, PERÍODO)
-  - Fecha de generación agregada para transparencia y trazabilidad
+  - Eliminada línea "Generado..." duplicada bajo período para diseño más limpio
   - Headers de tabla limpios: solo texto en negrita sin fondos ni bordes para máxima elegancia
   - Footer minimalista rediseñado sin fondo, solo línea superior y branding Oficaz
   - Numeración de páginas profesional cuando hay múltiples páginas
