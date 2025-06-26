@@ -54,28 +54,17 @@ export default function StatsCard({
       className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-4 h-20 flex items-center justify-center">
-        {/* Desktop: Layout horizontal con icono + número + texto en línea */}
-        <div className="hidden md:flex md:items-center md:space-x-3 w-full">
-          <div className={`w-8 h-8 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-            {Icon && <Icon className="w-4 h-4 text-white" />}
+      <CardContent className="p-4 h-20 flex flex-col items-center justify-center text-center">
+        {/* Layout vertical unificado: icono + número arriba, texto abajo */}
+        <div className="flex items-center justify-center space-x-2 mb-1">
+          <div className={`w-6 h-6 md:w-7 md:h-7 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+            {Icon && <Icon className="w-3 h-3 md:w-4 md:h-4 text-white" />}
           </div>
-          <span className="text-2xl font-bold text-gray-900">{value}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-xs text-gray-500">{subtitle}</p>
-          </div>
+          <span className="text-lg md:text-xl font-bold text-gray-900">{value}</span>
         </div>
-
-        {/* Mobile: Layout centrado simplificado igual que vacaciones */}
-        <div className="md:hidden text-center">
-          <div className="flex items-center justify-center space-x-1 mb-1">
-            <div className={`w-5 h-5 ${config.bg} rounded-full flex items-center justify-center`}>
-              {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
-            </div>
-            <span className="text-xs font-bold text-gray-900">{value}</span>
-          </div>
-          <p className="text-[10px] font-medium text-gray-600 leading-tight">{subtitle.length > 8 ? subtitle.substring(0, 6) + '.' : subtitle}</p>
+        <div className="min-h-0">
+          <p className="text-xs md:text-sm font-medium text-gray-600 leading-tight">{title}</p>
+          <p className="text-[10px] md:text-xs text-gray-500 leading-tight">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
