@@ -289,6 +289,7 @@ export default function VacationManagement() {
               subtitle="Pendientes"
               value={stats.pending}
               color="yellow"
+              icon={Clock}
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('pending');
@@ -301,6 +302,7 @@ export default function VacationManagement() {
               subtitle="Aprobadas"
               value={stats.approved}
               color="green"
+              icon={Check}
               onClick={() => {
                 setActiveTab('requests');
                 setSelectedStatus('approved');
@@ -313,6 +315,7 @@ export default function VacationManagement() {
               subtitle="De Vacaciones"
               value={stats.onVacation}
               color="blue"
+              icon={Plane}
               onClick={() => setActiveTab('employees')}
             />
 
@@ -321,6 +324,7 @@ export default function VacationManagement() {
               subtitle="2025"
               value={spanishHolidays2025.length}
               color="purple"
+              icon={CalendarDays}
               onClick={() => setActiveTab('holidays')}
             />
           </div>

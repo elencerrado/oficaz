@@ -689,6 +689,7 @@ export default function AdminDocuments() {
             subtitle="En sistema"
             value={(allDocuments || []).length}
             color="blue"
+            icon={FileText}
             onClick={() => setActiveTab('explorer')}
           />
 
@@ -701,6 +702,7 @@ export default function AdminDocuments() {
               return docDate.toDateString() === today.toDateString();
             }).length}
             color="green"
+            icon={Upload}
             onClick={() => setActiveTab('upload')}
           />
 
@@ -709,6 +711,7 @@ export default function AdminDocuments() {
             subtitle="Pendientes"
             value={(sentRequests || []).filter(req => !req.isCompleted).length}
             color="yellow"
+            icon={Send}
             onClick={() => setActiveTab('requests')}
           />
 
@@ -717,6 +720,7 @@ export default function AdminDocuments() {
             subtitle="Total activos"
             value={(employees || []).length}
             color="purple"
+            icon={Users}
             onClick={() => setActiveTab('explorer')}
           />
         </div>
