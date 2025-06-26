@@ -87,7 +87,7 @@ export default function FeatureUnavailable({ feature }: FeatureUnavailableProps)
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full">
             <Crown className="h-4 w-4 text-amber-600" />
             <span className="text-sm font-medium text-amber-800">
-              Funcionalidad Premium - Plan {config.requiredPlan}
+              No está disponible en tu plan
             </span>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function FeatureUnavailable({ feature }: FeatureUnavailableProps)
             </p>
             <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
               <Crown className="h-4 w-4" />
-              Actualizar a Plan {config.requiredPlan}
+              Actualizar Plan
             </button>
           </div>
         </div>
