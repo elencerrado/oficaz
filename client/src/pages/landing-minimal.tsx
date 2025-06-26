@@ -40,54 +40,60 @@ export default function LandingMinimal() {
       </header>
 
       {/* Hero */}
-      <section className="py-20 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="py-20 px-4 relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute top-20 right-0 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="mb-6">
-            <span className="inline-block px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-medium border border-white/20">
               ✨ La gestión empresarial que realmente funciona
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            <span className="text-blue-600">Oficaz</span> es para las empresas
-            <span className="text-blue-600 block">que lo quieren fácil</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <span className="text-yellow-300">Oficaz</span> es para las empresas
+            <span className="text-yellow-300 block">que lo quieren fácil</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
             Controla horarios, gestiona vacaciones, organiza documentos y comunícate con tu equipo. 
             Todo desde una plataforma tan simple que la dominarás en 5 minutos.
           </p>
           
           {/* Value proposition */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-2xl mx-auto">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-6 mb-8 max-w-2xl mx-auto border border-white/20">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-blue-600">2 min</div>
-                <div className="text-sm text-gray-600">para configurar</div>
+                <div className="text-2xl font-bold text-yellow-300">2 min</div>
+                <div className="text-sm text-white/80">para configurar</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">0€</div>
-                <div className="text-sm text-gray-600">primeros 14 días</div>
+                <div className="text-2xl font-bold text-green-300">0€</div>
+                <div className="text-sm text-white/80">primeros 14 días</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-600">24/7</div>
-                <div className="text-sm text-gray-600">soporte español</div>
+                <div className="text-2xl font-bold text-purple-300">24/7</div>
+                <div className="text-sm text-white/80">soporte español</div>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
-              <Button size="lg" className="px-8 py-4 text-lg bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" className="px-8 py-4 text-lg bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold shadow-xl">
                 Empieza gratis ahora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg" className="px-8 py-4 text-lg">
+              <Button variant="outline" size="lg" className="px-8 py-4 text-lg border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                 Ver cómo funciona
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-blue-200 mt-4">
             Sin tarjeta de crédito • Cancela cuando quieras • Datos 100% seguros
           </p>
         </div>
