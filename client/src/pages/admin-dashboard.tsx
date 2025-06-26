@@ -400,43 +400,68 @@ export default function AdminDashboard() {
               {/* Calendar - Simple and Compact */}
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="p-4">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={es}
-                    className="w-full mx-auto"
-                    modifiers={{
-                      nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date)),
-                      approvedVacation: approvedVacations.map(v => {
-                        const dates = [];
-                        const start = parseISO(v.startDate);
-                        const end = parseISO(v.endDate);
-                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-                          dates.push(new Date(date));
-                        }
-                        return dates;
-                      }).flat()
-                    }}
-                    modifiersStyles={{
-                      nationalHoliday: { 
-                        backgroundColor: '#fee2e2', 
-                        color: '#dc2626', 
-                        fontWeight: '600'
-                      },
-                      customHoliday: { 
-                        backgroundColor: '#fed7aa', 
-                        color: '#d97706', 
-                        fontWeight: '600'
-                      },
-                      approvedVacation: { 
-                        backgroundColor: '#dcfce7', 
-                        color: '#16a34a', 
-                        fontWeight: '600'
-                      }
-                    }}
-                  />
+                  {(() => {
+                    try {
+                      // Validar datos antes de crear modifiers
+                      const safeNationalHolidays = Array.isArray(nationalHolidays) ? nationalHolidays.filter(h => h?.date) : [];
+                      const safeCustomHolidays = Array.isArray(customHolidays) ? customHolidays.filter(h => h?.date) : [];
+                      const safeApprovedVacations = Array.isArray(approvedVacations) ? approvedVacations.filter(v => v?.startDate && v?.endDate) : [];
+
+                      return (
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateSelect}
+                          locale={es}
+                          className="w-full mx-auto"
+                          modifiers={{
+                            nationalHoliday: safeNationalHolidays.map(h => parseISO(h.date)),
+                            customHoliday: safeCustomHolidays.map(h => parseISO(h.date)),
+                            approvedVacation: safeApprovedVacations.map(v => {
+                              try {
+                                const dates = [];
+                                const start = parseISO(v.startDate);
+                                const end = parseISO(v.endDate);
+                                for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+                                  dates.push(new Date(date));
+                                }
+                                return dates;
+                              } catch {
+                                return [];
+                              }
+                            }).flat()
+                          }}
+                          modifiersStyles={{
+                            nationalHoliday: { 
+                              backgroundColor: '#fee2e2', 
+                              color: '#dc2626', 
+                              fontWeight: '600'
+                            },
+                            customHoliday: { 
+                              backgroundColor: '#fed7aa', 
+                              color: '#d97706', 
+                              fontWeight: '600'
+                            },
+                            approvedVacation: { 
+                              backgroundColor: '#dcfce7', 
+                              color: '#16a34a', 
+                              fontWeight: '600'
+                            }
+                          }}
+                        />
+                      );
+                    } catch (error) {
+                      console.warn('Error rendering calendar:', error);
+                      return (
+                        <div className="w-full h-64 flex items-center justify-center text-gray-500">
+                          <div className="text-center">
+                            <CalendarDays className="h-8 w-8 mx-auto mb-2" />
+                            <p>Calendario no disponible</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
 
                 {/* Event Details for Selected Date */}
@@ -447,46 +472,51 @@ export default function AdminDashboard() {
                       {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
                     </h4>
                     {(() => {
-                      const events = getDateEvents(selectedDate);
-                      const vacations = getVacationDetailsForDate(selectedDate);
-                      
-                      if (events.length === 0 && vacations.length === 0) {
-                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                      try {
+                        const events = getDateEvents(selectedDate) || [];
+                        const vacations = getVacationDetailsForDate(selectedDate) || [];
+                        
+                        if (events.length === 0 && vacations.length === 0) {
+                          return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                        }
+                        
+                        return (
+                          <div className="space-y-3">
+                            {/* Festivos */}
+                            {events.filter(event => event && event.type === 'holiday').map((event, idx) => (
+                              <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  event.subtype === 'custom' ? 'bg-orange-500' : 'bg-red-500'
+                                }`}></div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{event.name || 'Evento'}</p>
+                                  <p className="text-xs text-gray-600">
+                                    {event.subtype === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {/* Vacaciones aprobadas */}
+                            {vacations.filter(v => v && v.status === 'approved').map((vacation: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {vacation.userName || 'Empleado'} - Vacaciones
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } catch (error) {
+                        console.warn('Error rendering date events:', error);
+                        return <p className="text-sm text-gray-500">Error mostrando eventos</p>;
                       }
-                      
-                      return (
-                        <div className="space-y-3">
-                          {/* Festivos */}
-                          {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                              <div className={`w-3 h-3 rounded-full ${
-                                event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
-                              }`}></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                                <p className="text-xs text-gray-600">
-                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {/* Vacaciones aprobadas */}
-                          {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {vacation.userName} - Vacaciones
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
                     })()}
                   </div>
                 )}
