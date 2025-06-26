@@ -196,8 +196,8 @@ export default function Landing() {
         </div>
         
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-16 lg:py-24 min-h-[calc(100vh-4rem)] flex items-center">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-20 items-center w-full">
-            <div className="text-center lg:text-left space-y-10">
+          <div className="w-full max-w-5xl mx-auto">
+            <div className="text-center space-y-10">
               
               {/* Premium Badge */}
               <div className="inline-flex items-center gap-3 bg-gradient-to-r from-white/10 via-white/5 to-white/10 backdrop-blur-xl border border-white/20 rounded-full px-6 py-3 shadow-2xl">
@@ -269,83 +269,6 @@ export default function Landing() {
                     <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
                     <span className="text-sm">GDPR compliant</span>
                   </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Visual Elements - Only visible on desktop */}
-            <div className="hidden lg:block lg:col-span-1 mt-16 lg:mt-0">
-              <div className="relative min-h-[500px] xl:h-[calc(100vh-12rem)]">
-                {/* Floating Cards */}
-                <div className="absolute top-0 right-0 w-80 h-48 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-8 h-8 bg-green-400 rounded-lg flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Control de Tiempo</div>
-                      <div className="text-slate-300 text-sm">En tiempo real</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-2 bg-green-400/30 rounded-full">
-                      <div className="h-2 bg-green-400 rounded-full w-3/4"></div>
-                    </div>
-                    <div className="text-white text-sm">8h 32m trabajadas hoy</div>
-                  </div>
-                </div>
-
-                <div className="absolute top-32 left-0 w-72 h-44 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-6 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-8 h-8 bg-blue-400 rounded-lg flex items-center justify-center">
-                      <Users className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Equipo Activo</div>
-                      <div className="text-slate-300 text-sm">12 de 15 conectados</div>
-                    </div>
-                  </div>
-                  <div className="flex -space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-cyan-400 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-red-400 rounded-full border-2 border-white"></div>
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">+8</div>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-20 right-8 w-64 h-36 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 p-5 transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-8 h-8 bg-purple-400 rounded-lg flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <div className="text-white font-semibold">Documentos</div>
-                      <div className="text-slate-300 text-sm">Gestión automática</div>
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <div className="text-slate-300 text-sm">Nómina Abril.pdf</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      <div className="text-slate-300 text-sm">Contrato Juan.pdf</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Animated Background Elements */}
-                <div className="absolute top-20 left-20 w-3 h-3 bg-[#007AFF] rounded-full animate-pulse"></div>
-                <div className="absolute bottom-40 left-8 w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
-                <div className="absolute top-60 right-20 w-4 h-4 bg-purple-400 rounded-full animate-bounce"></div>
-                
-                {/* Grid Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                  <div className="absolute inset-0" style={{
-                    backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
-                    backgroundSize: '40px 40px'
-                  }}></div>
                 </div>
               </div>
             </div>
