@@ -48,8 +48,8 @@ export default function LandingMinimal() {
             </span>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Oficaz no es para las empresas que lo quieren
-            <span className="text-blue-600 block">todo, sino para las que lo quieren fácil</span>
+            <span className="text-blue-600">Oficaz</span> es para las empresas
+            <span className="text-blue-600 block">que lo quieren fácil</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
             Controla horarios, gestiona vacaciones, organiza documentos y comunícate con tu equipo. 
