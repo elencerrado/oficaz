@@ -769,7 +769,7 @@ export default function Landing() {
                   </div>
                 )}
                 
-                <div className={`relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 ${
+                <div className={`relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 h-full flex flex-col ${
                   plan.popular 
                     ? 'bg-white/20 border-[#007AFF]/50 shadow-2xl shadow-[#007AFF]/25' 
                     : 'bg-white/10 border-white/20 hover:bg-white/15 shadow-xl'
@@ -786,7 +786,7 @@ export default function Landing() {
                   </div>
                   
                   {/* Features */}
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-4 mb-8 flex-grow">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
                         <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
@@ -798,15 +798,17 @@ export default function Landing() {
                   </ul>
                   
                   {/* CTA Button */}
-                  <Link href="/request-code">
-                    <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                        : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
-                    }`}>
-                      Empezar Gratis
-                    </button>
-                  </Link>
+                  <div className="mt-auto">
+                    <Link href="/request-code">
+                      <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
+                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
+                      }`}>
+                        Empezar Gratis
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
