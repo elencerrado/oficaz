@@ -129,6 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Banner de cookies legal y completo implementado para cumplimiento RGPD
+  - CookieBanner.tsx: componente completo con configuración personalizable de 4 tipos de cookies
+  - Categorías legales: necesarias (obligatorias), funcionales, análisis y marketing con descripciones detalladas
+  - Modal de configuración avanzada con switches individuales y explicaciones legales
+  - Página /cookies completa con normativa RGPD, LOPD, LSSI y directiva ePrivacy
+  - Gestión de consentimiento: localStorage para persistir preferencias del usuario
+  - Botones: "Configurar", "Solo Necesarias", "Aceptar Todas" para máximo control
+  - Enlaces legales integrados en footer de landing y banner para fácil acceso
+  - Textos 100% conformes a normativa española y europea de protección de datos
 - June 26, 2025. Landing page completamente optimizada con vistas previas funcionales y precios espectaculares
   - Sección de vistas previas: 4 tarjetas principales recreando funcionalidades sin capturas
   - Panel de empleados: estados variados (Juan descanso, Marta trabajando, Carmen trabajando, Ana vacaciones)

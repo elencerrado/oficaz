@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
+import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
@@ -15,6 +16,7 @@ import { useState } from "react";
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
+import Cookies from "@/pages/cookies";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -149,6 +151,8 @@ function Router() {
       <Route path="/terms">
         <Terms />
       </Route>
+
+      <Route path="/cookies" component={Cookies} />
 
       {/* Public routes for authentication */}
       <Route path="/login">
@@ -318,6 +322,7 @@ function App() {
           <Toaster />
           <Router />
           <ReminderBanner />
+          <CookieBanner />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

@@ -926,7 +926,7 @@ export default function Landing() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Política de Privacidad</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Términos de Servicio</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookies</a></li>
+                <li><Link href="/cookies" className="hover:text-white transition-colors">Política de Cookies</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">GDPR</a></li>
               </ul>
             </div>
