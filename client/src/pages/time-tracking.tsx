@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StatsCard from '@/components/StatsCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -662,70 +663,38 @@ export default function TimeTracking() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Han Fichado</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {employeesWithSessions}/{totalEmployees}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Media Horas Diarias</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {averageHoursPerEmployee.toFixed(1)}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <CalendarDays className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Media Horas Semanales</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {averageHoursPerWeek.toFixed(1)}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Media Horas Mensuales</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {averageHoursPerMonth.toFixed(1)}h
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
+        <StatsCard
+          title="Han Fichado"
+          subtitle="Empleados"
+          value={`${employeesWithSessions}/${totalEmployees}`}
+          color="green"
+          icon={Users}
+        />
+        
+        <StatsCard
+          title="Media Diaria"
+          subtitle="Horas/día"
+          value={`${averageHoursPerEmployee.toFixed(1)}h`}
+          color="orange"
+          icon={TrendingUp}
+        />
+        
+        <StatsCard
+          title="Media Semanal"
+          subtitle="Horas/sem"
+          value={`${averageHoursPerWeek.toFixed(1)}h`}
+          color="blue"
+          icon={CalendarDays}
+        />
+        
+        <StatsCard
+          title="Media Mensual"
+          subtitle="Horas/mes"
+          value={`${averageHoursPerMonth.toFixed(1)}h`}
+          color="purple"
+          icon={BarChart3}
+        />
       </div>
 
       {/* Sessions Table */}
