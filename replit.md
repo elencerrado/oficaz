@@ -129,14 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 26, 2025. ERRORES VITE OVERLAY DEFINITIVAMENTE RESUELTOS: Handler global implementado
-  - Eliminados errores "Failed to fetch" con validación de tokens en páginas super-admin
-  - Resuelto error "frame" eliminando componente Calendar problemático de react-day-picker
-  - Handler global de errores añadido en main.tsx para capturar unhandledrejection
-  - Errores ahora capturados silenciosamente sin interrumpir la experiencia de usuario
+- June 26, 2025. SISTEMA DE LOGOS Y ROUTING COMPLETAMENTE CORREGIDO: Plan Basic ahora respetado
+  - Corregida lógica shouldShowLogo en todos los componentes: mobile-header, sidebar, employee-dashboard, time-tracking, vacation-requests
+  - Plan Basic (logoUpload: false) ahora muestra solo texto del nombre de empresa sin logos
+  - Eliminada aparición temporal de landing page para usuarios autenticados con PublicRoute en ruta raíz
   - Mensajes de funcionalidades restringidas simplificados: "No está disponible en tu plan"
-  - Eliminadas referencias específicas a planes (Pro, Master) en componente FeatureUnavailable
-  - Aplicación funcionando sin overlays molestos, errores manejados correctamente en consola
+  - Handler global de errores mantiene aplicación estable sin overlays de desarrollo
+  - Sistema de restricciones de logos funcionando correctamente según plan de suscripción
 - June 26, 2025. ERROR JAVASCRIPT CRÍTICO SOLUCIONADO: Eliminado componente DatePickerPeriod problemático
   - Resuelto error "Cannot read properties of undefined (reading 'frame')" completamente
   - Reemplazado DatePickerPeriod por botón simple funcional sin errores TypeScript

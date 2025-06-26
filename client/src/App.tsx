@@ -296,7 +296,9 @@ function Router() {
 
       {/* Root route - show landing page for non-authenticated users */}
       <Route path="/">
-        {user && company ? <Redirect to={`/${company.companyAlias}/inicio`} /> : <Landing />}
+        <PublicRoute>
+          <Landing />
+        </PublicRoute>
       </Route>
 
       {/* 404 fallback */}
