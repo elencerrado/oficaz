@@ -238,13 +238,22 @@ export default function Messages() {
     staleTime: 60000,
   });
 
-  // Chat messages query for real mode
-  const { data: fetchedChatMessages = [] } = useQuery({
-    queryKey: ['/api/messages/chat', selectedChat],
-    enabled: !!user && !!selectedChat && canAccess,
-  });
-  
-  const chatMessages = canAccess ? fetchedChatMessages : (selectedChat ? demoChatMessages : []);
+  // Use regular messages for chat, filtered by selectedChat
+  const chatMessages = useMemo(() => {
+    if (!canAccess) {
+      return selectedChat ? demoChatMessages : [];
+    }
+    
+    if (!selectedChat || !messages) {
+      return [];
+    }
+    
+    // Filter messages to show conversation between current user and selected chat user
+    return (messages as Message[]).filter(msg => 
+      (msg.senderId === user?.id && msg.receiverId === selectedChat) ||
+      (msg.senderId === selectedChat && msg.receiverId === user?.id)
+    ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }, [canAccess, selectedChat, messages, user?.id]);
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
