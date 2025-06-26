@@ -31,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
 export default function TimeTracking() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
   
   // Check if user has access to time tracking feature
@@ -268,16 +268,22 @@ export default function TimeTracking() {
       
       // Helper function to add header to new page
       const addPageHeader = () => {
-        // Company info (right aligned with proper margins)
+        // Company info (right aligned with proper margins) - Using real company data
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text('Test Company', 190, 20, { align: 'right' });
+        doc.text(company?.name || 'Empresa', 190, 20, { align: 'right' });
         
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
-        doc.text('CIF: B12345678', 190, 26, { align: 'right' });
-        doc.text('Calle Principal, 123, Madrid', 190, 31, { align: 'right' });
-        doc.text('+34 912 345 678', 190, 36, { align: 'right' });
+        if (company?.cif) {
+          doc.text(`CIF: ${company.cif}`, 190, 26, { align: 'right' });
+        }
+        if (company?.address) {
+          doc.text(company.address, 190, 31, { align: 'right' });
+        }
+        if (company?.phone) {
+          doc.text(company.phone, 190, 36, { align: 'right' });
+        }
         
         // Report title (left aligned)
         doc.setFontSize(16);
