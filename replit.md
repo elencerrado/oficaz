@@ -131,7 +131,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 - June 26, 2025. Hero section profesional y moderno implementado con efectos avanzados
   - Diseño oscuro sofisticado con gradientes slate-900 y efectos blur de colores
-  - Título impactante "Para empresas que innovan" con gradiente de texto azul-cyan
+  - Título corregido "Para empresas que lo quieren fácil" según especificación del usuario
+  - Hero fullscreen: ocupa toda la ventana menos header (calc(100vh-4rem)) sin scroll necesario
   - Elementos visuales flotantes: tarjetas glassmorphism con backdrop-blur y bordes translúcidos
   - Animaciones hover, pulse, ping y bounce para interactividad moderna
   - Indicadores de confianza profesionales: implementación 24h, seguridad bancaria, 99.9% uptime
