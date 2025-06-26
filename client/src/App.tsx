@@ -26,7 +26,9 @@ import VacationRequests from "@/pages/vacation-requests";
 import VacationManagement from "@/pages/vacation-management";
 import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
+import EmployeeDocuments from "@/pages/employee-documents";
 import Messages from "@/pages/messages";
+import EmployeeMessages from "@/pages/employee-messages";
 import Reminders from "@/pages/reminders";
 import EmployeeReminders from "@/pages/employee-reminders";
 import EmployeesSimple from "@/pages/employees-simple";
@@ -244,7 +246,7 @@ function Router() {
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
           <AppLayout>
-            {user?.role === 'employee' ? <Documents /> : <AdminDocuments />}
+            {user?.role === 'employee' ? <EmployeeDocuments /> : <AdminDocuments />}
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -252,7 +254,7 @@ function Router() {
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
           <AppLayout>
-            <Messages />
+            {user?.role === 'employee' ? <EmployeeMessages /> : <Messages />}
           </AppLayout>
         </ProtectedRoute>
       </Route>
