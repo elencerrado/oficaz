@@ -480,8 +480,8 @@ export default function Landing() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
+                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+                      <span className="text-sm text-orange-600 font-medium">En descanso</span>
                     </div>
                   </div>
                   
@@ -496,8 +496,8 @@ export default function Landing() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-sm text-orange-600 font-medium">En descanso</span>
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
                     </div>
                   </div>
                   
@@ -512,8 +512,8 @@ export default function Landing() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                      <span className="text-sm text-gray-600 font-medium">Desconectado</span>
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
                     </div>
                   </div>
                   
@@ -528,8 +528,8 @@ export default function Landing() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                      <span className="text-sm text-blue-600 font-medium">De vacaciones</span>
                     </div>
                   </div>
                 </div>
