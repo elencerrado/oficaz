@@ -602,25 +602,25 @@ export default function Landing() {
           <div className="mt-16 lg:mt-20">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              {/* Analytics Card */}
+              {/* Documents Card */}
               <div className="group relative">
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border border-indigo-200/50 hover:border-indigo-300/50 transition-all duration-500">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-indigo-600" />
+                      <FileText className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Análisis Inteligente</h4>
-                      <p className="text-indigo-600 text-sm font-medium">Reportes automáticos</p>
+                      <h4 className="text-lg font-bold text-gray-900">Documentos Inteligentes</h4>
+                      <p className="text-indigo-600 text-sm font-medium">Arrastra y llega automático</p>
                     </div>
                   </div>
                   <div className="bg-indigo-100/50 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-700">Productividad</span>
-                      <span className="text-sm font-bold text-indigo-700">+12%</span>
+                      <span className="text-sm text-gray-700">Nóminas enviadas</span>
+                      <span className="text-sm font-bold text-indigo-700">47/50</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full w-3/4"></div>
+                      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full w-[94%]"></div>
                     </div>
                   </div>
                 </div>
