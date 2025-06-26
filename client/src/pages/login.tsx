@@ -240,9 +240,12 @@ export default function Login() {
             </Button>
 
             {/* Register Link */}
-            <div className="text-center mt-6">
-              <Link href="/register" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+            <div className="text-center mt-6 space-y-2">
+              <Link href="/register" className="block text-sm text-blue-600 hover:text-blue-700 hover:underline">
                 Registra tu empresa
+              </Link>
+              <Link href="/" className="block text-sm text-gray-500 hover:text-gray-700 hover:underline">
+                ← Volver al inicio
               </Link>
             </div>
           </form>

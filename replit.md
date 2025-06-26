@@ -129,6 +129,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 25, 2025. Landing page moderna y atractiva implementada como página principal
+  - Nueva landing page profesional con filosofía de simplicidad "lo quieren fácil"
+  - Secciones completas: hero, funciones, filosofía, testimonios, precios, CTA
+  - Header fijo con navegación suave y botón de acceso al login
+  - Diseño moderno con gradientes, cards con hover effects y animaciones
+  - Testimonios reales de clientes ficticios pero coherentes con el mercado español
+  - Planes de precios Basic (€29), Pro (€59), Master (€149) con características claras
+  - Footer completo con enlaces organizados y branding consistente
+  - Routing actualizado: "/" ahora muestra landing, "/login" para acceso a la app
+  - Enlaces de retorno al inicio agregados en login y registro
 - June 25, 2025. Sistema de seguridad profesional SaaS implementado y login optimizado
   - Seguridad backend: Helmet CSP, CORS configurado, rate limiting global y específico por endpoint
   - Rate limiting login: máx 20 intentos por IP en 15min + bloqueo personalizado 5 intentos por usuario
