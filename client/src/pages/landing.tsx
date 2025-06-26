@@ -365,72 +365,72 @@ export default function Landing() {
         </div>
 
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-          {/* Header */}
-          <div className="text-center mb-16 lg:mb-20">
-            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-6 py-3 mb-8">
+          {/* Header - Más compacto */}
+          <div className="text-center mb-8 lg:mb-12">
+            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-4 py-2 mb-4">
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-[#007AFF] font-semibold text-sm">Funcionalidades Principales</span>
+              <span className="text-[#007AFF] font-semibold text-xs">Funcionalidades Principales</span>
             </div>
-            <h2 className="text-4xl lg:text-6xl xl:text-7xl font-black text-gray-900 mb-6 tracking-tight">
+            <h2 className="text-3xl lg:text-5xl xl:text-6xl font-black text-gray-900 mb-4 tracking-tight">
               Todo en una
               <span className="block bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 plataforma
               </span>
             </h2>
-            <p className="text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Diseñada para empresas que buscan <span className="text-gray-900 font-semibold">eficiencia sin complicaciones</span>
             </p>
           </div>
           
-          {/* Features Grid - App-like Design */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+          {/* Features Grid - Altura uniforme y más compacto */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <div 
                 key={index} 
-                className="group relative"
+                className="group relative h-full"
               >
-                {/* Feature Card with App Aesthetic */}
-                <div className="relative bg-white rounded-3xl p-8 lg:p-10 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-2 backdrop-blur-xl">
-                  {/* Icon Container */}
-                  <div className="relative mb-6">
-                    <div className="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25 group-hover:shadow-xl group-hover:shadow-[#007AFF]/30 transition-all duration-500">
-                      <feature.icon className="w-8 h-8 lg:w-10 lg:h-10 text-white" />
+                {/* Feature Card con altura fija */}
+                <div className="relative bg-white rounded-2xl p-6 lg:p-8 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                  {/* Icon Container - Más pequeño */}
+                  <div className="relative mb-4">
+                    <div className="w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25 group-hover:shadow-xl group-hover:shadow-[#007AFF]/30 transition-all duration-500">
+                      <feature.icon className="w-6 h-6 lg:w-8 lg:h-8 text-white" />
                     </div>
                     {/* Glow Effect */}
-                    <div className="absolute inset-0 w-16 h-16 lg:w-20 lg:h-20 bg-[#007AFF]/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    <div className="absolute inset-0 w-12 h-12 lg:w-16 lg:h-16 bg-[#007AFF]/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   </div>
                   
-                  {/* Content */}
-                  <div className="space-y-3">
-                    <h3 className="text-xl lg:text-2xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors duration-300">
+                  {/* Content - Flex para distribución uniforme */}
+                  <div className="flex-1 flex flex-col">
+                    <h3 className="text-lg lg:text-xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors duration-300 mb-2">
                       {feature.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed lg:text-lg">
+                    <p className="text-gray-600 leading-relaxed text-sm lg:text-base flex-1">
                       {feature.description}
                     </p>
                   </div>
 
                   {/* Hover Indicator */}
-                  <div className="absolute top-4 right-4 w-2 h-2 bg-[#007AFF] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute top-3 right-3 w-2 h-2 bg-[#007AFF] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   {/* Background Gradient on Hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/5 via-transparent to-blue-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#007AFF]/5 via-transparent to-blue-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Bottom CTA */}
-          <div className="text-center mt-16 lg:mt-20">
-            <div className="inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl px-8 py-6 shadow-lg">
+          {/* Bottom CTA - Más compacto */}
+          <div className="text-center mt-8 lg:mt-12">
+            <div className="inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl px-6 py-4 shadow-lg">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-gray-700 font-medium">Más de 500 empresas ya lo usan</span>
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-gray-700 font-medium text-sm">Más de 500 empresas ya lo usan</span>
               </div>
-              <div className="w-px h-6 bg-gray-300"></div>
+              <div className="w-px h-4 bg-gray-300"></div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-[#007AFF] rounded-full"></div>
-                <span className="text-gray-700 font-medium">Implementación en 24 horas</span>
+                <div className="w-2 h-2 bg-[#007AFF] rounded-full"></div>
+                <span className="text-gray-700 font-medium text-sm">Implementación en 24 horas</span>
               </div>
             </div>
           </div>
