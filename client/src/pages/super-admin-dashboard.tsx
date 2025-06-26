@@ -82,28 +82,42 @@ export default function SuperAdminDashboard() {
     queryKey: ['/api/super-admin/stats'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
+      if (!token) return null;
+      
       const response = await fetch('/api/super-admin/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch stats');
+      if (!response.ok) {
+        if (response.status === 401) return null;
+        throw new Error('Failed to fetch stats');
+      }
       return response.json();
     },
+    retry: false,
+    refetchOnWindowFocus: false
   });
 
   const { data: companies, isLoading: companiesLoading } = useQuery<CompanyWithStats[]>({
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
+      if (!token) return [];
+      
       const response = await fetch('/api/super-admin/companies', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch companies');
+      if (!response.ok) {
+        if (response.status === 401) return [];
+        throw new Error('Failed to fetch companies');
+      }
       return response.json();
     },
+    retry: false,
+    refetchOnWindowFocus: false
   });
 
   const handleLogout = () => {

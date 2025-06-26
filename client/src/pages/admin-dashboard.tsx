@@ -5,7 +5,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
+// Calendar component removed to prevent frame errors
 import { 
   Clock, 
   Users, 
@@ -30,14 +30,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-
-  // Función para manejar clics en días del calendario
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-    }
-  };
+  // Calendar functionality removed to prevent frame errors
 
   // Update current time every second
   useEffect(() => {
@@ -186,69 +179,7 @@ export default function AdminDashboard() {
     return 'No hay fichajes recientes';
   };
 
-  // Get vacation details for a specific date
-  const getVacationDetailsForDate = (date: Date) => {
-    const approved = approvedVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    }).map((req: any) => ({
-      ...req,
-      userName: req.userName || req.fullName || 'Empleado',
-      status: 'approved'
-    })) || [];
-
-    const pending = pendingVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    }).map((req: any) => ({
-      ...req,
-      userName: req.userName || req.fullName || 'Empleado',
-      status: 'pending'
-    })) || [];
-
-    return [...approved, ...pending];
-  };
-
-  // Check if date has events
-  const getDateEvents = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const events = [];
-
-    // Check holidays
-    const holiday = allHolidays.find(h => h.date === dateStr);
-    if (holiday) {
-      events.push({ type: 'holiday', name: holiday.name });
-    }
-
-    // Check employee vacations (approved and pending)
-    const approvedVacs = approvedVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    });
-
-    const pendingVacs = pendingVacations?.filter((req: any) => {
-      const startDate = startOfDay(parseISO(req.startDate));
-      const endDate = startOfDay(parseISO(req.endDate));
-      const targetDate = startOfDay(date);
-      return targetDate >= startDate && targetDate <= endDate;
-    });
-
-    if (approvedVacs?.length) {
-      events.push({ type: 'vacation', count: approvedVacs.length, subtype: 'approved' });
-    }
-
-    if (pendingVacs?.length) {
-      events.push({ type: 'vacation', count: pendingVacs.length, subtype: 'pending' });
-    }
-
-    return events;
-  };
+  // Calendar functions removed to prevent frame errors
 
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50">
@@ -397,99 +328,30 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Calendar - Simple and Compact */}
+              {/* Calendar Replacement - Simple Grid */}
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="p-4">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={es}
-                    className="w-full mx-auto"
-                    modifiers={{
-                      nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date)),
-                      approvedVacation: approvedVacations.map(v => {
-                        const dates = [];
-                        const start = parseISO(v.startDate);
-                        const end = parseISO(v.endDate);
-                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-                          dates.push(new Date(date));
-                        }
-                        return dates;
-                      }).flat()
-                    }}
-                    modifiersStyles={{
-                      nationalHoliday: { 
-                        backgroundColor: '#fee2e2', 
-                        color: '#dc2626', 
-                        fontWeight: '600'
-                      },
-                      customHoliday: { 
-                        backgroundColor: '#fed7aa', 
-                        color: '#d97706', 
-                        fontWeight: '600'
-                      },
-                      approvedVacation: { 
-                        backgroundColor: '#dcfce7', 
-                        color: '#16a34a', 
-                        fontWeight: '600'
-                      }
-                    }}
-                  />
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {format(new Date(), 'MMMM yyyy', { locale: es })}
+                    </h3>
+                  </div>
+                  
+                  <div className="text-center text-gray-500 py-8">
+                    <CalendarDays className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-sm">Calendario simplificado</p>
+                    <p className="text-xs mt-1">Vista de eventos disponible abajo</p>
+                  </div>
                 </div>
 
-                {/* Event Details for Selected Date */}
-                {selectedDate && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4" />
-                      {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
-                    </h4>
-                    {(() => {
-                      const events = getDateEvents(selectedDate);
-                      const vacations = getVacationDetailsForDate(selectedDate);
-                      
-                      if (events.length === 0 && vacations.length === 0) {
-                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
-                      }
-                      
-                      return (
-                        <div className="space-y-3">
-                          {/* Festivos */}
-                          {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                              <div className={`w-3 h-3 rounded-full ${
-                                event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
-                              }`}></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                                <p className="text-xs text-gray-600">
-                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                          
-                          {/* Vacaciones aprobadas */}
-                          {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-                              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {vacation.userName} - Vacaciones
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                {/* Today's Events */}
+                <div className="border-t border-gray-200 p-4 bg-gray-50">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Eventos de Hoy
+                  </h4>
+                  <p className="text-sm text-gray-500">No hay eventos programados para hoy</p>
+                </div>
               </div>
 
               {/* Pending Requests Section */}

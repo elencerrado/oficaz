@@ -8,6 +8,7 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import { useEffect, useState } from 'react';
+import type { SubscriptionFeatures } from '@/lib/feature-restrictions';
 
 interface WorkSession {
   id: number;
@@ -23,8 +24,8 @@ export default function EmployeeDashboard() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   
-  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
-  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  // Lógica inteligente: mostrar logo solo si existe
+  const shouldShowLogo = company?.logoUrl;
   const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
     return localStorage.getItem('hasVacationUpdates') === 'true';
   });
@@ -61,7 +62,7 @@ export default function EmployeeDashboard() {
   });
 
   // Get vacation requests with real-time updates for notifications
-  const { data: vacationRequests = [] } = useQuery({
+  const { data: vacationRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
     refetchInterval: 10000, // Check every 10 seconds for vacation updates
@@ -71,7 +72,7 @@ export default function EmployeeDashboard() {
 
   // Check for vacation updates - clear notification when back on dashboard
   useEffect(() => {
-    if (!vacationRequests?.length) return;
+    if (!Array.isArray(vacationRequests) || !vacationRequests.length) return;
     
     const lastCheckTime = localStorage.getItem('lastVacationCheck');
     const lastCheckDate = lastCheckTime ? new Date(lastCheckTime) : new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -359,7 +360,7 @@ export default function EmployeeDashboard() {
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
               <img 
-                src={company.logoUrl} 
+                src={company?.logoUrl ?? ''} 
                 alt={company.name} 
                 className="h-16 w-auto mx-auto object-contain filter brightness-0 invert"
               />
@@ -375,7 +376,7 @@ export default function EmployeeDashboard() {
         <div className="px-6 mb-6">
           <div className="grid grid-cols-3 gap-6">
             {menuItems.map((item, index) => {
-              const isFeatureDisabled = item.feature && !hasAccess(item.feature);
+              const isFeatureDisabled = item.feature && typeof item.feature === 'string' && !hasAccess(item.feature as any);
               
               return (
                 <div key={index} className="flex flex-col items-center">
@@ -400,7 +401,7 @@ export default function EmployeeDashboard() {
                         ? 'bg-gray-400 cursor-not-allowed opacity-50' 
                         : 'bg-blue-500 hover:bg-blue-600 hover:shadow-xl transform hover:scale-105'
                     }`}
-                    disabled={isFeatureDisabled}
+                    disabled={Boolean(isFeatureDisabled)}
                   >
                     <item.icon className={`h-12 w-12 ${
                       isFeatureDisabled ? 'text-gray-300' : 'text-white'

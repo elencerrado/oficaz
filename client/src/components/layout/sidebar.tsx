@@ -14,11 +14,11 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
-  const { user, company, subscription, logout } = useAuth();
+  const { user, company, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
   
-  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
-  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  // Lógica inteligente: mostrar logo solo si existe
+  const shouldShowLogo = company?.logoUrl;
 
   const { data: unreadCount } = useQuery({
     queryKey: ['/api/messages/unread-count'],
@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       
       {/* Sidebar */}
       <nav className={`
-        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
+        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300 flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
         {/* Fixed Company header */}
@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
               <img 
-                src={company.logoUrl} 
+                src={company?.logoUrl ?? ''} 
                 alt={company.name} 
                 className="h-6 w-auto object-contain flex-shrink-0"
               />

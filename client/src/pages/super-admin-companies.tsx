@@ -59,14 +59,20 @@ export default function SuperAdminCompanies() {
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
+      if (!token) return [];
+      
       const response = await fetch('/api/super-admin/companies', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch companies');
+      if (!response.ok) {
+        if (response.status === 401) return [];
+        throw new Error('Failed to fetch companies');
+      }
       return response.json();
     },
+    refetchOnWindowFocus: false,
     retry: false,
   });
 
