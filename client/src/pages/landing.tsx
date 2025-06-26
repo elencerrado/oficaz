@@ -91,8 +91,8 @@ export default function Landing() {
       features: [
         "Empleados ilimitados",
         "Todas las funciones Pro",
-        "API personalizada",
-        "Integración avanzada",
+        "Integraciones avanzadas",
+        "Personalización completa",
         "Soporte 24/7",
         "Gerente de cuenta dedicado"
       ],
@@ -728,75 +728,115 @@ export default function Landing() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Precios transparentes y justos
+      <section id="pricing" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
+        {/* Modern Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full opacity-30"
+               style={{
+                 backgroundImage: `radial-gradient(circle at 20% 20%, #007AFF20 0%, transparent 50%), 
+                                  radial-gradient(circle at 80% 80%, #8B5CF620 0%, transparent 50%),
+                                  linear-gradient(135deg, #1F293700 0%, #1F293720 100%)`
+               }}></div>
+          <div className="absolute top-10 right-10 w-96 h-96 bg-gradient-to-r from-[#007AFF]/10 to-cyan-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+          {/* Header */}
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3 mb-8">
+              <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
+              <span className="text-white font-semibold">Planes Oficaz</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight">
+              Precios que
+              <span className="bg-gradient-to-r from-[#007AFF] via-cyan-400 to-blue-300 bg-clip-text text-transparent"> convencen</span>
             </h2>
-            <p className="text-xl text-gray-600">
-              Elige el plan que mejor se adapte a tu empresa
+            <p className="text-xl md:text-2xl text-white/80 max-w-4xl mx-auto leading-relaxed">
+              Transparentes, justos y <span className="text-white font-semibold">sin sorpresas</span>
             </p>
           </div>
           
+          {/* Pricing Cards */}
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'border-[#007AFF] border-2 shadow-xl' : 'border shadow-lg'}`}>
+              <div key={index} className={`relative group ${plan.popular ? 'scale-105' : ''}`}>
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-[#007AFF] text-white px-4 py-1">
-                      Más Popular
-                    </Badge>
+                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+                    <div className="bg-gradient-to-r from-[#007AFF] to-cyan-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-2xl">
+                      ⭐ Más Elegido
+                    </div>
                   </div>
                 )}
                 
-                <CardContent className="p-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                    <p className="text-gray-600 mb-4">{plan.description}</p>
+                <div className={`relative backdrop-blur-xl rounded-3xl p-8 border transition-all duration-700 group-hover:scale-105 group-hover:-translate-y-2 ${
+                  plan.popular 
+                    ? 'bg-white/20 border-[#007AFF]/50 shadow-2xl shadow-[#007AFF]/25' 
+                    : 'bg-white/10 border-white/20 hover:bg-white/15 shadow-xl'
+                }`}>
+                  
+                  {/* Plan Header */}
+                  <div className="text-center mb-8">
+                    <h3 className="text-3xl font-bold text-white mb-3">{plan.name}</h3>
+                    <p className="text-white/70 mb-6">{plan.description}</p>
                     <div className="mb-6">
-                      <span className="text-4xl font-bold text-gray-900">€{plan.price}</span>
-                      <span className="text-gray-600">/mes</span>
+                      <span className="text-6xl font-black text-white">€{plan.price}</span>
+                      <span className="text-white/70 text-xl">/mes</span>
                     </div>
                   </div>
                   
-                  <ul className="space-y-3 mb-6">
+                  {/* Features */}
+                  <ul className="space-y-4 mb-8">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                        <span className="text-gray-700">{feature}</span>
+                        <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                          <CheckCircle className="w-4 h-4 text-green-400" />
+                        </div>
+                        <span className="text-white/90 font-medium">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   
+                  {/* CTA Button */}
                   <Link href="/request-code">
-                    <Button 
-                      className={`w-full ${plan.popular ? 'bg-[#007AFF] hover:bg-[#0056CC] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'}`}
-                    >
-                      Empezar Prueba Gratis
-                    </Button>
+                    <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                      plan.popular
+                        ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
+                        : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
+                    }`}>
+                      Empezar Gratis
+                    </button>
                   </Link>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
           
-          <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">
-              <strong>30 días de prueba gratuita</strong> • Sin tarjeta de crédito • Cancela cuando quieras
-            </p>
-            <div className="flex justify-center items-center space-x-8 text-sm text-gray-500">
-              <div className="flex items-center">
-                <Building2 className="w-4 h-4 mr-2" />
-                +500 empresas confían en nosotros
-              </div>
-              <div className="flex items-center">
-                <Smartphone className="w-4 h-4 mr-2" />
-                Apps móviles nativas
-              </div>
-              <div className="flex items-center">
-                <Globe className="w-4 h-4 mr-2" />
-                Soporte 24/7 en español
+          {/* Bottom Section */}
+          <div className="text-center mt-16">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-4xl mx-auto">
+              <p className="text-white/90 text-lg mb-6">
+                <span className="font-bold text-white">30 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white/70">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 bg-[#007AFF]/20 rounded-xl flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-[#007AFF]" />
+                  </div>
+                  <span className="font-medium">+500 empresas activas</span>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <Smartphone className="w-5 h-5 text-green-400" />
+                  </div>
+                  <span className="font-medium">Apps móviles incluidas</span>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <span className="font-medium">Soporte 24/7 en español</span>
+                </div>
               </div>
             </div>
           </div>
