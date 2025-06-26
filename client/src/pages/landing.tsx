@@ -516,6 +516,22 @@ export default function Landing() {
                       <span className="text-sm text-gray-600 font-medium">Desconectado</span>
                     </div>
                   </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        AS
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">Ana Sánchez</div>
+                        <div className="text-sm text-gray-500">Empleada</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
