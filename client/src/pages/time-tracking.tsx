@@ -70,6 +70,7 @@ export default function TimeTracking() {
     clockOut: '',
     date: '',
   });
+  const [showFilters, setShowFilters] = useState(true);
 
   // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
@@ -536,177 +537,190 @@ export default function TimeTracking() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>{getFilterTitle()} ({filteredSessions.length})</span>
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
 
         {/* Filters Section - Integrated between header and table */}
-        <div className="px-6 py-4 border-b bg-gray-50">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
-            {/* Left side - Employee Filter */}
-            <div className="flex flex-col space-y-2">
-              <label className="text-sm font-medium text-gray-700">Empleado</label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Seleccionar empleado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="p-2">
-                    <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input
-                        placeholder="Buscar empleado..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 h-8"
-                      />
+        {showFilters && (
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+              {/* Left side - Employee Filter */}
+              <div className="flex flex-col space-y-2">
+                <label className="text-sm font-medium text-gray-700">Empleado</label>
+                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Seleccionar empleado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <div className="p-2">
+                      <div className="relative mb-2">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="Buscar empleado..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 h-8"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <SelectItem value="all">Todos los empleados</SelectItem>
-                  {(employeesList || [])
-                    .filter((employee: any) => 
-                      employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((employee: any) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.fullName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    <SelectItem value="all">Todos los empleados</SelectItem>
+                    {(employeesList || [])
+                      .filter((employee: any) => 
+                        employee.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((employee: any) => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Right side - Date Filters */}
-            {/* ⚠️ CRÍTICO: NO MODIFICAR ESTE LAYOUT - IMPLEMENTACIÓN FINAL BLINDADA */}
-            {/* Layout perfecto: 5 botones uniformes en línea horizontal con distribución completa */}
-            {/* flex-1 + gap-2 + text-xs + text-center = distribución perfecta sin espacios vacíos */}
-            <div className="flex flex-col space-y-2 lg:col-span-2">
-              <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
-              <div className="flex items-center gap-2 w-full">
-                {/* ⚠️ TODOS LOS BOTONES DEBEN MANTENER: flex-1 text-xs font-normal text-center */}
-                <Button
-                  variant={dateFilter === 'today' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => {
-                    setDateFilter('today');
-                    setSelectedStartDate(null);
-                    setSelectedEndDate(null);
-                    setStartDate('');
-                    setEndDate('');
-                  }}
-                  className="h-10 text-xs font-normal flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
-                >
-                  Hoy
-                </Button>
-                
-                <DatePickerDay
-                  date={dateFilter === 'day' ? currentDate : undefined}
-                  onDateChange={(date) => {
-                    if (date) {
-                      setCurrentDate(date);
-                      setDateFilter('day');
+              {/* Right side - Date Filters */}
+              {/* ⚠️ CRÍTICO: NO MODIFICAR ESTE LAYOUT - IMPLEMENTACIÓN FINAL BLINDADA */}
+              {/* Layout perfecto: 5 botones uniformes en línea horizontal con distribución completa */}
+              {/* flex-1 + gap-2 + text-xs + text-center = distribución perfecta sin espacios vacíos */}
+              <div className="flex flex-col space-y-2 lg:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
+                <div className="flex items-center gap-2 w-full">
+                  {/* ⚠️ TODOS LOS BOTONES DEBEN MANTENER: flex-1 text-xs font-normal text-center */}
+                  <Button
+                    variant={dateFilter === 'today' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('today');
                       setSelectedStartDate(null);
                       setSelectedEndDate(null);
                       setStartDate('');
                       setEndDate('');
+                    }}
+                    className="h-10 text-xs font-normal flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
+                  >
+                    Hoy
+                  </Button>
+                  
+                  <DatePickerDay
+                    date={dateFilter === 'day' ? currentDate : undefined}
+                    onDateChange={(date) => {
+                      if (date) {
+                        setCurrentDate(date);
+                        setDateFilter('day');
+                        setSelectedStartDate(null);
+                        setSelectedEndDate(null);
+                        setStartDate('');
+                        setEndDate('');
+                      }
+                    }}
+                    buttonText={dateFilter === 'day' 
+                      ? format(currentDate, 'd MMM yyyy', { locale: es })
+                      : 'Día'
                     }
-                  }}
-                  buttonText={dateFilter === 'day' 
-                    ? format(currentDate, 'd MMM yyyy', { locale: es })
-                    : 'Día'
-                  }
-                  className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
-                    dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                  )}
-                />
+                    className={cn(
+                      "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
+                      dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                    )}
+                  />
 
-                <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={dateFilter === 'month' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
-                    >
-                      {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2" align="start">
-                    <div className="space-y-1 max-h-60 overflow-y-auto">
-                      {availableMonths.map((monthKey: string) => {
-                        const [year, month] = monthKey.split('-');
-                        const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-                        return (
-                          <Button
-                            key={monthKey}
-                            variant="ghost"
-                            className="w-full justify-start text-sm"
-                            onClick={() => {
-                              setCurrentMonth(monthDate);
-                              setDateFilter('month');
-                              setIsMonthDialogOpen(false);
-                              setSelectedStartDate(null);
-                              setSelectedEndDate(null);
-                              setStartDate('');
-                              setEndDate('');
-                            }}
-                          >
-                            {format(monthDate, 'MMMM yyyy', { locale: es })}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={dateFilter === 'month' ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center" // ⚠️ NO MODIFICAR: tipografía uniforme
+                      >
+                        {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="start">
+                      <div className="space-y-1 max-h-60 overflow-y-auto">
+                        {availableMonths.map((monthKey: string) => {
+                          const [year, month] = monthKey.split('-');
+                          const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                          return (
+                            <Button
+                              key={monthKey}
+                              variant="ghost"
+                              className="w-full justify-start text-sm"
+                              onClick={() => {
+                                setCurrentMonth(monthDate);
+                                setDateFilter('month');
+                                setIsMonthDialogOpen(false);
+                                setSelectedStartDate(null);
+                                setSelectedEndDate(null);
+                                setStartDate('');
+                                setEndDate('');
+                              }}
+                            >
+                              {format(monthDate, 'MMMM yyyy', { locale: es })}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
 
-                <DatePickerPeriod
-                  startDate={selectedStartDate}
-                  endDate={selectedEndDate}
-                  onStartDateChange={(date) => {
-                    setSelectedStartDate(date || null);
-                    setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
-                    if (date && selectedEndDate) {
-                      setDateFilter('custom');
-                    }
-                  }}
-                  onEndDateChange={(date) => {
-                    setSelectedEndDate(date || null);
-                    setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
-                    if (selectedStartDate && date) {
-                      setDateFilter('custom');
-                    }
-                  }}
-                  className={cn(
-                    "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
-                    dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                  )}
-                />
+                  <DatePickerPeriod
+                    startDate={selectedStartDate}
+                    endDate={selectedEndDate}
+                    onStartDateChange={(date) => {
+                      setSelectedStartDate(date || null);
+                      setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (date && selectedEndDate) {
+                        setDateFilter('custom');
+                      }
+                    }}
+                    onEndDateChange={(date) => {
+                      setSelectedEndDate(date || null);
+                      setEndDate(date ? format(date, 'yyyy-MM-dd') : '');
+                      if (selectedStartDate && date) {
+                        setDateFilter('custom');
+                      }
+                    }}
+                    className={cn(
+                      "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center", // ⚠️ NO MODIFICAR: tipografía uniforme
+                      dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                    )}
+                  />
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDateFilter('all');
-                    setSelectedEmployee('all');
-                    setSelectedStartDate(null);
-                    setSelectedEndDate(null);
-                    setStartDate('');
-                    setEndDate('');
-                    setCurrentDate(new Date());
-                    setCurrentMonth(new Date());
-                  }}
-                  className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
-                >
-                  Limpiar filtros
-                </Button>
-                {/* ⚠️ FIN ZONA CRÍTICA - Layout de filtros completamente optimizado y blindado */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDateFilter('all');
+                      setSelectedEmployee('all');
+                      setSelectedStartDate(null);
+                      setSelectedEndDate(null);
+                      setStartDate('');
+                      setEndDate('');
+                      setCurrentDate(new Date());
+                      setCurrentMonth(new Date());
+                    }}
+                    className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
+                  >
+                    Limpiar filtros
+                  </Button>
+                  {/* ⚠️ FIN ZONA CRÍTICA - Layout de filtros completamente optimizado y blindado */}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <CardContent className="p-0">
           <div className="overflow-x-auto">
