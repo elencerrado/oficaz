@@ -854,9 +854,9 @@ export default function Landing() {
           
           {/* Description */}
           <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-4xl mx-auto leading-relaxed">
-            No más papeles perdidos, no más horas extras calculando nóminas, 
-            no más empleados perdidos en procesos complicados. 
-            <span className="text-white font-semibold">Oficaz lo hace simple.</span>
+            No más horas perdidas enviando archivos, controlando horarios manualmente, 
+            calculando vacaciones o realizando tareas repetitivas que te roban tiempo. 
+            <span className="text-white font-semibold">Oficaz automatiza lo tedioso para que te enfoques en lo importante.</span>
           </p>
           
           {/* Benefits Grid */}
