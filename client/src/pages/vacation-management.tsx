@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DatePickerPeriod } from "@/components/ui/date-picker";
+// DatePickerPeriod eliminado por problemas de frame - usando selector simple
 import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -738,12 +738,32 @@ export default function VacationManagement() {
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
                       Nuevo período de vacaciones
                     </label>
-                    <DatePickerPeriod
-                      startDate={editDates.startDate}
-                      endDate={editDates.endDate}
-                      onStartDateChange={(date) => setEditDates(prev => ({ ...prev, startDate: date || null }))}
-                      onEndDateChange={(date) => setEditDates(prev => ({ ...prev, endDate: date || null }))}
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Fecha inicio</label>
+                        <Input
+                          type="date"
+                          value={editDates.startDate ? editDates.startDate.toISOString().split('T')[0] : ''}
+                          onChange={(e) => setEditDates(prev => ({ 
+                            ...prev, 
+                            startDate: e.target.value ? new Date(e.target.value) : null 
+                          }))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Fecha fin</label>
+                        <Input
+                          type="date"
+                          value={editDates.endDate ? editDates.endDate.toISOString().split('T')[0] : ''}
+                          onChange={(e) => setEditDates(prev => ({ 
+                            ...prev, 
+                            endDate: e.target.value ? new Date(e.target.value) : null 
+                          }))}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
