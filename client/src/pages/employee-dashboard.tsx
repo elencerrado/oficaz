@@ -30,9 +30,16 @@ export default function EmployeeDashboard() {
   });
   const [lastVacationCheck, setLastVacationCheck] = useState<any[]>([]);
 
-  // Get active work session
+  // Data fetching with real-time updates
   const { data: activeSession } = useQuery<WorkSession>({
     queryKey: ['/api/work-sessions/active'],
+    enabled: !!user,
+    staleTime: 10 * 1000, // 10 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 3 * 1000, // Poll every 3 seconds for clock status
+    refetchIntervalInBackground: true, // Continue polling in background
   });
 
   // Get unread messages count with real-time updates

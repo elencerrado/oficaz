@@ -83,11 +83,28 @@ export default function EmployeeTimeTracking() {
     },
   });
 
+  // Data fetching - Real-time updates
+  const { data: activeSession, isLoading: activeLoading } = useQuery({
+    queryKey: ['/api/work-sessions/active'],
+    enabled: !!user,
+    staleTime: 10 * 1000, // 10 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 3 * 1000, // Poll every 3 seconds for active session
+    refetchIntervalInBackground: true, // Continue polling in background
+  });
+
   // Get work sessions for current user
   const { data: workSessions = [], isLoading } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
     enabled: !!user,
-    staleTime: 30000, // Cache for 30 seconds to reduce API calls
+    staleTime: 30 * 1000, // 30 seconds for real-time updates
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
+    retryDelay: 500,
+    refetchInterval: 5 * 1000, // Poll every 5 seconds for sessions list
+    refetchIntervalInBackground: true, // Continue polling in background
   });
 
   // Check if user can edit time entries based on company configuration
