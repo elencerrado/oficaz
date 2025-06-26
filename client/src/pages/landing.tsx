@@ -598,6 +598,121 @@ export default function Landing() {
 
           </div>
 
+          {/* Second Row - Vacation and Documents */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-16 lg:mt-20">
+            
+            {/* Vacation Management Preview */}
+            <div className="group relative">
+              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <Calendar className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Gestión de Vacaciones</h3>
+                    <p className="text-blue-500 font-medium">Control visual y automático</p>
+                  </div>
+                </div>
+                
+                {/* Vacation Progress Bars */}
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Juan Ramírez - Días disponibles</span>
+                      <span className="text-sm text-blue-600 font-medium">18/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full w-[60%]"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-green-50/50 rounded-xl border border-green-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Marta Pérez - Días disponibles</span>
+                      <span className="text-sm text-green-600 font-medium">25/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full w-[83%]"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Ana Sánchez - Días disponibles</span>
+                      <span className="text-sm text-orange-600 font-medium">8/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full w-[27%]"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 flex gap-3">
+                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg">
+                    Nueva Solicitud
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Ver Calendario
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Document Management Preview */}
+            <div className="group relative">
+              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+                    <FileText className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-500 transition-colors">Documentos Inteligentes</h3>
+                    <p className="text-amber-500 font-medium">Arrastra y distribuye automático</p>
+                  </div>
+                </div>
+                
+                {/* Drag & Drop Area */}
+                <div className="border-2 border-dashed border-amber-300 rounded-xl p-6 bg-amber-50/30 hover:bg-amber-50/50 transition-colors mb-4">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
+                      <FileText className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Arrastra nóminas aquí</p>
+                    <p className="text-xs text-gray-500">Se envían automáticamente a cada empleado</p>
+                  </div>
+                </div>
+                
+                {/* Document Distribution Status */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-sm text-gray-700">Nómina Junio → Juan Ramírez</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Enviado</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <span className="text-sm text-gray-700">Nómina Junio → Marta Pérez</span>
+                    </div>
+                    <span className="text-xs text-green-600 font-medium">Enviado</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-lg border border-amber-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-gray-700">Nómina Junio → Ana Sánchez</span>
+                    </div>
+                    <span className="text-xs text-amber-600 font-medium">Enviando...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           {/* Feature Cards Row */}
           <div className="mt-16 lg:mt-20">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
