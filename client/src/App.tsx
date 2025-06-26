@@ -179,6 +179,25 @@ function Router() {
         </PublicRoute>
       </Route>
 
+      {/* Employee-specific routes */}
+      <Route path="/:companyAlias/employee/documentos">
+        <ProtectedRoute>
+          <EmployeeDocuments />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/employee/mensajes">
+        <ProtectedRoute>
+          <EmployeeMessages />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/employee/recordatorios">
+        <ProtectedRoute>
+          <EmployeeReminders />
+        </ProtectedRoute>
+      </Route>
+
       {/* Employee dashboard route */}
       <Route path="/:companyAlias">
         {(params) => (
@@ -245,25 +264,31 @@ function Router() {
 
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? <EmployeeDocuments /> : <AdminDocuments />}
-          </AppLayout>
+          {user?.role === 'employee' ? <EmployeeDocuments /> : (
+            <AppLayout>
+              <AdminDocuments />
+            </AppLayout>
+          )}
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? <EmployeeMessages /> : <Messages />}
-          </AppLayout>
+          {user?.role === 'employee' ? <EmployeeMessages /> : (
+            <AppLayout>
+              <Messages />
+            </AppLayout>
+          )}
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
-          <AppLayout>
-            {user?.role === 'employee' ? <EmployeeReminders /> : <Reminders />}
-          </AppLayout>
+          {user?.role === 'employee' ? <EmployeeReminders /> : (
+            <AppLayout>
+              <Reminders />
+            </AppLayout>
+          )}
         </ProtectedRoute>
       </Route>
 

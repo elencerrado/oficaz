@@ -129,6 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. PÁGINAS DE EMPLEADOS COMPLETAMENTE FUNCIONALES: Documentos, mensajes y recordatorios implementados
+  - Eliminadas páginas placeholder "Habilitado" y reemplazadas por funcionalidades completas
+  - employee-documents.tsx: sistema completo de subida, categorización y notificaciones de documentos
+  - employee-messages.tsx: chat en tiempo real con managers, indicadores de lectura y envío de mensajes
+  - employee-reminders.tsx: sistema tipo Google Keep con colores, prioridades, programación y gestión completa
+  - Rutas específicas creadas: /:companyAlias/employee/documentos, /mensajes, /recordatorios
+  - Dashboard de empleados actualizado para apuntar a nuevas rutas específicas
+  - Las funcionalidades se muestran cuando están habilitadas por super admin, independientemente del plan
+  - Diseño consistent con gradiente empleado (bg-employee-gradient) y navegación móvil optimizada
 - June 26, 2025. ACTUALIZACIONES TIEMPO REAL IMPLEMENTADAS: Fichajes se muestran instantáneamente
   - Sistema de refetch automático cada 3 segundos para datos de fichajes de empleados
   - Indicador visual "Actualizando..." con punto verde parpadeante durante fetch

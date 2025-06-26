@@ -280,7 +280,7 @@ export default function EmployeeDashboard() {
     { 
       icon: FileText, 
       title: 'Documentos', 
-      route: `/${companyAlias}/documentos`,
+      route: `/${companyAlias}/employee/documentos`,
       notification: hasDocumentRequests || hasNewDocuments,
       notificationType: hasDocumentRequests ? 'red' : 'green',
       feature: 'documents'
@@ -288,14 +288,14 @@ export default function EmployeeDashboard() {
     { 
       icon: Bell, 
       title: 'Recordatorios', 
-      route: `/${companyAlias}/recordatorios`,
+      route: `/${companyAlias}/employee/recordatorios`,
       notification: false,
       feature: 'reminders'
     },
     { 
       icon: MessageSquare, 
       title: 'Mensajes', 
-      route: `/${companyAlias}/mensajes`,
+      route: `/${companyAlias}/employee/mensajes`,
       notification: (unreadCount?.count || 0) > 0,
       feature: 'messages'
     },
