@@ -337,8 +337,8 @@ export default function Landing() {
               </span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
-              Diseño que realmente
-              <span className="text-[#007AFF] block md:inline"> enamora</span>
+              🚀 NUEVA SECCIÓN ACTUALIZADA 🚀
+              <span className="text-[#007AFF] block md:inline"> Ver los cambios</span>
             </h2>
             <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Interfaz moderna diseñada para ser intuitiva desde el primer uso
