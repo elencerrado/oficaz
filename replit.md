@@ -129,13 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 26, 2025. SISTEMA DE LOGOS Y ROUTING COMPLETAMENTE CORREGIDO: Plan Basic ahora respetado
-  - Corregida lógica shouldShowLogo en todos los componentes: mobile-header, sidebar, employee-dashboard, time-tracking, vacation-requests
-  - Plan Basic (logoUpload: false) ahora muestra solo texto del nombre de empresa sin logos
-  - Eliminada aparición temporal de landing page para usuarios autenticados con PublicRoute en ruta raíz
-  - Mensajes de funcionalidades restringidas simplificados: "No está disponible en tu plan"
-  - Handler global de errores mantiene aplicación estable sin overlays de desarrollo
-  - Sistema de restricciones de logos funcionando correctamente según plan de suscripción
+- June 26, 2025. ACTUALIZACIONES TIEMPO REAL IMPLEMENTADAS: Fichajes se muestran instantáneamente
+  - Sistema de refetch automático cada 3 segundos para datos de fichajes de empleados
+  - Indicador visual "Actualizando..." con punto verde parpadeante durante fetch
+  - Timestamp "Última actualización" con hora exacta cuando datos están frescos
+  - Configuración staleTime: 0 para considerar datos obsoletos inmediatamente
+  - refetchIntervalInBackground: true para continuar actualizando en segundo plano
+  - Los fichajes ahora aparecen automáticamente sin recargar página cuando empleados fichan
+  - Indicadores visuales en header de tabla muestran estado de sincronización en tiempo real
 - June 26, 2025. ERROR JAVASCRIPT CRÍTICO SOLUCIONADO: Eliminado componente DatePickerPeriod problemático
   - Resuelto error "Cannot read properties of undefined (reading 'frame')" completamente
   - Reemplazado DatePickerPeriod por botón simple funcional sin errores TypeScript

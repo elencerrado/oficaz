@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -60,12 +60,26 @@ export default function TimeTracking() {
     clockOut: '',
     date: '',
   });
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
   // All useQuery hooks
-  const { data: sessions = [], isLoading } = useQuery({
+  const { data: sessions = [], isLoading, isFetching } = useQuery({
     queryKey: ['/api/work-sessions/company'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    refetchInterval: 3000, // Actualización automática cada 3 segundos
+    refetchIntervalInBackground: true, // Continúa actualizando en segundo plano
+    staleTime: 0, // Considera datos obsoletos inmediatamente para refrescar siempre
   });
+
+  // Asegurar que sessions sea un array
+  const sessionsData = Array.isArray(sessions) ? sessions : [];
+
+  // Actualizar timestamp cuando hay nuevos datos
+  useEffect(() => {
+    if (sessionsData.length > 0) {
+      setLastUpdateTime(new Date());
+    }
+  }, [sessionsData]);
 
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
@@ -162,7 +176,7 @@ export default function TimeTracking() {
       sessionsList: filteredSessions,
       availableMonths: months
     };
-  }, [employees, sessions]);
+  }, [employees, sessionsData]);
 
   const filteredSessions = useMemo(() => {
     return (sessionsList || []).filter((session: any) => {
@@ -700,7 +714,23 @@ export default function TimeTracking() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>{getFilterTitle()} ({filteredSessions.length})</span>
+            <div className="flex items-center gap-3">
+              <span>{getFilterTitle()} ({filteredSessions.length})</span>
+              {isFetching && (
+                <div className="flex items-center gap-2 text-green-600">
+                  <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-normal">Actualizando...</span>
+                </div>
+              )}
+              {!isFetching && sessionsData.length > 0 && (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-xs font-normal">
+                    Última actualización: {format(lastUpdateTime, 'HH:mm:ss')}
+                  </span>
+                </div>
+              )}
+            </div>
             <Button variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="w-4 h-4 mr-2" />
               Exportar
