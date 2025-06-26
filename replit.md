@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 26, 2025. Sección de vistas previas implementada con componentes recreados sin capturas
+  - Eliminadas todas las capturas de pantalla por preferencia del usuario
+  - Creadas vistas previas de funcionalidades como interfaces visuales reales
+  - Panel de empleados interactivo con estados en tiempo real (trabajando, pausado, desconectado)
+  - Control de fichajes con datos de ejemplo y botones funcionales
+  - Tarjetas de análisis, notificaciones y seguridad con efectos hover
+  - Nombres realistas: Juan Ramírez, Marta Pérez, Carmen López (administradora)
+  - Efectos visuales modernos: escalado, sombras dinámicas, gradientes sofisticados
 - June 26, 2025. Sección de funcionalidades rediseñada como viewport completo con estética app moderna
   - Altura completa de pantalla: min-h-screen con flex items-center para centrado vertical perfecto
   - Fondo sofisticado: gradiente from-gray-50 via-white to-blue-50/30 con elementos blur sutiles

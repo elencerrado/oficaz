@@ -504,11 +504,11 @@ export default function Landing() {
                   <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        AT
+                        CL
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">Admin Test</div>
-                        <div className="text-sm text-gray-500">Administrador</div>
+                        <div className="font-semibold text-gray-900">Carmen López</div>
+                        <div className="text-sm text-gray-500">Administradora</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
