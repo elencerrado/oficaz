@@ -350,7 +350,7 @@ export default function VacationRequests() {
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-2xl font-light text-blue-300 mb-1 flex items-center justify-center gap-2">
+              <div className="text-2xl font-light text-blue-400 mb-1 flex items-center justify-center gap-2">
                 {totalDays}
                 <Dialog>
                   <DialogTrigger asChild>
@@ -364,24 +364,24 @@ export default function VacationRequests() {
                   >
                     <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
                       <DialogHeader className="mb-4">
-                        <DialogTitle className="text-blue-300 text-lg font-medium">
+                        <DialogTitle className="text-blue-400 text-lg font-medium">
                           ¿Por qué tengo {totalDays} días?
                         </DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 text-sm leading-relaxed text-white/90">
                         <p>
-                          En España te corresponden <span className="font-semibold text-blue-300">{daysPerMonth} días</span> de 
+                          En España te corresponden <span className="font-semibold text-blue-400">{daysPerMonth} días</span> de 
                           vacaciones por cada mes trabajado desde tu fecha de incorporación.
                         </p>
                         <p>
-                          Empezaste el <span className="font-semibold text-emerald-300">
+                          Empezaste el <span className="font-semibold text-green-400">
                           {format(startDate, 'd MMMM yyyy', { locale: es })}</span> y has trabajado{' '}
-                          <span className="font-semibold text-emerald-300">{monthsWorked} meses</span>, lo que te da{' '}
-                          <span className="font-semibold text-blue-300">{calculatedBaseDays} días</span>.
+                          <span className="font-semibold text-green-400">{monthsWorked} meses</span>, lo que te da{' '}
+                          <span className="font-semibold text-blue-400">{calculatedBaseDays} días</span>.
                         </p>
                         {adjustment !== 0 && (
                           <p>
-                            Además te hemos ajustado <span className="font-semibold text-orange-300">
+                            Además te hemos ajustado <span className="font-semibold text-orange-400">
                             {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
                           </p>
                         )}
@@ -393,11 +393,11 @@ export default function VacationRequests() {
               <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-light text-orange-300 mb-1">{usedDays}</div>
+              <div className="text-2xl font-light text-orange-400 mb-1">{usedDays}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Aprobados</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-light text-emerald-300 mb-1">{availableDays}</div>
+              <div className="text-2xl font-light text-green-400 mb-1">{availableDays}</div>
               <div className="text-xs text-white/60 uppercase tracking-wider">Disponibles</div>
             </div>
           </div>
@@ -414,7 +414,7 @@ export default function VacationRequests() {
               <div className="w-full bg-white/10 rounded-2xl h-6 overflow-hidden shadow-inner">
                 {/* Used days */}
                 <div 
-                  className="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 h-full rounded-2xl shadow-lg relative overflow-hidden"
+                  className="bg-blue-500 h-full rounded-2xl shadow-lg relative overflow-hidden"
                   style={{ 
                     '--final-width': `${Math.min(usagePercentage, 100)}%`,
                     animation: 'growWidth 1000ms ease-out 500ms both'
@@ -425,10 +425,8 @@ export default function VacationRequests() {
                 </div>
               </div>
               
-
-              
               {/* Subtle glow effect */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-blue-600/20 blur-sm -z-10"></div>
+              <div className="absolute inset-0 rounded-2xl bg-blue-500/20 blur-sm -z-10"></div>
             </div>
             
             {/* Legend */}
@@ -439,7 +437,7 @@ export default function VacationRequests() {
                   <span>Aprobados</span>
                 </div>
               </div>
-              <span className="text-white/40">{availableDays} días disponibles</span>
+              <span className="text-green-400/70">{availableDays} días disponibles</span>
             </div>
           </div>
         </div>
