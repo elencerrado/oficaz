@@ -428,12 +428,19 @@ export default function SuperAdminInvitations() {
                           variant="outline"
                           size="sm"
                           onClick={() => copyInvitationUrl(invitation.token)}
-                          className="border-white/20 text-white hover:bg-white/10"
+                          className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          title={copiedToken === invitation.token ? "¡Enlace copiado!" : "Copiar enlace de invitación"}
                         >
                           {copiedToken === invitation.token ? (
-                            <Check className="w-4 h-4" />
+                            <>
+                              <Check className="w-4 h-4 mr-1" />
+                              <span className="text-xs font-medium">Copiado</span>
+                            </>
                           ) : (
-                            <Copy className="w-4 h-4" />
+                            <>
+                              <Copy className="w-4 h-4 mr-1" />
+                              <span className="text-xs font-medium">Copiar</span>
+                            </>
                           )}
                         </Button>
                         <Button
