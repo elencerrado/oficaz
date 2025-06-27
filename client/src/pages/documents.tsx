@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -98,6 +98,13 @@ export default function Documents() {
   const pendingRequest = documentRequests.find((req: any) => !req.completed);
   
   console.log('Pending request:', pendingRequest);
+
+  // Mark that user visited documents page for notification clearing
+  useEffect(() => {
+    // Store timestamp when user visits the documents page
+    localStorage.setItem('lastDocumentPageVisit', new Date().toISOString());
+    console.log('📋 Documents page visited - marking timestamp for notification clearing');
+  }, []);
   console.log('User data:', user);
 
   const { data: documents, isLoading, refetch } = useQuery({

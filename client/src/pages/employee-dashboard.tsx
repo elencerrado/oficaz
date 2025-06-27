@@ -171,6 +171,28 @@ export default function EmployeeDashboard() {
     }
   }, [hasVacationUpdates]);
 
+  // Check for document notifications with intelligent state tracking
+  const [hasDocumentRequests, setHasDocumentRequests] = useState(false);
+  const [hasNewDocuments, setHasNewDocuments] = useState(false);
+
+  // Clear document notifications when returning to dashboard (after viewing documents page)
+  useEffect(() => {
+    // Check if user has visited documents page recently
+    const lastDocumentPageVisit = localStorage.getItem('lastDocumentPageVisit');
+    if (lastDocumentPageVisit) {
+      const lastVisitDate = new Date(lastDocumentPageVisit);
+      const timeSinceVisit = Date.now() - lastVisitDate.getTime();
+      
+      // If user visited documents page in the last 30 seconds, clear new documents notification
+      if (timeSinceVisit < 30000) {
+        console.log('📋 Clearing new documents notification - user recently visited documents page');
+        setHasNewDocuments(false);
+        localStorage.setItem('lastDocumentCheck', new Date().toISOString());
+        localStorage.removeItem('lastDocumentPageVisit');
+      }
+    }
+  }, []); // Only run once on mount
+
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
   const isOnVacation = vacationRequests.some((request: any) => 
@@ -179,9 +201,38 @@ export default function EmployeeDashboard() {
     request.endDate.split('T')[0] >= today
   );
 
-  // Check for pending notifications and new documents
-  const hasDocumentRequests = (documentNotifications as any[] || []).length > 0;
-  const hasNewDocuments = (documents as any[] || []).length > 0;
+  // Check document notifications and new documents with proper state logic
+  useEffect(() => {
+    if (!documentNotifications || !documents) return;
+
+    // Check for pending document requests (RED notification)
+    const pendingRequests = (documentNotifications as any[]).filter(notification => 
+      notification.status === 'pending'
+    );
+    const hasPendingRequests = pendingRequests.length > 0;
+    setHasDocumentRequests(hasPendingRequests);
+
+    // Check for new documents (GREEN notification)
+    const lastDocumentCheck = localStorage.getItem('lastDocumentCheck');
+    const lastCheckDate = lastDocumentCheck ? new Date(lastDocumentCheck) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const newDocuments = (documents as any[]).filter((doc: any) => {
+      const docDate = new Date(doc.createdAt);
+      return docDate > lastCheckDate;
+    });
+    
+    const hasRecentDocuments = newDocuments.length > 0;
+    setHasNewDocuments(hasRecentDocuments);
+
+    console.log('📋 Document notifications check:', {
+      pendingRequests: pendingRequests.length,
+      newDocuments: newDocuments.length,
+      lastCheck: lastCheckDate.toISOString(),
+      hasPendingRequests,
+      hasRecentDocuments
+    });
+
+  }, [documentNotifications, documents]);
 
   // Get recent work session for "last clock in" info
   const { data: recentSessions } = useQuery<WorkSession[]>({
