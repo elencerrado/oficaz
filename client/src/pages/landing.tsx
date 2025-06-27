@@ -417,18 +417,16 @@ export default function Landing() {
 
         <div className="w-full max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
           {/* Header - Más compacto */}
-          <div className="text-center mb-6 lg:mb-8">
-            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-4 py-2 mb-4">
+          <div className="text-center mb-16 md:mb-20">
+            <div className="inline-flex items-center gap-2 bg-[#007AFF]/10 backdrop-blur-sm border border-[#007AFF]/20 rounded-full px-6 py-3 mb-8">
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
-              <span className="text-[#007AFF] font-semibold text-xs">Funcionalidades Principales</span>
+              <span className="text-[#007AFF] font-semibold">Funcionalidades Principales</span>
             </div>
-            <h2 className="text-3xl lg:text-5xl xl:text-6xl font-black text-gray-900 mb-4 tracking-tight">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 tracking-tight">
               Todo en una
-              <span className="block bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent">
-                plataforma
-              </span>
+              <span className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-400 bg-clip-text text-transparent"> plataforma</span>
             </h2>
-            <p className="text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               Diseñada para empresas que buscan <span className="text-gray-900 font-semibold">eficiencia sin complicaciones</span>
             </p>
           </div>
@@ -806,7 +804,7 @@ export default function Landing() {
               <div className="w-2 h-2 bg-[#007AFF] rounded-full animate-pulse"></div>
               <span className="text-white font-semibold">Planes Oficaz</span>
             </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
               Precios que
               <span className="bg-gradient-to-r from-[#007AFF] via-cyan-400 to-blue-300 bg-clip-text text-transparent"> convencen</span>
             </h2>
@@ -906,11 +904,9 @@ export default function Landing() {
           </div>
           
           {/* Main Title */}
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-8 tracking-tight leading-tight">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight">
             Transforma tu empresa
-            <span className="block bg-gradient-to-r from-cyan-200 via-white to-blue-200 bg-clip-text text-transparent">
-              en minutos
-            </span>
+            <span className="bg-gradient-to-r from-cyan-200 via-white to-blue-200 bg-clip-text text-transparent"> en minutos</span>
           </h2>
           
           {/* Description */}
