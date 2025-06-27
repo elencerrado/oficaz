@@ -2,7 +2,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -553,20 +554,100 @@ export default function EmployeeDashboard() {
 
         {/* Company Logo and Name - Más grande sin cajón */}
         <div className="flex justify-center mb-3">
-          <div className="text-center">
-            {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-            {shouldShowLogo ? (
-              <img 
-                src={company.logoUrl} 
-                alt={company.name} 
-                className="h-10 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
-              />
-            ) : (
-              <div className="text-white text-base font-medium drop-shadow-lg">
-                {company?.name || 'Mi Empresa'}
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-center hover:scale-105 transition-transform duration-200 cursor-pointer">
+                {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+                {shouldShowLogo ? (
+                  <img 
+                    src={company.logoUrl} 
+                    alt={company.name} 
+                    className="h-10 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                  />
+                ) : (
+                  <div className="text-white text-base font-medium drop-shadow-lg">
+                    {company?.name || 'Mi Empresa'}
+                  </div>
+                )}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 text-white">
+              {/* Tarjeta de Visita de la Empresa */}
+              <div className="space-y-6 p-2">
+                {/* Header con logo o nombre */}
+                <div className="text-center border-b border-white/20 pb-4">
+                  {shouldShowLogo ? (
+                    <img 
+                      src={company.logoUrl} 
+                      alt={company.name} 
+                      className="h-16 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg mb-3"
+                    />
+                  ) : (
+                    <Building2 className="h-16 w-16 mx-auto text-blue-400 mb-3" />
+                  )}
+                  <h2 className="text-xl font-bold text-white">
+                    {company?.name || 'Mi Empresa'}
+                  </h2>
+                </div>
+
+                {/* Información de la empresa */}
+                <div className="space-y-4">
+                  {/* CIF */}
+                  {company?.cif && (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-300">CIF</p>
+                        <p className="font-medium text-white">{company.cif}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dirección Postal */}
+                  {(company?.address || company?.province) && (
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mt-1">
+                        <MapPin className="h-5 w-5 text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-300">Dirección</p>
+                        <div className="font-medium text-white leading-relaxed">
+                          {company?.address && (
+                            <p>{company.address}</p>
+                          )}
+                          {company?.province && (
+                            <p>{company.province}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email de contacto */}
+                  {company?.email && (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-300">Email de contacto</p>
+                        <p className="font-medium text-white">{company.email}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="text-center pt-4 border-t border-white/20">
+                  <p className="text-xs text-gray-400">
+                    Información corporativa
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Menu Grid - Compacto */}

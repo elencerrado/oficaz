@@ -136,6 +136,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Tarjeta de visita empresarial implementada en dashboard empleado
+  - Modal profesional que aparece al hacer clic en logo/nombre de empresa
+  - Información corporativa completa: nombre empresa, CIF, dirección postal completa
+  - Diseño elegante con fondo degradado oscuro y iconos coloridos por sección
+  - Efectos hover y transiciones suaves para mejor experiencia usuario
+  - Responsive y accesible, solo muestra campos con datos reales
+  - Email de contacto incluido usando billingEmail de la empresa
 - June 27, 2025. Chat empleado completamente funcional en desktop y móvil - PROBLEMA CRÍTICO RESUELTO
   - CORREGIDO: Chat empleado ahora visible en ambas versiones (desktop Y móvil)
   - Eliminada clase lg:hidden que ocultaba el chat empleado en pantallas grandes
