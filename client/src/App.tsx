@@ -43,6 +43,7 @@ import SuperAdminPlans from "@/pages/super-admin-plans";
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
 import SuperAdminInvitations from "@/pages/super-admin-invitations";
+import InvitationRegister from "@/pages/invitation-register";
 import QuickAccess from "@/pages/quick-access";
 
 
@@ -178,6 +179,12 @@ function Router() {
       <Route path="/register">
         <PublicRoute>
           <Register />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/registro/invitacion/:token">
+        <PublicRoute>
+          <InvitationRegister />
         </PublicRoute>
       </Route>
 

@@ -2691,6 +2691,42 @@ startxref
     }
   });
 
+  // Validate invitation token
+  app.get('/api/validate-invitation/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      if (!token) {
+        return res.status(400).json({ message: 'Token requerido' });
+      }
+
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).json({ message: 'Invitación no encontrada' });
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(invitation.expiresAt);
+      const isExpired = now > expiresAt;
+      const isUsed = invitation.used;
+      
+      const isValid = !isExpired && !isUsed;
+
+      res.json({
+        email: invitation.email,
+        token: invitation.token,
+        used: invitation.used,
+        expiresAt: invitation.expiresAt,
+        isValid,
+        isExpired
+      });
+    } catch (error) {
+      console.error('Error validating invitation:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   app.get('/api/super-admin/invitations', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {
       const invitations = await storage.getAllInvitationLinks();
