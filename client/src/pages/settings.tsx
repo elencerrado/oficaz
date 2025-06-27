@@ -40,9 +40,7 @@ export default function Settings() {
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
 
-  // Debug: Verificar qué contiene subscription
-  console.log('Settings subscription debug:', subscription);
-  console.log('Settings usageData debug:', usageData);
+
 
 // Component for Account Management
 const AccountManagement = () => {
