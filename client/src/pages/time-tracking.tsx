@@ -1040,7 +1040,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-6 mt-1">
+        <div className="relative h-8 mt-1">
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
             const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
@@ -1050,6 +1050,7 @@ export default function TimeTracking() {
               type: 'start' | 'end';
               sessionIndex: number;
               originalPosition: number;
+              level: number;
             }> = [];
 
             completedSessions.forEach((session: any, sessionIndex: number) => {
@@ -1069,7 +1070,8 @@ export default function TimeTracking() {
                 position: leftPercentage,
                 originalPosition: leftPercentage,
                 type: 'start',
-                sessionIndex
+                sessionIndex,
+                level: 0
               });
 
               // Agregar etiqueta de salida
@@ -1078,51 +1080,40 @@ export default function TimeTracking() {
                 position: leftPercentage + widthPercentage,
                 originalPosition: leftPercentage + widthPercentage,
                 type: 'end',
-                sessionIndex
+                sessionIndex,
+                level: 0
               });
             });
 
             // Ordenar etiquetas por posición
             timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
 
-            // Algoritmo para evitar superposiciones
-            const minDistance = 8; // Distancia mínima entre etiquetas en porcentaje
+            // Sistema de niveles para evitar superposiciones completamente
+            const minDistance = 14; // Distancia mínima para texto "HH:MM"
             const adjustedLabels = [...timeLabels];
             
-            for (let i = 0; i < adjustedLabels.length - 1; i++) {
-              const current = adjustedLabels[i];
-              const next = adjustedLabels[i + 1];
+            // Asignar niveles para evitar superposiciones
+            for (let i = 0; i < adjustedLabels.length; i++) {
+              let currentLevel = 0;
               
-              // Si la distancia es menor que el mínimo, ajustar posiciones
-              if (next.position - current.position < minDistance) {
-                const overlap = minDistance - (next.position - current.position);
+              // Verificar superposición con etiquetas anteriores
+              for (let j = 0; j < i; j++) {
+                const currentPos = adjustedLabels[i].originalPosition;
+                const previousPos = adjustedLabels[j].position;
+                const distance = Math.abs(currentPos - previousPos);
                 
-                // Mover etiquetas hacia los lados para crear espacio
-                if (current.position > overlap / 2) {
-                  current.position -= overlap / 2;
-                } else {
-                  current.position = 0;
-                }
-                
-                if (next.position + overlap / 2 < 100) {
-                  next.position += overlap / 2;
-                } else {
-                  next.position = 100;
-                }
-                
-                // Aplicar cambios a las etiquetas siguientes si es necesario
-                for (let j = i + 2; j < adjustedLabels.length; j++) {
-                  if (adjustedLabels[j].position - adjustedLabels[j - 1].position < minDistance) {
-                    adjustedLabels[j].position = adjustedLabels[j - 1].position + minDistance;
-                    if (adjustedLabels[j].position > 100) adjustedLabels[j].position = 100;
-                  } else {
-                    break;
-                  }
+                // Si están demasiado cerca, subir de nivel
+                if (distance < minDistance && adjustedLabels[j].level === currentLevel) {
+                  currentLevel++;
+                  j = -1; // Reiniciar verificación con el nuevo nivel
                 }
               }
+              
+              adjustedLabels[i].level = currentLevel;
+              adjustedLabels[i].position = adjustedLabels[i].originalPosition;
             }
 
-            // Renderizar etiquetas ajustadas
+            // Renderizar etiquetas en diferentes niveles
             return adjustedLabels.map((label, index) => (
               <div
                 key={`time-${label.sessionIndex}-${label.type}-${index}`}
@@ -1130,9 +1121,10 @@ export default function TimeTracking() {
                   label.type === 'start' ? 'text-green-700' : 'text-red-700'
                 }`}
                 style={{ 
-                  left: `${Math.max(0, Math.min(100, label.position))}%`,
-                  top: label.position !== label.originalPosition ? '6px' : '0px', // Mover ligeramente hacia abajo si fue ajustado
-                  transform: 'translateX(-50%)'
+                  left: `${Math.max(2, Math.min(98, label.position))}%`,
+                  top: `${label.level * 12}px`, // Separar niveles por 12px
+                  transform: 'translateX(-50%)',
+                  zIndex: 10 - label.level // Niveles más bajos tienen mayor z-index
                 }}
               >
                 {label.text}
