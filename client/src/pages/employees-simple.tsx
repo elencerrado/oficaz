@@ -157,6 +157,19 @@ export default function EmployeesSimple() {
       });
       return;
     }
+
+    // Check user limit
+    const maxUsers = user?.subscription?.maxUsers;
+    const currentUserCount = employeeList?.length || 0;
+    
+    if (maxUsers && currentUserCount >= maxUsers) {
+      toast({
+        title: 'Límite de usuarios alcanzado',
+        description: `No puedes añadir más usuarios. Tu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     createEmployeeMutation.mutate({
       fullName: newEmployee.fullName,

@@ -136,6 +136,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. SISTEMA DE LÍMITES DE USUARIOS COMPLETAMENTE IMPLEMENTADO
+  - Tarjeta de usuarios en configuración ahora muestra formato "X/Y" (usuarios actuales/límite máximo)
+  - Validación de límite de usuarios implementada en creación de empleados
+  - Mensaje de error específico cuando se intenta exceder el límite configurado en el plan
+  - Sistema respeta límites configurados por super admin (ej: 50 usuarios para plan Pro)
 - June 27, 2025. MODELO DE PRECIOS CAMBIADO A PRECIO FIJO MENSUAL: Ya no es por usuario
   - Actualizada interfaz super admin: "€ fijo/mes" en lugar de "€/mes" 
   - Schema comentado: pricePerUser ahora es precio fijo mensual (ej: 29.99 euros/mes)
