@@ -797,6 +797,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User creation endpoint (for employee creation from employees-simple.tsx)
+  app.post('/api/users', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const {
+        fullName,
+        dni,
+        companyEmail,
+        companyPhone,
+        position,
+        startDate,
+        status,
+        role,
+        personalEmail,
+        personalPhone,
+        postalAddress,
+        emergencyContactName,
+        emergencyContactPhone
+      } = req.body;
+
+      // Validate user limit
+      const subscription = await storage.getSubscriptionByCompanyId((req as AuthRequest).user!.companyId);
+      const currentEmployees = await storage.getEmployeesByCompany((req as AuthRequest).user!.companyId);
+      const currentUserCount = currentEmployees.filter((emp: any) => emp.role !== 'admin').length;
+      
+      if (subscription?.maxUsers && currentUserCount >= subscription.maxUsers) {
+        return res.status(400).json({ 
+          message: `Límite de usuarios alcanzado. Tu plan permite máximo ${subscription.maxUsers} usuarios y actualmente tienes ${currentUserCount}.` 
+        });
+      }
+
+      // Check if user already exists within the same company by DNI
+      const existingUser = await storage.getUserByDniAndCompany(dni, (req as AuthRequest).user!.companyId);
+      if (existingUser) {
+        return res.status(400).json({ message: 'DNI ya existe en tu empresa' });
+      }
+
+      const existingEmail = await storage.getUserByEmail(companyEmail);
+      if (existingEmail) {
+        return res.status(400).json({ message: 'Email ya existe' });
+      }
+
+      // Generate a temporary password (should be replaced with proper onboarding)
+      const tempPassword = 'TempPass123!';
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      const user = await storage.createUser({
+        companyEmail,
+        password: hashedPassword,
+        fullName,
+        dni,
+        role: role || 'employee',
+        companyId: (req as AuthRequest).user!.companyId,
+        companyPhone: companyPhone || null,
+        startDate: startDate ? new Date(startDate) : new Date(),
+        isActive: status === 'active',
+        totalVacationDays: "22.0", // Default vacation days
+        personalEmail: personalEmail || null,
+        personalPhone: personalPhone || null,
+        postalAddress: postalAddress || null,
+        emergencyContactName: emergencyContactName || null,
+        emergencyContactPhone: emergencyContactPhone || null,
+        position: position || null,
+        createdBy: (req as AuthRequest).user!.id,
+      });
+
+      res.status(201).json({ ...user, password: undefined });
+    } catch (error: any) {
+      console.error('User creation error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Work session routes
   app.post('/api/work-sessions/clock-in', authenticateToken, async (req: AuthRequest, res) => {
     try {
