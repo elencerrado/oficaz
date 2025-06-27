@@ -770,7 +770,7 @@ export default function TimeTracking() {
               return (
                 <div
                   key={`break-label-${sessionIndex}-${breakIndex}`}
-                  className="absolute text-xs text-orange-600 font-medium bg-orange-50 px-2 py-0.5 rounded-full shadow-sm border border-orange-200 transform -translate-x-1/2"
+                  className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2"
                   style={{ 
                     left: `${breakLeftPercentage + breakWidthPercentage/2}%`,
                     top: '0px'
@@ -862,7 +862,7 @@ export default function TimeTracking() {
               <div key={`times-${sessionIndex}`} className="relative">
                 {/* Hora de entrada al inicio del segmento */}
                 <div
-                  className="absolute text-xs text-green-700 font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-200 transform -translate-x-1/2 shadow-sm"
+                  className="absolute text-xs text-green-700 font-medium transform -translate-x-1/2"
                   style={{ left: `${leftPercentage}%`, top: '0px' }}
                 >
                   {formatTime(sessionStart)}
@@ -870,7 +870,7 @@ export default function TimeTracking() {
                 
                 {/* Hora de salida al final del segmento */}
                 <div
-                  className="absolute text-xs text-red-700 font-semibold bg-red-50 px-1.5 py-0.5 rounded border border-red-200 transform -translate-x-1/2 shadow-sm"
+                  className="absolute text-xs text-red-700 font-medium transform -translate-x-1/2"
                   style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px' }}
                 >
                   {formatTime(sessionEnd)}
