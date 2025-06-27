@@ -749,7 +749,7 @@ export default function TimeTracking() {
     const formatTime = (date: Date) => format(date, 'HH:mm');
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-5">
           {dayData.sessions.map((session: any, sessionIndex: number) => {
@@ -770,7 +770,7 @@ export default function TimeTracking() {
               return (
                 <div
                   key={`break-label-${sessionIndex}-${breakIndex}`}
-                  className="absolute text-xs text-orange-600 font-medium bg-orange-100 px-1 rounded transform -translate-x-1/2"
+                  className="absolute text-xs text-orange-600 font-medium bg-orange-50 px-2 py-0.5 rounded-full shadow-sm border border-orange-200 transform -translate-x-1/2"
                   style={{ 
                     left: `${breakLeftPercentage + breakWidthPercentage/2}%`,
                     top: '0px'
@@ -783,7 +783,69 @@ export default function TimeTracking() {
           })}
         </div>
 
-        {/* Contenedor para horas de entrada/salida ARRIBA de las barras */}
+        {/* Timeline visual mejorado con diseño elegante */}
+        <div className="relative h-8">
+          {/* Línea base gris con gradiente sutil */}
+          <div className="h-6 bg-gradient-to-r from-gray-100 via-gray-150 to-gray-100 rounded-full relative overflow-hidden shadow-inner border border-gray-200">
+            
+            {/* Segmentos de trabajo (barras azules elegantes) con descansos slider */}
+            {dayData.sessions.map((session: any, sessionIndex: number) => {
+              const sessionStart = new Date(session.clockIn);
+              const sessionEnd = new Date(session.clockOut);
+              
+              // Posición relativa dentro del día
+              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+              
+              const leftPercentage = (startOffset / totalDayDuration) * 100;
+              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+              
+              return (
+                <div key={sessionIndex} className="relative">
+                  {/* Barra azul elegante con gradiente y sombra */}
+                  <div
+                    className="absolute top-0.5 h-5 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full shadow-lg border border-blue-400"
+                    style={{
+                      left: `${leftPercentage}%`,
+                      width: `${widthPercentage}%`,
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+                    }}
+                  />
+                  
+                  {/* Descansos como sliders elegantes dentro de la barra azul */}
+                  {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
+                    if (!breakPeriod.breakEnd) return null;
+                    
+                    const breakStart = new Date(breakPeriod.breakStart);
+                    const breakEnd = new Date(breakPeriod.breakEnd);
+                    
+                    // Posición del descanso relativa al inicio de la sesión (no del día)
+                    const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                    const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                    
+                    const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
+                    const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Mínimo 2%
+                    
+                    return (
+                      <div
+                        key={`${sessionIndex}-${breakIndex}`}
+                        className="absolute top-1 h-3 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400 rounded-full shadow-inner border border-orange-300"
+                        style={{
+                          left: `${breakLeftPercentageInSession}%`,
+                          width: `${breakWidthPercentageInSession}%`,
+                          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.1)'
+                        }}
+                        title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
         <div className="relative h-4">
           {dayData.sessions.map((session: any, sessionIndex: number) => {
             const sessionStart = new Date(session.clockIn);
@@ -800,7 +862,7 @@ export default function TimeTracking() {
               <div key={`times-${sessionIndex}`} className="relative">
                 {/* Hora de entrada al inicio del segmento */}
                 <div
-                  className="absolute text-xs text-green-600 font-medium transform -translate-x-1/2"
+                  className="absolute text-xs text-green-700 font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-200 transform -translate-x-1/2 shadow-sm"
                   style={{ left: `${leftPercentage}%`, top: '0px' }}
                 >
                   {formatTime(sessionStart)}
@@ -808,7 +870,7 @@ export default function TimeTracking() {
                 
                 {/* Hora de salida al final del segmento */}
                 <div
-                  className="absolute text-xs text-red-600 font-medium transform -translate-x-1/2"
+                  className="absolute text-xs text-red-700 font-semibold bg-red-50 px-1.5 py-0.5 rounded border border-red-200 transform -translate-x-1/2 shadow-sm"
                   style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px' }}
                 >
                   {formatTime(sessionEnd)}
@@ -817,68 +879,6 @@ export default function TimeTracking() {
             );
           })}
         </div>
-
-        {/* Timeline visual consolidado */}
-        <div className="relative h-6">
-          {/* Línea base gris que representa todo el día */}
-          <div className="h-4 bg-gray-200 rounded-lg relative overflow-hidden">
-            
-            {/* Segmentos de trabajo (barras azules) con descansos dentro */}
-            {dayData.sessions.map((session: any, sessionIndex: number) => {
-              const sessionStart = new Date(session.clockIn);
-              const sessionEnd = new Date(session.clockOut);
-              
-              // Posición relativa dentro del día
-              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-              
-              const leftPercentage = (startOffset / totalDayDuration) * 100;
-              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
-              
-              return (
-                <div key={sessionIndex} className="relative">
-                  {/* Barra azul de la sesión */}
-                  <div
-                    className="absolute top-0 h-4 bg-blue-500 rounded"
-                    style={{
-                      left: `${leftPercentage}%`,
-                      width: `${widthPercentage}%`
-                    }}
-                  />
-                  
-                  {/* Descansos dentro de la barra azul */}
-                  {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
-                    if (!breakPeriod.breakEnd) return null;
-                    
-                    const breakStart = new Date(breakPeriod.breakStart);
-                    const breakEnd = new Date(breakPeriod.breakEnd);
-                    
-                    // Posición del descanso relativa al inicio del día
-                    const breakStartOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-                    const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-                    
-                    const breakLeftPercentage = (breakStartOffset / totalDayDuration) * 100;
-                    const breakWidthPercentage = Math.max((breakDuration / totalDayDuration) * 100, 1); // Mínimo 1%
-                    
-                    return (
-                      <div
-                        key={`${sessionIndex}-${breakIndex}`}
-                        className="absolute top-0 h-4 bg-orange-400 rounded"
-                        style={{
-                          left: `${breakLeftPercentage}%`,
-                          width: `${breakWidthPercentage}%`
-                        }}
-                        title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
-                      />
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-
       </div>
     );
   };
