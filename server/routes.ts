@@ -2569,7 +2569,6 @@ startxref
       }
 
       // Generate secure token
-      const crypto = require('crypto');
       const token = crypto.randomBytes(32).toString('hex');
       
       // Create invitation with 7 days expiry
