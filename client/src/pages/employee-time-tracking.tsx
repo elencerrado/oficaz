@@ -1,19 +1,26 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PageLoading } from '@/components/ui/page-loading';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, ChevronLeft, ChevronRight, Clock, BarChart3, Edit3, Save, X } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, differenceInMinutes, parseISO, subMonths, startOfWeek, isSameWeek } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Clock, 
+  Play, 
+  Square, 
+  Save, 
+  X,
+  RefreshCw
+} from 'lucide-react';
+import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useLocation, Link } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import LoadingSpinner from '@/components/ui/loading-spinner';
+import { apiRequest } from '@/lib/queryClient';
 
+// Interfaces
 interface WorkSession {
   id: number;
   userId: number;
@@ -23,187 +30,211 @@ interface WorkSession {
   createdAt: string;
 }
 
+interface BreakPeriod {
+  id: number;
+  workSessionId: number;
+  userId: number;
+  breakStart: string;
+  breakEnd?: string;
+  duration: number;
+  status: 'active' | 'completed';
+  createdAt: string;
+}
+
+interface ActiveSession {
+  id: number;
+  clockIn: string;
+}
+
 export default function EmployeeTimeTracking() {
-  const { user, company } = useAuth();
-  const { hasAccess, getRequiredPlan } = useFeatureCheck();
-  
-  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
-  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
-  
-  // Check if user has access to time tracking feature
-  if (!hasAccess('timeTracking')) {
-    return (
-      <FeatureRestrictedPage
-        featureName="Control de Tiempo"
-        description="Registro de fichajes y control horario"
-        requiredPlan={getRequiredPlan('timeTracking')}
-        icon={Clock}
-      />
-    );
-  }
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [location] = useLocation();
-  const urlParts = location.split('/').filter(part => part.length > 0);
-  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Touch/swipe handling
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-
-  // Editing functionality
+  
+  // State management
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const [editingSession, setEditingSession] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({
-    clockIn: '',
-    clockOut: ''
+  const [editForm, setEditForm] = useState({ clockIn: '', clockOut: '' });
+  const [tooltipContent, setTooltipContent] = useState<{ show: boolean; content: string; x: number; y: number }>({
+    show: false,
+    content: '',
+    x: 0,
+    y: 0
+  });
+  
+  // Touch handling for mobile swipe
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchThreshold = 50;
+  
+  const onTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    // Prevent any scroll during touch move
+    e.preventDefault();
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+
+    // Only process horizontal swipes (deltaY < 50 for horizontal bias)
+    if (deltaY < 50 && Math.abs(deltaX) > touchThreshold) {
+      e.preventDefault();
+      if (deltaX > 0) {
+        // Swipe right - previous month
+        setCurrentMonth(prev => subMonths(prev, 1));
+      } else {
+        // Swipe left - next month
+        setCurrentMonth(prev => addMonths(prev, 1));
+      }
+    }
+
+    touchStartRef.current = null;
+  };
+
+  // Date calculations
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const currentYear = new Date().getFullYear();
+  
+  // Queries
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['/api/work-sessions'],
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
   });
 
-  const minSwipeDistance = 50;
+  const { data: breakPeriods = [] } = useQuery({
+    queryKey: ['/api/break-periods'],
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
 
-  // Update work session mutation
+  const { data: activeSession } = useQuery({
+    queryKey: ['/api/work-sessions/active'],
+    staleTime: 10000,
+    gcTime: 30000,
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+  });
+
+  // Mutations
   const updateSessionMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { clockIn: string; clockOut?: string } }) => {
-      return apiRequest('PATCH', `/api/work-sessions/${id}`, data);
+    mutationFn: async ({ id, clockIn, clockOut }: { id: number; clockIn: string; clockOut: string }) => {
+      return apiRequest('PATCH', `/api/work-sessions/${id}`, { clockIn, clockOut });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       setEditingSession(null);
       toast({
-        title: 'Fichaje actualizado',
-        description: 'Los horarios han sido modificados correctamente.',
+        title: "Fichaje actualizado",
+        description: "Los horarios se han actualizado correctamente.",
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: 'Error',
-        description: error.message || 'No se pudo actualizar el fichaje',
-        variant: 'destructive',
+        title: "Error",
+        description: `No se pudo actualizar el fichaje: ${error.message}`,
+        variant: "destructive",
       });
     },
   });
 
-  // Data fetching - Real-time updates
-  const { data: activeSession, isLoading: activeLoading } = useQuery({
-    queryKey: ['/api/work-sessions/active'],
-    enabled: !!user,
-    staleTime: 10 * 1000, // 10 seconds for real-time updates
-    gcTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
-    retryDelay: 500,
-    refetchInterval: 3 * 1000, // Poll every 3 seconds for active session
-    refetchIntervalInBackground: true, // Continue polling in background
-  });
+  // Helper functions
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'dd/MM', { locale: es });
+  };
 
-  // Get work sessions for current user
-  const { data: workSessions = [], isLoading } = useQuery<WorkSession[]>({
-    queryKey: ['/api/work-sessions'],
-    enabled: !!user,
-    staleTime: 30 * 1000, // 30 seconds for real-time updates
-    gcTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
-    retryDelay: 500,
-    refetchInterval: 5 * 1000, // Poll every 5 seconds for sessions list
-    refetchIntervalInBackground: true, // Continue polling in background
-  });
+  const formatDayDate = (date: Date) => {
+    return format(date, 'EEEE dd', { locale: es });
+  };
 
-  // Check if user can edit time entries based on company configuration
-  const canEditTime = company?.employeeTimeEditPermission === 'yes';
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'HH:mm');
+  };
 
+  const formatTotalHours = (hours: number) => {
+    const totalMinutes = Math.round(hours * 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
+  };
 
+  const calculateSessionHours = (session: WorkSession) => {
+    if (!session.clockOut) return 0;
+    const start = new Date(session.clockIn);
+    const end = new Date(session.clockOut);
+    return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  };
 
-  // Filter sessions for current month + complete weeks that span across months
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  
-  // Get sessions for the month
-  const strictMonthSessions = workSessions.filter(session => {
+  // Check if user can edit time
+  const canEditTime = user?.company?.employeeTimeEditPermission === 'yes';
+
+  // Get sessions for current month
+  const monthSessions = sessions.filter((session: WorkSession) => {
     const sessionDate = new Date(session.clockIn);
     return sessionDate >= monthStart && sessionDate <= monthEnd;
   });
-  
-  // Get all weeks that have at least one session in the current month
-  const monthWeeks = new Set();
-  strictMonthSessions.forEach(session => {
-    const sessionDate = new Date(session.clockIn);
-    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
-    monthWeeks.add(weekStart.getTime());
-  });
-  
-  // Include all sessions from weeks that intersect with the current month
-  const monthSessions = workSessions.filter(session => {
-    const sessionDate = new Date(session.clockIn);
-    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
-    return monthWeeks.has(weekStart.getTime());
-  });
 
-  // Calculate total hours for the month correctly
-  const calculateSessionHours = (session: WorkSession) => {
-    if (!session.clockOut) return 0;
-    
-    const clockIn = parseISO(session.clockIn);
-    const clockOut = parseISO(session.clockOut);
-    const totalMinutes = differenceInMinutes(clockOut, clockIn);
-    
-    return totalMinutes / 60; // Convert to hours
-  };
-
-  // Calculate total only for sessions that actually belong to the current month
-  const totalMonthHours = strictMonthSessions.reduce((total, session) => {
+  // Calculate total hours for the month
+  const totalMonthHours = monthSessions.reduce((total, session) => {
     return total + calculateSessionHours(session);
   }, 0);
 
-  const formatTotalHours = (hours: number) => {
-    const wholeHours = Math.floor(hours);
-    const minutes = Math.round((hours - wholeHours) * 60);
-    return `${wholeHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-  };
-
-  const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-  };
-
-  const goToNextMonth = () => {
-    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
-    const currentMonth = new Date();
-    
-    // Don't allow going beyond current month
-    if (nextMonth <= currentMonth) {
-      setCurrentDate(nextMonth);
-    }
-  };
-
-  // Double click/tap handlers for editing
-  const [lastTap, setLastTap] = useState<number>(0);
-
+  // Edit functions
   const handleDoubleClick = (session: WorkSession) => {
-    if (canEditTime) {
-      startEditing(session);
-    }
+    if (!canEditTime) return;
+    startEditing(session);
   };
 
   const handleTouchEnd = (session: WorkSession) => {
     if (!canEditTime) return;
-    
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTap;
-    
-    if (tapLength < 500 && tapLength > 0) {
-      // Double tap detected
-      startEditing(session);
-    }
-    
-    setLastTap(currentTime);
+    startEditing(session);
   };
 
   const startEditing = (session: WorkSession) => {
-    if (!canEditTime) return;
-    
     setEditingSession(session.id);
     setEditForm({
-      clockIn: format(new Date(session.clockIn), 'HH:mm'),
-      clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : ''
+      clockIn: formatTime(session.clockIn),
+      clockOut: session.clockOut ? formatTime(session.clockOut) : ''
     });
+  };
+
+  const saveEdit = () => {
+    if (editingSession && editForm.clockIn && editForm.clockOut) {
+      const session = sessions.find((s: WorkSession) => s.id === editingSession);
+      if (session) {
+        const clockInDate = new Date(session.clockIn);
+        const clockOutDate = new Date(session.clockOut || session.clockIn);
+        
+        // Update times while preserving dates
+        const newClockIn = new Date(clockInDate);
+        const [inHours, inMinutes] = editForm.clockIn.split(':').map(Number);
+        newClockIn.setHours(inHours, inMinutes, 0, 0);
+        
+        const newClockOut = new Date(clockOutDate);
+        const [outHours, outMinutes] = editForm.clockOut.split(':').map(Number);
+        newClockOut.setHours(outHours, outMinutes, 0, 0);
+        
+        updateSessionMutation.mutate({
+          id: editingSession,
+          clockIn: newClockIn.toISOString(),
+          clockOut: newClockOut.toISOString()
+        });
+      }
+    }
   };
 
   const cancelEditing = () => {
@@ -211,228 +242,211 @@ export default function EmployeeTimeTracking() {
     setEditForm({ clockIn: '', clockOut: '' });
   };
 
-  const saveEdit = () => {
-    if (!editingSession) return;
+  // Mobile Timeline Rendering Function
+  const renderMobileTimeline = (session: WorkSession) => {
+    const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
     
-    const session = workSessions.find(s => s.id === editingSession);
-    if (!session) return;
-
-    const sessionDate = format(new Date(session.clockIn), 'yyyy-MM-dd');
-    const newClockIn = `${sessionDate}T${editForm.clockIn}:00.000Z`;
-    const newClockOut = editForm.clockOut ? `${sessionDate}T${editForm.clockOut}:00.000Z` : undefined;
-
-    updateSessionMutation.mutate({
-      id: editingSession,
-      data: {
-        clockIn: newClockIn,
-        clockOut: newClockOut
-      }
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    return new Date(timeString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const dayNames = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-    const dayOfWeek = dayNames[getDay(date)];
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = format(date, 'MMM', { locale: es }).substring(0, 3);
-    const year = date.getFullYear().toString().slice(-2);
-    
-    return `${dayOfWeek} ${day}/${month}/${year}`;
-  };
-
-  const monthName = format(currentDate, 'MMMM yyyy', { locale: es });
-  const currentYear = new Date().getFullYear();
-
-  // Navigate to current month
-  const goToCurrentMonth = () => {
-    setCurrentDate(new Date());
-  };
-
-  // Touch event handlers for swipe navigation
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    // Only update touchEnd, don't trigger any navigation during move
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    // Only execute navigation at the end of the gesture
-    if (isLeftSwipe) {
-      // Swipe left = next month (if allowed)
-      const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
-      const currentMonth = new Date();
-      if (nextMonth <= currentMonth) {
-        setCurrentDate(nextMonth);
-      }
-    } else if (isRightSwipe) {
-      // Swipe right = previous month
-      goToPreviousMonth();
+    if (!session.clockOut) {
+      return (
+        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
+            <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+              En curso
+            </Badge>
+          </div>
+          
+          <div className="flex items-center space-x-2 mb-3">
+            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
+          </div>
+          
+          <div className="text-center text-white/60 text-xs py-2">
+            Sesión activa - ficha para terminar
+          </div>
+        </div>
+      );
     }
+
+    // Timeline calculation
+    const startTime = new Date(session.clockIn);
+    const endTime = new Date(session.clockOut);
+    const totalMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
     
-    // Reset touch states
-    setTouchStart(null);
-    setTouchEnd(null);
+    // Create timeline points
+    const timelinePoints = [
+      { type: 'entrada', time: startTime, label: 'Entrada' },
+      ...sessionBreaks.flatMap((breakPeriod: BreakPeriod) => [
+        { type: 'break-start', time: new Date(breakPeriod.breakStart), label: 'Descanso inicio', breakPeriod },
+        ...(breakPeriod.breakEnd ? [{ type: 'break-end', time: new Date(breakPeriod.breakEnd), label: 'Descanso fin', breakPeriod }] : [])
+      ]),
+      { type: 'salida', time: endTime, label: 'Salida' }
+    ].sort((a, b) => a.time.getTime() - b.time.getTime());
+
+    // Collision detection with 0 threshold for maximum sensitivity
+    const hasProximity = timelinePoints.some((point, index) => {
+      if (index === timelinePoints.length - 1) return false;
+      const nextPoint = timelinePoints[index + 1];
+      const timeDiff = nextPoint.time.getTime() - point.time.getTime();
+      return timeDiff <= 0; // Any proximity triggers compact mode
+    });
+
+    return (
+      <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+        {/* Header with date and total hours */}
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
+          <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
+        </div>
+
+        {/* Timeline container */}
+        <div className="relative mb-2">
+          {/* Main blue bar */}
+          <div className="relative h-1 bg-blue-400 rounded-full">
+            {/* Break periods overlay */}
+            {sessionBreaks.map((breakPeriod: BreakPeriod) => {
+              const breakStart = new Date(breakPeriod.breakStart);
+              const breakEnd = breakPeriod.breakEnd ? new Date(breakPeriod.breakEnd) : new Date();
+              
+              const startPercent = ((breakStart.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
+              const endPercent = ((breakEnd.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
+              const width = Math.max(0, endPercent - startPercent);
+              
+              return (
+                <div
+                  key={breakPeriod.id}
+                  className={`absolute h-1 rounded-full ${breakPeriod.status === 'active' ? 'bg-orange-400 animate-pulse' : 'bg-gray-400'}`}
+                  style={{
+                    left: `${Math.max(0, Math.min(95, startPercent))}%`,
+                    width: `${Math.min(100 - Math.max(0, startPercent), width)}%`,
+                    top: '0px'
+                  }}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const content = breakPeriod.status === 'active' 
+                      ? `Descanso en progreso: ${Math.floor((new Date().getTime() - breakStart.getTime()) / (1000 * 60))} min`
+                      : `Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
+                    
+                    setTooltipContent({
+                      show: true,
+                      content,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top - 10
+                    });
+                  }}
+                  onMouseLeave={() => {
+                    setTooltipContent({ show: false, content: '', x: 0, y: 0 });
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Timeline points */}
+          {timelinePoints.map((point, index) => {
+            const position = ((point.time.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
+            const isEntrada = point.type === 'entrada';
+            const isSalida = point.type === 'salida';
+            
+            // Apply horizontal displacement for entrada/salida only
+            let adjustedPosition = position;
+            if (isEntrada) {
+              adjustedPosition = Math.max(0, position - 1); // 1% left for entrada
+            } else if (isSalida) {
+              adjustedPosition = Math.min(100, position + 1); // 1% right for salida
+            }
+
+            return (
+              <div
+                key={`${point.type}-${index}`}
+                className={`absolute w-3 h-3 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 ${
+                  isEntrada ? 'bg-green-400' : 
+                  isSalida ? 'bg-red-400' : 
+                  'bg-orange-400'
+                }`}
+                style={{
+                  left: `${adjustedPosition}%`,
+                  top: '0px',
+                  transform: 'translateX(-50%) translateY(-25%)'
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Times display - conditional based on proximity */}
+        {!hasProximity && (
+          <div className="flex justify-between text-xs text-white/70 mt-2">
+            <span>{formatTime(session.clockIn)}</span>
+            <span>{formatTime(session.clockOut)}</span>
+          </div>
+        )}
+
+        {/* Tooltip */}
+        {tooltipContent.show && (
+          <div
+            className="fixed z-50 bg-black/90 text-white text-xs px-2 py-1 rounded pointer-events-none"
+            style={{
+              left: tooltipContent.x,
+              top: tooltipContent.y,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            {tooltipContent.content}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90"></div>
+          </div>
+        )}
+      </div>
+    );
   };
-
-  // Calculate hours for last 4 months for chart
-  const getLast4MonthsData = () => {
-    const months = [];
-    for (let i = 3; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
-      const monthStart = startOfMonth(date);
-      const monthEnd = endOfMonth(date);
-      
-      const monthSessions = workSessions.filter(session => {
-        const sessionDate = new Date(session.clockIn);
-        return sessionDate >= monthStart && sessionDate <= monthEnd;
-      });
-      
-      const totalHours = monthSessions.reduce((total, session) => {
-        return total + calculateSessionHours(session);
-      }, 0);
-      
-      months.push({
-        month: format(date, 'MMM', { locale: es }),
-        hours: totalHours,
-        isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM')
-      });
-    }
-    return months;
-  };
-
-  const last4MonthsData = getLast4MonthsData();
-  const maxHours = Math.max(...last4MonthsData.map(m => m.hours), 1);
-
-  // Show loading state
-  if (isLoading) {
-    return <PageLoading />;
-  }
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
-      {/* Header - Fixed height */}
-      <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${companyAlias}/inicio`}>
-          <Button
-            variant="ghost"
-            size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <span className="font-medium">Atrás</span>
-          </Button>
-        </Link>
-        
-        <div className="flex-1 flex flex-col items-end text-right">
-          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-          {shouldShowLogo ? (
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+    <div 
+      className="min-h-screen bg-employee-gradient text-white overflow-x-hidden" 
+      style={{ overflowX: 'clip' }}
+    >
+      {/* Header with company info */}
+      <div className="px-6 pt-6 pb-2">
+        <div className="flex items-center space-x-3 mb-2">
+          {user?.company?.logoUrl ? (
+            <img
+              src={user.company.logoUrl}
+              alt="Logo empresa"
+              className="h-8 w-auto filter invert"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-1">
-              {company?.name || 'Mi Empresa'}
+            <div className="text-white text-base font-semibold">
+              {user?.company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-white/70 text-xs">
-            {user?.fullName}
-          </div>
+        </div>
+        <div className="text-white/70 text-xs">
+          {user?.fullName || 'Empleado'}
         </div>
       </div>
 
-      {/* Page Title */}
+      {/* Page title */}
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-white mb-2">Control de Tiempo</h1>
-        <p className="text-white/70 text-sm">
-          Gestiona tus fichajes y consulta tus horas trabajadas
-        </p>
+        <p className="text-white/70 text-sm">Revisa tu historial de fichajes y horas trabajadas</p>
       </div>
 
-      {/* 4-Month Hours Chart */}
-      <div 
-        className="px-6 mb-8"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
-          <div className="flex items-center mb-6">
-            <BarChart3 className="h-5 w-5 mr-2 text-blue-400" />
-            <h3 className="text-sm font-medium text-white/80">Últimos 4 meses</h3>
-          </div>
-          <div className="flex items-end justify-between h-24 space-x-3">
-            {last4MonthsData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div className="text-xs text-white/60 mb-2 capitalize">{data.month}</div>
-                <div className="text-xs text-white/80 font-medium mb-2">
-                  {formatTotalHours(data.hours)}
-                </div>
-                <div className="w-full bg-white/10 rounded-t-lg overflow-hidden relative" style={{ height: '70px' }}>
-                  <div 
-                    className={`w-full rounded-t-lg absolute bottom-0 ${
-                      data.isCurrentMonth ? 'bg-gradient-to-t from-blue-500 to-blue-400 shadow-lg shadow-blue-500/30' : 'bg-white/40'
-                    }`}
-                    style={{ 
-                      '--final-height': `${Math.max((data.hours / maxHours) * 100, data.hours > 0 ? 15 : 0)}%`,
-                      animation: `slideUp 800ms ease-out ${500 + index * 150}ms both`
-                    } as React.CSSProperties}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Month Navigation - Fixed height */}
-      <div 
-        className="flex items-center justify-between px-6 mb-4 h-16"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
+      {/* Month navigation - Fixed height */}
+      <div className="flex items-center justify-between px-6 mb-6 h-12">
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={goToPreviousMonth}
+          onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
           className="text-white hover:bg-white/10 p-2 rounded-xl"
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
         
-        <button 
-          onClick={goToCurrentMonth}
-          className="text-xl font-semibold capitalize text-white hover:text-blue-300 transition-colors duration-200 cursor-pointer"
-        >
-          {monthName}
-        </button>
+        <h2 className="text-xl font-semibold text-white text-center min-w-0 flex-1">
+          {format(currentMonth, 'MMMM yyyy', { locale: es })}
+        </h2>
         
-        {format(currentDate, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
+        {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToNextMonth}
+            onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
             className="text-white hover:bg-white/10 p-2 rounded-xl"
           >
             <ChevronRight className="h-6 w-6" />
@@ -457,200 +471,89 @@ export default function EmployeeTimeTracking() {
         </div>
       </div>
 
-      {/* Table Container - Dynamic height with touch events */}
+      {/* Timeline Mobile Container */}
       <div 
         className="px-6 mb-6"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
-          {/* Table Header */}
-          <div className="grid grid-cols-4 bg-white/10 py-3 px-4">
-            <div className="text-sm font-semibold text-center">Fecha</div>
-            <div className="text-sm font-semibold text-center">Entrada</div>
-            <div className="text-sm font-semibold text-center">Salida</div>
-            <div className="text-sm font-semibold text-center">Total</div>
-          </div>
-
-          {/* Table Body - No internal scroll with touch events */}
-          <div 
-            className="w-full" 
-            style={{ 
-              backgroundColor: 'rgba(50, 58, 70, 0.6)'
-            }}
-          >
-            {monthSessions.length > 0 ? (
-              (() => {
-                const sortedSessions = monthSessions
-                  .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
-                
-                let currentWeekStart: Date | null = null;
-                let previousWeekStart: Date | null = null;
-                
-                // Calculate weekly totals
-                const calculateWeekTotal = (weekStart: Date) => {
-                  return sortedSessions
-                    .filter(session => {
-                      const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
-                      return sessionWeekStart.getTime() === weekStart.getTime();
-                    })
-                    .reduce((total, session) => total + calculateSessionHours(session), 0);
-                };
-                
-                const result = sortedSessions.map((session, index) => {
-                  const sessionDate = new Date(session.clockIn);
-                  const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 }); // Monday start
-                  
-                  // Check if this is a new week
-                  const isNewWeek = currentWeekStart === null || 
-                    weekStart.getTime() !== currentWeekStart.getTime();
-                  
-                  if (isNewWeek) {
-                    previousWeekStart = currentWeekStart;
-                    currentWeekStart = weekStart;
-                  }
-                  
-                  return (
-                    <div key={session.id}>
-                      {/* Week separator with total - only show if it's a new week and not the first item */}
-                      {isNewWeek && index > 0 && previousWeekStart && (
-                        <div className="border-t-2 border-blue-400/30 bg-blue-400/10 py-2 px-4">
-                          <div className="text-center text-sm font-semibold text-blue-300">
-                            Total semana: {formatTotalHours(calculateWeekTotal(previousWeekStart))}
-                          </div>
-                        </div>
-                      )}
-                      {(() => {
-                        const sessionDate = new Date(session.clockIn);
-                        const isCurrentMonth = sessionDate >= monthStart && sessionDate <= monthEnd;
-                        const opacity = isCurrentMonth ? 'text-white/90' : 'text-white/50';
-                        const bgOpacity = isCurrentMonth ? 'hover:bg-white/5' : 'hover:bg-white/3';
-                        
-                        return editingSession === session.id && canEditTime ? (
-                          // Editing mode - Expanded row with maintained separators  
-                          <div className="border-b border-white/10 bg-blue-500/10 relative py-4 px-4">
-                            {/* Date header */}
-                            <div className="text-sm text-center text-white/90 mb-4 font-medium">
-                              {formatDate(session.clockIn)}
-                            </div>
-                            
-                            {/* Time inputs perfectly centered */}
-                            <div className="flex justify-center gap-6 mb-4">
-                              <div className="flex flex-col items-center space-y-2">
-                                <label className="text-xs text-white/70 font-medium">Entrada</label>
-                                <Input
-                                  type="time"
-                                  value={editForm.clockIn}
-                                  onChange={(e) => setEditForm({ ...editForm, clockIn: e.target.value })}
-                                  className="h-10 w-24 text-center bg-white/10 border-white/20 text-white text-sm rounded-lg"
-                                />
-                              </div>
-                              <div className="flex flex-col items-center space-y-2">
-                                <label className="text-xs text-white/70 font-medium">Salida</label>
-                                <Input
-                                  type="time"
-                                  value={editForm.clockOut}
-                                  onChange={(e) => setEditForm({ ...editForm, clockOut: e.target.value })}
-                                  className="h-10 w-24 text-center bg-white/10 border-white/20 text-white text-sm rounded-lg"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Total and action buttons with better spacing */}
-                            <div className="flex justify-between items-center pt-2">
-                              <div className="text-sm text-white/80">
-                                <span className="font-medium">Total: </span>
-                                <span className="font-mono">
-                                  {editForm.clockIn && editForm.clockOut ? 
-                                    formatTotalHours(
-                                      (new Date(`2000-01-01T${editForm.clockOut}:00`).getTime() - 
-                                       new Date(`2000-01-01T${editForm.clockIn}:00`).getTime()) / (1000 * 60 * 60)
-                                    ) : '-'
-                                  }
-                                </span>
-                              </div>
-                              <div className="flex gap-3">
-                                <Button
-                                  size="sm"
-                                  onClick={saveEdit}
-                                  disabled={updateSessionMutation.isPending}
-                                  className="h-9 w-9 p-0 bg-green-600 hover:bg-green-700 rounded-lg"
-                                >
-                                  <Save className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={cancelEditing}
-                                  className="h-9 w-9 p-0 bg-red-600 hover:bg-red-700 rounded-lg"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          // Normal mode with double click/tap
-                          <div 
-                            className={`grid grid-cols-4 py-3 px-4 border-b border-white/10 ${bgOpacity} relative select-none cursor-pointer`}
-                            onDoubleClick={() => handleDoubleClick(session)}
-                            onTouchEnd={() => handleTouchEnd(session)}
-                          >
-                            <div className={`text-sm text-center ${opacity} whitespace-nowrap ${!isCurrentMonth ? 'italic' : ''}`}>
-                              {formatDate(session.clockIn)}
-                            </div>
-                            <div className={`text-sm text-center font-mono ${opacity}`}>
-                              {formatTime(session.clockIn)}
-                            </div>
-                            <div className={`text-sm text-center font-mono ${opacity}`}>
-                              {session.clockOut ? formatTime(session.clockOut) : '-'}
-                            </div>
-                            <div className={`text-sm text-center font-mono font-semibold ${opacity}`}>
-                              {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '-'}
-                            </div>
-                            {/* Edit indicator - only show if editing is allowed */}
-                            {canEditTime && (
-                              <div className="absolute inset-0 flex items-center justify-end pr-2 pointer-events-none">
-                                <Edit3 className="h-3 w-3 text-white/20" />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })()}
+        {monthSessions.length > 0 ? (
+          (() => {
+            const sortedSessions = monthSessions
+              .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+            
+            let currentWeekStart: Date | null = null;
+            let previousWeekStart: Date | null = null;
+            
+            // Calculate weekly totals
+            const calculateWeekTotal = (weekStart: Date) => {
+              return sortedSessions
+                .filter(session => {
+                  const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
+                  return sessionWeekStart.getTime() === weekStart.getTime();
+                })
+                .reduce((total, session) => total + calculateSessionHours(session), 0);
+            };
+            
+            const result: JSX.Element[] = [];
+            
+            sortedSessions.forEach((session, index) => {
+              const sessionDate = new Date(session.clockIn);
+              const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 }); // Monday start
+              
+              // Check if this is a new week
+              const isNewWeek = currentWeekStart === null || 
+                weekStart.getTime() !== currentWeekStart.getTime();
+              
+              if (isNewWeek) {
+                previousWeekStart = currentWeekStart;
+                currentWeekStart = weekStart;
+              }
+              
+              // Week separator with total - only show if it's a new week and not the first item
+              if (isNewWeek && index > 0 && previousWeekStart) {
+                result.push(
+                  <div key={`week-total-${previousWeekStart.getTime()}`} className="bg-blue-400/10 rounded-lg p-3 mb-4 border border-blue-400/30">
+                    <div className="text-center text-sm font-semibold text-blue-300">
+                      📊 Total semana: {formatTotalHours(calculateWeekTotal(previousWeekStart))}
                     </div>
-                  );
-                });
-                
-                // Add total for the last (most recent) week at the end
-                if (currentWeekStart) {
-                  result.push(
-                    <div key="current-week-total" className="border-t-2 border-blue-400/30 bg-blue-400/10 py-2 px-4">
-                      <div className="text-center text-sm font-semibold text-blue-300">
-                        Total semana: {formatTotalHours(calculateWeekTotal(currentWeekStart))}
-                      </div>
-                    </div>
-                  );
-                }
-                
-                return result;
-              })()
-            ) : isLoading ? (
-              <div className="flex items-center justify-center h-full min-h-48">
-                <div className="text-center text-white/60">
-                  <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
-                  <p>Cargando fichajes...</p>
+                  </div>
+                );
+              }
+              
+              // Add the timeline for this session
+              result.push(renderMobileTimeline(session));
+            });
+            
+            // Add total for the last (most recent) week at the end
+            if (currentWeekStart) {
+              result.push(
+                <div key={`current-week-total-${currentWeekStart.getTime()}`} className="bg-blue-400/10 rounded-lg p-3 mb-4 border border-blue-400/30">
+                  <div className="text-center text-sm font-semibold text-blue-300">
+                    📊 Total semana: {formatTotalHours(calculateWeekTotal(currentWeekStart))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full min-h-48">
-                <div className="text-center text-white/60">
-                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No hay fichajes este mes</p>
-                </div>
-              </div>
-            )}
+              );
+            }
+            
+            return result;
+          })()
+        ) : isLoading ? (
+          <div className="flex items-center justify-center h-48">
+            <div className="text-center text-white/60">
+              <LoadingSpinner size="lg" className="mx-auto mb-3 text-white" />
+              <p>Cargando fichajes...</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-center h-48">
+            <div className="text-center text-white/60">
+              <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No hay fichajes este mes</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Copyright at bottom */}
