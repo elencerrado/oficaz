@@ -419,7 +419,7 @@ export default function EmployeeDashboard() {
                     <item.icon className={`h-12 w-12 transition-all duration-200 ${
                       isFeatureDisabled 
                         ? 'text-gray-400/50' 
-                        : 'text-white drop-shadow-lg'
+                        : 'text-[#007AFF] drop-shadow-lg'
                     }`} />
                     {item.notification && !isFeatureDisabled && (
                       <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-bounce ${
@@ -473,7 +473,7 @@ export default function EmployeeDashboard() {
               <Button
                 onClick={handleClockAction}
                 disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                className="w-24 h-24 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-lg font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
+                className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
               >
                 {clockInMutation.isPending || clockOutMutation.isPending ? (
                   <LoadingSpinner size="sm" className="text-white" />
