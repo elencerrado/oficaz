@@ -975,7 +975,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-6">
                 <img 
@@ -998,17 +998,6 @@ export default function Landing() {
                 <li><a href="#features" className="hover:text-white transition-colors">Funciones</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">Precios</a></li>
                 <li><a href="/request-code" className="hover:text-white transition-colors">Prueba Gratis</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integraciones</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-4">Empresa</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Sobre Nosotros</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Carreras</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contacto</a></li>
               </ul>
             </div>
             
@@ -1018,7 +1007,6 @@ export default function Landing() {
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Política de Privacidad</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Términos de Servicio</Link></li>
                 <li><Link href="/cookies" className="hover:text-white transition-colors">Política de Cookies</Link></li>
-                <li><a href="#" className="hover:text-white transition-colors">GDPR</a></li>
               </ul>
             </div>
           </div>
