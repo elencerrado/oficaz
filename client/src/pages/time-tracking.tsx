@@ -76,6 +76,7 @@ export default function TimeTracking() {
   const [showFilters, setShowFilters] = useState(false);
   const [showBreakTooltip, setShowBreakTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipContent, setTooltipContent] = useState('');
 
   // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
@@ -700,10 +701,23 @@ export default function TimeTracking() {
             return (
               <div
                 key={index}
-                className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                className="absolute top-0 bottom-0 bg-orange-400 rounded cursor-help"
                 style={{
                   left: `${leftPercentage}%`,
                   width: `${widthPercentage}%`,
+                }}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltipPosition({ 
+                    x: rect.left + rect.width / 2, 
+                    y: rect.top - 10 
+                  });
+                  setShowBreakTooltip(true);
+                  setTooltipContent(`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)} (${breakDurationMinutes} min)`);
+                }}
+                onMouseLeave={() => {
+                  setShowBreakTooltip(false);
+                  setTooltipContent('');
                 }}
               />
             );
@@ -863,15 +877,17 @@ export default function TimeTracking() {
                       y: rect.top - 10 
                     });
                     setShowBreakTooltip(true);
+                    setTooltipContent(`Descanso en progreso: ${Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} min`);
                   }}
                   onMouseLeave={() => {
                     setShowBreakTooltip(false);
+                    setTooltipContent('');
                   }}
                 />
               )}
 
               {/* Tooltip personalizado para descanso activo */}
-              {showBreakTooltip && activeBreakPeriod && (
+              {showBreakTooltip && (
                 <div
                   className="fixed bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg z-50 pointer-events-none"
                   style={{
@@ -880,7 +896,7 @@ export default function TimeTracking() {
                     transform: 'translateX(-50%)'
                   }}
                 >
-                  Descanso en progreso: {Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} minutos
+                  {tooltipContent || (activeBreakPeriod ? `Descanso en progreso: ${Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} minutos` : '')}
                   <div 
                     className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"
                   />
