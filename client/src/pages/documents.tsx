@@ -501,12 +501,12 @@ export default function Documents() {
                 <div key={document.id} className="bg-white/8 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-2xl hover:bg-white/10 transition-all duration-200">
                   <div className="flex items-center space-x-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      category === 'nominas' ? 'bg-green-100' :
-                      category === 'contratos' ? 'bg-blue-100' : 'bg-gray-100'
+                      category === 'nominas' ? 'bg-emerald-100' :
+                      category === 'contratos' ? 'bg-blue-100' : 'bg-orange-100'
                     }`}>
                       <FileIcon className={`${
-                        category === 'nominas' ? 'text-green-600' :
-                        category === 'contratos' ? 'text-blue-600' : 'text-gray-600'
+                        category === 'nominas' ? 'text-emerald-600' :
+                        category === 'contratos' ? 'text-blue-600' : 'text-orange-600'
                       }`} size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -519,8 +519,8 @@ export default function Documents() {
                             <Badge 
                               variant="secondary" 
                               className={`text-xs px-2 py-0 ${
-                                category === 'nominas' ? 'bg-green-100 text-green-700' :
-                                category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                category === 'nominas' ? 'bg-emerald-100 text-emerald-700' :
+                                category === 'contratos' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
                               }`}
                             >
                               {category === 'nominas' ? 'Nómina' :
