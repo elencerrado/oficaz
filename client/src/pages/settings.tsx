@@ -40,6 +40,10 @@ export default function Settings() {
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
 
+  // Debug: Verificar qué contiene subscription
+  console.log('Settings subscription debug:', subscription);
+  console.log('Settings usageData debug:', usageData);
+
 // Component for Account Management
 const AccountManagement = () => {
   const { user } = useAuth();
@@ -56,7 +60,7 @@ const AccountManagement = () => {
     retry: false,
   });
 
-  const { data: subscription } = useQuery({
+  const { data: subscriptionData } = useQuery({
     queryKey: ['/api/account/subscription'],
     retry: false,
   });
