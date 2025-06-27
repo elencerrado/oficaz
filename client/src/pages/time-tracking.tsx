@@ -1148,16 +1148,16 @@ export default function TimeTracking() {
               
               return (
                 <div key={`session-combined-${sessionIndex}`} className="relative">
-                  {/* Entrada: punto + hora */}
-                  <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px', transform: 'translateX(-50%)' }}>
+                  {/* Entrada: punto alineado con inicio de barra + hora a la derecha */}
+                  <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px' }}>
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
                     <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
                   </div>
                   
-                  {/* Salida: punto + hora */}
-                  <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-50%)' }}>
-                    <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                    <span className="text-xs font-medium text-red-700 whitespace-nowrap">{formatTime(sessionEnd)}</span>
+                  {/* Salida: hora a la izquierda + punto alineado con final de barra */}
+                  <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-100%)' }}>
+                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{formatTime(sessionEnd)}</span>
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                   </div>
                 </div>
               );
