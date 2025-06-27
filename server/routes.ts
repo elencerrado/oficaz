@@ -129,6 +129,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Email válido requerido' });
       }
 
+      // Check if public registration is enabled
+      const registrationSettings = await storage.getRegistrationSettings();
+      if (!registrationSettings?.publicRegistrationEnabled) {
+        return res.status(403).json({ error: 'El registro público está deshabilitado. Solo se puede acceder mediante invitación.' });
+      }
+
       // Check if email is already registered
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -288,6 +294,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!sessionId || !code) {
         return res.status(400).json({ error: 'Sesión y código requeridos' });
+      }
+
+      // Check if public registration is enabled
+      const registrationSettings = await storage.getRegistrationSettings();
+      if (!registrationSettings?.publicRegistrationEnabled) {
+        return res.status(403).json({ error: 'El registro público está deshabilitado. Solo se puede acceder mediante invitación.' });
       }
 
       const session = verificationSessions.get(sessionId);
@@ -586,6 +598,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register-company', async (req, res) => {
     try {
       const data = companyRegistrationSchema.parse(req.body);
+
+      // Check if public registration is enabled
+      const registrationSettings = await storage.getRegistrationSettings();
+      if (!registrationSettings?.publicRegistrationEnabled) {
+        return res.status(403).json({ message: 'El registro público está deshabilitado. Solo se puede acceder mediante invitación.' });
+      }
       
       // Check if company already exists
       const existingCompanyCif = await storage.getCompanyByCif?.(data.cif);

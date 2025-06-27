@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, AlertTriangle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -20,8 +21,20 @@ type EmailData = z.infer<typeof emailSchema>;
 
 export default function RequestCode() {
   const [, setLocation] = useLocation();
-
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if public registration is enabled
+  const { data: registrationSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ['/api/registration-status'],
+    retry: false,
+  });
+
+  // Redirect to home if registration is disabled
+  useEffect(() => {
+    if (!isLoadingSettings && registrationSettings && !registrationSettings.publicRegistrationEnabled) {
+      setLocation('/');
+    }
+  }, [registrationSettings, isLoadingSettings, setLocation]);
 
   const form = useForm<EmailData>({
     resolver: zodResolver(emailSchema),
@@ -64,6 +77,71 @@ export default function RequestCode() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking registration settings
+  if (isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8">
+            <div className="text-center">
+              <img
+                src={oficazLogo}
+                alt="Oficaz"
+                className="h-12 mx-auto mb-4 animate-pulse"
+              />
+              <h1 className="text-xl font-semibold text-gray-900 mb-2">
+                Verificando disponibilidad...
+              </h1>
+              <p className="text-gray-600">
+                Comprobando si el registro está disponible
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error page if registration is disabled
+  if (registrationSettings && !registrationSettings.publicRegistrationEnabled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8">
+            <div className="text-center">
+              <img
+                src={oficazLogo}
+                alt="Oficaz"
+                className="h-12 mx-auto mb-4"
+              />
+              <div className="w-16 h-16 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="h-8 w-8 text-orange-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Registro No Disponible
+              </h1>
+              <p className="text-gray-600 mb-6">
+                El registro público está temporalmente deshabilitado. Solo se puede acceder mediante invitación.
+              </p>
+              <div className="space-y-3">
+                <Link href="/">
+                  <Button variant="outline" className="w-full rounded-xl">
+                    Volver al Inicio
+                  </Button>
+                </Link>
+                <Link href="/login">
+                  <Button className="w-full rounded-xl">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
