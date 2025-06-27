@@ -302,20 +302,19 @@ export default function EmployeeTimeTracking() {
     const widthPercentage = (sessionDuration / totalDayDuration) * 100;
 
     return (
-      <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
+      <div 
+        key={session.id} 
+        className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20 cursor-pointer"
+        onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
+      >
         {/* Header with date and total hours */}
         <div className="flex justify-between items-center mb-4">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Contenedor clicable para expandir/colapsar */}
-        <div 
-          className="cursor-pointer"
-          onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
-        >
-          {/* Admin-style timeline bar - más ancho */}
-          <div className="relative h-7 mb-2 mx-2">
+        {/* Admin-style timeline bar - más ancho */}
+        <div className="relative h-7 mb-2 mx-2">
             {/* Main session bar - h-5 like admin, más ancho del contenedor */}
             <div
               className="absolute top-0 h-5 bg-blue-500 rounded-sm"
@@ -358,9 +357,9 @@ export default function EmployeeTimeTracking() {
             {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
             {expandedDays.has(`${formatDayDate(new Date(session.clockIn))}-${session.id}`) && (
               <>
-                {/* Punto de entrada - verde, debajo de la barra */}
+                {/* Punto de entrada - verde sólido, debajo de la barra */}
                 <div
-                  className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+                  className="absolute w-3 h-3 bg-green-500 rounded-full"
                   style={{
                     left: `${leftPercentage}%`,
                     top: '24px', // Debajo de la barra h-5
@@ -368,9 +367,9 @@ export default function EmployeeTimeTracking() {
                   }}
                 />
                 
-                {/* Punto de salida - rojo, debajo de la barra */}
+                {/* Punto de salida - rojo sólido, debajo de la barra */}
                 <div
-                  className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+                  className="absolute w-3 h-3 bg-red-500 rounded-full"
                   style={{
                     left: `${leftPercentage + widthPercentage + 1}%`,
                     top: '24px', // Debajo de la barra h-5
@@ -380,7 +379,6 @@ export default function EmployeeTimeTracking() {
               </>
             )}
           </div>
-        </div>
 
         {/* Detalles de horarios - solo cuando está expandido */}
         {expandedDays.has(`${formatDayDate(new Date(session.clockIn))}-${session.id}`) && (
@@ -391,7 +389,7 @@ export default function EmployeeTimeTracking() {
               <span>Salida: {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             
-            {/* Información de descansos */}
+            {/* Información de descansos - solo mostrar título cuando está expandido */}
             {sessionBreaks.length > 0 && (
               <div className="space-y-1">
                 <div className="text-xs text-white/50 font-medium">Descansos:</div>
@@ -645,9 +643,9 @@ export default function EmployeeTimeTracking() {
                                       {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
                                       {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && (
                                         <>
-                                          {/* Punto de entrada - verde, debajo de la barra */}
+                                          {/* Punto de entrada - verde sólido, debajo de la barra */}
                                           <div
-                                            className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+                                            className="absolute w-3 h-3 bg-green-500 rounded-full"
                                             style={{
                                               left: `${leftPercentage}%`,
                                               top: '24px', // Debajo de la barra h-5
@@ -655,9 +653,9 @@ export default function EmployeeTimeTracking() {
                                             }}
                                           />
                                           
-                                          {/* Punto de salida - rojo, debajo de la barra */}
+                                          {/* Punto de salida - rojo sólido, debajo de la barra */}
                                           <div
-                                            className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+                                            className="absolute w-3 h-3 bg-red-500 rounded-full"
                                             style={{
                                               left: `${leftPercentage + widthPercentage + 0.5}%`,
                                               top: '24px', // Debajo de la barra h-5
