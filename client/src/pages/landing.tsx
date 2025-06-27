@@ -977,9 +977,11 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-6">
-                <div className="w-8 h-8 bg-[#007AFF] rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">O</span>
-                </div>
+                <img 
+                  src="/attached_assets/Imagotipo Oficaz white_1750407614936.png" 
+                  alt="Oficaz" 
+                  className="h-8 w-auto"
+                />
                 <span className="text-xl font-bold">Oficaz</span>
               </div>
               <p className="text-gray-400 mb-4">
