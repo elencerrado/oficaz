@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Timeline de empleado optimizado con tarjetas compactas y alineación perfecta
+  - Altura de tarjetas reducida: padding de p-3 a p-2 para diseño más compacto
+  - Header ajustado: margen inferior de mb-4 a mb-3 en fecha y horas totales
+  - Timeline más compacto: altura reducida de h-7 a h-6 en contenedor de barras
+  - Alineación corregida: header con mx-2 para coincidir exactamente con límites de barra azul
+  - Espaciado mejorado: mb-4 en timeline para evitar solapamiento con puntos entrada/salida
+  - Cambios aplicados uniformemente en sesiones individuales y días múltiples
+  - Diseño final más limpio con textos perfectamente alineados a límites de barra temporal
 - June 27, 2025. Timeline de empleado finalizado con barras ancho completo y UI optimizada
   - Barras de timeline rediseñadas para ocupar todo el ancho del contenedor (no proporcional)
   - Puntos de entrada (verde) y salida (rojo) sólidos en extremos izquierdo y derecho de barras

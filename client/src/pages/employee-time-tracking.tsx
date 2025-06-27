@@ -314,7 +314,7 @@ export default function EmployeeTimeTracking() {
         </div>
 
         {/* Admin-style timeline bar - ancho completo */}
-        <div className="relative h-6 mb-2 mx-2">
+        <div className="relative h-6 mb-4 mx-2">
             {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
             <div
               className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
@@ -591,7 +591,7 @@ export default function EmployeeTimeTracking() {
                               </div>
 
                               {/* Multiple session bars - en la misma línea horizontal */}
-                              <div className="relative h-6 mb-2 mx-2">
+                              <div className="relative h-6 mb-4 mx-2">
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
