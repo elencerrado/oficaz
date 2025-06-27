@@ -129,6 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Hero section responsive corregido para pantallas PC estrechas
+  - Cambiada altura fija por minHeight responsive con padding adaptativo
+  - Textos y espaciado optimizados: tamaños escalables, espaciado reducido en móvil
+  - Contenedor reducido a max-w-4xl para mejor lectura en pantallas estrechas
+  - Indicadores de confianza adaptados: layout vertical en móvil, horizontal en desktop
+  - Descripción actualizada: enfoque en horas perdidas en tareas específicas (envío archivos, control horarios manual)
+  - Nueva frase final: "automatiza lo tedioso para que te enfoques en lo importante"
 - June 26, 2025. Landing page final optimizada con CTA espectacular y estructura limpia
   - Eliminada sección completa de testimonios por preferencia del usuario
   - Sección CTA final ampliada y mejorada: gradiente triple azul, efectos blur, elementos flotantes
