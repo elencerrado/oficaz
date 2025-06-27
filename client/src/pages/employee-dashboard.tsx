@@ -569,9 +569,17 @@ export default function EmployeeDashboard() {
           <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-2">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
-              activeSession ? 'text-green-400' : 'text-red-400'
+              activeSession 
+                ? activeBreak 
+                  ? 'text-orange-400' 
+                  : 'text-green-400' 
+                : 'text-red-400'
             }`}>
-              {activeSession ? '🟢 Trabajando...' : '🔴 Fuera del trabajo'}
+              {activeSession 
+                ? activeBreak 
+                  ? '🟡 En descanso' 
+                  : '🟢 Trabajando...' 
+                : '🔴 Fuera del trabajo'}
             </div>
             
             {temporaryMessage ? (
@@ -623,7 +631,7 @@ export default function EmployeeDashboard() {
                       }
                     }}
                     disabled={startBreakMutation.isPending || endBreakMutation.isPending || !activeSession}
-                    className={`w-24 h-24 rounded-full ${
+                    className={`w-32 h-32 rounded-full ${
                       activeBreak 
                         ? 'bg-red-500 hover:bg-red-600' 
                         : 'bg-orange-500 hover:bg-orange-600'
