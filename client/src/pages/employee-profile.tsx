@@ -106,7 +106,7 @@ export default function EmployeeProfile() {
 
       <div className="px-6 space-y-6">
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
-        <div className="bg-white/10 rounded-xl p-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="flex items-center space-x-4 mb-6">
             <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
               <User className="h-8 w-8 text-white" />
@@ -135,7 +135,7 @@ export default function EmployeeProfile() {
         </div>
 
         {/* Datos Editables */}
-        <div className="bg-white/10 rounded-xl p-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-medium text-white">Datos Personales</h3>
           </div>
