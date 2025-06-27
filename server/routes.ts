@@ -969,6 +969,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all break periods for the authenticated user
+  app.get('/api/break-periods', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const breakPeriods = await storage.getBreakPeriodsByUser(req.user!.id);
+      res.json(breakPeriods);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Vacation request routes
   app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {

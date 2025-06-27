@@ -48,6 +48,7 @@ export interface IStorage {
   // Break periods
   createBreakPeriod(breakPeriod: InsertBreakPeriod): Promise<BreakPeriod>;
   getActiveBreakPeriod(userId: number): Promise<BreakPeriod | undefined>;
+  getBreakPeriodsByUser(userId: number): Promise<BreakPeriod[]>;
   updateBreakPeriod(id: number, updates: Partial<InsertBreakPeriod>): Promise<BreakPeriod | undefined>;
   updateWorkSessionBreakTime(workSessionId: number): Promise<void>;
 
@@ -346,6 +347,13 @@ export class DrizzleStorage implements IStorage {
     await db.update(schema.workSessions)
       .set({ totalBreakTime: totalBreakTime.toFixed(2) })
       .where(eq(schema.workSessions.id, workSessionId));
+  }
+
+  async getBreakPeriodsByUser(userId: number): Promise<BreakPeriod[]> {
+    const breakPeriods = await db.select().from(schema.breakPeriods)
+      .where(eq(schema.breakPeriods.userId, userId))
+      .orderBy(desc(schema.breakPeriods.breakStart));
+    return breakPeriods;
   }
 
   // Vacation Requests

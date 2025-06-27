@@ -246,9 +246,12 @@ export default function EmployeeTimeTracking() {
   const renderMobileTimeline = (session: WorkSession) => {
     const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
     
+    // Debug: log break periods
+    console.log('Session breaks for session', session.id, ':', sessionBreaks);
+    
     if (!session.clockOut) {
       return (
-        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
           <div className="flex justify-between items-center mb-2">
             <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
             <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
@@ -292,30 +295,35 @@ export default function EmployeeTimeTracking() {
     });
 
     return (
-      <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/20">
+      <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
         {/* Header with date and total hours */}
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Timeline container */}
-        <div className="relative mb-2">
-          {/* Main blue bar */}
-          <div className="relative h-1 bg-blue-400 rounded-full">
+        {/* Timeline container - BARRA MÁS ANCHA */}
+        <div className="relative mb-3">
+          {/* Main blue bar - Aumentada de h-1 a h-2 */}
+          <div className="relative h-2 bg-blue-400 rounded-full">
             {/* Break periods overlay */}
             {sessionBreaks.map((breakPeriod: BreakPeriod) => {
-              const breakStart = new Date(breakPeriod.breakStart);
-              const breakEnd = breakPeriod.breakEnd ? new Date(breakPeriod.breakEnd) : new Date();
+              const breakStartField = breakPeriod.breakStart;
+              const breakEndField = breakPeriod.breakEnd;
+              
+              if (!breakStartField) return null;
+              
+              const breakStart = new Date(breakStartField);
+              const breakEnd = breakEndField ? new Date(breakEndField) : new Date();
               
               const startPercent = ((breakStart.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
               const endPercent = ((breakEnd.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
-              const width = Math.max(0, endPercent - startPercent);
+              const width = Math.max(2, endPercent - startPercent); // Mínimo 2% de ancho
               
               return (
                 <div
                   key={breakPeriod.id}
-                  className={`absolute h-1 rounded-full ${breakPeriod.status === 'active' ? 'bg-orange-400 animate-pulse' : 'bg-gray-400'}`}
+                  className={`absolute h-2 rounded-full ${breakPeriod.status === 'active' ? 'bg-orange-400 animate-pulse' : 'bg-gray-400'}`}
                   style={{
                     left: `${Math.max(0, Math.min(95, startPercent))}%`,
                     width: `${Math.min(100 - Math.max(0, startPercent), width)}%`,
@@ -325,7 +333,7 @@ export default function EmployeeTimeTracking() {
                     const rect = e.currentTarget.getBoundingClientRect();
                     const content = breakPeriod.status === 'active' 
                       ? `Descanso en progreso: ${Math.floor((new Date().getTime() - breakStart.getTime()) / (1000 * 60))} min`
-                      : `Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
+                      : `Descanso: ${formatTime(breakStartField)} - ${formatTime(breakEndField!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
                     
                     setTooltipContent({
                       show: true,
@@ -342,7 +350,7 @@ export default function EmployeeTimeTracking() {
             })}
           </div>
 
-          {/* Timeline points */}
+          {/* Timeline points - Puntos más grandes para mejor visibilidad */}
           {timelinePoints.map((point, index) => {
             const position = ((point.time.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
             const isEntrada = point.type === 'entrada';
@@ -359,7 +367,7 @@ export default function EmployeeTimeTracking() {
             return (
               <div
                 key={`${point.type}-${index}`}
-                className={`absolute w-3 h-3 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 ${
+                className={`absolute w-4 h-4 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 ${
                   isEntrada ? 'bg-green-400' : 
                   isSalida ? 'bg-red-400' : 
                   'bg-orange-400'
@@ -379,6 +387,13 @@ export default function EmployeeTimeTracking() {
           <div className="flex justify-between text-xs text-white/70 mt-2">
             <span>{formatTime(session.clockIn)}</span>
             <span>{formatTime(session.clockOut)}</span>
+          </div>
+        )}
+
+        {/* Debug info - mostrar descansos encontrados */}
+        {sessionBreaks.length > 0 && (
+          <div className="text-xs text-white/50 mt-2">
+            Descansos: {sessionBreaks.length}
           </div>
         )}
 
@@ -483,59 +498,50 @@ export default function EmployeeTimeTracking() {
             const sortedSessions = monthSessions
               .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
             
-            let currentWeekStart: Date | null = null;
-            let previousWeekStart: Date | null = null;
+            // Group sessions by week
+            const weekGroups = new Map<string, WorkSession[]>();
             
-            // Calculate weekly totals
-            const calculateWeekTotal = (weekStart: Date) => {
-              return sortedSessions
-                .filter(session => {
-                  const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
-                  return sessionWeekStart.getTime() === weekStart.getTime();
-                })
-                .reduce((total, session) => total + calculateSessionHours(session), 0);
-            };
+            sortedSessions.forEach((session) => {
+              const sessionDate = new Date(session.clockIn);
+              const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
+              const weekKey = weekStart.toISOString();
+              
+              if (!weekGroups.has(weekKey)) {
+                weekGroups.set(weekKey, []);
+              }
+              weekGroups.get(weekKey)!.push(session);
+            });
+            
+            // Convert to array and sort by week (most recent first)
+            const sortedWeeks = Array.from(weekGroups.entries())
+              .sort(([keyA], [keyB]) => new Date(keyB).getTime() - new Date(keyA).getTime());
             
             const result: JSX.Element[] = [];
             
-            sortedSessions.forEach((session, index) => {
-              const sessionDate = new Date(session.clockIn);
-              const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 }); // Monday start
+            sortedWeeks.forEach(([weekKey, weekSessions], weekIndex) => {
+              const weekStart = new Date(weekKey);
+              const weekTotal = weekSessions.reduce((total, session) => total + calculateSessionHours(session), 0);
               
-              // Check if this is a new week
-              const isNewWeek = currentWeekStart === null || 
-                weekStart.getTime() !== currentWeekStart.getTime();
-              
-              if (isNewWeek) {
-                previousWeekStart = currentWeekStart;
-                currentWeekStart = weekStart;
-              }
-              
-              // Week separator with total - only show if it's a new week and not the first item
-              if (isNewWeek && index > 0 && previousWeekStart) {
-                result.push(
-                  <div key={`week-total-${previousWeekStart.getTime()}`} className="bg-blue-400/10 rounded-lg p-3 mb-4 border border-blue-400/30">
-                    <div className="text-center text-sm font-semibold text-blue-300">
-                      📊 Total semana: {formatTotalHours(calculateWeekTotal(previousWeekStart))}
-                    </div>
-                  </div>
-                );
-              }
-              
-              // Add the timeline for this session
-              result.push(renderMobileTimeline(session));
-            });
-            
-            // Add total for the last (most recent) week at the end
-            if (currentWeekStart) {
+              // Contenedor de semana
               result.push(
-                <div key={`current-week-total-${currentWeekStart.getTime()}`} className="bg-blue-400/10 rounded-lg p-3 mb-4 border border-blue-400/30">
-                  <div className="text-center text-sm font-semibold text-blue-300">
-                    📊 Total semana: {formatTotalHours(calculateWeekTotal(currentWeekStart))}
+                <div key={`week-${weekKey}`} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 mb-4 border border-white/10">
+                  {/* Header de semana */}
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                    <h3 className="text-white font-medium text-sm">
+                      Semana del {format(weekStart, 'dd MMM', { locale: es })}
+                    </h3>
+                    <span className="text-blue-300 font-mono text-sm bg-blue-400/20 px-2 py-1 rounded-lg">
+                      📊 {formatTotalHours(weekTotal)}
+                    </span>
+                  </div>
+                  
+                  {/* Sesiones de la semana */}
+                  <div className="space-y-3">
+                    {weekSessions.map((session) => renderMobileTimeline(session))}
                   </div>
                 </div>
               );
-            }
+            });
             
             return result;
           })()
