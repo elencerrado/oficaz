@@ -129,7 +129,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Timeline de empleado finalizado con barras ancho completo y funcionalidad completa
+- June 27, 2025. Timeline de empleado finalizado con barras ancho completo y UI optimizada
   - Barras de timeline rediseñadas para ocupar todo el ancho del contenedor (no proporcional)
   - Puntos de entrada (verde) y salida (rojo) sólidos en extremos izquierdo y derecho de barras
   - Sesiones individuales y múltiples usan ancho completo sin cálculos proporcionales basados en horas
@@ -141,6 +141,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Sistema visual mejorado con jerarquía clara entre elementos expandidos y contraídos
   - Eliminadas etiquetas "Entrada:" y "Salida:" - solo hora en color verde (entrada) y rojo (salida)
   - Formato simplificado aplicado tanto en sesiones individuales como jornadas partidas
+  - OPTIMIZADO: Contenedores más compactos (p-3 mb-2 en lugar de p-4 mb-3)
+  - OPTIMIZADO: Eliminado icono gráfico 📊 del total semanal para diseño más limpio
+  - OPTIMIZADO: Navegación al futuro bloqueada - usuarios no pueden ir a meses posteriores
+  - MEJORADO: Sesiones múltiples del mismo día ahora se muestran en línea horizontal
+  - MEJORADO: Cada sesión ocupa su porción proporcional del ancho disponible
+  - MEJORADO: Puntos entrada/salida y barras de descanso ajustados para layout horizontal
 - June 27, 2025. Timeline de empleado completamente rediseñado con estilo admin y puntos de entrada/salida
   - Barras de timeline h-5 (principal) y h-4 (descansos) igual que vista admin para consistencia visual
   - Puntos de entrada verdes y salida rojos con borde blanco y sombras para mejor visibilidad

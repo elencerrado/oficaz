@@ -262,7 +262,7 @@ export default function EmployeeTimeTracking() {
     
     if (!session.clockOut) {
       return (
-        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
+        <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20">
           <div className="flex justify-between items-center mb-2">
             <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
             <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
@@ -304,7 +304,7 @@ export default function EmployeeTimeTracking() {
     return (
       <div 
         key={session.id} 
-        className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20 cursor-pointer"
+        className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
         {/* Header with date and total hours */}
@@ -472,16 +472,7 @@ export default function EmployeeTimeTracking() {
           {format(currentMonth, 'MMMM yyyy', { locale: es })}
         </h2>
         
-        {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
-          <Button
-            onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
-            className="text-white hover:bg-white/10 p-2 rounded-xl"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        ) : (
-          <div className="w-10 h-10 p-2" /> // Spacer to maintain exact layout
-        )}
+        <div className="w-10 h-10 p-2" /> {/* Spacer - navegación al futuro bloqueada */}
       </div>
 
       {/* Month Total Hours - Fixed height */}
@@ -544,7 +535,7 @@ export default function EmployeeTimeTracking() {
                       Semana del {format(weekStart, 'dd MMM', { locale: es })}
                     </h3>
                     <span className="text-blue-300 font-mono text-sm bg-blue-400/20 px-2 py-1 rounded-lg">
-                      📊 {formatTotalHours(weekTotal)}
+                      {formatTotalHours(weekTotal)}
                     </span>
                   </div>
                   
@@ -586,7 +577,7 @@ export default function EmployeeTimeTracking() {
                           return (
                             <div 
                               key={`day-${dayKey}`} 
-                              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20 cursor-pointer"
+                              className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
                               {/* Header with date and total hours */}
@@ -599,8 +590,8 @@ export default function EmployeeTimeTracking() {
                                 </span>
                               </div>
 
-                              {/* Multiple session bars - ancho completo por sesión */}
-                              <div className="space-y-2 mx-2">
+                              {/* Multiple session bars - en la misma línea horizontal */}
+                              <div className="relative h-7 mb-2 mx-2">
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
                                   
@@ -609,35 +600,39 @@ export default function EmployeeTimeTracking() {
                                   const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
                                   const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
                                   
+                                  // Calcular posición horizontal para cada sesión
+                                  const sessionWidth = (100 / sortedDaySessions.length) - 1; // Dividir ancho entre sesiones con pequeño gap
+                                  const sessionLeft = (sessionIndex * (100 / sortedDaySessions.length)) + (sessionIndex * 0.5);
+                                  
                                   return (
-                                    <div key={`session-${session.id}`} className="relative h-7 mb-1">
-                                      {/* Session bar - ancho completo */}
+                                    <div key={`session-${session.id}`} className="absolute top-0 h-7">
+                                      {/* Session bar - ancho proporcional al número de sesiones */}
                                       <div
-                                        className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
+                                        className="absolute top-0 h-5 bg-blue-500 rounded-sm"
                                         style={{
-                                          left: '0%',
-                                          width: '100%'
+                                          left: `${sessionLeft}%`,
+                                          width: `${sessionWidth}%`
                                         }}
                                       />
                                       
                                       {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
                                       {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && (
                                         <>
-                                          {/* Punto de entrada - verde sólido, extremo izquierdo debajo de la barra */}
+                                          {/* Punto de entrada - verde sólido, extremo izquierdo de esta sesión */}
                                           <div
                                             className="absolute w-3 h-3 bg-green-500 rounded-full"
                                             style={{
-                                              left: '0%',
+                                              left: `${sessionLeft}%`,
                                               top: '24px', // Debajo de la barra h-5
                                               transform: 'translateX(0%)'
                                             }}
                                           />
                                           
-                                          {/* Punto de salida - rojo sólido, extremo derecho debajo de la barra */}
+                                          {/* Punto de salida - rojo sólido, extremo derecho de esta sesión */}
                                           <div
                                             className="absolute w-3 h-3 bg-red-500 rounded-full"
                                             style={{
-                                              left: '100%',
+                                              left: `${sessionLeft + sessionWidth}%`,
                                               top: '24px', // Debajo de la barra h-5
                                               transform: 'translateX(-100%)'
                                             }}
@@ -658,13 +653,17 @@ export default function EmployeeTimeTracking() {
                                         const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
                                         const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2);
                                         
+                                        // Ajustar posición dentro de la sesión específica
+                                        const adjustedBreakLeft = sessionLeft + (breakLeftPercentageInSession * sessionWidth / 100);
+                                        const adjustedBreakWidth = (breakWidthPercentageInSession * sessionWidth / 100);
+                                        
                                         return (
                                           <div
                                             key={`break-${breakIndex}`}
                                             className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
                                             style={{
-                                              left: `${breakLeftPercentageInSession}%`,
-                                              width: `${breakWidthPercentageInSession}%`
+                                              left: `${adjustedBreakLeft}%`,
+                                              width: `${adjustedBreakWidth}%`
                                             }}
                                             title={`Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`}
                                           />
