@@ -95,7 +95,6 @@ export default function EmployeeProfile() {
           </div>
         </div>
       </div>
-      
       {/* Page Title */}
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
@@ -103,7 +102,6 @@ export default function EmployeeProfile() {
           Gestiona tu información personal y de contacto
         </p>
       </div>
-
       <div className="px-6 space-y-6">
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
@@ -155,7 +153,7 @@ export default function EmployeeProfile() {
         {/* Datos Editables */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="mb-6">
-            <h3 className="text-lg font-medium text-white">Datos Personales</h3>
+            <h3 className="text-lg font-medium text-white">Datos Personales Editables</h3>
           </div>
 
           <div className="space-y-4">
