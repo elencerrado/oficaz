@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface DatePickerDayProps {
@@ -20,10 +21,42 @@ export function DatePickerDay({
   date,
   onDateChange,
   className,
-  placeholder = "Día",
+  placeholder = "Seleccionar fecha",
   buttonText
 }: DatePickerDayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempYear, setTempYear] = useState(date?.getFullYear() || new Date().getFullYear());
+  const [tempMonth, setTempMonth] = useState(date?.getMonth() || new Date().getMonth());
+  const [tempDay, setTempDay] = useState(date?.getDate() || new Date().getDate());
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 80 }, (_, i) => currentYear - i); // 80 años hacia atrás
+  const months = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  
+  // Calcular días del mes seleccionado
+  const daysInMonth = new Date(tempYear, tempMonth + 1, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+  const handleAccept = () => {
+    // Ajustar día si es mayor al máximo del mes
+    const adjustedDay = Math.min(tempDay, daysInMonth);
+    const newDate = new Date(tempYear, tempMonth, adjustedDay);
+    onDateChange(newDate);
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    // Restaurar valores originales
+    if (date) {
+      setTempYear(date.getFullYear());
+      setTempMonth(date.getMonth());
+      setTempDay(date.getDate());
+    }
+    setIsModalOpen(false);
+  };
 
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -47,32 +80,81 @@ export function DatePickerDay({
             Seleccionar fecha
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center space-y-4 p-4">
-          <Calendar
-            mode="single"
-            selected={date}
-            defaultMonth={date || new Date()}
-            onSelect={(selectedDate) => {
-              onDateChange(selectedDate);
-              if (selectedDate) {
-                setTimeout(() => setIsModalOpen(false), 300);
-              }
-            }}
-            className="rounded-md border"
-            numberOfMonths={1}
-            showOutsideDays={false}
-            locale={es}
-          />
+        <div className="flex flex-col space-y-4 p-4">
+          {/* Selector de Año */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Año
+            </label>
+            <Select value={tempYear.toString()} onValueChange={(value) => setTempYear(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                {years.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                onDateChange(undefined);
-              }}
-              size="sm"
+          {/* Selector de Mes */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Mes
+            </label>
+            <Select value={tempMonth.toString()} onValueChange={(value) => setTempMonth(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month, index) => (
+                  <SelectItem key={index} value={index.toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Selector de Día */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Día
+            </label>
+            <Select 
+              value={Math.min(tempDay, daysInMonth).toString()} 
+              onValueChange={(value) => setTempDay(parseInt(value))}
             >
-              Limpiar fecha
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                {days.map((day) => (
+                  <SelectItem key={day} value={day.toString()}>
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Botones */}
+          <div className="flex gap-2 mt-6">
+            <Button 
+              variant="outline" 
+              onClick={handleCancel}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleAccept}
+              className="flex-1"
+            >
+              Aceptar
             </Button>
           </div>
         </div>

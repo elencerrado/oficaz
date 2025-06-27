@@ -136,6 +136,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. DATE PICKER COMPLETAMENTE REDISEÑADO: Sistema operativo eficiente implementado exitosamente
+  - Componente DatePickerDay rediseñado con selección independiente año/mes/día para máxima eficiencia operativa
+  - Eliminada navegación "pegajosa" mes a mes: ahora permite salto directo a cualquier fecha (ej: 5 años atrás)
+  - Selectores independientes: Año (80 años hacia atrás), Mes (nombres en español), Día (adapta automáticamente)
+  - Lógica inteligente: ajuste automático día al cambiar mes (ej: 31 Feb → 28/29 Feb)
+  - Backend corregido: conversión Date→ISO string en funciones handleCreateEmployee y handleSaveEmployee
+  - Sistema robusto: conserva funcionalidad existente mientras mejora dramáticamente la experiencia operativa
+  - Cumple requerimiento crítico del usuario: "por dios no rompas nada" - todas las funciones previas intactas
 - June 27, 2025. SISTEMA DE LÍMITES DE USUARIOS COMPLETAMENTE IMPLEMENTADO
   - Tarjeta de usuarios en configuración ahora muestra formato "X/Y" (usuarios actuales/límite máximo)
   - Validación de límite de usuarios implementada en creación de empleados

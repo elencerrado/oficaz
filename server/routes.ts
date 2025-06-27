@@ -818,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate user limit
       const subscription = await storage.getSubscriptionByCompanyId((req as AuthRequest).user!.companyId);
-      const currentEmployees = await storage.getEmployeesByCompany((req as AuthRequest).user!.companyId);
+      const currentEmployees = await storage.getUsersByCompany((req as AuthRequest).user!.companyId);
       const currentUserCount = currentEmployees.filter((emp: any) => emp.role !== 'admin').length;
       
       if (subscription?.maxUsers && currentUserCount >= subscription.maxUsers) {

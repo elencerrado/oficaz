@@ -27,6 +27,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { DatePickerDay } from '@/components/ui/date-picker';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,7 +43,7 @@ export default function EmployeesSimple() {
     companyEmail: '',
     companyPhone: '',
     position: '',
-    startDate: '',
+    startDate: new Date(),
     status: 'active',
     role: 'employee',
     vacationDaysAdjustment: 0,
@@ -59,7 +60,7 @@ export default function EmployeesSimple() {
     companyEmail: '',
     companyPhone: '',
     position: '',
-    startDate: '',
+    startDate: new Date(),
     status: 'active',
     role: 'employee',
     personalEmail: '',
@@ -135,7 +136,9 @@ export default function EmployeesSimple() {
       companyEmail: editEmployee.companyEmail,
       companyPhone: editEmployee.companyPhone,
       position: editEmployee.position,
-      startDate: editEmployee.startDate,
+      startDate: editEmployee.startDate instanceof Date 
+        ? editEmployee.startDate.toISOString().split('T')[0]
+        : editEmployee.startDate,
       status: editEmployee.status,
       role: editEmployee.role,
       vacationDaysAdjustment: editEmployee.vacationDaysAdjustment,
@@ -177,7 +180,9 @@ export default function EmployeesSimple() {
       companyEmail: newEmployee.companyEmail,
       companyPhone: newEmployee.companyPhone,
       position: newEmployee.position,
-      startDate: newEmployee.startDate || new Date().toISOString().split('T')[0],
+      startDate: newEmployee.startDate instanceof Date 
+        ? newEmployee.startDate.toISOString().split('T')[0]
+        : newEmployee.startDate || new Date().toISOString().split('T')[0],
       status: newEmployee.status,
       role: newEmployee.role,
       personalEmail: newEmployee.personalEmail,
@@ -243,7 +248,7 @@ export default function EmployeesSimple() {
       companyEmail: employee.companyEmail || '',
       companyPhone: employee.companyPhone || '',
       position: employee.position || employee.role,
-      startDate: employee.startDate ? new Date(employee.startDate).toISOString().split('T')[0] : '',
+      startDate: employee.startDate ? new Date(employee.startDate) : new Date(),
       status: employee.status || 'active',
       role: employee.role || 'employee',
       vacationDaysAdjustment: Number(employee.vacationDaysAdjustment || 0),
@@ -685,13 +690,13 @@ export default function EmployeesSimple() {
                     
                     <div>
                       <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
-                      <Input
-                        id="newStartDate"
-                        type="date"
-                        value={newEmployee.startDate}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, startDate: e.target.value })}
-                        className="mt-1"
-                      />
+                      <div className="mt-1">
+                        <DatePickerDay
+                          date={newEmployee.startDate}
+                          onDateChange={(date) => setNewEmployee({ ...newEmployee, startDate: date || new Date() })}
+                          placeholder="Seleccionar fecha"
+                        />
+                      </div>
                     </div>
                     
                     <div>
@@ -901,13 +906,13 @@ export default function EmployeesSimple() {
                       
                       <div>
                         <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
-                        <Input
-                          id="startDate"
-                          type="date"
-                          value={editEmployee.startDate}
-                          onChange={(e) => setEditEmployee({ ...editEmployee, startDate: e.target.value })}
-                          className="mt-1"
-                        />
+                        <div className="mt-1">
+                          <DatePickerDay
+                            date={editEmployee.startDate}
+                            onDateChange={(date) => setEditEmployee({ ...editEmployee, startDate: date || new Date() })}
+                            placeholder="Seleccionar fecha"
+                          />
+                        </div>
                       </div>
                       
                       <div>
