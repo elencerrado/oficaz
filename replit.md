@@ -127,8 +127,21 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 - **User expects consistency**: Header and margins must follow the same pattern as time-tracking and other admin pages
 - **No custom containers**: Always follow the px-6 py-4 pattern, never use max-w-7xl containers with border-bottom
 
+### Code Protection Standards
+- **Critical Functions Must Be Protected**: User has experienced functionality regression issues
+- **Protected Code Sections**: Use ⚠️ PROTECTED comments with "DO NOT MODIFY" warnings
+- **Document Classification**: The analyzeFileName function is CRITICAL and must remain stable
+- **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
+- **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
+
 ## Changelog
 
+- June 27, 2025. Sistema de clasificación de documentos BLINDADO contra regresiones
+  - Función analyzeFileName protegida con comentarios ⚠️ PROTECTED y advertencias "DO NOT MODIFY"
+  - Eliminados logs de debugging que causaban confusión en producción
+  - Documentación de estándares de protección de código crítico en User Preferences
+  - Sistema resistente a cambios futuros que puedan romper la clasificación automática
+  - Patrón de protección implementado para funcionalidades críticas del sistema
 - June 27, 2025. Headers empleado estandarizados completamente siguiendo patrón de fichajes
   - Documentos, recordatorios y mensajes empleado ahora usan header estándar idéntico
   - Logo inteligente: se muestra solo si tiene logo Y función logoUpload habilitada por super admin

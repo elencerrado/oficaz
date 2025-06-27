@@ -321,18 +321,14 @@ export default function AdminDocuments() {
     },
   });
 
-  // Smart file analysis functions
+  // ⚠️ PROTECTED: Smart file analysis functions - DO NOT MODIFY
+  // This function is CRITICAL for document classification and must remain stable
   const analyzeFileName = (fileName: string) => {
     const normalizedName = fileName.toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, ""); // Remove accents
     
-    console.log('🔍 Analyzing file:', fileName);
-    console.log('📝 Normalized name:', normalizedName);
-    console.log('👥 Available employees:', employees);
-    console.log('📋 Available document types:', documentTypes);
-    
-    // Find employee by name matching
+    // ⚠️ PROTECTED: Employee matching logic - DO NOT CHANGE
     const matchedEmployee = (employees as Employee[])?.find((emp: Employee) => {
       const empName = emp.fullName.toLowerCase()
         .normalize("NFD")
@@ -349,36 +345,23 @@ export default function AdminDocuments() {
       return matchedWords.length >= 2;
     });
     
-    // Detect document type with enhanced debugging
+    // ⚠️ PROTECTED: Document type detection - CRITICAL FUNCTIONALITY
+    // This logic MUST detect: nomina/nómina, contrato, dni, justificante
     const documentType = documentTypes.find(type => {
       const typeKeywords = type.keywords || [];
-      console.log(`🏷️ Checking type "${type.name}" with keywords:`, typeKeywords);
-      
-      const hasMatch = typeKeywords.some(keyword => {
-        const match = normalizedName.includes(keyword.toLowerCase());
-        if (match) {
-          console.log(`✅ MATCH found: "${keyword}" in "${normalizedName}"`);
-        }
-        return match;
-      });
-      
-      if (hasMatch) {
-        console.log(`🎯 Document type detected: ${type.name} (${type.id})`);
-      }
-      
-      return hasMatch;
+      return typeKeywords.some(keyword => 
+        normalizedName.includes(keyword.toLowerCase())
+      );
     });
     
-    const result = {
+    // ⚠️ PROTECTED: Return structure - DO NOT MODIFY
+    return {
       employee: matchedEmployee,
       documentType: documentType?.id || 'otros',
       confidence: matchedEmployee ? (documentType ? 'high' : 'medium') : 'low'
     };
-    
-    console.log('📊 Analysis result:', result);
-    
-    return result;
   };
+  // ⚠️ END PROTECTED SECTION
 
   const generateCleanFileName = (fileName: string, employee: Employee, docType: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
