@@ -61,6 +61,7 @@ export default function EmployeeTimeTracking() {
     x: 0,
     y: 0
   });
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
   
   // Touch handling for mobile swipe
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -242,6 +243,16 @@ export default function EmployeeTimeTracking() {
     setEditForm({ clockIn: '', clockOut: '' });
   };
 
+  const toggleDayExpansion = (dayKey: string) => {
+    const newExpanded = new Set(expandedDays);
+    if (newExpanded.has(dayKey)) {
+      newExpanded.delete(dayKey);
+    } else {
+      newExpanded.add(dayKey);
+    }
+    setExpandedDays(newExpanded);
+  };
+
   // Mobile Timeline Rendering Function - Admin Style Bars
   const renderMobileTimeline = (session: WorkSession) => {
     const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
@@ -298,99 +309,110 @@ export default function EmployeeTimeTracking() {
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Admin-style timeline bar - más ancho */}
-        <div className="relative h-7 mb-2 mx-2">
-          {/* Main session bar - h-5 like admin, más ancho del contenedor */}
-          <div
-            className="absolute top-0 h-5 bg-blue-500 rounded-sm"
-            style={{
-              left: `${Math.max(0, leftPercentage - 2)}%`,
-              width: `${Math.min(100, widthPercentage + 4)}%`
-            }}
-          />
-          
-          {/* Punto de entrada - verde, alineado con la barra */}
-          <div
-            className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
-            style={{
-              left: `${leftPercentage}%`,
-              top: '4px',
-              transform: 'translateX(-50%)'
-            }}
-          />
-          
-          {/* Punto de salida - rojo, ligeramente a la derecha */}
-          <div
-            className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
-            style={{
-              left: `${leftPercentage + widthPercentage + 1}%`,
-              top: '4px',
-              transform: 'translateX(-50%)'
-            }}
-          />
-          
-          {/* Break periods as orange bars inside the session bar */}
-          {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
-            if (!breakPeriod.breakEnd) return null;
+        {/* Contenedor clicable para expandir/colapsar */}
+        <div 
+          className="cursor-pointer"
+          onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
+        >
+          {/* Admin-style timeline bar - más ancho */}
+          <div className="relative h-7 mb-2 mx-2">
+            {/* Main session bar - h-5 like admin, más ancho del contenedor */}
+            <div
+              className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+              style={{
+                left: `${Math.max(0, leftPercentage - 2)}%`,
+                width: `${Math.min(100, widthPercentage + 4)}%`
+              }}
+            />
             
-            const breakStart = new Date(breakPeriod.breakStart);
-            const breakEnd = new Date(breakPeriod.breakEnd);
+            {/* Break periods as orange bars inside the session bar */}
+            {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+              if (!breakPeriod.breakEnd) return null;
+              
+              const breakStart = new Date(breakPeriod.breakStart);
+              const breakEnd = new Date(breakPeriod.breakEnd);
+              
+              // Position relative to session start (not day)
+              const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+              const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+              
+              const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
+              const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Minimum 2%
+              
+              // Calcular posición real considerando el margen de la barra expandida
+              const actualBarLeft = Math.max(0, leftPercentage - 2);
+              const actualBarWidth = Math.min(100, widthPercentage + 4);
+              
+              return (
+                <div
+                  key={`break-${breakIndex}`}
+                  className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
+                  style={{
+                    left: `${actualBarLeft + (breakLeftPercentageInSession * actualBarWidth / 100)}%`,
+                    width: `${(breakWidthPercentageInSession * actualBarWidth / 100)}%`
+                  }}
+                />
+              );
+            })}
             
-            // Position relative to session start (not day)
-            const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-            const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-            
-            const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
-            const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Minimum 2%
-            
-            // Calcular posición real considerando el margen de la barra expandida
-            const actualBarLeft = Math.max(0, leftPercentage - 2);
-            const actualBarWidth = Math.min(100, widthPercentage + 4);
-            
-            return (
-              <div
-                key={`break-${breakIndex}`}
-                className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
-                style={{
-                  left: `${actualBarLeft + (breakLeftPercentageInSession * actualBarWidth / 100)}%`,
-                  width: `${(breakWidthPercentageInSession * actualBarWidth / 100)}%`
-                }}
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const content = breakPeriod.status === 'active' 
-                    ? `Descanso en progreso: ${Math.floor((new Date().getTime() - breakStart.getTime()) / (1000 * 60))} min`
-                    : `Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
-                  
-                  setTooltipContent({
-                    show: true,
-                    content,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top - 10
-                  });
-                }}
-                onMouseLeave={() => {
-                  setTooltipContent({ show: false, content: '', x: 0, y: 0 });
-                }}
-              />
-            );
-          })}
+            {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
+            {expandedDays.has(`${formatDayDate(new Date(session.clockIn))}-${session.id}`) && (
+              <>
+                {/* Punto de entrada - verde, debajo de la barra */}
+                <div
+                  className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+                  style={{
+                    left: `${leftPercentage}%`,
+                    top: '24px', // Debajo de la barra h-5
+                    transform: 'translateX(-50%)'
+                  }}
+                />
+                
+                {/* Punto de salida - rojo, debajo de la barra */}
+                <div
+                  className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+                  style={{
+                    left: `${leftPercentage + widthPercentage + 1}%`,
+                    top: '24px', // Debajo de la barra h-5
+                    transform: 'translateX(-50%)'
+                  }}
+                />
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Time labels closer to the bar - más cerca */}
-        <div className="relative h-3 mb-2 mx-2">
-          <span 
-            className="absolute text-xs text-white/70 transform -translate-x-1/2"
-            style={{ left: `${leftPercentage}%` }}
-          >
-            {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          <span 
-            className="absolute text-xs text-white/70 transform -translate-x-1/2"
-            style={{ left: `${leftPercentage + widthPercentage + 1}%` }}
-          >
-            {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
+        {/* Detalles de horarios - solo cuando está expandido */}
+        {expandedDays.has(`${formatDayDate(new Date(session.clockIn))}-${session.id}`) && (
+          <div className="mx-2 mb-3 space-y-2">
+            {/* Horarios de entrada y salida */}
+            <div className="flex justify-between text-xs text-white/70">
+              <span>Entrada: {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>Salida: {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            
+            {/* Información de descansos */}
+            {sessionBreaks.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs text-white/50 font-medium">Descansos:</div>
+                {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+                  if (!breakPeriod.breakEnd) return null;
+                  
+                  const breakStart = new Date(breakPeriod.breakStart);
+                  const breakEnd = new Date(breakPeriod.breakEnd);
+                  const duration = Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
+                  
+                  return (
+                    <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-200">
+                      <span>{formatTime(breakPeriod.breakStart)} - {formatTime(breakPeriod.breakEnd!)}</span>
+                      <span>{duration} min</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Debug info - mostrar descansos encontrados */}
         {sessionBreaks.length > 0 && (
@@ -573,7 +595,11 @@ export default function EmployeeTimeTracking() {
                           );
                           
                           return (
-                            <div key={`day-${dayKey}`} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
+                            <div 
+                              key={`day-${dayKey}`} 
+                              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20 cursor-pointer"
+                              onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
+                            >
                               {/* Header with date and total hours */}
                               <div className="flex justify-between items-center mb-4">
                                 <span className="text-white font-medium text-sm">
@@ -616,25 +642,30 @@ export default function EmployeeTimeTracking() {
                                         }}
                                       />
                                       
-                                      {/* Punto de entrada - verde */}
-                                      <div
-                                        className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
-                                        style={{
-                                          left: `${leftPercentage}%`,
-                                          top: '4px',
-                                          transform: 'translateX(-50%)'
-                                        }}
-                                      />
-                                      
-                                      {/* Punto de salida - rojo */}
-                                      <div
-                                        className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
-                                        style={{
-                                          left: `${leftPercentage + widthPercentage + 0.5}%`,
-                                          top: '4px',
-                                          transform: 'translateX(-50%)'
-                                        }}
-                                      />
+                                      {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
+                                      {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && (
+                                        <>
+                                          {/* Punto de entrada - verde, debajo de la barra */}
+                                          <div
+                                            className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+                                            style={{
+                                              left: `${leftPercentage}%`,
+                                              top: '24px', // Debajo de la barra h-5
+                                              transform: 'translateX(-50%)'
+                                            }}
+                                          />
+                                          
+                                          {/* Punto de salida - rojo, debajo de la barra */}
+                                          <div
+                                            className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+                                            style={{
+                                              left: `${leftPercentage + widthPercentage + 0.5}%`,
+                                              top: '24px', // Debajo de la barra h-5
+                                              transform: 'translateX(-50%)'
+                                            }}
+                                          />
+                                        </>
+                                      )}
                                       
                                       {/* Break periods within session */}
                                       {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
@@ -670,42 +701,52 @@ export default function EmployeeTimeTracking() {
                                 })}
                               </div>
 
-                              {/* Time labels for all sessions - más cerca */}
-                              <div className="relative h-3 mb-2 mx-2">
-                                {sortedDaySessions.map((session) => {
-                                  if (!session.clockOut) return null;
-                                  
-                                  const sessionStart = new Date(session.clockIn);
-                                  const sessionEnd = new Date(session.clockOut);
-                                  
-                                  const dayStart = new Date(sessionStart);
-                                  dayStart.setHours(6, 0, 0, 0);
-                                  const totalDayDuration = 16;
-                                  
-                                  const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-                                  const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-                                  
-                                  const leftPercentage = (startOffset / totalDayDuration) * 100;
-                                  const widthPercentage = (sessionDuration / totalDayDuration) * 100;
-                                  
-                                  return (
-                                    <div key={`labels-${session.id}`}>
-                                      <span 
-                                        className="absolute text-xs text-white/70 transform -translate-x-1/2"
-                                        style={{ left: `${leftPercentage}%` }}
-                                      >
-                                        {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                      <span 
-                                        className="absolute text-xs text-white/70 transform -translate-x-1/2"
-                                        style={{ left: `${leftPercentage + widthPercentage + 0.5}%` }}
-                                      >
-                                        {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              {/* Detalles de horarios - solo cuando está expandido */}
+                              {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && (
+                                <div className="mx-2 mb-3 space-y-3">
+                                  {/* Lista de sesiones con horarios detallados */}
+                                  {sortedDaySessions.map((session, sessionIndex) => {
+                                    if (!session.clockOut) return null;
+                                    
+                                    const sessionStart = new Date(session.clockIn);
+                                    const sessionEnd = new Date(session.clockOut);
+                                    const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
+                                    
+                                    return (
+                                      <div key={`session-detail-${session.id}`} className="space-y-2">
+                                        <div className="text-xs text-white/50 font-medium">Sesión {sessionIndex + 1}:</div>
+                                        
+                                        {/* Horarios de entrada y salida de la sesión */}
+                                        <div className="flex justify-between text-xs text-white/70">
+                                          <span>Entrada: {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                          <span>Salida: {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        
+                                        {/* Información de descansos de esta sesión */}
+                                        {sessionBreaks.length > 0 && (
+                                          <div className="space-y-1 ml-4">
+                                            <div className="text-xs text-white/50 font-medium">Descansos:</div>
+                                            {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+                                              if (!breakPeriod.breakEnd) return null;
+                                              
+                                              const breakStart = new Date(breakPeriod.breakStart);
+                                              const breakEnd = new Date(breakPeriod.breakEnd);
+                                              const duration = Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
+                                              
+                                              return (
+                                                <div key={`break-detail-${breakIndex}`} className="flex justify-between text-xs text-orange-200">
+                                                  <span>{formatTime(breakPeriod.breakStart)} - {formatTime(breakPeriod.breakEnd!)}</span>
+                                                  <span>{duration} min</span>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
 
                               {/* Sessions info */}
                               <div className="text-xs text-white/50 mt-2">
