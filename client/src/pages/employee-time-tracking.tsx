@@ -384,9 +384,9 @@ export default function EmployeeTimeTracking() {
         {expandedDays.has(`${formatDayDate(new Date(session.clockIn))}-${session.id}`) && (
           <div className="mx-2 mb-3 space-y-2">
             {/* Horarios de entrada y salida */}
-            <div className="flex justify-between text-xs text-white/70">
-              <span>Entrada: {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span>Salida: {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+            <div className="flex justify-between text-xs">
+              <span className="text-green-400">{sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="text-red-400">{sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             
             {/* Información de descansos - solo mostrar título cuando está expandido */}
@@ -710,9 +710,9 @@ export default function EmployeeTimeTracking() {
                                         <div className="text-xs text-white/50 font-medium">Sesión {sessionIndex + 1}:</div>
                                         
                                         {/* Horarios de entrada y salida de la sesión */}
-                                        <div className="flex justify-between text-xs text-white/70">
-                                          <span>Entrada: {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                                          <span>Salida: {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <div className="flex justify-between text-xs">
+                                          <span className="text-green-400">{sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                                          <span className="text-red-400">{sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                         
                                         {/* Información de descansos de esta sesión */}

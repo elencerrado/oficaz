@@ -137,6 +137,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Componente de debug eliminado completamente para código de producción
   - Funcionalidad expandir/contraer operativa tanto para sesiones individuales como múltiples
   - Sistema visual mejorado con jerarquía clara entre elementos expandidos y contraídos
+  - Eliminadas etiquetas "Entrada:" y "Salida:" - solo hora en color verde (entrada) y rojo (salida)
+  - Formato simplificado aplicado tanto en sesiones individuales como jornadas partidas
 - June 27, 2025. Timeline de empleado completamente rediseñado con estilo admin y puntos de entrada/salida
   - Barras de timeline h-5 (principal) y h-4 (descansos) igual que vista admin para consistencia visual
   - Puntos de entrada verdes y salida rojos con borde blanco y sombras para mejor visibilidad
