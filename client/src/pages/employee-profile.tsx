@@ -129,14 +129,14 @@ export default function EmployeeProfile() {
             {/* DNI - siempre mostrar */}
             <div className="flex items-center justify-between">
               <span className="text-gray-300 text-sm">DNI</span>
-              <span className="text-white font-mono text-sm">{user?.dni}</span>
+              <span className="text-white text-sm">{user?.dni}</span>
             </div>
             
             {/* Teléfono - solo si tiene datos */}
             {user?.companyPhone && (
               <div className="flex items-center justify-between">
                 <span className="text-gray-300 text-sm">Teléfono</span>
-                <span className="text-white font-mono text-sm">{user.companyPhone}</span>
+                <span className="text-white text-sm">{user.companyPhone}</span>
               </div>
             )}
             
@@ -144,7 +144,7 @@ export default function EmployeeProfile() {
             {user?.companyEmail && (
               <div className="flex items-center justify-between">
                 <span className="text-gray-300 text-sm">Email</span>
-                <span className="text-white font-mono text-sm truncate max-w-48">{user.companyEmail}</span>
+                <span className="text-white text-sm truncate max-w-48">{user.companyEmail}</span>
               </div>
             )}
           </div>
