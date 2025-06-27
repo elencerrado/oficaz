@@ -307,8 +307,8 @@ export default function EmployeeTimeTracking() {
         className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
-        {/* Header with date and total hours */}
-        <div className="flex justify-between items-center mb-3">
+        {/* Header with date and total hours - alineado con barra azul */}
+        <div className="flex justify-between items-center mb-3 mx-2">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
@@ -580,8 +580,8 @@ export default function EmployeeTimeTracking() {
                               className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
-                              {/* Header with date and total hours */}
-                              <div className="flex justify-between items-center mb-3">
+                              {/* Header with date and total hours - alineado con barra azul */}
+                              <div className="flex justify-between items-center mb-3 mx-2">
                                 <span className="text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
