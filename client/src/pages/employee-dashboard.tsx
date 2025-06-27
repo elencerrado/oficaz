@@ -630,7 +630,7 @@ export default function EmployeeDashboard() {
                 
                 {/* Break Button - Solo visible cuando hay sesión activa */}
                 {activeSession && (
-                  <div className="transition-all duration-500 transform opacity-100 scale-100">
+                  <div className="transition-all duration-700 transform translate-x-0 opacity-100 scale-100 animate-slideInFromRight">
                     <Button
                       onClick={() => {
                         if (activeBreak) {
@@ -647,7 +647,7 @@ export default function EmployeeDashboard() {
                       } text-white text-sm font-bold shadow-lg transition-all duration-300 relative overflow-hidden`}
                     >
                       {startBreakMutation.isPending || endBreakMutation.isPending ? (
-                        <LoadingSpinner size="sm" className="text-white w-6 h-6" />
+                        <LoadingSpinner size="lg" className="text-white w-12 h-12" />
                       ) : (
                         <span className="relative z-10 whitespace-pre-line">
                           {activeBreak ? 'Terminar\nDescanso' : 'Tomar\nDescanso'}
