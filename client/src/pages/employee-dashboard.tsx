@@ -347,7 +347,7 @@ export default function EmployeeDashboard() {
         {/* Header - Moderno y elegante */}
         <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-600/20 border border-blue-400/30 flex items-center justify-center backdrop-blur-xl">
+            <div className="w-12 h-12 rounded-full bg-[#007AFF] flex items-center justify-center">
               <span className="text-white font-bold text-lg">
                 {user?.fullName?.split(' ').map(n => n[0]).join('').substring(0, 2) || 'U'}
               </span>
@@ -368,7 +368,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Company Logo and Name - Limpio y simple */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <div className="text-center">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
@@ -386,8 +386,8 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Menu Grid - Moderno y elegante inspirado en el hero */}
-        <div className="px-6 mb-8">
-          <div className="grid grid-cols-3 gap-6">
+        <div className="px-6 mb-6">
+          <div className="grid grid-cols-3 gap-4">
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
@@ -409,17 +409,17 @@ export default function EmployeeDashboard() {
                       }
                       handleNavigation(item.route);
                     }}
-                    className={`relative w-28 h-28 transition-all duration-300 rounded-2xl flex items-center justify-center mb-3 backdrop-blur-xl border ${
+                    className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
                       isFeatureDisabled 
                         ? 'bg-gray-500/20 border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-blue-500/20 border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/30 transform hover:scale-110 hover:-translate-y-1 group-hover:animate-pulse'
+                        : 'bg-[#007AFF]/20 border-[#007AFF]/30 hover:bg-[#007AFF]/30 hover:border-[#007AFF]/50'
                     }`}
                     disabled={isFeatureDisabled}
                   >
-                    <item.icon className={`h-14 w-14 transition-all duration-300 ${
+                    <item.icon className={`h-12 w-12 transition-all duration-200 ${
                       isFeatureDisabled 
                         ? 'text-gray-400/50' 
-                        : 'text-white drop-shadow-lg group-hover:scale-110'
+                        : 'text-white drop-shadow-lg'
                     }`} />
                     {item.notification && !isFeatureDisabled && (
                       <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-bounce ${
@@ -477,7 +477,7 @@ export default function EmployeeDashboard() {
               <Button
                 onClick={handleClockAction}
                 disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-4 border-white/20 backdrop-blur-xl relative overflow-hidden"
+                className="w-40 h-40 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
               >
                 {clockInMutation.isPending || clockOutMutation.isPending ? (
                   <LoadingSpinner size="lg" className="text-white scale-150" />
