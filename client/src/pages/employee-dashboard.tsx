@@ -604,28 +604,16 @@ export default function EmployeeDashboard() {
               </p>
             </div>
           ) : (
-            <div className="relative">
-              <div className="flex flex-col items-center space-y-4">
-                <Button
-                  onClick={handleClockAction}
-                  disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                  className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
-                >
-                  {clockInMutation.isPending || clockOutMutation.isPending ? (
-                    <LoadingSpinner size="lg" className="text-white w-12 h-12" />
-                  ) : (
-                    <span className="relative z-10">
-                      {activeSession ? 'SALIR' : 'FICHAR'}
-                    </span>
-                  )}
-                  {/* Anillo exterior pulsante cuando está activo */}
-                  {activeSession && (
-                    <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
-                  )}
-                </Button>
-
-                {/* Break Button - Solo visible cuando está trabajando */}
-                {activeSession && (
+            <div className="relative w-full flex justify-center">
+              {/* Contenedor con layout flexible para animaciones */}
+              <div className="relative flex items-center justify-center gap-6">
+                
+                {/* Break Button - Inicialmente a la izquierda, se muestra cuando hay sesión activa */}
+                <div className={`transition-all duration-500 transform ${
+                  activeSession 
+                    ? 'translate-x-0 opacity-100 scale-100' 
+                    : 'translate-x-16 opacity-0 scale-75 pointer-events-none'
+                }`}>
                   <Button
                     onClick={() => {
                       if (activeBreak) {
@@ -634,17 +622,17 @@ export default function EmployeeDashboard() {
                         startBreakMutation.mutate();
                       }
                     }}
-                    disabled={startBreakMutation.isPending || endBreakMutation.isPending}
+                    disabled={startBreakMutation.isPending || endBreakMutation.isPending || !activeSession}
                     className={`w-24 h-24 rounded-full ${
                       activeBreak 
                         ? 'bg-red-500 hover:bg-red-600' 
                         : 'bg-orange-500 hover:bg-orange-600'
-                    } text-white text-sm font-bold shadow-lg transition-colors duration-200 relative overflow-hidden`}
+                    } text-white text-sm font-bold shadow-lg transition-all duration-300 relative overflow-hidden`}
                   >
                     {startBreakMutation.isPending || endBreakMutation.isPending ? (
                       <LoadingSpinner size="sm" className="text-white w-6 h-6" />
                     ) : (
-                      <span className="relative z-10">
+                      <span className="relative z-10 whitespace-pre-line">
                         {activeBreak ? 'Terminar\nDescanso' : 'Tomar\nDescanso'}
                       </span>
                     )}
@@ -653,7 +641,32 @@ export default function EmployeeDashboard() {
                       <div className="absolute -inset-1 rounded-full border border-red-400 animate-pulse opacity-75"></div>
                     )}
                   </Button>
-                )}
+                </div>
+
+                {/* Clock Button - Se mueve hacia la derecha cuando hay sesión activa */}
+                <div className={`transition-all duration-500 transform ${
+                  activeSession 
+                    ? 'translate-x-4' 
+                    : 'translate-x-0'
+                }`}>
+                  <Button
+                    onClick={handleClockAction}
+                    disabled={clockInMutation.isPending || clockOutMutation.isPending}
+                    className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300 relative overflow-hidden"
+                  >
+                    {clockInMutation.isPending || clockOutMutation.isPending ? (
+                      <LoadingSpinner size="lg" className="text-white w-12 h-12" />
+                    ) : (
+                      <span className="relative z-10">
+                        {activeSession ? 'SALIR' : 'FICHAR'}
+                      </span>
+                    )}
+                    {/* Anillo exterior pulsante cuando está activo */}
+                    {activeSession && (
+                      <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
