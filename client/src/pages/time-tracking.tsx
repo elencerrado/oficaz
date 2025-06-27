@@ -751,11 +751,11 @@ export default function TimeTracking() {
     return (
       <div className="space-y-3">
         {/* Timeline visual consolidado */}
-        <div className="relative">
+        <div className="relative h-6 mb-4">
           {/* Línea base gris que representa todo el día */}
           <div className="h-4 bg-gray-100 rounded-lg relative overflow-hidden">
             
-            {/* Segmentos de trabajo (barras azules) */}
+            {/* Segmentos de trabajo (barras azules) con descansos dentro */}
             {dayData.sessions.map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
@@ -768,75 +768,75 @@ export default function TimeTracking() {
               const widthPercentage = (sessionDuration / totalDayDuration) * 100;
               
               return (
-                <div
-                  key={sessionIndex}
-                  className="absolute top-0 h-full bg-blue-500 rounded"
-                  style={{
-                    left: `${leftPercentage}%`,
-                    width: `${widthPercentage}%`
-                  }}
-                />
+                <div key={sessionIndex} className="relative">
+                  {/* Barra azul de la sesión */}
+                  <div
+                    className="absolute top-0 h-4 bg-blue-500 rounded"
+                    style={{
+                      left: `${leftPercentage}%`,
+                      width: `${widthPercentage}%`
+                    }}
+                  />
+                  
+                  {/* Descansos dentro de la barra azul */}
+                  {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
+                    if (!breakPeriod.breakEnd) return null;
+                    
+                    const breakStart = new Date(breakPeriod.breakStart);
+                    const breakEnd = new Date(breakPeriod.breakEnd);
+                    
+                    // Posición del descanso relativa al inicio del día
+                    const breakStartOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                    const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                    
+                    const breakLeftPercentage = (breakStartOffset / totalDayDuration) * 100;
+                    const breakWidthPercentage = Math.max((breakDuration / totalDayDuration) * 100, 1); // Mínimo 1%
+                    
+                    return (
+                      <div
+                        key={`${sessionIndex}-${breakIndex}`}
+                        className="absolute top-0 h-4 bg-orange-400 rounded"
+                        style={{
+                          left: `${breakLeftPercentage}%`,
+                          width: `${breakWidthPercentage}%`
+                        }}
+                        title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
+                      />
+                    );
+                  })}
+                  
+                  {/* Indicadores de entrada (verde) al inicio de cada segmento */}
+                  <div
+                    className="absolute -top-1 w-2 h-2 bg-green-500 rounded-full"
+                    style={{ left: `${leftPercentage}%`, transform: 'translateX(-50%)' }}
+                    title={`Entrada: ${formatTime(sessionStart)}`}
+                  />
+                  
+                  {/* Indicadores de salida (rojo) al final de cada segmento */}
+                  <div
+                    className="absolute -top-1 w-2 h-2 bg-red-500 rounded-full"
+                    style={{ left: `${leftPercentage + widthPercentage}%`, transform: 'translateX(-50%)' }}
+                    title={`Salida: ${formatTime(sessionEnd)}`}
+                  />
+                </div>
               );
             })}
           </div>
-
-          {/* Períodos de descanso (encima de la barra principal) */}
-          <div className="absolute -top-6 left-0 right-0 h-4">
-            {dayData.sessions.flatMap((session: any, sessionIndex: number) => 
-              (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
-                const breakStart = new Date(breakPeriod.breakStart);
-                const breakEnd = new Date(breakPeriod.breakEnd);
-                
-                const startOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-                const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-                
-                const leftPercentage = (startOffset / totalDayDuration) * 100;
-                const widthPercentage = (breakDuration / totalDayDuration) * 100;
-                
-                return (
-                  <div
-                    key={`${sessionIndex}-${breakIndex}`}
-                    className="absolute top-0 h-3 bg-orange-400 rounded-full flex items-center justify-center"
-                    style={{
-                      left: `${leftPercentage}%`,
-                      width: `${Math.max(widthPercentage, 2)}%` // Mínimo 2% para visibilidad
-                    }}
-                    title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
-                  >
-                    {breakDuration > 0.5 && (
-                      <span className="text-white text-xs font-medium">
-                        {(breakDuration * 60).toFixed(0)}m
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
         </div>
 
-        {/* Horarios de entrada y salida con código de colores */}
-        <div className="flex flex-wrap gap-1 text-xs mt-2">
+        {/* Horarios de entrada y salida como texto adicional */}
+        <div className="flex flex-wrap gap-2 text-xs text-gray-600">
           {dayData.sessions.map((session: any, index: number) => (
             <div key={index} className="flex items-center gap-1">
-              {/* Entrada (verde) */}
-              <span className="inline-flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700 font-medium">
-                  {formatTime(new Date(session.clockIn))}
-                </span>
+              <span className="text-green-600 font-medium">
+                {formatTime(new Date(session.clockIn))}
               </span>
-              
-              {/* Salida (rojo) */}
-              <span className="inline-flex items-center gap-1 ml-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <span className="text-gray-700 font-medium">
-                  {formatTime(new Date(session.clockOut))}
-                </span>
+              <span className="text-gray-400">→</span>
+              <span className="text-red-600 font-medium">
+                {formatTime(new Date(session.clockOut))}
               </span>
-              
               {index < dayData.sessions.length - 1 && (
-                <span className="text-gray-400 ml-1">•</span>
+                <span className="text-gray-400 mx-1">|</span>
               )}
             </div>
           ))}
