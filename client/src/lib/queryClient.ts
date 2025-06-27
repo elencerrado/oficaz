@@ -75,6 +75,24 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
+    // Handle token expiration in queries too
+    if (res.status === 403) {
+      try {
+        const errorText = await res.text();
+        if (errorText.includes('Invalid or expired token')) {
+          // Clear auth data and redirect to login
+          localStorage.removeItem('authData');
+          window.location.href = '/login';
+          return null;
+        }
+      } catch (e) {
+        // If we can't read the error text, still handle as auth error
+        localStorage.removeItem('authData');
+        window.location.href = '/login';
+        return null;
+      }
+    }
+
     await throwIfResNotOk(res);
     return await res.json();
   };

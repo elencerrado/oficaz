@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Company } from '@shared/schema';
-import { getAuthData, setAuthData, clearAuthData } from '@/lib/auth';
+import { getAuthData, setAuthData, clearAuthData, clearExpiredTokens } from '@/lib/auth';
 import { apiRequest } from '@/lib/queryClient';
 
 interface AuthContextType {
@@ -24,6 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
+      // Clear any expired tokens first
+      clearExpiredTokens();
+      
       const authData = getAuthData();
       console.log('Auth init with data:', authData ? 'found' : 'none');
       
