@@ -42,6 +42,7 @@ import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import SuperAdminPlans from "@/pages/super-admin-plans";
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
+import SuperAdminInvitations from "@/pages/super-admin-invitations";
 import QuickAccess from "@/pages/quick-access";
 
 
@@ -130,6 +131,7 @@ function Router() {
         <Route path="/super-admin/companies/:id">
           {(params) => <SuperAdminCompanyDetail companyId={params.id} />}
         </Route>
+        <Route path="/super-admin/invitations" component={SuperAdminInvitations} />
         <Route path="/super-admin" component={SuperAdminDashboard} />
         <Route component={NotFound} />
       </Switch>

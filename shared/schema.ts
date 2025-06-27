@@ -143,6 +143,27 @@ export const usageStats = pgTable("usage_stats", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Registration settings for invitation-only mode
+export const registrationSettings = pgTable("registration_settings", {
+  id: serial("id").primaryKey(),
+  registrationEnabled: boolean("registration_enabled").default(true).notNull(),
+  invitationOnlyMode: boolean("invitation_only_mode").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Invitation links for restricted registration
+export const invitationLinks = pgTable("invitation_links", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  token: text("token").notNull().unique(),
+  used: boolean("used").default(false).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdBy: integer("created_by").references(() => superAdmins.id).notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Users table
 export const users = pgTable("users", { 
   // Identificación y acceso
@@ -374,6 +395,17 @@ export const insertUsageStatsSchema = createInsertSchema(usageStats).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertRegistrationSettingsSchema = createInsertSchema(registrationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvitationLinkSchema = createInsertSchema(invitationLinks).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const superAdminLoginSchema = z.object({

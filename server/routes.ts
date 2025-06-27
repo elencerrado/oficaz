@@ -2501,6 +2501,153 @@ startxref
     }
   });
 
+  // Super Admin - Registration Settings Management
+  app.get('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const settings = await storage.getRegistrationSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching registration settings:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const { publicRegistrationEnabled } = req.body;
+      const settings = await storage.updateRegistrationSettings({
+        publicRegistrationEnabled,
+        updatedAt: new Date()
+      });
+      res.json(settings);
+    } catch (error) {
+      console.error('Error updating registration settings:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Super Admin - Invitation Links Management  
+  app.post('/api/super-admin/invitations', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const { email, inviterName, companyName } = req.body;
+      
+      // Check if email already has an active invitation
+      const existingInvitation = await storage.getActiveInvitationByEmail(email);
+      if (existingInvitation) {
+        return res.status(400).json({ message: 'Este email ya tiene una invitación activa' });
+      }
+
+      // Generate secure token
+      const crypto = require('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      
+      // Create invitation with 7 days expiry
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      const invitation = await storage.createInvitationLink({
+        email,
+        token,
+        inviterName: inviterName || 'Super Admin',
+        companyName: companyName || 'Oficaz',
+        expiresAt,
+        isUsed: false,
+        createdById: req.superAdmin.id
+      });
+
+      // Generate invitation URL
+      const invitationUrl = `${req.protocol}://${req.get('host')}/registro/invitacion/${token}`;
+      
+      // TODO: Send invitation email here
+      console.log(`Invitation created for ${email}: ${invitationUrl}`);
+      
+      res.status(201).json({
+        ...invitation,
+        invitationUrl
+      });
+    } catch (error) {
+      console.error('Error creating invitation:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.get('/api/super-admin/invitations', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const invitations = await storage.getAllInvitationLinks();
+      res.json(invitations);
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.delete('/api/super-admin/invitations/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const invitationId = parseInt(req.params.id);
+      const success = await storage.deleteInvitationLink(invitationId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Invitación no encontrada' });
+      }
+      
+      res.json({ message: 'Invitación eliminada correctamente' });
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Public endpoint to validate invitation token
+  app.get('/api/invitations/validate/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).json({ message: 'Invitación no encontrada' });
+      }
+      
+      if (invitation.isUsed) {
+        return res.status(400).json({ message: 'Esta invitación ya ha sido utilizada' });
+      }
+      
+      if (new Date() > invitation.expiresAt) {
+        return res.status(400).json({ message: 'Esta invitación ha expirado' });
+      }
+      
+      res.json({
+        email: invitation.email,
+        inviterName: invitation.inviterName,
+        companyName: invitation.companyName,
+        isValid: true
+      });
+    } catch (error) {
+      console.error('Error validating invitation:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Update existing registration endpoint to check invitation requirement
+  app.post('/api/register', async (req, res) => {
+    try {
+      // Check if public registration is enabled
+      const settings = await storage.getRegistrationSettings();
+      if (!settings?.publicRegistrationEnabled) {
+        return res.status(403).json({ 
+          message: 'El registro público está deshabilitado. Se requiere una invitación.',
+          requiresInvitation: true
+        });
+      }
+
+      // Existing registration logic would continue here...
+      // For now, return the previous behavior
+      res.status(501).json({ message: 'Funcionalidad en desarrollo' });
+    } catch (error) {
+      console.error('Error in registration:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

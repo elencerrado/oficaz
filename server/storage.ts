@@ -108,6 +108,18 @@ export interface IStorage {
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
   updateSubscriptionPlan(id: number, updates: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
   deleteSubscriptionPlan(id: number): Promise<boolean>;
+
+  // Registration Settings operations
+  getRegistrationSettings(): Promise<any>;
+  updateRegistrationSettings(updates: any): Promise<any>;
+  
+  // Invitation Links operations  
+  createInvitationLink(invitation: any): Promise<any>;
+  getInvitationByToken(token: string): Promise<any>;
+  getActiveInvitationByEmail(email: string): Promise<any>;
+  getAllInvitationLinks(): Promise<any[]>;
+  deleteInvitationLink(id: number): Promise<boolean>;
+  markInvitationAsUsed(id: number): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -813,6 +825,91 @@ export class DrizzleStorage implements IStorage {
       .orderBy(schema.reminders.reminderDate);
     
     return activeReminders;
+  }
+
+  // Registration Settings operations
+  async getRegistrationSettings(): Promise<any> {
+    const [settings] = await db.select().from(schema.registrationSettings).limit(1);
+    
+    // Return default settings if none exist
+    if (!settings) {
+      return {
+        id: 1,
+        publicRegistrationEnabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    
+    return settings;
+  }
+
+  async updateRegistrationSettings(updates: any): Promise<any> {
+    // Try to update existing settings first
+    const [existing] = await db.select().from(schema.registrationSettings).limit(1);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(schema.registrationSettings)
+        .set(updates)
+        .where(eq(schema.registrationSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      // Create new settings if none exist
+      const [created] = await db
+        .insert(schema.registrationSettings)
+        .values({
+          publicRegistrationEnabled: updates.publicRegistrationEnabled ?? true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  // Invitation Links operations
+  async createInvitationLink(invitation: any): Promise<any> {
+    const [result] = await db.insert(schema.invitationLinks).values(invitation).returning();
+    return result;
+  }
+
+  async getInvitationByToken(token: string): Promise<any> {
+    const [invitation] = await db.select().from(schema.invitationLinks)
+      .where(eq(schema.invitationLinks.token, token));
+    return invitation;
+  }
+
+  async getActiveInvitationByEmail(email: string): Promise<any> {
+    const [invitation] = await db.select().from(schema.invitationLinks)
+      .where(
+        and(
+          eq(schema.invitationLinks.email, email),
+          eq(schema.invitationLinks.isUsed, false),
+          sql`${schema.invitationLinks.expiresAt} > NOW()`
+        )
+      );
+    return invitation;
+  }
+
+  async getAllInvitationLinks(): Promise<any[]> {
+    return db.select().from(schema.invitationLinks)
+      .orderBy(desc(schema.invitationLinks.createdAt));
+  }
+
+  async deleteInvitationLink(id: number): Promise<boolean> {
+    const result = await db.delete(schema.invitationLinks)
+      .where(eq(schema.invitationLinks.id, id));
+    return result.rowCount > 0;
+  }
+
+  async markInvitationAsUsed(id: number): Promise<boolean> {
+    const result = await db
+      .update(schema.invitationLinks)
+      .set({ isUsed: true, updatedAt: new Date() })
+      .where(eq(schema.invitationLinks.id, id));
+    return result.rowCount > 0;
   }
 }
 

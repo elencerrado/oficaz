@@ -12,7 +12,8 @@ import {
   Settings,
   Edit,
   Check,
-  X
+  X,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -216,20 +217,21 @@ export default function SuperAdminDashboard() {
             <CardTitle className="text-white">Acciones rápidas</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+                onClick={() => setLocation('/super-admin/invitations')}
               >
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-blue-400" />
+                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                  <Mail className="h-6 w-6 text-orange-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-medium">Nueva empresa</p>
-                  <p className="text-xs text-white/60">Registrar nueva empresa</p>
+                  <p className="font-medium">Invitaciones</p>
+                  <p className="text-xs text-white/60">Gestionar registro</p>
                 </div>
               </Button>
-              
+
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
@@ -258,6 +260,19 @@ export default function SuperAdminDashboard() {
                 <div className="text-center">
                   <p className="font-medium">Gestión de Planes</p>
                   <p className="text-xs text-white/60">Configurar suscripciones</p>
+                </div>
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-blue-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Nueva empresa</p>
+                  <p className="text-xs text-white/60">Registrar nueva empresa</p>
                 </div>
               </Button>
             </div>

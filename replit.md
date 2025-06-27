@@ -129,6 +129,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Sistema de gestión de invitaciones para super admin implementado completamente
+  - Nueva página super-admin-invitations.tsx con diseño moderno espectacular y glassmorphism
+  - Gestión completa de configuración de registro: público vs solo por invitación
+  - Sistema de creación y gestión de enlaces de invitación con expiración de 7 días
+  - Integración en dashboard super admin con botón prominente "Invitaciones"
+  - Estadísticas visuales: invitaciones activas, utilizadas, expiradas y total
+  - Funcionalidades: crear, copiar enlace, eliminar invitaciones con confirmación
+  - Modal avanzado para crear invitaciones con email, invitador y empresa opcional
+  - Sistema de badges de estado (activa/utilizada/expirada) con colores diferenciados
+  - Interfaz responsive con efectos hover, transiciones suaves y tema oscuro
+  - Routing completo configurado en App.tsx para /super-admin/invitations
 - June 27, 2025. Logos de Oficaz corregidos en todas las páginas legales
   - Reemplazados logos improvisados (icono cookie, letra "O") por logo real de Oficaz
   - Política de Cookies, Privacidad y Términos ahora muestran imagotipo oficial
