@@ -29,6 +29,34 @@ export default function EmployeeDashboard() {
     return localStorage.getItem('hasVacationUpdates') === 'true';
   });
   const [lastVacationCheck, setLastVacationCheck] = useState<any[]>([]);
+  
+  // Estado para mensajes temporales en el cajón de fichaje
+  const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
+
+  // Función para generar mensajes dinámicos según la hora
+  const generateDynamicMessage = (actionType: 'entrada' | 'salida') => {
+    const hour = new Date().getHours();
+    let greeting = '';
+    
+    if (hour >= 6 && hour < 14) {
+      greeting = 'Buenos días';
+    } else if (hour >= 14 && hour < 20) {
+      greeting = 'Buenas tardes';
+    } else {
+      greeting = 'Buenas noches';
+    }
+    
+    const action = actionType === 'entrada' ? 'Entrada registrada' : 'Salida registrada';
+    return `${greeting}, ${action}.`;
+  };
+
+  // Función para mostrar mensaje temporal
+  const showTemporaryMessage = (message: string) => {
+    setTemporaryMessage(message);
+    setTimeout(() => {
+      setTemporaryMessage(null);
+    }, 3000); // Mensaje visible por 3 segundos
+  };
 
   // Data fetching with real-time updates
   const { data: activeSession } = useQuery<WorkSession>({
@@ -160,7 +188,8 @@ export default function EmployeeDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      toast({ title: '¡Entrada registrada!', description: 'Has fichado correctamente la entrada.' });
+      const message = generateDynamicMessage('entrada');
+      showTemporaryMessage(message);
     },
     onError: (error: any) => {
       if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
@@ -190,7 +219,8 @@ export default function EmployeeDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      toast({ title: '¡Salida registrada!', description: 'Has fichado correctamente la salida.' });
+      const message = generateDynamicMessage('salida');
+      showTemporaryMessage(message);
     },
     onError: (error: any) => {
       if (error.message?.includes('Invalid or expired token') || error.message?.includes('403')) {
@@ -447,13 +477,24 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* Last Clock In Info - Compacto */}
+        {/* Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2">
           <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-2">
-            <div className="text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
-            <div className="text-white text-sm font-medium">
-              {formatLastClockDate() || 'Sin fichajes previos'}
-            </div>
+            {temporaryMessage ? (
+              <>
+                <div className="text-green-400 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
+                <div className="text-white text-sm font-medium">
+                  {temporaryMessage}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
+                <div className="text-white text-sm font-medium">
+                  {formatLastClockDate() || 'Sin fichajes previos'}
+                </div>
+              </>
+            )}
           </div>
         </div>
 

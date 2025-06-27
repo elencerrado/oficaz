@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Sistema de mensajes dinámicos integrado en cajón de fichaje y toasts eliminados
+  - Toasts de fichaje completamente eliminados y reemplazados por mensajes integrados
+  - Mensajes dinámicos según hora: "Buenos días/tardes/noches, Entrada/Salida registrada"
+  - Sistema temporal: mensaje visible 3 segundos en "Tu último fichaje", luego vuelve al estado normal
+  - Indicador visual: "✓ Fichaje exitoso" con texto verde cuando hay mensaje temporal
+  - Lógica de saludos: 6-14h Buenos días, 14-20h Buenas tardes, resto Buenas noches
+  - Funciones generateDynamicMessage() y showTemporaryMessage() para gestión de mensajes
+  - Experiencia más fluida sin popups molestos, feedback directo en interfaz existente
 - June 27, 2025. Dashboard de empleado optimizado con botón de fichar más grande y colores corporativos
   - Botón de fichar incrementado a 32x32 (w-32 h-32) con texto text-xl para mejor visibilidad
   - Iconos del menú cambiados de blanco a color corporativo #007AFF para coherencia visual
