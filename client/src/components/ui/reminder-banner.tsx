@@ -35,12 +35,12 @@ export function ReminderBanner() {
   const { user, token, isLoading: authLoading } = useAuth();
   const isAuthenticated = !!(user && token);
 
-  // Fetch active reminders with optimized settings for real-time detection
+  // Fetch active reminders with reduced polling for better performance
   const { data: activeReminders = [], isLoading, error } = useQuery({
     queryKey: ['/api/reminders/active'],
-    refetchInterval: isAuthenticated ? 3000 : false, // Only poll if authenticated, every 3 seconds
-    staleTime: 0,
-    gcTime: 0,
+    refetchInterval: isAuthenticated ? 30000 : false, // Poll every 30 seconds instead of 3
+    staleTime: 25000, // Cache for 25 seconds
+    gcTime: 60000, // Keep in cache for 1 minute
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,

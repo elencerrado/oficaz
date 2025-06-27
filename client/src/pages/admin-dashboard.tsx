@@ -45,10 +45,12 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch active work session
+  // Fetch active work session - reduced polling for performance
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
-    refetchInterval: 5000,
+    refetchInterval: 20000, // Reduced from 5s to 20s
+    refetchIntervalInBackground: false,
+    staleTime: 15000,
   });
 
   // Fetch recent work sessions

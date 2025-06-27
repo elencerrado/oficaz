@@ -86,8 +86,8 @@ export default function TimeTracking() {
     gcTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
     retryDelay: 500,
-    refetchInterval: 5 * 1000, // Poll every 5 seconds for real-time updates
-    refetchIntervalInBackground: true, // Continue polling in background
+    refetchInterval: 20000, // Reduced from 5s to 20s for better performance
+    refetchIntervalInBackground: false, // Disabled background polling
   });
 
   const { data: employees = [] } = useQuery({

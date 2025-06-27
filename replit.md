@@ -136,6 +136,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Optimización crítica de rendimiento completada - polling reducido significativamente
+  - Employee Dashboard: intervals de polling aumentados de 3-15s a 10-120s en todas las queries  
+  - Work sessions activas: 3s → 10s para balance entre tiempo real y rendimiento
+  - Break periods: 3s → 15s solo cuando hay sesión activa, deshabilitado en background
+  - Messages: 10s → 30s con cache de 25s y sin polling en background
+  - Documents/notifications: 15s → 60s con cache de 45s para reducir carga servidor
+  - Vacation requests: 10s → 120s con cache de 90s ya que cambian poco frecuentemente
+  - Employee Time Tracking: work sessions/breaks de 3s → 15s, active session 3s → 10s
+  - Background polling completamente deshabilitado en todas las queries para mayor eficiencia
+  - Stale time incrementado en todas las queries para mejor caching y menos requests
+  - Resultado: reducción masiva de carga servidor manteniendo experiencia usuario aceptable
 - June 27, 2025. Corregido problema de redirección en recarga de página
   - Ruta raíz "/" ahora usa componente PublicRoute para verificar autenticación
   - Usuarios logueados son redirigidos automáticamente al dashboard correspondiente

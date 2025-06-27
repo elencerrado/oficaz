@@ -122,29 +122,29 @@ export default function EmployeeTimeTracking() {
   const monthEnd = endOfMonth(currentMonth);
   const currentYear = new Date().getFullYear();
   
-  // Queries
+  // Queries with optimized intervals for better performance
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/work-sessions'],
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchInterval: 15000, // Reduced from 3s to 15s
+    refetchIntervalInBackground: false,
   });
 
   const { data: breakPeriods = [] } = useQuery({
     queryKey: ['/api/break-periods'],
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchInterval: 15000, // Reduced from 3s to 15s
+    refetchIntervalInBackground: false,
   });
 
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
-    staleTime: 10000,
-    gcTime: 30000,
-    refetchInterval: 3000,
-    refetchIntervalInBackground: true,
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchInterval: 10000, // Reduced from 3s to 10s for active session
+    refetchIntervalInBackground: false,
   });
 
   // Mutations

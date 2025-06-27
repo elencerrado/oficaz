@@ -66,50 +66,53 @@ export default function EmployeeDashboard() {
     gcTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
     retryDelay: 500,
-    refetchInterval: 3 * 1000, // Poll every 3 seconds for clock status
-    refetchIntervalInBackground: true, // Continue polling in background
+    refetchInterval: 10 * 1000, // Poll every 10 seconds instead of 3
+    refetchIntervalInBackground: false, // Stop background polling
   });
 
   // Query for active break period
   const { data: activeBreak } = useQuery({
     queryKey: ['/api/break-periods/active'],
     enabled: !!user && !!activeSession,
-    refetchInterval: 3 * 1000,
-    refetchIntervalInBackground: true,
+    refetchInterval: activeSession ? 15 * 1000 : false, // Only poll when session active
+    refetchIntervalInBackground: false,
+    staleTime: 10 * 1000,
   });
 
   // Get unread messages count with real-time updates
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
     enabled: !!user,
-    refetchInterval: 10000, // Check every 10 seconds
-    refetchIntervalInBackground: true,
-    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 30000, // Check every 30 seconds instead of 10
+    refetchIntervalInBackground: false,
+    staleTime: 25000, // Cache for 25 seconds
   });
 
-  // Get document notifications with real-time updates
+  // Get document notifications with reduced frequency
   const { data: documents } = useQuery({
     queryKey: ['/api/documents'],
     enabled: !!user,
-    refetchInterval: 15000, // Check every 15 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 60000, // Check every minute instead of 15 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 45000,
   });
 
-  // Get real document notifications from database with real-time updates
+  // Get real document notifications from database with reduced frequency
   const { data: documentNotifications } = useQuery({
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
-    refetchInterval: 15000, // Check every 15 seconds
-    refetchIntervalInBackground: true,
+    refetchInterval: 60000, // Check every minute instead of 15 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 45000,
   });
 
-  // Get vacation requests with real-time updates for notifications
+  // Get vacation requests with reduced frequency
   const { data: vacationRequests = [] } = useQuery({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
-    refetchInterval: 10000, // Check every 10 seconds for vacation updates
-    refetchIntervalInBackground: true,
-    staleTime: 0, // Always fetch fresh data for vacation notifications
+    refetchInterval: 120000, // Check every 2 minutes instead of 10 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 90000, // Cache for 90 seconds
   });
 
   // Check for vacation updates - clear notification when back on dashboard

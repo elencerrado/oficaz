@@ -159,25 +159,27 @@ export default function AdminDocuments() {
     queryKey: ['/api/employees'],
   });
 
-  // Fetch document notifications (sent requests)
+  // Fetch document notifications (sent requests) - optimized polling
   const { data: sentRequests = [] } = useQuery({
     queryKey: ['/api/document-notifications'],
-    refetchInterval: 3000,
-    staleTime: 0,
-    gcTime: 0,
+    refetchInterval: 60000, // Reduced from 3s to 60s
+    staleTime: 45000,
+    gcTime: 120000,
+    refetchIntervalInBackground: false,
   });
 
-  // Fetch all documents with aggressive refresh
+  // Fetch all documents with optimized refresh
   const { data: allDocuments = [] } = useQuery({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
       return await apiRequest('GET', '/api/documents/all');
     },
-    refetchInterval: 3000, // Refetch cada 3 segundos
-    staleTime: 0, // Siempre considera los datos como obsoletos
-    refetchOnWindowFocus: true,
+    refetchInterval: 60000, // Reduced from 3s to 60s for better performance
+    staleTime: 45000, // Cache for 45 seconds
+    refetchOnWindowFocus: false, // Disabled aggressive refresh
     refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
+    refetchIntervalInBackground: false,
   });
 
   // Send document notification mutation
