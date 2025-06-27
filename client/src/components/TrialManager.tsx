@@ -105,8 +105,8 @@ export function TrialManager() {
   });
 
   const handleUpgrade = () => {
-    if (!selectedPlan) return;
-    createPaymentMutation.mutate(selectedPlan);
+    // Use the current plan from trial status instead of selectedPlan
+    createPaymentMutation.mutate(trialStatus.plan);
   };
 
   if (loadingTrial) {
@@ -192,78 +192,53 @@ export function TrialManager() {
     );
   }
 
-  // If trial is active, show days remaining with option to pay early
+  // If trial is active, show discrete notification about adding payment method
   return (
-    <Card className={trialStatus.daysRemaining <= 3 ? "border-orange-200 bg-orange-50" : "border-blue-200 bg-blue-50"}>
-      <CardHeader>
-        <CardTitle className={`flex items-center ${trialStatus.daysRemaining <= 3 ? "text-orange-800" : "text-blue-800"}`}>
-          <Clock className="w-5 h-5 mr-2" />
-          Período de Prueba
-          <Badge variant={trialStatus.daysRemaining <= 3 ? "destructive" : "secondary"} className="ml-2">
-            {trialStatus.daysRemaining} días restantes
-          </Badge>
-        </CardTitle>
-        <CardDescription className={trialStatus.daysRemaining <= 3 ? "text-orange-600" : "text-blue-600"}>
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-1" />
-            Expira el {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')}
+    <div className={`rounded-lg border p-4 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className={`p-2 rounded-full ${trialStatus.daysRemaining <= 3 ? "bg-amber-100" : "bg-blue-100"}`}>
+            <Clock className={`w-4 h-4 ${trialStatus.daysRemaining <= 3 ? "text-amber-600" : "text-blue-600"}`} />
           </div>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {trialStatus.daysRemaining <= 3 && (
-          <div className="bg-orange-100 border border-orange-200 rounded-lg p-3 mb-4">
-            <div className="flex items-center text-orange-800 text-sm">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              <strong>Acción requerida:</strong> Tu prueba expira pronto. Realiza el pago para evitar interrupciones.
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-900">
+                Plan {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
+              </span>
+              <Badge variant="outline" className="text-xs">
+                {trialStatus.daysRemaining} días restantes
+              </Badge>
             </div>
-          </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Seleccionar Plan:</label>
-            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {subscriptionPlans.map((plan: any) => (
-                  <SelectItem key={plan.name} value={plan.name.toLowerCase()}>
-                    {plan.displayName} - €{plan.pricePerUser}/mes
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="md:col-span-2 flex items-end">
-            <Button 
-              onClick={handleUpgrade}
-              disabled={isProcessingPayment || createPaymentMutation.isPending}
-              variant={trialStatus.daysRemaining <= 3 ? "default" : "outline"}
-              className="w-full"
-            >
-              {isProcessingPayment ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                  Procesando pago...
-                </>
+            <p className="text-xs text-gray-500 mt-1">
+              {trialStatus.daysRemaining <= 3 ? (
+                "Añade un método de pago para continuar sin interrupciones"
               ) : (
-                <>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {trialStatus.daysRemaining <= 3 ? "Pagar Ahora" : "Pagar Anticipadamente"}
-                </>
+                `Expira el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`
               )}
-            </Button>
+            </p>
           </div>
         </div>
-
-        {trialStatus.daysRemaining > 3 && (
-          <p className="text-sm text-gray-600 mt-2">
-            Puedes continuar usando la prueba gratuita o pagar anticipadamente para desbloquear funcionalidades completas.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        
+        <Button 
+          onClick={() => handleUpgrade()}
+          disabled={isProcessingPayment || createPaymentMutation.isPending}
+          variant="ghost"
+          size="sm"
+          className={`text-xs ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
+        >
+          {isProcessingPayment ? (
+            <>
+              <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
+              Procesando...
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-3 h-3 mr-1" />
+              Añadir pago
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }

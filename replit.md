@@ -136,6 +136,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. AVISO DE TRIAL REDISEÑADO: Notificación discreta y menos invasiva implementada
+  - Eliminada tarjeta grande y colores llamativos por diseño compacto horizontal
+  - Fondos suaves con transparencias (amber-50/50, blue-50/30) en lugar de colores sólidos
+  - Tipografía reducida: text-xs y text-sm para información esencial únicamente
+  - Botón minimalista "Añadir pago" tipo ghost en lugar de botones grandes prominentes
+  - Mensaje enfocado: "añadir método de pago" sin selección de plan (ya está elegido)
+  - Iconos pequeños en círculos sutiles, información contextual según días restantes
+  - Diseño discreto que no interrumpe el flujo de trabajo del usuario
 - June 27, 2025. FECHAS DE TRIAL SINCRONIZADAS CON REGISTRO REAL: Inconsistencia crítica corregida
   - PROBLEMA RESUELTO: Trial iniciaba 3 días antes del registro de empresa (16 jun vs 19 jun)
   - Base de datos corregida: trial_start_date ahora coincide con company.created_at (19 junio 2025)
