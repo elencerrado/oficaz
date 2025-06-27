@@ -219,32 +219,39 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // Auto-scroll funcional - SIN scrollIntoView para evitar scroll de página
+  // ⚠️ PROTECTED: Auto-scroll funcional para chat móvil empleado - DO NOT MODIFY
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0) {
-      // Función para hacer scroll hasta abajo del todo
       const scrollToBottom = () => {
-        // Buscar el contenedor de mensajes correcto
-        const desktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
-        const mobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50.flex.flex-col');
+        // Para vista móvil empleado: buscar contenedor específico con fondo degradado
+        const mobileEmployeeContainer = document.querySelector('[style*="radial-gradient"][style*="#1A2332"]');
+        if (mobileEmployeeContainer) {
+          const scrollableDiv = mobileEmployeeContainer.querySelector('.flex-1.overflow-y-auto');
+          if (scrollableDiv) {
+            scrollableDiv.scrollTop = scrollableDiv.scrollHeight;
+            return true; // Encontrado y scrolleado
+          }
+        }
+
+        // Fallback: buscar por clases más específicas para versión móvil
+        const containers = [
+          document.querySelector('.flex-1.overflow-y-auto.px-4'),
+          document.querySelector('.flex-1.overflow-y-auto.p-4'),
+          messagesContainerRef.current
+        ];
         
-        [desktopContainer, mobileContainer, messagesContainerRef.current].forEach(container => {
+        containers.forEach(container => {
           if (container) {
-            // Forzar scroll hasta el final máximo
-            container.scrollTop = container.scrollHeight + 100; // +100 para asegurar que llega al final
+            container.scrollTop = container.scrollHeight + 50;
           }
         });
-
-        // NO usar messagesEndRef.scrollIntoView - causa scroll de página completa
       };
 
-      // Ejecutar múltiples veces hasta que funcione
+      // Múltiples intentos para asegurar que funciona en móvil
       const timers = [
         setTimeout(scrollToBottom, 100),
         setTimeout(scrollToBottom, 300),
-        setTimeout(scrollToBottom, 600),
-        setTimeout(scrollToBottom, 1000),
-        setTimeout(scrollToBottom, 1500)
+        setTimeout(scrollToBottom, 600)
       ];
 
       return () => timers.forEach(timer => clearTimeout(timer));

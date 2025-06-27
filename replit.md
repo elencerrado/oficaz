@@ -136,6 +136,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Auto-scroll chat móvil empleado corregido para mostrar último mensaje
+  - Selector específico para contenedor móvil empleado con fondo degradado radial
+  - Búsqueda inteligente de contenedor scrollable dentro de vista móvil oscura
+  - Múltiples intentos de scroll (100ms, 300ms, 600ms) para asegurar funcionamiento
+  - Sistema PROTEGIDO con comentarios ⚠️ para prevenir modificaciones futuras
+  - Fallback robusto para diferentes tipos de contenedores de mensajes
 - June 27, 2025. Optimización crítica de rendimiento completada - polling reducido significativamente
   - Employee Dashboard: intervals de polling aumentados de 3-15s a 10-120s en todas las queries  
   - Work sessions activas: 3s → 10s para balance entre tiempo real y rendimiento
