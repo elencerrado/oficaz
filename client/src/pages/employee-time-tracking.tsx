@@ -559,15 +559,22 @@ export default function EmployeeTimeTracking() {
           <div className="grid grid-cols-4 gap-3">
             {getLast4MonthsData().map((monthData, index) => {
               const isViewingThisMonth = format(currentMonth, 'MMM', { locale: es }) === monthData.month;
+              const monthDate = subMonths(currentMonth, 3 - index);
+              
+              const handleMonthClick = () => {
+                setCurrentMonth(monthDate);
+              };
+              
               return (
                 <div 
                   key={monthData.month}
-                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 ${
+                  onClick={handleMonthClick}
+                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 cursor-pointer hover:scale-105 ${
                     isViewingThisMonth 
                       ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
                       : monthData.isCurrentMonth 
                         ? 'ring-1 ring-green-400/50 bg-green-500/10 border-green-400/30' 
-                        : 'border-white/10'
+                        : 'border-white/10 hover:border-white/30'
                   }`}
                   style={{
                     animationDelay: `${index * 100}ms`,
