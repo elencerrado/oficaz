@@ -129,6 +129,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. SEGURIDAD CRÍTICA: Protección de rutas de fichajes por roles implementada
+  - Ruta /fichajes ahora requiere rol admin/manager obligatoriamente
+  - Empleados son redirigidos automáticamente a /fichajes-empleado
+  - Imposible saltarse seguridad cambiando URL manualmente
+  - Verificación de roles aplicada en routing de App.tsx
+  - Sistema de redirección automática usando Redirect de wouter
 - June 27, 2025. Timeline de empleado optimizado con tarjetas compactas y alineación perfecta
   - Altura de tarjetas reducida: padding de p-3 a p-2 para diseño más compacto
   - Header ajustado: margen inferior de mb-4 a mb-3 en fecha y horas totales
