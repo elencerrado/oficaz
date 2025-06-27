@@ -143,7 +143,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className={`border-b sticky top-0 z-50 transition-all duration-300 ${
+      <header className={`border-b fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
           ? 'bg-white/98 backdrop-blur-md shadow-lg shadow-black/5' 
           : 'bg-white/95 backdrop-blur-sm'
@@ -183,8 +183,8 @@ export default function Landing() {
       </header>
 
       {/* Hero Section - Responsive Height */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24"
-               style={{ minHeight: 'calc(100vh - 4rem)' }}>
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
+               style={{ minHeight: '100vh' }}>
         {/* Spectacular 3D Grid Background with Function Icons */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 opacity-3">
