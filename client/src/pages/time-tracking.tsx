@@ -935,7 +935,7 @@ export default function TimeTracking() {
         {/* Timeline visual minimalista */}
         <div className="relative h-5">
           {/* Línea base gris minimalista */}
-          <div className="h-3 bg-gray-200 rounded-sm relative overflow-hidden">
+          <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
             
             {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
             {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
@@ -953,7 +953,7 @@ export default function TimeTracking() {
                 <div key={sessionIndex} className="relative">
                   {/* Barra azul minimalista */}
                   <div
-                    className="absolute top-0 h-3 bg-blue-500 rounded-sm"
+                    className="absolute top-0 h-5 bg-blue-500 rounded-sm"
                     style={{
                       left: `${leftPercentage}%`,
                       width: `${widthPercentage}%`
@@ -977,7 +977,7 @@ export default function TimeTracking() {
                     return (
                       <div
                         key={`${sessionIndex}-${breakIndex}`}
-                        className="absolute top-0.5 h-2 bg-orange-400 rounded-sm"
+                        className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
                         style={{
                           left: `${breakLeftPercentageInSession}%`,
                           width: `${breakWidthPercentageInSession}%`
@@ -993,7 +993,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-4">
+        <div className="relative h-3 mt-1">
           {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
             const sessionStart = new Date(session.clockIn);
             const sessionEnd = new Date(session.clockOut);
