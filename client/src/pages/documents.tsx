@@ -454,7 +454,7 @@ export default function Documents() {
         )}
 
         {/* Categories */}
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {categories.map((category) => {
             const IconComponent = category.icon;
             return (
@@ -463,10 +463,10 @@ export default function Documents() {
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}
+                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"} flex-1 min-w-0`}
               >
-                <IconComponent className="h-4 w-4 mr-2" />
-                {category.name}
+                <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">{category.name}</span>
               </Button>
             );
           })}
