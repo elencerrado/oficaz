@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import StatsCard from '@/components/StatsCard';
 import { 
   Building2, 
+  Settings, 
   User, 
   MapPin, 
   Mail, 
@@ -31,7 +32,7 @@ import {
   Info
 } from 'lucide-react';
 import { CreditCard as CreditCardIcon, Crown as CrownIcon, AlertCircle, CheckCircle as CheckCircleIcon, Lightbulb, Info as InfoIcon } from 'lucide-react';
-import { TabNavigation } from '@/components/ui/tab-navigation';
+import TabNavigation from '@/components/TabNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -120,112 +121,7 @@ export default function Settings() {
     staleTime: 60 * 1000,
   });
 
-  // Mobile Employee View with Glassmorphism
-  if (user?.role === 'employee') {
-    return (
-      <div className="min-h-screen bg-employee-gradient text-white p-6">
-        {/* Header - Standard employee pattern */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Configuración</h1>
-          <p className="text-white/70 text-sm">Gestiona tu perfil y preferencias</p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Profile Card - Glassmorphism Style */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white">Mi Perfil</h3>
-              <p className="text-white/70 mt-1">Información personal y datos de contacto</p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Nombre completo</Label>
-                  <p className="text-white/80 mt-1">{user?.fullName || 'No disponible'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Email corporativo</Label>
-                  <p className="text-white/80 mt-1">{user?.companyEmail || 'No asignado'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Email personal</Label>
-                  <p className="text-white/80 mt-1">{user?.personalEmail || 'No disponible'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Teléfono</Label>
-                  <p className="text-white/80 mt-1">{user?.phone || 'No disponible'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Cargo</Label>
-                  <p className="text-white/80 mt-1">{user?.jobTitle || 'Sin especificar'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Status Card - Glassmorphism Style */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white">Estado de Cuenta</h3>
-              <p className="text-white/70 mt-1">Información sobre tu estado laboral</p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Estado</Label>
-                  <p className="text-white/80 mt-1">
-                    {user?.status === 'active' ? 'Activo' : 
-                     user?.status === 'inactive' ? 'Inactivo' :
-                     user?.status === 'on_leave' ? 'De baja' :
-                     user?.status === 'on_vacation' ? 'De vacaciones' : 'Sin estado'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-white/90">Fecha de incorporación</Label>
-                  <p className="text-white/80 mt-1">
-                    {user?.hireDate ? new Date(user.hireDate).toLocaleDateString('es-ES') : 'No disponible'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Vacation Summary Card - Glassmorphism Style */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white">Resumen de Vacaciones</h3>
-              <p className="text-white/70 mt-1">Estado actual de tus días de vacaciones</p>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-blue-400">
-                  {Math.round(Number(user?.totalVacationDays || 0))}
-                </p>
-                <p className="text-white/70 text-sm">Total</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-orange-400">
-                  {Math.round(Number(user?.usedVacationDays || 0))}
-                </p>
-                <p className="text-white/70 text-sm">Usados</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-400">
-                  {Math.max(0, Math.round(Number(user?.totalVacationDays || 0) - Number(user?.usedVacationDays || 0)))}
-                </p>
-                <p className="text-white/70 text-sm">Disponibles</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Admin/Manager View - Standard design
+  // Standard employee header pattern
   return (
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
       {/* Page title */}
