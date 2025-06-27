@@ -210,6 +210,19 @@ export const workSessions = pgTable("work_sessions", {
   clockIn: timestamp("clock_in").notNull(),
   clockOut: timestamp("clock_out"),
   totalHours: decimal("total_hours", { precision: 4, scale: 2 }),
+  totalBreakTime: decimal("total_break_time", { precision: 4, scale: 2 }).default("0.00"), // Total break time in hours
+  status: text("status").notNull().default("active"), // active, completed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Break periods table - Para gestionar descansos durante jornada laboral
+export const breakPeriods = pgTable("break_periods", {
+  id: serial("id").primaryKey(),
+  workSessionId: integer("work_session_id").references(() => workSessions.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  breakStart: timestamp("break_start").notNull(),
+  breakEnd: timestamp("break_end"),
+  duration: decimal("duration", { precision: 4, scale: 2 }), // Duration in hours
   status: text("status").notNull().default("active"), // active, completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -322,6 +335,11 @@ export const insertUserSchema = createInsertSchema(users).omit({
 });
 
 export const insertWorkSessionSchema = createInsertSchema(workSessions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBreakPeriodSchema = createInsertSchema(breakPeriods).omit({
   id: true,
   createdAt: true,
 });
@@ -453,6 +471,7 @@ export type Company = typeof companies.$inferSelect;
 export type CompanyConfig = typeof companyConfigs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type WorkSession = typeof workSessions.$inferSelect;
+export type BreakPeriod = typeof breakPeriods.$inferSelect;
 export type VacationRequest = typeof vacationRequests.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
@@ -464,6 +483,7 @@ export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type InsertCompanyConfig = z.infer<typeof insertCompanyConfigSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
+export type InsertBreakPeriod = z.infer<typeof insertBreakPeriodSchema>;
 export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

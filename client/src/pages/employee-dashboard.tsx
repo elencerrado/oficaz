@@ -70,6 +70,14 @@ export default function EmployeeDashboard() {
     refetchIntervalInBackground: true, // Continue polling in background
   });
 
+  // Query for active break period
+  const { data: activeBreak } = useQuery({
+    queryKey: ['/api/break-periods/active'],
+    enabled: !!user && !!activeSession,
+    refetchInterval: 3 * 1000,
+    refetchIntervalInBackground: true,
+  });
+
   // Get unread messages count with real-time updates
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
@@ -240,6 +248,40 @@ export default function EmployeeDashboard() {
           variant: 'destructive'
         });
       }
+    },
+  });
+
+  // Break periods mutations
+  const startBreakMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/break-periods/start');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/break-periods/active'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo iniciar el descanso',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  const endBreakMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/break-periods/end');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/break-periods/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo finalizar el descanso',
+        variant: 'destructive'
+      });
     },
   });
 
@@ -518,23 +560,56 @@ export default function EmployeeDashboard() {
             </div>
           ) : (
             <div className="relative">
-              <Button
-                onClick={handleClockAction}
-                disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
-              >
-                {clockInMutation.isPending || clockOutMutation.isPending ? (
-                  <LoadingSpinner size="lg" className="text-white w-12 h-12" />
-                ) : (
-                  <span className="relative z-10">
-                    {activeSession ? 'SALIR' : 'FICHAR'}
-                  </span>
-                )}
-                {/* Anillo exterior pulsante cuando está activo */}
+              <div className="flex flex-col items-center space-y-4">
+                <Button
+                  onClick={handleClockAction}
+                  disabled={clockInMutation.isPending || clockOutMutation.isPending}
+                  className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
+                >
+                  {clockInMutation.isPending || clockOutMutation.isPending ? (
+                    <LoadingSpinner size="lg" className="text-white w-12 h-12" />
+                  ) : (
+                    <span className="relative z-10">
+                      {activeSession ? 'SALIR' : 'FICHAR'}
+                    </span>
+                  )}
+                  {/* Anillo exterior pulsante cuando está activo */}
+                  {activeSession && (
+                    <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
+                  )}
+                </Button>
+
+                {/* Break Button - Solo visible cuando está trabajando */}
                 {activeSession && (
-                  <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
+                  <Button
+                    onClick={() => {
+                      if (activeBreak) {
+                        endBreakMutation.mutate();
+                      } else {
+                        startBreakMutation.mutate();
+                      }
+                    }}
+                    disabled={startBreakMutation.isPending || endBreakMutation.isPending}
+                    className={`w-24 h-24 rounded-full ${
+                      activeBreak 
+                        ? 'bg-red-500 hover:bg-red-600' 
+                        : 'bg-orange-500 hover:bg-orange-600'
+                    } text-white text-sm font-bold shadow-lg transition-colors duration-200 relative overflow-hidden`}
+                  >
+                    {startBreakMutation.isPending || endBreakMutation.isPending ? (
+                      <LoadingSpinner size="sm" className="text-white w-6 h-6" />
+                    ) : (
+                      <span className="relative z-10">
+                        {activeBreak ? 'Terminar\nDescanso' : 'Tomar\nDescanso'}
+                      </span>
+                    )}
+                    {/* Indicador de descanso activo */}
+                    {activeBreak && (
+                      <div className="absolute -inset-1 rounded-full border border-red-400 animate-pulse opacity-75"></div>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
             </div>
           )}
         </div>

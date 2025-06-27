@@ -3,8 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and, or, desc, sql, lte, isNotNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
-  Company, CompanyConfig, User, WorkSession, VacationRequest, Document, Message, DocumentNotification, SystemNotification,
-  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification, InsertSystemNotification
+  Company, CompanyConfig, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, DocumentNotification, SystemNotification,
+  InsertCompany, InsertCompanyConfig, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification, InsertSystemNotification
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -44,6 +44,12 @@ export interface IStorage {
   updateWorkSession(id: number, updates: Partial<InsertWorkSession>): Promise<WorkSession | undefined>;
   getWorkSessionsByUser(userId: number, limit?: number): Promise<WorkSession[]>;
   getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]>;
+
+  // Break periods
+  createBreakPeriod(breakPeriod: InsertBreakPeriod): Promise<BreakPeriod>;
+  getActiveBreakPeriod(userId: number): Promise<BreakPeriod | undefined>;
+  updateBreakPeriod(id: number, updates: Partial<InsertBreakPeriod>): Promise<BreakPeriod | undefined>;
+  updateWorkSessionBreakTime(workSessionId: number): Promise<void>;
 
   // Vacation Requests
   createVacationRequest(request: InsertVacationRequest): Promise<VacationRequest>;
@@ -282,6 +288,7 @@ export class DrizzleStorage implements IStorage {
       clockIn: schema.workSessions.clockIn,
       clockOut: schema.workSessions.clockOut,
       totalHours: schema.workSessions.totalHours,
+      totalBreakTime: schema.workSessions.totalBreakTime,
       status: schema.workSessions.status,
       createdAt: schema.workSessions.createdAt,
       userName: schema.users.fullName,
@@ -289,6 +296,42 @@ export class DrizzleStorage implements IStorage {
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
       .orderBy(desc(schema.workSessions.createdAt));
+  }
+
+  // Break Periods
+  async createBreakPeriod(breakPeriod: InsertBreakPeriod): Promise<BreakPeriod> {
+    const [result] = await db.insert(schema.breakPeriods).values(breakPeriod).returning();
+    return result;
+  }
+
+  async getActiveBreakPeriod(userId: number): Promise<BreakPeriod | undefined> {
+    const [breakPeriod] = await db.select().from(schema.breakPeriods)
+      .where(and(eq(schema.breakPeriods.userId, userId), eq(schema.breakPeriods.status, 'active')));
+    return breakPeriod;
+  }
+
+  async updateBreakPeriod(id: number, updates: Partial<InsertBreakPeriod>): Promise<BreakPeriod | undefined> {
+    const [breakPeriod] = await db.update(schema.breakPeriods).set(updates).where(eq(schema.breakPeriods.id, id)).returning();
+    return breakPeriod;
+  }
+
+  async updateWorkSessionBreakTime(workSessionId: number): Promise<void> {
+    // Calculate total break time for this work session
+    const breakPeriods = await db.select().from(schema.breakPeriods)
+      .where(and(
+        eq(schema.breakPeriods.workSessionId, workSessionId),
+        eq(schema.breakPeriods.status, 'completed')
+      ));
+
+    // Sum up all break durations
+    const totalBreakTime = breakPeriods.reduce((total, period) => {
+      return total + (parseFloat(period.duration || '0'));
+    }, 0);
+
+    // Update the work session with total break time
+    await db.update(schema.workSessions)
+      .set({ totalBreakTime: totalBreakTime.toFixed(2) })
+      .where(eq(schema.workSessions.id, workSessionId));
   }
 
   // Vacation Requests

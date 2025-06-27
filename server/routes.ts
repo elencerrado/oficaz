@@ -907,6 +907,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Break periods routes
+  app.post('/api/break-periods/start', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Check if user has an active work session
+      const activeSession = await storage.getActiveWorkSession(req.user!.id);
+      if (!activeSession) {
+        return res.status(400).json({ message: 'No active work session found' });
+      }
+
+      // Check if user already has an active break
+      const activeBreak = await storage.getActiveBreakPeriod(req.user!.id);
+      if (activeBreak) {
+        return res.status(400).json({ message: 'Already on break' });
+      }
+
+      const breakPeriod = await storage.createBreakPeriod({
+        workSessionId: activeSession.id,
+        userId: req.user!.id,
+        breakStart: new Date(),
+        status: 'active',
+      });
+
+      res.status(201).json(breakPeriod);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/break-periods/end', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const activeBreak = await storage.getActiveBreakPeriod(req.user!.id);
+      if (!activeBreak) {
+        return res.status(400).json({ message: 'No active break found' });
+      }
+
+      const breakEnd = new Date();
+      const duration = (breakEnd.getTime() - activeBreak.breakStart.getTime()) / (1000 * 60 * 60);
+
+      const updatedBreak = await storage.updateBreakPeriod(activeBreak.id, {
+        breakEnd,
+        duration: duration.toFixed(2),
+        status: 'completed',
+      });
+
+      // Update the work session's total break time
+      await storage.updateWorkSessionBreakTime(activeBreak.workSessionId);
+
+      res.json(updatedBreak);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/break-periods/active', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const activeBreak = await storage.getActiveBreakPeriod(req.user!.id);
+      res.json(activeBreak || null);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Vacation request routes
   app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
     try {
