@@ -752,10 +752,12 @@ export default function TimeTracking() {
       const completedBreaks = (activeSession.breakPeriods || []).filter((bp: any) => bp.breakEnd);
       const activeBreakStart = activeBreakPeriod ? new Date(activeBreakPeriod.breakStart) : null;
       
-      // Calculate progress percentage based on elapsed time (max 8 hours = 100%)
+      // Calculate progress percentage based on elapsed time 
+      // LÓGICA: Una jornada típica de 8 horas = 100% de la barra
+      // La barra se llena progresivamente según el tiempo transcurrido
       const sessionElapsedMinutes = Math.round((now.getTime() - sessionStart.getTime()) / (1000 * 60));
-      const maxWorkdayMinutes = 8 * 60; // 8 hours
-      const progressPercentage = Math.min((sessionElapsedMinutes / maxWorkdayMinutes) * 100, 95); // Max 95% until clock out
+      const maxWorkdayMinutes = 8 * 60; // 480 minutos = 8 horas jornada estándar
+      const progressPercentage = Math.min((sessionElapsedMinutes / maxWorkdayMinutes) * 100, 90); // Máximo 90% hasta fichar salida
       
       // Calculate break positions as percentages of elapsed time
       const sessionElapsedMs = now.getTime() - sessionStart.getTime();
@@ -858,18 +860,18 @@ export default function TimeTracking() {
 
           {/* Contenedor para horas ABAJO de las barras */}
           <div className="relative h-4">
-            {/* Hora de entrada */}
+            {/* Hora de entrada - izquierda */}
             <div
-              className="absolute text-xs text-green-700 font-medium transform -translate-x-1/2"
+              className="absolute text-xs text-green-700 font-medium"
               style={{ left: '0%', top: '0px' }}
             >
               {formatTime(sessionStart)}
             </div>
             
-            {/* Estado actual en tiempo real al final de la barra de progreso */}
+            {/* Estado actual en tiempo real - derecha */}
             <div
-              className="absolute text-xs font-medium transform -translate-x-1/2 flex items-center gap-1"
-              style={{ left: `${progressPercentage}%`, top: '0px' }}
+              className="absolute text-xs font-medium flex items-center gap-1"
+              style={{ right: '0%', top: '0px' }}
             >
               <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
               <span className={`${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
