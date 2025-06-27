@@ -983,7 +983,6 @@ export default function Landing() {
                   alt="Oficaz" 
                   className="h-8 w-auto"
                 />
-                <span className="text-xl font-bold">Oficaz</span>
               </div>
               <p className="text-gray-400 mb-4">
                 La plataforma de gestión empresarial más intuitiva para empresas modernas.
