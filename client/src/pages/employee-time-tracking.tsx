@@ -307,14 +307,19 @@ export default function EmployeeTimeTracking() {
         className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
-        {/* Header with date and total hours */}
-        <div className="flex justify-between items-center mb-3">
+        {/* Fecha arriba */}
+        <div className="mb-3">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
-          <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Admin-style timeline bar - ancho completo */}
-        <div className="relative h-6 mb-2 mx-2">
+        {/* Timeline bar con horas alineadas */}
+        <div className="relative h-6 mb-2 mx-2 flex items-center">
+          {/* Horas totales alineadas con la barra */}
+          <div className="absolute -right-2 top-0 h-5 flex items-center">
+            <span className="text-white/90 font-mono text-sm bg-black/40 px-2 py-0.5 rounded text-xs">
+              {formatTotalHours(calculateSessionHours(session))}
+            </span>
+          </div>
             {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
             <div
               className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
@@ -580,18 +585,21 @@ export default function EmployeeTimeTracking() {
                               className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
-                              {/* Header with date and total hours */}
-                              <div className="flex justify-between items-center mb-3">
+                              {/* Fecha arriba */}
+                              <div className="mb-3">
                                 <span className="text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
-                                <span className="text-white/90 font-mono text-sm">
-                                  {formatTotalHours(dayTotal)}
-                                </span>
                               </div>
 
-                              {/* Multiple session bars - en la misma línea horizontal */}
-                              <div className="relative h-6 mb-2 mx-2">
+                              {/* Timeline bar con horas alineadas - sesiones múltiples */}
+                              <div className="relative h-6 mb-2 mx-2 flex items-center">
+                                {/* Horas totales alineadas con las barras */}
+                                <div className="absolute -right-2 top-0 h-5 flex items-center">
+                                  <span className="text-white/90 font-mono text-sm bg-black/40 px-2 py-0.5 rounded text-xs">
+                                    {formatTotalHours(dayTotal)}
+                                  </span>
+                                </div>
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
