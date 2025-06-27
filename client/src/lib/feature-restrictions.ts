@@ -21,7 +21,7 @@ export interface Subscription {
   maxUsers: number;
 }
 
-// Define trial features based on chosen plan (Basic or Pro)
+// Trial includes same features as chosen plan - only time limited (14 days)
 const getTrialFeaturesForPlan = (plan: string): SubscriptionFeatures => {
   const basicFeatures: SubscriptionFeatures = {
     messages: true,
@@ -51,16 +51,14 @@ const getTrialFeaturesForPlan = (plan: string): SubscriptionFeatures => {
     reminders: true
   };
 
-  // For trial periods, limit to Basic or Pro features only
-  // Master plan will be handled later
-  if (plan.toLowerCase() === 'basic') {
-    return basicFeatures;
-  } else if (plan.toLowerCase() === 'pro') {
-    return proFeatures;
-  } else {
-    // For any other plan (including master), default to Pro during trial
-    // This will be adjusted when Master plan logic is implemented
-    return proFeatures;
+  // Return features based on chosen plan during trial
+  switch (plan.toLowerCase()) {
+    case 'basic':
+      return basicFeatures;
+    case 'pro':
+      return proFeatures;
+    default:
+      return basicFeatures;
   }
 };
 
@@ -120,6 +118,7 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     reports: 'Reportes',
     analytics: 'Analíticas',
     customization: 'Personalización',
+    logoUpload: 'Subir logo',
     api: 'API',
     reminders: 'Recordatorios'
   };

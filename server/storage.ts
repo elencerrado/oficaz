@@ -704,7 +704,7 @@ export class DrizzleStorage implements IStorage {
       alias: row.alias,
       userCount: row.userCount || 0,
       subscription: {
-        plan: row.subscriptionPlan || 'free',
+        plan: row.subscriptionPlan || 'basic',
         status: row.subscriptionStatus || 'active',
         maxUsers: row.subscriptionMaxUsers || 5,
         startDate: row.subscriptionStartDate?.toISOString() || new Date().toISOString(),
