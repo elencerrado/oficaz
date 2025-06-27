@@ -367,18 +367,18 @@ export default function EmployeeDashboard() {
           </Button>
         </div>
 
-        {/* Company Logo and Name - Compacto */}
-        <div className="flex justify-center mb-2">
+        {/* Company Logo and Name - Más grande sin cajón */}
+        <div className="flex justify-center mb-3">
           <div className="text-center">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 
-                className="h-6 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                className="h-10 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
               />
             ) : (
-              <div className="text-white text-xs font-medium drop-shadow-lg">
+              <div className="text-white text-base font-medium drop-shadow-lg">
                 {company?.name || 'Mi Empresa'}
               </div>
             )}
