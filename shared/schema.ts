@@ -64,9 +64,15 @@ export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).unique().notNull(),
   plan: varchar("plan", { length: 50 }).notNull(), // free, basic, pro, master
-  status: varchar("status", { length: 50 }).default("active").notNull(), // active, inactive, suspended
+  status: varchar("status", { length: 50 }).default("trial").notNull(), // trial, active, inactive, suspended, blocked
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date"),
+  trialStartDate: timestamp("trial_start_date").defaultNow().notNull(),
+  trialEndDate: timestamp("trial_end_date").notNull(), // 14 days from trial start
+  isTrialActive: boolean("is_trial_active").default(true).notNull(),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  nextPaymentDate: timestamp("next_payment_date"),
   maxUsers: integer("max_users").default(5).notNull(),
   features: jsonb("features").default('{}').notNull(),
   useCustomSettings: boolean("use_custom_settings").default(false).notNull(),

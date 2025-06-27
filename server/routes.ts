@@ -2516,6 +2516,139 @@ startxref
     }
   });
 
+  // Trial Period Management
+  app.get('/api/account/trial-status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      const result = await db.execute(sql`
+        SELECT 
+          trial_start_date,
+          trial_end_date,
+          is_trial_active,
+          status,
+          plan,
+          stripe_subscription_id
+        FROM subscriptions 
+        WHERE company_id = ${companyId}
+      `);
+      
+      const subscription = result.rows[0];
+      if (!subscription) {
+        return res.status(404).json({ message: 'Suscripción no encontrada' });
+      }
+
+      const now = new Date();
+      const trialEndDate = new Date(subscription.trial_end_date);
+      const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isTrialExpired = daysRemaining <= 0;
+
+      // Auto-block if trial expired
+      if (isTrialExpired && subscription.is_trial_active && subscription.status === 'trial') {
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET status = 'blocked', is_trial_active = false 
+          WHERE company_id = ${companyId}
+        `);
+      }
+
+      res.json({
+        isTrialActive: subscription.is_trial_active && !isTrialExpired,
+        daysRemaining: Math.max(0, daysRemaining),
+        trialEndDate: subscription.trial_end_date,
+        status: isTrialExpired && subscription.status === 'trial' ? 'blocked' : subscription.status,
+        plan: subscription.plan,
+        hasPaymentMethod: !!subscription.stripe_subscription_id,
+        isBlocked: subscription.status === 'blocked' || (isTrialExpired && subscription.status === 'trial')
+      });
+    } catch (error) {
+      console.error('Error fetching trial status:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Create Stripe payment intent for subscription
+  app.post('/api/account/create-payment-intent', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { plan } = req.body;
+      
+      // Get plan pricing
+      const planPricing = {
+        'basic': 3.00,
+        'pro': 5.00,
+        'master': 8.00
+      };
+      
+      const pricePerUser = planPricing[plan] || 3.00;
+      
+      // Get employee count
+      const employeeResult = await db.execute(sql`
+        SELECT COUNT(*) as count FROM users WHERE company_id = ${companyId} AND is_active = true
+      `);
+      
+      const employeeCount = parseInt(employeeResult.rows[0]?.count || '1');
+      const totalAmount = Math.max(pricePerUser * employeeCount, pricePerUser); // Minimum 1 user
+      
+      // Here you would integrate with Stripe to create payment intent
+      // For now, return mock payment intent
+      res.json({
+        clientSecret: 'pi_mock_client_secret_for_demo',
+        amount: totalAmount,
+        currency: 'eur',
+        plan: plan,
+        employeeCount: employeeCount,
+        pricePerUser: pricePerUser
+      });
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Confirm payment and activate subscription
+  app.post('/api/account/confirm-payment', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { plan, paymentIntentId } = req.body;
+      
+      // Here you would verify the payment with Stripe
+      // For demo purposes, we'll assume payment succeeded
+      
+      // Get plan features
+      const planResult = await db.execute(sql`
+        SELECT features FROM subscription_plans WHERE name = ${plan}
+      `);
+      
+      const planFeatures = planResult.rows[0]?.features || {};
+      
+      // Update subscription to active
+      await db.execute(sql`
+        UPDATE subscriptions 
+        SET 
+          status = 'active',
+          is_trial_active = false,
+          plan = ${plan},
+          features = ${JSON.stringify(planFeatures)},
+          next_payment_date = ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}, -- 30 days from now
+          stripe_subscription_id = ${paymentIntentId},
+          updated_at = NOW()
+        WHERE company_id = ${companyId}
+      `);
+      
+      res.json({
+        success: true,
+        message: `Suscripción ${plan} activada correctamente`,
+        status: 'active',
+        plan: plan,
+        nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Super Admin - Subscription Plans Management
   app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {

@@ -23,6 +23,7 @@ import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { TrialManager } from '@/components/TrialManager';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -260,6 +261,11 @@ export default function AdminDashboard() {
         <p className="text-gray-500 mt-1">
           Gestión rápida y vista general de la empresa
         </p>
+      </div>
+
+      {/* Trial Status Management */}
+      <div className="mb-6">
+        <TrialManager />
       </div>
 
       {/* Two Column Layout */}
