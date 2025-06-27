@@ -11,7 +11,8 @@ import {
   Square, 
   Save, 
   X,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -19,6 +20,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { apiRequest } from '@/lib/queryClient';
+import { Link } from 'wouter';
 
 // Interfaces
 interface WorkSession {
@@ -433,23 +435,26 @@ export default function EmployeeTimeTracking() {
       className="min-h-screen bg-employee-gradient text-white overflow-x-hidden" 
       style={{ overflowX: 'clip' }}
     >
-      {/* Header with company info */}
-      <div className="px-6 pt-6 pb-2">
-        <div className="flex items-center space-x-3 mb-2">
-          {user?.company?.logoUrl ? (
-            <img
-              src={user.company.logoUrl}
-              alt="Logo empresa"
-              className="h-8 w-auto filter invert"
-            />
-          ) : (
-            <div className="text-white text-base font-semibold">
-              {user?.company?.name || 'Mi Empresa'}
-            </div>
-          )}
-        </div>
-        <div className="text-white/70 text-xs">
-          {user?.fullName || 'Empleado'}
+      {/* Header - Standard employee pattern */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
+        <Link href={`/${user?.company?.alias || 'test-company'}/inicio`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
+        
+        <div className="flex-1 flex flex-col items-end text-right">
+          <div className="text-white text-sm font-medium">
+            {user?.company?.name || 'Mi Empresa'}
+          </div>
+          <div className="text-white/70 text-xs">
+            {user?.fullName || 'Empleado'}
+          </div>
         </div>
       </div>
 
