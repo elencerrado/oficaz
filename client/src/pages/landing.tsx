@@ -2,6 +2,7 @@ import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import { 
   Clock, 
   Users, 
@@ -26,6 +27,18 @@ import {
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const features = [
     {
       icon: Clock,
@@ -130,7 +143,11 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
+      <header className={`border-b sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white/98 backdrop-blur-md shadow-lg shadow-black/5' 
+          : 'bg-white/95 backdrop-blur-sm'
+      }`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
