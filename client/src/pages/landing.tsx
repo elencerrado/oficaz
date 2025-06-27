@@ -155,9 +155,8 @@ export default function Landing() {
             </div>
             
             <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors">Funciones</a>
-              <a href="#pricing" className="text-gray-700 hover:text-gray-900 transition-colors">Precios</a>
-              <a href="#testimonials" className="text-gray-700 hover:text-gray-900 transition-colors">Testimonios</a>
+              <a href="#funciones" className="text-gray-700 hover:text-gray-900 transition-colors">Funciones</a>
+              <a href="#precios" className="text-gray-700 hover:text-gray-900 transition-colors">Precios</a>
               <Link href="/login">
                 <Button variant="outline" size="sm">
                   Iniciar Sesión
@@ -372,7 +371,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section - Full Viewport Height */}
-      <section id="features" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden flex items-center py-8 md:py-12">
+      <section id="funciones" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden flex items-center py-8 md:py-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#007AFF]/10 via-transparent to-purple-500/10"></div>
@@ -749,7 +748,7 @@ export default function Landing() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
+      <section id="precios" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
         {/* Modern Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full opacity-30"

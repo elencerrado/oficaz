@@ -129,13 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Header fijo mejorado con visibilidad optimizada sobre secciones oscuras
-  - Cambiado de sticky a fixed positioning para garantizar funcionamiento
-  - Fondo mejorado: bg-white/98 backdrop-blur-lg con shadow-lg en ambos estados
-  - Estado no-scrolled: sombra más fuerte (shadow-black/20) para contraste sobre hero negro
-  - Estado scrolled: sombra suave (shadow-black/5) para secciones claras
-  - Colores de texto adaptados: text-gray-700 por defecto, text-gray-600 cuando scrolled
-  - Header perfectamente visible tanto sobre secciones negras como blancas
+- June 27, 2025. Navegación del header optimizada con anclas en español
+  - Anclas cambiadas a español: #funciones y #precios en lugar de #features y #pricing
+  - Eliminada ancla #testimonials del header ya que la sección fue removida
+  - IDs de secciones actualizados para coincidir con anclas españolas
+  - Fondo header completamente blanco sólido para máxima visibilidad sobre secciones oscuras
+  - Shadow-xl y border más fuerte para contraste sobre hero negro
+  - Navegación más limpia con solo dos enlaces principales: Funciones y Precios
 - June 27, 2025. Hero section responsive corregido para pantallas PC estrechas
   - Cambiada altura fija por minHeight responsive con padding adaptativo
   - Textos y espaciado optimizados: tamaños escalables, espaciado reducido en móvil
