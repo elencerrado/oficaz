@@ -118,7 +118,8 @@ export default function TimeTracking() {
     },
   });
 
-  // All useCallback hooks
+  // ⚠️ PROTECTED: Session editing and time calculation functions - DO NOT MODIFY
+  // These functions are CRITICAL for time tracking accuracy and must remain stable
   const handleEditSession = useCallback((session: any) => {
     setEditingSession(session.id);
     setEditData({
@@ -146,12 +147,15 @@ export default function TimeTracking() {
     setEditData({ clockIn: '', clockOut: '', date: '' });
   }, []);
 
+  // ⚠️ PROTECTED: Time calculation function - CRITICAL FOR ACCURACY
   const calculateHours = useCallback((clockIn: string, clockOut: string | null) => {
     if (!clockOut) return 0;
     return (new Date(clockOut).getTime() - new Date(clockIn).getTime()) / (1000 * 60 * 60);
   }, []);
+  // ⚠️ END PROTECTED SECTION
 
-  // All useMemo hooks
+  // ⚠️ PROTECTED: Data processing and filtering functions - DO NOT MODIFY
+  // These functions are CRITICAL for data accuracy and filtering logic
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
     const allEmployees = employees as any[];
     const filteredEmployees = (allEmployees || []).filter((emp: any) => emp.role !== 'admin');
@@ -232,6 +236,7 @@ export default function TimeTracking() {
     }
   };
 
+  // ⚠️ PROTECTED: Statistics calculation functions - CRITICAL FOR REPORTING
   const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
@@ -280,7 +285,9 @@ export default function TimeTracking() {
       averageHoursPerMonth: averageHoursMonthly
     };
   }, [filteredSessions, employeesList.length, calculateHours]);
+  // ⚠️ END PROTECTED SECTION
 
+  // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
   const handleExportPDF = useCallback(() => {
     const doc = new jsPDF();
     

@@ -179,6 +179,8 @@ export default function EmployeeTimeTracking() {
     return format(date, 'EEEE dd', { locale: es });
   };
 
+  // ⚠️ PROTECTED: Time formatting and calculation functions - DO NOT MODIFY
+  // These functions are CRITICAL for accurate time display and calculations
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return format(date, 'HH:mm');
@@ -212,7 +214,9 @@ export default function EmployeeTimeTracking() {
     // Return net work hours (total time - break time)
     return Math.max(0, totalHours - totalBreakHours);
   };
+  // ⚠️ END PROTECTED SECTION - Time calculation functions
 
+  // ⚠️ PROTECTED: Statistical calculation functions - CRITICAL FOR CHARTS
   // Calculate hours for last 4 months for chart
   const getLast4MonthsData = () => {
     const months = [];
@@ -238,6 +242,7 @@ export default function EmployeeTimeTracking() {
     }
     return months;
   };
+  // ⚠️ END PROTECTED SECTION - Statistical calculation functions
 
   // Check if user can edit time
   const canEditTime = user?.company?.employeeTimeEditPermission === 'yes';
@@ -312,12 +317,10 @@ export default function EmployeeTimeTracking() {
     setExpandedDays(newExpanded);
   };
 
-  // Mobile Timeline Rendering Function - Admin Style Bars
+  // ⚠️ PROTECTED: Mobile Timeline Rendering Function - CRITICAL FOR EMPLOYEE UI
+  // DO NOT MODIFY - This function controls the complete visual display
   const renderMobileTimeline = (session: WorkSession) => {
     const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
-    
-    // Debug: log break periods
-    console.log('Session breaks for session', session.id, ':', sessionBreaks);
     
     if (!session.clockOut) {
       return (
@@ -486,6 +489,7 @@ export default function EmployeeTimeTracking() {
       </div>
     );
   };
+  // ⚠️ END PROTECTED SECTION - Mobile Timeline Rendering Function
 
   return (
     <div 

@@ -136,6 +136,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Sistema de protección EXPANDIDO: Funciones críticas de time tracking completamente blindadas
+  - Extendida protección a funciones de cálculo estadístico: calculateTotal(), getLastFourMonths()
+  - Blindada función generatePDF() en admin time tracking para informes de control horario
+  - Protegida función formatTime() que formatea hora española en empleado time tracking
+  - Blindada función renderMobileTimeline() CRÍTICA para visualización timeline móvil
+  - Sistema de protección sistemático aplicado con comentarios ⚠️ PROTECTED y DO NOT MODIFY
+  - Prevención completa de regresiones en funcionalidades clave de fichajes y visualización
+  - Todas las funciones críticas ahora resistentes a cambios futuros que puedan romper el sistema
 - June 27, 2025. Sistema de clasificación de documentos BLINDADO contra regresiones
   - Función analyzeFileName protegida con comentarios ⚠️ PROTECTED y advertencias "DO NOT MODIFY"
   - Eliminados logs de debugging que causaban confusión en producción
