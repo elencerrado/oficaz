@@ -1080,25 +1080,53 @@ export default function TimeTracking() {
             // Ordenar etiquetas por posición
             timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
 
-            // Detectar colisiones más precisamente basado en el ancho real del texto
-            // Estimar ancho del texto: caracteres promedio de hora "XX:XX" = ~30px + punto 8px + espacio 4px = ~42px
+            // Algoritmo híbrido: detectar colisiones locales y marcar puntos específicos
             const avgTextWidth = 5; // En porcentaje del contenedor (~42px de 800px típicos)
-            let significantOverlaps = 0;
+            const minDistance = 3; // Distancia mínima en % para evitar solapamiento
             
-            for (let i = 0; i < timeLabels.length - 1; i++) {
-              const currentEnd = timeLabels[i].position + (timeLabels[i].type === 'start' ? avgTextWidth : 0);
-              const nextStart = timeLabels[i + 1].position - (timeLabels[i + 1].type === 'end' ? avgTextWidth : 0);
+            // Marcar cada etiqueta como overlapping o no
+            const labelOverlapStatus = timeLabels.map((label, index) => {
+              let hasCollision = false;
               
-              if (currentEnd > nextStart) {
-                significantOverlaps++;
+              // Verificar colisión con etiqueta anterior
+              if (index > 0) {
+                const prevLabel = timeLabels[index - 1];
+                const distance = label.position - prevLabel.position;
+                if (distance < avgTextWidth + minDistance) {
+                  hasCollision = true;
+                }
               }
-            }
+              
+              // Verificar colisión con etiqueta siguiente
+              if (index < timeLabels.length - 1) {
+                const nextLabel = timeLabels[index + 1];
+                const distance = nextLabel.position - label.position;
+                if (distance < avgTextWidth + minDistance) {
+                  hasCollision = true;
+                }
+              }
+              
+              return { ...label, hasCollision };
+            });
 
-            // Umbral más estricto: ocultar horas cuando los puntos están muy cerca
-            const overlapThreshold = 0; // Cualquier solapamiento activa modo compacto
-            const shouldUseCompactMode = timeLabels.length > 8 || significantOverlaps >= overlapThreshold;
+            // Si hay muchas etiquetas (>8), usar modo compacto global
+            const shouldUseGlobalCompactMode = timeLabels.length > 8;
             
-            if (shouldUseCompactMode) {
+            // Log temporal para verificar funcionamiento
+            console.log('Algoritmo híbrido:', {
+              totalLabels: timeLabels.length,
+              globalCompactMode: shouldUseGlobalCompactMode,
+              overlappingLabels: labelOverlapStatus.filter(l => l.hasCollision).length,
+              labelDetails: labelOverlapStatus.map(l => ({ 
+                session: l.sessionIndex, 
+                type: l.type, 
+                position: l.position,
+                hasCollision: l.hasCollision 
+              }))
+            });
+            
+            if (shouldUseGlobalCompactMode) {
+              // Modo compacto global: todas las etiquetas como tooltips
               return completedSessions.map((session: any, sessionIndex: number) => {
                 const sessionStart = new Date(session.clockIn);
                 const sessionEnd = new Date(session.clockOut);
@@ -1137,7 +1165,7 @@ export default function TimeTracking() {
               });
             }
 
-            // Si no hay muchas superposiciones, mostrar puntos + hora al lado
+            // Modo híbrido: renderizar cada punto según si tiene colisión o no
             return completedSessions.map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
@@ -1147,20 +1175,58 @@ export default function TimeTracking() {
               
               const leftPercentage = (startOffset / totalDayDuration) * 100;
               const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+
+              // Buscar las etiquetas correspondientes para verificar colisiones
+              const startLabel = labelOverlapStatus.find(l => 
+                l.sessionIndex === sessionIndex && l.type === 'start'
+              );
+              const endLabel = labelOverlapStatus.find(l => 
+                l.sessionIndex === sessionIndex && l.type === 'end'
+              );
               
               return (
-                <div key={`session-combined-${sessionIndex}`} className="relative">
-                  {/* Entrada: punto alineado con inicio de barra + hora a la derecha */}
-                  <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px' }}>
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
-                  </div>
+                <div key={`session-hybrid-${sessionIndex}`} className="relative">
+                  {/* Entrada: renderizar según si tiene colisión */}
+                  {startLabel?.hasCollision ? (
+                    // Con colisión: solo punto con tooltip, ligeramente desplazado para evitar solapamiento
+                    <div 
+                      className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
+                      style={{ 
+                        left: `${leftPercentage}%`, 
+                        top: '1px', 
+                        transform: 'translateX(-50%)',
+                        zIndex: 10
+                      }}
+                      title={`Entrada: ${formatTime(sessionStart)}`}
+                    />
+                  ) : (
+                    // Sin colisión: punto + hora visible
+                    <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px' }}>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                      <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
+                    </div>
+                  )}
                   
-                  {/* Salida: hora a la izquierda + punto alineado con final de barra */}
-                  <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-100%)' }}>
-                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{formatTime(sessionEnd)}</span>
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  </div>
+                  {/* Salida: renderizar según si tiene colisión */}
+                  {endLabel?.hasCollision ? (
+                    // Con colisión: solo punto con tooltip, ligeramente desplazado para evitar solapamiento
+                    <div 
+                      className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
+                      style={{ 
+                        left: `${leftPercentage + widthPercentage}%`, 
+                        top: '-1px', 
+                        transform: 'translateX(-50%)',
+                        zIndex: 10
+                      }}
+                      title={`Salida: ${formatTime(sessionEnd)}`}
+                    />
+                  ) : (
+                    // Sin colisión: punto + hora visible  
+                    <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-100%)' }}>
+                      <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{formatTime(sessionEnd)}</span>
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    </div>
+                  )}
                 </div>
               );
             });
