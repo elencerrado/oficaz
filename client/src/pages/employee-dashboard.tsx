@@ -477,9 +477,14 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* Last Clock In Info / Temporary Message - Compacto */}
+        {/* Status Line and Last Clock In Info / Temporary Message - Compacto */}
         <div className="text-center mb-2">
           <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-2">
+            {/* Status Line */}
+            <div className="text-white/70 text-xs mb-2 font-medium">
+              {activeSession ? 'Trabajando...' : 'Fuera del trabajo'}
+            </div>
+            
             {temporaryMessage ? (
               <>
                 <div className="text-green-400 text-xs mb-1 font-medium">✓ Fichaje exitoso</div>
