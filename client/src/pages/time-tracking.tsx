@@ -1040,38 +1040,105 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-3 mt-1">
-          {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
-            const sessionStart = new Date(session.clockIn);
-            const sessionEnd = new Date(session.clockOut);
-            
-            // Posición relativa dentro del día
-            const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-            const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-            
-            const leftPercentage = (startOffset / totalDayDuration) * 100;
-            const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+        <div className="relative h-6 mt-1">
+          {(() => {
+            // Preparar todas las etiquetas de tiempo con sus posiciones
+            const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
+            const timeLabels: Array<{
+              text: string;
+              position: number;
+              type: 'start' | 'end';
+              sessionIndex: number;
+              originalPosition: number;
+            }> = [];
 
-            return (
-              <div key={`times-${sessionIndex}`} className="relative">
-                {/* Hora de entrada al inicio del segmento */}
-                <div
-                  className="absolute text-xs text-green-700 font-medium transform -translate-x-1/2"
-                  style={{ left: `${leftPercentage}%`, top: '0px' }}
-                >
-                  {formatTime(sessionStart)}
-                </div>
+            completedSessions.forEach((session: any, sessionIndex: number) => {
+              const sessionStart = new Date(session.clockIn);
+              const sessionEnd = new Date(session.clockOut);
+              
+              // Posición relativa dentro del día
+              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+              
+              const leftPercentage = (startOffset / totalDayDuration) * 100;
+              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+
+              // Agregar etiqueta de entrada
+              timeLabels.push({
+                text: formatTime(sessionStart),
+                position: leftPercentage,
+                originalPosition: leftPercentage,
+                type: 'start',
+                sessionIndex
+              });
+
+              // Agregar etiqueta de salida
+              timeLabels.push({
+                text: formatTime(sessionEnd),
+                position: leftPercentage + widthPercentage,
+                originalPosition: leftPercentage + widthPercentage,
+                type: 'end',
+                sessionIndex
+              });
+            });
+
+            // Ordenar etiquetas por posición
+            timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
+
+            // Algoritmo para evitar superposiciones
+            const minDistance = 8; // Distancia mínima entre etiquetas en porcentaje
+            const adjustedLabels = [...timeLabels];
+            
+            for (let i = 0; i < adjustedLabels.length - 1; i++) {
+              const current = adjustedLabels[i];
+              const next = adjustedLabels[i + 1];
+              
+              // Si la distancia es menor que el mínimo, ajustar posiciones
+              if (next.position - current.position < minDistance) {
+                const overlap = minDistance - (next.position - current.position);
                 
-                {/* Hora de salida al final del segmento */}
-                <div
-                  className="absolute text-xs text-red-700 font-medium transform -translate-x-1/2"
-                  style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px' }}
-                >
-                  {formatTime(sessionEnd)}
-                </div>
+                // Mover etiquetas hacia los lados para crear espacio
+                if (current.position > overlap / 2) {
+                  current.position -= overlap / 2;
+                } else {
+                  current.position = 0;
+                }
+                
+                if (next.position + overlap / 2 < 100) {
+                  next.position += overlap / 2;
+                } else {
+                  next.position = 100;
+                }
+                
+                // Aplicar cambios a las etiquetas siguientes si es necesario
+                for (let j = i + 2; j < adjustedLabels.length; j++) {
+                  if (adjustedLabels[j].position - adjustedLabels[j - 1].position < minDistance) {
+                    adjustedLabels[j].position = adjustedLabels[j - 1].position + minDistance;
+                    if (adjustedLabels[j].position > 100) adjustedLabels[j].position = 100;
+                  } else {
+                    break;
+                  }
+                }
+              }
+            }
+
+            // Renderizar etiquetas ajustadas
+            return adjustedLabels.map((label, index) => (
+              <div
+                key={`time-${label.sessionIndex}-${label.type}-${index}`}
+                className={`absolute text-xs font-medium whitespace-nowrap ${
+                  label.type === 'start' ? 'text-green-700' : 'text-red-700'
+                }`}
+                style={{ 
+                  left: `${Math.max(0, Math.min(100, label.position))}%`,
+                  top: label.position !== label.originalPosition ? '6px' : '0px', // Mover ligeramente hacia abajo si fue ajustado
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                {label.text}
               </div>
-            );
-          })}
+            ));
+          })()}
         </div>
       </div>
     );
