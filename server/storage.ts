@@ -282,7 +282,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]> {
-    return db.select({
+    const sessions = await db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
       clockIn: schema.workSessions.clockIn,
@@ -296,6 +296,20 @@ export class DrizzleStorage implements IStorage {
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
       .orderBy(desc(schema.workSessions.createdAt));
+
+    // Fetch break periods for each session
+    const sessionsWithBreaks = await Promise.all(sessions.map(async (session) => {
+      const breakPeriods = await db.select().from(schema.breakPeriods)
+        .where(eq(schema.breakPeriods.workSessionId, session.id))
+        .orderBy(schema.breakPeriods.breakStart);
+      
+      return {
+        ...session,
+        breakPeriods
+      };
+    }));
+
+    return sessionsWithBreaks;
   }
 
   // Break Periods

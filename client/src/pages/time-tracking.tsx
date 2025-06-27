@@ -27,7 +27,7 @@ import {
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, startOfWeek, addDays, subDays } from 'date-fns';
+import { format, startOfWeek, addDays, subDays, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -639,6 +639,92 @@ export default function TimeTracking() {
     });
   }, [filteredSessions, selectedEmployee, employeesList, dateFilter, currentDate, currentMonth, startDate, endDate, calculateHours, toast]);
 
+  // Timeline Bar Component for displaying work sessions with break periods
+  const TimelineBar = ({ session }: { session: any }) => {
+    if (!session.clockIn || !session.clockOut) {
+      return (
+        <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <Clock className="w-4 h-4" />
+          <span>Sesión en curso</span>
+        </div>
+      );
+    }
+
+    const clockIn = new Date(session.clockIn);
+    const clockOut = new Date(session.clockOut);
+    const totalSessionMinutes = differenceInMinutes(clockOut, clockIn);
+    const breakPeriods = session.breakPeriods || [];
+
+    // Calculate total break duration
+    const totalBreakMinutes = breakPeriods.reduce((total: number, breakPeriod: any) => {
+      if (breakPeriod.breakEnd) {
+        return total + differenceInMinutes(new Date(breakPeriod.breakEnd), new Date(breakPeriod.breakStart));
+      }
+      return total;
+    }, 0);
+
+    const formatTime = (date: Date) => format(date, 'HH:mm');
+    const formatDuration = (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    };
+
+    return (
+      <div className="space-y-2">
+        {/* Timeline visualization */}
+        <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden">
+          {/* Main work session bar */}
+          <div className="absolute inset-0 bg-blue-500 rounded-lg"></div>
+          
+          {/* Break periods as orange bars */}
+          {breakPeriods.map((breakPeriod: any, index: number) => {
+            if (!breakPeriod.breakEnd) return null;
+            
+            const breakStart = new Date(breakPeriod.breakStart);
+            const breakEnd = new Date(breakPeriod.breakEnd);
+            const breakStartMinutes = differenceInMinutes(breakStart, clockIn);
+            const breakDurationMinutes = differenceInMinutes(breakEnd, breakStart);
+            
+            const leftPercentage = (breakStartMinutes / totalSessionMinutes) * 100;
+            const widthPercentage = (breakDurationMinutes / totalSessionMinutes) * 100;
+            
+            return (
+              <div
+                key={index}
+                className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                style={{
+                  left: `${leftPercentage}%`,
+                  width: `${widthPercentage}%`,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Time labels */}
+        <div className="flex justify-between items-center text-xs text-gray-600">
+          <div className="flex items-center space-x-1">
+            <span className="font-medium">Entrada:</span>
+            <span>{formatTime(clockIn)}</span>
+          </div>
+          
+          {totalBreakMinutes > 0 && (
+            <div className="flex items-center space-x-1 text-orange-600">
+              <span className="font-medium">Descanso:</span>
+              <span>{formatDuration(totalBreakMinutes)}</span>
+            </div>
+          )}
+          
+          <div className="flex items-center space-x-1">
+            <span className="font-medium">Salida:</span>
+            <span>{formatTime(clockOut)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Loading check AFTER all hooks
   if (isLoading) {
     return (
@@ -899,8 +985,7 @@ export default function TimeTracking() {
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Entrada</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Salida</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 min-w-[300px]">Jornada de Trabajo</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Horas</th>
                   <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
                 </tr>
@@ -956,7 +1041,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200 h-10">
-                          <td colSpan={6} className="py-1 px-4 text-center">
+                          <td colSpan={5} className="py-1 px-4 text-center">
                             <div className="font-semibold text-blue-800 capitalize text-sm">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
@@ -969,7 +1054,7 @@ export default function TimeTracking() {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
                         <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300 h-10">
-                          <td colSpan={6} className="py-1 px-4 text-center">
+                          <td colSpan={5} className="py-1 px-4 text-center">
                             <div className="font-medium text-gray-700 text-sm">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
@@ -1002,32 +1087,28 @@ export default function TimeTracking() {
                             </div>
                           )}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 min-w-[300px]">
                           {isEditing ? (
-                            <Input
-                              type="time"
-                              value={editData.clockIn}
-                              onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                              className="w-24 h-8"
-                            />
-                          ) : (
-                            <div className="text-gray-700">
-                              {format(new Date(session.clockIn), 'HH:mm')}
+                            <div className="space-y-2">
+                              <div className="flex space-x-2">
+                                <Input
+                                  type="time"
+                                  value={editData.clockIn}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+                                  className="w-24 h-8"
+                                  placeholder="Entrada"
+                                />
+                                <Input
+                                  type="time"
+                                  value={editData.clockOut}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+                                  className="w-24 h-8"
+                                  placeholder="Salida"
+                                />
+                              </div>
                             </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          {isEditing ? (
-                            <Input
-                              type="time"
-                              value={editData.clockOut}
-                              onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                              className="w-24 h-8"
-                            />
                           ) : (
-                            <div className="text-gray-700">
-                              {session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-'}
-                            </div>
+                            <TimelineBar session={session} />
                           )}
                         </td>
                         <td className="py-3 px-4">
@@ -1075,7 +1156,7 @@ export default function TimeTracking() {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
                         <tr key={`week-final`} className="bg-gray-100 border-y border-gray-300">
-                          <td colSpan={6} className="py-2 px-4 text-center">
+                          <td colSpan={5} className="py-2 px-4 text-center">
                             <div className="font-medium text-gray-700">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
@@ -1091,7 +1172,7 @@ export default function TimeTracking() {
                       
                       result.push(
                         <tr key={`month-final`} className="bg-blue-50 border-y-2 border-blue-200">
-                          <td colSpan={6} className="py-3 px-4 text-center">
+                          <td colSpan={5} className="py-3 px-4 text-center">
                             <div className="font-semibold text-blue-800 capitalize">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
@@ -1106,7 +1187,7 @@ export default function TimeTracking() {
                 
                 {filteredSessions.length === 0 && (
                   <tr className="h-32">
-                    <td colSpan={6} className="py-8 text-center">
+                    <td colSpan={5} className="py-8 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                           <Users className="w-5 h-5 text-gray-400" />
