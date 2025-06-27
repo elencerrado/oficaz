@@ -136,6 +136,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. TRIAL MANAGER ACTUALIZADO: Precios dinámicos desde configuración super admin implementados
+  - Eliminados precios hardcodeados (€3/€5/€8) en selector de planes de TrialManager
+  - Añadido endpoint público /api/subscription-plans para usuarios autenticados
+  - Query hook actualizada para usar datos reales de base de datos subscription_plans
+  - SelectItems ahora muestran displayName y pricePerUser dinámicos (ej: "Plan Basic - €29.99/mes")
+  - Función getPlanPrice() implementada para obtener precios específicos de cada plan
+  - Sistema completamente integrado con configuración del super admin
 - June 27, 2025. DATE PICKER COMPLETAMENTE REDISEÑADO: Sistema operativo eficiente implementado exitosamente
   - Componente DatePickerDay rediseñado con selección independiente año/mes/día para máxima eficiencia operativa
   - Eliminada navegación "pegajosa" mes a mes: ahora permite salto directo a cualquier fecha (ej: 5 años atrás)

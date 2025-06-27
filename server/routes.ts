@@ -2721,6 +2721,17 @@ startxref
     }
   });
 
+  // Endpoint público para obtener planes de suscripción disponibles
+  app.get('/api/subscription-plans', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Super Admin - Subscription Plans Management
   app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {

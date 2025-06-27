@@ -39,6 +39,18 @@ export function TrialManager() {
     refetchInterval: 30000, // Check every 30 seconds
   });
 
+  // Obtener planes de suscripción disponibles
+  const { data: subscriptionPlans = [] } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    staleTime: 300000, // 5 minutos
+  });
+
+  // Función para obtener el precio de un plan
+  const getPlanPrice = (planName: string) => {
+    const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
+    return plan ? plan.pricePerUser : 0;
+  };
+
   // Create payment intent mutation
   const createPaymentMutation = useMutation({
     mutationFn: async (plan: string) => {
@@ -216,9 +228,11 @@ export function TrialManager() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="basic">Basic - €3/empleado/mes</SelectItem>
-                <SelectItem value="pro">Pro - €5/empleado/mes</SelectItem>
-                <SelectItem value="master">Master - €8/empleado/mes</SelectItem>
+                {subscriptionPlans.map((plan: any) => (
+                  <SelectItem key={plan.name} value={plan.name.toLowerCase()}>
+                    {plan.displayName} - €{plan.pricePerUser}/mes
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
