@@ -46,6 +46,13 @@ export function requireRole(roles: string[]) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
+    console.log('DEBUG - Role check:', { 
+      userId: req.user.id, 
+      userRole: req.user.role, 
+      requiredRoles: roles, 
+      hasPermission: roles.includes(req.user.role) 
+    });
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }

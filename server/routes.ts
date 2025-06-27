@@ -2498,12 +2498,12 @@ startxref
       `);
 
       const currentStats = {
-        employee_count: parseInt(employeeCount.rows[0]?.count || '0'),
-        active_employees: parseInt(employeeCount.rows[0]?.count || '0'),
-        time_entries_count: parseInt(timeEntriesCount.rows[0]?.count || '0'),
-        documents_uploaded: parseInt(documentsCount.rows[0]?.count || '0'),
+        employee_count: parseInt((employeeCount.rows[0] as any)?.count || '0'),
+        active_employees: parseInt((employeeCount.rows[0] as any)?.count || '0'),
+        time_entries_count: parseInt((timeEntriesCount.rows[0] as any)?.count || '0'),
+        documents_uploaded: parseInt((documentsCount.rows[0] as any)?.count || '0'),
         storage_used_mb: '0.5', // Placeholder - would need actual file size calculation
-        api_calls: parseInt(timeEntriesCount.rows[0]?.count || '0') * 2
+        api_calls: parseInt((timeEntriesCount.rows[0] as any)?.count || '0') * 2
       };
 
       res.json({
