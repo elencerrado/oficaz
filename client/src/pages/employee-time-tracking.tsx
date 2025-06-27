@@ -198,6 +198,32 @@ export default function EmployeeTimeTracking() {
     return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
   };
 
+  // Calculate hours for last 4 months for chart
+  const getLast4MonthsData = () => {
+    const months = [];
+    for (let i = 3; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      
+      const monthSessions = sessions.filter((session: any) => {
+        const sessionDate = new Date(session.clockIn);
+        return sessionDate >= monthStart && sessionDate <= monthEnd;
+      });
+      
+      const totalHours = monthSessions.reduce((total: number, session: any) => {
+        return total + calculateSessionHours(session);
+      }, 0);
+      
+      months.push({
+        month: format(date, 'MMM', { locale: es }),
+        hours: totalHours,
+        isCurrentMonth: format(date, 'yyyy-MM') === format(new Date(), 'yyyy-MM')
+      });
+    }
+    return months;
+  };
+
   // Check if user can edit time
   const canEditTime = user?.company?.employeeTimeEditPermission === 'yes';
 
@@ -527,6 +553,37 @@ export default function EmployeeTimeTracking() {
             <p className="text-white/70 text-sm mb-1">Total del mes</p>
             <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
           </div>
+        </div>
+      </div>
+
+      {/* 4 Month Statistics - Mini Charts */}
+      <div className="px-6 mb-6">
+        <div className="grid grid-cols-4 gap-2">
+          {getLast4MonthsData().map((monthData, index) => (
+            <div 
+              key={monthData.month}
+              className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 transition-all duration-500 ${
+                monthData.isCurrentMonth ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
+              }`}
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animation: 'fadeInUp 0.6s ease-out forwards'
+              }}
+            >
+              <div className="text-center">
+                <p className="text-white/60 text-xs mb-1 font-medium">{monthData.month}</p>
+                <div className="relative h-8 mb-1">
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 bg-blue-400 rounded-t-sm transition-all duration-700"
+                       style={{ 
+                         height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
+                         minHeight: monthData.hours > 0 ? '4px' : '0px'
+                       }}
+                  />
+                </div>
+                <p className="text-white text-xs font-mono">{monthData.hours.toFixed(0)}h</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
