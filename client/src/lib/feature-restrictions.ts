@@ -21,46 +21,8 @@ export interface Subscription {
   maxUsers: number;
 }
 
-// Trial includes same features as chosen plan - only time limited (14 days)
-const getTrialFeaturesForPlan = (plan: string): SubscriptionFeatures => {
-  const basicFeatures: SubscriptionFeatures = {
-    messages: true,
-    vacation: true,
-    timeTracking: true,
-    documents: false,
-    timeEditingPermissions: false,
-    reports: false,
-    analytics: false,
-    customization: true,
-    logoUpload: false,
-    api: false,
-    reminders: false
-  };
-
-  const proFeatures: SubscriptionFeatures = {
-    messages: true,
-    vacation: true,
-    timeTracking: true,
-    documents: true,
-    timeEditingPermissions: true,
-    reports: true,
-    analytics: true,
-    customization: true,
-    logoUpload: true,
-    api: false,
-    reminders: true
-  };
-
-  // Return features based on chosen plan during trial
-  switch (plan.toLowerCase()) {
-    case 'basic':
-      return basicFeatures;
-    case 'pro':
-      return proFeatures;
-    default:
-      return basicFeatures;
-  }
-};
+// Trial and active subscriptions now use the same feature system
+// Features are determined by the subscription plan configuration in the database
 
 export const checkFeatureAccess = (subscription: Subscription | null, feature: keyof SubscriptionFeatures): boolean => {
   console.log('checkFeatureAccess called with:', { subscription, feature });
@@ -75,18 +37,16 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     return false;
   }
   
-  // For trial periods, limit features based on chosen plan (Basic or Pro)
-  // Master plan features will be handled later
-  if (subscription.status === 'trial') {
-    const trialFeatures = getTrialFeaturesForPlan(subscription.plan);
-    const hasTrialAccess = trialFeatures[feature] || false;
-    console.log('Trial feature access:', { plan: subscription.plan, feature, hasTrialAccess, trialFeatures });
-    return hasTrialAccess;
-  }
-  
-  // For active subscriptions, use regular feature check
+  // For both trial and active subscriptions, use the features configured in the database
+  // Trial periods should have same features as the chosen plan, just time-limited
   const hasFeature = subscription.features[feature] || false;
-  console.log('Active subscription feature access:', { feature, hasFeature, features: subscription.features });
+  console.log('Feature access:', { 
+    status: subscription.status, 
+    plan: subscription.plan, 
+    feature, 
+    hasFeature, 
+    features: subscription.features 
+  });
   return hasFeature;
 };
 
