@@ -2586,8 +2586,100 @@ startxref
       // Generate invitation URL
       const invitationUrl = `${req.protocol}://${req.get('host')}/registro/invitacion/${token}`;
       
-      // TODO: Send invitation email here
-      console.log(`Invitation created for ${email}: ${invitationUrl}`);
+      // Send invitation email
+      try {
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.hostinger.com',
+          port: 465,
+          secure: true, // SSL
+          auth: {
+            user: 'soy@oficaz.es',
+            pass: 'Sanisidro@2025',
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        // Read logo file and convert to base64
+        const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+
+        const mailOptions = {
+          from: '"Oficaz" <soy@oficaz.es>',
+          to: email,
+          subject: 'Invitación a Oficaz - Registro de Empresa',
+          text: `Has sido invitado a registrar tu empresa en Oficaz. Usa este enlace para completar el registro: ${invitationUrl}. La invitación expira en 7 días.`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Invitación a Oficaz</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                
+                <!-- Header with logo -->
+                <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 30px 20px;">
+                  <h1 style="color: #1f2937; font-size: 24px; font-weight: 600; margin-bottom: 20px; text-align: center;">
+                    Has sido invitado a Oficaz
+                  </h1>
+                  
+                  <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                    Hola,
+                  </p>
+                  
+                  <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                    Has recibido una invitación para registrar tu empresa en <strong>Oficaz</strong>, la plataforma de gestión empresarial más intuitiva del mercado.
+                  </p>
+                  
+                  <div style="text-align: center; margin: 35px 0;">
+                    <a href="${invitationUrl}" style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Completar Registro
+                    </a>
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">
+                    Esta invitación expira en <strong>7 días</strong>. Si no puedes hacer clic en el botón, copia y pega el siguiente enlace en tu navegador:
+                  </p>
+                  
+                  <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; border-left: 3px solid #007AFF; margin-bottom: 20px;">
+                    <a href="${invitationUrl}" style="color: #007AFF; text-decoration: none; word-break: break-all; font-size: 14px;">
+                      ${invitationUrl}
+                    </a>
+                  </div>
+                  
+                  <p style="color: #6b7280; font-size: 14px; line-height: 1.5;">
+                    Si no esperabas esta invitación, puedes ignorar este email de forma segura.
+                  </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                    © 2025 Oficaz. Todos los derechos reservados.
+                  </p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Invitation email sent to ${email}: ${invitationUrl}`);
+        
+      } catch (emailError) {
+        console.error('Error sending invitation email:', emailError);
+        // Don't fail the invitation creation if email fails
+      }
       
       res.status(201).json({
         ...invitation,
