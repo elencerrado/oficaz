@@ -136,6 +136,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. FECHAS DE TRIAL SINCRONIZADAS CON REGISTRO REAL: Inconsistencia crítica corregida
+  - PROBLEMA RESUELTO: Trial iniciaba 3 días antes del registro de empresa (16 jun vs 19 jun)
+  - Base de datos corregida: trial_start_date ahora coincide con company.created_at (19 junio 2025)
+  - Trial period recalculado: 19 junio → 3 julio 2025 (exactamente 14 días desde registro real)
+  - Sistema completamente sincronizado: empresa registrada y trial iniciado el mismo día
+  - PaymentMethodManager implementado: interfaz completa para gestión de tarjetas con Stripe
+  - Preparado para integración real de Stripe pendiente de claves API del usuario
 - June 27, 2025. TRIAL MANAGER ACTUALIZADO: Precios dinámicos desde configuración super admin implementados
   - Eliminados precios hardcodeados (€3/€5/€8) en selector de planes de TrialManager
   - Añadido endpoint público /api/subscription-plans para usuarios autenticados
