@@ -491,18 +491,28 @@ export default function EmployeeTimeTracking() {
 
       {/* Month navigation - Fixed height */}
       <div className="flex items-center justify-between px-6 mb-6 h-12">
-        <Button
+        <button
           onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
-          className="text-white hover:bg-white/10 p-2 rounded-xl"
+          className="text-white/70 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
         >
-          <ChevronLeft className="h-6 w-6" />
-        </Button>
+          <ChevronLeft className="h-5 w-5" />
+        </button>
         
         <h2 className="text-xl font-semibold text-white text-center min-w-0 flex-1">
           {format(currentMonth, 'MMMM yyyy', { locale: es })}
         </h2>
         
-        <div className="w-10 h-10 p-2" /> {/* Spacer - navegación al futuro bloqueada */}
+        {/* Flecha hacia adelante - solo si no es el mes actual */}
+        {format(currentMonth, 'yyyy-MM') < format(new Date(), 'yyyy-MM') ? (
+          <button
+            onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
+            className="text-white/70 hover:text-white hover:bg-white/5 p-2 rounded-lg transition-all duration-200"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        ) : (
+          <div className="w-9 h-9 p-2" /> /* Spacer para mantener layout */
+        )}
       </div>
 
       {/* Month Total Hours - Fixed height */}
