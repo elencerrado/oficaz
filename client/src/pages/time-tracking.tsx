@@ -906,24 +906,19 @@ export default function TimeTracking() {
           </div>
 
           {/* Contenedor para horas ABAJO de las barras */}
-          <div className="relative h-3 mt-1">
-            {/* Hora de entrada - izquierda */}
-            <div
-              className="absolute text-xs text-green-700 font-medium"
-              style={{ left: '0%', top: '0px' }}
-            >
-              {formatTime(sessionStart)}
+          <div className="relative h-4 mt-1">
+            {/* Entrada: punto alineado con inicio de barra + hora a la derecha */}
+            <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+              <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
             </div>
             
-            {/* Estado actual en tiempo real - derecha */}
-            <div
-              className="absolute text-xs font-medium flex items-center gap-1"
-              style={{ right: '0%', top: '0px' }}
-            >
-              <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
-              <span className={`${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
+            {/* Estado actual en tiempo real con punto pulsante - derecha */}
+            <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(100%)' }}>
+              <span className={`text-xs font-medium mr-1 ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
                 {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
               </span>
+              <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
             </div>
           </div>
         </div>
@@ -1085,18 +1080,23 @@ export default function TimeTracking() {
             // Ordenar etiquetas por posición
             timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
 
-            // Detectar si hay superposiciones significativas
-            const minDistance = 15; // Distancia mínima para considerar superposición (ajustado para puntos + texto)
-            let hasOverlaps = false;
+            // Detectar colisiones más precisamente basado en el ancho real del texto
+            // Estimar ancho del texto: caracteres promedio de hora "XX:XX" = ~30px + punto 8px + espacio 4px = ~42px
+            const avgTextWidth = 5; // En porcentaje del contenedor (~42px de 800px típicos)
+            let significantOverlaps = 0;
+            
             for (let i = 0; i < timeLabels.length - 1; i++) {
-              if (timeLabels[i + 1].position - timeLabels[i].position < minDistance) {
-                hasOverlaps = true;
-                break;
+              const currentEnd = timeLabels[i].position + (timeLabels[i].type === 'start' ? avgTextWidth : 0);
+              const nextStart = timeLabels[i + 1].position - (timeLabels[i + 1].type === 'end' ? avgTextWidth : 0);
+              
+              if (currentEnd > nextStart) {
+                significantOverlaps++;
               }
             }
 
-            // Si hay muchas superposiciones, usar solo puntos con tooltips
-            if (timeLabels.length > 4 && hasOverlaps) {
+            // Umbral más inteligente: si más del 40% de elementos se solapan O hay más de 6 elementos totales
+            const overlapThreshold = Math.max(2, Math.floor(timeLabels.length * 0.4));
+            if (timeLabels.length > 6 || significantOverlaps >= overlapThreshold) {
               return completedSessions.map((session: any, sessionIndex: number) => {
                 const sessionStart = new Date(session.clockIn);
                 const sessionEnd = new Date(session.clockOut);
