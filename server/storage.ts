@@ -765,7 +765,25 @@ export class DrizzleStorage implements IStorage {
 
   async getSubscriptionByCompanyId(companyId: number): Promise<any | undefined> {
     const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
-    return subscription;
+    
+    if (!subscription) {
+      return undefined;
+    }
+
+    // Get the plan features from subscription_plans table
+    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, subscription.plan));
+    
+    if (!plan) {
+      console.warn(`Plan ${subscription.plan} not found in subscription_plans table`);
+      return subscription;
+    }
+
+    // Return subscription with features from the plan
+    return {
+      ...subscription,
+      features: plan.features,
+      maxUsers: plan.maxUsers
+    };
   }
 
   async updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined> {
