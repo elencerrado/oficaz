@@ -126,48 +126,27 @@ export default function EmployeeProfile() {
             </div>
           </div>
           
-          {/* Información básica en ficha - Grid moderno */}
-          <div className="grid grid-cols-1 gap-4">
+          {/* Información básica en ficha - Diseño compacto */}
+          <div className="space-y-2">
             {/* DNI - siempre mostrar */}
-            <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
-              <div className="flex items-center space-x-3 flex-1">
-                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-300 font-bold text-xs">ID</span>
-                </div>
-                <div>
-                  <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">DNI</span>
-                  <p className="text-white font-mono">{user?.dni}</p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300 text-sm">DNI</span>
+              <span className="text-white font-mono text-sm">{user?.dni}</span>
             </div>
             
             {/* Teléfono - solo si tiene datos */}
             {user?.companyPhone && (
-              <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
-                <div className="flex items-center space-x-3 flex-1">
-                  <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-green-300 font-bold text-xs">📱</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">Teléfono</span>
-                    <p className="text-white font-mono">{user.companyPhone}</p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300 text-sm">Teléfono</span>
+                <span className="text-white font-mono text-sm">{user.companyPhone}</span>
               </div>
             )}
             
             {/* Email - solo si tiene datos */}
             {user?.companyEmail && (
-              <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
-                <div className="flex items-center space-x-3 flex-1">
-                  <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                    <span className="text-purple-300 font-bold text-xs">@</span>
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">Email</span>
-                    <p className="text-white font-mono truncate">{user.companyEmail}</p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300 text-sm">Email</span>
+                <span className="text-white font-mono text-sm truncate max-w-48">{user.companyEmail}</span>
               </div>
             )}
           </div>
