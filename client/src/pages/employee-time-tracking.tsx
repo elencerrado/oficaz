@@ -592,83 +592,92 @@ export default function EmployeeTimeTracking() {
 
                               {/* Multiple session bars - en la misma línea horizontal */}
                               <div className="relative h-7 mb-2 mx-2">
+                                {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
+                                  
+                                  const sessionWidth = 100 / sortedDaySessions.length; // Dividir ancho entre sesiones
+                                  const sessionLeft = sessionIndex * sessionWidth;
+                                  
+                                  return (
+                                    <div
+                                      key={`session-bar-${session.id}`}
+                                      className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                                      style={{
+                                        left: `${sessionLeft}%`,
+                                        width: `${sessionWidth}%`
+                                      }}
+                                    />
+                                  );
+                                })}
+                                
+                                {/* Break periods */}
+                                {sortedDaySessions.map((session, sessionIndex) => {
+                                  if (!session.clockOut) return null;
                                   
                                   const sessionStart = new Date(session.clockIn);
                                   const sessionEnd = new Date(session.clockOut);
                                   const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
                                   const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                                  const sessionWidth = 100 / sortedDaySessions.length;
+                                  const sessionLeft = sessionIndex * sessionWidth;
                                   
-                                  // Calcular posición horizontal para cada sesión
-                                  const sessionWidth = (100 / sortedDaySessions.length) - 1; // Dividir ancho entre sesiones con pequeño gap
-                                  const sessionLeft = (sessionIndex * (100 / sortedDaySessions.length)) + (sessionIndex * 0.5);
+                                  return sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+                                    if (!breakPeriod.breakEnd) return null;
+                                    
+                                    const breakStart = new Date(breakPeriod.breakStart);
+                                    const breakEnd = new Date(breakPeriod.breakEnd);
+                                    
+                                    const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                                    const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                                    
+                                    const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
+                                    const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2);
+                                    
+                                    const adjustedBreakLeft = sessionLeft + (breakLeftPercentageInSession * sessionWidth / 100);
+                                    const adjustedBreakWidth = (breakWidthPercentageInSession * sessionWidth / 100);
+                                    
+                                    return (
+                                      <div
+                                        key={`break-${session.id}-${breakIndex}`}
+                                        className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
+                                        style={{
+                                          left: `${adjustedBreakLeft}%`,
+                                          width: `${adjustedBreakWidth}%`
+                                        }}
+                                        title={`Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`}
+                                      />
+                                    );
+                                  });
+                                })}
+                                
+                                {/* Entry/Exit points when expanded */}
+                                {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && sortedDaySessions.map((session, sessionIndex) => {
+                                  if (!session.clockOut) return null;
+                                  
+                                  const sessionWidth = 100 / sortedDaySessions.length;
+                                  const sessionLeft = sessionIndex * sessionWidth;
                                   
                                   return (
-                                    <div key={`session-${session.id}`} className="absolute top-0 h-7">
-                                      {/* Session bar - ancho proporcional al número de sesiones */}
+                                    <div key={`points-${session.id}`}>
+                                      {/* Punto de entrada */}
                                       <div
-                                        className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                                        className="absolute w-3 h-3 bg-green-500 rounded-full"
                                         style={{
                                           left: `${sessionLeft}%`,
-                                          width: `${sessionWidth}%`
+                                          top: '24px',
+                                          transform: 'translateX(0%)'
                                         }}
                                       />
-                                      
-                                      {/* Puntos de entrada/salida debajo de la barra - solo cuando está expandido */}
-                                      {expandedDays.has(`${formatDayDate(new Date(dayKey))}-multi`) && (
-                                        <>
-                                          {/* Punto de entrada - verde sólido, extremo izquierdo de esta sesión */}
-                                          <div
-                                            className="absolute w-3 h-3 bg-green-500 rounded-full"
-                                            style={{
-                                              left: `${sessionLeft}%`,
-                                              top: '24px', // Debajo de la barra h-5
-                                              transform: 'translateX(0%)'
-                                            }}
-                                          />
-                                          
-                                          {/* Punto de salida - rojo sólido, extremo derecho de esta sesión */}
-                                          <div
-                                            className="absolute w-3 h-3 bg-red-500 rounded-full"
-                                            style={{
-                                              left: `${sessionLeft + sessionWidth}%`,
-                                              top: '24px', // Debajo de la barra h-5
-                                              transform: 'translateX(-100%)'
-                                            }}
-                                          />
-                                        </>
-                                      )}
-                                      
-                                      {/* Break periods within session */}
-                                      {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
-                                        if (!breakPeriod.breakEnd) return null;
-                                        
-                                        const breakStart = new Date(breakPeriod.breakStart);
-                                        const breakEnd = new Date(breakPeriod.breakEnd);
-                                        
-                                        const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-                                        const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-                                        
-                                        const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
-                                        const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2);
-                                        
-                                        // Ajustar posición dentro de la sesión específica
-                                        const adjustedBreakLeft = sessionLeft + (breakLeftPercentageInSession * sessionWidth / 100);
-                                        const adjustedBreakWidth = (breakWidthPercentageInSession * sessionWidth / 100);
-                                        
-                                        return (
-                                          <div
-                                            key={`break-${breakIndex}`}
-                                            className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
-                                            style={{
-                                              left: `${adjustedBreakLeft}%`,
-                                              width: `${adjustedBreakWidth}%`
-                                            }}
-                                            title={`Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`}
-                                          />
-                                        );
-                                      })}
+                                      {/* Punto de salida */}
+                                      <div
+                                        className="absolute w-3 h-3 bg-red-500 rounded-full"
+                                        style={{
+                                          left: `${sessionLeft + sessionWidth}%`,
+                                          top: '24px',
+                                          transform: 'translateX(-100%)'
+                                        }}
+                                      />
                                     </div>
                                   );
                                 })}
