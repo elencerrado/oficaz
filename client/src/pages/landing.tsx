@@ -170,14 +170,6 @@ export default function Landing() {
               <div className="flex items-center space-x-8">
                 <a href="#funciones" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Funciones</a>
                 <a href="#precios" className="text-gray-700 hover:text-gray-900 transition-colors font-medium">Precios</a>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <Link href="/login">
-                  <Button variant="ghost" size="sm" className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium px-4">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
                     <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105">
@@ -190,21 +182,30 @@ export default function Landing() {
                   </Button>
                 )}
               </div>
+              
+              <div>
+                <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200 hover:underline underline-offset-4">
+                  Iniciar Sesión
+                </Link>
+              </div>
             </nav>
 
             {/* Mobile menu button */}
-            <div className="md:hidden">
+            <div className="md:hidden flex items-center space-x-4">
               {registrationSettings?.publicRegistrationEnabled ? (
-                <Link href="/request-code">
-                  <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-4 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
-                    Registrarse
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/login">
-                  <Button size="sm" variant="ghost" className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium px-4">
+                <>
+                  <Link href="/request-code">
+                    <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-4 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
+                      Registrarse
+                    </Button>
+                  </Link>
+                  <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
                     Entrar
-                  </Button>
+                  </Link>
+                </>
+              ) : (
+                <Link href="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200 hover:underline underline-offset-4">
+                  Entrar
                 </Link>
               )}
             </div>
