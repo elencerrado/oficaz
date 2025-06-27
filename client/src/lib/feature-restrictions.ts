@@ -27,8 +27,9 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     console.log('No subscription found');
     return false;
   }
-  if (subscription.status !== 'active') {
-    console.log('Subscription not active:', subscription.status);
+  // Allow access for both active subscriptions and trial periods
+  if (subscription.status !== 'active' && subscription.status !== 'trial') {
+    console.log('Subscription not active or trial:', subscription.status);
     return false;
   }
   const hasFeature = subscription.features[feature] || false;
