@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import oficazWhiteLogo from '@assets/Imagotipo Oficaz white_1750407614936.png';
 import { 
   Clock, 
   Users, 
@@ -978,7 +979,7 @@ export default function Landing() {
             <div>
               <div className="flex items-center space-x-2 mb-6">
                 <img 
-                  src="/attached_assets/Imagotipo Oficaz white_1750407614936.png" 
+                  src={oficazWhiteLogo} 
                   alt="Oficaz" 
                   className="h-8 w-auto"
                 />
