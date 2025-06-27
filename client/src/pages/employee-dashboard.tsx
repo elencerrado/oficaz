@@ -207,7 +207,7 @@ export default function EmployeeDashboard() {
 
     // Check for pending document requests (RED notification)
     const pendingRequests = (documentNotifications as any[]).filter(notification => 
-      notification.status === 'pending'
+      !notification.isCompleted
     );
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
@@ -225,7 +225,10 @@ export default function EmployeeDashboard() {
     setHasNewDocuments(hasRecentDocuments);
 
     console.log('📋 Document notifications check:', {
+      totalNotifications: (documentNotifications as any[]).length,
+      notificationsData: documentNotifications,
       pendingRequests: pendingRequests.length,
+      pendingRequestsData: pendingRequests,
       newDocuments: newDocuments.length,
       lastCheck: lastCheckDate.toISOString(),
       hasPendingRequests,
@@ -568,6 +571,18 @@ export default function EmployeeDashboard() {
           <div className="grid grid-cols-3 gap-2">
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
+              
+              // Debug specific menu item
+              if (item.title === 'Documentos') {
+                console.log('🗂️ Documentos menu item debug:', {
+                  title: item.title,
+                  notification: item.notification,
+                  notificationType: (item as any).notificationType,
+                  isFeatureDisabled,
+                  hasDocumentRequests,
+                  hasNewDocuments
+                });
+              }
               
               return (
                 <div key={index} className="flex flex-col items-center group">
