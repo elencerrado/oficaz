@@ -232,7 +232,13 @@ export default function TimeTracking() {
   const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
-      return total + calculateHours(session.clockIn, session.clockOut);
+      const sessionHours = calculateHours(session.clockIn, session.clockOut);
+      const breakHours = session.breakPeriods 
+        ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+            return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+          }, 0) 
+        : 0;
+      return total + (sessionHours - breakHours);
     }, 0);
     
     // Calculate average hours per worker per day
@@ -986,7 +992,7 @@ export default function TimeTracking() {
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-900 min-w-[300px]">Jornada de Trabajo</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Horas</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
                   <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
                 </tr>
               </thead>
@@ -1007,12 +1013,28 @@ export default function TimeTracking() {
                         const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                         return sessionWeekStart.getTime() === weekStart.getTime();
                       })
-                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                      .reduce((total, session) => {
+                        const totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        const breakHours = session.breakPeriods 
+                          ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                              return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                            }, 0) 
+                          : 0;
+                        return total + (totalSessionHours - breakHours);
+                      }, 0);
                   
                   const calculateMonthTotal = (monthKey: string) => 
                     (sortedSessions || [])
                       .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
-                      .reduce((total, session) => total + calculateHours(session.clockIn, session.clockOut), 0);
+                      .reduce((total, session) => {
+                        const totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        const breakHours = session.breakPeriods 
+                          ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                              return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                            }, 0) 
+                          : 0;
+                        return total + (totalSessionHours - breakHours);
+                      }, 0);
                   
                   const result: JSX.Element[] = [];
                   
@@ -1063,7 +1085,15 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    const hours = calculateHours(session.clockIn, session.clockOut);
+                    // Calcular horas totales trabajadas menos períodos de descanso
+                    const totalHours = calculateHours(session.clockIn, session.clockOut);
+                    const breakHours = session.breakPeriods 
+                      ? session.breakPeriods.reduce((total: number, breakPeriod: any) => {
+                          const breakDuration = calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                          return total + breakDuration;
+                        }, 0) 
+                      : 0;
+                    const hours = totalHours - breakHours;
                     const isEditing = editingSession === session.id;
                     
                     result.push(
