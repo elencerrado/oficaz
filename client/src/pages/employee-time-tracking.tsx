@@ -195,7 +195,22 @@ export default function EmployeeTimeTracking() {
     if (!session.clockOut) return 0;
     const start = new Date(session.clockIn);
     const end = new Date(session.clockOut);
-    return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    // Calculate base work hours
+    const totalHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+    
+    // Find break periods for this session and subtract them
+    const sessionBreaks = breakPeriods.filter((breakPeriod: any) => 
+      breakPeriod.workSessionId === session.id && 
+      breakPeriod.status === 'completed'
+    );
+    
+    const totalBreakHours = sessionBreaks.reduce((total: number, breakPeriod: any) => {
+      return total + (parseFloat(breakPeriod.duration) || 0);
+    }, 0);
+    
+    // Return net work hours (total time - break time)
+    return Math.max(0, totalHours - totalBreakHours);
   };
 
   // Calculate hours for last 4 months for chart
