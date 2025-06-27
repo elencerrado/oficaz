@@ -129,6 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Headers empleado estandarizados completamente siguiendo patrón de fichajes
+  - Documentos, recordatorios y mensajes empleado ahora usan header estándar idéntico
+  - Logo inteligente: se muestra solo si tiene logo Y función logoUpload habilitada por super admin
+  - Filtro brightness-0 invert aplicado a logos para visibilidad en fondos oscuros
+  - Comentarios "Standard employee pattern" y "Page title" añadidos para consistencia
+  - Headers ahora siguen exactamente el mismo formato que employee-time-tracking.tsx
+  - Eliminados headers inconsistentes con diseños personalizados diferentes
 - June 27, 2025. Gráficas animadas al cargar página implementadas en timeline empleado
   - Barras de gráficas suben desde 0 hasta altura final con animación growHeight
   - Duración 1.2s ease-out con delays escalonados de 150ms entre barras

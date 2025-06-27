@@ -229,7 +229,7 @@ export default function EmployeeReminders() {
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
-      {/* Header - Following employee mobile pattern */}
+      {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
@@ -243,21 +243,28 @@ export default function EmployeeReminders() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          <div className="text-white text-sm font-medium">
-            {company?.name || 'Test Company'}
-          </div>
+          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+          {company?.logoUrl && hasAccess('logoUpload') ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
           <div className="text-white/70 text-xs">
             {user?.fullName}
           </div>
         </div>
       </div>
 
-      {/* Page Title */}
+      {/* Page title */}
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-white mb-2">Recordatorios</h1>
-        <p className="text-white/70 text-sm">
-          Gestiona tus recordatorios personales
-        </p>
+        <p className="text-white/70 text-sm">Gestiona tus recordatorios personales</p>
       </div>
 
       {/* Search and Filters */}

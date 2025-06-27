@@ -333,7 +333,7 @@ export default function Documents() {
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
-      {/* Header - Employee Style */}
+      {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>
           <Button
@@ -352,7 +352,7 @@ export default function Documents() {
             <img 
               src={company.logoUrl} 
               alt={company.name} 
-              className="w-8 h-8 mb-1 rounded-full object-cover"
+              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
           ) : (
             <div className="text-white text-sm font-medium mb-1">
@@ -365,12 +365,10 @@ export default function Documents() {
         </div>
       </div>
 
-      {/* Title Section */}
+      {/* Page title */}
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-white mb-2">Documentos</h1>
-        <p className="text-white/70 text-sm">
-          Gestiona y descarga tus documentos laborales
-        </p>
+        <p className="text-white/70 text-sm">Gestiona y descarga tus documentos laborales</p>
       </div>
 
       {/* Content Container */}
