@@ -36,7 +36,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
-  const { user, company } = useAuth();
+  const { user, company, subscription } = useAuth();
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
 
@@ -136,7 +136,7 @@ const AccountManagement = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
-                  {usageData.current.employee_count}/{user?.subscription?.maxUsers || '∞'}
+                  {usageData.current.employee_count}/{subscription?.maxUsers || '∞'}
                 </p>
                 <p className="text-sm text-gray-600">Usuarios</p>
               </div>
