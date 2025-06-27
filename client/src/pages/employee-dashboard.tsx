@@ -571,21 +571,23 @@ export default function EmployeeDashboard() {
                 )}
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-md mx-auto bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/20 text-white">
+            <DialogContent className="max-w-sm mx-auto bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-3xl shadow-2xl">
               {/* Tarjeta de Visita de la Empresa */}
-              <div className="space-y-6 p-2">
+              <div className="space-y-5 p-6">
                 {/* Header con logo o nombre */}
-                <div className="text-center border-b border-white/20 pb-4">
+                <div className="text-center pb-5">
                   {shouldShowLogo ? (
                     <img 
                       src={company.logoUrl} 
                       alt={company.name} 
-                      className="h-16 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg mb-3"
+                      className="h-12 w-auto mx-auto object-contain filter brightness-0 invert mb-4"
                     />
                   ) : (
-                    <Building2 className="h-16 w-16 mx-auto text-blue-400 mb-3" />
+                    <div className="w-12 h-12 mx-auto bg-white/10 rounded-2xl flex items-center justify-center mb-4">
+                      <Building2 className="h-6 w-6 text-white" />
+                    </div>
                   )}
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-lg font-semibold text-white">
                     {company?.name || 'Mi Empresa'}
                   </h2>
                 </div>
@@ -594,26 +596,26 @@ export default function EmployeeDashboard() {
                 <div className="space-y-4">
                   {/* CIF */}
                   {company?.cif && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <CreditCard className="h-5 w-5 text-blue-400" />
+                    <div className="flex items-center space-x-4">
+                      <div className="w-8 h-8 rounded-xl bg-blue-400/20 flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-blue-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">CIF</p>
-                        <p className="font-medium text-white">{company.cif}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-white/60 mb-1">CIF</p>
+                        <p className="text-sm font-medium text-white">{company.cif}</p>
                       </div>
                     </div>
                   )}
 
                   {/* Dirección Postal */}
                   {(company?.address || company?.province) && (
-                    <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mt-1">
-                        <MapPin className="h-5 w-5 text-green-400" />
+                    <div className="flex items-start space-x-4">
+                      <div className="w-8 h-8 rounded-xl bg-green-400/20 flex items-center justify-center mt-0.5">
+                        <MapPin className="h-4 w-4 text-green-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">Dirección</p>
-                        <div className="font-medium text-white leading-relaxed">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-white/60 mb-1">Dirección</p>
+                        <div className="text-sm font-medium text-white leading-relaxed">
                           {company?.address && (
                             <p>{company.address}</p>
                           )}
@@ -627,23 +629,16 @@ export default function EmployeeDashboard() {
 
                   {/* Email de contacto */}
                   {company?.email && (
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                        <MessageSquare className="h-5 w-5 text-purple-400" />
+                    <div className="flex items-center space-x-4">
+                      <div className="w-8 h-8 rounded-xl bg-purple-400/20 flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-purple-300" />
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-300">Email de contacto</p>
-                        <p className="font-medium text-white">{company.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-white/60 mb-1">Contacto</p>
+                        <p className="text-sm font-medium text-white truncate">{company.email}</p>
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* Footer */}
-                <div className="text-center pt-4 border-t border-white/20">
-                  <p className="text-xs text-gray-400">
-                    Información corporativa
-                  </p>
                 </div>
               </div>
             </DialogContent>
