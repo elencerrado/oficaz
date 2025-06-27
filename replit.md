@@ -129,12 +129,13 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Header sticky mejorado con efectos dinámicos de scroll
-  - Estado isScrolled implementado con useEffect para detectar scroll > 50px
-  - Transición suave de 300ms entre estados normal y scrolled
-  - Estado normal: bg-white/95 backdrop-blur-sm sin sombra
-  - Estado scrolled: bg-white/98 backdrop-blur-md con shadow-lg para mayor visibilidad
-  - Header ahora sticky con efectos visuales profesionales al hacer scroll
+- June 27, 2025. Header fijo mejorado con visibilidad optimizada sobre secciones oscuras
+  - Cambiado de sticky a fixed positioning para garantizar funcionamiento
+  - Fondo mejorado: bg-white/98 backdrop-blur-lg con shadow-lg en ambos estados
+  - Estado no-scrolled: sombra más fuerte (shadow-black/20) para contraste sobre hero negro
+  - Estado scrolled: sombra suave (shadow-black/5) para secciones claras
+  - Colores de texto adaptados: text-gray-700 por defecto, text-gray-600 cuando scrolled
+  - Header perfectamente visible tanto sobre secciones negras como blancas
 - June 27, 2025. Hero section responsive corregido para pantallas PC estrechas
   - Cambiada altura fija por minHeight responsive con padding adaptativo
   - Textos y espaciado optimizados: tamaños escalables, espaciado reducido en móvil
