@@ -51,7 +51,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 50 }).notNull(), // Basic, Pro, Master
   displayName: varchar("display_name", { length: 100 }).notNull(),
-  pricePerUser: decimal("price_per_user", { precision: 10, scale: 2 }).notNull(), // 3.00 euros per user
+  pricePerUser: decimal("price_per_user", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
   maxUsers: integer("max_users"), // null = unlimited
   features: jsonb("features").notNull().default({}), // {messages: true, documents: true, vacation: true, etc}
   isActive: boolean("is_active").notNull().default(true),

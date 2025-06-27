@@ -400,7 +400,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                       <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white flex items-center gap-2">
                         <Euro className="w-4 h-4 text-green-400" />
                         {company.subscription.customPricePerUser || company.subscription.pricePerUser || '0'}
-                        <span className="text-white/60">€/mes</span>
+                        <span className="text-white/60">€ fijo/mes</span>
                       </div>
                       <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="text-white/60">
                         <Edit2 className="w-4 h-4" />

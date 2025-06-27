@@ -261,7 +261,7 @@ export default function SuperAdminPlans() {
                                   {plan.pricePerUser}
                                 </span>
                               )}
-                              <span className="text-white/60 text-xs">€/mes</span>
+                              <span className="text-white/60 text-xs">€ fijo/mes</span>
                             </div>
                             <div className="flex items-center justify-center gap-1">
                               <Users className="h-3 w-3 text-blue-400" />

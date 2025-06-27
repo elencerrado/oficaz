@@ -136,6 +136,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. MODELO DE PRECIOS CAMBIADO A PRECIO FIJO MENSUAL: Ya no es por usuario
+  - Actualizada interfaz super admin: "€ fijo/mes" en lugar de "€/mes" 
+  - Schema comentado: pricePerUser ahora es precio fijo mensual (ej: 29.99 euros/mes)
+  - Eliminado concepto de precio por usuario: ahora es precio fijo independiente del número de usuarios
+  - Sistema de facturación simplificado: planes con precio mensual fijo sin multiplicadores
 - June 27, 2025. SISTEMA DE TRIAL COMPLETAMENTE CORREGIDO: Ahora respeta tabla de super admin
   - Eliminado sistema hardcodeado de funcionalidades por trial que ignoraba configuración de super admin
   - Trial Basic y Pro ahora usan EXACTAMENTE las funcionalidades configuradas en tabla de super admin
