@@ -103,7 +103,7 @@ const AccountManagement = () => {
   return (
     <div className="space-y-6">
       {/* Subscription Status - Fichajes Style */}
-      <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+      <Card className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Crown className="h-5 w-5 text-yellow-500" />
@@ -169,7 +169,7 @@ const AccountManagement = () => {
       </Card>
 
       {/* Company Registration Info - Fichajes Style */}
-      <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+      <Card className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
@@ -202,7 +202,7 @@ const AccountManagement = () => {
       </Card>
 
       {/* Billing Information - Fichajes Style */}
-      <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+      <Card className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <CreditCard className="h-5 w-5" />
@@ -313,7 +313,7 @@ const AccountManagement = () => {
       )}
 
       {/* Management Actions - Fichajes Style */}
-      <Card className="backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+      <Card className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
         <CardHeader>
           <CardTitle>Gestión de cuenta</CardTitle>
           <CardDescription>
@@ -322,11 +322,11 @@ const AccountManagement = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="justify-start backdrop-blur-xl bg-white/10 border border-white/30 hover:bg-white/20 transition-all duration-200">
+            <Button variant="outline" className="justify-start bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
               <Crown className="mr-2 h-4 w-4" />
               Cambiar plan de suscripción
             </Button>
-            <Button variant="outline" className="justify-start backdrop-blur-xl bg-white/10 border border-white/30 hover:bg-white/20 transition-all duration-200">
+            <Button variant="outline" className="justify-start bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
               <FileText className="mr-2 h-4 w-4" />
               Descargar datos de la empresa
             </Button>
@@ -339,11 +339,11 @@ const AccountManagement = () => {
               Estas acciones son permanentes y no se pueden deshacer.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="justify-start backdrop-blur-xl bg-orange-500/10 border border-orange-500/30 text-orange-700 hover:bg-orange-500/20 transition-all duration-200">
+              <Button variant="outline" className="justify-start bg-orange-500/10 backdrop-blur-sm border border-orange-500/30 text-orange-700 hover:bg-orange-500/20">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Pausar cuenta temporalmente
               </Button>
-              <Button variant="outline" className="justify-start backdrop-blur-xl bg-red-500/10 border border-red-500/30 text-red-700 hover:bg-red-500/20 transition-all duration-200">
+              <Button variant="outline" className="justify-start bg-red-500/10 backdrop-blur-sm border border-red-500/30 text-red-700 hover:bg-red-500/20">
                 <X className="mr-2 h-4 w-4" />
                 Cancelar cuenta permanentemente
               </Button>
