@@ -362,7 +362,17 @@ export default function EmployeeDashboard() {
 
   const handleClockAction = () => {
     if (activeSession) {
-      clockOutMutation.mutate();
+      // Si hay un descanso activo, terminarlo primero antes de salir
+      if (activeBreak) {
+        endBreakMutation.mutate(undefined, {
+          onSuccess: () => {
+            // Después de terminar el descanso, hacer clock out
+            clockOutMutation.mutate();
+          }
+        });
+      } else {
+        clockOutMutation.mutate();
+      }
     } else {
       clockInMutation.mutate();
     }
