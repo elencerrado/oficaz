@@ -572,17 +572,7 @@ export default function EmployeeDashboard() {
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
-              // Debug specific menu item
-              if (item.title === 'Documentos') {
-                console.log('🗂️ Documentos menu item debug:', {
-                  title: item.title,
-                  notification: item.notification,
-                  notificationType: (item as any).notificationType,
-                  isFeatureDisabled,
-                  hasDocumentRequests,
-                  hasNewDocuments
-                });
-              }
+
               
               return (
                 <div key={index} className="flex flex-col items-center group">

@@ -36,7 +36,9 @@ import {
   List,
   Grid3X3,
   Folder,
-  FolderOpen
+  FolderOpen,
+  Receipt,
+  FileSignature
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -68,6 +70,18 @@ const documentTypes = [
     keywords: ['dni', 'documento', 'identidad', 'cedula', 'id']
   },
   { 
+    id: 'nomina', 
+    name: 'Nómina', 
+    icon: DollarSign,
+    keywords: ['nomina', 'nómina', 'payroll', 'salary', 'salario', 'sueldo']
+  },
+  { 
+    id: 'contrato', 
+    name: 'Contrato', 
+    icon: FileText,
+    keywords: ['contrato', 'contract', 'agreement', 'acuerdo', 'convenio']
+  },
+  { 
     id: 'justificante', 
     name: 'Justificante', 
     icon: FileCheck,
@@ -77,9 +91,21 @@ const documentTypes = [
     id: 'otros', 
     name: 'Otros', 
     icon: File,
-    keywords: ['nomina', 'nómina', 'contrato', 'irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
+    keywords: ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
   }
 ];
+
+// Function to get type badge color
+const getTypeBadgeColor = (type: string) => {
+  switch (type) {
+    case 'dni': return 'bg-blue-100 text-blue-800';
+    case 'nomina': return 'bg-green-100 text-green-800';
+    case 'contrato': return 'bg-purple-100 text-purple-800';
+    case 'justificante': return 'bg-orange-100 text-orange-800';
+    case 'otros': return 'bg-gray-100 text-gray-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
 
 export default function AdminDocuments() {
   const { user, company } = useAuth();
@@ -301,8 +327,13 @@ export default function AdminDocuments() {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, ""); // Remove accents
     
+    console.log('🔍 Analyzing file:', fileName);
+    console.log('📝 Normalized name:', normalizedName);
+    console.log('👥 Available employees:', employees);
+    console.log('📋 Available document types:', documentTypes);
+    
     // Find employee by name matching
-    const matchedEmployee = employees.find((emp: Employee) => {
+    const matchedEmployee = (employees as Employee[])?.find((emp: Employee) => {
       const empName = emp.fullName.toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
@@ -318,19 +349,35 @@ export default function AdminDocuments() {
       return matchedWords.length >= 2;
     });
     
-    // Detect document type
+    // Detect document type with enhanced debugging
     const documentType = documentTypes.find(type => {
       const typeKeywords = type.keywords || [];
-      return typeKeywords.some(keyword => 
-        normalizedName.includes(keyword.toLowerCase())
-      );
+      console.log(`🏷️ Checking type "${type.name}" with keywords:`, typeKeywords);
+      
+      const hasMatch = typeKeywords.some(keyword => {
+        const match = normalizedName.includes(keyword.toLowerCase());
+        if (match) {
+          console.log(`✅ MATCH found: "${keyword}" in "${normalizedName}"`);
+        }
+        return match;
+      });
+      
+      if (hasMatch) {
+        console.log(`🎯 Document type detected: ${type.name} (${type.id})`);
+      }
+      
+      return hasMatch;
     });
     
-    return {
+    const result = {
       employee: matchedEmployee,
       documentType: documentType?.id || 'otros',
       confidence: matchedEmployee ? (documentType ? 'high' : 'medium') : 'low'
     };
+    
+    console.log('📊 Analysis result:', result);
+    
+    return result;
   };
 
   const generateCleanFileName = (fileName: string, employee: Employee, docType: string) => {
@@ -996,6 +1043,8 @@ export default function AdminDocuments() {
                                   
                                   const typeNames: { [key: string]: string } = {
                                     dni: 'DNI',
+                                    nomina: 'Nóminas',
+                                    contrato: 'Contratos',
                                     justificante: 'Justificantes',
                                     otros: 'Otros'
                                   };
@@ -1022,7 +1071,7 @@ export default function AdminDocuments() {
                                             <Folder className="h-4 w-4 text-gray-600" />
                                           )}
                                           <span className="font-medium text-gray-800">{typeNames[type]}</span>
-                                          <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">
+                                          <span className={`text-xs px-2 py-1 rounded ${getTypeBadgeColor(type)}`}>
                                             {docs.length}
                                           </span>
                                         </div>
