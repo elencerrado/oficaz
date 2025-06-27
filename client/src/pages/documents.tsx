@@ -463,7 +463,7 @@ export default function Documents() {
                 variant={selectedCategory === category.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category.id)}
-                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"} flex-1 min-w-0`}
+                className={`${selectedCategory === category.id ? "bg-[#007AFF] hover:bg-[#0056CC] text-white" : "bg-white/10 backdrop-blur-sm text-white border-white/20 hover:bg-white/20"} flex-1 min-w-0`}
               >
                 <IconComponent className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="truncate">{category.name}</span>
@@ -473,24 +473,22 @@ export default function Documents() {
         </div>
 
         {/* Search */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                <Input
-                  placeholder="Buscar documentos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="text-sm text-gray-500">
-                {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
-              </div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-4">
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60" size={16} />
+              <Input
+                placeholder="Buscar documentos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/60 focus:border-white focus:ring-white"
+              />
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-sm text-white/70">
+              {filteredDocuments.length} documento{filteredDocuments.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+        </div>
 
         {/* Documents Grid */}
         {filteredDocuments.length > 0 ? (
@@ -562,40 +560,38 @@ export default function Documents() {
             })}
           </div>
         ) : (
-          <Card>
-            <CardContent className="p-12">
-              <div className="text-center">
-                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {searchTerm ? 'No se encontraron documentos' : 
-                   selectedCategory === 'nominas' ? 'No hay nóminas disponibles' :
-                   selectedCategory === 'contratos' ? 'No hay contratos disponibles' :
-                   selectedCategory === 'otros' ? 'No hay otros documentos' :
-                   'No hay documentos disponibles'}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {searchTerm 
-                    ? 'Intenta ajustar los términos de búsqueda.'
-                    : 'Los documentos aparecerán aquí cuando estén disponibles.'
-                  }
-                </p>
-                {!searchTerm && selectedCategory === 'todos' && (
-                  <Button
-                    onClick={() => createDemoMutation.mutate()}
-                    disabled={createDemoMutation.isPending}
-                    className="bg-[#007AFF] hover:bg-[#0056CC] text-white"
-                  >
-                    {createDemoMutation.isPending ? (
-                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    ) : (
-                      <FileText className="h-4 w-4 mr-2" />
-                    )}
-                    Crear documentos de prueba
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-12">
+            <div className="text-center">
+              <FileText className="mx-auto h-12 w-12 text-white/60 mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">
+                {searchTerm ? 'No se encontraron documentos' : 
+                 selectedCategory === 'nominas' ? 'No hay nóminas disponibles' :
+                 selectedCategory === 'contratos' ? 'No hay contratos disponibles' :
+                 selectedCategory === 'otros' ? 'No hay otros documentos' :
+                 'No hay documentos disponibles'}
+              </h3>
+              <p className="text-white/70 mb-4">
+                {searchTerm 
+                  ? 'Intenta ajustar los términos de búsqueda.'
+                  : 'Los documentos aparecerán aquí cuando estén disponibles.'
+                }
+              </p>
+              {!searchTerm && selectedCategory === 'todos' && (
+                <Button
+                  onClick={() => createDemoMutation.mutate()}
+                  disabled={createDemoMutation.isPending}
+                  className="bg-[#007AFF] hover:bg-[#0056CC] text-white"
+                >
+                  {createDemoMutation.isPending ? (
+                    <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <FileText className="h-4 w-4 mr-2" />
+                  )}
+                  Crear documentos de prueba
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>
