@@ -146,7 +146,7 @@ export const usageStats = pgTable("usage_stats", {
 // Registration settings for invitation-only mode
 export const registrationSettings = pgTable("registration_settings", {
   id: serial("id").primaryKey(),
-  registrationEnabled: boolean("registration_enabled").default(true).notNull(),
+  publicRegistrationEnabled: boolean("public_registration_enabled").default(true).notNull(),
   invitationOnlyMode: boolean("invitation_only_mode").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

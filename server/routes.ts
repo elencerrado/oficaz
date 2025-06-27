@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settings = await storage.getRegistrationSettings();
       res.json({ 
-        publicRegistrationEnabled: settings?.registrationEnabled ?? true 
+        publicRegistrationEnabled: settings?.publicRegistrationEnabled ?? true 
       });
     } catch (error) {
       console.error('Error fetching registration settings:', error);
