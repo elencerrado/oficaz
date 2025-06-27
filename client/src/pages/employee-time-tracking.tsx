@@ -107,8 +107,8 @@ export default function EmployeeTimeTracking() {
         const nextMonth = addMonths(currentMonth, 1);
         const currentDate = new Date();
         
-        // Solo permitir navegar al siguiente mes si no es futuro
-        if (nextMonth <= startOfMonth(currentDate)) {
+        // Solo permitir navegar al siguiente mes si no supera el mes actual
+        if (startOfMonth(nextMonth) <= startOfMonth(currentDate)) {
           setCurrentMonth(prev => addMonths(prev, 1));
         }
       }
