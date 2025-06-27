@@ -129,9 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. URL empleado simplificada: /fichajes-empleado → /misfichajes
+  - Cambio de URL más amigable y corta para empleados
+  - URL anterior /fichajes-empleado cambiada a /misfichajes
+  - Actualizado en routing App.tsx y redirección de seguridad 
+  - Dashboard empleado actualizado con nueva ruta en menuItems
 - June 27, 2025. SEGURIDAD CRÍTICA: Protección de rutas de fichajes por roles implementada
   - Ruta /fichajes ahora requiere rol admin/manager obligatoriamente
-  - Empleados son redirigidos automáticamente a /fichajes-empleado
+  - Empleados son redirigidos automáticamente a /misfichajes
   - Imposible saltarse seguridad cambiando URL manualmente
   - Verificación de roles aplicada en routing de App.tsx
   - Sistema de redirección automática usando Redirect de wouter

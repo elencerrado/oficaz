@@ -217,7 +217,7 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/fichajes-empleado">
+      <Route path="/:companyAlias/misfichajes">
         <ProtectedRoute>
           <AppLayout>
             <EmployeeTimeTracking />
@@ -231,7 +231,7 @@ function Router() {
             {user && (user.role === 'admin' || user.role === 'manager') ? (
               <TimeTracking />
             ) : (
-              <Redirect to={`/${company?.companyAlias || 'test'}/fichajes-empleado`} />
+              <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
             )}
           </AppLayout>
         </ProtectedRoute>
