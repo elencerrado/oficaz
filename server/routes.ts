@@ -359,9 +359,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const data = companyRegistrationSchema.parse(req.body);
+      const { verificationToken, invitationToken } = req.body;
+      
+      // Validate token (either verification or invitation)
+      let isValidAccess = false;
+      let invitationToMark = null;
+      
+      if (invitationToken) {
+        // Validate invitation token
+        const invitation = await storage.getInvitationByToken(invitationToken);
+        if (!invitation) {
+          return res.status(400).json({ message: 'Token de invitación inválido' });
+        }
+        
+        const now = new Date();
+        const expiresAt = new Date(invitation.expiresAt);
+        
+        if (invitation.used) {
+          return res.status(400).json({ message: 'Esta invitación ya ha sido utilizada' });
+        }
+        
+        if (now > expiresAt) {
+          return res.status(400).json({ message: 'Esta invitación ha expirado' });
+        }
+        
+        isValidAccess = true;
+        invitationToMark = invitation;
+      } else if (verificationToken) {
+        // Validate verification token (existing logic)
+        const tokenData = verificationTokens.get(verificationToken);
+        if (!tokenData) {
+          return res.status(400).json({ message: 'Token de verificación inválido o expirado' });
+        }
+        
+        if (Date.now() > tokenData.expires) {
+          verificationTokens.delete(verificationToken);
+          return res.status(400).json({ message: 'Token de verificación expirado' });
+        }
+        
+        if (tokenData.used) {
+          return res.status(400).json({ message: 'Token de verificación ya utilizado' });
+        }
+        
+        isValidAccess = true;
+      } else {
+        // Check if public registration is enabled
+        const registrationSettings = await storage.getRegistrationSettings();
+        if (!registrationSettings?.publicRegistrationEnabled) {
+          return res.status(403).json({ message: 'El registro público está deshabilitado. Se requiere una invitación.' });
+        }
+      }
       
       // Check if user already exists by email
-      const existingUser = await storage.getUserByEmail(data.adminEmail);
+      const existingUser = await storage.getUserByEmail(data.companyEmail);
       if (existingUser) {
         return res.status(400).json({ message: 'Email already exists' });
       }
@@ -408,6 +458,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: user.role,
         companyId: user.companyId,
       });
+
+      // Mark invitation as used if it was an invitation registration
+      if (invitationToMark) {
+        await storage.markInvitationAsUsed(invitationToMark.id);
+      }
+
+      // Mark verification token as used if it was verification registration
+      if (verificationToken) {
+        const tokenData = verificationTokens.get(verificationToken);
+        if (tokenData) {
+          tokenData.used = true;
+          verificationTokens.set(verificationToken, tokenData);
+        }
+      }
 
       res.status(201).json({
         user: { ...user, password: undefined },

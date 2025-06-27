@@ -188,7 +188,11 @@ export default function InvitationRegister() {
           </Card>
 
           {/* Componente de registro con email pre-validado */}
-          <Register />
+          <Register 
+            byInvitation={true}
+            invitationEmail={invitation.email}
+            invitationToken={invitation.token}
+          />
         </div>
       </div>
     </div>

@@ -82,7 +82,13 @@ type Step3Data = z.infer<typeof step3Schema>;
 
 type FormData = Step1Data & Step2Data & Step3Data;
 
-export default function Register() {
+interface RegisterProps {
+  byInvitation?: boolean;
+  invitationEmail?: string;
+  invitationToken?: string;
+}
+
+export default function Register({ byInvitation = false, invitationEmail, invitationToken }: RegisterProps = {}) {
   const [, setLocation] = useLocation();
   const search = useSearch();
 
@@ -97,22 +103,22 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Check for verification token
+  // Check for verification token (only if not by invitation)
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
 
   useEffect(() => {
-    if (!verificationToken) {
-      // Clear any loading states and redirect
+    if (!byInvitation && !verificationToken) {
+      // Clear any loading states and redirect only if not invitation
       setIsLoading(false);
       setValidatingStep2(false);
       setValidatingStep3(false);
       setLocation('/request-code');
     }
-  }, [verificationToken, setLocation]);
+  }, [verificationToken, setLocation, byInvitation]);
 
-  // Don't render if no token
-  if (!verificationToken) {
+  // Don't render if no token and not by invitation
+  if (!byInvitation && !verificationToken) {
     return null;
   }
 
@@ -231,7 +237,8 @@ export default function Register() {
       const finalData = { 
         ...formData, 
         ...data,
-        verificationToken 
+        verificationToken: byInvitation ? null : verificationToken,
+        invitationToken: byInvitation ? invitationToken : null
       };
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       

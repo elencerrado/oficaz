@@ -427,15 +427,22 @@ export const companyRegistrationSchema = z.object({
   contactName: z.string().min(1, "Nombre de contacto requerido"),
   companyAlias: z.string().min(1, "Alias de empresa requerido").regex(/^[a-zA-Z0-9-]+$/, "Solo letras, números y guiones"),
   phone: z.string().optional(),
+  contactPhone: z.string().optional(),
   address: z.string().optional(),
+  province: z.string().optional(),
   logoUrl: z.string().optional(),
   
   // Admin user fields
   adminFullName: z.string().min(1, "Nombre completo requerido"),
+  adminEmail: z.string().email("Email admin requerido"),
   adminDni: z.string().min(1, "DNI/NIE requerido"),
   adminPhoneNumber: z.string().optional(),
   password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string(),
+  
+  // Optional tokens for registration
+  verificationToken: z.string().optional(),
+  invitationToken: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
