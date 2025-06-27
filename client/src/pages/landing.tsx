@@ -145,8 +145,8 @@ export default function Landing() {
       {/* Header */}
       <header className={`border-b fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-white/98 backdrop-blur-md shadow-lg shadow-black/5 border-gray-200' 
-          : 'bg-white/98 backdrop-blur-lg shadow-lg shadow-black/20 border-white/30'
+          ? 'bg-white/95 backdrop-blur-md shadow-lg shadow-black/5 border-gray-200' 
+          : 'bg-white backdrop-blur-md shadow-xl shadow-black/30 border-gray-300'
       }`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -154,24 +154,10 @@ export default function Landing() {
               <img src={oficazLogo} alt="Oficaz" className="h-10 w-auto" />
             </div>
             
-            <nav className={`hidden md:flex items-center space-x-8 ${
-              isScrolled ? 'text-gray-600' : 'text-gray-700'
-            }`}>
-              <a href="#features" className={`transition-colors ${
-                isScrolled 
-                  ? 'text-gray-600 hover:text-gray-900' 
-                  : 'text-gray-700 hover:text-gray-900'
-              }`}>Funciones</a>
-              <a href="#pricing" className={`transition-colors ${
-                isScrolled 
-                  ? 'text-gray-600 hover:text-gray-900' 
-                  : 'text-gray-700 hover:text-gray-900'
-              }`}>Precios</a>
-              <a href="#testimonials" className={`transition-colors ${
-                isScrolled 
-                  ? 'text-gray-600 hover:text-gray-900' 
-                  : 'text-gray-700 hover:text-gray-900'
-              }`}>Testimonios</a>
+            <nav className="hidden md:flex items-center space-x-8">
+              <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors">Funciones</a>
+              <a href="#pricing" className="text-gray-700 hover:text-gray-900 transition-colors">Precios</a>
+              <a href="#testimonials" className="text-gray-700 hover:text-gray-900 transition-colors">Testimonios</a>
               <Link href="/login">
                 <Button variant="outline" size="sm">
                   Iniciar Sesión
