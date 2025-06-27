@@ -34,6 +34,13 @@ export function clearAuthData() {
 }
 
 export function getAuthHeaders(): HeadersInit {
+  // Check for super admin token first (for super admin operations)
+  const superAdminToken = localStorage.getItem('superAdminToken');
+  if (superAdminToken) {
+    return { Authorization: `Bearer ${superAdminToken}` };
+  }
+  
+  // Fall back to regular user token
   const authData = getAuthData();
   return authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
 }
