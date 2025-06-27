@@ -346,7 +346,7 @@ export default function VacationRequests() {
 
       {/* Compact Vacation Summary */}
       <div className="px-6 mb-6">
-        <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
@@ -362,7 +362,7 @@ export default function VacationRequests() {
                     className="max-w-md border-0 p-0 bg-transparent"
                     style={{ backgroundColor: 'rgba(50, 58, 70, 0.95)' }}
                   >
-                    <div className="bg-white/8 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-2xl">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                       <DialogHeader className="mb-4">
                         <DialogTitle className="text-blue-400 text-lg font-medium">
                           ¿Por qué tengo {totalDays} días?

@@ -135,7 +135,8 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Disponibles: text-green-400 (verde como puntos de entrada en timeline)
   - Barra de progreso: bg-blue-500 sólido (mismo azul que barras de trabajo)
   - Leyenda "días disponibles": text-green-400/70 para consistencia visual
-  - Esquema de colores ahora coincide perfectamente con las gráficas de horas
+  - Fondo: bg-white/10 backdrop-blur-sm rounded-xl border-white/20 (idéntico a gráficas)
+  - Esquema de colores y fondo ahora coincide perfectamente con las gráficas de horas
 - June 27, 2025. URL empleado simplificada: /fichajes-empleado → /misfichajes
   - Cambio de URL más amigable y corta para empleados
   - URL anterior /fichajes-empleado cambiada a /misfichajes
