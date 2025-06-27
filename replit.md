@@ -136,13 +136,18 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Banner de cookies optimizado para usuarios autenticados
+  - Banner de cookies ya no aparece para usuarios logueados
+  - Solo se muestra a visitantes no autenticados según normativa RGPD
+  - Mejora la experiencia de usuario eliminando interrupciones innecesarias
 - June 27, 2025. Tarjeta de visita empresarial implementada en dashboard empleado
   - Modal profesional que aparece al hacer clic en logo/nombre de empresa
   - Información corporativa completa: nombre empresa, CIF, dirección postal completa
-  - Diseño elegante con fondo degradado oscuro y iconos coloridos por sección
-  - Efectos hover y transiciones suaves para mejor experiencia usuario
+  - Diseño minimalista y moderno con bordes redondeados (rounded-3xl)
+  - Efecto glassmorphism elegante con backdrop-blur y transparencias
+  - Iconos más pequeños y sutiles con contenedores rounded-xl
+  - Tipografía refinada y espaciado compacto para look profesional
   - Responsive y accesible, solo muestra campos con datos reales
-  - Email de contacto incluido usando billingEmail de la empresa
 - June 27, 2025. Chat empleado completamente funcional en desktop y móvil - PROBLEMA CRÍTICO RESUELTO
   - CORREGIDO: Chat empleado ahora visible en ambas versiones (desktop Y móvil)
   - Eliminada clase lg:hidden que ocultaba el chat empleado en pantallas grandes

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/use-auth';
 
 interface CookiePreferences {
   necessary: boolean;
@@ -13,6 +14,7 @@ interface CookiePreferences {
 }
 
 const CookieBanner = () => {
+  const { isAuthenticated } = useAuth();
   const [showBanner, setShowBanner] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
@@ -23,6 +25,12 @@ const CookieBanner = () => {
   });
 
   useEffect(() => {
+    // No mostrar banner a usuarios autenticados
+    if (isAuthenticated) {
+      setShowBanner(false);
+      return;
+    }
+
     const cookieConsent = localStorage.getItem('oficaz-cookie-consent');
     if (!cookieConsent) {
       setShowBanner(true);
@@ -31,7 +39,7 @@ const CookieBanner = () => {
       setPreferences(savedPreferences);
       applyCookieSettings(savedPreferences);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const applyCookieSettings = (prefs: CookiePreferences) => {
     if (prefs.analytics) {
