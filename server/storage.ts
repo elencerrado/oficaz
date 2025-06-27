@@ -860,7 +860,7 @@ export class DrizzleStorage implements IStorage {
       const [created] = await db
         .insert(schema.registrationSettings)
         .values({
-          publicRegistrationEnabled: updates.publicRegistrationEnabled ?? true,
+          registrationEnabled: updates.publicRegistrationEnabled ?? true,
           createdAt: new Date(),
           updatedAt: new Date()
         })
@@ -886,7 +886,7 @@ export class DrizzleStorage implements IStorage {
       .where(
         and(
           eq(schema.invitationLinks.email, email),
-          eq(schema.invitationLinks.isUsed, false),
+          eq(schema.invitationLinks.used, false),
           sql`${schema.invitationLinks.expiresAt} > NOW()`
         )
       );
@@ -907,7 +907,7 @@ export class DrizzleStorage implements IStorage {
   async markInvitationAsUsed(id: number): Promise<boolean> {
     const result = await db
       .update(schema.invitationLinks)
-      .set({ isUsed: true, updatedAt: new Date() })
+      .set({ used: true, usedAt: new Date() })
       .where(eq(schema.invitationLinks.id, id));
     return result.rowCount > 0;
   }

@@ -18,7 +18,7 @@ interface Invitation {
   token: string;
   inviterName: string;
   companyName: string;
-  isUsed: boolean;
+  used: boolean;
   expiresAt: string;
   createdAt: string;
 }
@@ -41,19 +41,49 @@ export default function SuperAdminInvitations() {
   // Fetch registration settings
   const { data: settings } = useQuery<RegistrationSettings>({
     queryKey: ['/api/super-admin/registration-settings'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/registration-settings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch registration settings');
+      return response.json();
+    },
   });
 
   // Fetch invitations
   const { data: invitations = [], isLoading: isLoadingInvitations } = useQuery<Invitation[]>({
     queryKey: ['/api/super-admin/invitations'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/invitations', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch invitations');
+      return response.json();
+    },
   });
 
   // Toggle registration settings
   const toggleRegistrationMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
-      return apiRequest('PATCH', '/api/super-admin/registration-settings', {
-        publicRegistrationEnabled: enabled
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/registration-settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          publicRegistrationEnabled: enabled
+        }),
       });
+      if (!response.ok) throw new Error('Failed to update registration settings');
+      return response.json();
     },
     onSuccess: (_, enabled) => {
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/registration-settings'] });
@@ -135,7 +165,7 @@ export default function SuperAdminInvitations() {
   };
 
   const getStatusBadge = (invitation: Invitation) => {
-    if (invitation.isUsed) {
+    if (invitation.used) {
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Utilizada</Badge>;
     }
     
@@ -149,9 +179,9 @@ export default function SuperAdminInvitations() {
     return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Activa</Badge>;
   };
 
-  const activeInvitations = invitations.filter(inv => !inv.isUsed && new Date() <= new Date(inv.expiresAt));
-  const usedInvitations = invitations.filter(inv => inv.isUsed);
-  const expiredInvitations = invitations.filter(inv => !inv.isUsed && new Date() > new Date(inv.expiresAt));
+  const activeInvitations = invitations?.filter(inv => !inv.used && new Date() <= new Date(inv.expiresAt)) || [];
+  const usedInvitations = invitations?.filter(inv => inv.used) || [];
+  const expiredInvitations = invitations?.filter(inv => !inv.used && new Date() > new Date(inv.expiresAt)) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -274,7 +304,7 @@ export default function SuperAdminInvitations() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/70 text-sm">Total</p>
-                  <p className="text-2xl font-bold text-white">{invitations.length}</p>
+                  <p className="text-2xl font-bold text-white">{invitations?.length || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <UserPlus className="w-6 h-6 text-purple-400" />
