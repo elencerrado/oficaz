@@ -990,161 +990,12 @@ export default function Messages() {
     );
   }
 
-  // Employee view - Mobile-first design with desktop layout added
+  // Employee view - Mobile-first design - PROTECTED FROM ADMIN CHANGES
   return (
-    <>
-      {/* Desktop Layout for Employees */}
-      <div className="hidden lg:block px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
-            <p className="text-gray-500 mt-1">
-              Comunícate con tus responsables
-            </p>
-          </div>
-          
-          {/* Desktop Layout: Two columns side by side */}
-          <div className="flex gap-6 h-[calc(100vh-200px)]">
-            {/* Left Column: Manager List (1/3 width) */}
-            <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
-              <div className="p-4 border-b border-gray-200">
-                <h2 className="heading-3">Responsables ({filteredEmployees.length})</h2>
-                <p className="text-xs text-gray-500 mt-1">
-                  {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
-                </p>
-              </div>
-              
-              <div className="p-4 space-y-2 overflow-y-auto flex-1">
-                {filteredEmployees.map((manager) => (
-                  <div
-                    key={manager.id}
-                    className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
-                      selectedChat === manager.id
-                        ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
-                    onClick={() => setSelectedChat(manager.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-oficaz-primary to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {manager.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium truncate ${selectedChat === manager.id ? 'text-white' : 'text-gray-900'}`}>
-                          {manager.fullName}
-                        </p>
-                        <p className={`text-xs truncate ${selectedChat === manager.id ? 'text-blue-100' : 'text-gray-500'}`}>
-                          {manager.position || manager.jobTitle || 'Responsable'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column: Chat Messages (2/3 width) */}
-            <div className="w-2/3 bg-white rounded-lg border border-gray-200 flex flex-col">
-              {selectedChat && selectedChatUser ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-oficaz-primary to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {selectedChatUser.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{selectedChatUser.fullName}</h3>
-                        <p className="text-sm text-gray-500">{selectedChatUser.position || selectedChatUser.jobTitle || 'Responsable'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                    <div className="space-y-4">
-                      {messagesGroupedByDate.length > 0 ? (
-                        messagesGroupedByDate.map((group, index) => (
-                          <div key={index}>
-                            {/* Date Header */}
-                            <div className="flex justify-center my-4">
-                              <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
-                                {group.date}
-                              </div>
-                            </div>
-                            
-                            {/* Messages for this date */}
-                            <div className="space-y-3">
-                              {group.messages.map((message) => (
-                                <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                                  <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white border border-gray-200 text-gray-900'}`}>
-                                    <p className="text-sm">{message.content}</p>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
-                                        {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                                      </p>
-                                      {message.senderId === user?.id && (
-                                        <div className="ml-2">
-                                          <Check className="h-3 w-3 text-green-400" />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No hay mensajes aún</p>
-                          <p className="text-sm">Envía el primer mensaje para comenzar</p>
-                        </div>
-                      )}
-                    </div>
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Message Input - Fixed at bottom */}
-                  <div className="border-t border-gray-200 px-4 py-3 flex-shrink-0">
-                    <div className="flex space-x-2">
-                      <Input
-                        ref={messageInputRef}
-                        placeholder="Escribe tu mensaje..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                        className="input-oficaz flex-1"
-                      />
-                      <Button
-                        onClick={sendMessage}
-                        disabled={!newMessage.trim()}
-                        className="btn-oficaz-primary"
-                      >
-                        <Send className="icon-sm" />
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-lg font-medium">Selecciona una conversación</p>
-                    <p className="text-sm">Elige un responsable para empezar a chatear</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Layout for Employees - Original mobile-first design */}
-        <div className="lg:hidden min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
-          {!selectedChat ? (
-            /* Employee Dashboard - List of managers - STABLE VERSION */
-            <>
+    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+      {!selectedChat ? (
+        /* Employee Dashboard - List of managers - STABLE VERSION */
+        (<>
           {/* Header - Standard employee pattern */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
             <Link href={`/${companyAlias}/inicio`}>
@@ -1241,10 +1092,10 @@ export default function Messages() {
             )}
           </div>
         </div>
-        </>
+        </>)
       ) : (
             /* Chat View - EXACT COPY FROM ADMIN MOBILE LINE 657 */
-            <div 
+            (<div 
               className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
@@ -1376,10 +1227,8 @@ export default function Messages() {
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            </div>)
       )}
-    </>
+    </div>
   );
 }
