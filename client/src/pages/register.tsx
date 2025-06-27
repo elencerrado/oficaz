@@ -86,9 +86,10 @@ interface RegisterProps {
   byInvitation?: boolean;
   invitationEmail?: string;
   invitationToken?: string;
+  invitationWelcomeMessage?: string;
 }
 
-export default function Register({ byInvitation = false, invitationEmail, invitationToken }: RegisterProps = {}) {
+export default function Register({ byInvitation = false, invitationEmail, invitationToken, invitationWelcomeMessage }: RegisterProps = {}) {
   const [, setLocation] = useLocation();
   const search = useSearch();
 
@@ -274,6 +275,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               alt="Oficaz" 
               className="h-6 md:h-8 w-auto mx-auto mb-3"
             />
+            
+            {/* Mensaje de bienvenida para invitaciones */}
+            {byInvitation && invitationWelcomeMessage && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-center gap-2 text-green-700">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">{invitationWelcomeMessage}</span>
+                </div>
+              </div>
+            )}
+            
             <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Configurar tu empresa</CardTitle>
             <CardDescription className="text-xs md:text-sm text-gray-600 mt-1">
               Proceso rápido en 3 pasos - Solo toma un minuto

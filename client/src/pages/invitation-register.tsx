@@ -155,46 +155,13 @@ export default function InvitationRegister() {
     );
   }
 
-  // Si la invitación es válida, mostrar mensaje de bienvenida y luego el registro
+  // Si la invitación es válida, mostrar el registro con header integrado
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <div className="container mx-auto p-4">
-        <div className="max-w-2xl mx-auto">
-          {/* Header de bienvenida */}
-          <Card className="mb-6">
-            <CardHeader className="text-center">
-              <img 
-                src={imagotipo} 
-                alt="Oficaz" 
-                className="h-10 w-auto mx-auto mb-4"
-              />
-              <CardTitle className="text-green-600 flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                ¡Bienvenido a Oficaz!
-              </CardTitle>
-              <CardDescription>
-                Invitación válida para <strong>{invitation.email}</strong>
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <Clock className="w-4 h-4" />
-                <AlertDescription>
-                  Tu invitación es válida y te permite registrar tu empresa directamente. 
-                  Completa el formulario siguiente para comenzar.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-
-          {/* Componente de registro con email pre-validado */}
-          <Register 
-            byInvitation={true}
-            invitationEmail={invitation.email}
-            invitationToken={invitation.token}
-          />
-        </div>
-      </div>
-    </div>
+    <Register 
+      byInvitation={true}
+      invitationEmail={invitation.email}
+      invitationToken={invitation.token}
+      invitationWelcomeMessage={`¡Bienvenido a Oficaz! Invitación válida para ${invitation.email}`}
+    />
   );
 }
