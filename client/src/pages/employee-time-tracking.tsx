@@ -304,17 +304,17 @@ export default function EmployeeTimeTracking() {
     return (
       <div 
         key={session.id} 
-        className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20 cursor-pointer"
+        className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
         {/* Header with date and total hours */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-3">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
         {/* Admin-style timeline bar - ancho completo */}
-        <div className="relative h-7 mb-2 mx-2">
+        <div className="relative h-6 mb-2 mx-2">
             {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
             <div
               className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
@@ -577,11 +577,11 @@ export default function EmployeeTimeTracking() {
                           return (
                             <div 
                               key={`day-${dayKey}`} 
-                              className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20 cursor-pointer"
+                              className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
                               {/* Header with date and total hours */}
-                              <div className="flex justify-between items-center mb-4">
+                              <div className="flex justify-between items-center mb-3">
                                 <span className="text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
@@ -591,7 +591,7 @@ export default function EmployeeTimeTracking() {
                               </div>
 
                               {/* Multiple session bars - en la misma línea horizontal */}
-                              <div className="relative h-7 mb-2 mx-2">
+                              <div className="relative h-6 mb-2 mx-2">
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
