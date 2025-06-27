@@ -286,33 +286,78 @@ export default function EmployeeDashboard() {
   });
 
   const formatLastClockDate = () => {
-    const sessionToShow = activeSession || (recentSessions && recentSessions[0]);
-    if (!sessionToShow) return '';
-    
-    const clockInDate = new Date(sessionToShow.clockIn);
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const isToday = clockInDate.toDateString() === now.toDateString();
-    const isYesterday = clockInDate.toDateString() === yesterday.toDateString();
-    
-    const time = clockInDate.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: false 
-    });
-    
-    if (isToday) {
+    // If there's an active session, show when they clocked in today
+    if (activeSession) {
+      const clockInDate = new Date(activeSession.clockIn);
+      const time = clockInDate.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
       return `Hoy a las ${time}`;
-    } else if (isYesterday) {
-      return `Ayer a las ${time}`;
-    } else {
-      const dayName = clockInDate.toLocaleDateString('es-ES', { weekday: 'long' });
-      const dayNumber = clockInDate.getDate();
-      const month = clockInDate.toLocaleDateString('es-ES', { month: 'long' });
-      return `El ${dayName} ${dayNumber} de ${month} a las ${time}`;
     }
+    
+    // If no active session, show the most recent clock out or clock in
+    if (recentSessions && recentSessions.length > 0) {
+      // Find the most recent session (should be first due to ordering)
+      const mostRecentSession = recentSessions[0];
+      
+      // If the session has clock out, show when they clocked out
+      if (mostRecentSession.clockOut) {
+        const clockOutDate = new Date(mostRecentSession.clockOut);
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const isToday = clockOutDate.toDateString() === now.toDateString();
+        const isYesterday = clockOutDate.toDateString() === yesterday.toDateString();
+        
+        const time = clockOutDate.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+        
+        if (isToday) {
+          return `Salida hoy a las ${time}`;
+        } else if (isYesterday) {
+          return `Salida ayer a las ${time}`;
+        } else {
+          const dayName = clockOutDate.toLocaleDateString('es-ES', { weekday: 'long' });
+          const dayNumber = clockOutDate.getDate();
+          const month = clockOutDate.toLocaleDateString('es-ES', { month: 'long' });
+          return `Salida el ${dayName} ${dayNumber} de ${month} a las ${time}`;
+        }
+      } else {
+        // Show when they clocked in (incomplete session)
+        const clockInDate = new Date(mostRecentSession.clockIn);
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const isToday = clockInDate.toDateString() === now.toDateString();
+        const isYesterday = clockInDate.toDateString() === yesterday.toDateString();
+        
+        const time = clockInDate.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+        
+        if (isToday) {
+          return `Entrada hoy a las ${time}`;
+        } else if (isYesterday) {
+          return `Entrada ayer a las ${time}`;
+        } else {
+          const dayName = clockInDate.toLocaleDateString('es-ES', { weekday: 'long' });
+          const dayNumber = clockInDate.getDate();
+          const month = clockInDate.toLocaleDateString('es-ES', { month: 'long' });
+          return `Entrada el ${dayName} ${dayNumber} de ${month} a las ${time}`;
+        }
+      }
+    }
+    
+    return '';
   };
 
   const handleClockAction = () => {
