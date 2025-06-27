@@ -133,6 +133,7 @@ Oficaz is a comprehensive employee management system built with a modern full-st
   - Botón de fichar incrementado a 32x32 (w-32 h-32) con texto text-xl para mejor visibilidad
   - Iconos del menú cambiados de blanco a color corporativo #007AFF para coherencia visual
   - Logo empresa aumentado a h-10, nombre text-base para mayor prominencia sin "cajón"
+  - Loading spinner del botón fichar aumentado a w-12 h-12 para mejor visibilidad
   - Header compacto: avatar 8x8, nombre text-xs, botón salir reducido
   - Contenedor principal usa h-screen sin overflow-y-auto para ajuste perfecto
   - Información de fichaje compacta: rounded-lg p-2, texto text-xs y text-sm

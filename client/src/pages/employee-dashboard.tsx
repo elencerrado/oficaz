@@ -476,7 +476,7 @@ export default function EmployeeDashboard() {
                 className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
               >
                 {clockInMutation.isPending || clockOutMutation.isPending ? (
-                  <LoadingSpinner size="sm" className="text-white" />
+                  <LoadingSpinner size="lg" className="text-white w-12 h-12" />
                 ) : (
                   <span className="relative z-10">
                     {activeSession ? 'SALIR' : 'FICHAR'}
