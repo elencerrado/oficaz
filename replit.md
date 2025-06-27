@@ -129,13 +129,6 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Versión móvil de configuración con glassmorphism implementada para empleados
-  - Nueva vista móvil exclusiva para empleados con estilo glassmorphism estándar
-  - Cards con `bg-white/10 backdrop-blur-sm rounded-xl border border-white/20` siguiendo patrón establecido
-  - Vista diferenciada por rol: empleados ven versión móvil, admin/manager mantienen versión estándar
-  - Tarjetas de información: Mi Perfil, Estado de Cuenta, Resumen de Vacaciones
-  - Fondo employee-gradient con textos en blanco/transparencias para mejor legibilidad
-  - Solo empleados ven la nueva interfaz móvil con glassmorphism, admin conserva diseño original
 - June 27, 2025. Headers empleado estandarizados completamente siguiendo patrón de fichajes
   - Documentos, recordatorios y mensajes empleado ahora usan header estándar idéntico
   - Logo inteligente: se muestra solo si tiene logo Y función logoUpload habilitada por super admin
