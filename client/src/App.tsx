@@ -318,7 +318,9 @@ function Router() {
 
       {/* Landing page - main entry point (must be last to avoid conflicts) */}
       <Route path="/">
-        <Landing />
+        <PublicRoute>
+          <Landing />
+        </PublicRoute>
       </Route>
 
       {/* 404 fallback */}

@@ -136,6 +136,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Corregido problema de redirección en recarga de página
+  - Ruta raíz "/" ahora usa componente PublicRoute para verificar autenticación
+  - Usuarios logueados son redirigidos automáticamente al dashboard correspondiente
+  - Ya no aparece landing page cuando usuario está autenticado tras recargar
+  - Comportamiento correcto: admin → dashboard admin, empleado → dashboard empleado
 - June 27, 2025. Sistema de protección EXPANDIDO: Funciones críticas de time tracking completamente blindadas
   - Extendida protección a funciones de cálculo estadístico: calculateTotal(), getLastFourMonths()
   - Blindada función generatePDF() en admin time tracking para informes de control horario
