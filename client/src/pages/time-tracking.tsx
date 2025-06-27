@@ -827,7 +827,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Timeline visual progresivo */}
-          <div className="relative h-5">
+          <div className="relative h-5" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
             {/* Línea base gris */}
             <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
               {/* Barra azul progresiva (se va llenando en tiempo real) */}
@@ -1112,18 +1112,7 @@ export default function TimeTracking() {
             // Si hay muchas etiquetas (>8), usar modo compacto global
             const shouldUseGlobalCompactMode = timeLabels.length > 8;
             
-            // Log temporal para verificar funcionamiento
-            console.log('Algoritmo híbrido:', {
-              totalLabels: timeLabels.length,
-              globalCompactMode: shouldUseGlobalCompactMode,
-              overlappingLabels: labelOverlapStatus.filter(l => l.hasCollision).length,
-              labelDetails: labelOverlapStatus.map(l => ({ 
-                session: l.sessionIndex, 
-                type: l.type, 
-                position: l.position,
-                hasCollision: l.hasCollision 
-              }))
-            });
+            // Algoritmo híbrido implementado: detecta colisiones específicas y aplica posicionamiento flexible
             
             if (shouldUseGlobalCompactMode) {
               // Modo compacto global: todas las etiquetas como tooltips
@@ -1188,19 +1177,19 @@ export default function TimeTracking() {
                 <div key={`session-hybrid-${sessionIndex}`} className="relative">
                   {/* Entrada: renderizar según si tiene colisión */}
                   {startLabel?.hasCollision ? (
-                    // Con colisión: solo punto con tooltip, ligeramente desplazado para evitar solapamiento
+                    // Con colisión: punto desplazado verticalmente para evitar solapamiento
                     <div 
                       className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
                       style={{ 
                         left: `${leftPercentage}%`, 
-                        top: '1px', 
+                        top: `${-8 - (sessionIndex % 3) * 6}px`, // Desplazamiento vertical escalonado
                         transform: 'translateX(-50%)',
                         zIndex: 10
                       }}
                       title={`Entrada: ${formatTime(sessionStart)}`}
                     />
                   ) : (
-                    // Sin colisión: punto + hora visible
+                    // Sin colisión: punto + hora visible alineado con barra
                     <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px' }}>
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
                       <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
@@ -1209,19 +1198,19 @@ export default function TimeTracking() {
                   
                   {/* Salida: renderizar según si tiene colisión */}
                   {endLabel?.hasCollision ? (
-                    // Con colisión: solo punto con tooltip, ligeramente desplazado para evitar solapamiento
+                    // Con colisión: punto desplazado verticalmente para evitar solapamiento
                     <div 
                       className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
                       style={{ 
                         left: `${leftPercentage + widthPercentage}%`, 
-                        top: '-1px', 
+                        top: `${8 + (sessionIndex % 3) * 6}px`, // Desplazamiento vertical escalonado (opuesto a entrada)
                         transform: 'translateX(-50%)',
                         zIndex: 10
                       }}
                       title={`Salida: ${formatTime(sessionEnd)}`}
                     />
                   ) : (
-                    // Sin colisión: punto + hora visible  
+                    // Sin colisión: punto + hora visible alineado con barra
                     <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-100%)' }}>
                       <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{formatTime(sessionEnd)}</span>
                       <div className="w-2 h-2 bg-red-500 rounded-full"></div>
