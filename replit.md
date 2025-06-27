@@ -136,6 +136,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. CRÍTICO: Botón configuración del sidebar corregido para plan Pro 
+  - Funcionalidad "customization" agregada al trial del plan Pro (antes: false → ahora: true)
+  - Botón configuración ya no aparece desactivado/gris para usuarios con plan Pro 
+  - Sistema de restricciones por trial funcionando correctamente para todas las funciones Pro
+  - Usuarios con plan Pro ahora pueden acceder a configuración de empresa durante el trial
 - June 27, 2025. Banner de cookies optimizado para usuarios autenticados
   - Banner de cookies ya no aparece para usuarios logueados
   - Solo se muestra a visitantes no autenticados según normativa RGPD

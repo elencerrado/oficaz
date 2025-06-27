@@ -45,7 +45,7 @@ const getTrialFeaturesForPlan = (plan: string): SubscriptionFeatures => {
     timeEditingPermissions: true,
     reports: true,
     analytics: true,
-    customization: false,
+    customization: true,
     logoUpload: true,
     api: false,
     reminders: true
