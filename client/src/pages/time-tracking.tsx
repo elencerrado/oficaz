@@ -1045,6 +1045,7 @@ export default function TimeTracking() {
               type: 'start' | 'end';
               sessionIndex: number;
               originalPosition: number;
+              time: Date; // Agregar fecha real para ordenar cronológicamente
             }> = [];
 
             completedSessions.forEach((session: any, sessionIndex: number) => {
@@ -1064,7 +1065,8 @@ export default function TimeTracking() {
                 position: leftPercentage,
                 originalPosition: leftPercentage,
                 type: 'start',
-                sessionIndex
+                sessionIndex,
+                time: sessionStart
               });
 
               // Agregar etiqueta de salida
@@ -1073,12 +1075,13 @@ export default function TimeTracking() {
                 position: leftPercentage + widthPercentage,
                 originalPosition: leftPercentage + widthPercentage,
                 type: 'end',
-                sessionIndex
+                sessionIndex,
+                time: sessionEnd
               });
             });
 
-            // Ordenar etiquetas por posición
-            timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
+            // Ordenar etiquetas por tiempo real (cronológicamente)
+            timeLabels.sort((a, b) => a.time.getTime() - b.time.getTime());
 
             // Algoritmo híbrido: detectar colisiones locales y marcar puntos específicos
             const avgTextWidth = 5; // En porcentaje del contenedor (~42px de 800px típicos)
@@ -1154,91 +1157,51 @@ export default function TimeTracking() {
               });
             }
 
-            // Crear array de todos los eventos ordenados cronológicamente
-            const allEvents = [];
-            
-            completedSessions.forEach((session: any, sessionIndex: number) => {
-              const sessionStart = new Date(session.clockIn);
-              const sessionEnd = new Date(session.clockOut);
+            // Usar directamente timeLabels que ya está ordenado cronológicamente
+            return labelOverlapStatus.map((label, eventIndex) => {
+              const key = `event-${label.type}-${label.sessionIndex}-${eventIndex}`;
               
-              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-              
-              const leftPercentage = (startOffset / totalDayDuration) * 100;
-              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
-              
-              // Agregar entrada
-              allEvents.push({
-                time: sessionStart,
-                type: 'start',
-                position: leftPercentage,
-                sessionIndex,
-                formattedTime: formatTime(sessionStart)
-              });
-              
-              // Agregar salida
-              allEvents.push({
-                time: sessionEnd,
-                type: 'end',
-                position: leftPercentage + widthPercentage,
-                sessionIndex,
-                formattedTime: formatTime(sessionEnd)
-              });
-            });
-            
-            // Ordenar eventos por tiempo real (cronológicamente)
-            allEvents.sort((a, b) => a.time.getTime() - b.time.getTime());
-            
-            // Crear elementos ordenados cronológicamente
-            return allEvents.map((event, eventIndex) => {
-              // Buscar etiqueta correspondiente en labelOverlapStatus
-              const label = labelOverlapStatus.find(l => 
-                l.type === event.type && l.sessionIndex === event.sessionIndex
-              );
-              
-              const key = `event-${event.type}-${event.sessionIndex}-${eventIndex}`;
-              
-              if (event.type === 'start') {
+              if (label.type === 'start') {
                 // Entrada
-                return label?.hasCollision ? (
+                return label.hasCollision ? (
                   // Con colisión: punto desplazado horizontalmente
                   <div 
                     key={key}
                     className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
                     style={{ 
-                      left: `${event.position - 1}%`,
+                      left: `${label.position - 1}%`,
                       top: '0px',
                       transform: 'translateX(-50%)',
                       zIndex: 10
                     }}
-                    title={`Entrada: ${event.formattedTime}`}
+                    title={`Entrada: ${label.text}`}
                   />
                 ) : (
                   // Sin colisión: punto + hora visible
-                  <div key={key} className="absolute flex items-center" style={{ left: `${event.position}%`, top: '0px' }}>
+                  <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px' }}>
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">{event.formattedTime}</span>
+                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">{label.text}</span>
                   </div>
                 );
               } else {
                 // Salida
-                return label?.hasCollision ? (
+                return label.hasCollision ? (
                   // Con colisión: punto desplazado horizontalmente
                   <div 
                     key={key}
                     className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
                     style={{ 
-                      left: `${event.position + 1}%`,
+                      left: `${label.position + 1}%`,
                       top: '0px',
                       transform: 'translateX(-50%)',
                       zIndex: 10
                     }}
-                    title={`Salida: ${event.formattedTime}`}
+                    title={`Salida: ${label.text}`}
                   />
                 ) : (
                   // Sin colisión: punto + hora visible
-                  <div key={key} className="absolute flex items-center" style={{ left: `${event.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
-                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{event.formattedTime}</span>
+                  <div key={key} className="absolute flex items-center" style={{ left: `${label.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
+                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{label.text}</span>
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                   </div>
                 );
