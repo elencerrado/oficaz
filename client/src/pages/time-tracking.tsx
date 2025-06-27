@@ -750,10 +750,78 @@ export default function TimeTracking() {
 
     return (
       <div className="space-y-3">
+        {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
+        <div className="relative h-5">
+          {dayData.sessions.map((session: any, sessionIndex: number) => {
+            return (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
+              if (!breakPeriod.breakEnd) return null;
+              
+              const breakStart = new Date(breakPeriod.breakStart);
+              const breakEnd = new Date(breakPeriod.breakEnd);
+              
+              // Posición del descanso relativa al inicio del día
+              const breakStartOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+              
+              const breakLeftPercentage = (breakStartOffset / totalDayDuration) * 100;
+              const breakWidthPercentage = Math.max((breakDuration / totalDayDuration) * 100, 1);
+              const breakMinutes = Math.round((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
+              
+              return (
+                <div
+                  key={`break-label-${sessionIndex}-${breakIndex}`}
+                  className="absolute text-xs text-orange-600 font-medium bg-orange-100 px-1 rounded transform -translate-x-1/2"
+                  style={{ 
+                    left: `${breakLeftPercentage + breakWidthPercentage/2}%`,
+                    top: '0px'
+                  }}
+                >
+                  Descanso {breakMinutes}min
+                </div>
+              );
+            });
+          })}
+        </div>
+
+        {/* Contenedor para horas de entrada/salida ARRIBA de las barras */}
+        <div className="relative h-4">
+          {dayData.sessions.map((session: any, sessionIndex: number) => {
+            const sessionStart = new Date(session.clockIn);
+            const sessionEnd = new Date(session.clockOut);
+            
+            // Posición relativa dentro del día
+            const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+            const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+            
+            const leftPercentage = (startOffset / totalDayDuration) * 100;
+            const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+
+            return (
+              <div key={`times-${sessionIndex}`} className="relative">
+                {/* Hora de entrada al inicio del segmento */}
+                <div
+                  className="absolute text-xs text-green-600 font-medium transform -translate-x-1/2"
+                  style={{ left: `${leftPercentage}%`, top: '0px' }}
+                >
+                  {formatTime(sessionStart)}
+                </div>
+                
+                {/* Hora de salida al final del segmento */}
+                <div
+                  className="absolute text-xs text-red-600 font-medium transform -translate-x-1/2"
+                  style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px' }}
+                >
+                  {formatTime(sessionEnd)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Timeline visual consolidado */}
-        <div className="relative h-6 mb-4">
+        <div className="relative h-6">
           {/* Línea base gris que representa todo el día */}
-          <div className="h-4 bg-gray-100 rounded-lg relative overflow-hidden">
+          <div className="h-4 bg-gray-200 rounded-lg relative overflow-hidden">
             
             {/* Segmentos de trabajo (barras azules) con descansos dentro */}
             {dayData.sessions.map((session: any, sessionIndex: number) => {
@@ -804,20 +872,6 @@ export default function TimeTracking() {
                       />
                     );
                   })}
-                  
-                  {/* Indicadores de entrada (verde) al inicio de cada segmento */}
-                  <div
-                    className="absolute -top-1 w-2 h-2 bg-green-500 rounded-full"
-                    style={{ left: `${leftPercentage}%`, transform: 'translateX(-50%)' }}
-                    title={`Entrada: ${formatTime(sessionStart)}`}
-                  />
-                  
-                  {/* Indicadores de salida (rojo) al final de cada segmento */}
-                  <div
-                    className="absolute -top-1 w-2 h-2 bg-red-500 rounded-full"
-                    style={{ left: `${leftPercentage + widthPercentage}%`, transform: 'translateX(-50%)' }}
-                    title={`Salida: ${formatTime(sessionEnd)}`}
-                  />
                 </div>
               );
             })}
