@@ -312,22 +312,33 @@ export default function EmployeeTimeTracking() {
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
         </div>
 
-        {/* Timeline bar con horas alineadas */}
-        <div className="relative h-6 mb-2 mx-2 flex items-center">
-          {/* Horas totales alineadas con la barra */}
-          <div className="absolute -right-2 top-0 h-5 flex items-center">
-            <span className="text-white/90 font-mono text-sm bg-black/40 px-2 py-0.5 rounded text-xs">
+        {/* Timeline bar con horas alineadas a los límites */}
+        <div className="relative h-6 mb-2 mx-2">
+          {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
+          <div
+            className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
+            style={{
+              left: '0%',
+              width: '100%'
+            }}
+          />
+          
+          {/* Horas de entrada y salida alineadas con límites de la barra */}
+          <div className="absolute top-0 h-5 w-full flex justify-between items-center px-1 text-xs font-mono">
+            <span className="text-white bg-black/50 px-1 rounded">
+              {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <span className="text-white bg-black/50 px-1 rounded">
+              {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+          
+          {/* Horas totales en esquina superior derecha */}
+          <div className="absolute -top-1 -right-2">
+            <span className="text-white/90 font-mono text-xs bg-blue-600/80 px-2 py-0.5 rounded">
               {formatTotalHours(calculateSessionHours(session))}
             </span>
           </div>
-            {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
-            <div
-              className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
-              style={{
-                left: '0%',
-                width: '100%'
-              }}
-            />
             
             {/* Break periods as orange bars inside the session bar */}
             {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
@@ -592,14 +603,15 @@ export default function EmployeeTimeTracking() {
                                 </span>
                               </div>
 
-                              {/* Timeline bar con horas alineadas - sesiones múltiples */}
-                              <div className="relative h-6 mb-2 mx-2 flex items-center">
-                                {/* Horas totales alineadas con las barras */}
-                                <div className="absolute -right-2 top-0 h-5 flex items-center">
-                                  <span className="text-white/90 font-mono text-sm bg-black/40 px-2 py-0.5 rounded text-xs">
+                              {/* Timeline bar - sesiones múltiples */}
+                              <div className="relative h-6 mb-2 mx-2">
+                                {/* Horas totales en esquina superior derecha */}
+                                <div className="absolute -top-1 -right-2">
+                                  <span className="text-white/90 font-mono text-xs bg-blue-600/80 px-2 py-0.5 rounded">
                                     {formatTotalHours(dayTotal)}
                                   </span>
                                 </div>
+                                
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
@@ -610,15 +622,24 @@ export default function EmployeeTimeTracking() {
                                   const sessionWidth = (100 - totalGaps) / sortedDaySessions.length;
                                   const sessionLeft = sessionIndex * (sessionWidth + gapPercentage);
                                   
+                                  const sessionStart = new Date(session.clockIn);
+                                  const sessionEnd = new Date(session.clockOut);
+                                  
                                   return (
-                                    <div
-                                      key={`session-bar-${session.id}`}
-                                      className="absolute top-0 h-5 bg-blue-500 rounded-sm"
-                                      style={{
-                                        left: `${sessionLeft}%`,
-                                        width: `${sessionWidth}%`
-                                      }}
-                                    />
+                                    <div key={`session-bar-${session.id}`} className="absolute" style={{ left: `${sessionLeft}%`, width: `${sessionWidth}%` }}>
+                                      {/* Barra de sesión */}
+                                      <div className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full" />
+                                      
+                                      {/* Horas de entrada y salida dentro de cada barra */}
+                                      <div className="absolute top-0 h-5 w-full flex justify-between items-center px-1 text-xs font-mono">
+                                        <span className="text-white bg-black/50 px-1 rounded text-xs">
+                                          {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        <span className="text-white bg-black/50 px-1 rounded text-xs">
+                                          {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+                                    </div>
                                   );
                                 })}
                                 
