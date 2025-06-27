@@ -344,48 +344,60 @@ export default function EmployeeDashboard() {
     <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
       {/* Scrollable Content Container */}
       <div className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 pb-4 flex-shrink-0">
-          <div>
-            <h1 className="text-lg font-medium">{user?.fullName}</h1>
+        {/* Header - Moderno y elegante */}
+        <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/20 to-white/10 border border-white/30 flex items-center justify-center backdrop-blur-xl">
+              <span className="text-white font-bold text-lg">
+                {user?.fullName?.split(' ').map(n => n[0]).join('').substring(0, 2) || 'U'}
+              </span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white drop-shadow-lg">{user?.fullName}</h1>
+              <p className="text-white/70 text-sm font-medium">Empleado</p>
+            </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="text-white hover:bg-white/10"
+            className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-2 transition-all duration-300 hover:scale-105"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Salir
+            <span className="font-medium">Salir</span>
           </Button>
         </div>
 
-        {/* Company Logo and Name */}
-        <div className="flex justify-center mb-6">
+        {/* Company Logo and Name - Elegante y moderno */}
+        <div className="flex justify-center mb-8">
           <div className="text-center">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
-              <img 
-                src={company.logoUrl} 
-                alt={company.name} 
-                className="h-16 w-auto mx-auto object-contain filter brightness-0 invert"
-              />
+              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-6 mx-4 shadow-2xl">
+                <img 
+                  src={company.logoUrl} 
+                  alt={company.name} 
+                  className="h-20 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                />
+              </div>
             ) : (
-              <div className="text-white text-base font-medium">
-                {company?.name || 'Mi Empresa'}
+              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-6 mx-4 shadow-2xl">
+                <div className="text-white text-xl font-bold drop-shadow-lg">
+                  {company?.name || 'Mi Empresa'}
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Menu Grid - iPhone style with compact icons */}
-        <div className="px-6 mb-6">
+        {/* Menu Grid - Moderno y elegante inspirado en el hero */}
+        <div className="px-6 mb-8">
           <div className="grid grid-cols-3 gap-6">
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
               return (
-                <div key={index} className="flex flex-col items-center">
+                <div key={index} className="flex flex-col items-center group">
                   <button
                     onClick={() => {
                       if (isFeatureDisabled) {
@@ -402,25 +414,41 @@ export default function EmployeeDashboard() {
                       }
                       handleNavigation(item.route);
                     }}
-                    className={`relative w-24 h-24 transition-all duration-200 rounded-xl flex items-center justify-center mb-2 shadow-lg ${
+                    className={`relative w-28 h-28 transition-all duration-300 rounded-2xl flex items-center justify-center mb-3 backdrop-blur-xl border ${
                       isFeatureDisabled 
-                        ? 'bg-gray-400 cursor-not-allowed opacity-50' 
-                        : 'bg-blue-500 hover:bg-blue-600 hover:shadow-xl transform hover:scale-105'
+                        ? 'bg-gray-500/20 border-gray-400/30 cursor-not-allowed opacity-40' 
+                        : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:shadow-2xl hover:shadow-blue-500/20 transform hover:scale-110 hover:-translate-y-1 group-hover:animate-pulse'
                     }`}
                     disabled={isFeatureDisabled}
+                    style={{
+                      background: !isFeatureDisabled ? `linear-gradient(135deg, 
+                        rgba(59, 130, 246, 0.3) 0%, 
+                        rgba(139, 92, 246, 0.2) 50%, 
+                        rgba(16, 185, 129, 0.2) 100%)` : undefined
+                    }}
                   >
-                    <item.icon className={`h-12 w-12 ${
-                      isFeatureDisabled ? 'text-gray-300' : 'text-white'
+                    <item.icon className={`h-14 w-14 transition-all duration-300 ${
+                      isFeatureDisabled 
+                        ? 'text-gray-400/50' 
+                        : 'text-white drop-shadow-lg group-hover:scale-110'
                     }`} />
                     {item.notification && !isFeatureDisabled && (
-                      <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full border-2 border-white animate-pulse ${
-                        (item as any).notificationType === 'red' ? 'bg-red-500' : 
-                        (item as any).notificationType === 'green' ? 'bg-green-500' : 'bg-red-500'
-                      }`}></div>
+                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full border-2 border-white shadow-lg animate-bounce ${
+                        (item as any).notificationType === 'red' ? 'bg-gradient-to-r from-red-500 to-pink-500' : 
+                        (item as any).notificationType === 'green' ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-red-500 to-pink-500'
+                      }`}>
+                        <div className="w-full h-full rounded-full animate-ping opacity-75 bg-white/30"></div>
+                      </div>
+                    )}
+                    {/* Efecto de brillo en hover */}
+                    {!isFeatureDisabled && (
+                      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform -skew-x-12"></div>
                     )}
                   </button>
-                  <span className={`text-xs font-medium text-center leading-tight ${
-                    isFeatureDisabled ? 'text-white/40' : 'text-white/90'
+                  <span className={`text-sm font-medium text-center leading-tight transition-all duration-300 ${
+                    isFeatureDisabled 
+                      ? 'text-white/30' 
+                      : 'text-white/90 group-hover:text-white group-hover:scale-105'
                   }`}>
                     {item.title}
                   </span>
@@ -430,42 +458,66 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* Last Clock In Info - Always visible */}
-        <div className="px-6 mb-4 text-center">
-          <div className="text-gray-300 text-xs mb-1">Tu último fichaje:</div>
-          <div className="text-white text-sm font-medium">
-            {formatLastClockDate() || 'Sin fichajes previos'}
+        {/* Last Clock In Info - Elegante y moderno */}
+        <div className="px-6 mb-6 text-center">
+          <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-2xl p-4 mx-4">
+            <div className="text-white/60 text-sm mb-2 font-medium">Tu último fichaje</div>
+            <div className="text-white text-lg font-semibold">
+              {formatLastClockDate() || 'Sin fichajes previos'}
+            </div>
           </div>
         </div>
 
-        {/* Clock Button or Vacation Message - Positioned for thumb accessibility */}
-        <div className="flex-1 flex items-center justify-center px-6 pb-6 min-h-[200px]">
+        {/* Clock Button or Vacation Message - Moderno y espectacular */}
+        <div className="flex-1 flex items-center justify-center px-6 pb-8 min-h-[200px]">
           {isOnVacation ? (
             <div className="flex flex-col items-center">
-              <div className="w-36 h-36 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg">
-                <Palmtree className="w-16 h-16 text-white" />
+              <div className="w-40 h-40 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/30 border-4 border-white/20 backdrop-blur-xl">
+                <Palmtree className="w-20 h-20 text-white drop-shadow-lg" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
               </div>
-              <p className="text-lg font-medium text-white mb-2 text-center">
+              <p className="text-xl font-bold text-white mb-2 text-center drop-shadow-lg">
                 ¡Disfruta de tus vacaciones,
               </p>
-              <p className="text-lg font-medium text-white text-center">
+              <p className="text-xl font-bold text-white text-center drop-shadow-lg">
                 te las has ganado!
               </p>
             </div>
           ) : (
-            <Button
-              onClick={handleClockAction}
-              disabled={clockInMutation.isPending || clockOutMutation.isPending}
-              className="w-36 h-36 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95"
-            >
-              {clockInMutation.isPending || clockOutMutation.isPending ? (
-                <LoadingSpinner size="lg" className="text-white scale-150" />
-              ) : (
-                <>
-                  {activeSession ? 'SALIR' : 'FICHAR'}
-                </>
-              )}
-            </Button>
+            <div className="relative">
+              <Button
+                onClick={handleClockAction}
+                disabled={clockInMutation.isPending || clockOutMutation.isPending}
+                className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 hover:from-blue-400 hover:via-blue-500 hover:to-purple-500 text-white text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-4 border-white/20 backdrop-blur-xl relative overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, 
+                    rgba(59, 130, 246, 0.9) 0%, 
+                    rgba(147, 51, 234, 0.8) 50%, 
+                    rgba(16, 185, 129, 0.7) 100%)`
+                }}
+              >
+                {clockInMutation.isPending || clockOutMutation.isPending ? (
+                  <LoadingSpinner size="lg" className="text-white scale-150" />
+                ) : (
+                  <>
+                    <span className="relative z-10 drop-shadow-lg">
+                      {activeSession ? 'SALIR' : 'FICHAR'}
+                    </span>
+                  </>
+                )}
+                {/* Efecto de brillo animado */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 animate-pulse"></div>
+                {/* Anillo exterior pulsante cuando está activo */}
+                {activeSession && (
+                  <div className="absolute -inset-2 rounded-full border-2 border-green-400 animate-ping opacity-75"></div>
+                )}
+              </Button>
+              {/* Partículas flotantes decorativas */}
+              <div className="absolute -top-4 -left-4 w-3 h-3 bg-blue-400/60 rounded-full animate-bounce delay-100"></div>
+              <div className="absolute -top-2 -right-6 w-2 h-2 bg-purple-400/60 rounded-full animate-bounce delay-300"></div>
+              <div className="absolute -bottom-6 -left-2 w-4 h-4 bg-cyan-400/60 rounded-full animate-bounce delay-500"></div>
+              <div className="absolute -bottom-4 -right-4 w-2 h-2 bg-green-400/60 rounded-full animate-bounce delay-700"></div>
+            </div>
           )}
         </div>
       </div>

@@ -129,6 +129,17 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Dashboard de empleado completamente rediseñado con estética moderna y elegante
+  - Iconos de funcionalidades ampliados y con efectos glassmorphism inspirados en el hero de landing
+  - Botones de menú con gradientes, backdrop-blur, efectos hover scale y animaciones de pulso
+  - Notificaciones mejoradas con gradientes y efectos bounce más llamativos
+  - Header de usuario modernizado con avatar circular de iniciales y botón salir elegante
+  - Logo/nombre de empresa en contenedor glassmorphism con sombras y bordes sutiles
+  - Información de último fichaje en tarjeta moderna con backdrop-blur y bordes translúcidos
+  - Botón principal de fichar rediseñado: gradiente tricolor, efectos de brillo animados, partículas flotantes
+  - Anillo pulsante verde cuando hay sesión activa, transiciones suaves y escalado hover
+  - Mensaje de vacaciones mejorado con gradiente emerald-teal-cyan y efectos de profundidad
+  - Todos los elementos mantienen funcionalidad completa sin cambios en lógica o navegación
 - June 27, 2025. Sistema de gestión de invitaciones para super admin implementado completamente
   - Nueva página super-admin-invitations.tsx con diseño moderno espectacular y glassmorphism
   - Gestión completa de configuración de registro: público vs solo por invitación
