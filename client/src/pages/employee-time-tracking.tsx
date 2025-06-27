@@ -557,31 +557,48 @@ export default function EmployeeTimeTracking() {
           
           {/* 4 Month Statistics - Mini Charts */}
           <div className="grid grid-cols-4 gap-3">
-            {getLast4MonthsData().map((monthData, index) => (
-              <div 
-                key={monthData.month}
-                className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 transition-all duration-500 ${
-                  monthData.isCurrentMonth ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
-                }`}
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animation: 'fadeInUp 0.6s ease-out forwards'
-                }}
-              >
-                <div className="text-center">
-                  <p className="text-white/60 text-xs mb-1 font-medium">{monthData.month}</p>
-                  <div className="relative h-10 mb-1">
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 bg-blue-400 rounded-t-sm transition-all duration-700"
-                         style={{ 
-                           height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
-                           minHeight: monthData.hours > 0 ? '6px' : '0px'
-                         }}
-                    />
+            {getLast4MonthsData().map((monthData, index) => {
+              const isViewingThisMonth = format(currentMonth, 'MMM', { locale: es }) === monthData.month;
+              return (
+                <div 
+                  key={monthData.month}
+                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border transition-all duration-500 ${
+                    isViewingThisMonth 
+                      ? 'ring-2 ring-blue-400 bg-blue-500/20 border-blue-400/50' 
+                      : monthData.isCurrentMonth 
+                        ? 'ring-1 ring-green-400/50 bg-green-500/10 border-green-400/30' 
+                        : 'border-white/10'
+                  }`}
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: 'fadeInUp 0.6s ease-out forwards'
+                  }}
+                >
+                  <div className="text-center">
+                    <p className={`text-xs mb-1 font-medium ${
+                      isViewingThisMonth ? 'text-blue-300' : 'text-white/60'
+                    }`}>
+                      {monthData.month}
+                    </p>
+                    <div className="relative h-10 mb-1 px-1">
+                      <div className={`absolute bottom-0 left-0 right-0 rounded-t-sm transition-all duration-700 ${
+                        isViewingThisMonth ? 'bg-blue-400' : 'bg-blue-400'
+                      }`}
+                           style={{ 
+                             height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
+                             minHeight: monthData.hours > 0 ? '6px' : '0px'
+                           }}
+                      />
+                    </div>
+                    <p className={`text-xs font-mono ${
+                      isViewingThisMonth ? 'text-blue-200' : 'text-white'
+                    }`}>
+                      {monthData.hours.toFixed(0)}h
+                    </p>
                   </div>
-                  <p className="text-white text-xs font-mono">{monthData.hours.toFixed(0)}h</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
