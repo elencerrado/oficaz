@@ -749,9 +749,9 @@ export default function TimeTracking() {
     const formatTime = (date: Date) => format(date, 'HH:mm');
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-1">
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
-        <div className="relative h-5">
+        <div className="relative h-4">
           {dayData.sessions.map((session: any, sessionIndex: number) => {
             return (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
               if (!breakPeriod.breakEnd) return null;
@@ -770,25 +770,28 @@ export default function TimeTracking() {
               return (
                 <div
                   key={`break-label-${sessionIndex}-${breakIndex}`}
-                  className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2"
+                  className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2 flex items-center gap-1"
                   style={{ 
                     left: `${breakLeftPercentage + breakWidthPercentage/2}%`,
                     top: '0px'
                   }}
                 >
-                  Descanso {breakMinutes}min
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  {breakMinutes}min
                 </div>
               );
             });
           })}
         </div>
 
-        {/* Timeline visual mejorado con diseño elegante */}
-        <div className="relative h-8">
-          {/* Línea base gris con gradiente sutil */}
-          <div className="h-6 bg-gradient-to-r from-gray-100 via-gray-150 to-gray-100 rounded-full relative overflow-hidden shadow-inner border border-gray-200">
+        {/* Timeline visual minimalista */}
+        <div className="relative h-5">
+          {/* Línea base gris minimalista */}
+          <div className="h-3 bg-gray-200 rounded-sm relative overflow-hidden">
             
-            {/* Segmentos de trabajo (barras azules elegantes) con descansos slider */}
+            {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
             {dayData.sessions.map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
@@ -802,17 +805,16 @@ export default function TimeTracking() {
               
               return (
                 <div key={sessionIndex} className="relative">
-                  {/* Barra azul elegante con gradiente y sombra */}
+                  {/* Barra azul minimalista */}
                   <div
-                    className="absolute top-0.5 h-5 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 rounded-full shadow-lg border border-blue-400"
+                    className="absolute top-0 h-3 bg-blue-500 rounded-sm"
                     style={{
                       left: `${leftPercentage}%`,
-                      width: `${widthPercentage}%`,
-                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+                      width: `${widthPercentage}%`
                     }}
                   />
                   
-                  {/* Descansos como sliders elegantes dentro de la barra azul */}
+                  {/* Descansos como sliders dentro de la barra azul */}
                   {(session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
                     if (!breakPeriod.breakEnd) return null;
                     
@@ -829,11 +831,10 @@ export default function TimeTracking() {
                     return (
                       <div
                         key={`${sessionIndex}-${breakIndex}`}
-                        className="absolute top-1 h-3 bg-gradient-to-r from-orange-400 via-orange-500 to-orange-400 rounded-full shadow-inner border border-orange-300"
+                        className="absolute top-0.5 h-2 bg-orange-400 rounded-sm"
                         style={{
                           left: `${breakLeftPercentageInSession}%`,
-                          width: `${breakWidthPercentageInSession}%`,
-                          boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.1)'
+                          width: `${breakWidthPercentageInSession}%`
                         }}
                         title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
                       />
