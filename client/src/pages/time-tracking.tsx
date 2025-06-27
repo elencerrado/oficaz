@@ -731,6 +731,120 @@ export default function TimeTracking() {
     );
   };
 
+  // Daily Timeline Bar Component for displaying multiple sessions in a single day
+  const DailyTimelineBar = ({ dayData }: { dayData: any }) => {
+    if (!dayData.sessions || dayData.sessions.length === 0) {
+      return <div className="text-gray-400">Sin datos</div>;
+    }
+
+    // Calcular el rango total del día (desde primera entrada hasta última salida)
+    const allTimes = dayData.sessions.flatMap((session: any) => [
+      new Date(session.clockIn),
+      new Date(session.clockOut)
+    ]);
+    const dayStart = new Date(Math.min(...allTimes.map(d => d.getTime())));
+    const dayEnd = new Date(Math.max(...allTimes.map(d => d.getTime())));
+    const totalDayDuration = (dayEnd.getTime() - dayStart.getTime()) / (1000 * 60 * 60); // en horas
+
+    const formatTime = (date: Date) => format(date, 'HH:mm');
+
+    return (
+      <div className="space-y-3">
+        {/* Timeline visual consolidado */}
+        <div className="relative">
+          {/* Línea base gris que representa todo el día */}
+          <div className="h-4 bg-gray-100 rounded-lg relative overflow-hidden">
+            
+            {/* Segmentos de trabajo (barras azules) */}
+            {dayData.sessions.map((session: any, sessionIndex: number) => {
+              const sessionStart = new Date(session.clockIn);
+              const sessionEnd = new Date(session.clockOut);
+              
+              // Posición relativa dentro del día
+              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+              
+              const leftPercentage = (startOffset / totalDayDuration) * 100;
+              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+              
+              return (
+                <div
+                  key={sessionIndex}
+                  className="absolute top-0 h-full bg-blue-500 rounded"
+                  style={{
+                    left: `${leftPercentage}%`,
+                    width: `${widthPercentage}%`
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          {/* Períodos de descanso (encima de la barra principal) */}
+          <div className="absolute -top-6 left-0 right-0 h-4">
+            {dayData.sessions.flatMap((session: any, sessionIndex: number) => 
+              (session.breakPeriods || []).map((breakPeriod: any, breakIndex: number) => {
+                const breakStart = new Date(breakPeriod.breakStart);
+                const breakEnd = new Date(breakPeriod.breakEnd);
+                
+                const startOffset = (breakStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                
+                const leftPercentage = (startOffset / totalDayDuration) * 100;
+                const widthPercentage = (breakDuration / totalDayDuration) * 100;
+                
+                return (
+                  <div
+                    key={`${sessionIndex}-${breakIndex}`}
+                    className="absolute top-0 h-3 bg-orange-400 rounded-full flex items-center justify-center"
+                    style={{
+                      left: `${leftPercentage}%`,
+                      width: `${Math.max(widthPercentage, 2)}%` // Mínimo 2% para visibilidad
+                    }}
+                    title={`Descanso: ${formatTime(breakStart)} - ${formatTime(breakEnd)}`}
+                  >
+                    {breakDuration > 0.5 && (
+                      <span className="text-white text-xs font-medium">
+                        {(breakDuration * 60).toFixed(0)}m
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Horarios de entrada y salida con código de colores */}
+        <div className="flex flex-wrap gap-1 text-xs mt-2">
+          {dayData.sessions.map((session: any, index: number) => (
+            <div key={index} className="flex items-center gap-1">
+              {/* Entrada (verde) */}
+              <span className="inline-flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-gray-700 font-medium">
+                  {formatTime(new Date(session.clockIn))}
+                </span>
+              </span>
+              
+              {/* Salida (rojo) */}
+              <span className="inline-flex items-center gap-1 ml-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-gray-700 font-medium">
+                  {formatTime(new Date(session.clockOut))}
+                </span>
+              </span>
+              
+              {index < dayData.sessions.length - 1 && (
+                <span className="text-gray-400 ml-1">•</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Loading check AFTER all hooks
   if (isLoading) {
     return (
@@ -1036,12 +1150,37 @@ export default function TimeTracking() {
                         return total + (totalSessionHours - breakHours);
                       }, 0);
                   
+                  // Agrupar sesiones por empleado y día
+                  const sessionsByDay = sortedSessions.reduce((acc: any, session: any) => {
+                    const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
+                    if (!acc[dayKey]) {
+                      acc[dayKey] = {
+                        date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
+                        userId: session.userId,
+                        userName: session.userName,
+                        sessions: []
+                      };
+                    }
+                    acc[dayKey].sessions.push(session);
+                    return acc;
+                  }, {});
+
+                  // Ordenar sesiones dentro de cada día por hora
+                  Object.values(sessionsByDay).forEach((dayData: any) => {
+                    dayData.sessions.sort((a: any, b: any) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+                  });
+
+                  // Convertir a array y ordenar por fecha (más reciente primero)
+                  const dailyEntries = Object.values(sessionsByDay).sort((a: any, b: any) => 
+                    new Date(b.date).getTime() - new Date(a.date).getTime()
+                  );
+
                   const result: JSX.Element[] = [];
                   
-                  sortedSessions.forEach((session: any, index: number) => {
-                    const sessionDate = new Date(session.clockIn);
-                    const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
-                    const monthKey = format(sessionDate, 'yyyy-MM');
+                  dailyEntries.forEach((dayData: any, index: number) => {
+                    const dayDate = new Date(dayData.date);
+                    const weekStart = startOfWeek(dayDate, { weekStartsOn: 1 });
+                    const monthKey = format(dayDate, 'yyyy-MM');
                     const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
                     const isNewMonth = currentMonth === null || monthKey !== currentMonth;
                     
@@ -1085,22 +1224,24 @@ export default function TimeTracking() {
                       );
                     }
                     
-                    // Calcular horas totales trabajadas menos períodos de descanso
-                    const totalHours = calculateHours(session.clockIn, session.clockOut);
-                    const breakHours = session.breakPeriods 
-                      ? session.breakPeriods.reduce((total: number, breakPeriod: any) => {
-                          const breakDuration = calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
-                          return total + breakDuration;
-                        }, 0) 
-                      : 0;
-                    const hours = totalHours - breakHours;
-                    const isEditing = editingSession === session.id;
+                    // Calcular horas totales trabajadas del día menos períodos de descanso
+                    const totalDayHours = dayData.sessions.reduce((total: number, session: any) => {
+                      const sessionHours = calculateHours(session.clockIn, session.clockOut);
+                      const breakHours = session.breakPeriods 
+                        ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                            return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                          }, 0) 
+                        : 0;
+                      return total + (sessionHours - breakHours);
+                    }, 0);
+                    
+                    const isEditing = editingSession === dayData.sessions[0]?.id;
                     
                     result.push(
-                      <tr key={session.id} className="hover:bg-gray-50 border-b border-gray-100 h-12">
+                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 border-b border-gray-100 h-12">
                         <td className="py-2 px-4">
                           <div className="font-medium text-gray-900">
-                            {session.userName || 'Usuario Desconocido'}
+                            {dayData.userName || 'Usuario Desconocido'}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -1113,7 +1254,7 @@ export default function TimeTracking() {
                             />
                           ) : (
                             <div className="text-gray-700">
-                              {format(new Date(session.clockIn), 'dd/MM/yyyy')}
+                              {format(new Date(dayData.date), 'dd/MM/yyyy')}
                             </div>
                           )}
                         </td>
@@ -1138,12 +1279,12 @@ export default function TimeTracking() {
                               </div>
                             </div>
                           ) : (
-                            <TimelineBar session={session} />
+                            <DailyTimelineBar dayData={dayData} />
                           )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-medium text-gray-900">
-                            {hours > 0 ? `${hours.toFixed(1)}h` : '-'}
+                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -1151,7 +1292,7 @@ export default function TimeTracking() {
                             <div className="flex gap-2 justify-center">
                               <Button
                                 size="sm"
-                                onClick={() => handleSaveSession(session.id)}
+                                onClick={() => handleSaveSession(dayData.sessions[0]?.id)}
                                 className="h-8 w-8 p-0"
                               >
                                 <Check className="w-4 h-4" />
@@ -1169,7 +1310,7 @@ export default function TimeTracking() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleEditSession(session)}
+                              onClick={() => handleEditSession(dayData.sessions[0])}
                               className="h-8 w-8 p-0"
                             >
                               <Edit className="w-4 h-4" />
