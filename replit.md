@@ -129,6 +129,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Gráficas animadas al cargar página implementadas en timeline empleado
+  - Barras de gráficas suben desde 0 hasta altura final con animación growHeight
+  - Duración 1.2s ease-out con delays escalonados de 150ms entre barras
+  - Tarjetas aparecen con fadeInUp y opacity inicial 0 para entrada suave
+  - Animación CSS growHeight usando variable --final-height para altura dinámica
+  - Delays: tarjetas (index * 100ms), barras (index * 150ms + 300ms) para secuencia visual
 - June 27, 2025. Tarjeta de vacaciones rediseñada con colores de gráficas de fichajes
   - Total: text-blue-400 (azul vibrante como barras principales de fichajes)
   - Aprobados: text-orange-400 (naranja como barras de descanso en timeline)

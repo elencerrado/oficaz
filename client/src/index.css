@@ -144,6 +144,15 @@ body::after {
   }
 }
 
+@keyframes growHeight {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--final-height);
+  }
+}
+
 /* Custom scrollbar styles */
 @layer utilities {
   .scrollbar-thin {

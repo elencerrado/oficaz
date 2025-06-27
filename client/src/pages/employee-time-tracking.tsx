@@ -578,7 +578,8 @@ export default function EmployeeTimeTracking() {
                   }`}
                   style={{
                     animationDelay: `${index * 100}ms`,
-                    animation: 'fadeInUp 0.6s ease-out forwards'
+                    animation: 'fadeInUp 0.6s ease-out forwards',
+                    opacity: 0
                   }}
                 >
                   <div className="text-center">
@@ -592,9 +593,12 @@ export default function EmployeeTimeTracking() {
                         isViewingThisMonth ? 'bg-blue-400' : 'bg-blue-400'
                       }`}
                            style={{ 
-                             height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
-                             minHeight: monthData.hours > 0 ? '6px' : '0px'
-                           }}
+                             '--final-height': `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
+                             height: '0px',
+                             minHeight: monthData.hours > 0 ? '6px' : '0px',
+                             animationDelay: `${index * 150 + 300}ms`,
+                             animation: 'growHeight 1.2s ease-out forwards'
+                           } as React.CSSProperties}
                       />
                     </div>
                     <p className={`text-xs font-mono ${
