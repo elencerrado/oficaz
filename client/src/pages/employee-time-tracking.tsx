@@ -202,7 +202,7 @@ export default function EmployeeTimeTracking() {
   const getLast4MonthsData = () => {
     const months = [];
     for (let i = 3; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
+      const date = subMonths(currentMonth, i);
       const monthStart = startOfMonth(date);
       const monthEnd = endOfMonth(date);
       
