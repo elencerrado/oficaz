@@ -173,11 +173,6 @@ export default function Landing() {
               </div>
               
               <div className="flex items-center space-x-3">
-                <Link href="/login">
-                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-sm">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
                 {registrationSettings?.publicRegistrationEnabled ? (
                   <Link href="/request-code">
                     <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105">
@@ -189,16 +184,16 @@ export default function Landing() {
                     Registro Cerrado
                   </Button>
                 )}
+                <Link href="/login">
+                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:shadow-sm">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
               </div>
             </nav>
 
             {/* Mobile menu button */}
             <div className="md:hidden flex items-center space-x-3">
-              <Link href="/login">
-                <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg transition-all duration-200">
-                  Entrar
-                </Button>
-              </Link>
               {registrationSettings?.publicRegistrationEnabled ? (
                 <Link href="/request-code">
                   <Button size="sm" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg">
@@ -210,6 +205,11 @@ export default function Landing() {
                   Cerrado
                 </Button>
               )}
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 font-medium px-3 py-1.5 rounded-lg transition-all duration-200">
+                  Entrar
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
