@@ -860,7 +860,7 @@ export class DrizzleStorage implements IStorage {
       const [created] = await db
         .insert(schema.registrationSettings)
         .values({
-          registrationEnabled: updates.publicRegistrationEnabled ?? true,
+          publicRegistrationEnabled: updates.publicRegistrationEnabled ?? true,
           createdAt: new Date(),
           updatedAt: new Date()
         })

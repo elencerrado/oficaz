@@ -173,20 +173,34 @@ export default function Landing() {
                   Iniciar Sesión
                 </Button>
               </Link>
-              <Link href="/request-code">
-                <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
-                  Prueba Gratis
+              {registrationSettings?.publicRegistrationEnabled ? (
+                <Link href="/request-code">
+                  <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
+                    Prueba Gratis
+                  </Button>
+                </Link>
+              ) : (
+                <Button size="sm" className="bg-gray-400 cursor-not-allowed" disabled>
+                  Registro Cerrado
                 </Button>
-              </Link>
+              )}
             </nav>
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <Link href="/login">
-                <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
-                  Entrar
-                </Button>
-              </Link>
+              {registrationSettings?.publicRegistrationEnabled ? (
+                <Link href="/request-code">
+                  <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
+                    Registrarse
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <Button size="sm" variant="outline">
+                    Entrar
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
