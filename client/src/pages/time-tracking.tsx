@@ -1039,63 +1039,128 @@ export default function TimeTracking() {
           </div>
         </div>
 
-        {/* Contenedor para indicadores de tiempo con tooltip */}
+        {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
         <div className="relative h-4 mt-1">
-          {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
-            const sessionStart = new Date(session.clockIn);
-            const sessionEnd = new Date(session.clockOut);
-            
-            // Posición relativa dentro del día
-            const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
-            const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-            
-            const leftPercentage = (startOffset / totalDayDuration) * 100;
-            const widthPercentage = (sessionDuration / totalDayDuration) * 100;
-            
-            return (
-              <div key={`session-indicators-${sessionIndex}`} className="relative">
-                {/* Indicador de entrada */}
-                <div
-                  className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help group"
-                  style={{ left: `${leftPercentage}%`, top: '1px', transform: 'translateX(-50%)' }}
-                  title={`Entrada: ${formatTime(sessionStart)}`}
-                >
-                  {/* Tooltip hover */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-black text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-                    Entrada: {formatTime(sessionStart)}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-black"></div>
-                  </div>
-                </div>
-                
-                {/* Indicador de salida */}
-                <div
-                  className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help group"
-                  style={{ left: `${leftPercentage + widthPercentage}%`, top: '1px', transform: 'translateX(-50%)' }}
-                  title={`Salida: ${formatTime(sessionEnd)}`}
-                >
-                  {/* Tooltip hover */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-black text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-                    Salida: {formatTime(sessionEnd)}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-black"></div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          
-          {/* Mostrar solo la última hora registrada como texto visible */}
           {(() => {
-            const allSessions = dayData.sessions.filter((session: any) => session.clockOut);
-            if (allSessions.length === 0) return null;
-            
-            const lastSession = allSessions[allSessions.length - 1];
-            const lastTime = new Date(lastSession.clockOut);
-            
-            return (
-              <div className="absolute right-0 top-0 text-xs text-gray-600 font-medium">
-                Último: {formatTime(lastTime)}
+            // Preparar todas las etiquetas de tiempo con sus posiciones
+            const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
+            const timeLabels: Array<{
+              text: string;
+              position: number;
+              type: 'start' | 'end';
+              sessionIndex: number;
+              originalPosition: number;
+            }> = [];
+
+            completedSessions.forEach((session: any, sessionIndex: number) => {
+              const sessionStart = new Date(session.clockIn);
+              const sessionEnd = new Date(session.clockOut);
+              
+              // Posición relativa dentro del día
+              const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+              const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+              
+              const leftPercentage = (startOffset / totalDayDuration) * 100;
+              const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+
+              // Agregar etiqueta de entrada
+              timeLabels.push({
+                text: formatTime(sessionStart),
+                position: leftPercentage,
+                originalPosition: leftPercentage,
+                type: 'start',
+                sessionIndex
+              });
+
+              // Agregar etiqueta de salida
+              timeLabels.push({
+                text: formatTime(sessionEnd),
+                position: leftPercentage + widthPercentage,
+                originalPosition: leftPercentage + widthPercentage,
+                type: 'end',
+                sessionIndex
+              });
+            });
+
+            // Ordenar etiquetas por posición
+            timeLabels.sort((a, b) => a.originalPosition - b.originalPosition);
+
+            // Detectar si hay superposiciones significativas
+            const minDistance = 12; // Distancia mínima para considerar superposición
+            let hasOverlaps = false;
+            for (let i = 0; i < timeLabels.length - 1; i++) {
+              if (timeLabels[i + 1].position - timeLabels[i].position < minDistance) {
+                hasOverlaps = true;
+                break;
+              }
+            }
+
+            // Si hay muchas superposiciones (más de 4 etiquetas), usar sistema de puntos con tooltips
+            if (timeLabels.length > 4 && hasOverlaps) {
+              return (
+                <>
+                  {/* Puntos indicadores con tooltips */}
+                  {completedSessions.map((session: any, sessionIndex: number) => {
+                    const sessionStart = new Date(session.clockIn);
+                    const sessionEnd = new Date(session.clockOut);
+                    
+                    const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                    const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                    
+                    const leftPercentage = (startOffset / totalDayDuration) * 100;
+                    const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+                    
+                    return (
+                      <div key={`session-indicators-${sessionIndex}`} className="relative">
+                        {/* Indicador de entrada */}
+                        <div
+                          className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help group"
+                          style={{ left: `${leftPercentage}%`, top: '1px', transform: 'translateX(-50%)' }}
+                        >
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-black text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                            Entrada: {formatTime(sessionStart)}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-black"></div>
+                          </div>
+                        </div>
+                        
+                        {/* Indicador de salida */}
+                        <div
+                          className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help group"
+                          style={{ left: `${leftPercentage + widthPercentage}%`, top: '1px', transform: 'translateX(-50%)' }}
+                        >
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs bg-black text-white rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
+                            Salida: {formatTime(sessionEnd)}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-black"></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Mostrar solo la última hora registrada como texto visible */}
+                  <div className="absolute right-0 top-0 text-xs text-gray-600 font-medium">
+                    Último: {formatTime(new Date(completedSessions[completedSessions.length - 1].clockOut))}
+                  </div>
+                </>
+              );
+            }
+
+            // Si no hay muchas superposiciones, mostrar texto normal
+            return timeLabels.map((label, index) => (
+              <div
+                key={`time-${label.sessionIndex}-${label.type}-${index}`}
+                className={`absolute text-xs font-medium whitespace-nowrap ${
+                  label.type === 'start' ? 'text-green-700' : 'text-red-700'
+                }`}
+                style={{ 
+                  left: `${Math.max(2, Math.min(98, label.position))}%`,
+                  top: '0px',
+                  transform: 'translateX(-50%)'
+                }}
+              >
+                {label.text}
               </div>
-            );
+            ));
           })()}
         </div>
       </div>
