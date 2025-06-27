@@ -129,6 +129,11 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Logos de Oficaz corregidos en todas las páginas legales
+  - Reemplazados logos improvisados (icono cookie, letra "O") por logo real de Oficaz
+  - Política de Cookies, Privacidad y Términos ahora muestran imagotipo oficial
+  - Logo con altura h-10 y ancho automático para proporciones correctas
+  - Importación consistente desde '@assets/Imagotipo Oficaz_1750321812493.png'
 - June 27, 2025. Navegación del header optimizada con anclas en español
   - Anclas cambiadas a español: #funciones y #precios en lugar de #features y #pricing
   - Eliminada ancla #testimonials del header ya que la sección fue removida

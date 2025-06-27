@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Cookie, Shield, Settings, BarChart3, Target, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Cookies() {
   return (
@@ -8,28 +9,30 @@ export default function Cookies() {
       {/* Header */}
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
             <Link href="/">
               <Button variant="ghost" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Volver al inicio
               </Button>
             </Link>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#007AFF]/10 rounded-lg flex items-center justify-center">
-                <Cookie className="w-5 h-5 text-[#007AFF]" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Política de Cookies</h1>
-                <p className="text-gray-500">Última actualización: 26 de junio de 2025</p>
-              </div>
-            </div>
+            <img src={oficazLogo} alt="Oficaz" className="h-10 w-auto" />
           </div>
         </div>
       </header>
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-12">
+        {/* Title Section */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-12 h-12 bg-[#007AFF]/10 rounded-lg flex items-center justify-center">
+            <Cookie className="w-6 h-6 text-[#007AFF]" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Política de Cookies</h1>
+            <p className="text-gray-500 mt-1">Última actualización: 26 de junio de 2025</p>
+          </div>
+        </div>
         <div className="prose prose-gray max-w-none">
           
           {/* Introducción */}
