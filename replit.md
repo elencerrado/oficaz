@@ -129,6 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Sistema de tooltips para descansos implementado completamente
+  - Tooltips dinámicos para descansos activos y completados en línea de tiempo de fichajes
+  - Descansos activos: "Descanso en progreso: X min" con posicionamiento inteligente
+  - Descansos completados: "Descanso: HH:MM - HH:MM (X min)" con duración y horarios
+  - Sistema de tooltip personalizable con tooltipContent state y eventos mouse optimizados
+  - Eventos onMouseEnter/onMouseLeave para mostrar/ocultar tooltips con limpieza de estado
+  - Posicionamiento automático centrado sobre barras con flecha indicadora inferior
+  - Compatible tanto con barras grises (completados) como naranjas pulsantes (activos)
 - June 27, 2025. Sistema de mensajes dinámicos integrado en cajón de fichaje y toasts eliminados
   - Toasts de fichaje completamente eliminados y reemplazados por mensajes integrados
   - Línea de estado con colores distintivos: "🟢 Trabajando..." (verde) o "🔴 Fuera del trabajo" (rojo)
