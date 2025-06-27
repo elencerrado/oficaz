@@ -298,14 +298,34 @@ export default function EmployeeTimeTracking() {
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Admin-style timeline bar */}
-        <div className="relative h-7 mb-4">
-          {/* Main session bar - h-5 like admin */}
+        {/* Admin-style timeline bar - más ancho */}
+        <div className="relative h-7 mb-2 mx-2">
+          {/* Main session bar - h-5 like admin, más ancho del contenedor */}
           <div
             className="absolute top-0 h-5 bg-blue-500 rounded-sm"
             style={{
+              left: `${Math.max(0, leftPercentage - 2)}%`,
+              width: `${Math.min(100, widthPercentage + 4)}%`
+            }}
+          />
+          
+          {/* Punto de entrada - verde, alineado con la barra */}
+          <div
+            className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+            style={{
               left: `${leftPercentage}%`,
-              width: `${widthPercentage}%`
+              top: '4px',
+              transform: 'translateX(-50%)'
+            }}
+          />
+          
+          {/* Punto de salida - rojo, ligeramente a la derecha */}
+          <div
+            className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+            style={{
+              left: `${leftPercentage + widthPercentage + 1}%`,
+              top: '4px',
+              transform: 'translateX(-50%)'
             }}
           />
           
@@ -323,13 +343,17 @@ export default function EmployeeTimeTracking() {
             const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
             const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Minimum 2%
             
+            // Calcular posición real considerando el margen de la barra expandida
+            const actualBarLeft = Math.max(0, leftPercentage - 2);
+            const actualBarWidth = Math.min(100, widthPercentage + 4);
+            
             return (
               <div
                 key={`break-${breakIndex}`}
                 className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
                 style={{
-                  left: `${leftPercentage + (breakLeftPercentageInSession * widthPercentage / 100)}%`,
-                  width: `${(breakWidthPercentageInSession * widthPercentage / 100)}%`
+                  left: `${actualBarLeft + (breakLeftPercentageInSession * actualBarWidth / 100)}%`,
+                  width: `${(breakWidthPercentageInSession * actualBarWidth / 100)}%`
                 }}
                 onMouseEnter={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
@@ -352,8 +376,8 @@ export default function EmployeeTimeTracking() {
           })}
         </div>
 
-        {/* Time labels below the bar */}
-        <div className="relative h-4 mb-2">
+        {/* Time labels closer to the bar - más cerca */}
+        <div className="relative h-3 mb-2 mx-2">
           <span 
             className="absolute text-xs text-white/70 transform -translate-x-1/2"
             style={{ left: `${leftPercentage}%` }}
@@ -362,7 +386,7 @@ export default function EmployeeTimeTracking() {
           </span>
           <span 
             className="absolute text-xs text-white/70 transform -translate-x-1/2"
-            style={{ left: `${leftPercentage + widthPercentage}%` }}
+            style={{ left: `${leftPercentage + widthPercentage + 1}%` }}
           >
             {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
           </span>
@@ -560,8 +584,8 @@ export default function EmployeeTimeTracking() {
                                 </span>
                               </div>
 
-                              {/* Multiple session bars */}
-                              <div className="relative h-7 mb-4">
+                              {/* Multiple session bars - más ancho */}
+                              <div className="relative h-7 mb-2 mx-2">
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
                                   
@@ -583,12 +607,32 @@ export default function EmployeeTimeTracking() {
                                   
                                   return (
                                     <div key={`session-${session.id}`} className="relative">
-                                      {/* Session bar */}
+                                      {/* Session bar - más ancho */}
                                       <div
                                         className="absolute top-0 h-5 bg-blue-500 rounded-sm"
                                         style={{
+                                          left: `${Math.max(0, leftPercentage - 1)}%`,
+                                          width: `${Math.min(100, widthPercentage + 2)}%`
+                                        }}
+                                      />
+                                      
+                                      {/* Punto de entrada - verde */}
+                                      <div
+                                        className="absolute w-3 h-3 bg-green-400 rounded-full border-2 border-white shadow-md"
+                                        style={{
                                           left: `${leftPercentage}%`,
-                                          width: `${widthPercentage}%`
+                                          top: '4px',
+                                          transform: 'translateX(-50%)'
+                                        }}
+                                      />
+                                      
+                                      {/* Punto de salida - rojo */}
+                                      <div
+                                        className="absolute w-3 h-3 bg-red-400 rounded-full border-2 border-white shadow-md"
+                                        style={{
+                                          left: `${leftPercentage + widthPercentage + 0.5}%`,
+                                          top: '4px',
+                                          transform: 'translateX(-50%)'
                                         }}
                                       />
                                       
@@ -605,13 +649,17 @@ export default function EmployeeTimeTracking() {
                                         const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
                                         const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2);
                                         
+                                        // Calcular posición considerando la barra expandida
+                                        const actualBarLeft = Math.max(0, leftPercentage - 1);
+                                        const actualBarWidth = Math.min(100, widthPercentage + 2);
+                                        
                                         return (
                                           <div
                                             key={`break-${breakIndex}`}
                                             className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
                                             style={{
-                                              left: `${leftPercentage + (breakLeftPercentageInSession * widthPercentage / 100)}%`,
-                                              width: `${(breakWidthPercentageInSession * widthPercentage / 100)}%`
+                                              left: `${actualBarLeft + (breakLeftPercentageInSession * actualBarWidth / 100)}%`,
+                                              width: `${(breakWidthPercentageInSession * actualBarWidth / 100)}%`
                                             }}
                                             title={`Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`}
                                           />
@@ -622,8 +670,8 @@ export default function EmployeeTimeTracking() {
                                 })}
                               </div>
 
-                              {/* Time labels for all sessions */}
-                              <div className="relative h-4 mb-2">
+                              {/* Time labels for all sessions - más cerca */}
+                              <div className="relative h-3 mb-2 mx-2">
                                 {sortedDaySessions.map((session) => {
                                   if (!session.clockOut) return null;
                                   
@@ -650,7 +698,7 @@ export default function EmployeeTimeTracking() {
                                       </span>
                                       <span 
                                         className="absolute text-xs text-white/70 transform -translate-x-1/2"
-                                        style={{ left: `${leftPercentage + widthPercentage}%` }}
+                                        style={{ left: `${leftPercentage + widthPercentage + 0.5}%` }}
                                       >
                                         {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                                       </span>
