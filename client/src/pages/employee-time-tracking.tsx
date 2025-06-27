@@ -741,10 +741,7 @@ export default function EmployeeTimeTracking() {
                                 </div>
                               )}
 
-                              {/* Sessions info */}
-                              <div className="text-xs text-white/50 mt-2">
-                                {sortedDaySessions.length} tramos de trabajo
-                              </div>
+
                             </div>
                           );
                         }
