@@ -1,9 +1,10 @@
+import React from "react";
 import { Link } from "wouter";
 import { Cookie, Shield, Settings, BarChart3, Target, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
-export default function Cookies() {
+const Cookies = React.memo(() => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -294,4 +295,8 @@ export default function Cookies() {
       </main>
     </div>
   );
-}
+});
+
+Cookies.displayName = 'Cookies';
+
+export default Cookies;
