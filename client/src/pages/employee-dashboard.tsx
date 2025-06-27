@@ -481,8 +481,10 @@ export default function EmployeeDashboard() {
         <div className="text-center mb-2">
           <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-2">
             {/* Status Line */}
-            <div className="text-white/70 text-xs mb-2 font-medium">
-              {activeSession ? 'Trabajando...' : 'Fuera del trabajo'}
+            <div className={`text-xs mb-2 font-medium ${
+              activeSession ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {activeSession ? '🟢 Trabajando...' : '🔴 Fuera del trabajo'}
             </div>
             
             {temporaryMessage ? (
