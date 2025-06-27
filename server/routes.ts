@@ -2578,11 +2578,9 @@ startxref
       const invitation = await storage.createInvitationLink({
         email,
         token,
-        inviterName: inviterName || 'Super Admin',
-        companyName: companyName || 'Oficaz',
         expiresAt,
-        isUsed: false,
-        createdById: req.superAdmin.id
+        used: false,
+        createdBy: req.superAdmin.id
       });
 
       // Generate invitation URL
