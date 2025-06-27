@@ -224,7 +224,7 @@ export default function SuperAdminInvitations() {
               </div>
               <div className="flex items-center gap-3">
                 <Label htmlFor="public-registration" className="text-white text-sm font-medium">
-                  {settings?.publicRegistrationEnabled ? 'Registro Público Activo' : 'Solo por Invitación'}
+                  {settings?.publicRegistrationEnabled ? 'Permitir Registro Público' : 'Bloquear Registro Público'}
                 </Label>
                 <Switch
                   id="public-registration"
@@ -241,12 +241,12 @@ export default function SuperAdminInvitations() {
                 <div className={`w-2 h-2 rounded-full mt-2 ${settings?.publicRegistrationEnabled ? 'bg-green-400' : 'bg-orange-400'}`} />
                 <div>
                   <p className="text-white text-sm font-medium mb-1">
-                    {settings?.publicRegistrationEnabled ? 'Modo Público' : 'Modo Restringido'}
+                    {settings?.publicRegistrationEnabled ? 'Acceso Abierto' : 'Acceso Restringido'}
                   </p>
                   <p className="text-white/70 text-xs">
                     {settings?.publicRegistrationEnabled 
-                      ? 'Cualquier usuario puede acceder al formulario de registro desde la landing page'
-                      : 'Solo usuarios con un enlace de invitación válido pueden registrar nuevas empresas'
+                      ? 'Los botones de registro están visibles en la landing page. Cualquier usuario puede registrar su empresa'
+                      : 'Los botones de registro están ocultos en la landing page. Solo se puede registrar con enlaces de invitación'
                     }
                   </p>
                 </div>
