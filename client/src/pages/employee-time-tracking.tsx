@@ -541,49 +541,48 @@ export default function EmployeeTimeTracking() {
         )}
       </div>
 
-      {/* Month Total Hours - Fixed height */}
+      {/* Month Total Hours with 4 Month Statistics */}
       <div 
-        className="px-6 mb-6 h-20"
+        className="px-6 mb-6"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 h-full flex items-center justify-center">
-          <div className="text-center">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          {/* Total del mes */}
+          <div className="text-center mb-4">
             <p className="text-white/70 text-sm mb-1">Total del mes</p>
             <p className="text-2xl font-bold text-white">{formatTotalHours(totalMonthHours)}</p>
           </div>
-        </div>
-      </div>
-
-      {/* 4 Month Statistics - Mini Charts */}
-      <div className="px-6 mb-6">
-        <div className="grid grid-cols-4 gap-2">
-          {getLast4MonthsData().map((monthData, index) => (
-            <div 
-              key={monthData.month}
-              className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 transition-all duration-500 ${
-                monthData.isCurrentMonth ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
-              }`}
-              style={{
-                animationDelay: `${index * 100}ms`,
-                animation: 'fadeInUp 0.6s ease-out forwards'
-              }}
-            >
-              <div className="text-center">
-                <p className="text-white/60 text-xs mb-1 font-medium">{monthData.month}</p>
-                <div className="relative h-8 mb-1">
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 bg-blue-400 rounded-t-sm transition-all duration-700"
-                       style={{ 
-                         height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
-                         minHeight: monthData.hours > 0 ? '4px' : '0px'
-                       }}
-                  />
+          
+          {/* 4 Month Statistics - Mini Charts */}
+          <div className="grid grid-cols-4 gap-3">
+            {getLast4MonthsData().map((monthData, index) => (
+              <div 
+                key={monthData.month}
+                className={`bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10 transition-all duration-500 ${
+                  monthData.isCurrentMonth ? 'ring-2 ring-blue-400/50 bg-blue-500/10' : ''
+                }`}
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animation: 'fadeInUp 0.6s ease-out forwards'
+                }}
+              >
+                <div className="text-center">
+                  <p className="text-white/60 text-xs mb-1 font-medium">{monthData.month}</p>
+                  <div className="relative h-10 mb-1">
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3 bg-blue-400 rounded-t-sm transition-all duration-700"
+                         style={{ 
+                           height: `${(monthData.hours / Math.max(...getLast4MonthsData().map(m => m.hours), 1)) * 100}%`,
+                           minHeight: monthData.hours > 0 ? '6px' : '0px'
+                         }}
+                    />
+                  </div>
+                  <p className="text-white text-xs font-mono">{monthData.hours.toFixed(0)}h</p>
                 </div>
-                <p className="text-white text-xs font-mono">{monthData.hours.toFixed(0)}h</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
