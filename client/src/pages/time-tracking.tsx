@@ -813,10 +813,10 @@ export default function TimeTracking() {
           {/* Timeline visual progresivo */}
           <div className="relative h-5">
             {/* Línea base gris */}
-            <div className="h-3 bg-gray-200 rounded-sm relative overflow-hidden">
+            <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
               {/* Barra azul progresiva (se va llenando en tiempo real) */}
               <div
-                className="absolute top-0 h-3 bg-blue-500 rounded-sm transition-all duration-1000"
+                className="absolute top-0 h-5 bg-blue-500 rounded-sm transition-all duration-1000"
                 style={{
                   left: '0%',
                   width: `${progressPercentage}%`
@@ -836,7 +836,7 @@ export default function TimeTracking() {
                 return (
                   <div
                     key={`break-bar-${breakIndex}`}
-                    className="absolute top-0.5 h-2 bg-orange-400 rounded-sm"
+                    className="absolute top-0.5 h-4 bg-orange-400 rounded-sm"
                     style={{
                       left: `${breakLeftPercentage}%`,
                       width: `${breakWidthPercentage}%`
@@ -848,7 +848,7 @@ export default function TimeTracking() {
               {/* Descanso activo como slider naranja pulsante */}
               {activeBreakPeriod && (
                 <div
-                  className="absolute top-0.5 h-2 bg-orange-400 rounded-sm animate-pulse"
+                  className="absolute top-0.5 h-4 bg-orange-400 rounded-sm animate-pulse"
                   style={{
                     left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
                     width: `${Math.min((((now.getTime() - activeBreakStart!.getTime()) / sessionElapsedMs) * progressPercentage), 8)}%`
@@ -859,7 +859,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Contenedor para horas ABAJO de las barras */}
-          <div className="relative h-4">
+          <div className="relative h-3 mt-1">
             {/* Hora de entrada - izquierda */}
             <div
               className="absolute text-xs text-green-700 font-medium"
