@@ -1035,7 +1035,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-4 mt-1">
+        <div className="relative h-6 mt-1" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
             const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
@@ -1094,9 +1094,11 @@ export default function TimeTracking() {
               }
             }
 
-            // Umbral más inteligente: si más del 40% de elementos se solapan O hay más de 6 elementos totales
-            const overlapThreshold = Math.max(2, Math.floor(timeLabels.length * 0.4));
-            if (timeLabels.length > 6 || significantOverlaps >= overlapThreshold) {
+            // Umbral más estricto: ocultar horas cuando los puntos están muy cerca
+            const overlapThreshold = 0; // Cualquier solapamiento activa modo compacto
+            const shouldUseCompactMode = timeLabels.length > 8 || significantOverlaps >= overlapThreshold;
+            
+            if (shouldUseCompactMode) {
               return completedSessions.map((session: any, sessionIndex: number) => {
                 const sessionStart = new Date(session.clockIn);
                 const sessionEnd = new Date(session.clockOut);

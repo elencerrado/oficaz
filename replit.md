@@ -129,6 +129,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Algoritmo de detección de proximidad en timeline corregido definitivamente
+  - Umbral ajustado de 3 a 0 para máxima sensibilidad a la proximidad de puntos
+  - Ahora cuando los puntos de entrada/salida están cerca, se ocultan las horas automáticamente
+  - Sistema funciona correctamente: muestra solo puntos con tooltips hover cuando hay proximidad
+  - Logs de depuración eliminados tras confirmar funcionamiento correcto del algoritmo
+  - Comportamiento: cualquier proximidad detectada activa modo compacto (dots + hover)
 - June 27, 2025. Sistema de tooltips para descansos implementado completamente
   - Tooltips dinámicos para descansos activos y completados en línea de tiempo de fichajes
   - Descansos activos: "Descanso en progreso: X min" con posicionamiento inteligente
