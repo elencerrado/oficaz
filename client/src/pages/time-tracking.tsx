@@ -827,7 +827,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Timeline visual progresivo */}
-          <div className="relative h-5" style={{ paddingTop: '20px', paddingBottom: '20px' }}>
+          <div className="relative h-5">
             {/* Línea base gris */}
             <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
               {/* Barra azul progresiva (se va llenando en tiempo real) */}
@@ -1177,12 +1177,12 @@ export default function TimeTracking() {
                 <div key={`session-hybrid-${sessionIndex}`} className="relative">
                   {/* Entrada: renderizar según si tiene colisión */}
                   {startLabel?.hasCollision ? (
-                    // Con colisión: punto desplazado verticalmente para evitar solapamiento
+                    // Con colisión: punto desplazado horizontalmente ligeramente a la izquierda
                     <div 
                       className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
                       style={{ 
-                        left: `${leftPercentage}%`, 
-                        top: `${-8 - (sessionIndex % 3) * 6}px`, // Desplazamiento vertical escalonado
+                        left: `${leftPercentage - 1}%`, // Desplazamiento horizontal pequeño hacia la izquierda
+                        top: '0px',
                         transform: 'translateX(-50%)',
                         zIndex: 10
                       }}
@@ -1198,12 +1198,12 @@ export default function TimeTracking() {
                   
                   {/* Salida: renderizar según si tiene colisión */}
                   {endLabel?.hasCollision ? (
-                    // Con colisión: punto desplazado verticalmente para evitar solapamiento
+                    // Con colisión: punto desplazado horizontalmente ligeramente a la derecha
                     <div 
                       className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
                       style={{ 
-                        left: `${leftPercentage + widthPercentage}%`, 
-                        top: `${8 + (sessionIndex % 3) * 6}px`, // Desplazamiento vertical escalonado (opuesto a entrada)
+                        left: `${leftPercentage + widthPercentage + 1}%`, // Desplazamiento horizontal pequeño hacia la derecha
+                        top: '0px',
                         transform: 'translateX(-50%)',
                         zIndex: 10
                       }}

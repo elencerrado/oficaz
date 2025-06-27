@@ -129,14 +129,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Sistema híbrido de posicionamiento flexible implementado completamente
-  - Algoritmo que rompe alineación con barra azul cuando detecta colisión entre puntos
-  - Desplazamiento vertical escalonado: entradas hacia arriba, salidas hacia abajo
+- June 27, 2025. Sistema híbrido de posicionamiento horizontal implementado completamente
+  - Algoritmo que detecta colisiones entre puntos y los desplaza horizontalmente
+  - Desplazamiento horizontal sutil: entradas 1% izquierda, salidas 1% derecha
+  - Todos los puntos mantienen alineación vertical con la barra azul (top: 0px)
   - Sistema inteligente: zonas sin colisión mantienen alineación + horas visibles
   - Zonas con colisión usan puntos desplazados + tooltips únicamente
-  - Contenedor timeline expandido con padding para acomodar puntos desplazados
-  - Puntos con bordes blancos y sombras para mejor visibilidad en posiciones flexibles
-  - Sistema completamente funcional que evita solapamientos respetando UX cuando sea posible
+  - Puntos con bordes blancos y sombras para mejor visibilidad
+  - Sistema funcional que evita solapamientos manteniendo línea horizontal consistente
 - June 27, 2025. Algoritmo de detección de proximidad en timeline corregido definitivamente
   - Umbral ajustado de 3 a 0 para máxima sensibilidad a la proximidad de puntos
   - Ahora cuando los puntos de entrada/salida están cerca, se ocultan las horas automáticamente
