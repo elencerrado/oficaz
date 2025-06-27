@@ -652,7 +652,7 @@ export default function EmployeeTimeTracking() {
                   {/* Header de semana */}
                   <div className="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
                     <h3 className="text-white font-medium text-sm">
-                      Semana del {format(weekStart, 'dd MMM', { locale: es })}
+                      {format(weekStart, 'MMMM', { locale: es })} semana del {format(weekStart, 'dd', { locale: es })}-{format(addDays(weekStart, 6), 'dd', { locale: es })}
                     </h3>
                     <span className="text-blue-300 font-mono text-sm bg-blue-400/20 px-2 py-1 rounded-lg">
                       {formatTotalHours(weekTotal)}
