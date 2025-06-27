@@ -129,14 +129,16 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Dashboard de empleado completamente corregido con colores corporativos y optimización móvil
-  - Avatar circular completo usando color azul primario sólido (#007AFF) sin gradientes
-  - Botón de fichar simplificado: color primario #007AFF con hover #0056CC, efectos reducidos
-  - Botones de menú: bg-[#007AFF]/20 border-[#007AFF]/30 con colores corporativos consistentes
-  - Partículas flotantes todas en tonos azules: blue-300, blue-400, blue-500, blue-600
-  - Layout optimizado para móvil: botones reducidos 24x24, espaciado compacto, iconos 12x12
-  - Garantizado botón de fichar visible sin scroll en dispositivos móviles
-  - Eliminados efectos excesivos manteniendo elegancia profesional
+- June 27, 2025. Dashboard de empleado completamente optimizado para móvil sin scroll
+  - Header compacto: avatar 8x8, nombre text-xs, botón salir reducido
+  - Logo empresa reducido a h-6, nombre empresa text-xs para máximo espacio
+  - Contenedor principal usa h-screen sin overflow-y-auto para ajuste perfecto
+  - Botón de fichar reducido a 24x24 (w-24 h-24) con texto text-lg
+  - Información de fichaje compacta: rounded-lg p-2, texto text-xs y text-sm
+  - Espaciado mínimo: mb-2 entre secciones, gap-2 en grid de menú
+  - Layout usando flex flex-col con p-4 para aprovechar toda la ventana
+  - Garantizado que botón de fichar sea visible sin hacer scroll en cualquier móvil
+  - Diseño profesional manteniendo colores corporativos #007AFF consistentes
 - June 27, 2025. Dashboard de empleado completamente rediseñado con estética moderna y elegante
   - Iconos de funcionalidades ampliados y con efectos glassmorphism inspirados en el hero de landing
   - Botones de menú con gradientes, backdrop-blur, efectos hover scale y animaciones de pulso

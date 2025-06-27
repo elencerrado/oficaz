@@ -342,52 +342,52 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
-      {/* Scrollable Content Container */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Header - Moderno y elegante */}
-        <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#007AFF] flex items-center justify-center">
-              <span className="text-white font-bold text-lg">
+      {/* Fixed Content Container - Sin scroll */}
+      <div className="flex-1 flex flex-col p-4">
+        {/* Header - Compacto */}
+        <div className="flex justify-between items-center py-2 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#007AFF] flex items-center justify-center">
+              <span className="text-white font-bold text-xs">
                 {user?.fullName?.split(' ').map(n => n[0]).join('').substring(0, 2) || 'U'}
               </span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white drop-shadow-lg">{user?.fullName}</h1>
+              <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-2 transition-all duration-300 hover:scale-105"
+            className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-2 py-1 text-xs"
           >
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-3 w-3 mr-1" />
             <span className="font-medium">Salir</span>
           </Button>
         </div>
 
-        {/* Company Logo and Name - Limpio y simple */}
-        <div className="flex justify-center mb-6">
+        {/* Company Logo and Name - Compacto */}
+        <div className="flex justify-center mb-2">
           <div className="text-center">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
               <img 
                 src={company.logoUrl} 
                 alt={company.name} 
-                className="h-12 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+                className="h-6 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
               />
             ) : (
-              <div className="text-white text-lg font-semibold drop-shadow-lg">
+              <div className="text-white text-xs font-medium drop-shadow-lg">
                 {company?.name || 'Mi Empresa'}
               </div>
             )}
           </div>
         </div>
 
-        {/* Menu Grid - Moderno y elegante inspirado en el hero */}
-        <div className="px-6 mb-6">
-          <div className="grid grid-cols-3 gap-4">
+        {/* Menu Grid - Compacto */}
+        <div className="mb-2">
+          <div className="grid grid-cols-3 gap-2">
             {menuItems.map((item, index) => {
               const isFeatureDisabled = item.feature && !hasAccess(item.feature);
               
@@ -447,29 +447,25 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        {/* Last Clock In Info - Elegante y moderno */}
-        <div className="px-6 mb-6 text-center">
-          <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-2xl p-4 mx-4">
-            <div className="text-white/60 text-sm mb-2 font-medium">Tu último fichaje</div>
-            <div className="text-white text-lg font-semibold">
+        {/* Last Clock In Info - Compacto */}
+        <div className="text-center mb-2">
+          <div className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-lg p-2">
+            <div className="text-white/60 text-xs mb-1 font-medium">Tu último fichaje</div>
+            <div className="text-white text-sm font-medium">
               {formatLastClockDate() || 'Sin fichajes previos'}
             </div>
           </div>
         </div>
 
-        {/* Clock Button or Vacation Message - Moderno y espectacular */}
-        <div className="flex-1 flex items-center justify-center px-6 pb-8 min-h-[200px]">
+        {/* Clock Button or Vacation Message - Compacto */}
+        <div className="flex-1 flex items-center justify-center pb-4">
           {isOnVacation ? (
             <div className="flex flex-col items-center">
-              <div className="w-40 h-40 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/30 border-4 border-white/20 backdrop-blur-xl">
-                <Palmtree className="w-20 h-20 text-white drop-shadow-lg" />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center mb-3 shadow-lg">
+                <Palmtree className="w-12 h-12 text-white" />
               </div>
-              <p className="text-xl font-bold text-white mb-2 text-center drop-shadow-lg">
-                ¡Disfruta de tus vacaciones,
-              </p>
-              <p className="text-xl font-bold text-white text-center drop-shadow-lg">
-                te las has ganado!
+              <p className="text-sm font-bold text-white text-center">
+                ¡Disfruta de tus vacaciones!
               </p>
             </div>
           ) : (
@@ -477,29 +473,20 @@ export default function EmployeeDashboard() {
               <Button
                 onClick={handleClockAction}
                 disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                className="w-40 h-40 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
+                className="w-24 h-24 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-lg font-bold shadow-lg transition-colors duration-200 relative overflow-hidden"
               >
                 {clockInMutation.isPending || clockOutMutation.isPending ? (
-                  <LoadingSpinner size="lg" className="text-white scale-150" />
+                  <LoadingSpinner size="sm" className="text-white" />
                 ) : (
-                  <>
-                    <span className="relative z-10 drop-shadow-lg">
-                      {activeSession ? 'SALIR' : 'FICHAR'}
-                    </span>
-                  </>
+                  <span className="relative z-10">
+                    {activeSession ? 'SALIR' : 'FICHAR'}
+                  </span>
                 )}
-                {/* Efecto de brillo animado */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500 transform -skew-x-12 animate-pulse"></div>
                 {/* Anillo exterior pulsante cuando está activo */}
                 {activeSession && (
-                  <div className="absolute -inset-2 rounded-full border-2 border-green-400 animate-ping opacity-75"></div>
+                  <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
                 )}
               </Button>
-              {/* Partículas flotantes decorativas */}
-              <div className="absolute -top-4 -left-4 w-3 h-3 bg-blue-400/60 rounded-full animate-bounce delay-100"></div>
-              <div className="absolute -top-2 -right-6 w-2 h-2 bg-blue-300/60 rounded-full animate-bounce delay-300"></div>
-              <div className="absolute -bottom-6 -left-2 w-4 h-4 bg-blue-500/60 rounded-full animate-bounce delay-500"></div>
-              <div className="absolute -bottom-4 -right-4 w-2 h-2 bg-blue-600/60 rounded-full animate-bounce delay-700"></div>
             </div>
           )}
         </div>
