@@ -848,10 +848,11 @@ export default function TimeTracking() {
               {/* Descanso activo como slider naranja pulsante */}
               {activeBreakPeriod && (
                 <div
-                  className="absolute top-0.5 h-4 bg-orange-400 rounded-sm animate-pulse"
+                  className="absolute top-0.5 h-4 bg-orange-400 rounded-sm animate-pulse cursor-help"
                   style={{
                     left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
-                    width: `${Math.min((((now.getTime() - activeBreakStart!.getTime()) / sessionElapsedMs) * progressPercentage), 8)}%`
+                    width: `${Math.max(Math.min((((now.getTime() - activeBreakStart!.getTime()) / sessionElapsedMs) * progressPercentage), 8), 3)}%`,
+                    minWidth: '16px'
                   }}
                   title={`Descanso en progreso: ${Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} minutos`}
                 />
