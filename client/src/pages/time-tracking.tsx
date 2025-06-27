@@ -74,6 +74,8 @@ export default function TimeTracking() {
     date: '',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [showBreakTooltip, setShowBreakTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
@@ -852,10 +854,37 @@ export default function TimeTracking() {
                   style={{
                     left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
                     width: `${Math.max(Math.min((((now.getTime() - activeBreakStart!.getTime()) / sessionElapsedMs) * progressPercentage), 8), 3)}%`,
-                    minWidth: '16px'
+                    minWidth: '20px'
                   }}
-                  title={`Descanso en progreso: ${Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} minutos`}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltipPosition({ 
+                      x: rect.left + rect.width / 2, 
+                      y: rect.top - 10 
+                    });
+                    setShowBreakTooltip(true);
+                  }}
+                  onMouseLeave={() => {
+                    setShowBreakTooltip(false);
+                  }}
                 />
+              )}
+
+              {/* Tooltip personalizado para descanso activo */}
+              {showBreakTooltip && activeBreakPeriod && (
+                <div
+                  className="fixed bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg z-50 pointer-events-none"
+                  style={{
+                    left: `${tooltipPosition.x}px`,
+                    top: `${tooltipPosition.y}px`,
+                    transform: 'translateX(-50%)'
+                  }}
+                >
+                  Descanso en progreso: {Math.round((now.getTime() - activeBreakStart!.getTime()) / (1000 * 60))} minutos
+                  <div 
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"
+                  />
+                </div>
               )}
             </div>
           </div>
