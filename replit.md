@@ -129,12 +129,6 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Timeline de empleado con alineación perfecta de horas totales con barras azules
-  - Horas totales ahora alineadas visualmente con la altura de las barras azules del timeline
-  - Diseño reorganizado: fecha arriba, timeline con horas alineadas en el nivel de la barra
-  - Horas totales en badges semitransparentes posicionados a la derecha de cada barra
-  - Layout consistente aplicado tanto en sesiones individuales como múltiples
-  - Mejora visual significativa para coherencia entre elementos del timeline
 - June 27, 2025. Timeline de empleado finalizado con barras ancho completo y UI optimizada
   - Barras de timeline rediseñadas para ocupar todo el ancho del contenedor (no proporcional)
   - Puntos de entrada (verde) y salida (rojo) sólidos en extremos izquierdo y derecho de barras

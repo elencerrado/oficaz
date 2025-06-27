@@ -307,38 +307,22 @@ export default function EmployeeTimeTracking() {
         className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
         onClick={() => toggleDayExpansion(`${formatDayDate(new Date(session.clockIn))}-${session.id}`)}
       >
-        {/* Fecha arriba */}
-        <div className="mb-3">
+        {/* Header with date and total hours */}
+        <div className="flex justify-between items-center mb-3">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
+          <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Timeline bar con horas alineadas a los límites */}
+        {/* Admin-style timeline bar - ancho completo */}
         <div className="relative h-6 mb-2 mx-2">
-          {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
-          <div
-            className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
-            style={{
-              left: '0%',
-              width: '100%'
-            }}
-          />
-          
-          {/* Horas de entrada y salida alineadas con límites de la barra */}
-          <div className="absolute top-0 h-5 w-full flex justify-between items-center px-1 text-xs font-mono">
-            <span className="text-white bg-black/50 px-1 rounded">
-              {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <span className="text-white bg-black/50 px-1 rounded">
-              {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-          
-          {/* Horas totales en esquina superior derecha */}
-          <div className="absolute -top-1 -right-2">
-            <span className="text-white/90 font-mono text-xs bg-blue-600/80 px-2 py-0.5 rounded">
-              {formatTotalHours(calculateSessionHours(session))}
-            </span>
-          </div>
+            {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
+            <div
+              className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
+              style={{
+                left: '0%',
+                width: '100%'
+              }}
+            />
             
             {/* Break periods as orange bars inside the session bar */}
             {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
@@ -596,22 +580,18 @@ export default function EmployeeTimeTracking() {
                               className="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-2 border border-white/20 cursor-pointer"
                               onClick={() => toggleDayExpansion(`${formatDayDate(new Date(dayKey))}-multi`)}
                             >
-                              {/* Fecha arriba */}
-                              <div className="mb-3">
+                              {/* Header with date and total hours */}
+                              <div className="flex justify-between items-center mb-3">
                                 <span className="text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
+                                <span className="text-white/90 font-mono text-sm">
+                                  {formatTotalHours(dayTotal)}
+                                </span>
                               </div>
 
-                              {/* Timeline bar - sesiones múltiples */}
+                              {/* Multiple session bars - en la misma línea horizontal */}
                               <div className="relative h-6 mb-2 mx-2">
-                                {/* Horas totales en esquina superior derecha */}
-                                <div className="absolute -top-1 -right-2">
-                                  <span className="text-white/90 font-mono text-xs bg-blue-600/80 px-2 py-0.5 rounded">
-                                    {formatTotalHours(dayTotal)}
-                                  </span>
-                                </div>
-                                
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
@@ -622,24 +602,15 @@ export default function EmployeeTimeTracking() {
                                   const sessionWidth = (100 - totalGaps) / sortedDaySessions.length;
                                   const sessionLeft = sessionIndex * (sessionWidth + gapPercentage);
                                   
-                                  const sessionStart = new Date(session.clockIn);
-                                  const sessionEnd = new Date(session.clockOut);
-                                  
                                   return (
-                                    <div key={`session-bar-${session.id}`} className="absolute" style={{ left: `${sessionLeft}%`, width: `${sessionWidth}%` }}>
-                                      {/* Barra de sesión */}
-                                      <div className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full" />
-                                      
-                                      {/* Horas de entrada y salida dentro de cada barra */}
-                                      <div className="absolute top-0 h-5 w-full flex justify-between items-center px-1 text-xs font-mono">
-                                        <span className="text-white bg-black/50 px-1 rounded text-xs">
-                                          {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                        <span className="text-white bg-black/50 px-1 rounded text-xs">
-                                          {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                      </div>
-                                    </div>
+                                    <div
+                                      key={`session-bar-${session.id}`}
+                                      className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                                      style={{
+                                        left: `${sessionLeft}%`,
+                                        width: `${sessionWidth}%`
+                                      }}
+                                    />
                                   );
                                 })}
                                 
