@@ -136,13 +136,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
-- June 27, 2025. Chat móvil empleado completamente funcional y visible
-  - Corregida visibilidad del chat en versión móvil empleado con fondo degradado apropiado
+- June 27, 2025. Chat empleado completamente funcional en desktop y móvil - PROBLEMA CRÍTICO RESUELTO
+  - CORREGIDO: Chat empleado ahora visible en ambas versiones (desktop Y móvil)
+  - Eliminada clase lg:hidden que ocultaba el chat empleado en pantallas grandes
+  - Visibilidad del chat en versión móvil mejorada con fondo degradado #1A2332 a #0F1419
   - Auto-scroll optimizado con selector específico para contenedor móvil empleado
   - Búsqueda inteligente de contenedor scrollable dentro de vista móvil oscura
   - Múltiples intentos de scroll (100ms, 300ms, 600ms) para asegurar funcionamiento
-  - Sistema PROTEGIDO con comentarios ⚠️ para prevenir modificaciones futuras
-  - Chat ahora perfectamente visible con fondo #1A2332 a #0F1419 para máximo contraste
+  - Sistema PROTEGIDO con comentarios ⚠️ DO NOT MODIFY para prevenir regresiones futuras
+  - Chat empleado ahora funciona perfectamente en todas las resoluciones de pantalla
 - June 27, 2025. Optimización crítica de rendimiento completada - polling reducido significativamente
   - Employee Dashboard: intervals de polling aumentados de 3-15s a 10-120s en todas las queries  
   - Work sessions activas: 3s → 10s para balance entre tiempo real y rendimiento

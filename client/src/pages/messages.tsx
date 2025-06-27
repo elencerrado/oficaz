@@ -990,11 +990,11 @@ export default function Messages() {
     );
   }
 
-  // Employee view - Mobile-first design - PROTECTED FROM ADMIN CHANGES
+  // Employee view - Responsive design for desktop and mobile
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
       {!selectedChat ? (
-        /* Employee Dashboard - List of managers - STABLE VERSION */
+        /* Employee Dashboard - List of managers - RESPONSIVE VERSION */
         (<>
           {/* Header - Standard employee pattern */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
@@ -1094,9 +1094,10 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee Mobile Version */
+            /* Chat View - Employee Responsive Version - ⚠️ PROTECTED DO NOT MODIFY */
+            /* Desktop & Mobile visibility REQUIRED - DO NOT add lg:hidden class */
             (<div 
-              className="fixed inset-0 z-[60] flex flex-col lg:hidden"
+              className="fixed inset-0 z-[60] flex flex-col"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
