@@ -1094,13 +1094,14 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - EXACT COPY FROM ADMIN MOBILE LINE 657 */
+            /* Chat View - Employee Mobile Version */
             (<div 
-              className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
+              className="fixed inset-0 z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
-                position: 'fixed'
+                position: 'fixed',
+                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)'
               }}
             >
               {/* Chat Header - EMPLOYEE DARK VERSION */}
@@ -1136,7 +1137,7 @@ export default function Messages() {
               <div 
                 className="flex-1 overflow-y-auto px-4 py-4"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
                   WebkitOverflowScrolling: 'touch'
