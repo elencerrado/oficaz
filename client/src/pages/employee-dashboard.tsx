@@ -347,14 +347,13 @@ export default function EmployeeDashboard() {
         {/* Header - Moderno y elegante */}
         <div className="flex justify-between items-center p-6 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-white/20 to-white/10 border border-white/30 flex items-center justify-center backdrop-blur-xl">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/30 to-blue-600/20 border border-blue-400/30 flex items-center justify-center backdrop-blur-xl">
               <span className="text-white font-bold text-lg">
                 {user?.fullName?.split(' ').map(n => n[0]).join('').substring(0, 2) || 'U'}
               </span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-white drop-shadow-lg">{user?.fullName}</h1>
-              <p className="text-white/70 text-sm font-medium">Empleado</p>
             </div>
           </div>
           <Button
@@ -368,23 +367,19 @@ export default function EmployeeDashboard() {
           </Button>
         </div>
 
-        {/* Company Logo and Name - Elegante y moderno */}
+        {/* Company Logo and Name - Limpio y simple */}
         <div className="flex justify-center mb-8">
           <div className="text-center">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-6 mx-4 shadow-2xl">
-                <img 
-                  src={company.logoUrl} 
-                  alt={company.name} 
-                  className="h-20 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
-                />
-              </div>
+              <img 
+                src={company.logoUrl} 
+                alt={company.name} 
+                className="h-12 w-auto mx-auto object-contain filter brightness-0 invert drop-shadow-lg"
+              />
             ) : (
-              <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-6 mx-4 shadow-2xl">
-                <div className="text-white text-xl font-bold drop-shadow-lg">
-                  {company?.name || 'Mi Empresa'}
-                </div>
+              <div className="text-white text-lg font-semibold drop-shadow-lg">
+                {company?.name || 'Mi Empresa'}
               </div>
             )}
           </div>
@@ -417,15 +412,9 @@ export default function EmployeeDashboard() {
                     className={`relative w-28 h-28 transition-all duration-300 rounded-2xl flex items-center justify-center mb-3 backdrop-blur-xl border ${
                       isFeatureDisabled 
                         ? 'bg-gray-500/20 border-gray-400/30 cursor-not-allowed opacity-40' 
-                        : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40 hover:shadow-2xl hover:shadow-blue-500/20 transform hover:scale-110 hover:-translate-y-1 group-hover:animate-pulse'
+                        : 'bg-blue-500/20 border-blue-400/30 hover:bg-blue-500/30 hover:border-blue-400/50 hover:shadow-2xl hover:shadow-blue-500/30 transform hover:scale-110 hover:-translate-y-1 group-hover:animate-pulse'
                     }`}
                     disabled={isFeatureDisabled}
-                    style={{
-                      background: !isFeatureDisabled ? `linear-gradient(135deg, 
-                        rgba(59, 130, 246, 0.3) 0%, 
-                        rgba(139, 92, 246, 0.2) 50%, 
-                        rgba(16, 185, 129, 0.2) 100%)` : undefined
-                    }}
                   >
                     <item.icon className={`h-14 w-14 transition-all duration-300 ${
                       isFeatureDisabled 
@@ -488,13 +477,7 @@ export default function EmployeeDashboard() {
               <Button
                 onClick={handleClockAction}
                 disabled={clockInMutation.isPending || clockOutMutation.isPending}
-                className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 hover:from-blue-400 hover:via-blue-500 hover:to-purple-500 text-white text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-4 border-white/20 backdrop-blur-xl relative overflow-hidden"
-                style={{
-                  background: `linear-gradient(135deg, 
-                    rgba(59, 130, 246, 0.9) 0%, 
-                    rgba(147, 51, 234, 0.8) 50%, 
-                    rgba(16, 185, 129, 0.7) 100%)`
-                }}
+                className="w-40 h-40 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 text-white text-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-4 border-white/20 backdrop-blur-xl relative overflow-hidden"
               >
                 {clockInMutation.isPending || clockOutMutation.isPending ? (
                   <LoadingSpinner size="lg" className="text-white scale-150" />
@@ -514,9 +497,9 @@ export default function EmployeeDashboard() {
               </Button>
               {/* Partículas flotantes decorativas */}
               <div className="absolute -top-4 -left-4 w-3 h-3 bg-blue-400/60 rounded-full animate-bounce delay-100"></div>
-              <div className="absolute -top-2 -right-6 w-2 h-2 bg-purple-400/60 rounded-full animate-bounce delay-300"></div>
-              <div className="absolute -bottom-6 -left-2 w-4 h-4 bg-cyan-400/60 rounded-full animate-bounce delay-500"></div>
-              <div className="absolute -bottom-4 -right-4 w-2 h-2 bg-green-400/60 rounded-full animate-bounce delay-700"></div>
+              <div className="absolute -top-2 -right-6 w-2 h-2 bg-blue-300/60 rounded-full animate-bounce delay-300"></div>
+              <div className="absolute -bottom-6 -left-2 w-4 h-4 bg-blue-500/60 rounded-full animate-bounce delay-500"></div>
+              <div className="absolute -bottom-4 -right-4 w-2 h-2 bg-blue-600/60 rounded-full animate-bounce delay-700"></div>
             </div>
           )}
         </div>

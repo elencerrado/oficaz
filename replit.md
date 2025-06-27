@@ -129,6 +129,15 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 27, 2025. Dashboard de empleado corregido según feedback del usuario con diseño corporativo azul
+  - Eliminados colores arcoíris reemplazados por esquema azul corporativo (#007AFF)
+  - Logo reducido de h-20 a h-12 y eliminado contenedor glassmorphism 
+  - Removido texto "Empleado" del header de usuario para diseño más limpio
+  - Botones de menú ahora usan bg-blue-500/20 border-blue-400/30 con efectos hover azules
+  - Botón principal de fichar convertido a gradiente azul: from-blue-500 to-blue-700
+  - Partículas flotantes cambiadas a diferentes tonos de azul (blue-300, blue-400, blue-500, blue-600)
+  - Avatar circular del header con gradiente azul: from-blue-500/30 to-blue-600/20
+  - Diseño más elegante y corporativo manteniendo todas las funcionalidades existentes
 - June 27, 2025. Dashboard de empleado completamente rediseñado con estética moderna y elegante
   - Iconos de funcionalidades ampliados y con efectos glassmorphism inspirados en el hero de landing
   - Botones de menú con gradientes, backdrop-blur, efectos hover scale y animaciones de pulso
