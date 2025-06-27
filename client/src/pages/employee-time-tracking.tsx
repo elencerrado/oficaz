@@ -17,10 +17,11 @@ import {
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/ui/loading-spinner';
 import { apiRequest } from '@/lib/queryClient';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 
 // Interfaces
 interface WorkSession {
@@ -49,9 +50,18 @@ interface ActiveSession {
 }
 
 export default function EmployeeTimeTracking() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
+  // Get company alias from URL
+  const [location] = useLocation();
+  const urlParts = location.split('/').filter((part: string) => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test-company';
   
   // State management
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -437,7 +447,7 @@ export default function EmployeeTimeTracking() {
     >
       {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
-        <Link href={`/${user?.company?.alias || 'test-company'}/inicio`}>
+        <Link href={`/${companyAlias}/inicio`}>
           <Button
             variant="ghost"
             size="lg"
@@ -449,11 +459,20 @@ export default function EmployeeTimeTracking() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          <div className="text-white text-sm font-medium">
-            {user?.company?.name || 'Mi Empresa'}
-          </div>
+          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+          {shouldShowLogo ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
+            </div>
+          )}
           <div className="text-white/70 text-xs">
-            {user?.fullName || 'Empleado'}
+            {user?.fullName}
           </div>
         </div>
       </div>
