@@ -1154,8 +1154,10 @@ export default function TimeTracking() {
               });
             }
 
-            // Modo híbrido: renderizar cada punto según si tiene colisión o no
-            return completedSessions.map((session: any, sessionIndex: number) => {
+            // Crear array de todos los eventos ordenados cronológicamente
+            const allEvents = [];
+            
+            completedSessions.forEach((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
               
@@ -1164,60 +1166,83 @@ export default function TimeTracking() {
               
               const leftPercentage = (startOffset / totalDayDuration) * 100;
               const widthPercentage = (sessionDuration / totalDayDuration) * 100;
-
-              // Buscar las etiquetas correspondientes para verificar colisiones
-              const startLabel = labelOverlapStatus.find(l => 
-                l.sessionIndex === sessionIndex && l.type === 'start'
-              );
-              const endLabel = labelOverlapStatus.find(l => 
-                l.sessionIndex === sessionIndex && l.type === 'end'
+              
+              // Agregar entrada
+              allEvents.push({
+                time: sessionStart,
+                type: 'start',
+                position: leftPercentage,
+                sessionIndex,
+                formattedTime: formatTime(sessionStart)
+              });
+              
+              // Agregar salida
+              allEvents.push({
+                time: sessionEnd,
+                type: 'end',
+                position: leftPercentage + widthPercentage,
+                sessionIndex,
+                formattedTime: formatTime(sessionEnd)
+              });
+            });
+            
+            // Ordenar eventos por tiempo real (cronológicamente)
+            allEvents.sort((a, b) => a.time.getTime() - b.time.getTime());
+            
+            // Crear elementos ordenados cronológicamente
+            return allEvents.map((event, eventIndex) => {
+              // Buscar etiqueta correspondiente en labelOverlapStatus
+              const label = labelOverlapStatus.find(l => 
+                l.type === event.type && l.sessionIndex === event.sessionIndex
               );
               
-              return (
-                <div key={`session-hybrid-${sessionIndex}`} className="relative">
-                  {/* Entrada: renderizar según si tiene colisión */}
-                  {startLabel?.hasCollision ? (
-                    // Con colisión: punto desplazado horizontalmente ligeramente a la izquierda
-                    <div 
-                      className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
-                      style={{ 
-                        left: `${leftPercentage - 1}%`, // Desplazamiento horizontal pequeño hacia la izquierda
-                        top: '0px',
-                        transform: 'translateX(-50%)',
-                        zIndex: 10
-                      }}
-                      title={`Entrada: ${formatTime(sessionStart)}`}
-                    />
-                  ) : (
-                    // Sin colisión: punto + hora visible alineado con barra
-                    <div className="absolute flex items-center" style={{ left: `${leftPercentage}%`, top: '0px' }}>
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                      <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
-                    </div>
-                  )}
-                  
-                  {/* Salida: renderizar según si tiene colisión */}
-                  {endLabel?.hasCollision ? (
-                    // Con colisión: punto desplazado horizontalmente ligeramente a la derecha
-                    <div 
-                      className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
-                      style={{ 
-                        left: `${leftPercentage + widthPercentage + 1}%`, // Desplazamiento horizontal pequeño hacia la derecha
-                        top: '0px',
-                        transform: 'translateX(-50%)',
-                        zIndex: 10
-                      }}
-                      title={`Salida: ${formatTime(sessionEnd)}`}
-                    />
-                  ) : (
-                    // Sin colisión: punto + hora visible alineado con barra
-                    <div className="absolute flex items-center" style={{ left: `${leftPercentage + widthPercentage}%`, top: '0px', transform: 'translateX(-100%)' }}>
-                      <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{formatTime(sessionEnd)}</span>
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    </div>
-                  )}
-                </div>
-              );
+              const key = `event-${event.type}-${event.sessionIndex}-${eventIndex}`;
+              
+              if (event.type === 'start') {
+                // Entrada
+                return label?.hasCollision ? (
+                  // Con colisión: punto desplazado horizontalmente
+                  <div 
+                    key={key}
+                    className="absolute w-2 h-2 bg-green-500 rounded-full cursor-help shadow-md border border-white" 
+                    style={{ 
+                      left: `${event.position - 1}%`,
+                      top: '0px',
+                      transform: 'translateX(-50%)',
+                      zIndex: 10
+                    }}
+                    title={`Entrada: ${event.formattedTime}`}
+                  />
+                ) : (
+                  // Sin colisión: punto + hora visible
+                  <div key={key} className="absolute flex items-center" style={{ left: `${event.position}%`, top: '0px' }}>
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                    <span className="text-xs font-medium text-green-700 whitespace-nowrap">{event.formattedTime}</span>
+                  </div>
+                );
+              } else {
+                // Salida
+                return label?.hasCollision ? (
+                  // Con colisión: punto desplazado horizontalmente
+                  <div 
+                    key={key}
+                    className="absolute w-2 h-2 bg-red-500 rounded-full cursor-help shadow-md border border-white" 
+                    style={{ 
+                      left: `${event.position + 1}%`,
+                      top: '0px',
+                      transform: 'translateX(-50%)',
+                      zIndex: 10
+                    }}
+                    title={`Salida: ${event.formattedTime}`}
+                  />
+                ) : (
+                  // Sin colisión: punto + hora visible
+                  <div key={key} className="absolute flex items-center" style={{ left: `${event.position}%`, top: '0px', transform: 'translateX(-100%)' }}>
+                    <span className="text-xs font-medium text-red-700 whitespace-nowrap mr-1">{event.formattedTime}</span>
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  </div>
+                );
+              }
             });
           })()}
         </div>
