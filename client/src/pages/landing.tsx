@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Clock, 
   Users, 
@@ -28,6 +29,16 @@ import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Check if public registration is enabled
+  const { data: registrationSettings } = useQuery({
+    queryKey: ['/api/registration-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/registration-status');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -340,14 +351,16 @@ export default function Landing() {
             </div>
 
             {/* Responsive CTA Button */}
-            <div className="flex justify-center pt-2 lg:pt-4">
-              <Link href="/request-code">
-                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-6 lg:px-8 py-3 lg:py-4 text-base lg:text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl">
-                  Empezar Gratis
-                  <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
-                </Button>
-              </Link>
-            </div>
+            {registrationSettings?.publicRegistrationEnabled && (
+              <div className="flex justify-center pt-2 lg:pt-4">
+                <Link href="/request-code">
+                  <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-6 lg:px-8 py-3 lg:py-4 text-base lg:text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl">
+                    Empezar Gratis
+                    <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {/* Responsive Trust Indicators */}
             <div className="pt-2 lg:pt-4">
@@ -736,14 +749,16 @@ export default function Landing() {
 
 
           {/* CTA */}
-          <div className="text-center mt-16 md:mt-20">
-            <Link href="/request-code">
-              <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-12 py-6 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
-                Comenzar Prueba Gratis
-                <ArrowRight className="w-6 h-6 ml-3" />
-              </Button>
-            </Link>
-          </div>
+          {registrationSettings?.publicRegistrationEnabled && (
+            <div className="text-center mt-16 md:mt-20">
+              <Link href="/request-code">
+                <Button size="lg" className="bg-gradient-to-r from-[#007AFF] via-blue-500 to-cyan-500 hover:from-[#0056CC] hover:via-blue-600 hover:to-cyan-600 text-white px-12 py-6 text-xl font-bold shadow-2xl shadow-[#007AFF]/25 border-0 rounded-2xl transform hover:scale-105 transition-all duration-300">
+                  Comenzar Prueba Gratis
+                  <ArrowRight className="w-6 h-6 ml-3" />
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -819,15 +834,21 @@ export default function Landing() {
                   
                   {/* CTA Button */}
                   <div className="mt-auto">
-                    <Link href="/request-code">
-                      <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                        plan.popular
-                          ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
-                      }`}>
-                        Empezar Gratis
-                      </button>
-                    </Link>
+                    {registrationSettings?.publicRegistrationEnabled ? (
+                      <Link href="/request-code">
+                        <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                          plan.popular
+                            ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
+                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
+                        }`}>
+                          Empezar Gratis
+                        </button>
+                      </Link>
+                    ) : (
+                      <div className="w-full py-4 px-6 rounded-2xl font-bold text-lg bg-gray-500/30 text-gray-300 border border-gray-400/30 cursor-not-allowed">
+                        Registro No Disponible
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -904,17 +925,19 @@ export default function Landing() {
           </div>
           
           {/* CTA Button */}
-          <div className="mb-12">
-            <Link href="/request-code">
-              <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-bold text-xl px-12 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
-                <span className="relative z-10 flex items-center gap-3">
-                  Empezar Gratis Ahora
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-white to-gray-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              </button>
-            </Link>
-          </div>
+          {registrationSettings?.publicRegistrationEnabled && (
+            <div className="mb-12">
+              <Link href="/request-code">
+                <button className="group relative bg-white text-[#007AFF] hover:bg-gray-50 font-bold text-xl px-12 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300">
+                  <span className="relative z-10 flex items-center gap-3">
+                    Empezar Gratis Ahora
+                    <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white to-gray-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </button>
+              </Link>
+            </div>
+          )}
           
           {/* Trust Indicators */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-white/80">

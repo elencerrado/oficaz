@@ -63,6 +63,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public endpoint to check registration settings
+  app.get('/api/registration-status', async (req, res) => {
+    try {
+      const settings = await storage.getRegistrationSettings();
+      res.json({ 
+        publicRegistrationEnabled: settings?.registrationEnabled ?? true 
+      });
+    } catch (error) {
+      console.error('Error fetching registration settings:', error);
+      res.json({ publicRegistrationEnabled: true }); // Default to enabled if error
+    }
+  });
+
   // User validation endpoints
   app.post('/api/validate-user', async (req, res) => {
     try {
