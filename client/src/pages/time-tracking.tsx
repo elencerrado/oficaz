@@ -741,36 +741,141 @@ export default function TimeTracking() {
     const hasActiveSessions = dayData.sessions.some((session: any) => !session.clockOut);
     
     if (hasActiveSessions) {
-      // Handle active sessions - show current status
+      // Handle active sessions - show current status with same visual style
       const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
       const sessionStart = new Date(activeSession.clockIn);
       const now = new Date();
       const activeBreakPeriod = (activeSession.breakPeriods || []).find((bp: any) => !bp.breakEnd);
       const formatTime = (date: Date) => format(date, 'HH:mm');
       
+      // Calculate active session progress and break positions
+      const completedBreaks = (activeSession.breakPeriods || []).filter((bp: any) => bp.breakEnd);
+      const activeBreakStart = activeBreakPeriod ? new Date(activeBreakPeriod.breakStart) : null;
+      
+      // Calculate progress percentage based on elapsed time (max 8 hours = 100%)
+      const sessionElapsedMinutes = Math.round((now.getTime() - sessionStart.getTime()) / (1000 * 60));
+      const maxWorkdayMinutes = 8 * 60; // 8 hours
+      const progressPercentage = Math.min((sessionElapsedMinutes / maxWorkdayMinutes) * 100, 95); // Max 95% until clock out
+      
+      // Calculate break positions as percentages of elapsed time
+      const sessionElapsedMs = now.getTime() - sessionStart.getTime();
+      
       return (
-        <div className="space-y-2">
-          <div className="flex items-center space-x-3">
-            {/* Entrada en verde */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-xs font-medium text-green-700">
-                Entrada: {formatTime(sessionStart)}
-              </span>
+        <div className="space-y-1">
+          {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
+          <div className="relative h-4">
+            {/* Descansos completados */}
+            {completedBreaks.map((breakPeriod: any, breakIndex: number) => {
+              const breakStart = new Date(breakPeriod.breakStart);
+              const breakEnd = new Date(breakPeriod.breakEnd);
+              const breakMinutes = Math.round((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60));
+              
+              // Calculate break position as percentage of elapsed session time
+              const breakStartMs = breakStart.getTime() - sessionStart.getTime();
+              const breakPositionPercentage = Math.min((breakStartMs / sessionElapsedMs) * progressPercentage, progressPercentage - 5);
+              
+              return (
+                <div
+                  key={`completed-break-${breakIndex}`}
+                  className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2 flex items-center gap-1"
+                  style={{ 
+                    left: `${breakPositionPercentage}%`,
+                    top: '0px'
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  {breakMinutes}min
+                </div>
+              );
+            })}
+            
+            {/* Descanso activo */}
+            {activeBreakPeriod && (
+              <div
+                className="absolute text-xs text-orange-600 font-medium transform -translate-x-1/2 flex items-center gap-1 animate-pulse"
+                style={{ 
+                  left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
+                  top: '0px'
+                }}
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                {activeBreakStart ? Math.round((now.getTime() - activeBreakStart.getTime()) / (1000 * 60)) : 0}min
+              </div>
+            )}
+          </div>
+
+          {/* Timeline visual progresivo */}
+          <div className="relative h-5">
+            {/* Línea base gris */}
+            <div className="h-3 bg-gray-200 rounded-sm relative overflow-hidden">
+              {/* Barra azul progresiva (se va llenando en tiempo real) */}
+              <div
+                className="absolute top-0 h-3 bg-blue-500 rounded-sm transition-all duration-1000"
+                style={{
+                  left: '0%',
+                  width: `${progressPercentage}%`
+                }}
+              />
+              
+              {/* Descansos completados como sliders naranjas posicionados correctamente */}
+              {completedBreaks.map((breakPeriod: any, breakIndex: number) => {
+                const breakStart = new Date(breakPeriod.breakStart);
+                const breakEnd = new Date(breakPeriod.breakEnd);
+                const breakStartMs = breakStart.getTime() - sessionStart.getTime();
+                const breakDurationMs = breakEnd.getTime() - breakStart.getTime();
+                
+                const breakLeftPercentage = Math.min((breakStartMs / sessionElapsedMs) * progressPercentage, progressPercentage - 5);
+                const breakWidthPercentage = Math.min((breakDurationMs / sessionElapsedMs) * progressPercentage, 8);
+                
+                return (
+                  <div
+                    key={`break-bar-${breakIndex}`}
+                    className="absolute top-0.5 h-2 bg-orange-400 rounded-sm"
+                    style={{
+                      left: `${breakLeftPercentage}%`,
+                      width: `${breakWidthPercentage}%`
+                    }}
+                  />
+                );
+              })}
+              
+              {/* Descanso activo como slider naranja pulsante */}
+              {activeBreakPeriod && (
+                <div
+                  className="absolute top-0.5 h-2 bg-orange-400 rounded-sm animate-pulse"
+                  style={{
+                    left: `${Math.min((((activeBreakStart!.getTime() - sessionStart.getTime()) / sessionElapsedMs) * progressPercentage), progressPercentage - 5)}%`,
+                    width: `${Math.min((((now.getTime() - activeBreakStart!.getTime()) / sessionElapsedMs) * progressPercentage), 8)}%`
+                  }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Contenedor para horas ABAJO de las barras */}
+          <div className="relative h-4">
+            {/* Hora de entrada */}
+            <div
+              className="absolute text-xs text-green-700 font-medium transform -translate-x-1/2"
+              style={{ left: '0%', top: '0px' }}
+            >
+              {formatTime(sessionStart)}
             </div>
             
-            {/* Estado actual */}
-            <div className="flex items-center space-x-2">
+            {/* Estado actual en tiempo real al final de la barra de progreso */}
+            <div
+              className="absolute text-xs font-medium transform -translate-x-1/2 flex items-center gap-1"
+              style={{ left: `${progressPercentage}%`, top: '0px' }}
+            >
               <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
-              <span className={`text-xs font-medium ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
+              <span className={`${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
                 {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
               </span>
             </div>
-          </div>
-          
-          {/* Tiempo transcurrido */}
-          <div className="text-xs text-gray-500">
-            Tiempo transcurrido: {Math.round((now.getTime() - sessionStart.getTime()) / (1000 * 60))} min
           </div>
         </div>
       );
