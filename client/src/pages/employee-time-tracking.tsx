@@ -596,8 +596,8 @@ export default function EmployeeTimeTracking() {
                                 {sortedDaySessions.map((session, sessionIndex) => {
                                   if (!session.clockOut) return null; // Skip active sessions in multi-view
                                   
-                                  // Calcular ancho con pequeño gap entre sesiones
-                                  const gapPercentage = 0.5; // 0.5% de gap entre sesiones
+                                  // Calcular ancho con gap más visible entre sesiones
+                                  const gapPercentage = 1.5; // 1.5% de gap entre sesiones
                                   const totalGaps = (sortedDaySessions.length - 1) * gapPercentage;
                                   const sessionWidth = (100 - totalGaps) / sortedDaySessions.length;
                                   const sessionLeft = sessionIndex * (sessionWidth + gapPercentage);
@@ -624,7 +624,7 @@ export default function EmployeeTimeTracking() {
                                   const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
                                   
                                   // Usar mismo cálculo de gap que las barras de sesión
-                                  const gapPercentage = 0.5;
+                                  const gapPercentage = 1.5;
                                   const totalGaps = (sortedDaySessions.length - 1) * gapPercentage;
                                   const sessionWidth = (100 - totalGaps) / sortedDaySessions.length;
                                   const sessionLeft = sessionIndex * (sessionWidth + gapPercentage);
@@ -663,7 +663,7 @@ export default function EmployeeTimeTracking() {
                                   if (!session.clockOut) return null;
                                   
                                   // Usar mismo cálculo de gap que las barras de sesión
-                                  const gapPercentage = 0.5;
+                                  const gapPercentage = 1.5;
                                   const totalGaps = (sortedDaySessions.length - 1) * gapPercentage;
                                   const sessionWidth = (100 - totalGaps) / sortedDaySessions.length;
                                   const sessionLeft = sessionIndex * (sessionWidth + gapPercentage);
