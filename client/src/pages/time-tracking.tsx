@@ -878,23 +878,7 @@ export default function TimeTracking() {
           </div>
         </div>
 
-        {/* Horarios de entrada y salida como texto adicional */}
-        <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-          {dayData.sessions.map((session: any, index: number) => (
-            <div key={index} className="flex items-center gap-1">
-              <span className="text-green-600 font-medium">
-                {formatTime(new Date(session.clockIn))}
-              </span>
-              <span className="text-gray-400">→</span>
-              <span className="text-red-600 font-medium">
-                {formatTime(new Date(session.clockOut))}
-              </span>
-              {index < dayData.sessions.length - 1 && (
-                <span className="text-gray-400 mx-1">|</span>
-              )}
-            </div>
-          ))}
-        </div>
+
       </div>
     );
   };
