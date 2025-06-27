@@ -107,29 +107,61 @@ export default function EmployeeProfile() {
       <div className="px-6 space-y-6">
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-              <User className="h-8 w-8 text-white" />
+          <div className="flex items-center space-x-6 mb-6">
+            {/* Avatar moderno con gradiente */}
+            <div className="relative">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-600 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
+                <User className="h-10 w-10 text-white drop-shadow-lg" />
+              </div>
+              {/* Indicador de estado online */}
+              <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
             </div>
+            
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-white">{user?.fullName}</h2>
-              <p className="text-gray-300">{user?.position || 'Empleado'}</p>
+              <h2 className="text-2xl font-bold text-white mb-1">{user?.fullName}</h2>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <p className="text-blue-200 font-medium">{user?.position || 'Empleado'}</p>
+              </div>
             </div>
           </div>
           
-          {/* Información básica en ficha */}
-          <div className="space-y-3">
-            <div className="flex items-center text-white">
-              <span className="text-gray-300 w-20">DNI:</span>
-              <span>{user?.dni}</span>
+          {/* Información básica en ficha - Grid moderno */}
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="flex items-center space-x-3 flex-1">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-blue-300 font-bold text-xs">ID</span>
+                </div>
+                <div>
+                  <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">DNI</span>
+                  <p className="text-white font-mono">{user?.dni}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center text-white">
-              <span className="text-gray-300 w-20">Teléfono:</span>
-              <span>{user?.companyPhone || 'No especificado'}</span>
+            
+            <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="flex items-center space-x-3 flex-1">
+                <div className="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-green-300 font-bold text-xs">📱</span>
+                </div>
+                <div>
+                  <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">Teléfono</span>
+                  <p className="text-white font-mono">{user?.companyPhone || 'No especificado'}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center text-white">
-              <span className="text-gray-300 w-20">Email:</span>
-              <span className="truncate">{user?.companyEmail}</span>
+            
+            <div className="flex items-center bg-white/5 rounded-lg p-3 border border-white/10">
+              <div className="flex items-center space-x-3 flex-1">
+                <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-purple-300 font-bold text-xs">@</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-gray-300 text-xs font-medium uppercase tracking-wide">Email</span>
+                  <p className="text-white font-mono truncate">{user?.companyEmail}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
