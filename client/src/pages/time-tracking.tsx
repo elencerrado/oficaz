@@ -737,11 +737,50 @@ export default function TimeTracking() {
       return <div className="text-gray-400">Sin datos</div>;
     }
 
-    // Calcular el rango total del día (desde primera entrada hasta última salida)
+    // Check for active sessions (sessions without clockOut)
+    const hasActiveSessions = dayData.sessions.some((session: any) => !session.clockOut);
+    
+    if (hasActiveSessions) {
+      // Handle active sessions - show current status
+      const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
+      const sessionStart = new Date(activeSession.clockIn);
+      const now = new Date();
+      const activeBreakPeriod = (activeSession.breakPeriods || []).find((bp: any) => !bp.breakEnd);
+      const formatTime = (date: Date) => format(date, 'HH:mm');
+      
+      return (
+        <div className="space-y-2">
+          <div className="flex items-center space-x-3">
+            {/* Entrada en verde */}
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-xs font-medium text-green-700">
+                Entrada: {formatTime(sessionStart)}
+              </span>
+            </div>
+            
+            {/* Estado actual */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
+              <span className={`text-xs font-medium ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
+                {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Tiempo transcurrido */}
+          <div className="text-xs text-gray-500">
+            Tiempo transcurrido: {Math.round((now.getTime() - sessionStart.getTime()) / (1000 * 60))} min
+          </div>
+        </div>
+      );
+    }
+
+    // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
     const allTimes = dayData.sessions.flatMap((session: any) => [
       new Date(session.clockIn),
-      new Date(session.clockOut)
-    ]);
+      session.clockOut ? new Date(session.clockOut) : null
+    ]).filter(Boolean);
     const dayStart = new Date(Math.min(...allTimes.map(d => d.getTime())));
     const dayEnd = new Date(Math.max(...allTimes.map(d => d.getTime())));
     const totalDayDuration = (dayEnd.getTime() - dayStart.getTime()) / (1000 * 60 * 60); // en horas
@@ -792,7 +831,7 @@ export default function TimeTracking() {
           <div className="h-3 bg-gray-200 rounded-sm relative overflow-hidden">
             
             {/* Segmentos de trabajo (barras azules minimalistas) con descansos slider */}
-            {dayData.sessions.map((session: any, sessionIndex: number) => {
+            {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
               const sessionStart = new Date(session.clockIn);
               const sessionEnd = new Date(session.clockOut);
               
@@ -848,7 +887,7 @@ export default function TimeTracking() {
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
         <div className="relative h-4">
-          {dayData.sessions.map((session: any, sessionIndex: number) => {
+          {dayData.sessions.filter((session: any) => session.clockOut).map((session: any, sessionIndex: number) => {
             const sessionStart = new Date(session.clockIn);
             const sessionEnd = new Date(session.clockOut);
             
