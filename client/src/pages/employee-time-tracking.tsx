@@ -103,8 +103,14 @@ export default function EmployeeTimeTracking() {
         // Swipe right - previous month
         setCurrentMonth(prev => subMonths(prev, 1));
       } else {
-        // Swipe left - next month
-        setCurrentMonth(prev => addMonths(prev, 1));
+        // Swipe left - next month (solo si no es futuro)
+        const nextMonth = addMonths(currentMonth, 1);
+        const currentDate = new Date();
+        
+        // Solo permitir navegar al siguiente mes si no es futuro
+        if (nextMonth <= startOfMonth(currentDate)) {
+          setCurrentMonth(prev => addMonths(prev, 1));
+        }
       }
     }
 
