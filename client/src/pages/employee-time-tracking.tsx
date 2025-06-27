@@ -242,7 +242,7 @@ export default function EmployeeTimeTracking() {
     setEditForm({ clockIn: '', clockOut: '' });
   };
 
-  // Mobile Timeline Rendering Function
+  // Mobile Timeline Rendering Function - Admin Style Bars
   const renderMobileTimeline = (session: WorkSession) => {
     const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
     
@@ -271,28 +271,24 @@ export default function EmployeeTimeTracking() {
       );
     }
 
-    // Timeline calculation
-    const startTime = new Date(session.clockIn);
-    const endTime = new Date(session.clockOut);
-    const totalMinutes = (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+    // Admin-style timeline with wide bars and day boundaries
+    const sessionStart = new Date(session.clockIn);
+    const sessionEnd = new Date(session.clockOut);
     
-    // Create timeline points
-    const timelinePoints = [
-      { type: 'entrada', time: startTime, label: 'Entrada' },
-      ...sessionBreaks.flatMap((breakPeriod: BreakPeriod) => [
-        { type: 'break-start', time: new Date(breakPeriod.breakStart), label: 'Descanso inicio', breakPeriod },
-        ...(breakPeriod.breakEnd ? [{ type: 'break-end', time: new Date(breakPeriod.breakEnd), label: 'Descanso fin', breakPeriod }] : [])
-      ]),
-      { type: 'salida', time: endTime, label: 'Salida' }
-    ].sort((a, b) => a.time.getTime() - b.time.getTime());
-
-    // Collision detection with 0 threshold for maximum sensitivity
-    const hasProximity = timelinePoints.some((point, index) => {
-      if (index === timelinePoints.length - 1) return false;
-      const nextPoint = timelinePoints[index + 1];
-      const timeDiff = nextPoint.time.getTime() - point.time.getTime();
-      return timeDiff <= 0; // Any proximity triggers compact mode
-    });
+    // Use day boundaries like admin view (6 AM to 10 PM)
+    const dayStart = new Date(sessionStart);
+    dayStart.setHours(6, 0, 0, 0);
+    const dayEnd = new Date(sessionStart);
+    dayEnd.setHours(22, 0, 0, 0);
+    
+    const totalDayDuration = 16; // 16 hours from 6 AM to 10 PM
+    
+    // Calculate position relative to day (not session)
+    const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+    const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+    
+    const leftPercentage = (startOffset / totalDayDuration) * 100;
+    const widthPercentage = (sessionDuration / totalDayDuration) * 100;
 
     return (
       <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
@@ -302,93 +298,75 @@ export default function EmployeeTimeTracking() {
           <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
         </div>
 
-        {/* Timeline container - BARRA MÁS ANCHA */}
-        <div className="relative mb-3">
-          {/* Main blue bar - Aumentada de h-1 a h-2 */}
-          <div className="relative h-2 bg-blue-400 rounded-full">
-            {/* Break periods overlay */}
-            {sessionBreaks.map((breakPeriod: BreakPeriod) => {
-              const breakStartField = breakPeriod.breakStart;
-              const breakEndField = breakPeriod.breakEnd;
-              
-              if (!breakStartField) return null;
-              
-              const breakStart = new Date(breakStartField);
-              const breakEnd = breakEndField ? new Date(breakEndField) : new Date();
-              
-              const startPercent = ((breakStart.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
-              const endPercent = ((breakEnd.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
-              const width = Math.max(2, endPercent - startPercent); // Mínimo 2% de ancho
-              
-              return (
-                <div
-                  key={breakPeriod.id}
-                  className={`absolute h-2 rounded-full ${breakPeriod.status === 'active' ? 'bg-orange-400 animate-pulse' : 'bg-gray-400'}`}
-                  style={{
-                    left: `${Math.max(0, Math.min(95, startPercent))}%`,
-                    width: `${Math.min(100 - Math.max(0, startPercent), width)}%`,
-                    top: '0px'
-                  }}
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const content = breakPeriod.status === 'active' 
-                      ? `Descanso en progreso: ${Math.floor((new Date().getTime() - breakStart.getTime()) / (1000 * 60))} min`
-                      : `Descanso: ${formatTime(breakStartField)} - ${formatTime(breakEndField!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
-                    
-                    setTooltipContent({
-                      show: true,
-                      content,
-                      x: rect.left + rect.width / 2,
-                      y: rect.top - 10
-                    });
-                  }}
-                  onMouseLeave={() => {
-                    setTooltipContent({ show: false, content: '', x: 0, y: 0 });
-                  }}
-                />
-              );
-            })}
-          </div>
-
-          {/* Timeline points - Puntos más grandes para mejor visibilidad */}
-          {timelinePoints.map((point, index) => {
-            const position = ((point.time.getTime() - startTime.getTime()) / (endTime.getTime() - startTime.getTime())) * 100;
-            const isEntrada = point.type === 'entrada';
-            const isSalida = point.type === 'salida';
+        {/* Admin-style timeline bar */}
+        <div className="relative h-7 mb-4">
+          {/* Main session bar - h-5 like admin */}
+          <div
+            className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+            style={{
+              left: `${leftPercentage}%`,
+              width: `${widthPercentage}%`
+            }}
+          />
+          
+          {/* Break periods as orange bars inside the session bar */}
+          {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+            if (!breakPeriod.breakEnd) return null;
             
-            // Apply horizontal displacement for entrada/salida only
-            let adjustedPosition = position;
-            if (isEntrada) {
-              adjustedPosition = Math.max(0, position - 1); // 1% left for entrada
-            } else if (isSalida) {
-              adjustedPosition = Math.min(100, position + 1); // 1% right for salida
-            }
-
+            const breakStart = new Date(breakPeriod.breakStart);
+            const breakEnd = new Date(breakPeriod.breakEnd);
+            
+            // Position relative to session start (not day)
+            const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+            const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+            
+            const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
+            const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2); // Minimum 2%
+            
             return (
               <div
-                key={`${point.type}-${index}`}
-                className={`absolute w-4 h-4 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 ${
-                  isEntrada ? 'bg-green-400' : 
-                  isSalida ? 'bg-red-400' : 
-                  'bg-orange-400'
-                }`}
+                key={`break-${breakIndex}`}
+                className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
                 style={{
-                  left: `${adjustedPosition}%`,
-                  top: '0px',
-                  transform: 'translateX(-50%) translateY(-25%)'
+                  left: `${leftPercentage + (breakLeftPercentageInSession * widthPercentage / 100)}%`,
+                  width: `${(breakWidthPercentageInSession * widthPercentage / 100)}%`
+                }}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const content = breakPeriod.status === 'active' 
+                    ? `Descanso en progreso: ${Math.floor((new Date().getTime() - breakStart.getTime()) / (1000 * 60))} min`
+                    : `Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`;
+                  
+                  setTooltipContent({
+                    show: true,
+                    content,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top - 10
+                  });
+                }}
+                onMouseLeave={() => {
+                  setTooltipContent({ show: false, content: '', x: 0, y: 0 });
                 }}
               />
             );
           })}
         </div>
 
-        {/* Times display - conditional based on proximity */}
-        {!hasProximity && (
-          <div className="flex justify-between text-xs text-white/70 mt-2">
-            <span>{formatTime(session.clockIn)}</span>
-            <span>{formatTime(session.clockOut)}</span>
-          </div>
-        )}
+        {/* Time labels below the bar */}
+        <div className="relative h-4 mb-2">
+          <span 
+            className="absolute text-xs text-white/70 transform -translate-x-1/2"
+            style={{ left: `${leftPercentage}%` }}
+          >
+            {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <span 
+            className="absolute text-xs text-white/70 transform -translate-x-1/2"
+            style={{ left: `${leftPercentage + widthPercentage}%` }}
+          >
+            {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
 
         {/* Debug info - mostrar descansos encontrados */}
         {sessionBreaks.length > 0 && (
@@ -535,9 +513,161 @@ export default function EmployeeTimeTracking() {
                     </span>
                   </div>
                   
-                  {/* Sesiones de la semana */}
+                  {/* Sesiones de la semana agrupadas por día */}
                   <div className="space-y-3">
-                    {weekSessions.map((session) => renderMobileTimeline(session))}
+                    {(() => {
+                      // Agrupar sesiones por día
+                      const dayGroups = new Map<string, WorkSession[]>();
+                      
+                      weekSessions.forEach((session) => {
+                        const sessionDate = new Date(session.clockIn);
+                        const dayKey = sessionDate.toDateString(); // Same day
+                        
+                        if (!dayGroups.has(dayKey)) {
+                          dayGroups.set(dayKey, []);
+                        }
+                        dayGroups.get(dayKey)!.push(session);
+                      });
+                      
+                      // Convert to array and sort by day (most recent first)
+                      const sortedDays = Array.from(dayGroups.entries())
+                        .sort(([keyA], [keyB]) => new Date(keyB).getTime() - new Date(keyA).getTime());
+                      
+                      return sortedDays.map(([dayKey, daySessions]) => {
+                        // Sort sessions within the day chronologically
+                        const sortedDaySessions = daySessions.sort((a, b) => 
+                          new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime()
+                        );
+                        
+                        if (sortedDaySessions.length === 1) {
+                          // Single session - use current rendering
+                          return renderMobileTimeline(sortedDaySessions[0]);
+                        } else {
+                          // Multiple sessions in same day - group them
+                          const dayTotal = sortedDaySessions.reduce((total, session) => 
+                            total + calculateSessionHours(session), 0
+                          );
+                          
+                          return (
+                            <div key={`day-${dayKey}`} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-3 border border-white/20">
+                              {/* Header with date and total hours */}
+                              <div className="flex justify-between items-center mb-4">
+                                <span className="text-white font-medium text-sm">
+                                  {formatDayDate(new Date(dayKey))}
+                                </span>
+                                <span className="text-white/90 font-mono text-sm">
+                                  {formatTotalHours(dayTotal)}
+                                </span>
+                              </div>
+
+                              {/* Multiple session bars */}
+                              <div className="relative h-7 mb-4">
+                                {sortedDaySessions.map((session, sessionIndex) => {
+                                  if (!session.clockOut) return null; // Skip active sessions in multi-view
+                                  
+                                  const sessionStart = new Date(session.clockIn);
+                                  const sessionEnd = new Date(session.clockOut);
+                                  const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
+                                  
+                                  // Day boundaries (6 AM to 10 PM)
+                                  const dayStart = new Date(sessionStart);
+                                  dayStart.setHours(6, 0, 0, 0);
+                                  const totalDayDuration = 16; // 16 hours
+                                  
+                                  // Calculate position relative to day
+                                  const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                                  const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                                  
+                                  const leftPercentage = (startOffset / totalDayDuration) * 100;
+                                  const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+                                  
+                                  return (
+                                    <div key={`session-${session.id}`} className="relative">
+                                      {/* Session bar */}
+                                      <div
+                                        className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                                        style={{
+                                          left: `${leftPercentage}%`,
+                                          width: `${widthPercentage}%`
+                                        }}
+                                      />
+                                      
+                                      {/* Break periods within session */}
+                                      {sessionBreaks.map((breakPeriod: BreakPeriod, breakIndex: number) => {
+                                        if (!breakPeriod.breakEnd) return null;
+                                        
+                                        const breakStart = new Date(breakPeriod.breakStart);
+                                        const breakEnd = new Date(breakPeriod.breakEnd);
+                                        
+                                        const breakStartRelativeToSession = (breakStart.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                                        const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+                                        
+                                        const breakLeftPercentageInSession = (breakStartRelativeToSession / sessionDuration) * 100;
+                                        const breakWidthPercentageInSession = Math.max((breakDuration / sessionDuration) * 100, 2);
+                                        
+                                        return (
+                                          <div
+                                            key={`break-${breakIndex}`}
+                                            className="absolute top-0.5 h-4 bg-orange-400 rounded-sm cursor-pointer"
+                                            style={{
+                                              left: `${leftPercentage + (breakLeftPercentageInSession * widthPercentage / 100)}%`,
+                                              width: `${(breakWidthPercentageInSession * widthPercentage / 100)}%`
+                                            }}
+                                            title={`Descanso: ${formatTime(breakPeriod.breakStart)} - ${formatTime(breakPeriod.breakEnd!)} (${Math.floor((breakEnd.getTime() - breakStart.getTime()) / (1000 * 60))} min)`}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Time labels for all sessions */}
+                              <div className="relative h-4 mb-2">
+                                {sortedDaySessions.map((session) => {
+                                  if (!session.clockOut) return null;
+                                  
+                                  const sessionStart = new Date(session.clockIn);
+                                  const sessionEnd = new Date(session.clockOut);
+                                  
+                                  const dayStart = new Date(sessionStart);
+                                  dayStart.setHours(6, 0, 0, 0);
+                                  const totalDayDuration = 16;
+                                  
+                                  const startOffset = (sessionStart.getTime() - dayStart.getTime()) / (1000 * 60 * 60);
+                                  const sessionDuration = (sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+                                  
+                                  const leftPercentage = (startOffset / totalDayDuration) * 100;
+                                  const widthPercentage = (sessionDuration / totalDayDuration) * 100;
+                                  
+                                  return (
+                                    <div key={`labels-${session.id}`}>
+                                      <span 
+                                        className="absolute text-xs text-white/70 transform -translate-x-1/2"
+                                        style={{ left: `${leftPercentage}%` }}
+                                      >
+                                        {sessionStart.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                      <span 
+                                        className="absolute text-xs text-white/70 transform -translate-x-1/2"
+                                        style={{ left: `${leftPercentage + widthPercentage}%` }}
+                                      >
+                                        {sessionEnd.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Sessions info */}
+                              <div className="text-xs text-white/50 mt-2">
+                                {sortedDaySessions.length} tramos de trabajo
+                              </div>
+                            </div>
+                          );
+                        }
+                      });
+                    })()}
                   </div>
                 </div>
               );
