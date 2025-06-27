@@ -412,12 +412,7 @@ export default function EmployeeTimeTracking() {
           </div>
         )}
 
-        {/* Debug info - mostrar descansos encontrados */}
-        {sessionBreaks.length > 0 && (
-          <div className="text-xs text-white/50 mt-2">
-            Descansos: {sessionBreaks.length}
-          </div>
-        )}
+
 
         {/* Tooltip */}
         {tooltipContent.show && (
