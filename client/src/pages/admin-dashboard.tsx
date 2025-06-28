@@ -294,11 +294,13 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-900">
-                    ⚠️ Tu suscripción terminará el {new Date(cancellationStatus.cancellationDate).toLocaleDateString('es-ES', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
+                    ⚠️ Tu suscripción terminará el {cancellationStatus?.nextPaymentDate ? 
+                      new Date(cancellationStatus.nextPaymentDate).toLocaleDateString('es-ES', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      }) : 'fecha por determinar'
+                    }
                   </span>
                   <p className="text-xs text-gray-600 mt-0.5">
                     Añade una tarjeta antes de esa fecha para mantener tu suscripción
