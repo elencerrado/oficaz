@@ -467,7 +467,7 @@ export default function AdminDocuments() {
     
     // Analyze all files and show preview
     const analysisResults = validFiles.map(file => {
-      const analysis = analyzeFileName(file.name, employees?.data || []);
+      const analysis = analyzeFileName(file.name, employees || []);
       return {
         file,
         ...analysis,
@@ -864,7 +864,7 @@ export default function AdminDocuments() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleViewDocument(document.id, document.originalName)}
+                              onClick={() => handleViewDocument(document.id)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -1018,7 +1018,7 @@ export default function AdminDocuments() {
                                                     <Button
                                                       variant="outline"
                                                       size="sm"
-                                                      onClick={() => handleViewDocument(document.id, document.originalName)}
+                                                      onClick={() => handleViewDocument(document.id)}
                                                       className="h-7 w-7 p-0"
                                                     >
                                                       <Eye className="h-3 w-3" />
