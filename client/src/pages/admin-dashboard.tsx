@@ -463,7 +463,7 @@ export default function AdminDashboard() {
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <div className="flex justify-center md:justify-end gap-4">
+                <div className="flex flex-col md:flex-row justify-center md:justify-end gap-2">
                   {!activeSession ? (
                     <Button
                       size="lg"
