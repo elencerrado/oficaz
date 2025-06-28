@@ -475,7 +475,7 @@ export default function AdminDocuments() {
         ...analysis,
         documentType: documentTypeId, // Use ID instead of name for Select compatibility
         documentTypeName: analysis.documentType, // Keep original name for display
-        suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
+        suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, documentTypeId) : undefined
       };
     });
     
@@ -758,7 +758,7 @@ export default function AdminDocuments() {
                           ...analysis,
                           documentType: documentTypeId, // Use ID instead of name for Select compatibility
                           documentTypeName: analysis.documentType, // Keep original name for display
-                          suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
+                          suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, documentTypeId) : undefined
                         };
                       });
                       setUploadAnalysis(analysisResults);
