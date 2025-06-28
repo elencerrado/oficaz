@@ -73,21 +73,9 @@ export function TrialManager() {
 
   if (!trialStatus) return null;
 
-  // If account is active (paid), show success status
+  // If account is active (paid), don't show anything - subscription is working
   if (trialStatus.status === 'active' && !trialStatus.isTrialActive) {
-    return (
-      <Card className="border-green-200 bg-green-50">
-        <CardHeader>
-          <CardTitle className="flex items-center text-green-800">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            Suscripción Activa
-          </CardTitle>
-          <CardDescription className="text-green-600">
-            Tu suscripción {trialStatus.plan} está activa y funcionando correctamente.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
+    return null;
   }
 
   // If account is blocked, show urgent payment required

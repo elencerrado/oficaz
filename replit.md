@@ -136,6 +136,12 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 28, 2025. TARJETA DE TRIAL OCULTA AL ACTIVAR SUSCRIPCIÓN: UX mejorada tras confirmación de pago
+  - TrialManager.tsx modificado para retornar null cuando status='active' y trial inactivo
+  - Eliminada tarjeta verde "Suscripción Activa" que aparecía tras confirmar pago
+  - Interfaz más limpia: solo muestra notificaciones cuando hay acciones pendientes (trial o cuenta bloqueada)
+  - Sistema de invalidación de cache implementado para refrescar estado tras pago exitoso
+  - Etiquetas de estado traducidas al español: ACTIVO, PRUEBA, CANCELADO
 - June 28, 2025. FLUJO DE PAGO TRIAL SIMPLIFICADO: Sistema optimizado para gestión de métodos de pago
   - TrialManagerSimple.tsx creado para enfoque específico en añadir métodos de pago durante trial
   - Componente simplificado sin funcionalidades de pago directo, solo gestión de tarjetas
