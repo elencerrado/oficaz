@@ -122,11 +122,10 @@ const AccountManagement = () => {
   };
 
   const getPlanPrice = () => {
-    const currentSubscription = subscriptionData || subscription;
-    if (!currentSubscription?.plan || !subscriptionPlans) return '€29.99';
+    if (!subscription?.plan || !subscriptionPlans) return '€29.99';
     
     const plan = (subscriptionPlans as any[])?.find((p: any) => 
-      p.name === currentSubscription.plan
+      p.name === subscription.plan
     );
     
     return plan?.pricePerUser ? `€${plan.pricePerUser}` : '€29.99';
@@ -159,9 +158,9 @@ const AccountManagement = () => {
               <div className="flex items-center space-x-3">
                 <Crown className="h-6 w-6 text-blue-600" />
                 <div>
-                  <p className="font-semibold text-gray-900">Plan {(subscriptionData || subscription)?.plan?.charAt(0).toUpperCase() + (subscriptionData || subscription)?.plan?.slice(1)}</p>
+                  <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                   <p className="text-sm text-gray-600">
-                    {(subscriptionData || subscription)?.end_date ? `Activo hasta: ${formatDate((subscriptionData || subscription).end_date)}` : 'Plan activo'}
+                    {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
                   </p>
                 </div>
               </div>
@@ -174,7 +173,7 @@ const AccountManagement = () => {
             </div>
             
             {/* Payment Information or Cancellation Warning */}
-            {(subscriptionData || subscription)?.nextPaymentDate && !trialStatus?.isTrialActive && (
+            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && (
               <div className="pt-2 border-t border-gray-200/50">
                 {paymentMethods && paymentMethods.length > 0 ? (
                   // Show payment info when payment methods exist
@@ -183,7 +182,7 @@ const AccountManagement = () => {
                       <Calendar className="h-4 w-4 text-gray-500" />
                       <span className="text-sm text-gray-600">Próximo cobro:</span>
                       <span className="text-sm font-medium text-gray-900">
-                        {formatDate((subscriptionData || subscription).nextPaymentDate)}
+                        {formatDate(subscription.nextPaymentDate)}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -200,7 +199,7 @@ const AccountManagement = () => {
                       <AlertCircle className="h-4 w-4 text-red-600" />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-red-800">
-                          ⚠️ Tu suscripción terminará el {formatDate((subscriptionData || subscription).nextPaymentDate)}
+                          ⚠️ Tu suscripción terminará el {formatDate(subscription.nextPaymentDate)}
                         </p>
                         <p className="text-xs text-red-600 mt-1">
                           No tienes métodos de pago activos. Añade una tarjeta antes de esa fecha para mantener tu suscripción.
@@ -340,7 +339,7 @@ const AccountManagement = () => {
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
-                        ⚠️ Tu suscripción terminará el {(subscriptionData || subscription)?.nextPaymentDate ? formatDate((subscriptionData || subscription).nextPaymentDate) : '(fecha no disponible)'}
+                        ⚠️ Tu suscripción terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
                       </p>
                       <p className="text-sm text-red-700 mt-1">
                         No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente en esa fecha.
