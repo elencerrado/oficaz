@@ -143,16 +143,12 @@ export default function VacationManagement() {
   // ⚠️ PROTECTED TIMELINE FUNCTIONS - DO NOT MODIFY ⚠️
   // Funciones críticas para el timeline de vacaciones tipo Gantt
   const getTimelineRange = () => {
-    if (timelineViewMode === 'month') {
-      const start = startOfMonth(timelineViewDate);
-      const end = endOfMonth(timelineViewDate);
-      return { start, end, days: eachDayOfInterval({ start, end }) };
-    } else {
-      // Vista trimestral: 3 meses
-      const start = startOfMonth(subMonths(timelineViewDate, 1));
-      const end = endOfMonth(addMonths(timelineViewDate, 1));
-      return { start, end, days: eachDayOfInterval({ start, end }) };
-    }
+    const today = new Date();
+    
+    // Timeline continuo de 6 meses: 2 meses pasados + mes actual + 3 meses futuros
+    const start = startOfMonth(subMonths(today, 2));
+    const end = endOfMonth(addMonths(today, 3));
+    return { start, end, days: eachDayOfInterval({ start, end }) };
   };
 
   const getVacationPeriodsForEmployee = (employeeId: number) => {
@@ -166,17 +162,11 @@ export default function VacationManagement() {
   };
 
   const navigateTimeline = (direction: 'prev' | 'next') => {
-    if (timelineViewMode === 'month') {
-      setTimelineViewDate(direction === 'next' 
-        ? addMonths(timelineViewDate, 1)
-        : subMonths(timelineViewDate, 1)
-      );
-    } else {
-      setTimelineViewDate(direction === 'next' 
-        ? addMonths(timelineViewDate, 3)
-        : subMonths(timelineViewDate, 3)
-      );
-    }
+    // Navegación suave mes a mes en timeline continuo
+    setTimelineViewDate(direction === 'next' 
+      ? addMonths(timelineViewDate, 1)
+      : subMonths(timelineViewDate, 1)
+    );
   };
 
   const renderVacationBar = (employee: Employee, timelineRange: any) => {
@@ -802,9 +792,8 @@ export default function VacationManagement() {
                 ) : (
                   <div className="bg-white rounded-lg border overflow-hidden">
                     <div className="p-4 border-b bg-gray-50">
-                      {/* Header unificado con controles y leyenda */}
+                      {/* Header con controles de vista y leyenda */}
                       <div className="flex items-center justify-between">
-                        {/* Leyenda de colores y controles de navegación compactos */}
                         <div className="flex items-center gap-6">
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
@@ -817,39 +806,16 @@ export default function VacationManagement() {
                             </div>
                           </div>
                           
-                          {/* Navegación compacta del timeline */}
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigateTimeline('prev')}
-                              className="h-8 w-8 p-0"
-                            >
-                              <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            
-                            <div className="text-center min-w-[140px]">
-                              <span className="text-sm font-medium text-gray-900">
-                                {timelineViewMode === 'month' 
-                                  ? format(timelineViewDate, "MMM yyyy", { locale: es })
-                                  : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
-                                }
-                              </span>
-                            </div>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigateTimeline('next')}
-                              className="h-8 w-8 p-0"
-                            >
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
+                          <div className="text-sm text-gray-700">
+                            <span className="font-medium">Timeline con scroll horizontal</span>
+                            <span className="text-gray-500 ml-2">
+                              ({timelineViewMode === 'month' ? '1 mes' : '3 meses'})
+                            </span>
                           </div>
                         </div>
                         
-                        {/* Opciones de vista compactas */}
-                        <div className="flex items-center gap-1">
+                        {/* Toggle de vista */}
+                        <div className="flex items-center gap-1 bg-white rounded-lg p-1 border">
                           <Button
                             variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
                             size="sm"
@@ -870,131 +836,201 @@ export default function VacationManagement() {
                       </div>
                     </div>
 
-                    {/* Lista de Empleados con Timeline */}
-                    <div className="divide-y">
-                      {employees.map((employee: Employee) => {
-                        // Calcular días usados y disponibles
-                        const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
-                          req.userId === employee.id && req.status === 'approved'
-                        );
-                        const usedDays = employeeRequests.reduce((sum, req) => 
-                          sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
-                        );
-                        const totalDays = parseInt(employee.totalVacationDays) || 22;
-                        const availableDays = Math.max(0, totalDays - usedDays);
-                        const usagePercent = (usedDays / totalDays) * 100;
-                        
+                    {/* Timeline con Scroll Horizontal */}
+                    <div className="relative">
+                      {(() => {
                         const timelineRange = getTimelineRange();
+                        // Ancho fijo por día para hacer el scroll fluido
+                        const dayWidth = timelineViewMode === 'month' ? 12 : 6; // px por día - más ancho para mejor UX
+                        const totalWidth = timelineRange.days.length * dayWidth;
                         
                         return (
-                          <div key={employee.id} className="p-4 hover:bg-gray-50">
-                            <div className="flex items-center">
-                              {/* Información del Empleado */}
-                              <div className="w-72 flex-shrink-0 pr-6">
-                                <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-blue-100 rounded-full">
-                                    <User className="w-4 h-4 text-blue-600" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900 truncate">
-                                      {employee.fullName}
-                                    </h4>
-                                    <div className="text-xs text-gray-500 space-y-1">
-                                      <div>
-                                        <span className="font-medium">{usedDays}</span>/{totalDays} días usados
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                          <div 
-                                            className="bg-blue-500 h-2 rounded-full"
-                                            style={{ width: `${Math.min(100, usagePercent)}%` }}
+                          <div className="overflow-x-auto">
+                            <div style={{ minWidth: `${totalWidth + 288}px` }}> {/* 288px = w-72 */}
+                              {/* Header del timeline con marcadores de fechas */}
+                              <div className="flex">
+                                {/* Espacio para columna de empleados */}
+                                <div className="w-72 flex-shrink-0 bg-gray-50 border-r border-b p-4">
+                                  <div className="text-sm font-medium text-gray-700">Empleados</div>
+                                </div>
+                                
+                                {/* Header del timeline */}
+                                <div className="flex-1 bg-gray-50 border-b">
+                                  <div 
+                                    className="relative h-16 bg-gradient-to-r from-gray-50 to-gray-100"
+                                    style={{ width: `${totalWidth}px` }}
+                                  >
+                                    {/* Marcadores de mes */}
+                                    {timelineRange.days
+                                      .filter(day => day.getDate() === 1)
+                                      .map((monthStart, index) => {
+                                        const dayIndex = eachDayOfInterval({
+                                          start: timelineRange.start,
+                                          end: monthStart
+                                        }).length - 1;
+                                        const position = dayIndex * dayWidth;
+                                        
+                                        return (
+                                          <div key={`month-header-${index}`}>
+                                            {/* Línea vertical del mes */}
+                                            <div
+                                              className="absolute top-0 bottom-0 w-0.5 bg-blue-600"
+                                              style={{ left: `${position}px` }}
+                                            />
+                                            {/* Etiqueta del mes */}
+                                            <div
+                                              className="absolute top-2 text-sm font-semibold text-blue-700 whitespace-nowrap"
+                                              style={{ left: `${position + 4}px` }}
+                                            >
+                                              {format(monthStart, "MMM yyyy", { locale: es })}
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    }
+                                    
+                                    {/* Grid de días - semanas para vista mensual, quincenas para trimestral */}
+                                    {timelineRange.days
+                                      .filter((_, index) => index % (timelineViewMode === 'month' ? 7 : 15) === 0)
+                                      .map((day, index) => {
+                                        const dayIndex = eachDayOfInterval({
+                                          start: timelineRange.start,
+                                          end: day
+                                        }).length - 1;
+                                        const position = dayIndex * dayWidth;
+                                        
+                                        return (
+                                          <div
+                                            key={`day-line-${index}`}
+                                            className="absolute top-0 bottom-0 w-px bg-gray-300"
+                                            style={{ left: `${position}px` }}
                                           />
-                                        </div>
-                                        <span className="text-xs font-medium text-green-600">
-                                          {availableDays} rest.
-                                        </span>
-                                      </div>
-                                    </div>
+                                        );
+                                      })
+                                    }
                                   </div>
                                 </div>
                               </div>
                               
-                              {/* Timeline Horizontal */}
-                              <div className="flex-1 relative">
-                                {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border">
-                                  {/* Grid de días (solo mostrar algunos para no saturar) */}
-                                  {timelineRange.days
-                                    .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
-                                    .map((day, index) => (
-                                      <div
-                                        key={index}
-                                        className="absolute top-0 bottom-0 w-px bg-gray-200"
-                                        style={{
-                                          left: `${(eachDayOfInterval({
-                                            start: timelineRange.start,
-                                            end: day
-                                          }).length - 1) / timelineRange.days.length * 100}%`
-                                        }}
-                                      />
-                                    ))
-                                  }
+                              {/* Filas de empleados */}
+                              <div className="divide-y">
+                                {employees.map((employee: Employee) => {
+                                  const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                                    req.userId === employee.id && req.status === 'approved'
+                                  );
+                                  const usedDays = employeeRequests.reduce((sum, req) => 
+                                    sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                                  );
+                                  const totalDays = parseInt(employee.totalVacationDays) || 22;
+                                  const availableDays = Math.max(0, totalDays - usedDays);
                                   
-                                  {/* Marcadores de inicio de mes */}
-                                  {timelineRange.days
-                                    .filter(day => day.getDate() === 1) // Solo primer día del mes
-                                    .map((monthStart, index) => {
-                                      const position = (eachDayOfInterval({
-                                        start: timelineRange.start,
-                                        end: monthStart
-                                      }).length - 1) / timelineRange.days.length * 100;
-                                      
-                                      return (
-                                        <div key={`month-${index}`}>
-                                          {/* Línea vertical prominente */}
-                                          <div
-                                            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
-                                            style={{ left: `${position}%` }}
-                                          />
+                                  return (
+                                    <div key={employee.id} className="flex hover:bg-gray-50">
+                                      {/* Información del empleado - columna fija */}
+                                      <div className="w-72 flex-shrink-0 p-4 bg-white border-r">
+                                        <div className="flex items-center gap-3">
+                                          <div className="p-2 bg-blue-100 rounded-full">
+                                            <User className="w-4 h-4 text-blue-600" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <h4 className="font-medium text-gray-900 truncate">
+                                              {employee.fullName}
+                                            </h4>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                              <div className="flex items-center gap-2">
+                                                <span>
+                                                  <span className="font-medium">{usedDays}</span>/{totalDays} días
+                                                </span>
+                                                <span className="text-green-600 font-medium">
+                                                  • {availableDays} disponibles
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
                                         </div>
-                                      );
-                                    })
-                                  }
-                                  
-                                  {/* Contenedor específico para barras de vacaciones */}
-                                  <div className="absolute inset-0 overflow-hidden">
-                                    {renderVacationBar(employee, timelineRange)}
-                                  </div>
-                                </div>
-                                
-                                {/* Labels de meses debajo del timeline */}
-                                <div className="relative text-xs text-blue-600 font-medium mt-2 h-4">
-                                  {/* Mostrar etiquetas de mes según los marcadores verticales */}
-                                  {timelineRange.days
-                                    .filter(day => day.getDate() === 1) // Solo primer día del mes
-                                    .map((monthStart, index) => {
-                                      const position = (eachDayOfInterval({
-                                        start: timelineRange.start,
-                                        end: monthStart
-                                      }).length - 1) / timelineRange.days.length * 100;
+                                      </div>
                                       
-                                      return (
-                                        <div
-                                          key={`month-label-${index}`}
-                                          className="absolute transform -translate-x-1/2"
-                                          style={{ left: `${position}%` }}
+                                      {/* Timeline del empleado - alineado con header */}
+                                      <div className="flex-1">
+                                        <div 
+                                          className="relative h-20 bg-gray-100 border-b"
+                                          style={{ width: `${totalWidth}px` }}
                                         >
-                                          {format(monthStart, "MMM", { locale: es })}
+                                          {/* Líneas verticales de mes */}
+                                          {timelineRange.days
+                                            .filter(day => day.getDate() === 1)
+                                            .map((monthStart, index) => {
+                                              const dayIndex = eachDayOfInterval({
+                                                start: timelineRange.start,
+                                                end: monthStart
+                                              }).length - 1;
+                                              const position = dayIndex * dayWidth;
+                                              
+                                              return (
+                                                <div
+                                                  key={`line-${index}`}
+                                                  className="absolute top-0 bottom-0 w-px bg-gray-400 opacity-50"
+                                                  style={{ left: `${position}px` }}
+                                                />
+                                              );
+                                            })
+                                          }
+                                          
+                                          {/* Barras de vacaciones */}
+                                          <div className="absolute inset-2">
+                                            {getVacationPeriodsForEmployee(employee.id).map((period, index) => {
+                                              const startDay = eachDayOfInterval({
+                                                start: timelineRange.start,
+                                                end: period.startDate
+                                              }).length - 1;
+                                              const endDay = eachDayOfInterval({
+                                                start: timelineRange.start,
+                                                end: period.endDate
+                                              }).length - 1;
+                                              
+                                              // Solo mostrar si intersecta con el rango visible
+                                              if (endDay < 0 || startDay >= timelineRange.days.length) return null;
+                                              
+                                              const startPosition = Math.max(0, startDay) * dayWidth;
+                                              const endPosition = Math.min(endDay, timelineRange.days.length - 1) * dayWidth;
+                                              const width = Math.max(dayWidth * 2, endPosition - startPosition + dayWidth);
+                                              
+                                              return (
+                                                <div
+                                                  key={`vacation-${index}`}
+                                                  className={`absolute top-4 bottom-4 rounded-lg border-2 border-white shadow-lg transition-all hover:shadow-xl cursor-pointer ${
+                                                    period.status === 'approved' 
+                                                      ? 'bg-blue-500 hover:bg-blue-600' 
+                                                      : 'bg-yellow-400 hover:bg-yellow-500'
+                                                  }`}
+                                                  style={{
+                                                    left: `${startPosition}px`,
+                                                    width: `${width}px`
+                                                  }}
+                                                  title={`${employee.fullName}: ${format(period.startDate, 'dd/MM/yyyy', { locale: es })} - ${format(period.endDate, 'dd/MM/yyyy', { locale: es })} (${calculateDays(period.startDate.toISOString(), period.endDate.toISOString())} días)`}
+                                                >
+                                                  {/* Texto dentro de la barra si es suficientemente ancha */}
+                                                  {width > 80 && (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                      <span className="text-xs font-medium text-white px-1 truncate">
+                                                        {calculateDays(period.startDate.toISOString(), period.endDate.toISOString())}d
+                                                      </span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
                                         </div>
-                                      );
-                                    })
-                                  }
-                                </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
                         );
-                      })}
+                      })()}
                     </div>
                   </div>
                 )}
