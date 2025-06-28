@@ -27,7 +27,7 @@ import EmployeeDashboard from "@/pages/employee-dashboard";
 import TimeTracking from "@/pages/time-tracking";
 import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
-import VacationManagement from "@/pages/vacation-management";
+import VacationManagement from "@/pages/vacation-management-clean";
 import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
 import Messages from "@/pages/messages";
