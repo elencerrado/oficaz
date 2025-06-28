@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
-import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw } from "lucide-react";
-import { format, differenceInDays, parseISO } from "date-fns";
+import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User } from "lucide-react";
+import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -84,6 +84,10 @@ export default function VacationManagement() {
   const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
   
+  // Estados para el timeline de vacaciones (pestaña empleados)
+  const [timelineViewDate, setTimelineViewDate] = useState(new Date());
+  const [timelineViewMode, setTimelineViewMode] = useState<'month' | 'quarter'>('month');
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -118,6 +122,89 @@ export default function VacationManagement() {
     const end = parseISO(endDate);
     return differenceInDays(end, start) + 1;
   };
+
+  // ⚠️ PROTECTED TIMELINE FUNCTIONS - DO NOT MODIFY ⚠️
+  // Funciones críticas para el timeline de vacaciones tipo Gantt
+  const getTimelineRange = () => {
+    if (timelineViewMode === 'month') {
+      const start = startOfMonth(timelineViewDate);
+      const end = endOfMonth(timelineViewDate);
+      return { start, end, days: eachDayOfInterval({ start, end }) };
+    } else {
+      // Vista trimestral: 3 meses
+      const start = startOfMonth(subMonths(timelineViewDate, 1));
+      const end = endOfMonth(addMonths(timelineViewDate, 1));
+      return { start, end, days: eachDayOfInterval({ start, end }) };
+    }
+  };
+
+  const getVacationPeriodsForEmployee = (employeeId: number) => {
+    return vacationRequests
+      .filter(req => req.userId === employeeId && (req.status === 'approved' || req.status === 'pending'))
+      .map(req => ({
+        ...req,
+        startDate: parseISO(req.startDate),
+        endDate: parseISO(req.endDate)
+      }));
+  };
+
+  const navigateTimeline = (direction: 'prev' | 'next') => {
+    if (timelineViewMode === 'month') {
+      setTimelineViewDate(direction === 'next' 
+        ? addMonths(timelineViewDate, 1)
+        : subMonths(timelineViewDate, 1)
+      );
+    } else {
+      setTimelineViewDate(direction === 'next' 
+        ? addMonths(timelineViewDate, 3)
+        : subMonths(timelineViewDate, 3)
+      );
+    }
+  };
+
+  const renderVacationBar = (employee: Employee, timelineRange: any) => {
+    const periods = getVacationPeriodsForEmployee(employee.id);
+    const { start: rangeStart, end: rangeEnd } = timelineRange;
+    
+    return periods.map((period, index) => {
+      // Verificar si el período se solapa con el rango visible
+      const periodStart = period.startDate;
+      const periodEnd = period.endDate;
+      
+      if (periodEnd < rangeStart || periodStart > rangeEnd) {
+        return null; // Período fuera del rango visible
+      }
+      
+      // Calcular posición y ancho relativo
+      const visibleStart = periodStart < rangeStart ? rangeStart : periodStart;
+      const visibleEnd = periodEnd > rangeEnd ? rangeEnd : periodEnd;
+      
+      const totalDays = differenceInDays(rangeEnd, rangeStart) + 1;
+      const startOffset = differenceInDays(visibleStart, rangeStart);
+      const duration = differenceInDays(visibleEnd, visibleStart) + 1;
+      
+      const leftPercent = (startOffset / totalDays) * 100;
+      const widthPercent = (duration / totalDays) * 100;
+      
+      return (
+        <div
+          key={`${employee.id}-${period.id}-${index}`}
+          className={`absolute h-4 rounded-sm ${
+            period.status === 'approved' 
+              ? 'bg-blue-500 border-blue-600' 
+              : 'bg-yellow-400 border-yellow-500'
+          } border opacity-80`}
+          style={{
+            left: `${leftPercent}%`,
+            width: `${widthPercent}%`,
+            top: '2px'
+          }}
+          title={`${period.status === 'approved' ? 'Aprobado' : 'Pendiente'}: ${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`}
+        />
+      );
+    }).filter(Boolean);
+  };
+  // ⚠️ END PROTECTED TIMELINE FUNCTIONS ⚠️
 
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
@@ -551,59 +638,170 @@ export default function VacationManagement() {
             )}
 
             {activeTab === 'employees' && (
-              <div className="space-y-4">
-              {loadingEmployees ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : employeesOnVacation.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No hay empleados de vacaciones actualmente
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {employeesOnVacation.map((employee: Employee) => {
-                    // Calcular días usados (vacaciones aprobadas)
-                    const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
-                      req.userId === employee.id && req.status === 'approved'
-                    );
-                    const usedDays = employeeRequests.reduce((sum, req) => 
-                      sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
-                    );
+              <div className="space-y-6">
+                {/* Timeline Controls */}
+                <div className="flex items-center justify-between bg-white p-4 rounded-lg border">
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigateTimeline('prev')}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
                     
-                    // Encontrar la solicitud de vacaciones activa actual
-                    const currentVacation = employeeRequests.find((req: VacationRequest) => {
-                      const today = new Date().toISOString().split('T')[0];
-                      return req.startDate.split('T')[0] <= today && req.endDate.split('T')[0] >= today;
-                    });
+                    <div className="text-center">
+                      <h3 className="font-medium text-gray-900">
+                        {timelineViewMode === 'month' 
+                          ? format(timelineViewDate, "MMMM yyyy", { locale: es })
+                          : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
+                        }
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {timelineViewMode === 'month' ? 'Vista mensual' : 'Vista trimestral'}
+                      </p>
+                    </div>
                     
-                    return (
-                      <Card key={employee.id} className="border-blue-200 bg-blue-50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-500 rounded-full">
-                              <Plane className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900">{employee.fullName}</h3>
-                              <div className="text-sm text-gray-600">
-                                <p>Días totales: {employee.totalVacationDays || 22}</p>
-                                <p>Días aprobados: {usedDays}</p>
-                                <p>Disponibles: {Math.max(0, (employee.totalVacationDays || 22) - usedDays)}</p>
-                                {currentVacation && (
-                                  <p className="text-blue-600 font-medium">
-                                    Hasta: {format(new Date(currentVacation.endDate), "dd/MM/yyyy", { locale: es })}
-                                  </p>
-                                )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigateTimeline('next')}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={timelineViewMode === 'month' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimelineViewMode('month')}
+                    >
+                      <Calendar className="w-4 h-4 mr-1" />
+                      Mes
+                    </Button>
+                    <Button
+                      variant={timelineViewMode === 'quarter' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimelineViewMode('quarter')}
+                    >
+                      <CalendarDays className="w-4 h-4 mr-1" />
+                      Trimestre
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Timeline de Vacaciones tipo Gantt */}
+                {loadingEmployees ? (
+                  <div className="flex justify-center py-8">
+                    <LoadingSpinner />
+                  </div>
+                ) : employees.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No hay empleados registrados
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg border overflow-hidden">
+                    <div className="p-4 border-b bg-gray-50">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                          <span>Aprobado</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
+                          <span>Pendiente</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lista de Empleados con Timeline */}
+                    <div className="divide-y">
+                      {employees.map((employee: Employee) => {
+                        // Calcular días usados y disponibles
+                        const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                          req.userId === employee.id && req.status === 'approved'
+                        );
+                        const usedDays = employeeRequests.reduce((sum, req) => 
+                          sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                        );
+                        const totalDays = parseInt(employee.totalVacationDays) || 22;
+                        const availableDays = Math.max(0, totalDays - usedDays);
+                        const usagePercent = (usedDays / totalDays) * 100;
+                        
+                        const timelineRange = getTimelineRange();
+                        
+                        return (
+                          <div key={employee.id} className="p-4 hover:bg-gray-50">
+                            <div className="flex items-center">
+                              {/* Información del Empleado */}
+                              <div className="w-72 flex-shrink-0 pr-6">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-blue-100 rounded-full">
+                                    <User className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-gray-900 truncate">
+                                      {employee.fullName}
+                                    </h4>
+                                    <div className="text-xs text-gray-500 space-y-1">
+                                      <div>
+                                        <span className="font-medium">{usedDays}</span>/{totalDays} días usados
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                          <div 
+                                            className="bg-blue-500 h-2 rounded-full"
+                                            style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-xs font-medium text-green-600">
+                                          {availableDays} rest.
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Timeline Horizontal */}
+                              <div className="flex-1 relative">
+                                {/* Fondo del timeline con marcas de días */}
+                                <div className="relative h-6 bg-gray-100 rounded border">
+                                  {/* Grid de días (solo mostrar algunos para no saturar) */}
+                                  {timelineRange.days
+                                    .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
+                                    .map((day, index) => (
+                                      <div
+                                        key={index}
+                                        className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                        style={{
+                                          left: `${(eachDayOfInterval({
+                                            start: timelineRange.start,
+                                            end: day
+                                          }).length - 1) / timelineRange.days.length * 100}%`
+                                        }}
+                                      />
+                                    ))
+                                  }
+                                  
+                                  {/* Barras de vacaciones */}
+                                  {renderVacationBar(employee, timelineRange)}
+                                </div>
+                                
+                                {/* Labels de días debajo del timeline */}
+                                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                  <span>{format(timelineRange.start, "dd/MM")}</span>
+                                  <span>{format(timelineRange.end, "dd/MM")}</span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
