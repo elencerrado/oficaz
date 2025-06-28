@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. PROBLEMA CRÍTICO DE COLORES DE AVATARES RESUELTO: Sistema completamente funcional
+  - PROBLEMA CRÍTICO SOLUCIONADO: Color oficaz-primary agregado directamente a tailwind.config.ts 
+  - Definición HSL correcta implementada: hsl(211, 100%, 50%) en configuración de Tailwind
+  - Sistema de avatares UserAvatar funcionando consistentemente con color azul corporativo #007AFF
+  - Avatar añadido junto al nombre en tabla de fichajes de time-tracking.tsx con size="sm"
+  - Importación correcta de UserAvatar agregada a time-tracking.tsx
+  - Todos los avatares ahora muestran color uniforme y consistente en toda la aplicación
 - June 28, 2025. COMPONENTE USERAVATAR OPTIMIZADO Y AVATARES REEMPLAZADOS COMPLETAMENTE: Sistema de avatares unificado
   - COMPONENTE USERAVATAR MEJORADO: Lógica simplificada para aplicar correctamente colores personalizados sin conflictos
   - REEMPLAZADOS 8 AVATARES EN MENSAJES: Chat header, lista empleados, modal empleados, modal managers, chat móvil

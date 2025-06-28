@@ -5,6 +5,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1734,8 +1735,14 @@ export default function TimeTracking() {
                     result.push(
                       <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 border-b border-gray-100 h-12">
                         <td className="py-2 px-4">
-                          <div className="font-medium text-gray-900">
-                            {dayData.userName || 'Usuario Desconocido'}
+                          <div className="flex items-center gap-3">
+                            <UserAvatar 
+                              fullName={dayData.userName || 'Usuario Desconocido'} 
+                              size="sm" 
+                            />
+                            <div className="font-medium text-gray-900">
+                              {dayData.userName || 'Usuario Desconocido'}
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-4">
