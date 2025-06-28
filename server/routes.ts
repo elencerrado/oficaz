@@ -2737,6 +2737,7 @@ startxref
   app.get('/api/account/invoices', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const companyId = req.user!.companyId;
+      console.log('DEBUG - Invoices request for company:', companyId);
       
       // Get subscription to find Stripe customer ID
       const subscriptionResult = await db.execute(sql`
@@ -2746,11 +2747,14 @@ startxref
       `);
       
       const subscription = subscriptionResult.rows[0] as any;
+      console.log('DEBUG - Subscription data:', subscription);
       
       if (!subscription?.stripe_customer_id) {
-        console.log('No Stripe customer ID found for company:', companyId);
+        console.log('No Stripe customer ID found for company:', companyId, '- returning empty array');
         return res.json([]);
       }
+
+      console.log('Found Stripe customer ID:', subscription.stripe_customer_id);
 
       try {
         // Get invoices from Stripe
