@@ -204,9 +204,14 @@ export default function VacationManagement() {
             // Encontrar la solicitud completa en la lista de vacationRequests
             const fullRequest = vacationRequests.find(req => req.id === period.id);
             if (fullRequest) {
-              // Determinar la acción según el estado
-              const action = period.status === 'pending' ? 'approve' : 'revert';
-              openRequestModal(fullRequest, action);
+              // Mostrar todas las opciones disponibles según el estado
+              if (period.status === 'pending') {
+                // Para solicitudes pendientes, abrimos con la acción de editar para dar más opciones
+                openRequestModal(fullRequest, 'edit');
+              } else {
+                // Para solicitudes aprobadas, permitir revertir
+                openRequestModal(fullRequest, 'revert');
+              }
             }
           }}
         />
