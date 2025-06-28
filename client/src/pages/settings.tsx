@@ -129,7 +129,10 @@ const AccountManagement = () => {
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                {subscription?.status?.toUpperCase()}
+                {subscription?.status === 'trial' ? 'PRUEBA' : 
+                 subscription?.status === 'active' ? 'ACTIVO' : 
+                 subscription?.status === 'cancelled' ? 'CANCELADO' : 
+                 subscription?.status?.toUpperCase()}
               </Badge>
             </div>
           </div>

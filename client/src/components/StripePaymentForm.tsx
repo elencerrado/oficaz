@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, CheckCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface StripePaymentFormProps {
   planName: string;
@@ -70,6 +70,12 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
             title: "¡Método de pago añadido!",
             description: "Tu método de pago ha sido configurado correctamente",
           });
+          
+          // Invalidate auth data to refresh subscription status
+          queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+          
           onSuccess();
         } catch (backendError) {
           console.error('Backend confirmation error:', backendError);
