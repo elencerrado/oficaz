@@ -436,8 +436,8 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between min-h-[60px] gap-4">
-                <div className="flex flex-col justify-center items-center lg:items-start">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between min-h-[60px] gap-4">
+                <div className="flex flex-col justify-center items-center md:items-start">
                   {/* Estado actual */}
                   <div className="mb-2">
                     {activeSession ? (
@@ -459,11 +459,11 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500 text-center lg:text-left">
+                  <p className="text-sm text-gray-500 text-center md:text-left">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <div className="flex justify-center lg:justify-end gap-4">
+                <div className="flex justify-center md:justify-end gap-4">
                   {!activeSession ? (
                     <Button
                       size="lg"
