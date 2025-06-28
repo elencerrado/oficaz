@@ -893,7 +893,7 @@ export default function VacationManagement() {
                               {/* Información del Empleado */}
                               <div className="w-72 flex-shrink-0 pr-6">
                                 <div className="flex items-center gap-3">
-                                  <UserAvatar fullName={employee.fullName} size="sm" />
+                                  <UserAvatar fullName={employee.fullName} size="sm" userId={employee.id} />
                                   <div className="flex-1">
                                     <h4 className="font-medium text-gray-900 truncate">
                                       {employee.fullName}

@@ -543,11 +543,7 @@ export default function Messages() {
                       <UserAvatar 
                         fullName={employee.fullName || ''} 
                         size="md" 
-                        className={`w-10 h-10 ${
-                          selectedChat === employee.id
-                            ? 'bg-white/20 text-white'
-                            : 'bg-oficaz-primary text-white'
-                        }`} 
+                        userId={employee.id}
                       />
                       
                       <div className="flex-1 min-w-0">
@@ -578,7 +574,7 @@ export default function Messages() {
                       <UserAvatar 
                         fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
                         size="md" 
-                        className="w-10 h-10 bg-oficaz-primary text-white" 
+                        userId={selectedChat}
                       />
                       <div>
                         <h3 className="heading-4">
@@ -737,7 +733,6 @@ export default function Messages() {
                           fullName={employee.fullName || ''} 
                           size="md" 
                           userId={employee.id}
-                          className="w-10 h-10 bg-oficaz-primary text-white" 
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">
@@ -777,7 +772,6 @@ export default function Messages() {
                   fullName={selectedChatUser?.fullName || ''} 
                   size="md" 
                   userId={selectedChatUser?.id}
-                  className="w-10 h-10 bg-oficaz-primary text-white" 
                 />
                 <div>
                   <h3 className="font-semibold text-gray-900">
@@ -989,11 +983,6 @@ export default function Messages() {
                           fullName={employee.fullName || ''} 
                           size="sm" 
                           userId={employee.id}
-                          className={`w-8 h-8 ${
-                            modalGroupMode && modalSelectedEmployees.includes(employee.id)
-                              ? 'bg-white/20 text-white'
-                              : 'bg-oficaz-primary text-white'
-                          }`} 
                         />
                         
                         <div className="flex-1 min-w-0">
@@ -1102,7 +1091,6 @@ export default function Messages() {
                           fullName={manager.fullName || ''} 
                           size="lg" 
                           userId={manager.id}
-                          className="w-12 h-12 bg-white/20 text-white" 
                         />
                         
                         <div className="flex-1 min-w-0">
@@ -1169,7 +1157,6 @@ export default function Messages() {
                   fullName={selectedChatUser?.fullName || ''} 
                   size="md" 
                   userId={selectedChatUser?.id}
-                  className="w-10 h-10 bg-white/20 text-white" 
                 />
                 <div>
                   <h3 className="font-semibold text-white">
