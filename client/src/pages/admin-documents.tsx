@@ -746,19 +746,18 @@ export default function AdminDocuments() {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
-                        // Debug temporal para verificar exactamente qué pasa
-                        console.log('🔍 DEBUGGING FILE ANALYSIS:');
-                        console.log('  • Archivo:', file.name);
-                        console.log('  • Empleados disponibles:', employees?.length || 0);
-                        console.log('  • Lista empleados:', employees?.map(emp => emp.fullName) || []);
+                        console.log('DEBUG FILE ANALYSIS START');
+                        console.log('Archivo:', file.name);
+                        console.log('Empleados count:', employees.length);
+                        console.log('Empleados names:', employees.map(emp => emp.fullName));
                         
-                        const analysis = analyzeFileName(file.name, employees || []);
+                        const analysis = analyzeFileName(file.name, employees);
                         
-                        console.log('  • Resultado análisis:');
-                        console.log('    - Empleado detectado:', analysis.employee?.fullName || 'NINGUNO');
-                        console.log('    - Tipo documento:', analysis.documentType);
-                        console.log('    - Confianza:', analysis.confidence);
-                        console.log('  ==========================================');
+                        console.log('Analysis result:');
+                        console.log('- Employee:', analysis.employee?.fullName || 'NONE');
+                        console.log('- Document Type:', analysis.documentType);
+                        console.log('- Confidence:', analysis.confidence);
+                        console.log('DEBUG FILE ANALYSIS END');
                         
                         return {
                           file,
