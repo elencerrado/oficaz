@@ -436,8 +436,8 @@ export default function AdminDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between min-h-[60px]">
-                <div className="flex flex-col justify-center">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between min-h-[60px] gap-4">
+                <div className="flex flex-col justify-center items-center lg:items-start">
                   {/* Estado actual */}
                   <div className="mb-2">
                     {activeSession ? (
@@ -459,11 +459,11 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 text-center lg:text-left">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-center lg:justify-end gap-4">
                   {!activeSession ? (
                     <Button
                       size="lg"
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
                         size="lg"
                         onClick={() => clockOutMutation.mutate()}
                         disabled={clockOutMutation.isPending}
-                        className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md mr-4"
+                        className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md"
                       >
                         {clockOutMutation.isPending ? (
                           <>
