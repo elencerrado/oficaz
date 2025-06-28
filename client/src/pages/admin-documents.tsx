@@ -468,9 +468,13 @@ export default function AdminDocuments() {
     // Analyze all files and show preview
     const analysisResults = validFiles.map(file => {
       const analysis = analyzeFileName(file.name, employees || []);
+      // ⚠️ PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
+      const documentTypeId = documentTypes.find(type => type.name === analysis.documentType)?.id || 'otros';
       return {
         file,
         ...analysis,
+        documentType: documentTypeId, // Use ID instead of name for Select compatibility
+        documentTypeName: analysis.documentType, // Keep original name for display
         suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
       };
     });
@@ -747,9 +751,13 @@ export default function AdminDocuments() {
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
                         const analysis = analyzeFileName(file.name, employees);
+                        // ⚠️ PROTECTED - DO NOT MODIFY: Convert document type name to ID for Select component
+                        const documentTypeId = documentTypes.find(type => type.name === analysis.documentType)?.id || 'otros';
                         return {
                           file,
                           ...analysis,
+                          documentType: documentTypeId, // Use ID instead of name for Select compatibility
+                          documentTypeName: analysis.documentType, // Keep original name for display
                           suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
                         };
                       });
