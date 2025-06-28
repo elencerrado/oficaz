@@ -274,7 +274,11 @@ export default function VacationManagement() {
               {/* Información del empleado */}
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-1">Empleado: <span className="font-medium text-gray-900">{employee.fullName}</span></p>
-                <p className="text-sm text-gray-600">Duración: <span className="font-medium text-gray-900">{fullRequest?.days || 0} días</span></p>
+                <p className="text-sm text-gray-600">Duración: <span className="font-medium text-gray-900">{
+                  fullRequest?.startDate && fullRequest?.endDate 
+                    ? calculateDays(fullRequest.startDate, fullRequest.endDate)
+                    : fullRequest?.days || 0
+                } días</span></p>
               </div>
               
               {/* Comentario si existe */}
