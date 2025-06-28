@@ -23,7 +23,7 @@ app.use(helmet({
       connectSrc: ["'self'", "ws:", "wss:", "https://api.stripe.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
     },
   },
   crossOriginEmbedderPolicy: false, // Required for development

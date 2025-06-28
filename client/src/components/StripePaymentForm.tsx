@@ -31,13 +31,21 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
 
     try {
       console.log('Confirming setup with Stripe...');
-      const result = await stripe.confirmSetup({
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Stripe setup took too long')), 30000)
+      );
+
+      const stripePromise = stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: window.location.origin + '/configuracion',
         },
         redirect: 'if_required',
       });
+
+      const result = await Promise.race([stripePromise, timeoutPromise]) as any;
 
       console.log('Stripe response:', result);
 
