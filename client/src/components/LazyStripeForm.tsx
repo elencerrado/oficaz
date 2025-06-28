@@ -28,49 +28,32 @@ export function LazyStripeForm({
   useEffect(() => {
     const initializeStripe = async () => {
       try {
-        // Usar claves de test en desarrollo, claves de producción en deploy
-        const isDevelopment = import.meta.env.DEV;
-        console.log('import.meta.env.DEV:', import.meta.env.DEV);
-        console.log('import.meta.env.MODE:', import.meta.env.MODE);
-        console.log('NODE_ENV detection:', import.meta.env.NODE_ENV);
-        console.log('VITE_STRIPE_PUBLIC_KEY_TEST available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST);
-        console.log('VITE_STRIPE_PUBLIC_KEY available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+        // FORZAR CLAVES DE TEST EN DESARROLLO - SIN FALLBACK A DEMO
+        const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST;
         
-        // Forzar uso de claves de test si están disponibles
-        const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST || import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-        
-        console.log('Environment:', isDevelopment ? 'Development' : 'Production');
-        console.log('Using test keys:', isDevelopment);
-        console.log('Public key available:', !!publicKey);
-        console.log('Public key type:', publicKey?.substring(0, 7));
-        
+        console.log('FORCED TEST MODE');
+        console.log('Test key available:', !!publicKey);
+        console.log('Test key value:', publicKey?.substring(0, 15) + '...');
+
         if (!publicKey) {
-          setError(`Claves de Stripe no configuradas para ${isDevelopment ? 'desarrollo' : 'producción'}`);
+          setError('FALTAN CLAVES DE TEST DE STRIPE');
           setLoading(false);
           return;
         }
 
         const stripeInstance = await loadStripe(publicKey);
-        
         if (!stripeInstance) {
-          setError('No se pudo cargar Stripe - verificar configuración de claves');
+          setError('STRIPE NO SE PUDO CARGAR CON CLAVES DE TEST');
           setLoading(false);
           return;
         }
 
+        console.log('STRIPE CARGADO EXITOSAMENTE CON CLAVES TEST');
         setStripe(stripeInstance);
         setLoading(false);
       } catch (err) {
-        console.error('Error loading Stripe:', err);
-        console.error('Test key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST);
-        console.error('Test key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST?.substring(0, 10) + '...');
-        console.error('Prod key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-        console.error('Prod key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 10) + '...');
-        
-        // Solo mostrar error si realmente hay un problema, no un objeto vacío
-        if (err && Object.keys(err).length > 0) {
-          setError(`Error al cargar el sistema de pagos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-        }
+        console.error('ERROR REAL DE STRIPE:', err);
+        setError(`ERROR CRITICO DE STRIPE: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
         setLoading(false);
       }
     };
