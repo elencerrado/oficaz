@@ -58,6 +58,51 @@ export function TrialManager() {
     return plan ? plan.pricePerUser : 0;
   };
 
+  // Estado para procesar pago
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Mutación para crear intención de pago
+  const createPaymentMutation = useMutation({
+    mutationFn: async ({ plan }: { plan: string }) => {
+      const response = await fetch('/api/account/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ plan })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al crear intención de pago');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setIsProcessingPayment(false);
+      toast({
+        title: "Pago procesado",
+        description: "Tu suscripción ha sido activada correctamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+    },
+    onError: (error: any) => {
+      setIsProcessingPayment(false);
+      toast({
+        title: "Error en el pago",
+        description: error.message || "No se pudo procesar el pago",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Función para manejar la actualización del plan
+  const handleUpgrade = () => {
+    setIsProcessingPayment(true);
+    createPaymentMutation.mutate({ plan: selectedPlan });
+  };
+
 
 
   if (loadingTrial) {
