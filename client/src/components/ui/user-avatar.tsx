@@ -179,36 +179,62 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     // Usar colores únicos con estilos inline SUPER agresivos
     const colors = getUserColors(userId);
     
-    // Si hay foto de perfil, mostrarla con borde de color único
+    // Si hay foto de perfil, mostrarla con borde de color único - ESTILOS INLINE PUROS
     if (profilePicture) {
       return (
         <div 
-          className={`rounded-full overflow-hidden flex items-center justify-center select-none ${sizeClasses[size]}`}
           style={{
+            width: '40px',
+            height: '40px',
             border: `3px solid ${colors.bg}`,
-            padding: '2px'
+            padding: '2px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            userSelect: 'none'
           } as React.CSSProperties}
         >
           <img 
             src={profilePicture} 
             alt={fullName}
-            className="w-full h-full rounded-full object-cover"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              display: 'block'
+            } as React.CSSProperties}
             onError={(e) => {
-              // Si la imagen falla al cargar, ocultar el elemento para mostrar fallback
-              (e.target as HTMLImageElement).style.display = 'none';
+              // Si la imagen falla al cargar, reemplazar con iniciales
+              const target = e.target as HTMLImageElement;
+              const parent = target.parentElement;
+              if (parent) {
+                parent.innerHTML = `<div style="width: 100%; height: 100%; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 14px; user-select: none;">${getInitials(fullName)}</div>`;
+              }
             }}
           />
         </div>
       );
     }
     
-    // Si no hay foto, mostrar iniciales con fondo de color
+    // Si no hay foto, mostrar iniciales con fondo de color - ESTILOS INLINE PUROS
     return (
       <div 
-        className={`rounded-full flex items-center justify-center font-medium select-none user-avatar-unique ${sizeClasses[size]}`}
         style={{
-          '--avatar-bg': colors.bg,
-          '--avatar-color': colors.text
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          backgroundColor: colors.bg,
+          color: colors.text,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: '500',
+          fontSize: '14px',
+          userSelect: 'none'
         } as React.CSSProperties}
       >
         {getInitials(fullName)}
@@ -230,30 +256,56 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         className="hidden"
       />
       
-      {/* Avatar principal */}
+      {/* Avatar principal - ESTILOS INLINE PUROS */}
       <div 
-        className={`rounded-full overflow-hidden flex items-center justify-center select-none cursor-pointer transition-all duration-200 hover:opacity-80 ${sizeClasses[size]}`}
         style={{
+          width: '40px',
+          height: '40px',
           border: `3px solid ${colors.bg}`,
-          padding: '2px'
+          padding: '2px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          userSelect: 'none',
+          cursor: 'pointer',
+          transition: 'opacity 0.2s',
+          opacity: 1
         } as React.CSSProperties}
         onClick={() => fileInputRef.current?.click()}
+        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
       >
         {profilePicture ? (
           <img 
             src={profilePicture} 
             alt={fullName}
-            className="w-full h-full rounded-full object-cover"
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              display: 'block'
+            } as React.CSSProperties}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         ) : (
           <div 
-            className="w-full h-full rounded-full flex items-center justify-center font-medium select-none user-avatar-unique"
             style={{
-              '--avatar-bg': colors.bg,
-              '--avatar-color': colors.text
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              backgroundColor: colors.bg,
+              color: colors.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: '500',
+              fontSize: '14px',
+              userSelect: 'none'
             } as React.CSSProperties}
           >
             {getInitials(fullName)}

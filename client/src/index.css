@@ -499,13 +499,7 @@ body::after {
     @apply oficaz-loading h-6 w-1/2 mb-4;
   }
   
-  /* UserAvatar override - máxima prioridad para colores únicos */
-  .user-avatar-unique {
-    background-color: var(--avatar-bg) !important;
-    color: var(--avatar-color) !important;
-    background-image: none !important;
-    background: var(--avatar-bg) !important;
-  }
+  /* UserAvatar ahora usa estilos inline puros - CSS obsoleto */
 
   /* Hover Effects - Consistent */
   .oficaz-hover-lift {
