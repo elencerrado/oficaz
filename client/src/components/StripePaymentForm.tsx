@@ -75,6 +75,7 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
           queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
           queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
           queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
           
           onSuccess();
         } catch (backendError) {

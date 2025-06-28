@@ -2658,19 +2658,38 @@ startxref
 
   app.get('/api/account/payment-methods', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const companyId = req.user!.companyId;
+      const userId = req.user!.id;
       
+      // Get user data to obtain Stripe customer ID
+      const user = await storage.getUser(userId);
+      if (!user || !user.stripeCustomerId) {
+        return res.json([]);
+      }
+
       try {
-        const result = await db.execute(sql`
-          SELECT * FROM payment_methods 
-          WHERE company_id = ${companyId} AND is_active = true
-        `);
-        
-        // Always return the database result (empty or with data)
-        return res.json(result.rows);
-      } catch (dbError) {
-        console.log('payment_methods table not found, returning empty array');
-        // Return empty array when no payment methods table exists
+        // Get payment methods from Stripe
+        const paymentMethods = await stripe.paymentMethods.list({
+          customer: user.stripeCustomerId,
+          type: 'card',
+        });
+
+        // Get customer default payment method
+        const customer = await stripe.customers.retrieve(user.stripeCustomerId);
+        const defaultPaymentMethodId = (customer as any).invoice_settings?.default_payment_method;
+
+        // Transform Stripe data to our format
+        const formattedMethods = paymentMethods.data.map(pm => ({
+          id: pm.id,
+          card_brand: pm.card?.brand || 'unknown',
+          card_last_four: pm.card?.last4 || '0000',
+          card_exp_month: pm.card?.exp_month || 1,
+          card_exp_year: pm.card?.exp_year || 2030,
+          is_default: pm.id === defaultPaymentMethodId
+        }));
+
+        res.json(formattedMethods);
+      } catch (stripeError) {
+        console.error('Error fetching payment methods from Stripe:', stripeError);
         res.json([]);
       }
     } catch (error) {
