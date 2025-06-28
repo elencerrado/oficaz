@@ -210,7 +210,7 @@ export default function VacationManagement() {
           </div>
 
           {/* Tooltip flotante que aparece en hover */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto z-50">
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto" style={{ zIndex: 9999 }}>
             <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg min-w-48 max-w-64">
               {/* Flecha del tooltip */}
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
@@ -858,7 +858,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border overflow-hidden">
+                                <div className="relative h-12 bg-gray-100 rounded border overflow-visible">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
