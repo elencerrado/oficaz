@@ -33,6 +33,7 @@ import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { TrialManager } from '@/components/TrialManager';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
@@ -747,6 +748,13 @@ const AccountManagement = () => {
         <h1 className="text-2xl font-semibold text-gray-900">Configuración</h1>
         <p className="text-gray-500 mt-1">Gestiona la configuración de tu empresa y perfil</p>
       </div>
+
+      {/* Trial Manager - shown for companies in trial */}
+      {subscription?.status === 'trial' && subscription?.isTrialActive && (
+        <div className="mb-6">
+          <TrialManager />
+        </div>
+      )}
 
       <TabNavigation
           tabs={[

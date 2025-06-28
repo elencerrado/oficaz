@@ -2407,7 +2407,7 @@ startxref
     }
   });
 
-  // Confirm payment method and activate subscription
+  // Confirm payment method and create recurring subscription
   app.post('/api/account/confirm-payment-method', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
@@ -2424,20 +2424,107 @@ startxref
         return res.status(400).json({ message: 'El método de pago no fue confirmado' });
       }
 
-      // Update subscription status to active
+      // Get company and subscription data
       const company = await storage.getCompanyByUserId(userId);
-      if (company?.subscription) {
-        await storage.updateSubscriptionStatus(company.subscription.id, 'active');
+      if (!company?.subscription) {
+        return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Get subscription plan details
+      const planResult = await db.execute(sql`
+        SELECT price_per_user FROM subscription_plans 
+        WHERE name = ${company.subscription.plan}
+      `);
+
+      if (!planResult.rows[0]) {
+        return res.status(404).json({ message: 'Plan no encontrado' });
+      }
+
+      const pricePerUser = (planResult.rows[0] as any).price_per_user;
+
+      // Create or get Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.companyEmail,
+          name: company.name,
+          metadata: {
+            userId: userId.toString(),
+            companyId: company.id.toString()
+          }
+        });
+        
+        stripeCustomerId = customer.id;
+        await storage.updateUserStripeCustomerId(userId, stripeCustomerId);
+      }
+
+      // Attach payment method to customer
+      await stripe.paymentMethods.attach(setupIntent.payment_method as string, {
+        customer: stripeCustomerId,
+      });
+
+      // Set as default payment method
+      await stripe.customers.update(stripeCustomerId, {
+        invoice_settings: {
+          default_payment_method: setupIntent.payment_method as string,
+        },
+      });
+
+      // Create product first
+      const product = await stripe.products.create({
+        name: `Plan ${company.subscription.plan.charAt(0).toUpperCase() + company.subscription.plan.slice(1)} - ${company.name}`,
+      });
+
+      // Create a price for that product
+      const price = await stripe.prices.create({
+        currency: 'eur',
+        unit_amount: Math.round(pricePerUser * 100), // Convert to cents
+        recurring: {
+          interval: 'month',
+        },
+        product: product.id,
+      });
+
+      // Create recurring subscription in Stripe
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeCustomerId,
+        items: [{
+          price: price.id,
+        }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+
+      // Calculate next payment date (30 days from now)
+      const nextPaymentDate = new Date();
+      nextPaymentDate.setDate(nextPaymentDate.getDate() + 30);
+
+      // Update database with Stripe subscription info and activate
+      await db.execute(sql`
+        UPDATE subscriptions 
+        SET 
+          status = 'active',
+          is_trial_active = false,
+          stripe_subscription_id = ${subscription.id},
+          next_payment_date = ${nextPaymentDate.toISOString()}
+        WHERE id = ${company.subscription.id}
+      `);
 
       res.json({ 
         success: true, 
-        message: 'Método de pago añadido correctamente',
-        paymentMethodId: setupIntent.payment_method
+        message: 'Suscripción activada correctamente. Tu facturación mensual ha comenzado.',
+        subscriptionId: subscription.id,
+        nextPaymentDate: nextPaymentDate.toISOString()
       });
     } catch (error) {
       console.error('Error confirming payment method:', error);
-      res.status(500).json({ message: 'Error al confirmar método de pago' });
+      res.status(500).json({ message: 'Error al confirmar método de pago: ' + (error as any).message });
     }
   });
 
