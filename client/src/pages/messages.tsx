@@ -168,14 +168,35 @@ export default function Messages() {
       });
       setNewMessage("");
       
-      // Forzar scroll después de enviar mensaje con un pequeño delay
+      // Forzar scroll después de enviar mensaje con un pequeño delay - usa misma lógica que useEffect
       setTimeout(() => {
+        // MÉTODO 1: Usar scrollIntoView en messagesEndRef
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'auto', 
             block: 'end',
             inline: 'nearest'
           });
+        }
+
+        // MÉTODO 2: Forzar scroll en contenedores específicos
+        const adminDesktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
+        if (adminDesktopContainer) {
+          adminDesktopContainer.scrollTop = adminDesktopContainer.scrollHeight;
+        }
+
+        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50');
+        if (adminMobileContainer) {
+          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+        }
+
+        const employeeContainer = document.querySelector('.min-h-screen.bg-employee-gradient .overflow-y-auto');
+        if (employeeContainer) {
+          employeeContainer.scrollTop = employeeContainer.scrollHeight;
+        }
+
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
         }
       }, 300);
     } catch (error) {
@@ -230,20 +251,44 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // ⚠️ PROTECTED: Auto-scroll DIRECTO usando messagesEndRef - DO NOT MODIFY
+  // ⚠️ PROTECTED: Auto-scroll forzando scroll en contenedores exactos - DO NOT MODIFY
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0) {
       const scrollToBottom = () => {
-        // Usar scrollIntoView en el messagesEndRef que está al final de los mensajes
+        // MÉTODO 1: Usar scrollIntoView en messagesEndRef
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'auto', 
             block: 'end',
             inline: 'nearest'
           });
-          return true;
         }
-        return false;
+
+        // MÉTODO 2: Forzar scroll en contenedores específicos
+        // Vista admin desktop: flex-1 overflow-y-auto p-4 bg-gray-50
+        const adminDesktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
+        if (adminDesktopContainer) {
+          adminDesktopContainer.scrollTop = adminDesktopContainer.scrollHeight;
+        }
+
+        // Vista admin móvil: overflow-y-auto px-4 bg-gray-50
+        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50');
+        if (adminMobileContainer) {
+          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
+        }
+
+        // Vista empleado: el contenedor con el fondo degradado
+        const employeeContainer = document.querySelector('.min-h-screen.bg-employee-gradient .overflow-y-auto');
+        if (employeeContainer) {
+          employeeContainer.scrollTop = employeeContainer.scrollHeight;
+        }
+
+        // MÉTODO 3: Usar messagesContainerRef si existe
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+
+        return true;
       };
 
       // Scroll inmediato y después delay para asegurar que DOM está listo

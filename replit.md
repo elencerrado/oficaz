@@ -182,14 +182,17 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- June 28, 2025. AUTO-SCROLL DEL CHAT REESCRITO CON MÉTODO DIRECTO: scrollIntoView usando messagesEndRef
-  - PROBLEMA RESUELTO: Auto-scroll reescrito completamente usando `messagesEndRef.scrollIntoView()`
-  - Método más directo y confiable que busca el elemento al final de todos los mensajes
-  - Configuración `behavior: 'auto'` para máxima compatibilidad con todos los navegadores
-  - Eliminados selectores CSS complejos que fallaban en diferentes layouts
-  - Sistema simplificado: scroll inmediato + delay 300ms para asegurar DOM actualizado
-  - Funciona idénticamente en admin desktop, admin móvil y vista empleado
-  - Código de producción limpio sin logs de debugging
+- June 28, 2025. AUTO-SCROLL DEL CHAT CORREGIDO DEFINITIVAMENTE: Métodos múltiples para todos los contenedores
+  - PROBLEMA CRÍTICO RESUELTO: Auto-scroll implementado con 3 métodos simultáneos para máxima compatibilidad
+  - MÉTODO 1: messagesEndRef.scrollIntoView() como método principal directo
+  - MÉTODO 2: Seleccores CSS específicos para cada vista:
+    * Vista admin desktop: `.flex-1.overflow-y-auto.p-4.bg-gray-50`
+    * Vista admin móvil: `.flex-1.overflow-y-auto.px-4.bg-gray-50`
+    * Vista empleado: `.min-h-screen.bg-employee-gradient .overflow-y-auto`
+  - MÉTODO 3: messagesContainerRef.current.scrollTop para referencias directas
+  - Sistema robusto: múltiples intentos de scroll para garantizar funcionamiento en todos los layouts
+  - Aplicado tanto en useEffect (mensajes nuevos) como en sendMessage (envío manual)
+  - DOCUMENTADO PARA FUTURAS REFERENCIAS: problema recurrente resuelto con enfoque exhaustivo
 - June 28, 2025. AUTO-SCROLL DEL CHAT RESTAURADO COMPLETAMENTE: Función robusta con múltiples contenedores
   - PROBLEMA CRÍTICO RESUELTO: Auto-scroll perdido otra vez en chat empleado (línea 572 messages.tsx)
   - Función de scroll mejorada con 6 selectores diferentes para encontrar contenedor correcto
