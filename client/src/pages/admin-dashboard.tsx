@@ -540,7 +540,7 @@ export default function AdminDashboard() {
                           ) : (
                             <>
                               <Coffee className="h-4 w-4 mr-2" />
-                              Fin Descanso
+                              Finalizar
                             </>
                           )}
                         </Button>
