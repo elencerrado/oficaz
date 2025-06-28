@@ -728,67 +728,70 @@ export default function VacationManagement() {
                 ) : (
                   <div className="bg-white rounded-lg border overflow-hidden">
                     <div className="p-4 border-b bg-gray-50">
-                      {/* Controles de navegación del timeline */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateTimeline('prev')}
-                          >
-                            <ChevronLeft className="w-4 h-4" />
-                          </Button>
-                          
-                          <div className="text-center">
-                            <h3 className="font-medium text-gray-900">
-                              {timelineViewMode === 'month' 
-                                ? format(timelineViewDate, "MMMM yyyy", { locale: es })
-                                : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
-                              }
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              {timelineViewMode === 'month' ? 'Vista mensual' : 'Vista trimestral'}
-                            </p>
+                      {/* Header unificado con controles y leyenda */}
+                      <div className="flex items-center justify-between">
+                        {/* Leyenda de colores y controles de navegación compactos */}
+                        <div className="flex items-center gap-6">
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                              <span>Aprobado</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
+                              <span>Pendiente</span>
+                            </div>
                           </div>
                           
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigateTimeline('next')}
-                          >
-                            <ChevronRight className="w-4 h-4" />
-                          </Button>
+                          {/* Navegación compacta del timeline */}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigateTimeline('prev')}
+                              className="h-8 w-8 p-0"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            
+                            <div className="text-center min-w-[140px]">
+                              <span className="text-sm font-medium text-gray-900">
+                                {timelineViewMode === 'month' 
+                                  ? format(timelineViewDate, "MMM yyyy", { locale: es })
+                                  : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
+                                }
+                              </span>
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigateTimeline('next')}
+                              className="h-8 w-8 p-0"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        {/* Opciones de vista compactas */}
+                        <div className="flex items-center gap-1">
                           <Button
-                            variant={timelineViewMode === 'month' ? 'default' : 'outline'}
+                            variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setTimelineViewMode('month')}
+                            className="h-8 px-3 text-xs"
                           >
-                            <Calendar className="w-4 h-4 mr-1" />
                             Mes
                           </Button>
                           <Button
-                            variant={timelineViewMode === 'quarter' ? 'default' : 'outline'}
+                            variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
                             size="sm"
                             onClick={() => setTimelineViewMode('quarter')}
+                            className="h-8 px-3 text-xs"
                           >
-                            <CalendarDays className="w-4 h-4 mr-1" />
                             Trimestre
                           </Button>
-                        </div>
-                      </div>
-
-                      {/* Leyenda de colores */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-                          <span>Aprobado</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
-                          <span>Pendiente</span>
                         </div>
                       </div>
                     </div>
