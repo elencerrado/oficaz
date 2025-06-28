@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. MENSAJES DE TRIAL CORREGIDOS COMPLETAMENTE: Terminología clara indicando período de prueba
+  - TrialManager (dashboard): Solo aparece sin método de pago, dice "Período de Prueba [Plan]" con mensajes claros
+  - TrialManagerSimple (configuración): Siempre muestra estado, diferencia sin/con método de pago
+  - Sin pago: "Período de prueba hasta el [fecha] • €X/mes después"
+  - Con pago: "Período de prueba activo. Se cobrará el [fecha] • €X/mes"
+  - Títulos corregidos de "Plan Pro" a "Período de Prueba Pro" para máxima claridad
+  - Todos los mensajes ahora indican explícitamente que están en período de prueba
 - June 28, 2025. SISTEMA DE TESTING VITEST IMPLEMENTADO COMPLETAMENTE: Protección crítica de funciones clave
   - Vitest configurado e instalado como framework de testing para Oficaz
   - Tests completos para calculateDays(): 14 casos que cubren fechas básicas, fines de semana, cambios de mes, años bisiestos

@@ -192,7 +192,7 @@ export function TrialManager() {
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-900">
-                Plan {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
+                Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
               </span>
               <Badge variant="outline" className="text-xs">
                 {trialStatus.daysRemaining} días restantes
@@ -200,9 +200,9 @@ export function TrialManager() {
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {trialStatus.daysRemaining <= 3 ? (
-                "Añade un método de pago para continuar sin interrupciones"
+                "Período de prueba termina pronto. Añade un método de pago para continuar"
               ) : (
-                `Expira el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`
+                `Período de prueba hasta el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes después`
               )}
             </p>
           </div>
