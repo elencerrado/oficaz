@@ -67,10 +67,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     <div 
       className={`rounded-full flex items-center justify-center font-medium select-none ${sizeClasses[size]}`}
       style={{
-        backgroundColor: `${colors.bg} !important`,
-        color: `${colors.text} !important`,
-        backgroundImage: 'none !important',
-        backgroundClip: 'border-box !important'
+        backgroundColor: colors.bg,
+        color: colors.text,
+        backgroundImage: 'none',
+        background: colors.bg,
+        border: 'none'
       }}
     >
       {getInitials(fullName)}
