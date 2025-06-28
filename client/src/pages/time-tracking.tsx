@@ -308,29 +308,7 @@ export default function TimeTracking() {
       periodText = 'Todos los registros';
     }
 
-    // Helper function to format break periods for PDF with line breaks
-    const formatBreakPeriodsForPDF = (breakPeriods: any[]) => {
-      if (!breakPeriods || breakPeriods.length === 0) {
-        return 'Sin descansos';
-      }
-      
-      return breakPeriods.map(bp => {
-        try {
-          // Usar los nombres correctos de las propiedades
-          const startTime = format(new Date(bp.breakStart), 'HH:mm');
-          const endTime = bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : 'En curso';
-          if (bp.breakEnd) {
-            const duration = Math.round((new Date(bp.breakEnd).getTime() - new Date(bp.breakStart).getTime()) / (1000 * 60));
-            return `${startTime}-${endTime} (${duration} min)`;
-          } else {
-            return `${startTime} (En curso)`;
-          }
-        } catch (error) {
-          // En caso de error de fecha, devolver texto seguro
-          return 'Descanso (datos inválidos)';
-        }
-      }).join(' | '); // Separador con barras verticales para múltiples descansos
-    };
+
 
     // Function to create a page for an employee
     const createEmployeePage = (employee: any, employeeSessions: any[], isFirstPage: boolean) => {
@@ -558,16 +536,60 @@ export default function TimeTracking() {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(40, 40, 40);
           
-          // Format break periods
-          const breakPeriodsText = formatBreakPeriodsForPDF(session.breakPeriods || []);
-          
+          // Main row with session data
           doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(breakPeriodsText, colPositions[3], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
           
-          currentY += 6;
+          // Handle break periods - create separate rows for each break
+          const breakPeriods = session.breakPeriods || [];
+          if (breakPeriods.length === 0) {
+            doc.text('Sin descansos', colPositions[3], currentY);
+            doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            currentY += 6;
+          } else {
+            // First break on main row
+            const firstBreak = breakPeriods[0];
+            try {
+              const startTime = format(new Date(firstBreak.breakStart), 'HH:mm');
+              const endTime = firstBreak.breakEnd ? format(new Date(firstBreak.breakEnd), 'HH:mm') : 'En curso';
+              if (firstBreak.breakEnd) {
+                const duration = Math.round((new Date(firstBreak.breakEnd).getTime() - new Date(firstBreak.breakStart).getTime()) / (1000 * 60));
+                doc.text(`${startTime}-${endTime} (${duration} min)`, colPositions[3], currentY);
+              } else {
+                doc.text(`${startTime} (En curso)`, colPositions[3], currentY);
+              }
+            } catch (error) {
+              doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
+            }
+            doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            currentY += 6;
+            
+            // Additional breaks in separate rows (empty cells except for break info)
+            for (let i = 1; i < breakPeriods.length; i++) {
+              // Check if we need a new page for additional break row
+              if (currentY > maxContentY) {
+                addFooter();
+                doc.addPage();
+                currentY = addPageHeader();
+              }
+              
+              const breakPeriod = breakPeriods[i];
+              try {
+                const startTime = format(new Date(breakPeriod.breakStart), 'HH:mm');
+                const endTime = breakPeriod.breakEnd ? format(new Date(breakPeriod.breakEnd), 'HH:mm') : 'En curso';
+                if (breakPeriod.breakEnd) {
+                  const duration = Math.round((new Date(breakPeriod.breakEnd).getTime() - new Date(breakPeriod.breakStart).getTime()) / (1000 * 60));
+                  doc.text(`${startTime}-${endTime} (${duration} min)`, colPositions[3], currentY);
+                } else {
+                  doc.text(`${startTime} (En curso)`, colPositions[3], currentY);
+                }
+              } catch (error) {
+                doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
+              }
+              currentY += 6;
+            }
+          }
           weekHours += hours;
           monthHours += hours;
           
@@ -624,20 +646,64 @@ export default function TimeTracking() {
             : 0;
           const hours = Math.max(0, sessionHours - breakHours);
           
-          // Format break periods
-          const breakPeriodsText = formatBreakPeriodsForPDF(session.breakPeriods || []);
-          
           doc.setFontSize(8);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(40, 40, 40);
           
+          // Main row with session data
           doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(breakPeriodsText, colPositions[3], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
           
-          currentY += 6;
+          // Handle break periods - create separate rows for each break
+          const breakPeriods = session.breakPeriods || [];
+          if (breakPeriods.length === 0) {
+            doc.text('Sin descansos', colPositions[3], currentY);
+            doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            currentY += 6;
+          } else {
+            // First break on main row
+            const firstBreak = breakPeriods[0];
+            try {
+              const startTime = format(new Date(firstBreak.breakStart), 'HH:mm');
+              const endTime = firstBreak.breakEnd ? format(new Date(firstBreak.breakEnd), 'HH:mm') : 'En curso';
+              if (firstBreak.breakEnd) {
+                const duration = Math.round((new Date(firstBreak.breakEnd).getTime() - new Date(firstBreak.breakStart).getTime()) / (1000 * 60));
+                doc.text(`${startTime}-${endTime} (${duration} min)`, colPositions[3], currentY);
+              } else {
+                doc.text(`${startTime} (En curso)`, colPositions[3], currentY);
+              }
+            } catch (error) {
+              doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
+            }
+            doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
+            currentY += 6;
+            
+            // Additional breaks in separate rows (empty cells except for break info)
+            for (let i = 1; i < breakPeriods.length; i++) {
+              // Check if we need a new page for additional break row
+              if (currentY > maxContentY) {
+                addFooter();
+                doc.addPage();
+                currentY = addPageHeader();
+              }
+              
+              const breakPeriod = breakPeriods[i];
+              try {
+                const startTime = format(new Date(breakPeriod.breakStart), 'HH:mm');
+                const endTime = breakPeriod.breakEnd ? format(new Date(breakPeriod.breakEnd), 'HH:mm') : 'En curso';
+                if (breakPeriod.breakEnd) {
+                  const duration = Math.round((new Date(breakPeriod.breakEnd).getTime() - new Date(breakPeriod.breakStart).getTime()) / (1000 * 60));
+                  doc.text(`${startTime}-${endTime} (${duration} min)`, colPositions[3], currentY);
+                } else {
+                  doc.text(`${startTime} (En curso)`, colPositions[3], currentY);
+                }
+              } catch (error) {
+                doc.text('Descanso (datos inválidos)', colPositions[3], currentY);
+              }
+              currentY += 6;
+            }
+          }
         });
       }
       
