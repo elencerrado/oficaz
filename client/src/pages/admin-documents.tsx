@@ -303,6 +303,10 @@ export default function AdminDocuments() {
 
   // Use analyzeFileName from shared utilities
 
+  // ⚠️ PROTECTED - DO NOT MODIFY: Generate clean filename with document type, employee name and date
+  // CRITICAL FUNCTION: User confirmed satisfaction with current functionality 
+  // Fixed issues: "mar" false positive detection, correct type mapping, proper date extraction
+  // This function is ESSENTIAL for document naming - preserve all logic completely
   const generateCleanFileName = (fileName: string, employee: Employee, docType: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
     
@@ -323,7 +327,9 @@ export default function AdminDocuments() {
     const currentYear = new Date().getFullYear();
     const year = yearMatch ? yearMatch[0] : currentYear.toString();
     
-    // Try to find month - specific patterns with context to avoid false positives in names
+    // ⚠️ PROTECTED - DO NOT MODIFY: Month detection logic fixed to avoid false positives
+    // CRITICAL: Removed "mar" abbreviation to prevent detecting "mar" in "Marti" as "marzo"
+    // Uses word boundaries and separators to ensure accurate month detection
     const monthMatch = fileName.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/i) ||
                        fileName.match(/\b(jan|feb|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i) ||
                        fileName.match(/[-\s_](0?[1-9]|1[0-2])[-\s_]/); // Numbers only with separators

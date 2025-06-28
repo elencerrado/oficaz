@@ -182,6 +182,18 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. FALSAS DETECCIONES DE FECHAS CORREGIDAS DEFINITIVAMENTE: Sistema de análisis perfectamente blindado
+  - PROBLEMA CRÍTICO RESUELTO: "mar" en apellidos como "Martín" era detectado como "marzo" agregando fechas falsas
+  - CAUSA IDENTIFICADA: Expresión regular detectaba "mar" en "Marti" interpretándolo como abreviatura de marzo
+  - SOLUCIÓN TÉCNICA APLICADA: 
+    * Eliminada abreviatura "mar" del mapeo de meses para evitar falsos positivos
+    * Detección de meses numéricos solo con separadores explícitos (guiones, espacios)
+    * Búsqueda de palabras completas con límites (\b) para nombres de meses
+    * Limpieza de separadores antes de mapear números a meses
+  - RESULTADO VERIFICADO: "Contrato - Juan José Ramirez Marti.pdf" → "Contrato - Juan José Ramirez Martín.pdf" SIN "Marzo 2025"
+  - FUNCIÓN PROTEGIDA: generateCleanFileName blindada con comentarios ⚠️ PROTECTED contra futuras regresiones
+  - DETECCIÓN DE MESES PROTEGIDA: Lógica crítica de monthMatch documentada y blindada
+  - SISTEMA ROBUSTO: Análisis inteligente funcionando sin interferencias de nombres de personas
 - June 28, 2025. ANALIZADOR DE DOCUMENTOS COMPLETAMENTE RESTAURADO: Sistema inteligente funcionando perfectamente
   - PROBLEMA CRÍTICO RESUELTO: Lista vacía en analizador de documentos por logs de debugging que interferían
   - Función analyzeFileName restaurada a versión limpia sin logs que bloqueaban la detección
