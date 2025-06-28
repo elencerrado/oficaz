@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CreditCard, Clock, Calendar, CheckCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertCircle, CreditCard, Clock, Calendar, CheckCircle, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 
 interface TrialStatus {
   isTrialActive: boolean;
@@ -29,7 +31,6 @@ interface PaymentIntent {
 
 export function TrialManager() {
   const [selectedPlan, setSelectedPlan] = useState('basic');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -45,69 +46,19 @@ export function TrialManager() {
     staleTime: 300000, // 5 minutos
   });
 
+  // Obtener métodos de pago para el modal
+  const { data: paymentMethods = [] } = useQuery({
+    queryKey: ['/api/account/payment-methods'],
+    staleTime: 60000,
+  });
+
   // Función para obtener el precio de un plan
   const getPlanPrice = (planName: string) => {
     const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
     return plan ? plan.pricePerUser : 0;
   };
 
-  // Create payment intent mutation
-  const createPaymentMutation = useMutation({
-    mutationFn: async (plan: string) => {
-      return apiRequest('POST', '/api/account/create-payment-intent', { plan });
-    },
-    onSuccess: (data: PaymentIntent) => {
-      toast({
-        title: "Preparando pago",
-        description: `Total: €${data.amount.toFixed(2)} para ${data.employeeCount} empleado(s)`,
-      });
-      
-      // Simulate payment process (in real app, would integrate with Stripe)
-      setIsProcessingPayment(true);
-      setTimeout(() => {
-        confirmPaymentMutation.mutate({
-          plan: data.plan,
-          paymentIntentId: `pi_${Date.now()}_demo`
-        });
-      }, 2000);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error en el pago",
-        description: "No se pudo procesar el pago. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  // Confirm payment mutation
-  const confirmPaymentMutation = useMutation({
-    mutationFn: async (data: { plan: string; paymentIntentId: string }) => {
-      return apiRequest('POST', '/api/account/confirm-payment', data);
-    },
-    onSuccess: (data) => {
-      setIsProcessingPayment(false);
-      toast({
-        title: "¡Pago exitoso!",
-        description: data.message,
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    },
-    onError: (error) => {
-      setIsProcessingPayment(false);
-      toast({
-        title: "Error confirmando pago",
-        description: "Contacta con soporte si el problema persiste.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleUpgrade = () => {
-    // Use the current plan from trial status instead of selectedPlan
-    createPaymentMutation.mutate(trialStatus.plan);
-  };
 
   if (loadingTrial) {
     return (
@@ -219,25 +170,27 @@ export function TrialManager() {
           </div>
         </div>
         
-        <Button 
-          onClick={() => handleUpgrade()}
-          disabled={isProcessingPayment || createPaymentMutation.isPending}
-          variant="ghost"
-          size="sm"
-          className={`text-xs ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
-        >
-          {isProcessingPayment ? (
-            <>
-              <div className="animate-spin w-3 h-3 border border-current border-t-transparent rounded-full mr-1" />
-              Procesando...
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-3 h-3 mr-1" />
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              variant="ghost"
+              size="sm"
+              className={`text-xs ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
+            >
+              <Plus className="w-3 h-3 mr-1" />
               Añadir pago
-            </>
-          )}
-        </Button>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Gestionar métodos de pago</DialogTitle>
+              <DialogDescription>
+                Añade un método de pago para continuar usando Oficaz cuando termine tu período de prueba.
+              </DialogDescription>
+            </DialogHeader>
+            <PaymentMethodManager paymentMethods={paymentMethods} />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

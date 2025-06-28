@@ -33,7 +33,7 @@ import { getAuthHeaders } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { TrialManager } from '@/components/TrialManager';
+import { TrialManagerSimple } from '@/components/TrialManagerSimple';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
@@ -752,7 +752,7 @@ const AccountManagement = () => {
       {/* Trial Manager - shown for companies in trial */}
       {subscription?.status === 'trial' && subscription?.isTrialActive && (
         <div className="mb-6">
-          <TrialManager />
+          <TrialManagerSimple />
         </div>
       )}
 
