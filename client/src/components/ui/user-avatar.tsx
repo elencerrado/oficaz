@@ -16,39 +16,39 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     return (words[0][0] + (words[words.length - 1][0] || '')).toUpperCase();
   };
 
-  // Colores únicos para cada empleado usando estilos inline con !important
-  const getUserColor = (id?: number) => {
-    if (!id) return '007AFF'; // Oficaz primary color
+  // Colores únicos para cada empleado usando estilos inline agresivos
+  const getUserColors = (id?: number) => {
+    if (!id) return { bg: '#007AFF', text: '#FFFFFF' }; // Oficaz primary color
     
-    const colors = [
-      '3B82F6',  // blue-500
-      '10B981',  // emerald-500  
-      '8B5CF6',  // purple-500
-      'F97316',  // orange-500
-      'EC4899',  // pink-500
-      '14B8A6',  // teal-500
-      '6366F1',  // indigo-500
-      'EF4444',  // red-500
-      '06B6D4',  // cyan-500
-      'F59E0B',  // amber-500
-      '84CC16',  // lime-500
-      'F43F5E',  // rose-500
-      '8B5CF6',  // violet-500
-      '0EA5E9',  // sky-500
-      '22C55E',  // green-500
-      'EAB308',  // yellow-500 (texto negro)
-      'D946EF',  // fuchsia-500
-      '64748B',  // slate-500
+    const colorPairs = [
+      { bg: '#3B82F6', text: '#FFFFFF' },  // blue-500
+      { bg: '#10B981', text: '#FFFFFF' },  // emerald-500  
+      { bg: '#8B5CF6', text: '#FFFFFF' },  // purple-500
+      { bg: '#F97316', text: '#FFFFFF' },  // orange-500
+      { bg: '#EC4899', text: '#FFFFFF' },  // pink-500
+      { bg: '#14B8A6', text: '#FFFFFF' },  // teal-500
+      { bg: '#6366F1', text: '#FFFFFF' },  // indigo-500
+      { bg: '#EF4444', text: '#FFFFFF' },  // red-500
+      { bg: '#06B6D4', text: '#FFFFFF' },  // cyan-500
+      { bg: '#F59E0B', text: '#FFFFFF' },  // amber-500
+      { bg: '#84CC16', text: '#FFFFFF' },  // lime-500
+      { bg: '#F43F5E', text: '#FFFFFF' },  // rose-500
+      { bg: '#8B5CF6', text: '#FFFFFF' },  // violet-500
+      { bg: '#0EA5E9', text: '#FFFFFF' },  // sky-500
+      { bg: '#22C55E', text: '#FFFFFF' },  // green-500
+      { bg: '#EAB308', text: '#000000' },  // yellow-500 (texto negro)
+      { bg: '#D946EF', text: '#FFFFFF' },  // fuchsia-500
+      { bg: '#64748B', text: '#FFFFFF' },  // slate-500
     ];
     
-    return colors[id % colors.length];
+    return colorPairs[id % colorPairs.length];
   };
 
   // Tamaños según el tamaño del avatar
-  const sizeMap = {
-    sm: { width: '32px', height: '32px', fontSize: '12px' },
-    md: { width: '40px', height: '40px', fontSize: '14px' }, 
-    lg: { width: '48px', height: '48px', fontSize: '16px' }
+  const sizeClasses = {
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-10 h-10 text-sm', 
+    lg: 'w-12 h-12 text-base'
   };
 
   // Si hay clases personalizadas, usarlas completamente
@@ -60,29 +60,17 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     );
   }
 
-  // Crear avatar con estilos inline completos que no puedan ser sobrescritos
-  const userColor = getUserColor(userId);
-  const isYellow = userColor === 'EAB308';
-  const textColor = isYellow ? '#000000' : '#FFFFFF';
-  const bgColor = `#${userColor}`;
-  const sizes = sizeMap[size];
+  // Usar colores únicos con estilos inline SUPER agresivos
+  const colors = getUserColors(userId);
   
   return (
     <div 
+      className={`rounded-full flex items-center justify-center font-medium select-none ${sizeClasses[size]}`}
       style={{
-        backgroundColor: bgColor + ' !important',
-        color: textColor + ' !important',
-        width: sizes.width,
-        height: sizes.height,
-        fontSize: sizes.fontSize,
-        borderRadius: '9999px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: '500',
-        userSelect: 'none',
-        border: 'none',
-        outline: 'none'
+        backgroundColor: `${colors.bg} !important`,
+        color: `${colors.text} !important`,
+        backgroundImage: 'none !important',
+        backgroundClip: 'border-box !important'
       }}
     >
       {getInitials(fullName)}
