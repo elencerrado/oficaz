@@ -381,21 +381,34 @@ const AccountManagement = () => {
             <div className="space-y-3">
               {invoices?.slice(0, 5).map((invoice: any) => (
                 <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{invoice.invoice_number}</p>
                     <p className="text-sm text-gray-600">{invoice.description}</p>
                     <p className="text-xs text-gray-500">
                       {formatDate(invoice.created_at)}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatAmount(invoice.amount)}</p>
-                    <Badge 
-                      variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
-                      className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
-                    >
-                      {invoice.status === 'paid' ? 'Pagada' : 'Pendiente'}
-                    </Badge>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="font-semibold">{formatAmount(invoice.amount)}</p>
+                      <Badge 
+                        variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
+                        className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                      >
+                        {invoice.status === 'paid' ? 'Pagada' : 'Pendiente'}
+                      </Badge>
+                    </div>
+                    {invoice.download_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(invoice.download_url, '_blank')}
+                        className="ml-2"
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        PDF
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -163,6 +163,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. HISTORIAL DE FACTURAS MIGRADO A STRIPE API: Sistema completamente integrado con datos reales
+  - Reemplazado sistema de facturas sintéticas por integración directa con Stripe invoices API
+  - Endpoint `/api/account/invoices` ahora consulta facturas reales de Stripe usando customer ID
+  - Conversión automática de centavos a euros y formateo de fechas desde timestamps Unix
+  - Botón de descarga PDF agregado cuando Stripe proporciona invoice_pdf URL
+  - Sistema robusto: retorna array vacío en lugar de error cuando no hay Stripe customer ID
+  - Solo muestra facturas pagadas (status: 'paid') para mejor experiencia de usuario
+  - Datos completamente auténticos: números de factura, importes, fechas y descripciones reales
+  - Eliminados todos los datos sintéticos hardcodeados del sistema de facturación
 - June 28, 2025. MENSAJES DE AUTO-CANCELACIÓN OPTIMIZADOS: Terminología precisa implementada
   - Mejorados mensajes de advertencia para mostrar fecha exacta de cancelación de forma prominente
   - Mensaje principal corregido: "⚠️ Tu suscripción terminará el [fecha]" en lugar de "próximo pago"

@@ -2738,55 +2738,51 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
-      try {
-        const result = await db.execute(sql`
-          SELECT * FROM invoices 
-          WHERE company_id = ${companyId}
-          ORDER BY created_at DESC
-        `);
-        
-        if (result.rows.length > 0) {
-          return res.json(result.rows);
-        }
-      } catch (dbError) {
-        console.log('invoices table not found, using default data');
+      // Get subscription to find Stripe customer ID
+      const subscriptionResult = await db.execute(sql`
+        SELECT stripe_customer_id, stripe_subscription_id
+        FROM subscriptions 
+        WHERE company_id = ${companyId}
+      `);
+      
+      const subscription = subscriptionResult.rows[0] as any;
+      
+      if (!subscription?.stripe_customer_id) {
+        console.log('No Stripe customer ID found for company:', companyId);
+        return res.json([]);
       }
 
-      // Create invoices for March, April, and May 2024
-      const realInvoices = [
-        {
-          id: 1,
-          invoice_number: 'OFZ-2024-05-001',
-          amount: '29.99',
-          currency: 'EUR',
-          status: 'paid',
-          description: 'Plan Premium - mayo 2024',
-          created_at: new Date(2024, 4, 1).toISOString(), // May 1st
-          paid_at: new Date(2024, 3, 30).toISOString() // April 30th
-        },
-        {
-          id: 2,
-          invoice_number: 'OFZ-2024-04-001',
-          amount: '29.99',
-          currency: 'EUR',
-          status: 'paid',
-          description: 'Plan Premium - abril 2024',
-          created_at: new Date(2024, 3, 1).toISOString(), // April 1st
-          paid_at: new Date(2024, 2, 31).toISOString() // March 31st
-        },
-        {
-          id: 3,
-          invoice_number: 'OFZ-2024-03-001',
-          amount: '29.99',
-          currency: 'EUR',
-          status: 'paid',
-          description: 'Plan Premium - marzo 2024',
-          created_at: new Date(2024, 2, 1).toISOString(), // March 1st
-          paid_at: new Date(2024, 1, 29).toISOString() // February 29th
-        }
-      ];
+      try {
+        // Get invoices from Stripe
+        const invoices = await stripe.invoices.list({
+          customer: subscription.stripe_customer_id,
+          limit: 20,
+          status: 'paid', // Only show paid invoices
+        });
 
-      res.json(realInvoices);
+        // Format invoices for frontend
+        const formattedInvoices = invoices.data.map((invoice, index) => ({
+          id: invoice.id,
+          invoice_number: invoice.number || `INV-${String(index + 1).padStart(3, '0')}`,
+          amount: (invoice.amount_paid / 100).toFixed(2), // Convert from cents to euros
+          currency: invoice.currency.toUpperCase(),
+          status: invoice.status === 'paid' ? 'paid' : 'pending',
+          description: invoice.description || invoice.lines.data[0]?.description || 'Suscripción Oficaz',
+          created_at: new Date(invoice.created * 1000).toISOString(),
+          paid_at: invoice.status_transitions.paid_at 
+            ? new Date(invoice.status_transitions.paid_at * 1000).toISOString() 
+            : null,
+          download_url: invoice.invoice_pdf
+        }));
+
+        res.json(formattedInvoices);
+      } catch (stripeError: any) {
+        console.error('Error fetching Stripe invoices:', stripeError.message);
+        
+        // Return empty array instead of error for better UX
+        res.json([]);
+      }
+      
     } catch (error) {
       console.error('Error fetching invoices:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
