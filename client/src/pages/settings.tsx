@@ -372,9 +372,19 @@ const AccountManagement = () => {
       {invoices && invoices.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Historial de facturas</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Historial de facturas
+              {invoices?.some((inv: any) => inv.is_demo) && (
+                <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
+                  Demostración
+                </Badge>
+              )}
+            </CardTitle>
             <CardDescription>
-              Últimas facturas emitidas para tu cuenta
+              {invoices?.some((inv: any) => inv.is_demo) 
+                ? "Datos de demostración - se mostrarán facturas reales cuando añadas un método de pago"
+                : "Últimas facturas emitidas para tu cuenta"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>

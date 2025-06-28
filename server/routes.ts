@@ -2750,8 +2750,23 @@ startxref
       console.log('DEBUG - Subscription data:', subscription);
       
       if (!subscription?.stripe_customer_id) {
-        console.log('No Stripe customer ID found for company:', companyId, '- returning empty array');
-        return res.json([]);
+        console.log('No Stripe customer ID found for company:', companyId, '- returning demo invoices');
+        // Return demo invoices when no Stripe customer exists
+        const demoInvoices = [
+          {
+            id: 'demo_1',
+            invoice_number: 'DEMO-2025-001',
+            amount: '29.99',
+            currency: 'EUR',
+            status: 'paid',
+            description: 'Plan Premium - Factura de demostración',
+            created_at: new Date(2025, 5, 1).toISOString(),
+            paid_at: new Date(2025, 4, 30).toISOString(),
+            download_url: null,
+            is_demo: true
+          }
+        ];
+        return res.json(demoInvoices);
       }
 
       console.log('Found Stripe customer ID:', subscription.stripe_customer_id);
