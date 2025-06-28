@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
@@ -509,11 +510,7 @@ export default function EmployeesSimple() {
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-blue-600 text-white">
-                          {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar fullName={employee.fullName || ''} size="lg" />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>
@@ -550,11 +547,7 @@ export default function EmployeesSimple() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-blue-600 text-white">
-                          {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar fullName={employee.fullName || ''} size="md" />
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -835,11 +828,7 @@ export default function EmployeesSimple() {
               {/* Employee Header */}
               <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border-2 border-white shadow">
-                    <AvatarFallback className="bg-oficaz-primary text-white font-semibold">
-                      {selectedEmployee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" className="h-12 w-12 border-2 border-white shadow" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
                     <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">

@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { 
   Send, 
   ArrowLeft,
@@ -402,11 +403,7 @@ export default function Messages() {
                         className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
-                          <Avatar className="h-12 w-12 bg-blue-500">
-                            <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                              {manager.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar fullName={manager.fullName} size="lg" className="h-12 w-12" />
                           <div className="flex-1">
                             <p className="text-white font-medium">{manager.fullName}</p>
                             <p className="text-white/70 text-sm capitalize">{manager.role}</p>
@@ -447,11 +444,7 @@ export default function Messages() {
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <Avatar className="h-12 w-12 bg-green-500">
-                              <AvatarFallback className="bg-green-500 text-white font-semibold">
-                                {employee.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar fullName={employee.fullName} size="lg" className="h-12 w-12" />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <p className="text-white font-medium">{employee.fullName}</p>
@@ -530,11 +523,7 @@ export default function Messages() {
                 
                 return (
                   <>
-                    <Avatar className={`h-8 w-8 ${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'}`}>
-                      <AvatarFallback className={`${user?.role === 'employee' ? 'bg-blue-500' : 'bg-green-500'} text-white text-sm`}>
-                        {contact?.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar fullName={contact?.fullName || ''} size="sm" className="h-8 w-8" />
                     <div>
                       <p className="text-white font-medium">
                         {contact?.fullName}

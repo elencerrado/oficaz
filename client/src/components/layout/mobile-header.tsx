@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
@@ -97,11 +98,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 lg:h-10 lg:w-10 rounded-lg">
-              <Avatar className="h-9 w-9 lg:h-10 lg:w-10 rounded-lg">
-                <AvatarFallback className="bg-oficaz-primary text-white text-xs lg:text-sm rounded-lg">
-                  {user?.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar fullName={user?.fullName || ''} size="sm" className="h-9 w-9 lg:h-10 lg:w-10 rounded-lg" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>

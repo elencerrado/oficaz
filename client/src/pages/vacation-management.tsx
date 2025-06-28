@@ -19,6 +19,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import StatsCard from "@/components/StatsCard";
 import { useAuth } from "@/hooks/use-auth";
 import { TabNavigation } from "@/components/ui/tab-navigation";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface VacationRequest {
   id: number;
@@ -892,9 +893,7 @@ export default function VacationManagement() {
                               {/* Información del Empleado */}
                               <div className="w-72 flex-shrink-0 pr-6">
                                 <div className="flex items-center gap-3">
-                                  <div className="p-2 bg-blue-100 rounded-full">
-                                    <User className="w-4 h-4 text-blue-600" />
-                                  </div>
+                                  <UserAvatar fullName={employee.fullName} size="sm" />
                                   <div className="flex-1">
                                     <h4 className="font-medium text-gray-900 truncate">
                                       {employee.fullName}

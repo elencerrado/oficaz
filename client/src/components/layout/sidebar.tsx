@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 

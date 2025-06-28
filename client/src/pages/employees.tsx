@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -372,11 +373,7 @@ export default function Employees() {
                     onClick={() => handleEditEmployee(employee)}
                   >
                     <div className="flex items-center space-x-4 flex-1">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-oficaz-primary text-white">
-                          {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar fullName={employee.fullName || ''} size="md" />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 mb-1">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -633,11 +630,7 @@ export default function Employees() {
                       
                       <div className="p-4">
                         <div className="flex items-center space-x-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-oficaz-primary text-white">
-                              {employee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar fullName={employee.fullName || ''} size="md" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
@@ -813,11 +806,7 @@ export default function Employees() {
               {/* Employee Header */}
               <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border-2 border-white shadow">
-                    <AvatarFallback className="bg-oficaz-primary text-white font-semibold">
-                      {selectedEmployee.fullName?.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" className="h-12 w-12 border-2 border-white shadow" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
                     <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">

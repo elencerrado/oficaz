@@ -6,7 +6,7 @@ import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Send, 
@@ -540,15 +540,15 @@ export default function Messages() {
                     onClick={() => setSelectedChat(employee.id)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        selectedChat === employee.id
-                          ? 'bg-white/20 text-white'
-                          : 'bg-oficaz-primary text-white'
-                      }`}>
-                        <span className="text-sm font-medium">
-                          {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
+                      <UserAvatar 
+                        fullName={employee.fullName || ''} 
+                        size="md" 
+                        className={`w-10 h-10 ${
+                          selectedChat === employee.id
+                            ? 'bg-white/20 text-white'
+                            : 'bg-oficaz-primary text-white'
+                        }`} 
+                      />
                       
                       <div className="flex-1 min-w-0">
                         <p className={`truncate font-medium text-sm ${
@@ -575,11 +575,11 @@ export default function Messages() {
                   {/* Chat Header */}
                   <div className="p-4 border-b border-gray-200 flex-shrink-0">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
+                      <UserAvatar 
+                        fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
+                        size="md" 
+                        className="w-10 h-10 bg-oficaz-primary" 
+                      />
                       <div>
                         <h3 className="heading-4">
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
@@ -733,11 +733,11 @@ export default function Messages() {
                       onClick={() => setSelectedChat(employee.id)}
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium text-sm">
-                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </span>
-                        </div>
+                        <UserAvatar 
+                          fullName={employee.fullName || ''} 
+                          size="md" 
+                          className="w-10 h-10 bg-oficaz-primary" 
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">
                             {employee.fullName}
@@ -772,11 +772,11 @@ export default function Messages() {
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
-                <div className="w-10 h-10 bg-oficaz-primary rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium">
-                    {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </span>
-                </div>
+                <UserAvatar 
+                  fullName={selectedChatUser?.fullName || ''} 
+                  size="md" 
+                  className="w-10 h-10 bg-oficaz-primary text-white" 
+                />
                 <div>
                   <h3 className="font-semibold text-gray-900">
                     {selectedChatUser?.fullName}
@@ -983,15 +983,15 @@ export default function Messages() {
                           </div>
                         )}
                         
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          modalGroupMode && modalSelectedEmployees.includes(employee.id)
-                            ? 'bg-white/20 text-white'
-                            : 'bg-oficaz-primary text-white'
-                        }`}>
-                          <span className="text-xs font-medium">
-                            {employee.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </span>
-                        </div>
+                        <UserAvatar 
+                          fullName={employee.fullName || ''} 
+                          size="sm" 
+                          className={`w-8 h-8 ${
+                            modalGroupMode && modalSelectedEmployees.includes(employee.id)
+                              ? 'bg-white/20 text-white'
+                              : 'bg-oficaz-primary text-white'
+                          }`} 
+                        />
                         
                         <div className="flex-1 min-w-0">
                           <p className={`font-medium text-sm truncate ${
@@ -1095,11 +1095,11 @@ export default function Messages() {
                       onClick={() => setSelectedChat(manager.id)}
                     >
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium">
-                            {manager.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </span>
-                        </div>
+                        <UserAvatar 
+                          fullName={manager.fullName || ''} 
+                          size="lg" 
+                          className="w-12 h-12 bg-white/20 text-white" 
+                        />
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
@@ -1161,11 +1161,11 @@ export default function Messages() {
                 >
                   <ArrowLeft className="w-5 h-5 text-white" />
                 </Button>
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium">
-                    {selectedChatUser?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </span>
-                </div>
+                <UserAvatar 
+                  fullName={selectedChatUser?.fullName || ''} 
+                  size="md" 
+                  className="w-10 h-10 bg-white/20 text-white" 
+                />
                 <div>
                   <h3 className="font-semibold text-white">
                     {selectedChatUser?.fullName}
