@@ -311,17 +311,23 @@ export default function TimeTracking() {
     // Helper function to format break periods for PDF
     const formatBreakPeriodsForPDF = (breakPeriods: any[]) => {
       if (!breakPeriods || breakPeriods.length === 0) {
-        return '-';
+        return 'Sin descansos';
       }
       
       return breakPeriods.map(bp => {
-        const startTime = format(new Date(bp.startTime), 'HH:mm');
-        const endTime = bp.endTime ? format(new Date(bp.endTime), 'HH:mm') : 'En curso';
-        if (bp.endTime) {
-          const duration = Math.round((new Date(bp.endTime).getTime() - new Date(bp.startTime).getTime()) / (1000 * 60));
-          return `${startTime}-${endTime} (${duration}min)`;
-        } else {
-          return `${startTime} (En curso)`;
+        try {
+          // Usar los nombres correctos de las propiedades
+          const startTime = format(new Date(bp.breakStart), 'HH:mm');
+          const endTime = bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : 'En curso';
+          if (bp.breakEnd) {
+            const duration = Math.round((new Date(bp.breakEnd).getTime() - new Date(bp.breakStart).getTime()) / (1000 * 60));
+            return `${startTime}-${endTime} (${duration} min)`;
+          } else {
+            return `${startTime} (En curso)`;
+          }
+        } catch (error) {
+          // En caso de error de fecha, devolver texto seguro
+          return 'Descanso (datos inválidos)';
         }
       }).join(', ');
     };
