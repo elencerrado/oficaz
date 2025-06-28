@@ -448,7 +448,7 @@ export default function AdminDashboard() {
                       size="lg"
                       onClick={() => clockInMutation.mutate()}
                       disabled={clockInMutation.isPending}
-                      className="px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
+                      className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
                     >
                       {clockInMutation.isPending ? (
                         <>
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
                         size="lg"
                         onClick={() => clockOutMutation.mutate()}
                         disabled={clockOutMutation.isPending}
-                        className="px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md mr-4"
+                        className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md mr-4"
                       >
                         {clockOutMutation.isPending ? (
                           <>
@@ -485,11 +485,11 @@ export default function AdminDashboard() {
                       
                       {!activeBreak ? (
                         <Button
-                          size="sm"
+                          size="lg"
                           variant="outline"
                           onClick={() => startBreakMutation.mutate()}
                           disabled={startBreakMutation.isPending}
-                          className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                          className="w-[120px] h-[48px] border-orange-300 text-orange-600 hover:bg-orange-50"
                         >
                           {startBreakMutation.isPending ? (
                             <>
@@ -505,11 +505,11 @@ export default function AdminDashboard() {
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
+                          size="lg"
                           variant="outline"
                           onClick={() => endBreakMutation.mutate()}
                           disabled={endBreakMutation.isPending}
-                          className="border-green-300 text-green-600 hover:bg-green-50"
+                          className="w-[120px] h-[48px] border-green-300 text-green-600 hover:bg-green-50"
                         >
                           {endBreakMutation.isPending ? (
                             <>
