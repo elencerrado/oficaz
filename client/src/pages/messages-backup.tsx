@@ -403,7 +403,7 @@ export default function Messages() {
                         className="bg-white/10 rounded-lg p-4 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
                       >
                         <div className="flex items-center space-x-3">
-                          <UserAvatar fullName={manager.fullName} size="lg" className="h-12 w-12" />
+                          <UserAvatar fullName={manager.fullName} size="lg" userId={manager.id} />
                           <div className="flex-1">
                             <p className="text-white font-medium">{manager.fullName}</p>
                             <p className="text-white/70 text-sm capitalize">{manager.role}</p>
@@ -444,7 +444,7 @@ export default function Messages() {
                           }`}
                         >
                           <div className="flex items-center space-x-3">
-                            <UserAvatar fullName={employee.fullName} size="lg" className="h-12 w-12" />
+                            <UserAvatar fullName={employee.fullName} size="lg" userId={employee.id} />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <p className="text-white font-medium">{employee.fullName}</p>
@@ -523,7 +523,7 @@ export default function Messages() {
                 
                 return (
                   <>
-                    <UserAvatar fullName={contact?.fullName || ''} size="sm" className="h-8 w-8" />
+                    <UserAvatar fullName={contact?.fullName || ''} size="sm" userId={contact?.id} />
                     <div>
                       <p className="text-white font-medium">
                         {contact?.fullName}

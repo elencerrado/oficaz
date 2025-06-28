@@ -16,8 +16,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     return (words[0][0] + (words[words.length - 1][0] || '')).toUpperCase();
   };
 
-  // Colores únicos para cada empleado con estilos CSS directos
-  const getUserColorStyle = (id?: number) => {
+  // Colores únicos para cada empleado usando estilos inline con !important
+  const getUserColor = (id?: number) => {
     if (!id) return { backgroundColor: '#007AFF', color: '#FFFFFF' }; // Oficaz primary color
     
     const colors = [
@@ -36,41 +36,40 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
       '#8B5CF6',  // violet-500
       '#0EA5E9',  // sky-500
       '#22C55E',  // green-500
-      '#EAB308',  // yellow-500
+      '#EAB308',  // yellow-500 (texto negro)
       '#D946EF',  // fuchsia-500
       '#64748B',  // slate-500
     ];
     
-    return { backgroundColor: colors[id % colors.length], color: '#FFFFFF' };
+    const bgColor = colors[id % colors.length];
+    const textColor = bgColor === '#EAB308' ? '#000000' : '#FFFFFF'; // yellow con texto negro
+    
+    return { backgroundColor: bgColor, color: textColor };
   };
 
-  // Tamaños de texto según el tamaño del avatar
-  const textSizes = {
-    sm: 'text-xs',
-    md: 'text-sm', 
-    lg: 'text-base'
+  // Tamaños según el tamaño del avatar
+  const sizeClasses = {
+    sm: 'w-8 h-8 text-xs',
+    md: 'w-10 h-10 text-sm', 
+    lg: 'w-12 h-12 text-base'
   };
 
-  // Crear clases base mínimas
-  const baseClasses = 'rounded-full flex items-center justify-center font-medium select-none';
-  
   // Si hay clases personalizadas, usarlas completamente
   if (className) {
     return (
-      <div className={`${baseClasses} ${textSizes[size]} ${className}`}>
+      <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
         {getInitials(fullName)}
       </div>
     );
   }
 
-  // Solo aplicar defaults si no hay className personalizada
-  const defaultClasses = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
-  const userColorStyle = getUserColorStyle(userId);
+  // Usar estilos inline para colores únicos que no puedan ser sobrescritos
+  const userColor = getUserColor(userId);
   
   return (
     <div 
-      className={`${baseClasses} ${defaultClasses} ${textSizes[size]}`}
-      style={userColorStyle}
+      className={`rounded-full flex items-center justify-center font-medium select-none ${sizeClasses[size]}`}
+      style={userColor}
     >
       {getInitials(fullName)}
     </div>
