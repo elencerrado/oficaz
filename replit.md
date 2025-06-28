@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. COMPONENTE USERAVATAR OPTIMIZADO Y AVATARES REEMPLAZADOS COMPLETAMENTE: Sistema de avatares unificado
+  - COMPONENTE USERAVATAR MEJORADO: Lógica simplificada para aplicar correctamente colores personalizados sin conflictos
+  - REEMPLAZADOS 8 AVATARES EN MENSAJES: Chat header, lista empleados, modal empleados, modal managers, chat móvil
+  - COLORES PERSONALIZADOS PRESERVADOS: bg-oficaz-primary text-white, bg-white/20 text-white según contexto
+  - LÓGICA CONDICIONAL OPTIMIZADA: className personalizada tiene prioridad completa sobre colores por defecto
+  - ELIMINADOS COLORES POR DEFECTO PROBLEMÁTICOS: ya no interfieren con especificaciones personalizadas
+  - COMPONENTE ROBUSTO: maneja casos con y sin className de forma inteligente y consistente
+  - SISTEMA DE AVATARES UNIFICADO: todas las páginas ahora usan UserAvatar en lugar de implementaciones manuales
 - June 28, 2025. FALSAS DETECCIONES DE FECHAS CORREGIDAS DEFINITIVAMENTE: Sistema de análisis perfectamente blindado
   - PROBLEMA CRÍTICO RESUELTO: "mar" en apellidos como "Martín" era detectado como "marzo" agregando fechas falsas
   - CAUSA IDENTIFICADA: Expresión regular detectaba "mar" en "Marti" interpretándolo como abreviatura de marzo

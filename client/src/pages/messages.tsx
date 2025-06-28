@@ -578,7 +578,7 @@ export default function Messages() {
                       <UserAvatar 
                         fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
                         size="md" 
-                        className="w-10 h-10 bg-oficaz-primary" 
+                        className="w-10 h-10 bg-oficaz-primary text-white" 
                       />
                       <div>
                         <h3 className="heading-4">
@@ -736,7 +736,7 @@ export default function Messages() {
                         <UserAvatar 
                           fullName={employee.fullName || ''} 
                           size="md" 
-                          className="w-10 h-10 bg-oficaz-primary" 
+                          className="w-10 h-10 bg-oficaz-primary text-white" 
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">
