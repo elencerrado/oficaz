@@ -133,12 +133,12 @@ export default function AdminDocuments() {
   }>({ show: false, requestId: null, documentType: '' });
 
   // Fetch employees
-  const { data: employees = [] } = useQuery({
+  const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
   });
 
   // Fetch document notifications (sent requests) - optimized polling
-  const { data: sentRequests = [] } = useQuery({
+  const { data: sentRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/document-notifications'],
     refetchInterval: 60000, // Reduced from 3s to 60s
     staleTime: 45000,
@@ -147,7 +147,7 @@ export default function AdminDocuments() {
   });
 
   // Fetch all documents with optimized refresh
-  const { data: allDocuments = [] } = useQuery({
+  const { data: allDocuments = [] } = useQuery<any[]>({
     queryKey: ['/api/documents/all'],
     queryFn: async () => {
       return await apiRequest('GET', '/api/documents/all');
@@ -746,7 +746,7 @@ export default function AdminDocuments() {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
-                        const analysis = analyzeFileName(file.name, employees?.data || []);
+                        const analysis = analyzeFileName(file.name, employees || []);
                         return {
                           file,
                           ...analysis,
