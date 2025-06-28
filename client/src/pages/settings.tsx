@@ -91,6 +91,11 @@ const AccountManagement = () => {
     }
   });
 
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    retry: false,
+  });
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -104,6 +109,16 @@ const AccountManagement = () => {
       style: 'currency',
       currency: 'EUR'
     }).format(parseFloat(amount));
+  };
+
+  const getPlanPrice = () => {
+    if (!subscription?.plan || !subscriptionPlans) return '€29.99';
+    
+    const plan = (subscriptionPlans as any[])?.find((p: any) => 
+      p.name === subscription.plan
+    );
+    
+    return plan?.pricePerUser ? `€${plan.pricePerUser}` : '€29.99';
   };
 
   if (!accountInfo && !subscription) {
@@ -128,22 +143,43 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
-            <div className="flex items-center space-x-3">
-              <Crown className="h-6 w-6 text-blue-600" />
-              <div>
-                <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
-                <p className="text-sm text-gray-600">
-                  {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
-                </p>
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Crown className="h-6 w-6 text-blue-600" />
+                <div>
+                  <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
+                  <p className="text-sm text-gray-600">
+                    {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  {trialStatus?.isTrialActive ? 'PRUEBA' : 'ACTIVO'}
+                </Badge>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                {trialStatus?.isTrialActive ? 'PRUEBA' : 'ACTIVO'}
-              </Badge>
-            </div>
+            
+            {/* Payment Information */}
+            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && (
+              <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">Próximo pago:</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {formatDate(subscription.nextPaymentDate)}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CreditCard className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-semibold text-blue-600">
+                    {getPlanPrice()}/mes
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Usage Statistics */}
