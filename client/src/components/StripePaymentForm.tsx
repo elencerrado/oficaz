@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, CheckCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface StripePaymentFormProps {
   planName: string;
@@ -61,27 +62,15 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
         
         // Call the backend to confirm the payment method
         try {
-          const response = await fetch('/api/account/confirm-payment-method', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-            body: JSON.stringify({
-              setupIntentId: result.setupIntent.id,
-            }),
+          await apiRequest('POST', '/api/account/confirm-payment-method', {
+            setupIntentId: result.setupIntent.id,
           });
 
-          if (response.ok) {
-            toast({
-              title: "¡Método de pago añadido!",
-              description: "Tu método de pago ha sido configurado correctamente",
-            });
-            onSuccess();
-          } else {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al confirmar el método de pago');
-          }
+          toast({
+            title: "¡Método de pago añadido!",
+            description: "Tu método de pago ha sido configurado correctamente",
+          });
+          onSuccess();
         } catch (backendError) {
           console.error('Backend confirmation error:', backendError);
           toast({
