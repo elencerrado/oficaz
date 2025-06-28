@@ -229,9 +229,12 @@ export default function VacationManagement() {
             setActiveTooltip(isTooltipActive ? null : tooltipId);
           }}
         >
-          {/* Período visible siempre */}
-          <div className="text-white text-xs font-medium select-none">
-            {periodText}
+          {/* Número de días visible siempre */}
+          <div className="text-white text-sm font-bold select-none">
+            {fullRequest?.startDate && fullRequest?.endDate 
+              ? calculateDays(fullRequest.startDate, fullRequest.endDate)
+              : fullRequest?.days || duration
+            }
           </div>
 
           {/* Panel de información que aparece al hacer clic */}
