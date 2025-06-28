@@ -63,15 +63,30 @@ export const analyzeFileName = (fileName: string, employees: Employee[] = []) =>
   };
 
   const normalizedFileName = normalizeText(fileName);
+  console.log('🔍 analyzeFileName DEBUG:', {
+    originalFileName: fileName,
+    normalizedFileName,
+    documentTypesLength: documentTypes.length
+  });
   
   // Document type detection using the predefined document types
   let documentType = 'Documento';
   for (const docType of documentTypes) {
-    if (docType.keywords.some(keyword => normalizedFileName.includes(keyword))) {
+    console.log('🔍 Checking docType:', docType.name, 'keywords:', docType.keywords);
+    const hasKeyword = docType.keywords.some(keyword => {
+      const includes = normalizedFileName.includes(keyword);
+      console.log(`  - keyword "${keyword}": ${includes}`);
+      return includes;
+    });
+    
+    if (hasKeyword) {
       documentType = docType.name;
+      console.log('✅ MATCH found:', documentType);
       break;
     }
   }
+  
+  console.log('🎯 Final documentType:', documentType);
 
   // Find best matching employee
   let bestMatch = null;
