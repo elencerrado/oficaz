@@ -172,12 +172,12 @@ const AccountManagement = () => {
               </div>
             </div>
             
-            {/* Payment Information */}
-            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && (
+            {/* Payment Information - Only show if there are payment methods */}
+            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && paymentMethods && paymentMethods.length > 0 && (
               <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Próximo pago:</span>
+                  <span className="text-sm text-gray-600">Próximo cobro:</span>
                   <span className="text-sm font-medium text-gray-900">
                     {formatDate(subscription.nextPaymentDate)}
                   </span>
