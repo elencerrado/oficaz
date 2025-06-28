@@ -611,6 +611,7 @@ export default function AdminDashboard() {
                         onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
                       >
                         <UserAvatar 
+                          fullName={message.senderName || 'Empleado'}
                           userId={message.senderId} 
                           size="sm" 
                         />
