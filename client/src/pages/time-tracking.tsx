@@ -308,6 +308,24 @@ export default function TimeTracking() {
       periodText = 'Todos los registros';
     }
 
+    // Helper function to format break periods for PDF
+    const formatBreakPeriodsForPDF = (breakPeriods: any[]) => {
+      if (!breakPeriods || breakPeriods.length === 0) {
+        return '-';
+      }
+      
+      return breakPeriods.map(bp => {
+        const startTime = format(new Date(bp.startTime), 'HH:mm');
+        const endTime = bp.endTime ? format(new Date(bp.endTime), 'HH:mm') : 'En curso';
+        if (bp.endTime) {
+          const duration = Math.round((new Date(bp.endTime).getTime() - new Date(bp.startTime).getTime()) / (1000 * 60));
+          return `${startTime}-${endTime} (${duration}min)`;
+        } else {
+          return `${startTime} (En curso)`;
+        }
+      }).join(', ');
+    };
+
     // Function to create a page for an employee
     const createEmployeePage = (employee: any, employeeSessions: any[], isFirstPage: boolean) => {
       if (!isFirstPage) {
@@ -393,7 +411,8 @@ export default function TimeTracking() {
         doc.text('FECHA', colPositions[0], headerY);
         doc.text('ENTRADA', colPositions[1], headerY);
         doc.text('SALIDA', colPositions[2], headerY);
-        doc.text('HORAS', colPositions[3], headerY);
+        doc.text('DESCANSOS', colPositions[3], headerY);
+        doc.text('HORAS', colPositions[4], headerY);
         
         return headerY + 5; // Return starting Y position for content
       };
@@ -433,13 +452,14 @@ export default function TimeTracking() {
       };
       
       // Table setup for individual employee (no employee column needed)
-      const tableStartX = 60;
-      const colWidths = [35, 25, 25, 25];
+      const tableStartX = 50;
+      const colWidths = [30, 22, 22, 30, 20];
       const colPositions = [
         tableStartX, 
         tableStartX + colWidths[0], 
         tableStartX + colWidths[0] + colWidths[1], 
-        tableStartX + colWidths[0] + colWidths[1] + colWidths[2]
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
+        tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3]
       ];
       
       // Add header to first page
@@ -479,7 +499,7 @@ export default function TimeTracking() {
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 122, 255);
             doc.text(`TOTAL ${monthName.toUpperCase()}:`, colPositions[0], currentY);
-            doc.text(`${monthHours.toFixed(1)}h`, colPositions[3], currentY);
+            doc.text(`${monthHours.toFixed(1)}h`, colPositions[4], currentY);
             
             // Add footer and create new page for new month
             addFooter();
@@ -502,7 +522,7 @@ export default function TimeTracking() {
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(80, 80, 80);
             doc.text('TOTAL SEMANA:', colPositions[0], currentY);
-            doc.text(`${weekHours.toFixed(1)}h`, colPositions[3], currentY);
+            doc.text(`${weekHours.toFixed(1)}h`, colPositions[4], currentY);
             currentY += 7;
             weekHours = 0;
           }
@@ -522,10 +542,14 @@ export default function TimeTracking() {
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(40, 40, 40);
           
+          // Format break periods
+          const breakPeriodsText = formatBreakPeriodsForPDF(session.breakPeriods || []);
+          
           doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+          doc.text(breakPeriodsText, colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
           
           currentY += 6;
           weekHours += hours;
@@ -546,7 +570,7 @@ export default function TimeTracking() {
               doc.setFont('helvetica', 'bold');
               doc.setTextColor(80, 80, 80);
               doc.text('TOTAL SEMANA:', colPositions[0], currentY);
-              doc.text(`${weekHours.toFixed(1)}h`, colPositions[3], currentY);
+              doc.text(`${weekHours.toFixed(1)}h`, colPositions[4], currentY);
               currentY += 7;
             }
             
@@ -574,6 +598,9 @@ export default function TimeTracking() {
           const sessionDate = new Date(session.clockIn);
           const hours = calculateHours(session.clockIn, session.clockOut);
           
+          // Format break periods
+          const breakPeriodsText = formatBreakPeriodsForPDF(session.breakPeriods || []);
+          
           doc.setFontSize(8);
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(40, 40, 40);
@@ -581,7 +608,8 @@ export default function TimeTracking() {
           doc.text(format(sessionDate, 'dd/MM/yyyy'), colPositions[0], currentY);
           doc.text(format(sessionDate, 'HH:mm'), colPositions[1], currentY);
           doc.text(session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '-', colPositions[2], currentY);
-          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[3], currentY);
+          doc.text(breakPeriodsText, colPositions[3], currentY);
+          doc.text(hours > 0 ? `${hours.toFixed(1)}h` : '-', colPositions[4], currentY);
           
           currentY += 6;
         });

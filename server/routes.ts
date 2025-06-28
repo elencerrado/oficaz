@@ -970,16 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId);
       
-      // Add user names to sessions
-      const sessionsWithNames = await Promise.all(sessions.map(async (session: any) => {
-        const user = await storage.getUser(session.userId);
-        return {
-          ...session,
-          userName: user?.fullName || 'Usuario desconocido'
-        };
-      }));
-      
-      res.json(sessionsWithNames);
+      res.json(sessions);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
