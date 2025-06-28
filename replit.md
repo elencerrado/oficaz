@@ -173,6 +173,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - Logs de debugging eliminados para versión de producción
 - **Estado FINAL**: Sistema de fichaje admin completamente funcional y protegido contra overflow
 
+### VISIBILIDAD DE FICHAJES ADMIN CORREGIDA (28 Junio 2025)
+- **Problema**: Fichajes del admin no aparecían en página de control horario
+- **Causa**: Filtro en time-tracking.tsx excluía sesiones con userRole === 'admin'
+- **Solución**: Eliminado filtro restrictivo para incluir todas las sesiones
+- **Resultado**: Admin ahora ve sus propios fichajes junto con los del equipo
+- **Limpieza**: Eliminados registros de prueba del admin del día actual
+
 ## Changelog
 
 - June 28, 2025. BOTONES DE FICHAJE ADMIN ESTANDARIZADOS: Tamaños uniformes y debugging añadido
