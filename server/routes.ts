@@ -3403,6 +3403,138 @@ startxref
     }
   });
 
+  // Auto-cancel subscriptions endpoint (called periodically)
+  app.post('/api/subscription/auto-cancel-check', async (req, res) => {
+    try {
+      console.log('Checking for subscriptions to auto-cancel...');
+      
+      // Get all active subscriptions that have passed their next payment date
+      const now = new Date();
+      const expiredSubscriptions = await db.execute(sql`
+        SELECT 
+          s.id,
+          s.company_id,
+          s.stripe_subscription_id,
+          s.next_payment_date,
+          s.status,
+          u.stripe_customer_id
+        FROM subscriptions s
+        JOIN companies c ON s.company_id = c.id  
+        JOIN users u ON c.id = u.company_id AND u.role = 'admin'
+        WHERE 
+          s.status = 'active' 
+          AND s.next_payment_date < ${now.toISOString()}
+          AND s.stripe_subscription_id IS NOT NULL
+      `);
+      
+      let cancelledCount = 0;
+      
+      for (const subscription of expiredSubscriptions.rows) {
+        const sub = subscription as any;
+        
+        try {
+          // Check if customer has any payment methods
+          if (sub.stripe_customer_id) {
+            const paymentMethods = await stripe.paymentMethods.list({
+              customer: sub.stripe_customer_id,
+              type: 'card',
+            });
+            
+            // If no payment methods available, cancel the subscription
+            if (paymentMethods.data.length === 0) {
+              console.log(`No payment methods found for subscription ${sub.stripe_subscription_id}, cancelling...`);
+              
+              // Cancel in Stripe
+              await stripe.subscriptions.cancel(sub.stripe_subscription_id);
+              
+              // Update database
+              await db.execute(sql`
+                UPDATE subscriptions 
+                SET 
+                  status = 'cancelled',
+                  end_date = ${now.toISOString()}
+                WHERE id = ${sub.id}
+              `);
+              
+              cancelledCount++;
+              console.log(`Cancelled subscription ${sub.stripe_subscription_id} for company ${sub.company_id}`);
+            } else {
+              console.log(`Payment methods available for subscription ${sub.stripe_subscription_id}, keeping active`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing subscription ${sub.stripe_subscription_id}:`, error);
+        }
+      }
+      
+      res.json({ 
+        message: `Auto-cancel check completed. Cancelled ${cancelledCount} subscriptions.`,
+        cancelledCount 
+      });
+      
+    } catch (error) {
+      console.error('Error in auto-cancel check:', error);
+      res.status(500).json({ message: 'Error during auto-cancel check' });
+    }
+  });
+
+  // Check if subscription is scheduled for cancellation
+  app.get('/api/account/cancellation-status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      // Get subscription and check payment methods
+      const subscriptionResult = await db.execute(sql`
+        SELECT 
+          s.*,
+          u.stripe_customer_id
+        FROM subscriptions s
+        JOIN companies c ON s.company_id = c.id  
+        JOIN users u ON c.id = u.company_id AND u.role = 'admin'
+        WHERE s.company_id = ${companyId}
+      `);
+      
+      if (!subscriptionResult.rows.length) {
+        return res.json({ scheduledForCancellation: false });
+      }
+      
+      const subscription = subscriptionResult.rows[0] as any;
+      
+      // Only check if subscription is active and has a next payment date
+      if (subscription.status !== 'active' || !subscription.next_payment_date) {
+        return res.json({ 
+          scheduledForCancellation: false,
+          status: subscription.status
+        });
+      }
+      
+      // Check if customer has payment methods
+      let hasPaymentMethods = false;
+      if (subscription.stripe_customer_id) {
+        try {
+          const paymentMethods = await stripe.paymentMethods.list({
+            customer: subscription.stripe_customer_id,
+            type: 'card',
+          });
+          hasPaymentMethods = paymentMethods.data.length > 0;
+        } catch (error) {
+          console.error('Error checking payment methods:', error);
+        }
+      }
+      
+      res.json({
+        scheduledForCancellation: !hasPaymentMethods,
+        hasPaymentMethods,
+        nextPaymentDate: subscription.next_payment_date,
+        status: subscription.status
+      });
+      
+    } catch (error) {
+      console.error('Error checking cancellation status:', error);
+      res.status(500).json({ message: 'Error checking cancellation status' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

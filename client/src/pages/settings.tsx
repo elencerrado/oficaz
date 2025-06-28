@@ -85,6 +85,11 @@ const AccountManagement = () => {
     retry: false,
   });
 
+  const { data: cancellationStatus } = useQuery({
+    queryKey: ['/api/account/cancellation-status'],
+    retry: false,
+  });
+
   const { data: trialStatus } = useQuery({
     queryKey: ['/api/account/trial-status'],
     retry: false,
@@ -182,6 +187,23 @@ const AccountManagement = () => {
                   <span className="text-sm font-semibold text-blue-600">
                     {getPlanPrice()}/mes
                   </span>
+                </div>
+              </div>
+            )}
+            
+            {/* Cancellation Warning */}
+            {cancellationStatus?.hasPendingCancellation && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800">
+                      Suscripción programada para cancelación
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      No tienes métodos de pago activos. Tu suscripción se cancelará cuando acabe el período facturado actual ({formatDate(subscription?.nextPaymentDate || '')}).
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -307,7 +329,29 @@ const AccountManagement = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 mt-2">No hay métodos de pago configurados</p>
+              <div className="mt-2">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-red-800">
+                        Sin método de pago
+                      </p>
+                      <p className="text-sm text-red-700 mt-1">
+                        Tu suscripción se cancelará cuando acabe ese periodo facturado 
+                        {subscription?.nextPaymentDate && (
+                          <span className="font-medium">
+                            {' '}el {formatDate(subscription.nextPaymentDate)}
+                          </span>
+                        )}.
+                      </p>
+                      <p className="text-xs text-red-600 mt-2">
+                        Añade un método de pago para mantener tu suscripción activa.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
