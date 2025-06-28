@@ -161,8 +161,25 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 - ✅ Migración aplicada exitosamente
 - ✅ Mensajes personalizados según escenario de pago
 
+## Estado Actual del Sistema de Fichaje Admin
+
+### Investigación de Errores (28 Junio 2025)
+- **Problema Reportado**: Usuario reporta errores al fichar desde dashboard admin
+- **Investigación Realizada**: 
+  - Botones estandarizados w-[120px] h-[48px] para uniformidad visual
+  - Logs de debugging añadidos a clock-in y clock-out mutations
+  - Errores en logs del servidor son de Stripe (customer ID no válido), NO del sistema de fichaje
+  - Endpoints de fichaje (/api/work-sessions/clock-in, /api/work-sessions/clock-out) funcionan correctamente
+- **Estado**: Sistema de fichaje admin técnicamente funcional, errores de Stripe no relacionados con fichajes
+- **Pendiente**: Confirmación con usuario si error persiste tras logs de debugging implementados
+
 ## Changelog
 
+- June 28, 2025. BOTONES DE FICHAJE ADMIN ESTANDARIZADOS: Tamaños uniformes y debugging añadido
+  - Todos los botones (Entrar, Salir, Descanso, Fin Descanso) estandarizados a w-[120px] h-[48px]
+  - Logs de debugging añadidos a mutations de clock-in y clock-out para identificar errores específicos
+  - Errores de Stripe en logs del servidor identificados como NO relacionados con sistema de fichaje
+  - Sistema de fichaje admin mantiene funcionalidad idéntica a empleado con mensajes dinámicos
 - June 28, 2025. DATOS DE EMPRESA A STRIPE CORREGIDOS: Información completa y fechas de cobro sincronizadas
   - Endpoint `/api/account/confirm-payment-method` corregido para enviar datos COMPLETOS de empresa a Stripe
   - Customer de Stripe ahora incluye: nombre empresa, dirección completa, CIF, email, datos contacto
