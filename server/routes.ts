@@ -2646,26 +2646,13 @@ startxref
           WHERE company_id = ${companyId} AND is_active = true
         `);
         
-        if (result.rows.length > 0) {
-          return res.json(result.rows);
-        }
+        // Always return the database result (empty or with data)
+        return res.json(result.rows);
       } catch (dbError) {
-        console.log('payment_methods table not found, using default data');
+        console.log('payment_methods table not found, returning empty array');
+        // Return empty array when no payment methods table exists
+        res.json([]);
       }
-
-      // Return actual payment method based on company
-      const currentYear = new Date().getFullYear();
-      const realPaymentMethods = [{
-        id: 1,
-        card_brand: 'visa',
-        card_last_four: '8912',
-        card_exp_month: 8,
-        card_exp_year: currentYear + 2,
-        is_default: true,
-        stripe_customer_id: `cus_${companyId}_oficial`
-      }];
-
-      res.json(realPaymentMethods);
     } catch (error) {
       console.error('Error fetching payment methods:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
