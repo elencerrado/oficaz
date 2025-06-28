@@ -17,11 +17,6 @@ interface DocumentType {
 
 export const documentTypes = [
   { 
-    id: 'dni', 
-    name: 'DNI',
-    keywords: ['dni', 'documento', 'identidad', 'cedula', 'id']
-  },
-  { 
     id: 'nomina', 
     name: 'Nómina',
     keywords: ['nomina', 'nómina', 'payroll', 'salary', 'salario', 'sueldo']
@@ -40,6 +35,11 @@ export const documentTypes = [
     id: 'otros', 
     name: 'Otros',
     keywords: ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
+  },
+  { 
+    id: 'dni', 
+    name: 'DNI',
+    keywords: ['dni', 'documento identidad', 'cedula', 'id card']
   }
 ];
 
@@ -64,20 +64,11 @@ export const analyzeFileName = (fileName: string, employees: Employee[] = []) =>
 
   const normalizedFileName = normalizeText(fileName);
   
-  // Document type detection
-  const documentTypes = [
-    { keywords: ['nomina', 'salario', 'payroll', 'salary'], type: 'Nómina' },
-    { keywords: ['contrato', 'contract'], type: 'Contrato' },
-    { keywords: ['cv', 'curriculum', 'resume'], type: 'CV' },
-    { keywords: ['justificante', 'certificate', 'certificado'], type: 'Certificado' },
-    { keywords: ['factura', 'invoice'], type: 'Factura' },
-    { keywords: ['recibo', 'receipt'], type: 'Recibo' }
-  ];
-
+  // Document type detection using the predefined document types
   let documentType = 'Documento';
   for (const docType of documentTypes) {
     if (docType.keywords.some(keyword => normalizedFileName.includes(keyword))) {
-      documentType = docType.type;
+      documentType = docType.name;
       break;
     }
   }
