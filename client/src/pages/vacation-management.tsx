@@ -716,58 +716,6 @@ export default function VacationManagement() {
 
             {activeTab === 'employees' && (
               <div className="space-y-6">
-                {/* Timeline Controls */}
-                <div className="flex items-center justify-between bg-white p-4 rounded-lg border">
-                  <div className="flex items-center gap-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigateTimeline('prev')}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    
-                    <div className="text-center">
-                      <h3 className="font-medium text-gray-900">
-                        {timelineViewMode === 'month' 
-                          ? format(timelineViewDate, "MMMM yyyy", { locale: es })
-                          : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
-                        }
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {timelineViewMode === 'month' ? 'Vista mensual' : 'Vista trimestral'}
-                      </p>
-                    </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigateTimeline('next')}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant={timelineViewMode === 'month' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimelineViewMode('month')}
-                    >
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Mes
-                    </Button>
-                    <Button
-                      variant={timelineViewMode === 'quarter' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimelineViewMode('quarter')}
-                    >
-                      <CalendarDays className="w-4 h-4 mr-1" />
-                      Trimestre
-                    </Button>
-                  </div>
-                </div>
-
                 {/* Timeline de Vacaciones tipo Gantt */}
                 {loadingEmployees ? (
                   <div className="flex justify-center py-8">
@@ -780,6 +728,59 @@ export default function VacationManagement() {
                 ) : (
                   <div className="bg-white rounded-lg border overflow-hidden">
                     <div className="p-4 border-b bg-gray-50">
+                      {/* Controles de navegación del timeline */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateTimeline('prev')}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="text-center">
+                            <h3 className="font-medium text-gray-900">
+                              {timelineViewMode === 'month' 
+                                ? format(timelineViewDate, "MMMM yyyy", { locale: es })
+                                : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
+                              }
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {timelineViewMode === 'month' ? 'Vista mensual' : 'Vista trimestral'}
+                            </p>
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateTimeline('next')}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant={timelineViewMode === 'month' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setTimelineViewMode('month')}
+                          >
+                            <Calendar className="w-4 h-4 mr-1" />
+                            Mes
+                          </Button>
+                          <Button
+                            variant={timelineViewMode === 'quarter' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setTimelineViewMode('quarter')}
+                          >
+                            <CalendarDays className="w-4 h-4 mr-1" />
+                            Trimestre
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Leyenda de colores */}
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
