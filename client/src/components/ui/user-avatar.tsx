@@ -266,8 +266,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         style={{
           width: `${sizeConfig.size}px`,
           height: `${sizeConfig.size}px`,
-          border: `3px solid ${colors.bg}`,
-          padding: '2px',
           borderRadius: '50%',
           overflow: 'hidden',
           display: 'flex',
@@ -283,20 +281,35 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
       >
         {profilePicture ? (
-          <img 
-            src={profilePicture} 
-            alt={fullName}
+          <div 
             style={{
               width: '100%',
               height: '100%',
+              border: `${sizeConfig.border}px solid ${colors.bg}`,
+              padding: '2px',
+              backgroundColor: 'white',
               borderRadius: '50%',
-              objectFit: 'cover',
-              display: 'block'
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             } as React.CSSProperties}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+          >
+            <img 
+              src={profilePicture} 
+              alt={fullName}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                display: 'block'
+              } as React.CSSProperties}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
         ) : (
           <div 
             style={{
