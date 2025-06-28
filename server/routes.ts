@@ -2510,7 +2510,7 @@ startxref
         expand: ['latest_invoice.payment_intent'],
       });
 
-      // Calculate next payment date based on when payment method is added
+      // Calculate next payment date based on trial end date
       const trialEndDate = new Date(company.subscription.trialEndDate);
       const now = new Date();
       let nextPaymentDate: Date;
@@ -2519,8 +2519,8 @@ startxref
         // Trial still active: next payment = trial end date
         nextPaymentDate = trialEndDate;
       } else {
-        // Trial has ended: next payment = one month from NOW (when payment is added)
-        nextPaymentDate = new Date(now);
+        // Trial has ended: next payment = one month after trial end date
+        nextPaymentDate = new Date(trialEndDate);
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       }
 
