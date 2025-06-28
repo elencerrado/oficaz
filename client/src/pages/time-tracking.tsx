@@ -158,11 +158,10 @@ export default function TimeTracking() {
   // These functions are CRITICAL for data accuracy and filtering logic
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
     const allEmployees = employees as any[];
-    const filteredEmployees = (allEmployees || []).filter((emp: any) => emp.role !== 'admin');
-    const filteredSessions = (sessions || []).filter((session: any) => {
-      const sessionUser = allEmployees.find((emp: any) => emp.id === session.userId);
-      return sessionUser?.role !== 'admin';
-    });
+    // Include admin for employee list so admin can see their own time tracking
+    const filteredEmployees = (allEmployees || []);
+    // Include all sessions including admin sessions
+    const filteredSessions = (sessions || []);
 
     const months = (filteredSessions || []).reduce((acc: string[], session: any) => {
       const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
