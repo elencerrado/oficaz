@@ -16,19 +16,27 @@ export async function apiRequest(
   const authHeaders = getAuthHeaders();
   const headers: Record<string, string> = {};
   
+  // Solo establecer Content-Type para JSON, FormData lo maneja automáticamente
+  const isFormData = data instanceof FormData;
+  let body: any = undefined;
+  
   if (data) {
-    headers["Content-Type"] = "application/json";
+    if (isFormData) {
+      // FormData maneja su propio Content-Type con boundary
+      body = data;
+    } else {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(data);
+    }
   }
   
   // Always add authorization header if token exists
   Object.assign(headers, authHeaders);
-  
-  // Auth headers applied successfully
 
   const res = await fetch(url, {
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body,
     credentials: "include",
   });
 
