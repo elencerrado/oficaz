@@ -368,61 +368,61 @@ const AccountManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Invoice History */}
-      {invoices && invoices.length > 0 && (
+      {/* Invoice History - Solo mostrar si hay métodos de pago */}
+      {paymentMethods && paymentMethods.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               Historial de facturas
-              {invoices?.some((inv: any) => inv.is_demo) && (
-                <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50">
-                  Demostración
-                </Badge>
-              )}
             </CardTitle>
             <CardDescription>
-              {invoices?.some((inv: any) => inv.is_demo) 
-                ? "Datos de demostración - se mostrarán facturas reales cuando añadas un método de pago"
-                : "Últimas facturas emitidas para tu cuenta"
-              }
+              Últimas facturas emitidas para tu cuenta
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {invoices?.slice(0, 5).map((invoice: any) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{invoice.invoice_number}</p>
-                    <p className="text-sm text-gray-600">{invoice.description}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(invoice.created_at)}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-right">
-                      <p className="font-semibold">{formatAmount(invoice.amount)}</p>
-                      <Badge 
-                        variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
-                        className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
-                      >
-                        {invoice.status === 'paid' ? 'Pagada' : 'Pendiente'}
-                      </Badge>
+            {invoices && invoices.length > 0 ? (
+              <div className="space-y-3">
+                {invoices.slice(0, 5).map((invoice: any) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">{invoice.invoice_number}</p>
+                      <p className="text-sm text-gray-600">{invoice.description}</p>
+                      <p className="text-xs text-gray-500">
+                        {formatDate(invoice.created_at)}
+                      </p>
                     </div>
-                    {invoice.download_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(invoice.download_url, '_blank')}
-                        className="ml-2"
-                      >
-                        <FileText className="h-4 w-4 mr-1" />
-                        PDF
-                      </Button>
-                    )}
+                    <div className="flex items-center space-x-3">
+                      <div className="text-right">
+                        <p className="font-semibold">{formatAmount(invoice.amount)}</p>
+                        <Badge 
+                          variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}
+                          className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                        >
+                          {invoice.status === 'paid' ? 'Pagada' : 'Pendiente'}
+                        </Badge>
+                      </div>
+                      {invoice.download_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(invoice.download_url, '_blank')}
+                          className="ml-2"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          PDF
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <p>Aún no hay facturas disponibles</p>
+                <p className="text-sm mt-1">Las facturas aparecerán aquí cuando se generen</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

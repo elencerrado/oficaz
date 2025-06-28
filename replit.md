@@ -163,6 +163,11 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. LÓGICA DE FACTURAS OPTIMIZADA: Sección solo visible con método de pago configurado
+  - Sin método de pago → sección de facturas completamente oculta
+  - Con método de pago → sección visible con facturas reales de Stripe o mensaje "aún no hay facturas"
+  - Eliminados badges de "Demostración" y referencias a datos sintéticos del frontend
+  - Sistema completamente limpio: solo muestra datos auténticos cuando hay configuración real
 - June 28, 2025. BUG CRÍTICO CORREGIDO: stripe_customer_id ahora se busca en tabla users correctamente
   - Corregida consulta SQL para buscar stripe_customer_id en tabla `users` en lugar de `subscriptions`
   - Sistema de facturas ahora funciona correctamente con la estructura real de base de datos
