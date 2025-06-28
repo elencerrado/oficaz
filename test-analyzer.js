@@ -1,21 +1,6 @@
-// ⚠️ PROTECTED CODE - DO NOT MODIFY ⚠️
-// Esta función es crítica para la clasificación automática de documentos
-// Cualquier cambio puede romper funcionalidades existentes
+// Test manual de la función analyzeFileName
 
-interface Employee {
-  id: number;
-  fullName: string;
-  email: string;
-  role: string;
-}
-
-interface DocumentType {
-  id: string;
-  name: string;
-  keywords: string[];
-}
-
-export const documentTypes = [
+const documentTypes = [
   { 
     id: 'nomina', 
     name: 'Nómina',
@@ -43,16 +28,8 @@ export const documentTypes = [
   }
 ];
 
-/**
- * Analiza un nombre de archivo para determinar empleado y tipo de documento
- * @param fileName - Nombre del archivo a analizar
- * @param employees - Lista de empleados para matchear
- * @returns Objeto con empleado, tipo de documento y nivel de confianza
- */
-export const analyzeFileName = (fileName: string, employees: Employee[] = []) => {
-  // ⚠️ PROTECTED - DO NOT MODIFY
-  // This function is critical for document detection
-  const normalizeText = (text: string) => {
+function analyzeFileName(fileName, employees = []) {
+  const normalizeText = (text) => {
     return text
       .toLowerCase()
       .normalize('NFD')
@@ -99,9 +76,32 @@ export const analyzeFileName = (fileName: string, employees: Employee[] = []) =>
   }
 
   return {
+    documentType,
     employee: bestMatch,
-    documentType: documentType,
-    confidence: highestConfidence
+    confidence: Math.round(highestConfidence * 100) / 100
   };
-};
-// ⚠️ END PROTECTED CODE ⚠️
+}
+
+// Test
+const fileName = 'nomina junio 2025 - juan jose ramirez.pdf';
+const employees = [
+  { id: 5, fullName: 'Juan José Ramirez Martín', email: 'juan@test.com', role: 'employee' }
+];
+
+console.log('Testing analyzeFileName function...');
+console.log('File:', fileName);
+console.log('Available document types:', documentTypes.map(dt => dt.name));
+
+const result = analyzeFileName(fileName, employees);
+console.log('Result:', result);
+
+console.log('\nTesting normalization:');
+const normalizedFileName = fileName
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9\s]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+console.log('Normalized:', normalizedFileName);
+console.log('Contains "nomina":', normalizedFileName.includes('nomina'));

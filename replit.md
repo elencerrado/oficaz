@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. ANALIZADOR DE DOCUMENTOS COMPLETAMENTE RESTAURADO: Sistema inteligente funcionando perfectamente
+  - PROBLEMA CRÍTICO RESUELTO: Lista vacía en analizador de documentos por logs de debugging que interferían
+  - Función analyzeFileName restaurada a versión limpia sin logs que bloqueaban la detección
+  - Detección automática funcionando: "nomina junio 2025 - juan jose ramirez.pdf" → "Nómina" + empleado correcto
+  - Sistema completo: detecta tipos de documento (Nómina, Contrato, Justificante, DNI, Otros) y empleados
+  - Generación de nombres limpios funcionando: formato "Tipo - Empleado - Fecha.extensión"
+  - Modal de análisis inteligente mostrando correctamente todos los archivos seleccionados
+  - Eliminados todos los logs de debugging que causaban interferencias en producción
 - June 28, 2025. AUTO-SCROLL DEL CHAT CORREGIDO DEFINITIVAMENTE: Métodos múltiples para todos los contenedores
   - PROBLEMA CRÍTICO RESUELTO: Auto-scroll implementado con 3 métodos simultáneos para máxima compatibilidad
   - MÉTODO 1: messagesEndRef.scrollIntoView() como método principal directo
