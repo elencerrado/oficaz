@@ -329,7 +329,7 @@ export default function TimeTracking() {
           // En caso de error de fecha, devolver texto seguro
           return 'Descanso (datos inválidos)';
         }
-      }).join('\n\n'); // Doble salto de línea para mejor espaciado vertical
+      }).join(' | '); // Separador con barras verticales para múltiples descansos
     };
 
     // Function to create a page for an employee
