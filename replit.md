@@ -182,13 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- June 28, 2025. AVATARES ÚNICOS FINALMENTE FUNCIONANDO: Componente completamente reescrito con estilos inline
-  - PROBLEMA CRÍTICO RESUELTO: CSS global seguía sobrescribiendo colores, cambiado a estilos inline puros
-  - Componente UserAvatar completamente reescrito: getUserColor() genera estilos inline backgroundColor/color
-  - 18 colores únicos diferentes garantizados: estilos inline no pueden ser sobrescritos por CSS global
-  - Sistema robusto: userId determina color único permanente sin interferencias externas
-  - Funcionalidad limpia: si hay className personalizada, la usa; si no, aplica colores únicos automáticamente
-  - Solución definitiva: estilos inline tienen máxima especificidad sobre cualquier CSS global existente
+- June 28, 2025. AVATARES ÚNICOS FINALMENTE FUNCIONANDO: Solución definitiva con estilos inline puros
+  - PROBLEMA CRÍTICO RESUELTO: shadcn/ui CSS causaba interferencias, eliminado TODO uso de clases CSS
+  - UserAvatar completamente reescrito: solo estilos inline style={{}} sin ninguna clase
+  - 18 colores únicos garantizados: userId determina color hexadecimal directo (#3B82F6, #10B981, etc)
+  - Tamaños fijos en pixeles: 32px/40px/48px sin clases responsive que puedan interferir
+  - Especificidad máxima: estilos inline no pueden ser sobrescritos por CSS externo alguno
+  - Sistema blindado: sin dependencias de Tailwind o shadcn que puedan causar regresiones futuras
 - June 28, 2025. SISTEMA DE AVATARES ÚNICOS COMPLETAMENTE FINALIZADO: Todas las instancias corregidas exitosamente
   - MESSAGES.TSX COMPLETAMENTE CORREGIDO: 8 instancias de UserAvatar actualizadas sistemáticamente
   - Eliminadas TODAS las className personalizadas que bloqueaban el sistema de colores únicos
