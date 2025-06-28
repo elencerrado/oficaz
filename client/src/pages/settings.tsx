@@ -341,8 +341,8 @@ const AccountManagement = () => {
                       {trialStatus?.isTrialActive ? (
                         // Durante período de prueba (con o sin haber tenido método de pago antes)
                         <>
-                          <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
-                            ⚠️ Tu período de prueba terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
+                          <p className="text-sm font-medium text-red-800" key={subscription?.trialEndDate}>
+                            ⚠️ Tu período de prueba terminará el {subscription?.trialEndDate ? formatDate(subscription.trialEndDate) : '(fecha no disponible)'}
                           </p>
                           <p className="text-sm text-red-700 mt-1">
                             No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente cuando termine el período de prueba.
