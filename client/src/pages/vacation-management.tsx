@@ -940,6 +940,34 @@ export default function VacationManagement() {
                                     ))
                                   }
                                   
+                                  {/* Marcadores de inicio de mes (solo en vista trimestral) */}
+                                  {timelineViewMode === 'quarter' && timelineRange.days
+                                    .filter(day => day.getDate() === 1) // Solo primer día del mes
+                                    .map((monthStart, index) => {
+                                      const position = (eachDayOfInterval({
+                                        start: timelineRange.start,
+                                        end: monthStart
+                                      }).length - 1) / timelineRange.days.length * 100;
+                                      
+                                      return (
+                                        <div key={`month-${index}`}>
+                                          {/* Línea vertical prominente */}
+                                          <div
+                                            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+                                            style={{ left: `${position}%` }}
+                                          />
+                                          {/* Etiqueta del mes */}
+                                          <div
+                                            className="absolute -top-5 transform -translate-x-1/2 text-xs font-medium text-blue-700 bg-white px-1 rounded shadow-sm border"
+                                            style={{ left: `${position}%` }}
+                                          >
+                                            {format(monthStart, "MMM", { locale: es })}
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  }
+                                  
                                   {/* Contenedor específico para barras de vacaciones */}
                                   <div className="absolute inset-0 overflow-hidden">
                                     {renderVacationBar(employee, timelineRange)}
@@ -948,8 +976,18 @@ export default function VacationManagement() {
                                 
                                 {/* Labels de días debajo del timeline */}
                                 <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                  <span>{format(timelineRange.start, "dd/MM")}</span>
-                                  <span>{format(timelineRange.end, "dd/MM")}</span>
+                                  <span>
+                                    {timelineViewMode === 'quarter' 
+                                      ? format(timelineRange.start, "MMM yyyy", { locale: es })
+                                      : format(timelineRange.start, "dd/MM")
+                                    }
+                                  </span>
+                                  <span>
+                                    {timelineViewMode === 'quarter' 
+                                      ? format(timelineRange.end, "MMM yyyy", { locale: es })
+                                      : format(timelineRange.end, "dd/MM")
+                                    }
+                                  </span>
                                 </div>
                               </div>
                             </div>
