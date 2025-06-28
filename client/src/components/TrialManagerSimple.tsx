@@ -103,7 +103,9 @@ export function TrialManagerSimple() {
               </Badge>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              {trialStatus.daysRemaining <= 3 ? (
+              {trialStatus.hasPaymentMethod ? (
+                `Se cobrará el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`
+              ) : trialStatus.daysRemaining <= 3 ? (
                 "Añade un método de pago para continuar sin interrupciones"
               ) : (
                 `Expira el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`

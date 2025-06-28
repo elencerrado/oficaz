@@ -123,6 +123,11 @@ export function TrialManager() {
     return null;
   }
 
+  // If in trial and has payment method, don't show in dashboard
+  if (trialStatus.isTrialActive && trialStatus.hasPaymentMethod) {
+    return null;
+  }
+
   // If account is blocked, show urgent payment required
   if (trialStatus.isBlocked) {
     return (
