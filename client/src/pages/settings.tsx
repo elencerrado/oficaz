@@ -108,21 +108,16 @@ const AccountManagement = () => {
 
   const formatDate = (dateString: string) => {
     try {
-      console.log('formatDate called with:', dateString, 'type:', typeof dateString);
       // Ensure we handle ISO date strings properly
       const date = new Date(dateString);
-      console.log('Date object created:', date, 'isValid:', !isNaN(date.getTime()));
       if (isNaN(date.getTime())) {
-        console.error('Invalid date detected:', dateString);
         return '(fecha no disponible)';
       }
-      const formatted = date.toLocaleDateString('es-ES', {
+      return date.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       });
-      console.log('Formatted date result:', formatted);
-      return formatted;
     } catch (error) {
       console.error('Error formatting date:', error, 'dateString:', dateString);
       return '(fecha no disponible)';

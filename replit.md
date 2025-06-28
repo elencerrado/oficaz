@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. AUTO-SCROLL DEL CHAT RESTAURADO COMPLETAMENTE: Función robusta con múltiples contenedores
+  - PROBLEMA CRÍTICO RESUELTO: Auto-scroll perdido otra vez en chat empleado (línea 572 messages.tsx)
+  - Función de scroll mejorada con 6 selectores diferentes para encontrar contenedor correcto
+  - Logs de debugging añadidos para detectar problemas futuros con contenedores de mensajes
+  - Auto-scroll forzado también al enviar mensaje (500ms delay) para asegurar funcionamiento
+  - Sistema PROTEGIDO con comentarios ⚠️ para prevenir regresiones futuras
+  - Funciona tanto en vista móvil como desktop, empleado y admin
 - June 28, 2025. LÓGICA DE MENSAJES DE PAGO COMPLETAMENTE REFINADA: Sistema inteligente según estado exacto
   - CASO 1: Sin método de pago + trial activo → "Tu período de prueba terminará el [fecha]"
   - CASO 2: Con método de pago + trial activo → Sin mensaje de advertencia (limpio)
