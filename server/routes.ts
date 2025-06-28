@@ -2702,30 +2702,20 @@ startxref
   app.delete('/api/payment-methods/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const paymentMethodId = req.params.id;
-      const companyId = req.user!.companyId;
+      const userId = req.user!.id;
       
-      console.log(`Deleting payment method ${paymentMethodId} for company ${companyId}`);
+      console.log(`Deleting payment method ${paymentMethodId} for user ${userId}`);
       
-      // Get the company's Stripe customer ID
-      const subscriptionResult = await db.execute(sql`
-        SELECT stripe_customer_id FROM subscriptions 
-        WHERE company_id = ${companyId}
-      `);
-      
-      if (!subscriptionResult.rows.length) {
-        return res.status(404).json({ message: 'No se encontró información de suscripción' });
-      }
-      
-      const stripeCustomerId = (subscriptionResult.rows[0] as any).stripe_customer_id;
-      
-      if (!stripeCustomerId) {
+      // Get the user's Stripe customer ID (same logic as GET payment methods)
+      const user = await storage.getUser(userId);
+      if (!user || !user.stripeCustomerId) {
         return res.status(400).json({ message: 'No se encontró el ID de cliente de Stripe' });
       }
       
       // Detach the payment method from Stripe customer
       await stripe.paymentMethods.detach(paymentMethodId);
       
-      console.log(`Successfully detached payment method ${paymentMethodId} from Stripe`);
+      console.log(`Successfully detached payment method ${paymentMethodId} from Stripe customer ${user.stripeCustomerId}`);
       res.json({ success: true, message: 'Método de pago eliminado correctamente' });
       
     } catch (error: any) {
