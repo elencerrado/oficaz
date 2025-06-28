@@ -16,11 +16,20 @@ import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { subscriptions, companies } from '@shared/schema';
 
-// Initialize Stripe
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+// Initialize Stripe with environment-specific keys
+const isDevelopment = process.env.NODE_ENV === 'development';
+const stripeSecretKey = isDevelopment 
+  ? process.env.STRIPE_SECRET_KEY_TEST 
+  : process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  throw new Error(`STRIPE_SECRET_KEY${isDevelopment ? '_TEST' : ''} environment variable is required`);
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+console.log('Stripe Environment:', isDevelopment ? 'Development (Test)' : 'Production (Live)');
+console.log('Stripe key type:', stripeSecretKey.substring(0, 7));
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2024-11-20.acacia',
 });
 

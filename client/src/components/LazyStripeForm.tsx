@@ -28,10 +28,19 @@ export function LazyStripeForm({
   useEffect(() => {
     const initializeStripe = async () => {
       try {
-        const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+        // Usar claves de test en desarrollo, claves de producción en deploy
+        const isDevelopment = import.meta.env.DEV;
+        const publicKey = isDevelopment 
+          ? import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST 
+          : import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+        
+        console.log('Environment:', isDevelopment ? 'Development' : 'Production');
+        console.log('Using test keys:', isDevelopment);
+        console.log('Public key available:', !!publicKey);
+        console.log('Public key type:', publicKey?.substring(0, 7));
         
         if (!publicKey) {
-          setError('Claves de Stripe no configuradas');
+          setError(`Claves de Stripe no configuradas para ${isDevelopment ? 'desarrollo' : 'producción'}`);
           setLoading(false);
           return;
         }
