@@ -339,13 +339,13 @@ const AccountManagement = () => {
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
-                        ⚠️ Tu suscripción terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
+                        ⚠️ Tu período de prueba terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
                       </p>
                       <p className="text-sm text-red-700 mt-1">
-                        No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente en esa fecha.
+                        No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente cuando termine el período de prueba.
                       </p>
                       <p className="text-xs text-red-600 mt-2">
-                        Añade una tarjeta de crédito o débito para mantener tu suscripción activa.
+                        Añade una tarjeta de crédito o débito para continuar usando Oficaz después del período de prueba.
                       </p>
                     </div>
                   </div>

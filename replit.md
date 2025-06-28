@@ -188,6 +188,7 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - Sin pago: "Período de prueba hasta el [fecha] • €X/mes después"
   - Con pago: "Período de prueba activo. Se cobrará el [fecha] • €X/mes"
   - Títulos corregidos de "Plan Pro" a "Período de Prueba Pro" para máxima claridad
+  - Sección métodos de pago: "Tu período de prueba terminará" en lugar de "Tu suscripción terminará"
   - Todos los mensajes ahora indican explícitamente que están en período de prueba
 - June 28, 2025. SISTEMA DE TESTING VITEST IMPLEMENTADO COMPLETAMENTE: Protección crítica de funciones clave
   - Vitest configurado e instalado como framework de testing para Oficaz
