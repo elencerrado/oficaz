@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { StripePaymentForm } from './StripePaymentForm';
+import { MockPaymentForm } from './MockPaymentForm';
 import { CreditCard, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -38,7 +39,7 @@ export function LazyStripeForm({
         const stripeInstance = await loadStripe(publicKey);
         
         if (!stripeInstance) {
-          setError('No se pudo cargar Stripe');
+          setError('No se pudo cargar Stripe - verificar configuración de claves');
           setLoading(false);
           return;
         }
@@ -66,29 +67,15 @@ export function LazyStripeForm({
     );
   }
 
-  if (error) {
+  // Si hay error o no se pudo cargar Stripe, usar formulario de demostración
+  if (error || !stripe) {
     return (
-      <div className="p-6 text-center">
-        <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
-        <p className="text-sm text-gray-600 mb-4">{error}</p>
-        <Button variant="outline" onClick={onCancel}>
-          Cerrar
-        </Button>
-      </div>
-    );
-  }
-
-  if (!stripe) {
-    return (
-      <div className="p-6 text-center">
-        <CreditCard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-sm text-gray-600 mb-4">
-          Sistema de pagos no disponible
-        </p>
-        <Button variant="outline" onClick={onCancel}>
-          Cerrar
-        </Button>
-      </div>
+      <MockPaymentForm
+        planName={planName}
+        planPrice={planPrice}
+        onSuccess={onSuccess}
+        onCancel={onCancel}
+      />
     );
   }
 
