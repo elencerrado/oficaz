@@ -98,6 +98,15 @@ const AccountManagement = () => {
     retry: false,
   });
 
+  // Debug logging para verificar los datos
+  console.log('DEBUG - Crown card data:', {
+    subscriptionData,
+    subscriptionPlans,
+    trialStatus,
+    nextPaymentDate: subscriptionData?.nextPaymentDate,
+    plan: subscriptionData?.plan
+  });
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -141,11 +150,11 @@ const AccountManagement = () => {
               <div>
                 <p className="font-semibold text-gray-900">Plan {subscriptionData?.plan?.charAt(0).toUpperCase() + subscriptionData?.plan?.slice(1)}</p>
                 <p className="text-sm text-gray-600">
-                  {trialStatus?.nextPaymentDate ? (
+                  {subscriptionData?.nextPaymentDate ? (
                     (() => {
                       const currentPlan = subscriptionPlans?.find(plan => plan.name === subscriptionData?.plan);
                       const pricePerUser = currentPlan?.pricePerUser || 29.99;
-                      return `Próximo pago: ${new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €${pricePerUser}/mes`;
+                      return `Próximo pago: ${new Date(subscriptionData.nextPaymentDate).toLocaleDateString('es-ES')} • €${pricePerUser}/mes`;
                     })()
                   ) : subscriptionData?.end_date ? 
                     `Activo hasta: ${formatDate(subscriptionData.end_date)}` : 
@@ -167,7 +176,7 @@ const AccountManagement = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
-                  {usageData.current.employee_count}/{subscriptionData?.maxUsers || '∞'}
+                  {usageData.current.employee_count}/infinito
                 </p>
                 <p className="text-sm text-gray-600">Usuarios</p>
               </div>
