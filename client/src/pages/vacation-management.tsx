@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePickerPeriod } from "@/components/ui/date-picker";
 import { CalendarDays, Users, MapPin, Plus, Check, X, Clock, Plane, Edit, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Calendar, User } from "lucide-react";
-import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, addDays } from "date-fns";
+import { format, differenceInDays, parseISO, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +80,7 @@ export default function VacationManagement() {
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit' | 'revert'>('approve');
+  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit'>('approve');
   const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
   
@@ -88,18 +88,6 @@ export default function VacationManagement() {
   const [timelineViewDate, setTimelineViewDate] = useState(new Date());
   const [timelineViewMode, setTimelineViewMode] = useState<'month' | 'quarter'>('month');
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-  
-  // Estados para funcionalidad de arrastrar y redimensionar
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-  const [dragData, setDragData] = useState<{
-    requestId: number;
-    startX: number;
-    originalStartDate: string;
-    originalEndDate: string;
-    timelineRange: any;
-    resizeHandle?: 'start' | 'end';
-  } | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -145,154 +133,11 @@ export default function VacationManagement() {
     }
   }, [company, selectedRegion]);
 
-  // Event listeners para arrastrar y redimensionar
-  useEffect(() => {
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, isResizing, dragData]);
-
   // Calculate days function
   const calculateDays = (startDate: string, endDate: string) => {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
     return differenceInDays(end, start) + 1;
-  };
-
-  // Funciones para arrastrar y redimensionar barras
-  const pixelsToDate = (pixels: number, timelineRange: any) => {
-    const totalPixels = 800; // Ancho aproximado del timeline
-    const dayIndex = Math.round((pixels / totalPixels) * timelineRange.days.length);
-    const clampedIndex = Math.max(0, Math.min(dayIndex, timelineRange.days.length - 1));
-    return timelineRange.days[clampedIndex];
-  };
-
-  const dateToPixels = (date: Date, timelineRange: any) => {
-    const totalPixels = 800;
-    const dayIndex = timelineRange.days.findIndex((d: Date) => 
-      d.toDateString() === date.toDateString()
-    );
-    return (dayIndex / timelineRange.days.length) * totalPixels;
-  };
-
-  const handleBarMouseDown = (e: React.MouseEvent, request: VacationRequest, timelineRange: any, resizeHandle?: 'start' | 'end') => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const startX = e.clientX - rect.left;
-    
-    setDragData({
-      requestId: request.id,
-      startX,
-      originalStartDate: request.startDate,
-      originalEndDate: request.endDate,
-      timelineRange,
-      resizeHandle
-    });
-    
-    if (resizeHandle) {
-      setIsResizing(true);
-    } else {
-      setIsDragging(true);
-    }
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!dragData || (!isDragging && !isResizing)) return;
-    
-    const rect = document.querySelector('[data-timeline-container]')?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const currentX = e.clientX - rect.left;
-    const deltaX = currentX - dragData.startX;
-    
-    // Convertir delta de píxeles a días basado en el ancho del timeline
-    const timelineWidth = rect.width;
-    const totalDays = dragData.timelineRange.days.length;
-    const pixelsPerDay = timelineWidth / totalDays;
-    const daysDelta = Math.round(deltaX / pixelsPerDay);
-    
-    if (daysDelta === 0) return; // No hay cambio significativo
-    
-    const request = vacationRequests.find((r: VacationRequest) => r.id === dragData.requestId);
-    if (!request) return;
-    
-    const originalStart = parseISO(dragData.originalStartDate);
-    const originalEnd = parseISO(dragData.originalEndDate);
-    
-    if (isResizing && dragData.resizeHandle) {
-      // Redimensionar barra
-      if (dragData.resizeHandle === 'start') {
-        const newStartDate = addDays(originalStart, daysDelta);
-        if (newStartDate < originalEnd) {
-          // Actualizar temporalmente en el estado local si es necesario
-        }
-      } else if (dragData.resizeHandle === 'end') {
-        const newEndDate = addDays(originalEnd, daysDelta);
-        if (newEndDate > originalStart) {
-          // Actualizar temporalmente en el estado local si es necesario
-        }
-      }
-    } else if (isDragging) {
-      // Mover barra completa
-      const newStartDate = addDays(originalStart, daysDelta);
-      const newEndDate = addDays(originalEnd, daysDelta);
-      
-      // Validar que las fechas estén dentro del rango del timeline
-      if (newStartDate >= dragData.timelineRange.start && newEndDate <= dragData.timelineRange.end) {
-        // Actualizar temporalmente en el estado local si es necesario
-      }
-    }
-  };
-
-  const handleMouseUp = async () => {
-    if (!dragData || (!isDragging && !isResizing)) return;
-    
-    const request = vacationRequests.find((r: VacationRequest) => r.id === dragData.requestId);
-    if (!request) {
-      setDragData(null);
-      setIsDragging(false);
-      setIsResizing(false);
-      return;
-    }
-    
-    // Aquí implementaremos la actualización real de la solicitud
-    try {
-      const updatedData = {
-        startDate: request.startDate, // Temporalmente usar los datos originales
-        endDate: request.endDate,
-        days: calculateDays(request.startDate, request.endDate)
-      };
-      
-      await updateRequestMutation.mutateAsync({
-        id: dragData.requestId,
-        status: request.status,
-        ...updatedData
-      });
-      
-      // Toast de confirmación
-      toast({
-        title: "Vacaciones actualizadas",
-        description: "Las fechas se han modificado correctamente",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la solicitud",
-        variant: "destructive",
-      });
-    }
-    
-    setDragData(null);
-    setIsDragging(false);
-    setIsResizing(false);
   };
 
   // ⚠️ PROTECTED TIMELINE FUNCTIONS - DO NOT MODIFY ⚠️
@@ -368,13 +213,11 @@ export default function VacationManagement() {
         <div
           key={tooltipId}
           data-vacation-bar
-          className={`absolute h-10 rounded-md transition-all group relative ${
+          className={`absolute h-10 rounded-md cursor-pointer transition-all ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
-          } border opacity-90 hover:opacity-100 flex items-center justify-center ${
-            isDragging || isResizing ? 'cursor-grabbing' : 'cursor-grab'
-          }`}
+          } border opacity-90 hover:opacity-100 flex items-center justify-center`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
@@ -382,26 +225,11 @@ export default function VacationManagement() {
             bottom: '4px',
             zIndex: isTooltipActive ? 15 : 10
           }}
-          onMouseDown={(e) => handleBarMouseDown(e, fullRequest, timelineRange)}
           onClick={(e) => {
             e.stopPropagation();
-            if (!isDragging && !isResizing) {
-              setActiveTooltip(isTooltipActive ? null : tooltipId);
-            }
+            setActiveTooltip(isTooltipActive ? null : tooltipId);
           }}
         >
-          {/* Handles de redimensionado */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-l-md"
-            onMouseDown={(e) => handleBarMouseDown(e, fullRequest, timelineRange, 'start')}
-            onClick={(e) => e.stopPropagation()}
-          />
-          <div
-            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-r-md"
-            onMouseDown={(e) => handleBarMouseDown(e, fullRequest, timelineRange, 'end')}
-            onClick={(e) => e.stopPropagation()}
-          />
-          
           {/* Número de días visible siempre */}
           <div className="text-white text-sm font-bold select-none">
             {fullRequest?.startDate && fullRequest?.endDate 
@@ -410,21 +238,19 @@ export default function VacationManagement() {
             }
           </div>
 
-        </div>
-
-        {/* Panel de información que aparece al hacer clic */}
-        {isTooltipActive && (
-          <div 
-            data-vacation-tooltip
-            className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-80"
-            style={{ 
-              zIndex: 10000,
-              left: '50%',
-              top: '20%',
-              transform: 'translateX(-50%)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          {/* Panel de información que aparece al hacer clic */}
+          {isTooltipActive && (
+            <div 
+              data-vacation-tooltip
+              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-80"
+              style={{ 
+                zIndex: 10000,
+                left: '50%',
+                top: '20%',
+                transform: 'translateX(-50%)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Botón cerrar */}
               <div className="flex justify-end mb-2">
                 <button
@@ -525,7 +351,7 @@ export default function VacationManagement() {
               </div>
             </div>
           )}
-        </>
+        </div>
       );
     }).filter(Boolean);
   };
@@ -1096,7 +922,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border" data-timeline-container>
+                                <div className="relative h-12 bg-gray-100 rounded border">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
