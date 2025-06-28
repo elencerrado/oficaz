@@ -26,8 +26,15 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       formData.append('profilePicture', file);
       return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidar todas las queries que puedan contener datos del usuario
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      
+      // Forzar refetch inmediato de los datos del usuario
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      
       toast({ title: "Foto actualizada", description: "Tu foto de perfil se ha actualizado correctamente" });
     },
     onError: () => {
@@ -43,7 +50,14 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return await apiRequest('DELETE', '/api/users/profile-picture');
     },
     onSuccess: () => {
+      // Invalidar todas las queries que puedan contener datos del usuario
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      
+      // Forzar refetch inmediato de los datos del usuario
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      
       toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
     },
     onError: () => {
