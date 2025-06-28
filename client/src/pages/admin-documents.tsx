@@ -746,12 +746,7 @@ export default function AdminDocuments() {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
-                        alert(`DEBUG: Analizando archivo ${file.name} con ${employees.length} empleados`);
-                        
                         const analysis = analyzeFileName(file.name, employees);
-                        
-                        alert(`RESULTADO: Empleado detectado: ${analysis.employee?.fullName || 'NINGUNO'} - Confianza: ${analysis.confidence}`);
-                        
                         return {
                           file,
                           ...analysis,

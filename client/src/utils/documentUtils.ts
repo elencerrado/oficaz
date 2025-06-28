@@ -50,41 +50,67 @@ export const documentTypes = [
  * @returns Objeto con empleado, tipo de documento y nivel de confianza
  */
 export const analyzeFileName = (fileName: string, employees: Employee[] = []) => {
-  const normalizedName = fileName.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, ""); // Remove accents
+  // ⚠️ PROTECTED - DO NOT MODIFY
+  // This function is critical for document detection
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const normalizedFileName = normalizeText(fileName);
   
-  // ⚠️ PROTECTED: Employee matching logic - DO NOT CHANGE
-  const matchedEmployee = employees.find((emp: Employee) => {
-    const empName = emp.fullName.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+  // Document type detection
+  const documentTypes = [
+    { keywords: ['nomina', 'salario', 'payroll', 'salary'], type: 'Nómina' },
+    { keywords: ['contrato', 'contract'], type: 'Contrato' },
+    { keywords: ['cv', 'curriculum', 'resume'], type: 'CV' },
+    { keywords: ['justificante', 'certificate', 'certificado'], type: 'Certificado' },
+    { keywords: ['factura', 'invoice'], type: 'Factura' },
+    { keywords: ['recibo', 'receipt'], type: 'Recibo' }
+  ];
+
+  let documentType = 'Documento';
+  for (const docType of documentTypes) {
+    if (docType.keywords.some(keyword => normalizedFileName.includes(keyword))) {
+      documentType = docType.type;
+      break;
+    }
+  }
+
+  // Find best matching employee
+  let bestMatch = null;
+  let highestConfidence = 0;
+
+  for (const employee of employees) {
+    const normalizedEmployeeName = normalizeText(employee.fullName);
+    const employeeWords = normalizedEmployeeName.split(/\s+/).filter(word => word.length > 2);
     
-    // Split employee name into words
-    const nameWords = empName.split(' ');
-    
-    // Check if at least 2 words from employee name appear in filename
-    const matchedWords = nameWords.filter(word => 
-      word.length > 2 && normalizedName.includes(word)
-    );
-    
-    return matchedWords.length >= 2;
-  });
-  
-  // ⚠️ PROTECTED: Document type detection - CRITICAL FUNCTIONALITY
-  // This logic MUST detect: nomina/nómina, contrato, dni, justificante
-  const documentType = documentTypes.find(type => {
-    const typeKeywords = type.keywords || [];
-    return typeKeywords.some(keyword => 
-      normalizedName.includes(keyword.toLowerCase())
-    );
-  });
-  
-  // ⚠️ PROTECTED: Return structure - DO NOT MODIFY
+    let matchingWords = 0;
+    for (const word of employeeWords) {
+      if (normalizedFileName.includes(word)) {
+        matchingWords++;
+      }
+    }
+
+    if (matchingWords >= 2) {
+      const confidence = matchingWords / employeeWords.length;
+      
+      if (confidence > highestConfidence) {
+        highestConfidence = confidence;
+        bestMatch = employee;
+      }
+    }
+  }
+
   return {
-    employee: matchedEmployee,
-    documentType: documentType?.id || 'otros',
-    confidence: matchedEmployee ? (documentType ? 'high' : 'medium') : 'low'
+    employee: bestMatch,
+    documentType: documentType,
+    confidence: highestConfidence
   };
 };
 // ⚠️ END PROTECTED CODE ⚠️
