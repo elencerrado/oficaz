@@ -182,6 +182,18 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. SISTEMA DE AVATARES COMPLETADO: Última instancia corregida en admin-dashboard.tsx
+  - PROBLEMA FINAL RESUELTO: UserAvatar agregado en sección de mensajes del dashboard admin
+  - Reemplazado icono MessageSquare por UserAvatar con userId, name y size="sm"
+  - TODAS las instancias de avatares ahora usan UserAvatar con colores únicos por empleado
+  - Sistema completamente unificado en: employees-simple, messages, time-tracking, vacation-management y admin-dashboard
+  - Colores únicos funcionando perfectamente en toda la aplicación sin inconsistencias
+- June 28, 2025. DATE PICKER REDISEÑADO: Sistema calendario implementado siguiendo solicitud del usuario
+  - CAMBIO CRÍTICO: DatePickerDay ahora usa formato calendario (Dialog + Calendar) igual al filtro de rango
+  - DatePickerDayEmployee mantiene formato dropdown exclusivamente para fechas de incorporación
+  - Distinción clara: calendario para fechas generales, dropdown solo para incorporación de empleados
+  - Estructura idéntica al DatePickerPeriod con Dialog, Calendar mode="single" y botones Cancelar/Limpiar
+  - Implementado según énfasis del usuario: "calendario normal!!!!" para máxima usabilidad
 - June 28, 2025. AVATARES ÚNICOS FINALMENTE FUNCIONANDO: Solución definitiva con estilos inline puros
   - PROBLEMA CRÍTICO RESUELTO: shadcn/ui CSS causaba interferencias, eliminado TODO uso de clases CSS
   - UserAvatar completamente reescrito: solo estilos inline style={{}} sin ninguna clase

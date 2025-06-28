@@ -25,6 +25,7 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -609,9 +610,10 @@ export default function AdminDashboard() {
                         className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
                         onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
                       >
-                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                          <MessageSquare className="h-4 w-4 text-purple-600" />
-                        </div>
+                        <UserAvatar 
+                          userId={message.senderId} 
+                          size="sm" 
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>
                           <p className="text-sm text-gray-500 truncate">{message.content}</p>
