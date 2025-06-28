@@ -47,7 +47,9 @@ export function LazyStripeForm({
         setLoading(false);
       } catch (err) {
         console.error('Error loading Stripe:', err);
-        setError('Error al cargar el sistema de pagos');
+        console.error('Public key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+        console.error('Public key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 10) + '...');
+        setError(`Error al cargar el sistema de pagos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
         setLoading(false);
       }
     };
