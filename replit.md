@@ -173,6 +173,7 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - Formateo de fecha en español: "3 de agosto de 2025" usando formatDate con locale es-ES
   - Key único agregado para forzar re-render del componente en actualizaciones
   - Lógica condicional mejorada: "Próximo cobro" solo aparece con métodos de pago activos
+  - Posicionamiento optimizado: mensaje de cancelación aparece exactamente donde aparecería "Próximo cobro"
 - June 28, 2025. LÓGICA DE PAGOS OPTIMIZADA Y FINALIZADA: Sistema completo de fechas de primer y próximo pago
   - Campo firstPaymentDate añadido al esquema de suscripciones para manejar fecha del primer cobro
   - Lógica empresarial correcta implementada: pago antes del trial → primer cobro al terminar trial

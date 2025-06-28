@@ -172,22 +172,42 @@ const AccountManagement = () => {
               </div>
             </div>
             
-            {/* Payment Information - Only show if there are payment methods */}
-            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && paymentMethods && paymentMethods.length > 0 && (
-              <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Próximo cobro:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {formatDate(subscription.nextPaymentDate)}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-semibold text-blue-600">
-                    {getPlanPrice()}/mes
-                  </span>
-                </div>
+            {/* Payment Information or Cancellation Warning */}
+            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && (
+              <div className="pt-2 border-t border-gray-200/50">
+                {paymentMethods && paymentMethods.length > 0 ? (
+                  // Show payment info when payment methods exist
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600">Próximo cobro:</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {formatDate(subscription.nextPaymentDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CreditCard className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm font-semibold text-blue-600">
+                        {getPlanPrice()}/mes
+                      </span>
+                    </div>
+                  </div>
+                ) : cancellationStatus?.hasPendingCancellation && (
+                  // Show cancellation warning when no payment methods
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-red-800">
+                          ⚠️ Tu suscripción terminará el {formatDate(subscription.nextPaymentDate)}
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          No tienes métodos de pago activos. Añade una tarjeta antes de esa fecha para mantener tu suscripción.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
