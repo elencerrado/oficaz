@@ -72,7 +72,7 @@ const regions = [
 
 export default function VacationManagement() {
   const { company } = useAuth();
-  const [activeTab, setActiveTab] = useState("requests");
+  const [activeTab, setActiveTab] = useState("employees");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -571,8 +571,8 @@ export default function VacationManagement() {
         {/* Tabs Navigation */}
         <TabNavigation
           tabs={[
+            { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
             { id: 'requests', label: 'Solicitudes', icon: Clock },
-            { id: 'employees', label: 'Empleados de Vacaciones', icon: Users },
             { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
           ]}
           activeTab={activeTab}

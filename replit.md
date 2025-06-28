@@ -182,6 +182,20 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. REORGANIZACIÓN DE PESTAÑAS VACACIONES COMPLETADA: Timeline ahora es pestaña principal
+  - "Timeline de Vacaciones" reubicado como primera pestaña con nombre más descriptivo
+  - Pestaña por defecto cambiada de "Solicitudes" a "Timeline de Vacaciones" 
+  - Texto móvil actualizado: "Timeline" para pantallas pequeñas
+  - Orden final: Timeline de Vacaciones → Solicitudes → Días Festivos
+  - Sistema Gantt con barras correctamente posicionadas ahora es la vista principal
+- June 28, 2025. BUG CRÍTICO BARRAS VACACIONES POSICIONAMIENTO RESUELTO: Timeline Gantt completamente funcional
+  - PROBLEMA CRÍTICO: Barras de vacaciones aparecían fuera de líneas horizontales en timeline
+  - SOLUCIÓN: Contenedor específico con absolute inset-0 overflow-hidden para barras
+  - Altura barras reducida (h-10) vs contenedor (h-12) para margen interno adecuado  
+  - Posicionamiento centrado: top:4px y bottom:4px para alineación perfecta
+  - Eliminado overflow-hidden problemático del contenedor principal
+  - Sistema Gantt ahora muestra barras perfectamente contenidas dentro de sus líneas
+  - Funcionalidad completa: tooltips, cálculo dinámico días, botones revertir operativos
 - June 28, 2025. BUG CRÍTICO PDF CORREGIDO: Cálculos de horas y formato de descansos completamente arreglados
   - PROBLEMA 1 RESUELTO: Cálculo de horas totales ahora descuenta correctamente los períodos de descanso
   - PROBLEMA 2 RESUELTO: Múltiples descansos ahora aparecen con saltos de línea (\n\n) en lugar de comas

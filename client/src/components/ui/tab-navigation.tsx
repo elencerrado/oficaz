@@ -49,7 +49,8 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
               <span className="truncate">
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span className="sm:hidden">
-                  {tab.label === 'Empleados de Vacaciones' ? 'Empleados' :
+                  {tab.label === 'Timeline de Vacaciones' ? 'Timeline' :
+                   tab.label === 'Empleados de Vacaciones' ? 'Empleados' :
                    tab.label === 'Días Festivos' ? 'Festivos' :
                    tab.label === 'Mi Perfil' ? 'Perfil' :
                    tab.label === 'Explorador' ? 'Archivos' :
