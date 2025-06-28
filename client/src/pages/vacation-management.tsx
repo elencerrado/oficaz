@@ -921,7 +921,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border overflow-visible">
+                                <div className="relative h-12 bg-gray-100 rounded border overflow-hidden">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
