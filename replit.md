@@ -182,12 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- June 28, 2025. SISTEMA DE AVATARES COMPLETADO: Última instancia corregida en admin-dashboard.tsx
+- June 28, 2025. SISTEMA DE AVATARES COMPLETADO: Tamaño uniforme y última instancia corregida
+  - TAMAÑO CONSISTENTE: Todos los avatares estandarizados a 32x32px (w-8 h-8) independientemente del size prop
   - PROBLEMA FINAL RESUELTO: UserAvatar agregado en sección de mensajes del dashboard admin
-  - Reemplazado icono MessageSquare por UserAvatar con userId, name y size="sm"
+  - Reemplazado icono MessageSquare por UserAvatar con userId, fullName y size="sm"
   - TODAS las instancias de avatares ahora usan UserAvatar con colores únicos por empleado
   - Sistema completamente unificado en: employees-simple, messages, time-tracking, vacation-management y admin-dashboard
   - Colores únicos funcionando perfectamente en toda la aplicación sin inconsistencias
+  - Tamaño uniforme garantiza coherencia visual en todas las páginas
 - June 28, 2025. DATE PICKER REDISEÑADO: Sistema calendario implementado siguiendo solicitud del usuario
   - CAMBIO CRÍTICO: DatePickerDay ahora usa formato calendario (Dialog + Calendar) igual al filtro de rango
   - DatePickerDayEmployee mantiene formato dropdown exclusivamente para fechas de incorporación

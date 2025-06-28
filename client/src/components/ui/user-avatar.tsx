@@ -44,11 +44,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     return colorPairs[id % colorPairs.length];
   };
 
-  // Tamaños según el tamaño del avatar
+  // Tamaño único consistente para todos los avatares
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',
-    md: 'w-10 h-10 text-sm', 
-    lg: 'w-12 h-12 text-base'
+    md: 'w-8 h-8 text-xs', 
+    lg: 'w-8 h-8 text-xs'
   };
 
   // Si hay clases personalizadas, usarlas completamente
