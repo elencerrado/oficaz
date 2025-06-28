@@ -260,7 +260,7 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
 
       {/* Modal para añadir método de pago */}
       <Dialog open={isAddingCard} onOpenChange={setIsAddingCard}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Añadir método de pago</DialogTitle>
             <DialogDescription>
