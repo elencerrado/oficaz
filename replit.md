@@ -134,8 +134,37 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
+## Conceptos de Fechas en Sistema de Suscripciones
+
+### Diferencia Crítica: Trial End vs Next Payment Date
+
+El sistema maneja dos conceptos de fecha independientes que pueden divergir:
+
+1. **trial_end_date**: Fecha límite cuando la web deja de ser operativa sin pago
+   - Se establece al registro: trial_start_date + 14 días
+   - NO se modifica una vez establecida
+   - Determina cuándo bloquear acceso a la aplicación
+
+2. **next_payment_date**: Fecha del próximo cobro de suscripción
+   - Se calcula al confirmar método de pago
+   - Si el usuario añade pago ANTES del trial_end_date: next_payment_date = trial_end_date
+   - Si el usuario añade pago DESPUÉS del trial_end_date: next_payment_date = trial_end_date + meses transcurridos
+
+### Escenarios Posibles:
+- **Pago Puntual**: Trial expira 3 jul, usuario paga antes → cobro 3 jul (fechas coinciden)
+- **Pago Tardío**: Trial expira 3 jul, usuario paga 10 jul → cobro 3 agosto (fechas diferentes)
+
+### Estado Actual del Sistema:
+- ✅ Base de datos preparada con ambos campos separados
+- ✅ Lógica de cálculo implementada en confirm-payment-method
+- ✅ Frontend actualizado para mostrar next_payment_date
+
 ## Changelog
 
+- June 28, 2025. CONCEPTOS DE FECHAS CLARIFICADOS: Trial end vs Next payment date separados
+  - Documentada diferencia crítica entre trial_end_date (bloqueo) y next_payment_date (cobro)
+  - Sistema preparado para manejar pagos tardíos donde las fechas no coinciden
+  - Lógica actual calcula correctamente próximo cobro basado en fin de trial + tiempo transcurrido
 - June 28, 2025. TARJETA DE TRIAL OCULTA AL ACTIVAR SUSCRIPCIÓN: UX mejorada tras confirmación de pago
   - TrialManager.tsx modificado para retornar null cuando status='active' y trial inactivo
   - Eliminada tarjeta verde "Suscripción Activa" que aparecía tras confirmar pago
