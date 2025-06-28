@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { LazyStripeForm } from './LazyStripeForm';
 
 interface PaymentMethod {
   id: string;
@@ -21,14 +22,16 @@ interface PaymentMethodManagerProps {
   paymentMethods: PaymentMethod[];
 }
 
+
+
 export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Check if Stripe keys are available
-  const hasStripeKeys = !!import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+
 
   const deletePaymentMethodMutation = useMutation({
     mutationFn: async (paymentMethodId: string) => {
@@ -71,6 +74,23 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
     },
   });
 
+  const createSetupIntentMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/account/create-setup-intent');
+      return response;
+    },
+    onSuccess: (data: any) => {
+      setClientSecret(data.clientSecret);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo inicializar el formulario de pago.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteMethod = (method: PaymentMethod) => {
     setSelectedMethod(method);
   };
@@ -85,6 +105,27 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
     if (!method.is_default) {
       setDefaultPaymentMethodMutation.mutate(method.id);
     }
+  };
+
+  const handleAddCard = () => {
+    setClientSecret(null);
+    createSetupIntentMutation.mutate();
+    setIsAddingCard(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setIsAddingCard(false);
+    setClientSecret(null);
+    queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+    toast({
+      title: "¡Método de pago añadido!",
+      description: "Tu tarjeta se ha añadido correctamente.",
+    });
+  };
+
+  const handlePaymentCancel = () => {
+    setIsAddingCard(false);
+    setClientSecret(null);
   };
 
   if (!hasStripeKeys) {
@@ -118,31 +159,10 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
                 Gestiona tus tarjetas de crédito y débito
               </CardDescription>
             </div>
-            <Dialog open={isAddingCard} onOpenChange={setIsAddingCard}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Añadir tarjeta
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Añadir método de pago</DialogTitle>
-                  <DialogDescription>
-                    Añade una nueva tarjeta de crédito o débito de forma segura.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="p-6 text-center">
-                  <CreditCard className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-sm text-gray-600 mb-4">
-                    El formulario de Stripe se cargará aquí una vez configuradas las claves API.
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Procesado de forma segura por Stripe. No almacenamos datos de tarjetas.
-                  </p>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="outline" size="sm" onClick={handleAddCard}>
+              <Plus className="w-4 h-4 mr-2" />
+              Añadir tarjeta
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -245,6 +265,50 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
               {deletePaymentMethodMutation.isPending ? 'Eliminando...' : 'Eliminar tarjeta'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para añadir método de pago */}
+      <Dialog open={isAddingCard} onOpenChange={setIsAddingCard}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Añadir método de pago</DialogTitle>
+            <DialogDescription>
+              Añade una nueva tarjeta de crédito o débito de forma segura.
+            </DialogDescription>
+          </DialogHeader>
+          {clientSecret ? (
+            <LazyStripeForm
+              clientSecret={clientSecret}
+              planName="Basic"
+              planPrice={29.99}
+              onSuccess={handlePaymentSuccess}
+              onCancel={handlePaymentCancel}
+            />
+          ) : (
+            <div className="p-6 text-center">
+              {createSetupIntentMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-sm text-gray-600">Preparando formulario de pago...</p>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
+                  <p className="text-sm text-gray-600 mb-4">
+                    No se pudo cargar el formulario de pago.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => createSetupIntentMutation.mutate()}
+                    disabled={createSetupIntentMutation.isPending}
+                  >
+                    Reintentar
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
