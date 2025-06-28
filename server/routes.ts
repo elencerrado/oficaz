@@ -2510,17 +2510,20 @@ startxref
         expand: ['latest_invoice.payment_intent'],
       });
 
-      // Calculate next payment date based on when payment method is added
+      // Calculate payment dates based on when payment method is added
       const trialEndDate = new Date(company.subscription.trialEndDate);
       const now = new Date();
+      let firstPaymentDate: Date;
       let nextPaymentDate: Date;
       
       if (trialEndDate > now) {
-        // Trial still active: next payment = one month after trial end date
+        // Trial still active: first payment when trial ends, next payment one month later
+        firstPaymentDate = new Date(trialEndDate);
         nextPaymentDate = new Date(trialEndDate);
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       } else {
-        // Trial has ended: next payment = one month from now (when payment is added)
+        // Trial has ended: first payment now, next payment one month from now
+        firstPaymentDate = new Date(now);
         nextPaymentDate = new Date(now);
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       }
@@ -2532,14 +2535,20 @@ startxref
           status = 'active',
           is_trial_active = false,
           stripe_subscription_id = ${subscription.id},
+          first_payment_date = ${firstPaymentDate.toISOString()},
           next_payment_date = ${nextPaymentDate.toISOString()}
         WHERE id = ${company.subscription.id}
       `);
 
+      const firstPaymentMessage = trialEndDate > now 
+        ? `Tu primer cobro será el ${firstPaymentDate.toLocaleDateString('es-ES')} cuando termine la prueba gratuita.`
+        : `Tu primer cobro será procesado hoy ${firstPaymentDate.toLocaleDateString('es-ES')}.`;
+
       res.json({ 
         success: true, 
-        message: 'Suscripción activada correctamente. Tu facturación mensual ha comenzado.',
+        message: `Suscripción activada correctamente. ${firstPaymentMessage}`,
         subscriptionId: subscription.id,
+        firstPaymentDate: firstPaymentDate.toISOString(),
         nextPaymentDate: nextPaymentDate.toISOString()
       });
     } catch (error) {

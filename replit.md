@@ -155,12 +155,22 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 - **Pago Tardío**: Trial expira 3 jul, usuario paga después (10 jul) → cobro 10 agosto (un mes desde que añadió pago)
 
 ### Estado Actual del Sistema:
-- ✅ Base de datos preparada con ambos campos separados
-- ✅ Lógica de cálculo implementada en confirm-payment-method
-- ✅ Frontend actualizado para mostrar next_payment_date
+- ✅ Base de datos con firstPaymentDate y nextPaymentDate separados
+- ✅ Lógica de cálculo completa implementada en confirm-payment-method
+- ✅ Esquema actualizado con campo first_payment_date
+- ✅ Migración aplicada exitosamente
+- ✅ Mensajes personalizados según escenario de pago
 
 ## Changelog
 
+- June 28, 2025. LÓGICA DE PAGOS OPTIMIZADA Y FINALIZADA: Sistema completo de fechas de primer y próximo pago
+  - Campo firstPaymentDate añadido al esquema de suscripciones para manejar fecha del primer cobro
+  - Lógica empresarial correcta implementada: pago antes del trial → primer cobro al terminar trial
+  - Pago después del trial → primer cobro inmediato al añadir método de pago
+  - Mensajes personalizados según escenario: "primer cobro el [fecha]" o "primer cobro procesado hoy"
+  - Base de datos migrada exitosamente con nuevo campo first_payment_date
+  - Endpoint confirm-payment-method actualizado para calcular ambas fechas independientemente
+  - Sistema robusto que maneja correctamente los dos escenarios de timing de pago
 - June 28, 2025. CONCEPTOS DE FECHAS CLARIFICADOS: Trial end vs Next payment date separados
   - Documentada diferencia crítica entre trial_end_date (bloqueo) y next_payment_date (cobro)
   - Sistema preparado para manejar pagos tardíos donde las fechas no coinciden

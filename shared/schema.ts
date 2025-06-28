@@ -72,6 +72,7 @@ export const subscriptions = pgTable("subscriptions", {
   isTrialActive: boolean("is_trial_active").default(true).notNull(),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
+  firstPaymentDate: timestamp("first_payment_date"),
   nextPaymentDate: timestamp("next_payment_date"),
   maxUsers: integer("max_users").default(5).notNull(),
   features: jsonb("features").default('{}').notNull(),
