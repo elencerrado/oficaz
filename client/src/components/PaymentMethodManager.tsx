@@ -134,11 +134,6 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
 
 
 
-  // Mostrar solo la tarjeta principal o la primera disponible
-  const primaryMethod = paymentMethods && paymentMethods.length > 0 
-    ? paymentMethods.find(method => method.is_default) || paymentMethods[0]
-    : null;
-
   return (
     <div className="space-y-4">
       {/* Current Payment Methods */}
@@ -161,42 +156,52 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
           </div>
         </CardHeader>
         <CardContent>
-          {primaryMethod ? (
+          {paymentMethods && paymentMethods.length > 0 ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <CreditCard className="h-8 w-8 text-blue-600" />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <p className="font-medium">
-                        {primaryMethod.card_brand?.toUpperCase()} •••• {primaryMethod.card_last_four}
+              {paymentMethods.map((method) => (
+                <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <CreditCard className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium">
+                          {method.card_brand?.toUpperCase()} •••• {method.card_last_four}
+                        </p>
+                        {method.is_default && (
+                          <Badge variant="secondary" className="text-xs">
+                            Principal
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Expira: {method.card_exp_month.toString().padStart(2, '0')}/{method.card_exp_year}
                       </p>
-                      <Badge variant="secondary" className="text-xs">
-                        Principal
-                      </Badge>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      Expira: {primaryMethod.card_exp_month.toString().padStart(2, '0')}/{primaryMethod.card_exp_year}
-                    </p>
-                    {paymentMethods && paymentMethods.length > 1 && (
-                      <p className="text-xs text-blue-600 mt-1">
-                        +{paymentMethods.length - 1} tarjetas adicionales
-                      </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {!method.is_default && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetDefault(method)}
+                        disabled={setDefaultPaymentMethodMutation.isPending}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Marcar principal
+                      </Button>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteMethod(method)}
+                      disabled={deletePaymentMethodMutation.isPending}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteMethod(primaryMethod)}
-                    disabled={deletePaymentMethodMutation.isPending}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-8">
