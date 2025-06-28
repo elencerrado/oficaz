@@ -93,12 +93,9 @@ export function TrialManagerSimple() {
                 <span className="text-sm font-medium text-gray-900">
                   Plan {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)} Activo
                 </span>
-                <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
-                  Suscripción Activa
-                </Badge>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Próximo pago: {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes
+                Próximo pago: {new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes
               </p>
             </div>
           </div>
