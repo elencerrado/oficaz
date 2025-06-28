@@ -630,7 +630,7 @@ export default function Employees() {
                       
                       <div className="p-4">
                         <div className="flex items-center space-x-3">
-                          <UserAvatar fullName={employee.fullName || ''} size="md" />
+                          <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
