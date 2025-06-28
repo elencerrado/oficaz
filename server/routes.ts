@@ -2909,12 +2909,14 @@ startxref
 
       // IMPLEMENTACIÓN DE LOS 4 ESCENARIOS:
       let currentStatus = subscription.status;
+      let isTrialCurrentlyActive = subscription.is_trial_active;
       let shouldBlock = false;
 
-      // Escenario 1 & 4: Sin método de pago después del trial = BLOQUEO TOTAL
+      // ÚNICO ESCENARIO DE BLOQUEO: Sin método de pago después del trial expirado  
       if (isTrialExpired && !hasPaymentMethod) {
         currentStatus = 'blocked';
         shouldBlock = true;
+        isTrialCurrentlyActive = false;
         
         // Auto-block en base de datos si no está ya bloqueado
         if (subscription.status !== 'blocked') {
@@ -2926,11 +2928,21 @@ startxref
         }
       }
       
-      // Escenario 2 & 3: Con método de pago = ACTIVO (ya procesado en confirm-payment-method)
-      // No necesita cambios aquí ya que se maneja al confirmar el pago
+      // Escenario 4: Sin método de pago ANTES de expirar trial = REACTIVAR TRIAL
+      else if (!isTrialExpired && !hasPaymentMethod && subscription.status === 'active') {
+        currentStatus = 'trial';
+        isTrialCurrentlyActive = true;
+        
+        // Reactivar trial en base de datos
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET status = 'trial', is_trial_active = true 
+          WHERE company_id = ${companyId}
+        `);
+      }
 
       res.json({
-        isTrialActive: subscription.is_trial_active && !isTrialExpired,
+        isTrialActive: isTrialCurrentlyActive && !isTrialExpired,
         daysRemaining: Math.max(0, daysRemaining),
         trialEndDate: subscription.trial_end_date,
         nextPaymentDate: subscription.next_payment_date,

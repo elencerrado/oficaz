@@ -5,8 +5,11 @@ import { sql } from 'drizzle-orm';
 
 /**
  * Middleware que implementa el bloqueo de suscripciones según los 4 escenarios:
- * 1. Sin método de pago durante trial = Sin método de pago después del trial = BLOQUEO TOTAL
- * 4. Con método de pago y lo elimina antes de fin prueba = BLOQUEO TOTAL
+ * 1. Sin método de pago durante trial → continúa hasta fin trial
+ * 2. Con método de pago antes del trial → acceso permitido  
+ * 3. Con método de pago después del trial → acceso permitido
+ * 4. Método de pago eliminado ANTES de fin trial → regresa a estado trial
+ * Solo BLOQUEO TOTAL: Sin método de pago DESPUÉS del trial expirado
  */
 export async function requireActiveSubscription(req: AuthRequest, res: Response, next: NextFunction) {
   try {
@@ -42,7 +45,7 @@ export async function requireActiveSubscription(req: AuthRequest, res: Response,
     const isTrialExpired = now > trialEndDate;
     const hasPaymentMethod = !!subscription.stripe_customer_id;
 
-    // Escenario 1 & 4: Sin método de pago después del trial = BLOQUEO TOTAL
+    // ÚNICO ESCENARIO DE BLOQUEO: Sin método de pago después del trial expirado
     if (isTrialExpired && !hasPaymentMethod) {
       // Auto-bloquear en base de datos si no está ya bloqueado
       if (subscription.status !== 'blocked') {
@@ -61,9 +64,19 @@ export async function requireActiveSubscription(req: AuthRequest, res: Response,
       });
     }
 
-    // Durante el trial sin método de pago: permitir acceso con advertencia
+    // Escenario 4: Sin método de pago ANTES de expirar trial = REACTIVAR TRIAL
     if (!isTrialExpired && !hasPaymentMethod) {
-      // Continuar normalmente - se mostrará advertencia en frontend
+      // Si la suscripción está marcada como 'active' pero no hay método de pago
+      // y aún no ha expirado el trial, reactivar el trial
+      if (subscription.status === 'active' && !subscription.is_trial_active) {
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET status = 'trial', is_trial_active = true 
+          WHERE company_id = ${companyId}
+        `);
+      }
+      
+      // Continuar normalmente - se mostrará como trial en frontend
       return next();
     }
 
