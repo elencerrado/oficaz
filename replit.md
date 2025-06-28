@@ -171,6 +171,7 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - Pagos tardíos procesan inmediatamente pero mantienen alignment con próximas fechas
   - Facturación garantizada: Stripe tiene toda información necesaria para facturas precisas
   - Sistema crítico para cumplimiento legal: CIF, direcciones, datos fiscales correctos
+  - Eliminada tarjeta verde "Suscripción Activa" de TrialManagerSimple.tsx para interfaz más limpia
 - June 28, 2025. LÓGICA DE FACTURAS OPTIMIZADA: Sección solo visible con método de pago configurado
   - Sin método de pago → sección de facturas completamente oculta
   - Con método de pago → sección visible con facturas reales de Stripe o mensaje "aún no hay facturas"
