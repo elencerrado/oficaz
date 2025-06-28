@@ -10,6 +10,7 @@ interface TrialStatus {
   isTrialActive: boolean;
   daysRemaining: number;
   trialEndDate: string;
+  nextPaymentDate: string;
   status: string;
   plan: string;
   hasPaymentMethod: boolean;
@@ -98,7 +99,7 @@ export function TrialManagerSimple() {
                 </Badge>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Próximo pago: {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes
+                Próximo pago: {new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes
               </p>
             </div>
           </div>

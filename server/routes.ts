@@ -2813,7 +2813,8 @@ startxref
           is_trial_active,
           status,
           plan,
-          stripe_subscription_id
+          stripe_subscription_id,
+          next_payment_date
         FROM subscriptions 
         WHERE company_id = ${companyId}
       `);
@@ -2841,6 +2842,7 @@ startxref
         isTrialActive: subscription.is_trial_active && !isTrialExpired,
         daysRemaining: Math.max(0, daysRemaining),
         trialEndDate: subscription.trial_end_date,
+        nextPaymentDate: subscription.next_payment_date,
         status: isTrialExpired && subscription.status === 'trial' ? 'blocked' : subscription.status,
         plan: subscription.plan,
         hasPaymentMethod: !!subscription.stripe_subscription_id,
