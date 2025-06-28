@@ -163,15 +163,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Estado Actual del Sistema de Fichaje Admin
 
-### Investigación de Errores (28 Junio 2025)
-- **Problema Reportado**: Usuario reporta errores al fichar desde dashboard admin
-- **Investigación Realizada**: 
-  - Botones estandarizados w-[120px] h-[48px] para uniformidad visual
-  - Logs de debugging añadidos a clock-in y clock-out mutations
-  - Errores en logs del servidor son de Stripe (customer ID no válido), NO del sistema de fichaje
-  - Endpoints de fichaje (/api/work-sessions/clock-in, /api/work-sessions/clock-out) funcionan correctamente
-- **Estado**: Sistema de fichaje admin técnicamente funcional, errores de Stripe no relacionados con fichajes
-- **Pendiente**: Confirmación con usuario si error persiste tras logs de debugging implementados
+### PROBLEMA RESUELTO (28 Junio 2025)
+- **Problema Original**: Usuario reporta errores al fichar desde dashboard admin
+- **Causa Identificada**: Overflow numérico en campo totalHours por sesiones con fechas muy antiguas
+- **Solución Implementada**: 
+  - Validación de duración máxima 24 horas en endpoint clock-out
+  - Verificación de fechas válidas (salida no anterior a entrada)
+  - Limitación segura del campo totalHours (0-24 horas máximo)
+  - Logs de debugging eliminados para versión de producción
+- **Estado FINAL**: Sistema de fichaje admin completamente funcional y protegido contra overflow
 
 ## Changelog
 

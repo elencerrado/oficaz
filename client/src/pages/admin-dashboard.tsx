@@ -170,18 +170,9 @@ export default function AdminDashboard() {
   // ⚠️ PROTECTED - DO NOT MODIFY - Fichaje mutations identical to employee system
   const clockInMutation = useMutation({
     mutationFn: async () => {
-      console.log('DEBUG: Starting clock-in mutation');
-      try {
-        const result = await apiRequest('POST', '/api/work-sessions/clock-in');
-        console.log('DEBUG: Clock-in success:', result);
-        return result;
-      } catch (error) {
-        console.log('DEBUG: Clock-in error:', error);
-        throw error;
-      }
+      return await apiRequest('POST', '/api/work-sessions/clock-in');
     },
     onSuccess: () => {
-      console.log('DEBUG: Clock-in mutation onSuccess triggered');
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
@@ -189,10 +180,9 @@ export default function AdminDashboard() {
       showTemporaryMessage(message);
     },
     onError: (error: any) => {
-      console.log('DEBUG: Clock-in mutation onError:', error);
       toast({ 
         title: 'Error', 
-        description: `No se pudo registrar la entrada: ${error.message || 'Error desconocido'}`,
+        description: 'No se pudo registrar la entrada',
         variant: 'destructive'
       });
     },
@@ -200,18 +190,9 @@ export default function AdminDashboard() {
 
   const clockOutMutation = useMutation({
     mutationFn: async () => {
-      console.log('DEBUG: Starting clock-out mutation');
-      try {
-        const result = await apiRequest('POST', '/api/work-sessions/clock-out');
-        console.log('DEBUG: Clock-out success:', result);
-        return result;
-      } catch (error) {
-        console.log('DEBUG: Clock-out error:', error);
-        throw error;
-      }
+      return await apiRequest('POST', '/api/work-sessions/clock-out');
     },
     onSuccess: () => {
-      console.log('DEBUG: Clock-out mutation onSuccess triggered');
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
@@ -219,10 +200,9 @@ export default function AdminDashboard() {
       showTemporaryMessage(message);
     },
     onError: (error: any) => {
-      console.log('DEBUG: Clock-out mutation onError:', error);
       toast({ 
         title: 'Error', 
-        description: `No se pudo registrar la salida: ${error.message || 'Error desconocido'}`,
+        description: 'No se pudo registrar la salida',
         variant: 'destructive'
       });
     },

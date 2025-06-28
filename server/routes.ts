@@ -916,11 +916,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const clockOut = new Date();
-      const totalHours = (clockOut.getTime() - activeSession.clockIn.getTime()) / (1000 * 60 * 60);
+      const clockInTime = new Date(activeSession.clockIn);
+      const diffInMs = clockOut.getTime() - clockInTime.getTime();
+      
+      // Validate reasonable time difference (max 24 hours)
+      if (diffInMs < 0) {
+        return res.status(400).json({ message: 'Invalid time: clock-out cannot be before clock-in' });
+      }
+      
+      if (diffInMs > 24 * 60 * 60 * 1000) {
+        const hoursDiff = diffInMs / (1000 * 60 * 60);
+        return res.status(400).json({ 
+          message: `Session too long: ${hoursDiff.toFixed(1)} hours. Maximum 24 hours allowed. Please contact admin to fix this session.` 
+        });
+      }
+      
+      const totalHours = diffInMs / (1000 * 60 * 60);
+      
+      // Ensure totalHours is a reasonable number (max 24)
+      const safeTotalHours = Math.min(Math.max(totalHours, 0), 24);
 
       const updatedSession = await storage.updateWorkSession(activeSession.id, {
         clockOut,
-        totalHours: totalHours.toFixed(2),
+        totalHours: safeTotalHours.toFixed(2),
         status: 'completed',
       });
 
