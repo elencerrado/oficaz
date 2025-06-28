@@ -2706,28 +2706,40 @@ startxref
       
       console.log(`Deleting payment method ${paymentMethodId} for company ${companyId}`);
       
-      // Try to delete from database if table exists
-      try {
-        const result = await db.execute(sql`
-          UPDATE payment_methods 
-          SET is_active = false, updated_at = NOW()
-          WHERE id = ${paymentMethodId} AND company_id = ${companyId}
-        `);
-        
-        if (result.rowsAffected && result.rowsAffected > 0) {
-          console.log('Payment method deleted from database');
-          return res.json({ success: true, message: 'Método de pago eliminado correctamente' });
-        }
-      } catch (dbError) {
-        console.log('payment_methods table not found, simulating deletion');
+      // Get the company's Stripe customer ID
+      const subscriptionResult = await db.execute(sql`
+        SELECT stripe_customer_id FROM subscriptions 
+        WHERE company_id = ${companyId}
+      `);
+      
+      if (!subscriptionResult.rows.length) {
+        return res.status(404).json({ message: 'No se encontró información de suscripción' });
       }
       
-      // For demo purposes, always return success even if no database table
-      console.log('Simulating payment method deletion');
+      const stripeCustomerId = (subscriptionResult.rows[0] as any).stripe_customer_id;
+      
+      if (!stripeCustomerId) {
+        return res.status(400).json({ message: 'No se encontró el ID de cliente de Stripe' });
+      }
+      
+      // Detach the payment method from Stripe customer
+      await stripe.paymentMethods.detach(paymentMethodId);
+      
+      console.log(`Successfully detached payment method ${paymentMethodId} from Stripe`);
       res.json({ success: true, message: 'Método de pago eliminado correctamente' });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting payment method:', error);
+      
+      // Handle specific Stripe errors
+      if (error.type === 'StripeCardError') {
+        return res.status(400).json({ message: 'Error con la tarjeta: ' + error.message });
+      } else if (error.type === 'StripeInvalidRequestError') {
+        return res.status(400).json({ message: 'Solicitud inválida: ' + error.message });
+      } else if (error.code === 'resource_missing') {
+        return res.status(404).json({ message: 'El método de pago no existe o ya fue eliminado' });
+      }
+      
       res.status(500).json({ message: 'Error eliminando método de pago' });
     }
   });
