@@ -547,7 +547,7 @@ export default function EmployeesSimple() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <UserAvatar fullName={employee.fullName || ''} size="md" />
+                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} />
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
