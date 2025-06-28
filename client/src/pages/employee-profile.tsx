@@ -8,6 +8,7 @@ import { ArrowLeft, User, Mail, Phone, Edit3, Save, X, Camera, Trash2 } from 'lu
 import { useLocation, Link } from 'wouter';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function EmployeeProfile() {
   const { user, company, companyAlias } = useAuth();
@@ -30,16 +31,7 @@ export default function EmployeeProfile() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch('/api/users/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Error al actualizar perfil');
-      return response.json();
+      return await apiRequest('PATCH', '/api/users/profile', data);
     },
     onSuccess: () => {
       setIsEditing(false);
@@ -62,20 +54,7 @@ export default function EmployeeProfile() {
       const formData = new FormData();
       formData.append('profilePicture', file);
       
-      const response = await fetch('/api/users/profile-picture', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al subir la foto de perfil');
-      }
-      
-      return response.json();
+      return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
@@ -95,19 +74,7 @@ export default function EmployeeProfile() {
 
   const deleteProfilePictureMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/users/profile-picture', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar la foto de perfil');
-      }
-      
-      return response.json();
+      return await apiRequest('DELETE', '/api/users/profile-picture');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });

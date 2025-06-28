@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { 
   Building2, 
   Users, 
@@ -1497,11 +1498,12 @@ const AccountManagement = () => {
               <CardContent className="space-y-6">
                 {/* User info header */}
                 <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-12 h-12 bg-oficaz-primary rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium">
-                      {user?.fullName?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </span>
-                  </div>
+                  <UserAvatar
+                    userId={user?.id}
+                    fullName={user?.fullName}
+                    size="lg"
+                    showUpload={true}
+                  />
                   <div>
                     <h3 className="font-medium text-gray-900">{user?.fullName}</h3>
                     <div className="flex items-center space-x-2">
