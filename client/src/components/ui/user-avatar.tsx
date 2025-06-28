@@ -38,7 +38,7 @@ export function UserAvatar({ fullName, size = 'md', className = '' }: UserAvatar
   const defaultClasses = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
   
   return (
-    <div className={`${baseClasses} ${defaultClasses} ${textSizes[size]} bg-blue-100 text-blue-600`}>
+    <div className={`${baseClasses} ${defaultClasses} ${textSizes[size]} bg-oficaz-primary text-white`}>
       {getInitials(fullName)}
     </div>
   );

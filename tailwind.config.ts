@@ -11,6 +11,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        'oficaz-primary': 'hsl(211, 100%, 50%)',
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
