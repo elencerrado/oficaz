@@ -128,21 +128,7 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
     setClientSecret(null);
   };
 
-  if (!hasStripeKeys) {
-    return (
-      <Card className="border-orange-200 bg-orange-50">
-        <CardHeader>
-          <CardTitle className="flex items-center text-orange-800">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            Configuración de pagos pendiente
-          </CardTitle>
-          <CardDescription className="text-orange-600">
-            Las claves de Stripe no están configuradas. Contacta con el administrador del sistema.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+
 
   return (
     <div className="space-y-4">
