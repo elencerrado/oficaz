@@ -746,18 +746,11 @@ export default function AdminDocuments() {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
-                        console.log('DEBUG FILE ANALYSIS START');
-                        console.log('Archivo:', file.name);
-                        console.log('Empleados count:', employees.length);
-                        console.log('Empleados names:', employees.map(emp => emp.fullName));
+                        alert(`DEBUG: Analizando archivo ${file.name} con ${employees.length} empleados`);
                         
                         const analysis = analyzeFileName(file.name, employees);
                         
-                        console.log('Analysis result:');
-                        console.log('- Employee:', analysis.employee?.fullName || 'NONE');
-                        console.log('- Document Type:', analysis.documentType);
-                        console.log('- Confidence:', analysis.confidence);
-                        console.log('DEBUG FILE ANALYSIS END');
+                        alert(`RESULTADO: Empleado detectado: ${analysis.employee?.fullName || 'NINGUNO'} - Confianza: ${analysis.confidence}`);
                         
                         return {
                           file,
