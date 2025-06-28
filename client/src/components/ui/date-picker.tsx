@@ -25,6 +25,83 @@ export function DatePickerDay({
   buttonText
 }: DatePickerDayProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "justify-center text-center font-normal bg-white border-gray-200 hover:bg-gray-50 w-full",
+            className
+          )}
+        >
+          <span className="truncate text-xs">
+            {buttonText || (date 
+              ? format(date, "d MMM yyyy", { locale: es })
+              : placeholder
+            )}
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center">
+            Seleccionar fecha
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center space-y-4 p-4">
+          <Calendar
+            mode="single"
+            selected={date}
+            defaultMonth={date || new Date()}
+            onSelect={(selectedDate) => {
+              onDateChange(selectedDate);
+              if (selectedDate) {
+                setTimeout(() => {
+                  setIsModalOpen(false);
+                }, 300);
+              }
+            }}
+            initialFocus
+            locale={es}
+          />
+          <div className="flex gap-2 w-full">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsModalOpen(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            {date && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  onDateChange(undefined);
+                  setIsModalOpen(false);
+                }}
+                className="flex-1"
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Componente específico para fechas de incorporación (mantenemos los selectores)
+export function DatePickerDayEmployee({
+  date,
+  onDateChange,
+  className,
+  placeholder = "Seleccionar fecha",
+  buttonText
+}: DatePickerDayProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempYear, setTempYear] = useState(date?.getFullYear() || new Date().getFullYear());
   const [tempMonth, setTempMonth] = useState(date?.getMonth() || new Date().getMonth());
   const [tempDay, setTempDay] = useState(date?.getDate() || new Date().getDate());

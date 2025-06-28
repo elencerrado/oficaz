@@ -28,7 +28,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { DatePickerDay } from '@/components/ui/date-picker';
+import { DatePickerDayEmployee } from '@/components/ui/date-picker';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -684,7 +684,7 @@ export default function EmployeesSimple() {
                     <div>
                       <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
                       <div className="mt-1">
-                        <DatePickerDay
+                        <DatePickerDayEmployee
                           date={newEmployee.startDate}
                           onDateChange={(date) => setNewEmployee({ ...newEmployee, startDate: date || new Date() })}
                           placeholder="Seleccionar fecha"
@@ -896,7 +896,7 @@ export default function EmployeesSimple() {
                       <div>
                         <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
                         <div className="mt-1">
-                          <DatePickerDay
+                          <DatePickerDayEmployee
                             date={editEmployee.startDate}
                             onDateChange={(date) => setEditEmployee({ ...editEmployee, startDate: date || new Date() })}
                             placeholder="Seleccionar fecha"
