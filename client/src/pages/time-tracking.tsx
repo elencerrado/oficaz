@@ -308,7 +308,7 @@ export default function TimeTracking() {
       periodText = 'Todos los registros';
     }
 
-    // Helper function to format break periods for PDF
+    // Helper function to format break periods for PDF with line breaks
     const formatBreakPeriodsForPDF = (breakPeriods: any[]) => {
       if (!breakPeriods || breakPeriods.length === 0) {
         return 'Sin descansos';
@@ -329,7 +329,7 @@ export default function TimeTracking() {
           // En caso de error de fecha, devolver texto seguro
           return 'Descanso (datos inválidos)';
         }
-      }).join(', ');
+      }).join('\n'); // Cambiar de ', ' a '\n' para saltos de línea
     };
 
     // Function to create a page for an employee
@@ -487,7 +487,17 @@ export default function TimeTracking() {
       if (showSummaries && sortedSessions.length > 0) {
         sortedSessions.forEach((session: any, index: number) => {
           const sessionDate = new Date(session.clockIn);
-          const hours = calculateHours(session.clockIn, session.clockOut);
+          // Calculate total session hours minus break time
+          const sessionHours = calculateHours(session.clockIn, session.clockOut);
+          const breakHours = session.breakPeriods 
+            ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                if (breakPeriod.breakEnd) {
+                  return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                }
+                return breakTotal;
+              }, 0)
+            : 0;
+          const hours = Math.max(0, sessionHours - breakHours);
           
           // Calculate week start (Monday)
           const weekStart = startOfWeek(sessionDate, { weekStartsOn: 1 });
@@ -602,7 +612,17 @@ export default function TimeTracking() {
           }
           
           const sessionDate = new Date(session.clockIn);
-          const hours = calculateHours(session.clockIn, session.clockOut);
+          // Calculate total session hours minus break time
+          const sessionHours = calculateHours(session.clockIn, session.clockOut);
+          const breakHours = session.breakPeriods 
+            ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                if (breakPeriod.breakEnd) {
+                  return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                }
+                return breakTotal;
+              }, 0)
+            : 0;
+          const hours = Math.max(0, sessionHours - breakHours);
           
           // Format break periods
           const breakPeriodsText = formatBreakPeriodsForPDF(session.breakPeriods || []);
