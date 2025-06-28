@@ -198,7 +198,7 @@ const AccountManagement = () => {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-red-800">
-                      ⚠️ Tu cuenta se cancelará el {formatDate(subscription?.nextPaymentDate || '')}
+                      ⚠️ Tu suscripción terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
                     </p>
                     <p className="text-xs text-red-600 mt-1">
                       No tienes métodos de pago activos. Añade una tarjeta antes de esa fecha para mantener tu suscripción.
@@ -334,11 +334,11 @@ const AccountManagement = () => {
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-800">
-                        ⚠️ Tu cuenta se cancelará el {formatDate(subscription?.nextPaymentDate || '')}
+                      <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
+                        ⚠️ Tu suscripción terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
                       </p>
                       <p className="text-sm text-red-700 mt-1">
-                        No tienes métodos de pago configurados. Tu suscripción terminará automáticamente en esa fecha.
+                        No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente en esa fecha.
                       </p>
                       <p className="text-xs text-red-600 mt-2">
                         Añade una tarjeta de crédito o débito para mantener tu suscripción activa.

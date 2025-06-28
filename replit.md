@@ -163,12 +163,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- June 28, 2025. MENSAJES DE AUTO-CANCELACIÓN OPTIMIZADOS: Fecha específica claramente visible
+- June 28, 2025. MENSAJES DE AUTO-CANCELACIÓN OPTIMIZADOS: Terminología precisa implementada
   - Mejorados mensajes de advertencia para mostrar fecha exacta de cancelación de forma prominente
-  - Mensaje principal: "⚠️ Tu cuenta se cancelará el [fecha]" con emoji de advertencia
+  - Mensaje principal corregido: "⚠️ Tu suscripción terminará el [fecha]" en lugar de "próximo pago"
+  - Terminología precisa sin tarjeta: "terminará" y "se cancelará" en lugar de referencias a pagos
   - Ambas secciones actualizadas: tarjeta de estado de suscripción y sección de métodos de pago
   - Texto más directo y accionable: "Añade una tarjeta antes de esa fecha para mantener tu suscripción"
   - Sistema completo: detección automática → programación cancelación → warning claro con fecha específica
+  - Formateo de fecha en español: "3 de agosto de 2025" usando formatDate con locale es-ES
+  - Key único agregado para forzar re-render del componente en actualizaciones
 - June 28, 2025. LÓGICA DE PAGOS OPTIMIZADA Y FINALIZADA: Sistema completo de fechas de primer y próximo pago
   - Campo firstPaymentDate añadido al esquema de suscripciones para manejar fecha del primer cobro
   - Lógica empresarial correcta implementada: pago antes del trial → primer cobro al terminar trial
