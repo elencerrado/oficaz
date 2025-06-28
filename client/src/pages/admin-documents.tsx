@@ -323,16 +323,22 @@ export default function AdminDocuments() {
     const currentYear = new Date().getFullYear();
     const year = yearMatch ? yearMatch[0] : currentYear.toString();
     
-    // Try to find month
-    const monthMatch = fileName.match(/(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2})/i);
+    // Try to find month - specific patterns with context to avoid false positives in names
+    const monthMatch = fileName.match(/\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b/i) ||
+                       fileName.match(/\b(jan|feb|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i) ||
+                       fileName.match(/[-\s_](0?[1-9]|1[0-2])[-\s_]/); // Numbers only with separators
     
     if (monthMatch) {
-      const monthStr = monthMatch[0].toLowerCase();
+      let monthStr = monthMatch[0].toLowerCase();
+      
+      // Clean separators from numeric months
+      monthStr = monthStr.replace(/[-\s_]/g, '');
+      
       // Convert month to proper Spanish format
       const monthMap: { [key: string]: string } = {
         'enero': 'Enero', 'jan': 'Enero', '01': 'Enero', '1': 'Enero',
         'febrero': 'Febrero', 'feb': 'Febrero', '02': 'Febrero', '2': 'Febrero',
-        'marzo': 'Marzo', 'mar': 'Marzo', '03': 'Marzo', '3': 'Marzo',
+        'marzo': 'Marzo', '03': 'Marzo', '3': 'Marzo',
         'abril': 'Abril', 'apr': 'Abril', '04': 'Abril', '4': 'Abril',
         'mayo': 'Mayo', 'may': 'Mayo', '05': 'Mayo', '5': 'Mayo',
         'junio': 'Junio', 'jun': 'Junio', '06': 'Junio', '6': 'Junio',
