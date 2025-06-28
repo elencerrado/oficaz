@@ -192,15 +192,16 @@ export default function VacationManagement() {
       return (
         <div
           key={`${employee.id}-${period.id}-${index}`}
-          className={`absolute h-12 rounded-md cursor-pointer transition-all hover:z-20 group ${
+          className={`absolute h-12 rounded-md cursor-pointer transition-all group ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600' 
               : 'bg-yellow-400 border-yellow-500'
-          } border opacity-90 hover:opacity-100 flex items-center justify-center relative`}
+          } border opacity-90 hover:opacity-100 flex items-center justify-center`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
-            top: '0px'
+            top: '0px',
+            zIndex: 10
           }}
         >
           {/* Período visible siempre */}
@@ -848,7 +849,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border">
+                                <div className="relative h-12 bg-gray-100 rounded border overflow-hidden">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
