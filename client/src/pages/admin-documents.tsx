@@ -466,8 +466,14 @@ export default function AdminDocuments() {
     if (validFiles.length === 0) return;
     
     // Analyze all files and show preview
+    console.log('📋 Drag & Drop - Files to analyze:', validFiles.length);
+    console.log('👥 Drag & Drop - Employees available:', employees?.length || 0);
+    
     const analysisResults = validFiles.map(file => {
+      console.log('📄 Drag & Drop - Analyzing file:', file.name);
       const analysis = analyzeFileName(file.name, employees || []);
+      console.log('🔬 Drag & Drop - Analysis result:', analysis);
+      
       return {
         file,
         ...analysis,
@@ -475,6 +481,7 @@ export default function AdminDocuments() {
       };
     });
     
+    console.log('📊 Drag & Drop - Final analysis results:', analysisResults);
     setUploadAnalysis(analysisResults);
     setShowUploadPreview(true);
   };
@@ -744,15 +751,23 @@ export default function AdminDocuments() {
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   onChange={(e) => {
                     const files = Array.from(e.target.files || []);
+                    console.log('🔍 Files selected:', files.length);
+                    console.log('👥 Employees available:', employees?.length || 0, employees);
+                    
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
+                        console.log('📄 Analyzing file:', file.name);
                         const analysis = analyzeFileName(file.name, employees);
+                        console.log('🔬 Analysis result:', analysis);
+                        
                         return {
                           file,
                           ...analysis,
                           suggestedName: analysis.employee ? generateCleanFileName(file.name, analysis.employee, analysis.documentType) : undefined
                         };
                       });
+                      
+                      console.log('📊 Final analysis results:', analysisResults);
                       setUploadAnalysis(analysisResults);
                       setShowUploadPreview(true);
                     }
