@@ -22,13 +22,16 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
     e.preventDefault();
 
     if (!stripe || !elements) {
+      console.log('Stripe not ready:', { stripe: !!stripe, elements: !!elements });
       return;
     }
 
     setIsLoading(true);
+    console.log('Starting payment setup process...');
 
     try {
-      const { error } = await stripe.confirmSetup({
+      console.log('Confirming setup with Stripe...');
+      const result = await stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: window.location.origin + '/configuracion',
@@ -36,18 +39,49 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
         redirect: 'if_required',
       });
 
-      if (error) {
+      console.log('Stripe response:', result);
+
+      if (result.error) {
+        console.error('Stripe error:', result.error);
         toast({
           title: "Error al procesar el pago",
-          description: error.message || "Ha ocurrido un error inesperado",
+          description: result.error.message || "Ha ocurrido un error inesperado",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "¡Método de pago añadido!",
-          description: "Tu suscripción está ahora activa",
-        });
-        onSuccess();
+      } else if (result.setupIntent) {
+        console.log('Setup successful:', result.setupIntent);
+        
+        // Call the backend to confirm the payment method
+        try {
+          const response = await fetch('/api/account/confirm-payment-method', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+            body: JSON.stringify({
+              setupIntentId: result.setupIntent.id,
+            }),
+          });
+
+          if (response.ok) {
+            toast({
+              title: "¡Método de pago añadido!",
+              description: "Tu método de pago ha sido configurado correctamente",
+            });
+            onSuccess();
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al confirmar el método de pago');
+          }
+        } catch (backendError) {
+          console.error('Backend confirmation error:', backendError);
+          toast({
+            title: "Error",
+            description: "El método de pago se procesó pero no se pudo confirmar en el servidor",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error processing payment:', error);
