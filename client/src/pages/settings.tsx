@@ -86,6 +86,8 @@ const AccountManagement = () => {
   const { data: trialStatus } = useQuery({
     queryKey: ['/api/account/trial-status'],
     retry: false,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
     meta: {
       authRequired: true
     }
@@ -136,7 +138,7 @@ const AccountManagement = () => {
                 <p className="text-sm text-gray-600">
                   {trialStatus?.nextPaymentDate ? 
                     `Próximo pago: ${new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €29.99/mes` : 
-                    'Plan activo'
+                    subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'
                   }
                 </p>
               </div>
