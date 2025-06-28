@@ -192,7 +192,7 @@ const AccountManagement = () => {
                       </span>
                     </div>
                   </div>
-                ) : cancellationStatus?.hasPendingCancellation && (
+                ) : cancellationStatus?.scheduledForCancellation && (
                   // Show cancellation warning when no payment methods
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center space-x-2">
@@ -212,7 +212,7 @@ const AccountManagement = () => {
             )}
             
             {/* Cancellation Warning */}
-            {cancellationStatus?.hasPendingCancellation && (
+            {cancellationStatus?.scheduledForCancellation && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-4 w-4 text-red-600" />
