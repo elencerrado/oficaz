@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { LazyStripeForm } from './LazyStripeForm';
+import { StripePaymentForm } from './StripePaymentForm';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 interface PaymentMethod {
   id: string;
@@ -23,6 +25,8 @@ interface PaymentMethodManagerProps {
 }
 
 
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
 
 export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
@@ -264,13 +268,14 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
             </DialogDescription>
           </DialogHeader>
           {clientSecret ? (
-            <LazyStripeForm
-              clientSecret={clientSecret}
-              planName="Basic"
-              planPrice={29.99}
-              onSuccess={handlePaymentSuccess}
-              onCancel={handlePaymentCancel}
-            />
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <StripePaymentForm
+                planName="Basic"
+                planPrice={29.99}
+                onSuccess={handlePaymentSuccess}
+                onCancel={handlePaymentCancel}
+              />
+            </Elements>
           ) : (
             <div className="p-6 text-center">
               {createSetupIntentMutation.isPending ? (
