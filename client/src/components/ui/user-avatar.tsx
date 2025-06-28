@@ -18,7 +18,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
 
   // Colores únicos para cada empleado (paleta vibrante y profesional)
   const getUserColor = (id?: number) => {
-    if (!id) return 'bg-oficaz-primary'; // Color por defecto si no hay userId
+    console.log('UserAvatar getUserColor called with userId:', id); // DEBUG
+    if (!id) {
+      console.log('No userId provided, using oficaz-primary'); // DEBUG
+      return 'bg-oficaz-primary'; // Color por defecto si no hay userId
+    }
     
     const colors = [
       'bg-blue-500',    // Azul vibrante
@@ -42,7 +46,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
     ];
     
     // Usar el ID del usuario para seleccionar un color consistente
-    return colors[id % colors.length];
+    const selectedColor = colors[id % colors.length];
+    console.log(`UserId ${id} gets color: ${selectedColor}`); // DEBUG
+    return selectedColor;
   };
 
   // Tamaños de texto según el tamaño del avatar
