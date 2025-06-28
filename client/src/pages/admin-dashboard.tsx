@@ -438,6 +438,27 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="flex items-center justify-between min-h-[60px]">
                 <div className="flex flex-col justify-center">
+                  {/* Estado actual */}
+                  <div className="mb-2">
+                    {activeSession ? (
+                      activeBreak ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                          <span className="text-orange-600 font-medium">🟠 En descanso</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          <span className="text-green-600 font-medium">🟢 Trabajando</span>
+                        </div>
+                      )
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-red-600 font-medium">🔴 Fuera del trabajo</span>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
