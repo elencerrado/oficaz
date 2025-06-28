@@ -30,9 +30,14 @@ export function LazyStripeForm({
       try {
         // Usar claves de test en desarrollo, claves de producción en deploy
         const isDevelopment = import.meta.env.DEV;
-        const publicKey = isDevelopment 
-          ? import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST 
-          : import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+        console.log('import.meta.env.DEV:', import.meta.env.DEV);
+        console.log('import.meta.env.MODE:', import.meta.env.MODE);
+        console.log('NODE_ENV detection:', import.meta.env.NODE_ENV);
+        console.log('VITE_STRIPE_PUBLIC_KEY_TEST available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST);
+        console.log('VITE_STRIPE_PUBLIC_KEY available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+        
+        // Forzar uso de claves de test si están disponibles
+        const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST || import.meta.env.VITE_STRIPE_PUBLIC_KEY;
         
         console.log('Environment:', isDevelopment ? 'Development' : 'Production');
         console.log('Using test keys:', isDevelopment);
