@@ -240,13 +240,19 @@ export default function TimeTracking() {
   const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
-      const sessionHours = calculateHours(session.clockIn, session.clockOut);
+      let sessionHours = calculateHours(session.clockIn, session.clockOut);
+      
+      // Validación: Limitar a máximo 24 horas por sesión
+      if (sessionHours > 24) {
+        sessionHours = 24;
+      }
+      
       const breakHours = session.breakPeriods 
         ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
             return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
           }, 0) 
         : 0;
-      return total + (sessionHours - breakHours);
+      return total + Math.max(0, sessionHours - breakHours);
     }, 0);
     
     // Calculate average hours per worker per day
@@ -1623,26 +1629,38 @@ export default function TimeTracking() {
                         return sessionWeekStart.getTime() === weekStart.getTime();
                       })
                       .reduce((total, session) => {
-                        const totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        
+                        // Validación: Limitar a máximo 24 horas por sesión
+                        if (totalSessionHours > 24) {
+                          totalSessionHours = 24;
+                        }
+                        
                         const breakHours = session.breakPeriods 
                           ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
                               return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
                             }, 0) 
                           : 0;
-                        return total + (totalSessionHours - breakHours);
+                        return total + Math.max(0, totalSessionHours - breakHours);
                       }, 0);
                   
                   const calculateMonthTotal = (monthKey: string) => 
                     (sortedSessions || [])
                       .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
                       .reduce((total, session) => {
-                        const totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                        
+                        // Validación: Limitar a máximo 24 horas por sesión
+                        if (totalSessionHours > 24) {
+                          totalSessionHours = 24;
+                        }
+                        
                         const breakHours = session.breakPeriods 
                           ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
                               return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
                             }, 0) 
                           : 0;
-                        return total + (totalSessionHours - breakHours);
+                        return total + Math.max(0, totalSessionHours - breakHours);
                       }, 0);
                   
                   // Agrupar sesiones por empleado y día
@@ -1721,13 +1739,20 @@ export default function TimeTracking() {
                     
                     // Calcular horas totales trabajadas del día menos períodos de descanso
                     const totalDayHours = dayData.sessions.reduce((total: number, session: any) => {
-                      const sessionHours = calculateHours(session.clockIn, session.clockOut);
+                      let sessionHours = calculateHours(session.clockIn, session.clockOut);
+                      
+                      // Validación: Limitar a máximo 24 horas por sesión para evitar overflow
+                      if (sessionHours > 24) {
+                        sessionHours = 24;
+                      }
+                      
                       const breakHours = session.breakPeriods 
                         ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
                             return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
                           }, 0) 
                         : 0;
-                      return total + (sessionHours - breakHours);
+                      
+                      return total + Math.max(0, sessionHours - breakHours);
                     }, 0);
                     
                     const isEditing = editingSession === dayData.sessions[0]?.id;
