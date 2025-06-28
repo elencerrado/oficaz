@@ -329,7 +329,7 @@ export default function TimeTracking() {
           // En caso de error de fecha, devolver texto seguro
           return 'Descanso (datos inválidos)';
         }
-      }).join('\n'); // Cambiar de ', ' a '\n' para saltos de línea
+      }).join('\n\n'); // Doble salto de línea para mejor espaciado vertical
     };
 
     // Function to create a page for an employee
@@ -446,7 +446,7 @@ export default function TimeTracking() {
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 122, 255);
-        doc.text('Powered by Oficaz', 105, pageHeight - 10, { align: 'center' });
+        doc.text('Generado por Oficaz', 105, pageHeight - 10, { align: 'center' });
         
         // Page number with elegant styling
         const pageCount = doc.getNumberOfPages();

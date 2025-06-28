@@ -184,11 +184,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 - June 28, 2025. BUG CRÍTICO PDF CORREGIDO: Cálculos de horas y formato de descansos completamente arreglados
   - PROBLEMA 1 RESUELTO: Cálculo de horas totales ahora descuenta correctamente los períodos de descanso
-  - PROBLEMA 2 RESUELTO: Múltiples descansos ahora aparecen con saltos de línea (\n) en lugar de comas
-  - Actualizada función formatBreakPeriodsForPDF para usar '\n' como separador de líneas
+  - PROBLEMA 2 RESUELTO: Múltiples descansos ahora aparecen con saltos de línea (\n\n) en lugar de comas
+  - PROBLEMA 3 RESUELTO: Espaciado vertical mejorado con doble salto de línea para mejor legibilidad
+  - Actualizada función formatBreakPeriodsForPDF para usar '\n\n' como separador de líneas
   - Corregida lógica de cálculo: sessionHours - breakHours = horas reales trabajadas
   - Sistema ahora calcula: tiempo total (entrada-salida) menos tiempo total de descansos
-  - PDFs muestran horas exactas trabajadas y descansos legibles con formato vertical
+  - PDFs muestran horas exactas trabajadas y descansos legibles con formato vertical espaciado
 - June 28, 2025. BOTONES DE FICHAJE ADMIN ESTANDARIZADOS: Tamaños uniformes y debugging añadido
   - Todos los botones (Entrar, Salir, Descanso, Fin Descanso) estandarizados a w-[120px] h-[48px]
   - Logs de debugging añadidos a mutations de clock-in y clock-out para identificar errores específicos
