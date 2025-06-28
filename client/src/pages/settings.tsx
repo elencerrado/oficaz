@@ -93,6 +93,11 @@ const AccountManagement = () => {
     }
   });
 
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    retry: false,
+  });
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric',
@@ -134,11 +139,17 @@ const AccountManagement = () => {
             <div className="flex items-center space-x-3">
               <Crown className="h-6 w-6 text-blue-600" />
               <div>
-                <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
+                <p className="font-semibold text-gray-900">Plan {subscriptionData?.plan?.charAt(0).toUpperCase() + subscriptionData?.plan?.slice(1)}</p>
                 <p className="text-sm text-gray-600">
-                  {trialStatus?.nextPaymentDate ? 
-                    `Próximo pago: ${new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €29.99/mes` : 
-                    subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'
+                  {trialStatus?.nextPaymentDate ? (
+                    (() => {
+                      const currentPlan = subscriptionPlans?.find(plan => plan.name === subscriptionData?.plan);
+                      const pricePerUser = currentPlan?.pricePerUser || 29.99;
+                      return `Próximo pago: ${new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €${pricePerUser}/mes`;
+                    })()
+                  ) : subscriptionData?.end_date ? 
+                    `Activo hasta: ${formatDate(subscriptionData.end_date)}` : 
+                    'Plan activo'
                   }
                 </p>
               </div>
@@ -156,7 +167,7 @@ const AccountManagement = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
-                  {usageData.current.employee_count}/{subscription?.maxUsers || '∞'}
+                  {usageData.current.employee_count}/{subscriptionData?.maxUsers || '∞'}
                 </p>
                 <p className="text-sm text-gray-600">Usuarios</p>
               </div>
