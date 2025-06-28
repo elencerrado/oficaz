@@ -46,6 +46,20 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch cancellation status for subscription termination warning
+  const { data: cancellationStatus } = useQuery({
+    queryKey: ['/api/account/cancellation-status'],
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
+  // Fetch payment methods to determine if user has payment method
+  const { data: paymentMethods } = useQuery({
+    queryKey: ['/api/account/payment-methods'],
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
   // Fetch active work session - reduced polling for performance
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
@@ -267,6 +281,42 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <TrialManager />
       </div>
+
+      {/* Subscription Termination Warning - Discrete */}
+      {cancellationStatus?.scheduledForCancellation && 
+       (!paymentMethods || paymentMethods.length === 0) && (
+        <div className="mb-6">
+          <div className="rounded-lg border p-3 bg-amber-50/30 border-amber-200/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 rounded-full bg-amber-100">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-900">
+                    ⚠️ Tu suscripción terminará el {new Date(cancellationStatus.cancellationDate).toLocaleDateString('es-ES', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </span>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Añade una tarjeta antes de esa fecha para mantener tu suscripción
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost"
+                size="sm"
+                className="text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-100"
+                onClick={() => setLocation('/configuracion')}
+              >
+                Gestionar pago
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
