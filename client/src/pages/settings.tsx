@@ -198,10 +198,10 @@ const AccountManagement = () => {
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-red-800">
-                      Suscripción programada para cancelación
+                      ⚠️ Tu cuenta se cancelará el {formatDate(subscription?.nextPaymentDate || '')}
                     </p>
                     <p className="text-xs text-red-600 mt-1">
-                      No tienes métodos de pago activos. Tu suscripción se cancelará cuando acabe el período facturado actual ({formatDate(subscription?.nextPaymentDate || '')}).
+                      No tienes métodos de pago activos. Añade una tarjeta antes de esa fecha para mantener tu suscripción.
                     </p>
                   </div>
                 </div>
@@ -335,18 +335,13 @@ const AccountManagement = () => {
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-red-800">
-                        Sin método de pago
+                        ⚠️ Tu cuenta se cancelará el {formatDate(subscription?.nextPaymentDate || '')}
                       </p>
                       <p className="text-sm text-red-700 mt-1">
-                        Tu suscripción se cancelará cuando acabe ese periodo facturado 
-                        {subscription?.nextPaymentDate && (
-                          <span className="font-medium">
-                            {' '}el {formatDate(subscription.nextPaymentDate)}
-                          </span>
-                        )}.
+                        No tienes métodos de pago configurados. Tu suscripción terminará automáticamente en esa fecha.
                       </p>
                       <p className="text-xs text-red-600 mt-2">
-                        Añade un método de pago para mantener tu suscripción activa.
+                        Añade una tarjeta de crédito o débito para mantener tu suscripción activa.
                       </p>
                     </div>
                   </div>
