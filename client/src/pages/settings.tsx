@@ -52,6 +52,10 @@ const AccountManagement = () => {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['/api/account/info'] });
     queryClient.refetchQueries({ queryKey: ['/api/account/info'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+    queryClient.refetchQueries({ queryKey: ['/api/account/trial-status'] });
   }, [queryClient]);
   
   const { data: accountInfo } = useQuery({
@@ -77,6 +81,14 @@ const AccountManagement = () => {
   const { data: usageData } = useQuery({
     queryKey: ['/api/account/usage-stats'],
     retry: false,
+  });
+
+  const { data: trialStatus } = useQuery({
+    queryKey: ['/api/account/trial-status'],
+    retry: false,
+    meta: {
+      authRequired: true
+    }
   });
 
   const formatDate = (dateString: string) => {
@@ -129,10 +141,7 @@ const AccountManagement = () => {
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                {subscription?.status === 'trial' ? 'PRUEBA' : 
-                 subscription?.status === 'active' ? 'ACTIVO' : 
-                 subscription?.status === 'cancelled' ? 'CANCELADO' : 
-                 subscription?.status?.toUpperCase()}
+                {trialStatus?.isTrialActive ? 'PRUEBA' : 'ACTIVO'}
               </Badge>
             </div>
           </div>
