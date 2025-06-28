@@ -498,6 +498,14 @@ body::after {
   .oficaz-skeleton-title {
     @apply oficaz-loading h-6 w-1/2 mb-4;
   }
+  
+  /* UserAvatar override - máxima prioridad para colores únicos */
+  .user-avatar-unique {
+    background-color: var(--avatar-bg) !important;
+    color: var(--avatar-color) !important;
+    background-image: none !important;
+    background: var(--avatar-bg) !important;
+  }
 
   /* Hover Effects - Consistent */
   .oficaz-hover-lift {

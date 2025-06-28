@@ -65,14 +65,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
   
   return (
     <div 
-      className={`rounded-full flex items-center justify-center font-medium select-none ${sizeClasses[size]}`}
+      className={`rounded-full flex items-center justify-center font-medium select-none user-avatar-unique ${sizeClasses[size]}`}
       style={{
-        backgroundColor: colors.bg,
-        color: colors.text,
-        backgroundImage: 'none',
-        background: colors.bg,
-        border: 'none'
-      }}
+        '--avatar-bg': colors.bg,
+        '--avatar-color': colors.text
+      } as React.CSSProperties}
     >
       {getInitials(fullName)}
     </div>
