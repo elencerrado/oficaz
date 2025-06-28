@@ -1501,6 +1501,7 @@ const AccountManagement = () => {
                   <UserAvatar
                     userId={user?.id}
                     fullName={user?.fullName}
+                    profilePicture={user?.profilePicture}
                     size="lg"
                     showUpload={true}
                   />

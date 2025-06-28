@@ -1,12 +1,73 @@
+import { useState, useRef } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { Camera, X } from 'lucide-react';
+
 interface UserAvatarProps {
   fullName: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   userId?: number; // Para generar color único por empleado
   profilePicture?: string | null; // URL de la foto de perfil
+  showUpload?: boolean; // Mostrar opción de subir foto
 }
 
-export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture }: UserAvatarProps) {
+export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false }: UserAvatarProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Mutations para subir y eliminar fotos
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      return await apiRequest('POST', '/api/users/profile-picture', formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({ title: "Foto actualizada", description: "Tu foto de perfil se ha actualizado correctamente" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo actualizar la foto", variant: "destructive" });
+    },
+    onSettled: () => {
+      setIsUploading(false);
+    },
+  });
+
+  const deletePhotoMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('DELETE', '/api/users/profile-picture');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo eliminar la foto", variant: "destructive" });
+    },
+  });
+
+  // Manejar selección de archivo
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Error", description: "El archivo debe ser menor a 5MB", variant: "destructive" });
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Error", description: "Solo se permiten archivos de imagen", variant: "destructive" });
+        return;
+      }
+      setIsUploading(true);
+      uploadPhotoMutation.mutate(file);
+    }
+  };
+
   // Extraer iniciales del nombre completo
   const getInitials = (name: string) => {
     const words = name.trim().split(/\s+/);
@@ -52,51 +113,132 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     lg: 'w-10 h-10 text-sm'
   };
 
-  // Si hay clases personalizadas, usarlas completamente
-  if (className) {
+  // Si no se necesita upload, usar el renderizado simple original
+  if (!showUpload) {
+    // Si hay clases personalizadas, usarlas completamente
+    if (className) {
+      return (
+        <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
+          {getInitials(fullName)}
+        </div>
+      );
+    }
+
+    // Usar colores únicos con estilos inline SUPER agresivos
+    const colors = getUserColors(userId);
+    
+    // Si hay foto de perfil, mostrarla con borde de color único
+    if (profilePicture) {
+      return (
+        <div 
+          className={`rounded-full overflow-hidden flex items-center justify-center select-none ${sizeClasses[size]}`}
+          style={{
+            border: `3px solid ${colors.bg}`,
+            padding: '2px'
+          } as React.CSSProperties}
+        >
+          <img 
+            src={profilePicture} 
+            alt={fullName}
+            className="w-full h-full rounded-full object-cover"
+            onError={(e) => {
+              // Si la imagen falla al cargar, ocultar el elemento para mostrar fallback
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </div>
+      );
+    }
+    
+    // Si no hay foto, mostrar iniciales con fondo de color
     return (
-      <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
+      <div 
+        className={`rounded-full flex items-center justify-center font-medium select-none user-avatar-unique ${sizeClasses[size]}`}
+        style={{
+          '--avatar-bg': colors.bg,
+          '--avatar-color': colors.text
+        } as React.CSSProperties}
+      >
         {getInitials(fullName)}
       </div>
     );
   }
 
-  // Usar colores únicos con estilos inline SUPER agresivos
+  // Renderizado con opciones de upload
   const colors = getUserColors(userId);
   
-  // Si hay foto de perfil, mostrarla con borde de color único
-  if (profilePicture) {
-    return (
+  return (
+    <div className="relative">
+      {/* Input oculto para seleccionar archivos */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      
+      {/* Avatar principal */}
       <div 
-        className={`rounded-full overflow-hidden flex items-center justify-center select-none ${sizeClasses[size]}`}
+        className={`rounded-full overflow-hidden flex items-center justify-center select-none cursor-pointer transition-all duration-200 hover:opacity-80 ${sizeClasses[size]}`}
         style={{
           border: `3px solid ${colors.bg}`,
           padding: '2px'
         } as React.CSSProperties}
+        onClick={() => fileInputRef.current?.click()}
       >
-        <img 
-          src={profilePicture} 
-          alt={fullName}
-          className="w-full h-full rounded-full object-cover"
-          onError={(e) => {
-            // Si la imagen falla al cargar, ocultar el elemento para mostrar fallback
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
+        {profilePicture ? (
+          <img 
+            src={profilePicture} 
+            alt={fullName}
+            className="w-full h-full rounded-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div 
+            className="w-full h-full rounded-full flex items-center justify-center font-medium select-none user-avatar-unique"
+            style={{
+              '--avatar-bg': colors.bg,
+              '--avatar-color': colors.text
+            } as React.CSSProperties}
+          >
+            {getInitials(fullName)}
+          </div>
+        )}
+        
+        {/* Overlay con icono de cámara cuando está uploading */}
+        {isUploading && (
+          <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
       </div>
-    );
-  }
-  
-  // Si no hay foto, mostrar iniciales con fondo de color
-  return (
-    <div 
-      className={`rounded-full flex items-center justify-center font-medium select-none user-avatar-unique ${sizeClasses[size]}`}
-      style={{
-        '--avatar-bg': colors.bg,
-        '--avatar-color': colors.text
-      } as React.CSSProperties}
-    >
-      {getInitials(fullName)}
+      
+      {/* Botón de cámara */}
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isUploading}
+        className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200 disabled:opacity-50"
+        title="Cambiar foto"
+      >
+        <Camera className="w-3 h-3" />
+      </button>
+      
+      {/* Botón de eliminar foto cuando hay una */}
+      {profilePicture && !isUploading && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            deletePhotoMutation.mutate();
+          }}
+          className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200"
+          title="Eliminar foto"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
     </div>
   );
 }
