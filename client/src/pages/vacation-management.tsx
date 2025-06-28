@@ -344,7 +344,7 @@ export default function VacationManagement() {
                     className="flex items-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors w-full justify-center"
                   >
                     <RotateCcw className="w-5 h-5" />
-                    Revertir Aprobación
+                    {period.status === 'approved' ? 'Revertir Aprobación' : 'Revertir Denegación'}
                   </button>
                 )}
               </div>
@@ -685,7 +685,7 @@ export default function VacationManagement() {
                             </>
                           ) : (
                             <div className="flex gap-2">
-                              {request.status === 'approved' && (
+                              {(request.status === 'approved' || request.status === 'denied') && (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -766,7 +766,7 @@ export default function VacationManagement() {
                           </div>
                         ) : (
                           <div className="flex gap-2">
-                            {request.status === 'approved' && (
+                            {(request.status === 'approved' || request.status === 'denied') && (
                               <Button
                                 size="sm"
                                 variant="outline"
