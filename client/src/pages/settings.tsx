@@ -749,12 +749,13 @@ const AccountManagement = () => {
         <p className="text-gray-500 mt-1">Gestiona la configuración de tu empresa y perfil</p>
       </div>
 
-      {/* Trial Manager - shown for companies in trial */}
-      {subscription?.status === 'trial' && subscription?.isTrialActive && (
+      {/* Trial Manager - shown for companies in trial or active accounts */}
+      {(subscription?.status === 'trial' && subscription?.isTrialActive) || 
+       (subscription?.status === 'active') ? (
         <div className="mb-6">
           <TrialManagerSimple />
         </div>
-      )}
+      ) : null}
 
       <TabNavigation
           tabs={[

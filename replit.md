@@ -136,6 +136,14 @@ Oficaz is a comprehensive employee management system built with a modern full-st
 
 ## Changelog
 
+- June 28, 2025. FLUJO DE PAGO TRIAL SIMPLIFICADO: Sistema optimizado para gestión de métodos de pago
+  - TrialManagerSimple.tsx creado para enfoque específico en añadir métodos de pago durante trial
+  - Componente simplificado sin funcionalidades de pago directo, solo gestión de tarjetas
+  - Eliminadas secciones de trial expirado y cuenta bloqueada del componente original
+  - Modal Dialog integrado con PaymentMethodManager para flujo de gestión de pagos
+  - settings.tsx actualizada para usar TrialManagerSimple en lugar de TrialManager
+  - Base de datos actualizada a status='trial' para permitir testing del flujo de trial
+  - Sistema enfocado en añadir método de pago sin procesar pago inmediato
 - June 27, 2025. AVISO DE TRIAL REDISEÑADO: Notificación discreta y menos invasiva implementada
   - Eliminada tarjeta grande y colores llamativos por diseño compacto horizontal
   - Fondos suaves con transparencias (amber-50/50, blue-50/30) en lugar de colores sólidos

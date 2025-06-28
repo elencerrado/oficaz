@@ -66,17 +66,70 @@ export function TrialManagerSimple() {
 
   if (!trialStatus) return null;
 
-  // If account is active (paid), show success status
-  if (trialStatus.status === 'active' && !trialStatus.isTrialActive) {
-    return null; // Don't show anything for active accounts
-  }
-
-  // If account is blocked or trial expired, don't show (handled elsewhere)
-  if (trialStatus.isBlocked || !trialStatus.isTrialActive) {
+  // If account is blocked, don't show (handled elsewhere)
+  if (trialStatus.isBlocked) {
     return null;
   }
 
-  // If trial is active, show discrete notification about adding payment method
+  // Determine display based on trial status
+  const isActivePaidAccount = trialStatus.status === 'active' && !trialStatus.isTrialActive;
+  const isActiveTrial = trialStatus.status === 'trial' && trialStatus.isTrialActive;
+
+  if (!isActivePaidAccount && !isActiveTrial) {
+    return null;
+  }
+
+  // For active paid accounts, show subscription management
+  if (isActivePaidAccount) {
+    return (
+      <div className="rounded-lg border p-4 bg-green-50/30 border-green-200/50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-full bg-green-100">
+              <Clock className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">
+                  Plan {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)} Activo
+                </span>
+                <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                  Suscripción Activa
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Próximo pago: {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes
+              </p>
+            </div>
+          </div>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button 
+                variant="ghost"
+                size="sm"
+                className="text-xs text-green-700 hover:text-green-800 hover:bg-green-100"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Gestionar pagos
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Gestionar métodos de pago</DialogTitle>
+                <DialogDescription>
+                  Administra tus métodos de pago y facturación para tu suscripción activa.
+                </DialogDescription>
+              </DialogHeader>
+              <PaymentMethodManager paymentMethods={paymentMethods || []} />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  }
+
+  // For active trial, show trial notification
   return (
     <div className={`rounded-lg border p-4 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
       <div className="flex items-center justify-between">
