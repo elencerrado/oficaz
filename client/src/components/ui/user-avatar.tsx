@@ -18,7 +18,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
 
   // Colores únicos para cada empleado con estilos CSS directos
   const getUserColorStyle = (id?: number) => {
-    if (!id) return { backgroundColor: '#007AFF' }; // Oficaz primary color
+    if (!id) return { backgroundColor: '#007AFF', color: '#FFFFFF' }; // Oficaz primary color
     
     const colors = [
       '#3B82F6',  // blue-500
@@ -41,7 +41,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
       '#64748B',  // slate-500
     ];
     
-    return { backgroundColor: colors[id % colors.length] };
+    return { backgroundColor: colors[id % colors.length], color: '#FFFFFF' };
   };
 
   // Tamaños de texto según el tamaño del avatar
@@ -69,7 +69,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
   
   return (
     <div 
-      className={`${baseClasses} ${defaultClasses} ${textSizes[size]} text-white`}
+      className={`${baseClasses} ${defaultClasses} ${textSizes[size]}`}
       style={userColorStyle}
     >
       {getInitials(fullName)}
