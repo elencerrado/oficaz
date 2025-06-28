@@ -194,8 +194,8 @@ export default function VacationManagement() {
           key={`${employee.id}-${period.id}-${index}`}
           className={`absolute h-12 rounded-md cursor-pointer transition-all group ${
             period.status === 'approved' 
-              ? 'bg-blue-500 border-blue-600' 
-              : 'bg-yellow-400 border-yellow-500'
+              ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
+              : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
           } border opacity-90 hover:opacity-100 flex items-center justify-center relative`}
           style={{
             left: `${leftPercent}%`,
@@ -203,88 +203,96 @@ export default function VacationManagement() {
             top: '0px',
             zIndex: 10
           }}
+          onClick={() => fullRequest && openRequestModal(fullRequest, period.status === 'pending' ? 'approve' : 'edit')}
         >
           {/* Período visible siempre */}
-          <div className="text-white text-xs font-medium">
+          <div className="text-white text-xs font-medium select-none">
             {periodText}
           </div>
 
-          {/* Tooltip flotante que aparece en hover */}
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto" style={{ zIndex: 9999 }}>
-            <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg min-w-48 max-w-64">
-              {/* Flecha del tooltip */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
-              
-              {/* Información del período */}
-              <div className="font-medium mb-2 text-center">
-                {periodText}
-              </div>
-              
-              {/* Comentario si existe */}
-              {fullRequest?.reason && (
-                <div className="text-gray-300 mb-3 text-center">
+          {/* Panel de información que aparece en hover - FUERA del contenedor principal */}
+          <div 
+            className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto min-w-72"
+            style={{ 
+              zIndex: 10000,
+              left: '50%',
+              top: '20%',
+              transform: 'translateX(-50%)'
+            }}
+          >
+            {/* Título con fecha */}
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+              <h4 className="font-semibold text-gray-900 text-sm">
+                Vacaciones: {periodText}
+              </h4>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                period.status === 'approved' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {period.status === 'approved' ? 'Aprobado' : 'Pendiente'}
+              </span>
+            </div>
+            
+            {/* Comentario si existe */}
+            {fullRequest?.reason && (
+              <div className="mb-4">
+                <p className="text-xs text-gray-500 mb-1">Comentario del empleado:</p>
+                <p className="text-sm text-gray-700 italic">
                   "{fullRequest.reason}"
-                </div>
-              )}
-              
-              {/* Botones de acción */}
-              <div className="flex justify-center gap-2">
-                {period.status === 'pending' ? (
-                  <>
-                    {/* Aprobar */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (fullRequest) openRequestModal(fullRequest, 'approve');
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs transition-all hover:scale-105"
-                      title="Aprobar"
-                    >
-                      <Check className="w-3 h-3" />
-                      Aprobar
-                    </button>
-                    
-                    {/* Modificar */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (fullRequest) openRequestModal(fullRequest, 'edit');
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs transition-all hover:scale-105"
-                      title="Modificar"
-                    >
-                      <Edit className="w-3 h-3" />
-                      Editar
-                    </button>
-                    
-                    {/* Denegar */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (fullRequest) openRequestModal(fullRequest, 'deny');
-                      }}
-                      className="flex items-center gap-1 px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs transition-all hover:scale-105"
-                      title="Denegar"
-                    >
-                      <X className="w-3 h-3" />
-                      Rechazar
-                    </button>
-                  </>
-                ) : (
-                  /* Para solicitudes aprobadas, solo mostrar revertir */
+                </p>
+              </div>
+            )}
+            
+            {/* Botones de acción - más grandes y fáciles de pulsar */}
+            <div className="flex gap-2">
+              {period.status === 'pending' ? (
+                <>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (fullRequest) openRequestModal(fullRequest, 'revert');
+                      if (fullRequest) openRequestModal(fullRequest, 'approve');
                     }}
-                    className="flex items-center gap-1 px-2 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs transition-all hover:scale-105"
-                    title="Revertir aprobación"
+                    className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
                   >
-                    <RotateCcw className="w-3 h-3" />
-                    Revertir
+                    <Check className="w-4 h-4" />
+                    Aprobar
                   </button>
-                )}
-              </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullRequest) openRequestModal(fullRequest, 'edit');
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Editar
+                  </button>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullRequest) openRequestModal(fullRequest, 'deny');
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
+                  >
+                    <X className="w-4 h-4" />
+                    Rechazar
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (fullRequest) openRequestModal(fullRequest, 'revert');
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium transition-colors w-full justify-center"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Revertir Aprobación
+                </button>
+              )}
             </div>
           </div>
         </div>
