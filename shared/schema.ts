@@ -195,6 +195,9 @@ export const users = pgTable("users", {
   // Dirección
   postalAddress: text("postal_address"), // Lo escribe el empleado
   
+  // Foto de perfil
+  profilePicture: text("profile_picture"), // URL de la foto de perfil
+  
   // Vacaciones
   totalVacationDays: decimal("total_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Calculado automáticamente
   usedVacationDays: decimal("used_vacation_days", { precision: 4, scale: 1 }).notNull().default("0.0"), // Auto

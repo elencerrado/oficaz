@@ -3,9 +3,10 @@ interface UserAvatarProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   userId?: number; // Para generar color único por empleado
+  profilePicture?: string | null; // URL de la foto de perfil
 }
 
-export function UserAvatar({ fullName, size = 'md', className = '', userId }: UserAvatarProps) {
+export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture }: UserAvatarProps) {
   // Extraer iniciales del nombre completo
   const getInitials = (name: string) => {
     const words = name.trim().split(/\s+/);
@@ -63,6 +64,30 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId }: Us
   // Usar colores únicos con estilos inline SUPER agresivos
   const colors = getUserColors(userId);
   
+  // Si hay foto de perfil, mostrarla con borde de color único
+  if (profilePicture) {
+    return (
+      <div 
+        className={`rounded-full overflow-hidden flex items-center justify-center select-none ${sizeClasses[size]}`}
+        style={{
+          border: `3px solid ${colors.bg}`,
+          padding: '2px'
+        } as React.CSSProperties}
+      >
+        <img 
+          src={profilePicture} 
+          alt={fullName}
+          className="w-full h-full rounded-full object-cover"
+          onError={(e) => {
+            // Si la imagen falla al cargar, ocultar el elemento para mostrar fallback
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+    );
+  }
+  
+  // Si no hay foto, mostrar iniciales con fondo de color
   return (
     <div 
       className={`rounded-full flex items-center justify-center font-medium select-none user-avatar-unique ${sizeClasses[size]}`}

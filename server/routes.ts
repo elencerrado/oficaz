@@ -1947,6 +1947,97 @@ startxref
     }
   });
 
+  // Upload profile picture
+  app.post('/api/users/profile-picture', authenticateToken, upload.single('profilePicture'), async (req: AuthRequest, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No se ha proporcionado ningún archivo' });
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        // Delete uploaded file if invalid
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'Tipo de archivo no válido. Solo se permiten imágenes JPG, PNG y GIF.' });
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (req.file.size > maxSize) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: 'El archivo es demasiado grande. Tamaño máximo: 5MB.' });
+      }
+
+      // Generate unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const filename = `profile_${req.user!.id}_${Date.now()}${fileExtension}`;
+      const newPath = path.join(uploadDir, filename);
+
+      // Move file to permanent location
+      fs.renameSync(req.file.path, newPath);
+
+      // Update user profile picture in database
+      const profilePictureUrl = `/uploads/${filename}`;
+      const updatedUser = await storage.updateUser(req.user!.id, { 
+        profilePicture: profilePictureUrl 
+      });
+
+      if (!updatedUser) {
+        // Clean up file if database update fails
+        fs.unlinkSync(newPath);
+        return res.status(500).json({ error: 'Error al actualizar la foto de perfil en la base de datos' });
+      }
+
+      res.json({ 
+        message: 'Foto de perfil actualizada correctamente',
+        profilePicture: profilePictureUrl 
+      });
+    } catch (error: any) {
+      console.error('Error uploading profile picture:', error);
+      res.status(500).json({ error: 'Error al subir la foto de perfil' });
+    }
+  });
+
+  // Delete profile picture
+  app.delete('/api/users/profile-picture', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      // Remove profile picture from database
+      const updatedUser = await storage.updateUser(req.user!.id, { 
+        profilePicture: null 
+      });
+
+      if (!updatedUser) {
+        return res.status(500).json({ error: 'Error al eliminar la foto de perfil de la base de datos' });
+      }
+
+      // Delete file from filesystem if it exists
+      if (user.profilePicture) {
+        const filePath = path.join(process.cwd(), 'uploads', path.basename(user.profilePicture));
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fileError) {
+          console.warn('Warning: Could not delete profile picture file:', fileError);
+          // Continue anyway as database update was successful
+        }
+      }
+
+      res.json({ 
+        message: 'Foto de perfil eliminada correctamente' 
+      });
+    } catch (error: any) {
+      console.error('Error deleting profile picture:', error);
+      res.status(500).json({ error: 'Error al eliminar la foto de perfil' });
+    }
+  });
+
   // Calculate vacation days for a user
   app.post('/api/users/:id/calculate-vacation', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {

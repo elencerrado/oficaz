@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { ArrowLeft, User, Mail, Phone, Edit3, Save, X } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { ArrowLeft, User, Mail, Phone, Edit3, Save, X, Camera, Trash2 } from 'lucide-react';
 import { useLocation, Link } from 'wouter';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EmployeeProfile() {
   const { user, company, companyAlias } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Editable fields by employee
   const [personalEmail, setPersonalEmail] = useState(user?.personalEmail || '');
@@ -53,6 +56,107 @@ export default function EmployeeProfile() {
       });
     },
   });
+
+  const uploadProfilePictureMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+      
+      const response = await fetch('/api/users/profile-picture', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al subir la foto de perfil');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: 'Foto actualizada',
+        description: 'Tu foto de perfil ha sido actualizada correctamente.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error al subir foto',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteProfilePictureMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/users/profile-picture', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al eliminar la foto de perfil');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: 'Foto eliminada',
+        description: 'Tu foto de perfil ha sido eliminada correctamente.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error al eliminar foto',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validar tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: 'Tipo de archivo no válido',
+          description: 'Solo se permiten archivos JPG, PNG y GIF.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validar tamaño (máximo 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast({
+          title: 'Archivo demasiado grande',
+          description: 'El tamaño máximo permitido es 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      uploadProfilePictureMutation.mutate(file);
+    }
+  };
+
+  const handleDeletePhoto = () => {
+    deleteProfilePictureMutation.mutate();
+  };
 
   const handleSave = () => {
     updateProfileMutation.mutate({
@@ -106,11 +210,58 @@ export default function EmployeeProfile() {
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="flex items-center space-x-6 mb-6">
-            {/* Avatar moderno con gradiente */}
+            {/* Avatar with photo upload functionality */}
             <div className="relative">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-600 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
-                <User className="h-10 w-10 text-white drop-shadow-lg" />
+              <UserAvatar
+                fullName={user?.fullName || ''}
+                size="lg"
+                userId={user?.id}
+                profilePicture={user?.profilePicture}
+                className="w-20 h-20 shadow-lg"
+              />
+              
+              {/* Photo controls overlay */}
+              <div className="absolute -bottom-2 -right-2 flex gap-1">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-8 h-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white border-2 border-white shadow-lg"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadProfilePictureMutation.isPending}
+                >
+                  {uploadProfilePictureMutation.isPending ? (
+                    <LoadingSpinner className="w-3 h-3" />
+                  ) : (
+                    <Camera className="w-3 h-3" />
+                  )}
+                </Button>
+                
+                {user?.profilePicture && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="w-8 h-8 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white border-2 border-white shadow-lg"
+                    onClick={handleDeletePhoto}
+                    disabled={deleteProfilePictureMutation.isPending}
+                  >
+                    {deleteProfilePictureMutation.isPending ? (
+                      <LoadingSpinner className="w-3 h-3" />
+                    ) : (
+                      <Trash2 className="w-3 h-3" />
+                    )}
+                  </Button>
+                )}
               </div>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              
               {/* Indicador de estado online */}
               <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
             </div>
