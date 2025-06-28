@@ -163,6 +163,11 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. BUG CRÍTICO CORREGIDO: stripe_customer_id ahora se busca en tabla users correctamente
+  - Corregida consulta SQL para buscar stripe_customer_id en tabla `users` en lugar de `subscriptions`
+  - Sistema de facturas ahora funciona correctamente con la estructura real de base de datos
+  - Endpoint /api/account/invoices corregido para obtener customer ID del usuario admin de la empresa
+  - Eliminados logs de debugging para versión de producción limpia
 - June 28, 2025. HISTORIAL DE FACTURAS MIGRADO A STRIPE API: Sistema completamente integrado con datos reales
   - Reemplazado sistema de facturas sintéticas por integración directa con Stripe invoices API
   - Endpoint `/api/account/invoices` ahora consulta facturas reales de Stripe usando customer ID

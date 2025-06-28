@@ -2737,20 +2737,17 @@ startxref
   app.get('/api/account/invoices', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const companyId = req.user!.companyId;
-      console.log('DEBUG - Invoices request for company:', companyId);
-      
-      // Get subscription to find Stripe customer ID
-      const subscriptionResult = await db.execute(sql`
-        SELECT stripe_customer_id, stripe_subscription_id
-        FROM subscriptions 
-        WHERE company_id = ${companyId}
+      // Get admin user to find Stripe customer ID
+      const userResult = await db.execute(sql`
+        SELECT stripe_customer_id
+        FROM users 
+        WHERE company_id = ${companyId} AND role = 'admin'
+        LIMIT 1
       `);
       
-      const subscription = subscriptionResult.rows[0] as any;
-      console.log('DEBUG - Subscription data:', subscription);
+      const user = userResult.rows[0] as any;
       
-      if (!subscription?.stripe_customer_id) {
-        console.log('No Stripe customer ID found for company:', companyId, '- returning demo invoices');
+      if (!user?.stripe_customer_id) {
         // Return demo invoices when no Stripe customer exists
         const demoInvoices = [
           {
@@ -2769,12 +2766,12 @@ startxref
         return res.json(demoInvoices);
       }
 
-      console.log('Found Stripe customer ID:', subscription.stripe_customer_id);
+
 
       try {
         // Get invoices from Stripe
         const invoices = await stripe.invoices.list({
-          customer: subscription.stripe_customer_id,
+          customer: user.stripe_customer_id,
           limit: 20,
           status: 'paid', // Only show paid invoices
         });
