@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
+
 import { 
   Clock, 
   Users, 
@@ -32,6 +33,32 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  
+  // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
+  const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
+
+  // ⚠️ PROTECTED - DO NOT MODIFY - Dynamic message functions identical to employee system
+  const generateDynamicMessage = (type: 'entrada' | 'salida') => {
+    const hour = new Date().getHours();
+    let greeting;
+    
+    if (hour >= 6 && hour < 14) {
+      greeting = 'Buenos días';
+    } else if (hour >= 14 && hour < 20) {
+      greeting = 'Buenas tardes';
+    } else {
+      greeting = 'Buenas noches';
+    }
+    
+    return `${greeting}, ${type === 'entrada' ? 'Entrada' : 'Salida'} registrada`;
+  };
+
+  const showTemporaryMessage = (message: string) => {
+    setTemporaryMessage(message);
+    setTimeout(() => {
+      setTemporaryMessage(null);
+    }, 3000);
+  };
 
   // Función para manejar clics en días del calendario
   const handleDateSelect = (date: Date | undefined) => {
@@ -60,12 +87,19 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
-  // Fetch active work session - reduced polling for performance
+  // ⚠️ PROTECTED - DO NOT MODIFY - Queries identical to employee system
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
     refetchInterval: 20000, // Reduced from 5s to 20s
     refetchIntervalInBackground: false,
     staleTime: 15000,
+  });
+
+  // Query for active break period
+  const { data: activeBreak } = useQuery({
+    queryKey: ['/api/break-periods/active'],
+    refetchInterval: 3000, // Poll every 3 seconds when session is active
+    enabled: !!activeSession, // Only run when there's an active session
   });
 
   // Fetch recent work sessions
@@ -133,19 +167,77 @@ export default function AdminDashboard() {
   const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
   const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
 
-  // Clock in/out mutation
-  const clockMutation = useMutation({
-    mutationFn: async (action: 'in' | 'out') => {
-      return await apiRequest(`/api/work-sessions/clock-${action}`, {
-        method: 'POST',
-      });
+  // ⚠️ PROTECTED - DO NOT MODIFY - Fichaje mutations identical to employee system
+  const clockInMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/work-sessions/clock-in');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
-      toast({
-        title: activeSession ? 'Fichaje de salida registrado' : 'Fichaje de entrada registrado',
-        description: `${format(new Date(), 'HH:mm', { locale: es })}`,
+      const message = generateDynamicMessage('entrada');
+      showTemporaryMessage(message);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo registrar la entrada',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  const clockOutMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/work-sessions/clock-out');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      const message = generateDynamicMessage('salida');
+      showTemporaryMessage(message);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo registrar la salida',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  // Break periods mutations - identical to employee system
+  const startBreakMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/break-periods/start');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/break-periods/active'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo iniciar el descanso',
+        variant: 'destructive'
+      });
+    },
+  });
+
+  const endBreakMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/break-periods/end');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/break-periods/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: 'No se pudo finalizar el descanso',
+        variant: 'destructive'
       });
     },
   });
@@ -184,7 +276,17 @@ export default function AdminDashboard() {
     return format(parseISO(dateString), 'dd/MM HH:mm', { locale: es });
   };
 
+  // ⚠️ PROTECTED - DO NOT MODIFY - Dynamic message display identical to employee system
   const getLastClockInTime = () => {
+    // If there's a temporary message, show it with success indicator
+    if (temporaryMessage) {
+      return (
+        <span className="text-green-400">
+          ✓ Fichaje exitoso - {temporaryMessage}
+        </span>
+      );
+    }
+
     if (activeSession?.clockIn) {
       const clockDate = parseISO(activeSession.clockIn);
       const today = new Date();
@@ -341,28 +443,89 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <div className="flex justify-end">
-                  <Button
-                    size="lg"
-                    onClick={() => clockMutation.mutate(activeSession ? 'out' : 'in')}
-                    disabled={clockMutation.isPending}
-                    className={`px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm ${
-                      activeSession 
-                        ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200' 
-                        : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200'
-                    } hover:shadow-md`}
-                  >
-                    {activeSession ? (
-                      <>
-                        <LogOut className="h-5 w-5 mr-2" />
-                        Salir
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="h-5 w-5 mr-2" />
-                        Entrar
-                      </>
-                    )}
-                  </Button>
+                  {!activeSession ? (
+                    <Button
+                      size="lg"
+                      onClick={() => clockInMutation.mutate()}
+                      disabled={clockInMutation.isPending}
+                      className="px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
+                    >
+                      {clockInMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Fichando...
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="h-5 w-5 mr-2" />
+                          Entrar
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="lg"
+                        onClick={() => clockOutMutation.mutate()}
+                        disabled={clockOutMutation.isPending}
+                        className="px-8 py-3 font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md mr-4"
+                      >
+                        {clockOutMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Fichando...
+                          </>
+                        ) : (
+                          <>
+                            <LogOut className="h-5 w-5 mr-2" />
+                            Salir
+                          </>
+                        )}
+                      </Button>
+                      
+                      {!activeBreak ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => startBreakMutation.mutate()}
+                          disabled={startBreakMutation.isPending}
+                          className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                        >
+                          {startBreakMutation.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                              Iniciando...
+                            </>
+                          ) : (
+                            <>
+                              <Coffee className="h-4 w-4 mr-2" />
+                              Descanso
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => endBreakMutation.mutate()}
+                          disabled={endBreakMutation.isPending}
+                          className="border-green-300 text-green-600 hover:bg-green-50"
+                        >
+                          {endBreakMutation.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+                              Finalizando...
+                            </>
+                          ) : (
+                            <>
+                              <Coffee className="h-4 w-4 mr-2" />
+                              Fin Descanso
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
