@@ -148,11 +148,11 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 2. **next_payment_date**: Fecha del próximo cobro de suscripción
    - Se calcula al confirmar método de pago
    - Si el usuario añade pago ANTES del trial_end_date: next_payment_date = trial_end_date
-   - Si el usuario añade pago DESPUÉS del trial_end_date: next_payment_date = trial_end_date + meses transcurridos
+   - Si el usuario añade pago DESPUÉS del trial_end_date: next_payment_date = fecha_actual + 1 mes
 
 ### Escenarios Posibles:
 - **Pago Puntual**: Trial expira 3 jul, usuario paga antes → cobro 3 jul (fechas coinciden)
-- **Pago Tardío**: Trial expira 3 jul, usuario paga 10 jul → cobro 3 agosto (fechas diferentes)
+- **Pago Tardío**: Trial expira 3 jul, usuario paga 10 jul → cobro 10 agosto (un mes desde que añadió pago)
 
 ### Estado Actual del Sistema:
 - ✅ Base de datos preparada con ambos campos separados

@@ -2510,17 +2510,18 @@ startxref
         expand: ['latest_invoice.payment_intent'],
       });
 
-      // Calculate next payment date based on trial end date
+      // Calculate next payment date based on when payment method is added
       const trialEndDate = new Date(company.subscription.trialEndDate);
-      let nextPaymentDate = trialEndDate;
-      
-      // If trial has already ended, calculate next payment from trial end date
       const now = new Date();
-      if (trialEndDate < now) {
-        // Trial has ended, calculate next payment date from trial end
-        nextPaymentDate = new Date(trialEndDate);
-        const monthsElapsed = Math.floor((now.getTime() - trialEndDate.getTime()) / (30 * 24 * 60 * 60 * 1000)) + 1;
-        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + monthsElapsed);
+      let nextPaymentDate: Date;
+      
+      if (trialEndDate > now) {
+        // Trial still active: next payment = trial end date
+        nextPaymentDate = trialEndDate;
+      } else {
+        // Trial has ended: next payment = one month from NOW (when payment is added)
+        nextPaymentDate = new Date(now);
+        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
       }
 
       // Update database with Stripe subscription info and activate
