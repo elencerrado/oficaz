@@ -928,15 +928,19 @@ export default function AdminDocuments() {
                       }, {});
 
                       return Object.entries(documentsByEmployee).map(([employeeId, employeeData]: [string, any]) => {
-                        // Agrupar documentos por tipo
+                        // ⚠️ PROTECTED - DO NOT MODIFY: Smart document categorization using analyzeFileName
+                        // Agrupar documentos por tipo usando la función inteligente de análisis
                         const docsByType = employeeData.documents.reduce((acc: any, doc: Document) => {
-                          const fileName = doc.originalName?.toLowerCase() || '';
-                          let type = 'otros';
+                          const fileName = doc.originalName || doc.fileName || '';
                           
-                          if (fileName.includes('dni') || fileName.includes('documento') || fileName.includes('identidad')) {
-                            type = 'dni';
-                          } else if (fileName.includes('justificante') || fileName.includes('certificado') || fileName.includes('comprobante') || fileName.includes('vacaciones') || fileName.includes('baja') || fileName.includes('permiso')) {
-                            type = 'justificante';
+                          // Usar la función de análisis inteligente para detectar el tipo
+                          const analysis = analyzeFileName(fileName, employees);
+                          
+                          // Mapear el nombre del tipo al ID correcto
+                          let type = 'otros';
+                          const foundDocType = documentTypes.find(dt => dt.name === analysis.documentType);
+                          if (foundDocType) {
+                            type = foundDocType.id;
                           }
                           
                           if (!acc[type]) {
