@@ -3,6 +3,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -532,11 +533,12 @@ export default function EmployeeDashboard() {
         {/* Header - Compacto */}
         <div className="flex justify-between items-center py-2 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#007AFF] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">
-                {user?.fullName?.split(' ').map(n => n[0]).join('').substring(0, 2) || 'U'}
-              </span>
-            </div>
+            <UserAvatar
+              fullName={user?.fullName || ''}
+              size="sm"
+              userId={user?.id}
+              profilePicture={user?.profilePicture}
+            />
             <div>
               <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
             </div>

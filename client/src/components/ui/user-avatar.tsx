@@ -158,11 +158,14 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     return colorPairs[id % colorPairs.length];
   };
 
-  // Tamaño único consistente para todos los avatares - más grande
-  const sizeClasses = {
-    sm: 'w-10 h-10 text-sm',
-    md: 'w-10 h-10 text-sm', 
-    lg: 'w-10 h-10 text-sm'
+  // Tamaños dinámicos en pixeles para estilos inline
+  const getSizePixels = (size: 'sm' | 'md' | 'lg') => {
+    switch (size) {
+      case 'sm': return { size: 32, fontSize: 12, border: 2 };
+      case 'md': return { size: 40, fontSize: 14, border: 3 };
+      case 'lg': return { size: 48, fontSize: 16, border: 3 };
+      default: return { size: 32, fontSize: 12, border: 2 };
+    }
   };
 
   // Si no se necesita upload, usar el renderizado simple original
@@ -178,15 +181,16 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
     // Usar colores únicos con estilos inline SUPER agresivos
     const colors = getUserColors(userId);
+    const sizeConfig = getSizePixels(size);
     
     // Si hay foto de perfil, mostrarla con borde de color único - ESTILOS INLINE PUROS
     if (profilePicture) {
       return (
         <div 
           style={{
-            width: '40px',
-            height: '40px',
-            border: `3px solid ${colors.bg}`,
+            width: `${sizeConfig.size}px`,
+            height: `${sizeConfig.size}px`,
+            border: `${sizeConfig.border}px solid ${colors.bg}`,
             padding: '2px',
             backgroundColor: 'white',
             borderRadius: '50%',
@@ -212,7 +216,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               const target = e.target as HTMLImageElement;
               const parent = target.parentElement;
               if (parent) {
-                parent.innerHTML = `<div style="width: 100%; height: 100%; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 14px; user-select: none;">${getInitials(fullName)}</div>`;
+                parent.innerHTML = `<div style="width: 100%; height: 100%; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: ${sizeConfig.fontSize}px; user-select: none;">${getInitials(fullName)}</div>`;
               }
             }}
           />
@@ -224,8 +228,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     return (
       <div 
         style={{
-          width: '40px',
-          height: '40px',
+          width: `${sizeConfig.size}px`,
+          height: `${sizeConfig.size}px`,
           borderRadius: '50%',
           backgroundColor: colors.bg,
           color: colors.text,
@@ -233,7 +237,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           alignItems: 'center',
           justifyContent: 'center',
           fontWeight: '500',
-          fontSize: '14px',
+          fontSize: `${sizeConfig.fontSize}px`,
           userSelect: 'none'
         } as React.CSSProperties}
       >
@@ -244,6 +248,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
   // Renderizado con opciones de upload
   const colors = getUserColors(userId);
+  const sizeConfig = getSizePixels(size);
   
   return (
     <div className="relative">
@@ -259,8 +264,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       {/* Avatar principal - ESTILOS INLINE PUROS */}
       <div 
         style={{
-          width: '40px',
-          height: '40px',
+          width: `${sizeConfig.size}px`,
+          height: `${sizeConfig.size}px`,
           border: `3px solid ${colors.bg}`,
           padding: '2px',
           borderRadius: '50%',
@@ -304,7 +309,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: '500',
-              fontSize: '14px',
+              fontSize: `${sizeConfig.fontSize}px`,
               userSelect: 'none'
             } as React.CSSProperties}
           >
