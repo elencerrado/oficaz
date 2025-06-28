@@ -170,41 +170,14 @@ export default function Messages() {
       
       // Forzar scroll después de enviar mensaje con un pequeño delay
       setTimeout(() => {
-        let scrolled = false;
-
-        // 1. Intentar con el ref directo PRIMERO
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight + 100;
-          scrolled = true;
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'auto', 
+            block: 'end',
+            inline: 'nearest'
+          });
         }
-
-        // 2. Fallback: buscar contenedores específicos si ref no funciona
-        if (!scrolled) {
-          const selectors = [
-            // Contenedor admin desktop y móvil
-            '.flex-1.overflow-y-auto.p-4.bg-gray-50',
-            '.flex-1.overflow-y-auto.px-4.bg-gray-50',
-            // Contenedor empleado con fondo degradado
-            '[style*="radial-gradient"][style*="#1A2332"] .flex-1.overflow-y-auto',
-            '[style*="radial-gradient"][style*="#232B36"] .flex-1.overflow-y-auto',
-            // Contenedores específicos de chat empleado
-            '.bg-employee-gradient .flex-1.overflow-y-auto',
-            '.min-h-screen.bg-employee-gradient .flex-1.overflow-y-auto',
-            // Fallback genérico
-            '.flex-1.overflow-y-auto.px-4',
-            '.flex-1.overflow-y-auto.p-4'
-          ];
-
-          for (const selector of selectors) {
-            const container = document.querySelector(selector);
-            if (container) {
-              container.scrollTop = container.scrollHeight + 100;
-              scrolled = true;
-              break;
-            }
-          }
-        }
-      }, 500);
+      }, 300);
     } catch (error) {
       console.error('Error sending employee message:', error);
     }
@@ -257,58 +230,27 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // ⚠️ PROTECTED: Auto-scroll funcional para chat empleado y admin - DO NOT MODIFY
+  // ⚠️ PROTECTED: Auto-scroll DIRECTO usando messagesEndRef - DO NOT MODIFY
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0) {
       const scrollToBottom = () => {
-        let scrolled = false;
-
-        // 1. Intentar con el ref directo PRIMERO (tanto admin como empleado)
-        if (messagesContainerRef.current) {
-          const container = messagesContainerRef.current;
-          container.scrollTop = container.scrollHeight + 100;
-          scrolled = true;
+        // Usar scrollIntoView en el messagesEndRef que está al final de los mensajes
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ 
+            behavior: 'auto', 
+            block: 'end',
+            inline: 'nearest'
+          });
+          return true;
         }
-
-        // 2. Fallback: buscar contenedores específicos si ref no funciona
-        if (!scrolled) {
-          const selectors = [
-            // Contenedor admin desktop
-            '.flex-1.overflow-y-auto.p-4.bg-gray-50',
-            // Contenedor admin móvil
-            '.flex-1.overflow-y-auto.px-4.bg-gray-50',
-            // Contenedor empleado con fondo degradado
-            '[style*="radial-gradient"][style*="#1A2332"] .flex-1.overflow-y-auto',
-            '[style*="radial-gradient"][style*="#232B36"] .flex-1.overflow-y-auto',
-            // Contenedores específicos de chat empleado
-            '.bg-employee-gradient .flex-1.overflow-y-auto',
-            '.min-h-screen.bg-employee-gradient .flex-1.overflow-y-auto',
-            // Fallback genérico
-            '.flex-1.overflow-y-auto.px-4',
-            '.flex-1.overflow-y-auto.p-4'
-          ];
-          
-          for (const selector of selectors) {
-            const container = document.querySelector(selector);
-            if (container) {
-              container.scrollTop = container.scrollHeight + 100;
-              scrolled = true;
-              break;
-            }
-          }
-        }
-
-        return scrolled;
+        return false;
       };
 
-      // Múltiples intentos para asegurar que funciona
-      const timers = [
-        setTimeout(scrollToBottom, 100),
-        setTimeout(scrollToBottom, 300),
-        setTimeout(scrollToBottom, 600)
-      ];
+      // Scroll inmediato y después delay para asegurar que DOM está listo
+      scrollToBottom();
+      const timer = setTimeout(scrollToBottom, 300);
 
-      return () => timers.forEach(timer => clearTimeout(timer));
+      return () => clearTimeout(timer);
     }
   }, [selectedChat, messages?.length]);
 

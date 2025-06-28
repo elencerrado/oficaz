@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. AUTO-SCROLL DEL CHAT REESCRITO CON MÉTODO DIRECTO: scrollIntoView usando messagesEndRef
+  - PROBLEMA RESUELTO: Auto-scroll reescrito completamente usando `messagesEndRef.scrollIntoView()`
+  - Método más directo y confiable que busca el elemento al final de todos los mensajes
+  - Configuración `behavior: 'auto'` para máxima compatibilidad con todos los navegadores
+  - Eliminados selectores CSS complejos que fallaban en diferentes layouts
+  - Sistema simplificado: scroll inmediato + delay 300ms para asegurar DOM actualizado
+  - Funciona idénticamente en admin desktop, admin móvil y vista empleado
+  - Código de producción limpio sin logs de debugging
 - June 28, 2025. AUTO-SCROLL DEL CHAT RESTAURADO COMPLETAMENTE: Función robusta con múltiples contenedores
   - PROBLEMA CRÍTICO RESUELTO: Auto-scroll perdido otra vez en chat empleado (línea 572 messages.tsx)
   - Función de scroll mejorada con 6 selectores diferentes para encontrar contenedor correcto
