@@ -158,24 +158,28 @@ export default function VacationManagement() {
           title="Total Solicitudes" 
           value={totalRequests} 
           subtitle="este año" 
+          color="blue"
           icon={Calendar}
         />
         <StatsCard 
           title="Pendientes" 
           value={pendingCount} 
           subtitle="por aprobar" 
+          color="yellow"
           icon={Clock}
         />
         <StatsCard 
           title="Aprobadas" 
           value={approvedCount} 
           subtitle="confirmadas" 
+          color="green"
           icon={Calendar}
         />
         <StatsCard 
           title="En Vacaciones" 
           value={onVacationCount} 
           subtitle="actualmente" 
+          color="orange"
           icon={MapPin}
         />
       </div>
