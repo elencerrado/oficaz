@@ -189,17 +189,26 @@ export default function VacationManagement() {
       return (
         <div
           key={`${employee.id}-${period.id}-${index}`}
-          className={`absolute h-4 rounded-sm ${
+          className={`absolute h-4 rounded-sm cursor-pointer transition-all hover:scale-105 hover:z-10 ${
             period.status === 'approved' 
-              ? 'bg-blue-500 border-blue-600' 
-              : 'bg-yellow-400 border-yellow-500'
-          } border opacity-80`}
+              ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
+              : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
+          } border opacity-80 hover:opacity-100`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
             top: '2px'
           }}
           title={`${period.status === 'approved' ? 'Aprobado' : 'Pendiente'}: ${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`}
+          onClick={() => {
+            // Encontrar la solicitud completa en la lista de vacationRequests
+            const fullRequest = vacationRequests.find(req => req.id === period.id);
+            if (fullRequest) {
+              // Determinar la acción según el estado
+              const action = period.status === 'pending' ? 'approve' : 'revert';
+              openRequestModal(fullRequest, action);
+            }
+          }}
         />
       );
     }).filter(Boolean);
