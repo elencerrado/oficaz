@@ -163,6 +163,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. DATOS DE EMPRESA A STRIPE CORREGIDOS: Información completa y fechas de cobro sincronizadas
+  - Endpoint `/api/account/confirm-payment-method` corregido para enviar datos COMPLETOS de empresa a Stripe
+  - Customer de Stripe ahora incluye: nombre empresa, dirección completa, CIF, email, datos contacto
+  - Fechas de cobro en Stripe perfectamente sincronizadas con "Próximo cobro" mostrado en app
+  - Trial periods respetan fecha exacta: `trial_end` en Stripe = `trial_end_date` de base datos
+  - Pagos tardíos procesan inmediatamente pero mantienen alignment con próximas fechas
+  - Facturación garantizada: Stripe tiene toda información necesaria para facturas precisas
+  - Sistema crítico para cumplimiento legal: CIF, direcciones, datos fiscales correctos
 - June 28, 2025. LÓGICA DE FACTURAS OPTIMIZADA: Sección solo visible con método de pago configurado
   - Sin método de pago → sección de facturas completamente oculta
   - Con método de pago → sección visible con facturas reales de Stripe o mensaje "aún no hay facturas"

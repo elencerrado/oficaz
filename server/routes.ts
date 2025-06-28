@@ -2460,12 +2460,23 @@ startxref
       let stripeCustomerId = user.stripeCustomerId;
       
       if (!stripeCustomerId) {
+        // Create Stripe customer with complete company information for accurate invoicing
         const customer = await stripe.customers.create({
-          email: user.companyEmail,
+          email: user.companyEmail || company.email,
           name: company.name,
+          description: `Cliente Oficaz - ${company.name}`,
+          address: {
+            line1: company.address || 'Dirección no especificada',
+            city: company.province || 'Madrid',
+            postal_code: company.province === 'sevilla' ? '41001' : '28020',
+            country: 'ES'
+          },
           metadata: {
             userId: userId.toString(),
-            companyId: company.id.toString()
+            companyId: company.id.toString(),
+            plan: company.subscription.plan,
+            contact_name: user.fullName,
+            tax_id: company.cif || 'B00000000'
           }
         });
         
@@ -2500,33 +2511,44 @@ startxref
         product: product.id,
       });
 
-      // Create recurring subscription in Stripe
-      const subscription = await stripe.subscriptions.create({
-        customer: stripeCustomerId,
-        items: [{
-          price: price.id,
-        }],
-        payment_behavior: 'default_incomplete',
-        expand: ['latest_invoice.payment_intent'],
-      });
-
-      // Calculate payment dates based on when payment method is added
+      // Calculate exact payment dates to match what's shown in the app
       const trialEndDate = new Date(company.subscription.trialEndDate);
       const now = new Date();
       let firstPaymentDate: Date;
       let nextPaymentDate: Date;
+      let stripeSubscriptionParams: any;
       
       if (trialEndDate > now) {
-        // Trial still active: first payment when trial ends, next payment one month later
+        // Trial still active: first payment when trial ends exactly at the date shown in app
         firstPaymentDate = new Date(trialEndDate);
         nextPaymentDate = new Date(trialEndDate);
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        
+        // Create subscription with trial end set to the exact trial end date
+        stripeSubscriptionParams = {
+          customer: stripeCustomerId,
+          items: [{ price: price.id }],
+          trial_end: Math.floor(trialEndDate.getTime() / 1000), // Convert to Unix timestamp
+          payment_behavior: 'default_incomplete',
+          expand: ['latest_invoice.payment_intent'],
+        };
       } else {
-        // Trial has ended: first payment now, next payment one month from now
+        // Trial has ended: first payment now, but align next payment with app display
         firstPaymentDate = new Date(now);
         nextPaymentDate = new Date(now);
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        
+        // Create subscription without trial (immediate payment)
+        stripeSubscriptionParams = {
+          customer: stripeCustomerId,
+          items: [{ price: price.id }],
+          payment_behavior: 'default_incomplete',
+          expand: ['latest_invoice.payment_intent'],
+        };
       }
+
+      // Create recurring subscription in Stripe with exact timing
+      const subscription = await stripe.subscriptions.create(stripeSubscriptionParams);
 
       // Update database with Stripe subscription info and activate
       await db.execute(sql`
