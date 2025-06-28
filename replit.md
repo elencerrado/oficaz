@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. LÓGICA DE MENSAJES DE PAGO COMPLETAMENTE REFINADA: Sistema inteligente según estado exacto
+  - CASO 1: Sin método de pago + trial activo → "Tu período de prueba terminará el [fecha]"
+  - CASO 2: Con método de pago + trial activo → Sin mensaje de advertencia (limpio)
+  - CASO 3: Sin método de pago + eliminó durante trial → Mismo mensaje "período de prueba terminará"  
+  - CASO 4: Sin método de pago + suscripción activa → "Tu suscripción no se renovará el [fecha]"
+  - Sistema condicional que detecta automáticamente el estado exacto del usuario
+  - Mensajes contextuales precisos que guían al usuario según su situación específica
+  - Terminología clara diferenciando "período de prueba" vs "suscripción activa"
 - June 28, 2025. MENSAJES DE TRIAL CORREGIDOS COMPLETAMENTE: Terminología clara indicando período de prueba
   - TrialManager (dashboard): Solo aparece sin método de pago, dice "Período de Prueba [Plan]" con mensajes claros
   - TrialManagerSimple (configuración): Siempre muestra estado, diferencia sin/con método de pago

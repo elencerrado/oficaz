@@ -338,15 +338,33 @@ const AccountManagement = () => {
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
-                        ⚠️ Tu período de prueba terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
-                      </p>
-                      <p className="text-sm text-red-700 mt-1">
-                        No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente cuando termine el período de prueba.
-                      </p>
-                      <p className="text-xs text-red-600 mt-2">
-                        Añade una tarjeta de crédito o débito para continuar usando Oficaz después del período de prueba.
-                      </p>
+                      {trialStatus?.isTrialActive ? (
+                        // Durante período de prueba (con o sin haber tenido método de pago antes)
+                        <>
+                          <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
+                            ⚠️ Tu período de prueba terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
+                          </p>
+                          <p className="text-sm text-red-700 mt-1">
+                            No tienes métodos de pago configurados. Tu cuenta se cancelará automáticamente cuando termine el período de prueba.
+                          </p>
+                          <p className="text-xs text-red-600 mt-2">
+                            Añade una tarjeta de crédito o débito para continuar usando Oficaz después del período de prueba.
+                          </p>
+                        </>
+                      ) : (
+                        // Suscripción activa sin método de pago (eliminado durante suscripción activa)
+                        <>
+                          <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
+                            ⚠️ Tu suscripción no se renovará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
+                          </p>
+                          <p className="text-sm text-red-700 mt-1">
+                            Has eliminado tu método de pago. Tu suscripción se cancelará automáticamente en la fecha indicada.
+                          </p>
+                          <p className="text-xs text-red-600 mt-2">
+                            Añade una tarjeta de crédito o débito para que tu suscripción se renueve automáticamente.
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
