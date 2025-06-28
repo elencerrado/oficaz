@@ -134,7 +134,10 @@ const AccountManagement = () => {
               <div>
                 <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 <p className="text-sm text-gray-600">
-                  {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
+                  {trialStatus?.nextPaymentDate ? 
+                    `Próximo pago: ${new Date(trialStatus.nextPaymentDate).toLocaleDateString('es-ES')} • €29.99/mes` : 
+                    'Plan activo'
+                  }
                 </p>
               </div>
             </div>
