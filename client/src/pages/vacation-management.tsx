@@ -87,9 +87,26 @@ export default function VacationManagement() {
   // Estados para el timeline de vacaciones (pestaña empleados)
   const [timelineViewDate, setTimelineViewDate] = useState(new Date());
   const [timelineViewMode, setTimelineViewMode] = useState<'month' | 'quarter'>('month');
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Cerrar tooltip al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeTooltip) {
+        const target = event.target as Element;
+        // Solo cerrar si no es un clic en el tooltip o en una barra de vacaciones
+        if (!target.closest('[data-vacation-bar]') && !target.closest('[data-vacation-tooltip]')) {
+          setActiveTooltip(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeTooltip]);
 
   // Set initial region based on company province
   useEffect(() => {
@@ -189,10 +206,14 @@ export default function VacationManagement() {
       const fullRequest = vacationRequests.find(req => req.id === period.id);
       const periodText = `${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`;
       
+      const tooltipId = `${employee.id}-${period.id}-${index}`;
+      const isTooltipActive = activeTooltip === tooltipId;
+
       return (
         <div
-          key={`${employee.id}-${period.id}-${index}`}
-          className={`absolute h-12 rounded-md cursor-pointer transition-all group ${
+          key={tooltipId}
+          data-vacation-bar
+          className={`absolute h-12 rounded-md cursor-pointer transition-all ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
@@ -201,100 +222,127 @@ export default function VacationManagement() {
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
             top: '0px',
-            zIndex: 10
+            zIndex: isTooltipActive ? 15 : 10
           }}
-          onClick={() => fullRequest && openRequestModal(fullRequest, period.status === 'pending' ? 'approve' : 'edit')}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveTooltip(isTooltipActive ? null : tooltipId);
+          }}
         >
           {/* Período visible siempre */}
           <div className="text-white text-xs font-medium select-none">
             {periodText}
           </div>
 
-          {/* Panel de información que aparece en hover - FUERA del contenedor principal */}
-          <div 
-            className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto min-w-72"
-            style={{ 
-              zIndex: 10000,
-              left: '50%',
-              top: '20%',
-              transform: 'translateX(-50%)'
-            }}
-          >
-            {/* Título con fecha */}
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
-              <h4 className="font-semibold text-gray-900 text-sm">
-                Vacaciones: {periodText}
-              </h4>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                period.status === 'approved' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {period.status === 'approved' ? 'Aprobado' : 'Pendiente'}
-              </span>
-            </div>
-            
-            {/* Comentario si existe */}
-            {fullRequest?.reason && (
-              <div className="mb-4">
-                <p className="text-xs text-gray-500 mb-1">Comentario del empleado:</p>
-                <p className="text-sm text-gray-700 italic">
-                  "{fullRequest.reason}"
-                </p>
-              </div>
-            )}
-            
-            {/* Botones de acción - más grandes y fáciles de pulsar */}
-            <div className="flex gap-2">
-              {period.status === 'pending' ? (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (fullRequest) openRequestModal(fullRequest, 'approve');
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
-                  >
-                    <Check className="w-4 h-4" />
-                    Aprobar
-                  </button>
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (fullRequest) openRequestModal(fullRequest, 'edit');
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Editar
-                  </button>
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (fullRequest) openRequestModal(fullRequest, 'deny');
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors flex-1 justify-center"
-                  >
-                    <X className="w-4 h-4" />
-                    Rechazar
-                  </button>
-                </>
-              ) : (
+          {/* Panel de información que aparece al hacer clic */}
+          {isTooltipActive && (
+            <div 
+              data-vacation-tooltip
+              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-80"
+              style={{ 
+                zIndex: 10000,
+                left: '50%',
+                top: '20%',
+                transform: 'translateX(-50%)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botón cerrar */}
+              <div className="flex justify-end mb-2">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (fullRequest) openRequestModal(fullRequest, 'revert');
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium transition-colors w-full justify-center"
+                  onClick={() => setActiveTooltip(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  Revertir Aprobación
+                  <X className="w-4 h-4" />
                 </button>
+              </div>
+
+              {/* Título con fecha */}
+              <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                <h4 className="font-semibold text-gray-900 text-base">
+                  Vacaciones: {periodText}
+                </h4>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  period.status === 'approved' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {period.status === 'approved' ? 'Aprobado' : 'Pendiente'}
+                </span>
+              </div>
+              
+              {/* Información del empleado */}
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-1">Empleado: <span className="font-medium text-gray-900">{employee.fullName}</span></p>
+                <p className="text-sm text-gray-600">Duración: <span className="font-medium text-gray-900">{fullRequest?.days || 0} días</span></p>
+              </div>
+              
+              {/* Comentario si existe */}
+              {fullRequest?.reason && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600 mb-1">Comentario del empleado:</p>
+                  <p className="text-sm text-gray-800 italic">
+                    "{fullRequest.reason}"
+                  </p>
+                </div>
               )}
+              
+              {/* Botones de acción - grandes y fáciles de pulsar */}
+              <div className="flex gap-3">
+                {period.status === 'pending' ? (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(null);
+                        if (fullRequest) openRequestModal(fullRequest, 'approve');
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                    >
+                      <Check className="w-5 h-5" />
+                      Aprobar
+                    </button>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(null);
+                        if (fullRequest) openRequestModal(fullRequest, 'edit');
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                    >
+                      <Edit className="w-5 h-5" />
+                      Editar
+                    </button>
+                    
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(null);
+                        if (fullRequest) openRequestModal(fullRequest, 'deny');
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                    >
+                      <X className="w-5 h-5" />
+                      Rechazar
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTooltip(null);
+                      if (fullRequest) openRequestModal(fullRequest, 'revert');
+                    }}
+                    className="flex items-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    Revertir Aprobación
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       );
     }).filter(Boolean);
