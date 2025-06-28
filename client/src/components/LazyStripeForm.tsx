@@ -62,9 +62,15 @@ export function LazyStripeForm({
         setLoading(false);
       } catch (err) {
         console.error('Error loading Stripe:', err);
-        console.error('Public key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-        console.error('Public key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 10) + '...');
-        setError(`Error al cargar el sistema de pagos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+        console.error('Test key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST);
+        console.error('Test key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST?.substring(0, 10) + '...');
+        console.error('Prod key available:', !!import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+        console.error('Prod key value:', import.meta.env.VITE_STRIPE_PUBLIC_KEY?.substring(0, 10) + '...');
+        
+        // Solo mostrar error si realmente hay un problema, no un objeto vacío
+        if (err && Object.keys(err).length > 0) {
+          setError(`Error al cargar el sistema de pagos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+        }
         setLoading(false);
       }
     };
