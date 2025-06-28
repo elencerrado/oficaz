@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
+import { requireActiveSubscription, isWhitelistedRoute } from './middleware/subscription';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
@@ -888,7 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Work session routes
-  app.post('/api/work-sessions/clock-in', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/work-sessions/clock-in', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       // Check if user already has an active session
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
@@ -908,7 +909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/work-sessions/clock-out', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/work-sessions/clock-out', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
       if (!activeSession) {
@@ -948,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/work-sessions/active', authenticateToken, async (req: AuthRequest, res) => {
+  app.get('/api/work-sessions/active', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
       res.json(activeSession || null);
@@ -1007,7 +1008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Break periods routes
-  app.post('/api/break-periods/start', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/break-periods/start', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       // Check if user has an active work session
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
@@ -1034,7 +1035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/break-periods/end', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/break-periods/end', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       const activeBreak = await storage.getActiveBreakPeriod(req.user!.id);
       if (!activeBreak) {
@@ -1079,7 +1080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vacation request routes
-  app.post('/api/vacation-requests', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/vacation-requests', authenticateToken, requireActiveSubscription, async (req: AuthRequest, res) => {
     try {
       console.log('Vacation request body:', req.body);
       console.log('User ID:', req.user!.id);
@@ -2889,6 +2890,7 @@ startxref
           status,
           plan,
           stripe_subscription_id,
+          stripe_customer_id,
           next_payment_date
         FROM subscriptions 
         WHERE company_id = ${companyId}
@@ -2903,25 +2905,39 @@ startxref
       const trialEndDate = new Date(subscription.trial_end_date);
       const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       const isTrialExpired = daysRemaining <= 0;
+      const hasPaymentMethod = !!subscription.stripe_customer_id;
 
-      // Auto-block if trial expired
-      if (isTrialExpired && subscription.is_trial_active && subscription.status === 'trial') {
-        await db.execute(sql`
-          UPDATE subscriptions 
-          SET status = 'blocked', is_trial_active = false 
-          WHERE company_id = ${companyId}
-        `);
+      // IMPLEMENTACIÓN DE LOS 4 ESCENARIOS:
+      let currentStatus = subscription.status;
+      let shouldBlock = false;
+
+      // Escenario 1 & 4: Sin método de pago después del trial = BLOQUEO TOTAL
+      if (isTrialExpired && !hasPaymentMethod) {
+        currentStatus = 'blocked';
+        shouldBlock = true;
+        
+        // Auto-block en base de datos si no está ya bloqueado
+        if (subscription.status !== 'blocked') {
+          await db.execute(sql`
+            UPDATE subscriptions 
+            SET status = 'blocked', is_trial_active = false 
+            WHERE company_id = ${companyId}
+          `);
+        }
       }
+      
+      // Escenario 2 & 3: Con método de pago = ACTIVO (ya procesado en confirm-payment-method)
+      // No necesita cambios aquí ya que se maneja al confirmar el pago
 
       res.json({
         isTrialActive: subscription.is_trial_active && !isTrialExpired,
         daysRemaining: Math.max(0, daysRemaining),
         trialEndDate: subscription.trial_end_date,
         nextPaymentDate: subscription.next_payment_date,
-        status: isTrialExpired && subscription.status === 'trial' ? 'blocked' : subscription.status,
+        status: currentStatus,
         plan: subscription.plan,
-        hasPaymentMethod: !!subscription.stripe_subscription_id,
-        isBlocked: subscription.status === 'blocked' || (isTrialExpired && subscription.status === 'trial')
+        hasPaymentMethod: hasPaymentMethod,
+        isBlocked: shouldBlock || subscription.status === 'blocked'
       });
     } catch (error) {
       console.error('Error fetching trial status:', error);
