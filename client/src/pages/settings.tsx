@@ -34,6 +34,8 @@ import { useToast } from '@/hooks/use-toast';
 import { TabNavigation } from '@/components/ui/tab-navigation';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { TrialManagerSimple } from '@/components/TrialManagerSimple';
+import { PaymentMethodManager } from '@/components/PaymentMethodManager';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
@@ -95,6 +97,9 @@ const AccountManagement = () => {
     queryKey: ['/api/subscription-plans'],
     retry: false,
   });
+
+  // Estado para el modal de gestión de métodos de pago
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -308,7 +313,11 @@ const AccountManagement = () => {
 
           {/* Management Actions */}
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => setIsPaymentModalOpen(true)}
+            >
               <CreditCard className="mr-2 h-4 w-4" />
               Actualizar método de pago
             </Button>
@@ -391,6 +400,19 @@ const AccountManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de gestión de métodos de pago */}
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Gestionar métodos de pago</DialogTitle>
+            <DialogDescription>
+              Administra tus métodos de pago y facturación para tu suscripción activa.
+            </DialogDescription>
+          </DialogHeader>
+          <PaymentMethodManager paymentMethods={paymentMethods || []} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
