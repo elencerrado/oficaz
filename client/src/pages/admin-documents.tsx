@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { analyzeFileName, documentTypes as importedDocumentTypes } from '@/utils/documentUtils';
 
 interface Employee {
   id: number;
@@ -62,38 +63,15 @@ interface Document {
   };
 }
 
-const documentTypes = [
-  { 
-    id: 'dni', 
-    name: 'DNI', 
-    icon: User,
-    keywords: ['dni', 'documento', 'identidad', 'cedula', 'id']
-  },
-  { 
-    id: 'nomina', 
-    name: 'Nómina', 
-    icon: DollarSign,
-    keywords: ['nomina', 'nómina', 'payroll', 'salary', 'salario', 'sueldo']
-  },
-  { 
-    id: 'contrato', 
-    name: 'Contrato', 
-    icon: FileText,
-    keywords: ['contrato', 'contract', 'agreement', 'acuerdo', 'convenio']
-  },
-  { 
-    id: 'justificante', 
-    name: 'Justificante', 
-    icon: FileCheck,
-    keywords: ['justificante', 'certificado', 'comprobante', 'vacaciones', 'vacation', 'holiday', 'permiso', 'baja', 'medico']
-  },
-  { 
-    id: 'otros', 
-    name: 'Otros', 
-    icon: File,
-    keywords: ['irpf', 'hacienda', 'impuesto', 'declaracion', 'renta', 'tributacion', 'fiscal', 'formulario', 'modelo', 'aeat']
-  }
-];
+// Use documentTypes from shared utilities with icons
+const documentTypes = importedDocumentTypes.map(type => ({
+  ...type,
+  icon: type.id === 'dni' ? User :
+        type.id === 'nomina' ? DollarSign :
+        type.id === 'contrato' ? FileText :
+        type.id === 'justificante' ? FileCheck :
+        File
+}));
 
 // Function to get type badge color
 const getTypeBadgeColor = (type: string) => {
@@ -323,47 +301,7 @@ export default function AdminDocuments() {
     },
   });
 
-  // ⚠️ PROTECTED: Smart file analysis functions - DO NOT MODIFY
-  // This function is CRITICAL for document classification and must remain stable
-  const analyzeFileName = (fileName: string) => {
-    const normalizedName = fileName.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Remove accents
-    
-    // ⚠️ PROTECTED: Employee matching logic - DO NOT CHANGE
-    const matchedEmployee = (employees as Employee[])?.find((emp: Employee) => {
-      const empName = emp.fullName.toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-      
-      // Split employee name into words
-      const nameWords = empName.split(' ');
-      
-      // Check if at least 2 words from employee name appear in filename
-      const matchedWords = nameWords.filter(word => 
-        word.length > 2 && normalizedName.includes(word)
-      );
-      
-      return matchedWords.length >= 2;
-    });
-    
-    // ⚠️ PROTECTED: Document type detection - CRITICAL FUNCTIONALITY
-    // This logic MUST detect: nomina/nómina, contrato, dni, justificante
-    const documentType = documentTypes.find(type => {
-      const typeKeywords = type.keywords || [];
-      return typeKeywords.some(keyword => 
-        normalizedName.includes(keyword.toLowerCase())
-      );
-    });
-    
-    // ⚠️ PROTECTED: Return structure - DO NOT MODIFY
-    return {
-      employee: matchedEmployee,
-      documentType: documentType?.id || 'otros',
-      confidence: matchedEmployee ? (documentType ? 'high' : 'medium') : 'low'
-    };
-  };
-  // ⚠️ END PROTECTED SECTION
+  // Use analyzeFileName from shared utilities
 
   const generateCleanFileName = (fileName: string, employee: Employee, docType: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase() || 'pdf';
@@ -529,7 +467,7 @@ export default function AdminDocuments() {
     
     // Analyze all files and show preview
     const analysisResults = validFiles.map(file => {
-      const analysis = analyzeFileName(file.name);
+      const analysis = analyzeFileName(file.name, employees?.data || []);
       return {
         file,
         ...analysis,
@@ -808,7 +746,7 @@ export default function AdminDocuments() {
                     const files = Array.from(e.target.files || []);
                     if (files.length > 0) {
                       const analysisResults = files.map(file => {
-                        const analysis = analyzeFileName(file.name);
+                        const analysis = analyzeFileName(file.name, employees?.data || []);
                         return {
                           file,
                           ...analysis,

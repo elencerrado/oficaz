@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 28, 2025. SISTEMA DE TESTING VITEST IMPLEMENTADO COMPLETAMENTE: Protección crítica de funciones clave
+  - Vitest configurado e instalado como framework de testing para Oficaz
+  - Tests completos para calculateDays(): 14 casos que cubren fechas básicas, fines de semana, cambios de mes, años bisiestos
+  - Tests exhaustivos para analyzeFileName(): 23 casos cubriendo detección de empleados, tipos de documento, niveles de confianza
+  - Utilidades compartidas creadas: dateUtils.ts y documentUtils.ts con funciones protegidas usando comentarios ⚠️ PROTECTED
+  - Configuración completa con vitest.config.ts, tests/setup.ts, mocks de localStorage y fetch
+  - Todos los tests pasan exitosamente (37/37): sistema robusto que previene regresiones futuras
+  - Funciones críticas blindadas contra cambios futuros que puedan romper funcionalidades clave
+  - Sistema preparado para añadir tests de más funciones críticas (generatePDF, calculateTotal, formatTime)
 - June 28, 2025. REORGANIZACIÓN DE PESTAÑAS VACACIONES COMPLETADA: Timeline ahora es pestaña principal
   - "Timeline de Vacaciones" reubicado como primera pestaña con nombre más descriptivo
   - Pestaña por defecto cambiada de "Solicitudes" a "Timeline de Vacaciones" 
