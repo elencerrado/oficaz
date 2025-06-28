@@ -186,78 +186,96 @@ export default function VacationManagement() {
       const leftPercent = (startOffset / totalDays) * 100;
       const widthPercent = (duration / totalDays) * 100;
       
+      const fullRequest = vacationRequests.find(req => req.id === period.id);
+      const periodText = `${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`;
+      
       return (
         <div
           key={`${employee.id}-${period.id}-${index}`}
-          className={`absolute h-8 rounded-sm cursor-pointer transition-all hover:z-20 group ${
+          className={`absolute h-12 rounded-md cursor-pointer transition-all hover:z-20 group ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600' 
               : 'bg-yellow-400 border-yellow-500'
-          } border opacity-80 hover:opacity-100`}
+          } border opacity-90 hover:opacity-100 flex items-center justify-center relative`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
             top: '0px'
           }}
-          title={`${period.status === 'approved' ? 'Aprobado' : 'Pendiente'}: ${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`}
         >
-          {/* Iconos de acción que aparecen en hover */}
-          <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            {period.status === 'pending' ? (
-              <>
-                {/* Aprobar */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const fullRequest = vacationRequests.find(req => req.id === period.id);
-                    if (fullRequest) openRequestModal(fullRequest, 'approve');
-                  }}
-                  className="w-6 h-6 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
-                  title="Aprobar"
-                >
-                  <Check className="w-3 h-3" />
-                </button>
-                
-                {/* Modificar */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const fullRequest = vacationRequests.find(req => req.id === period.id);
-                    if (fullRequest) openRequestModal(fullRequest, 'edit');
-                  }}
-                  className="w-6 h-6 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
-                  title="Modificar"
-                >
-                  <Edit className="w-3 h-3" />
-                </button>
-                
-                {/* Denegar */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const fullRequest = vacationRequests.find(req => req.id === period.id);
-                    if (fullRequest) openRequestModal(fullRequest, 'deny');
-                  }}
-                  className="w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
-                  title="Denegar"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </>
-            ) : (
-              /* Para solicitudes aprobadas, solo mostrar revertir */
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const fullRequest = vacationRequests.find(req => req.id === period.id);
-                  if (fullRequest) openRequestModal(fullRequest, 'revert');
-                }}
-                className="w-6 h-6 bg-orange-600 hover:bg-orange-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
-                title="Revertir aprobación"
-              >
-                <RotateCcw className="w-3 h-3" />
-              </button>
+          {/* Período visible siempre */}
+          <div className="text-white text-xs font-medium group-hover:opacity-0 transition-opacity duration-200">
+            {periodText}
+          </div>
+
+          {/* Información completa y iconos que aparecen en hover */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/20 rounded-md flex flex-col items-center justify-center p-1">
+            {/* Información del período */}
+            <div className="text-white text-xs font-medium mb-1">
+              {periodText}
+            </div>
+            
+            {/* Comentario si existe */}
+            {fullRequest?.reason && (
+              <div className="text-white text-xs opacity-90 mb-1 text-center px-1 truncate max-w-full">
+                {fullRequest.reason}
+              </div>
             )}
+            
+            {/* Iconos de acción */}
+            <div className="flex items-center gap-1">
+              {period.status === 'pending' ? (
+                <>
+                  {/* Aprobar */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullRequest) openRequestModal(fullRequest, 'approve');
+                    }}
+                    className="w-6 h-6 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
+                    title="Aprobar"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                  
+                  {/* Modificar */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullRequest) openRequestModal(fullRequest, 'edit');
+                    }}
+                    className="w-6 h-6 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
+                    title="Modificar"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  
+                  {/* Denegar */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (fullRequest) openRequestModal(fullRequest, 'deny');
+                    }}
+                    className="w-6 h-6 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
+                    title="Denegar"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </>
+              ) : (
+                /* Para solicitudes aprobadas, solo mostrar revertir */
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (fullRequest) openRequestModal(fullRequest, 'revert');
+                  }}
+                  className="w-6 h-6 bg-orange-600 hover:bg-orange-700 rounded-full flex items-center justify-center text-white text-xs transition-all hover:scale-110"
+                  title="Revertir aprobación"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -826,7 +844,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-8 bg-gray-100 rounded border">
+                                <div className="relative h-12 bg-gray-100 rounded border">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
