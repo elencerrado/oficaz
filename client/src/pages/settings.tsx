@@ -210,23 +210,7 @@ const AccountManagement = () => {
                 )}
               </div>
             )}
-            
-            {/* Cancellation Warning */}
-            {cancellationStatus?.scheduledForCancellation && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-red-800">
-                      ⚠️ Tu suscripción terminará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
-                    </p>
-                    <p className="text-xs text-red-600 mt-1">
-                      No tienes métodos de pago activos. Añade una tarjeta antes de esa fecha para mantener tu suscripción.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
           
           {/* Usage Statistics */}
