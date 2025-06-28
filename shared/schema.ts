@@ -204,6 +204,9 @@ export const users = pgTable("users", {
   emergencyContactName: text("emergency_contact_name"), // Lo escribe el empleado
   emergencyContactPhone: text("emergency_contact_phone"), // Lo escribe el empleado
   
+  // Stripe payment integration
+  stripeCustomerId: text("stripe_customer_id"), // ID del cliente en Stripe
+  
   // Metadatos
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -994,6 +994,49 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.invitationLinks.id, id));
     return result.rowCount > 0;
   }
+
+  // Stripe payment methods
+  async updateUserStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(schema.users)
+      .set({ stripeCustomerId })
+      .where(eq(schema.users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateSubscriptionStatus(subscriptionId: number, status: string): Promise<any | undefined> {
+    const [subscription] = await db
+      .update(schema.subscriptions)
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
+      .where(eq(schema.subscriptions.id, subscriptionId))
+      .returning();
+    return subscription;
+  }
+
+  async getCompanyByUserId(userId: number): Promise<any | undefined> {
+    const [result] = await db
+      .select({
+        company: schema.companies,
+        subscription: schema.subscriptions
+      })
+      .from(schema.companies)
+      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+      .innerJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
+      .where(eq(schema.users.id, userId));
+    
+    if (result) {
+      return {
+        ...result.company,
+        subscription: result.subscription
+      };
+    }
+    
+    return undefined;
+  }
 }
 
 export const storage = new DrizzleStorage();

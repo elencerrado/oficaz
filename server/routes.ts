@@ -8,12 +8,21 @@ import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
+import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { subscriptions, companies } from '@shared/schema';
+
+// Initialize Stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-11-20.acacia',
+});
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -2351,6 +2360,84 @@ startxref
     } catch (error) {
       console.error("Error fetching active reminders:", error);
       res.status(500).json({ message: "Failed to fetch active reminders" });
+    }
+  });
+
+  // Stripe payment setup intent endpoint
+  app.post('/api/account/create-setup-intent', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Create or get Stripe customer
+      let stripeCustomerId = user.stripeCustomerId;
+      
+      if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+          email: user.companyEmail,
+          name: user.fullName,
+          metadata: {
+            userId: userId.toString(),
+            companyId: user.companyId.toString()
+          }
+        });
+        
+        stripeCustomerId = customer.id;
+        await storage.updateUserStripeCustomerId(userId, stripeCustomerId);
+      }
+
+      // Create setup intent for future payments
+      const setupIntent = await stripe.setupIntents.create({
+        customer: stripeCustomerId,
+        payment_method_types: ['card'],
+        usage: 'off_session'
+      });
+
+      res.json({
+        clientSecret: setupIntent.client_secret,
+        customerId: stripeCustomerId
+      });
+    } catch (error) {
+      console.error('Error creating setup intent:', error);
+      res.status(500).json({ message: 'Error al crear setup intent' });
+    }
+  });
+
+  // Confirm payment method and activate subscription
+  app.post('/api/account/confirm-payment-method', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { setupIntentId } = req.body;
+
+      if (!setupIntentId) {
+        return res.status(400).json({ message: 'Setup Intent ID es requerido' });
+      }
+
+      // Retrieve the setup intent to get payment method
+      const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+      
+      if (setupIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: 'El método de pago no fue confirmado' });
+      }
+
+      // Update subscription status to active
+      const company = await storage.getCompanyByUserId(userId);
+      if (company?.subscription) {
+        await storage.updateSubscriptionStatus(company.subscription.id, 'active');
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Método de pago añadido correctamente',
+        paymentMethodId: setupIntent.payment_method
+      });
+    } catch (error) {
+      console.error('Error confirming payment method:', error);
+      res.status(500).json({ message: 'Error al confirmar método de pago' });
     }
   });
 
