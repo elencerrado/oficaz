@@ -213,15 +213,16 @@ export default function VacationManagement() {
         <div
           key={tooltipId}
           data-vacation-bar
-          className={`absolute h-12 rounded-md cursor-pointer transition-all ${
+          className={`absolute h-10 rounded-md cursor-pointer transition-all ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
-          } border opacity-90 hover:opacity-100 flex items-center justify-center relative`}
+          } border opacity-90 hover:opacity-100 flex items-center justify-center`}
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
-            top: '0px',
+            top: '4px',
+            bottom: '4px',
             zIndex: isTooltipActive ? 15 : 10
           }}
           onClick={(e) => {
@@ -921,7 +922,7 @@ export default function VacationManagement() {
                               {/* Timeline Horizontal */}
                               <div className="flex-1 relative">
                                 {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border overflow-hidden">
+                                <div className="relative h-12 bg-gray-100 rounded border">
                                   {/* Grid de días (solo mostrar algunos para no saturar) */}
                                   {timelineRange.days
                                     .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
@@ -939,8 +940,10 @@ export default function VacationManagement() {
                                     ))
                                   }
                                   
-                                  {/* Barras de vacaciones */}
-                                  {renderVacationBar(employee, timelineRange)}
+                                  {/* Contenedor específico para barras de vacaciones */}
+                                  <div className="absolute inset-0 overflow-hidden">
+                                    {renderVacationBar(employee, timelineRange)}
+                                  </div>
                                 </div>
                                 
                                 {/* Labels de días debajo del timeline */}
