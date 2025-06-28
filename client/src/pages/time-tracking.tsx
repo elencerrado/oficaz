@@ -1738,7 +1738,8 @@ export default function TimeTracking() {
                           <div className="flex items-center gap-3">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
-                              size="sm" 
+                              size="sm"
+                              userId={dayData.userId}
                             />
                             <div className="font-medium text-gray-900">
                               {dayData.userName || 'Usuario Desconocido'}

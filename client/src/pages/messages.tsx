@@ -736,6 +736,7 @@ export default function Messages() {
                         <UserAvatar 
                           fullName={employee.fullName || ''} 
                           size="md" 
+                          userId={employee.id}
                           className="w-10 h-10 bg-oficaz-primary text-white" 
                         />
                         <div className="flex-1 min-w-0">
@@ -775,6 +776,7 @@ export default function Messages() {
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
                   size="md" 
+                  userId={selectedChatUser?.id}
                   className="w-10 h-10 bg-oficaz-primary text-white" 
                 />
                 <div>
@@ -986,6 +988,7 @@ export default function Messages() {
                         <UserAvatar 
                           fullName={employee.fullName || ''} 
                           size="sm" 
+                          userId={employee.id}
                           className={`w-8 h-8 ${
                             modalGroupMode && modalSelectedEmployees.includes(employee.id)
                               ? 'bg-white/20 text-white'
@@ -1098,6 +1101,7 @@ export default function Messages() {
                         <UserAvatar 
                           fullName={manager.fullName || ''} 
                           size="lg" 
+                          userId={manager.id}
                           className="w-12 h-12 bg-white/20 text-white" 
                         />
                         
@@ -1164,6 +1168,7 @@ export default function Messages() {
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
                   size="md" 
+                  userId={selectedChatUser?.id}
                   className="w-10 h-10 bg-white/20 text-white" 
                 />
                 <div>
