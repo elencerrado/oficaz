@@ -1381,7 +1381,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/documents/:id/download', authenticateToken, async (req: AuthRequest, res) => {
+  // Special authentication middleware for file downloads that accepts token in query params
+  const authenticateTokenOrQuery = (req: any, res: any, next: any) => {
+    let token = req.headers.authorization?.split(' ')[1];
+    
+    // If no token in headers, try query parameter
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
+    
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+      req.user = decoded;
+      next();
+    } catch (error: any) {
+      console.error('Token verification failed:', error.message);
+      return res.status(403).json({ message: "Invalid or expired token" });
+    }
+  };
+
+  app.get('/api/documents/:id/download', authenticateTokenOrQuery, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.getDocument(id);

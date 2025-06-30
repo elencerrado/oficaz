@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. BUG CRÍTICO DE DESCARGA DE DOCUMENTOS RESUELTO: Sistema empleado completamente funcional
+  - PROBLEMA RESUELTO: Error "invalid or expired token" en descarga de documentos empleado
+  - CAUSA IDENTIFICADA: Frontend enviaba token por query param pero backend solo aceptaba headers Authorization
+  - MIDDLEWARE CREADO: authenticateTokenOrQuery permite autenticación por header o query parameter
+  - ENDPOINT CORREGIDO: /api/documents/:id/download ahora acepta ?token=${token} para descargas directas
+  - FUNCIONALIDAD EMPLEADO: Descarga y visualización de documentos funcionando correctamente
 - June 30, 2025. BUG CRÍTICO DE ELIMINACIÓN PERMANENTE RESUELTO: Sistema super admin completamente funcional
   - PROBLEMA RESUELTO: Error en eliminación permanente por tablas inexistentes (document_notifications, custom_holidays)
   - ENDPOINT CORREGIDO: /api/super-admin/companies/:id/delete-permanently actualizado para usar solo tablas existentes
