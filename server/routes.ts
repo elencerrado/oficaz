@@ -2724,7 +2724,7 @@ startxref
         account_id: `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
         billing_name: admin?.fullName || req.user!.fullName,
-        billing_email: admin?.companyEmail || admin?.personalEmail || company.email,
+        billing_email: company.email, // Email de empresa unificado con facturación
         billing_address: company.address || `Calle Principal ${companyId}, 1º A`,
         billing_city: company.province || 'Madrid',
         billing_postal_code: company.province === 'sevilla' ? '41001' : '28020',

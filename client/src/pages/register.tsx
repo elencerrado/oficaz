@@ -478,17 +478,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="companyEmail">Email de facturación *</Label>
+                  <Label htmlFor="companyEmail">Email corporativo / facturación *</Label>
                   <Input
                     id="companyEmail"
                     type="email"
                     className="rounded-xl"
                     {...step2Form.register('companyEmail')}
-                    placeholder="facturacion@miempresa.com"
+                    placeholder="info@miempresa.com"
                   />
                   {step2Form.formState.errors.companyEmail && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyEmail.message}</p>
                   )}
+                  <p className="text-xs text-gray-500">
+                    Este email se usará para comunicaciones corporativas y facturación
+                  </p>
                 </div>
 
                 <div className="space-y-2">

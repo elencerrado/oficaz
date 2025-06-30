@@ -276,7 +276,7 @@ const AccountManagement = () => {
               <p className="text-sm text-gray-600">{user?.fullName}</p>
             </div>
             <div>
-              <Label className="text-sm font-medium">Email de facturación</Label>
+              <Label className="text-sm font-medium">Email corporativo / facturación</Label>
               <p className="text-sm text-gray-600">{accountInfo?.billing_email}</p>
             </div>
           </div>
@@ -1203,7 +1203,7 @@ const AccountManagement = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="companyEmail">Email corporativo</Label>
+                    <Label htmlFor="companyEmail">Email corporativo / facturación</Label>
                     {isEditingCompany ? (
                       <Input
                         id="companyEmail"
@@ -1217,6 +1217,9 @@ const AccountManagement = () => {
                         {companyData.email || 'No especificado'}
                       </div>
                     )}
+                    <p className="text-sm text-gray-500 mt-1">
+                      Este email se usa tanto para comunicaciones corporativas como para facturación
+                    </p>
                   </div>
                   
                   <div>
