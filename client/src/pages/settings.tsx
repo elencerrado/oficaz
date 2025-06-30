@@ -525,6 +525,9 @@ const AccountManagement = () => {
     personalPhone: user?.personalPhone || '',
     personalEmail: user?.personalEmail || '',
     postalAddress: user?.postalAddress || '',
+    companyEmail: user?.companyEmail || '',
+    companyPhone: user?.companyPhone || '',
+    position: user?.position || '',
     emergencyContactName: user?.emergencyContactName || '',
     emergencyContactPhone: user?.emergencyContactPhone || ''
   });
@@ -882,6 +885,9 @@ const AccountManagement = () => {
                           personalPhone: user?.personalPhone || '',
                           personalEmail: user?.personalEmail || '',
                           postalAddress: user?.postalAddress || '',
+                          companyEmail: user?.companyEmail || '',
+                          companyPhone: user?.companyPhone || '',
+                          position: user?.position || '',
                           emergencyContactName: user?.emergencyContactName || '',
                           emergencyContactPhone: user?.emergencyContactPhone || ''
                         });
@@ -1516,55 +1522,153 @@ const AccountManagement = () => {
                   </div>
                 </div>
 
-                {/* Editable personal info - same structure as employee view */}
-                <div className="grid md:grid-cols-2 gap-4">
+                {/* Editable profile info - expanded with all fields */}
+                <div className="space-y-6">
+                  {/* Información corporativa */}
                   <div>
-                    <Label htmlFor="adminPersonalEmail">Email personal</Label>
-                    {isEditingProfile ? (
-                      <Input
-                        id="adminPersonalEmail"
-                        value={profileData.personalEmail}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, personalEmail: e.target.value }))}
-                        placeholder="tu@email.com"
-                      />
-                    ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
-                        {profileData.personalEmail || 'No especificado'}
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Información corporativa</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="adminCompanyEmail">Email corporativo</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminCompanyEmail"
+                            value={profileData.companyEmail}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, companyEmail: e.target.value }))}
+                            placeholder="admin@empresa.com"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.companyEmail || 'No especificado'}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      
+                      <div>
+                        <Label htmlFor="adminCompanyPhone">Teléfono corporativo</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminCompanyPhone"
+                            value={profileData.companyPhone}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, companyPhone: e.target.value }))}
+                            placeholder="+34 900 000 000"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.companyPhone || 'No especificado'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <Label htmlFor="adminPosition">Cargo/Puesto</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminPosition"
+                            value={profileData.position}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, position: e.target.value }))}
+                            placeholder="Director General, Administrador, etc."
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.position || 'No especificado'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  
+
+                  {/* Información personal */}
                   <div>
-                    <Label htmlFor="adminPersonalPhone">Teléfono personal</Label>
-                    {isEditingProfile ? (
-                      <Input
-                        id="adminPersonalPhone"
-                        value={profileData.personalPhone}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, personalPhone: e.target.value }))}
-                        placeholder="+34 600 000 000"
-                      />
-                    ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
-                        {profileData.personalPhone || 'No especificado'}
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Información personal</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="adminPersonalEmail">Email personal</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminPersonalEmail"
+                            value={profileData.personalEmail}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, personalEmail: e.target.value }))}
+                            placeholder="tu@email.com"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.personalEmail || 'No especificado'}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      
+                      <div>
+                        <Label htmlFor="adminPersonalPhone">Teléfono personal</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminPersonalPhone"
+                            value={profileData.personalPhone}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, personalPhone: e.target.value }))}
+                            placeholder="+34 600 000 000"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.personalPhone || 'No especificado'}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <Label htmlFor="adminPostalAddress">Dirección personal</Label>
+                        {isEditingProfile ? (
+                          <Textarea
+                            id="adminPostalAddress"
+                            value={profileData.postalAddress}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, postalAddress: e.target.value }))}
+                            placeholder="Calle, número, piso, código postal, ciudad"
+                            rows={3}
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
+                            {profileData.postalAddress || 'No especificada'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="md:col-span-2">
-                    <Label htmlFor="adminPostalAddress">Dirección personal</Label>
-                    {isEditingProfile ? (
-                      <Textarea
-                        id="adminPostalAddress"
-                        value={profileData.postalAddress}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, postalAddress: e.target.value }))}
-                        placeholder="Calle, número, piso, código postal, ciudad"
-                        rows={3}
-                      />
-                    ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
-                        {profileData.postalAddress || 'No especificada'}
+
+                  {/* Contacto de emergencia */}
+                  <div>
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Contacto de emergencia</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="adminEmergencyContactName">Nombre del contacto</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminEmergencyContactName"
+                            value={profileData.emergencyContactName}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactName: e.target.value }))}
+                            placeholder="Nombre completo"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.emergencyContactName || 'No especificado'}
+                          </div>
+                        )}
                       </div>
-                    )}
+                      
+                      <div>
+                        <Label htmlFor="adminEmergencyContactPhone">Teléfono de emergencia</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminEmergencyContactPhone"
+                            value={profileData.emergencyContactPhone}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
+                            placeholder="+34 600 000 000"
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                            {profileData.emergencyContactPhone || 'No especificado'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
