@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro } from 'lucide-react';
+import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro, AlertCircle, Trash2 } from 'lucide-react';
 
 interface CompanyDetailProps {
   companyId: string;
@@ -54,6 +56,11 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const [newPrice, setNewPrice] = useState('');
   const [useCustomSettings, setUseCustomSettings] = useState(false);
   const [customFeatures, setCustomFeatures] = useState<any>({});
+  
+  // Delete company modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch company details
   const { data: company, isLoading } = useQuery({
@@ -132,6 +139,66 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       });
     },
   });
+
+  // Delete company mutation
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (confirmationText: string) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/companies/${companyId}/delete-permanently`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ confirmationText }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar la empresa');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setConfirmationText('');
+      
+      toast({
+        title: "Empresa eliminada",
+        description: data.message,
+      });
+      
+      // Redirect to companies list after successful deletion
+      setTimeout(() => {
+        setLocation('/super-admin/companies');
+      }, 2000);
+    },
+    onError: (error: Error) => {
+      setIsDeleting(false);
+      
+      toast({
+        title: "Error al eliminar empresa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCompany = () => {
+    if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
+      toast({
+        title: "Error de confirmación",
+        description: 'Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"',
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDeleting(true);
+    deleteCompanyMutation.mutate(confirmationText);
+  };
 
   const handleFeatureToggle = (feature: keyof typeof featureLabels, enabled: boolean) => {
     if (!company) return;
@@ -527,7 +594,116 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
             </div>
           </CardContent>
         </Card>
+
+        {/* Danger Zone - Delete Company */}
+        <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/30 mt-8">
+          <CardHeader>
+            <CardTitle className="text-red-400 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Zona de Peligro
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium text-red-400 mb-2">Eliminar empresa permanentemente</h3>
+                <p className="text-sm text-white/60 mb-4">
+                  Esta acción eliminará completamente la empresa y todos sus datos asociados. Esta acción no se puede deshacer.
+                </p>
+                <p className="text-sm text-red-400 mb-4">
+                  Se eliminarán:
+                </p>
+                <ul className="text-sm text-white/60 list-disc list-inside mb-4 space-y-1">
+                  <li>Todos los usuarios y sus datos personales</li>
+                  <li>Fichajes y registros de tiempo</li>
+                  <li>Solicitudes de vacaciones</li>
+                  <li>Documentos y archivos subidos</li>
+                  <li>Mensajes y notificaciones</li>
+                  <li>Configuración de empresa</li>
+                  <li>Datos de suscripción y facturación</li>
+                </ul>
+              </div>
+              <Button 
+                onClick={() => setIsDeleteModalOpen(true)}
+                variant="destructive"
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar Empresa Permanentemente
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="bg-gray-900 border-red-500/30 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Confirmar Eliminación Permanente
+            </DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Esta acción eliminará permanentemente la empresa <strong>{company?.name}</strong> y todos sus datos.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-red-500/10 p-4 rounded-lg border border-red-500/30">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-red-400">
+                    ⚠️ ADVERTENCIA: Esta acción es irreversible
+                  </p>
+                  <p className="text-sm text-gray-300">
+                    Se eliminarán TODOS los datos de la empresa, usuarios, fichajes, documentos y configuraciones.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="confirmation" className="text-sm font-medium text-gray-300">
+                Para confirmar, escribe: <span className="text-red-400 font-mono">ELIMINAR PERMANENTEMENTE</span>
+              </Label>
+              <Input
+                id="confirmation"
+                type="text"
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder="ELIMINAR PERMANENTEMENTE"
+                className="mt-2 bg-gray-800 border-gray-600 text-white"
+                disabled={isDeleting}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setConfirmationText('');
+                  setIsDeleting(false);
+                }}
+                disabled={isDeleting}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleDeleteCompany}
+                disabled={confirmationText !== 'ELIMINAR PERMANENTEMENTE' || isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeleting ? 'Eliminando...' : 'Eliminar Permanentemente'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
