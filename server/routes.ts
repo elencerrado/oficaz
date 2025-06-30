@@ -3713,14 +3713,8 @@ startxref
       `);
       console.log('✅ Deleted notifications');
 
-      // 7. Delete all document notifications
-      await db.execute(sql`
-        DELETE FROM document_notifications 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted document notifications');
+      // 7. Delete all document notifications (skip if table doesn't exist)
+      // Note: document_notifications table doesn't exist in current schema
 
       // 8. Delete all reminders
       await db.execute(sql`
@@ -3731,28 +3725,24 @@ startxref
       `);
       console.log('✅ Deleted reminders');
 
-      // 9. Delete all custom holidays
-      await db.execute(sql`
-        DELETE FROM custom_holidays 
-        WHERE company_id = ${companyId}
-      `);
-      console.log('✅ Deleted custom holidays');
+      // 9. Delete all custom holidays (skip if table doesn't exist)
+      // Note: custom_holidays table doesn't exist in current schema
 
-      // 10. Delete subscription
+      // 8. Delete subscription
       await db.execute(sql`
         DELETE FROM subscriptions 
         WHERE company_id = ${companyId}
       `);
       console.log('✅ Deleted subscription');
 
-      // 11. Delete all users
+      // 9. Delete all users
       await db.execute(sql`
         DELETE FROM users 
         WHERE company_id = ${companyId}
       `);
       console.log('✅ Deleted users');
 
-      // 12. Finally, delete the company
+      // 10. Finally, delete the company
       await db.execute(sql`
         DELETE FROM companies 
         WHERE id = ${companyId}
