@@ -1388,18 +1388,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // If no token in headers, try query parameter
     if (!token && req.query.token) {
       token = req.query.token;
+      console.log('Using token from query parameter:', token.substring(0, 20) + '...');
+    } else if (token) {
+      console.log('Using token from headers:', token.substring(0, 20) + '...');
     }
     
     if (!token) {
+      console.log('No token found in headers or query params');
       return res.status(401).json({ message: "No token provided" });
     }
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
       req.user = decoded;
+      console.log('Token successfully verified for user:', decoded.id);
       next();
     } catch (error: any) {
       console.error('Token verification failed:', error.message);
+      console.error('Token length:', token.length, 'First 50 chars:', token.substring(0, 50));
       return res.status(403).json({ message: "Invalid or expired token" });
     }
   };

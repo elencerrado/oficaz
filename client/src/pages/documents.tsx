@@ -271,7 +271,20 @@ export default function Documents() {
   const handleDownload = (id: number, filename: string) => {
     // Create download link with token authentication  
     const token = localStorage.getItem('token');
-    const url = `/api/documents/${id}/download?token=${token}`;
+    console.log('Frontend token for download:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
+    
+    if (!token) {
+      console.error('No authentication token found in localStorage');
+      toast({
+        title: "Error de autenticación",
+        description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}`;
+    console.log('Download URL:', url.replace(token, '[TOKEN_HIDDEN]'));
     
     // Create temporary link and trigger download
     const a = document.createElement('a');
@@ -286,7 +299,20 @@ export default function Documents() {
   const handleViewDocument = (id: number, filename: string) => {
     // Open PDF directly in new tab with token authentication
     const token = localStorage.getItem('token');
-    const url = `/api/documents/${id}/download?token=${token}&view=true`;
+    console.log('Frontend token for view:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
+    
+    if (!token) {
+      console.error('No authentication token found in localStorage for view');
+      toast({
+        title: "Error de autenticación",
+        description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}&view=true`;
+    console.log('View URL:', url.replace(token, '[TOKEN_HIDDEN]'));
     window.open(url, '_blank');
   };
 
