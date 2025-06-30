@@ -2486,8 +2486,11 @@ startxref
       let stripeCustomerId = user.stripeCustomerId;
       
       if (!stripeCustomerId) {
+        // Get company data for unified email
+        const company = await storage.getCompanyByUserId(userId);
+        
         const customer = await stripe.customers.create({
-          email: user.companyEmail,
+          email: company?.email || user.companyEmail,
           name: user.fullName,
           metadata: {
             userId: userId.toString(),
@@ -2562,7 +2565,7 @@ startxref
       if (!stripeCustomerId) {
         // Create Stripe customer with complete company information for accurate invoicing
         const customer = await stripe.customers.create({
-          email: user.companyEmail || company.email,
+          email: company.email,
           name: company.name,
           description: `Cliente Oficaz - ${company.name}`,
           address: {

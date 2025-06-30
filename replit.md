@@ -184,11 +184,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 - June 30, 2025. UNIFICACIÓN DE EMAIL CORPORATIVO Y FACTURACIÓN COMPLETADA: Sistema completamente coherente implementado
   - BACKEND UNIFICADO: billing_email ahora usa directamente company.email eliminando fallbacks complejos
+  - STRIPE INTEGRADO: Endpoints create-setup-intent y confirm-payment-method usan company.email para customers
   - FRONTEND ACTUALIZADO: Ambas páginas (registro y configuración) usan "Email corporativo / facturación" como label
   - TERMINOLOGÍA COHERENTE: Sistema clarifica que el email de empresa sirve para comunicaciones Y facturación
   - EXPLICACIÓN AÑADIDA: Texto descriptivo en registro explica el uso dual del email corporativo
   - CONSISTENCIA TOTAL: Ya no existe separación entre email empresa vs email facturación
   - SIMPLIFICACIÓN LOGICA: Eliminada complejidad de fallbacks (admin?.companyEmail || admin?.personalEmail || company.email)
+  - FACTURAS STRIPE: Todas las facturas de Stripe ahora usan el email corporativo unificado (info@test.com)
 - June 30, 2025. CONSOLIDACIÓN DE BASE DE DATOS COMPLETADA: Eliminación definitiva de tabla company_configs
   - MIGRACIÓN EXITOSA: Todos los datos de configuración de empresa movidos a tabla companies
   - BACKEND ACTUALIZADO: Todas las funciones ahora usan companies table directamente
