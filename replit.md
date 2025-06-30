@@ -182,13 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- June 30, 2025. TAMAÑOS DE AVATARES OPTIMIZADOS: Reducción de píxeles para mejor proporción visual
-  - PROBLEMA RESUELTO: Avatares se percibían demasiado grandes visualmente en la interfaz
-  - AJUSTE APLICADO: Reducción de tamaños en getSizePixels() para proporciones más compactas
-  - NUEVOS TAMAÑOS: sm=28px (era 32px), md=32px (era 40px), lg=40px (era 48px)
-  - FUENTES AJUSTADAS: sm=11px, md=12px, lg=14px para mantener legibilidad
-  - BORDES OPTIMIZADOS: Reducidos para mantener proporción visual equilibrada
-  - RESULTADO: Avatares más compactos y proporcionalmente mejor integrados en la UI
+- June 30, 2025. TAMAÑOS DE AVATARES FINALMENTE AJUSTADOS: Equilibrio perfecto entre visibilidad y proporción
+  - ITERACIÓN FINAL: Ajustados a tamaños óptimos tras feedback del usuario para mejor visibilidad
+  - TAMAÑOS DEFINITIVOS: sm=30px, md=36px, lg=44px (equilibrio entre compacto y visible)
+  - FUENTES OPTIMIZADAS: sm=12px, md=13px, lg=15px para legibilidad perfecta
+  - BORDES MANTIENEN PROPORCIÓN: 2px para sm/md, 3px para lg
+  - RESULTADO FINAL: Avatares con visibilidad óptima sin ser demasiado grandes para la UI
 - June 30, 2025. PROBLEMA CRÍTICO DE COMANDOS SED SOLUCIONADO: Restauración precisa de tamaños de botones completada
   - CAUSA IDENTIFICADA: Comando sed anterior cambió accidentalmente Button components de size="sm" a size="md"
   - SOLUCIÓN APLICADA: Corrección selectiva para restaurar solo Button components a size="sm" manteniendo UserAvatar size="md"
