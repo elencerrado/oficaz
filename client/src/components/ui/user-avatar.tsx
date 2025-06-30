@@ -230,6 +230,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         style={{
           width: `${sizeConfig.size}px`,
           height: `${sizeConfig.size}px`,
+          minWidth: `${sizeConfig.size}px`,
+          minHeight: `${sizeConfig.size}px`,
+          maxWidth: `${sizeConfig.size}px`,
+          maxHeight: `${sizeConfig.size}px`,
           borderRadius: '50%',
           backgroundColor: colors.bg,
           color: colors.text,
@@ -238,7 +242,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           justifyContent: 'center',
           fontWeight: '500',
           fontSize: `${sizeConfig.fontSize}px`,
-          userSelect: 'none'
+          userSelect: 'none',
+          flexShrink: 0,
+          aspectRatio: '1'
         } as React.CSSProperties}
       >
         {getInitials(fullName)}
@@ -266,6 +272,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         style={{
           width: `${sizeConfig.size}px`,
           height: `${sizeConfig.size}px`,
+          minWidth: `${sizeConfig.size}px`,
+          minHeight: `${sizeConfig.size}px`,
+          maxWidth: `${sizeConfig.size}px`,
+          maxHeight: `${sizeConfig.size}px`,
           borderRadius: '50%',
           overflow: 'hidden',
           display: 'flex',
@@ -274,7 +284,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           userSelect: 'none',
           cursor: 'pointer',
           transition: 'opacity 0.2s',
-          opacity: 1
+          opacity: 1,
+          flexShrink: 0,
+          aspectRatio: '1'
         } as React.CSSProperties}
         onClick={() => fileInputRef.current?.click()}
         onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
@@ -323,7 +335,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               justifyContent: 'center',
               fontWeight: '500',
               fontSize: `${sizeConfig.fontSize}px`,
-              userSelect: 'none'
+              userSelect: 'none',
+              flexShrink: 0,
+              aspectRatio: '1'
             } as React.CSSProperties}
           >
             {getInitials(fullName)}

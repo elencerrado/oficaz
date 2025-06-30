@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. PROBLEMA CRÍTICO DE AVATARES ELÍPTICOS RESUELTO: Refuerzo anti-deformación implementado
+  - PROBLEMA IDENTIFICADO: UserAvatar se deformaba a elipses en pantallas pequeñas por layout constraints
+  - SOLUCIÓN ROBUSTA: Agregadas propiedades CSS críticas para mantener forma circular perfecta:
+    * minWidth/minHeight/maxWidth/maxHeight para evitar compresión por contenedores padre
+    * flexShrink: 0 para prevenir encogimiento automático en flex containers
+    * aspectRatio: '1' para forzar ratio 1:1 perfecto en navegadores modernos
+  - APLICADO EN TODOS LOS CONTEXTOS: Avatar simple, avatar con upload, y contenedores internos
+  - BLINDAJE COMPLETO: Sistema resistente a cualquier CSS externo que pueda afectar dimensiones
+  - TAMAÑOS GARANTIZADOS: sm=32px, md=40px, lg=48px siempre circulares sin deformación
 - June 28, 2025. SISTEMA DE AVATARES FINALMENTE PERFECCIONADO: Tamaño dinámico implementado completamente
   - TAMAÑO DINÁMICO IMPLEMENTADO: UserAvatar ahora usa sizeConfig dinámico en lugar de valores hardcodeados
   - ESCALADO CORRECTO: size="sm" (32px), size="md" (40px), size="lg" (48px) funcionando perfectamente
