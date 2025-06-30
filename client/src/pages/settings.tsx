@@ -277,7 +277,7 @@ const AccountManagement = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Email corporativo / facturación</Label>
-              <p className="text-sm text-gray-600">{accountInfo?.billing_email}</p>
+              <p className="text-sm text-gray-600">{company?.email}</p>
             </div>
           </div>
         </CardContent>
