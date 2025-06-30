@@ -33,6 +33,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import { useLocation } from 'wouter';
+import { getAuthData } from '@/lib/auth';
 
 interface DocumentRequest {
   id: number;
@@ -270,11 +271,12 @@ export default function Documents() {
 
   const handleDownload = (id: number, filename: string) => {
     // Create download link with token authentication  
-    const token = localStorage.getItem('token');
+    const authData = getAuthData();
+    const token = authData?.token;
     console.log('Frontend token for download:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
     
     if (!token) {
-      console.error('No authentication token found in localStorage');
+      console.error('No authentication token found in authData');
       toast({
         title: "Error de autenticación",
         description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
@@ -298,11 +300,12 @@ export default function Documents() {
 
   const handleViewDocument = (id: number, filename: string) => {
     // Open PDF directly in new tab with token authentication
-    const token = localStorage.getItem('token');
+    const authData = getAuthData();
+    const token = authData?.token;
     console.log('Frontend token for view:', token ? 'Token found (length: ' + token.length + ')' : 'No token found');
     
     if (!token) {
-      console.error('No authentication token found in localStorage for view');
+      console.error('No authentication token found in authData for view');
       toast({
         title: "Error de autenticación",
         description: "No se encontró token de autenticación. Inicia sesión de nuevo.",
