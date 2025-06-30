@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, j
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Companies table
+// Companies table - consolidada con configuraciones
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -18,23 +18,21 @@ export const companies = pgTable("companies", {
   defaultVacationDays: integer("default_vacation_days").default(30),
   vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"),
   logoUrl: text("logo_url"),
+  // Campos migrados desde company_configs
+  workingHoursStart: text("working_hours_start").default("08:00").notNull(),
+  workingHoursEnd: text("working_hours_end").default("17:00").notNull(),
+  workingDays: integer("working_days").array().default([1, 2, 3, 4, 5]).notNull(),
+  payrollSendDays: text("payroll_send_days").default("1").notNull(),
+  defaultVacationPolicy: decimal("default_vacation_policy", { precision: 3, scale: 1 }).default("2.5").notNull(),
+  language: text("language").default("es").notNull(),
+  timezone: text("timezone").default("Europe/Madrid").notNull(),
+  customAiRules: text("custom_ai_rules").default(""),
+  allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const companyConfigs = pgTable("company_configs", {
-  id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  workingHoursStart: text("working_hours_start").notNull().default("08:00"),
-  workingHoursEnd: text("working_hours_end").notNull().default("17:00"),
-  workingDays: integer("working_days").array().notNull().default([1, 2, 3, 4, 5]),
-  payrollSendDays: text("payroll_send_days").notNull().default("1"),
-  defaultVacationPolicy: decimal("default_vacation_policy", { precision: 3, scale: 1 }).notNull().default("2.5"),
-  language: text("language").notNull().default("es"),
-  timezone: text("timezone").notNull().default("Europe/Madrid"),
-  customAiRules: text("custom_ai_rules").default(""),
-  allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+
 
 // Super admin table for platform owner
 export const superAdmins = pgTable("super_admins", {
@@ -335,10 +333,7 @@ export const insertCompanySchema = createInsertSchema(companies).omit({
   createdAt: true,
 });
 
-export const insertCompanyConfigSchema = createInsertSchema(companyConfigs).omit({
-  id: true,
-  createdAt: true,
-});
+
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -402,6 +397,12 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   createdAt: true,
   updatedAt: true,
   features: true,
+});
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertAccountInfoSchema = createInsertSchema(accountInfo).omit({
@@ -481,7 +482,6 @@ export const companyRegistrationSchema = z.object({
 
 // Types
 export type Company = typeof companies.$inferSelect;
-export type CompanyConfig = typeof companyConfigs.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type WorkSession = typeof workSessions.$inferSelect;
 export type BreakPeriod = typeof breakPeriods.$inferSelect;
@@ -490,10 +490,9 @@ export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type SystemNotification = typeof systemNotifications.$inferSelect;
 export type DocumentNotification = typeof documentNotifications.$inferSelect;
-export type CustomHoliday = typeof customHolidays.$inferSelect;
+
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
-export type InsertCompanyConfig = z.infer<typeof insertCompanyConfigSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertWorkSession = z.infer<typeof insertWorkSessionSchema>;
 export type InsertBreakPeriod = z.infer<typeof insertBreakPeriodSchema>;
@@ -502,7 +501,6 @@ export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
 export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
-export type InsertCustomHoliday = z.infer<typeof insertCustomHolidaySchema>;
 export type InsertSuperAdmin = z.infer<typeof insertSuperAdminSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 
