@@ -190,6 +190,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           style={{
             width: `${sizeConfig.size}px`,
             height: `${sizeConfig.size}px`,
+            minWidth: `${sizeConfig.size}px`,
+            minHeight: `${sizeConfig.size}px`,
+            maxWidth: `${sizeConfig.size}px`,
+            maxHeight: `${sizeConfig.size}px`,
             border: `${sizeConfig.border}px solid ${colors.bg}`,
             padding: '2px',
             backgroundColor: 'white',
@@ -198,7 +202,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            userSelect: 'none'
+            userSelect: 'none',
+            flexShrink: 0,
+            aspectRatio: '1'
           } as React.CSSProperties}
         >
           <img 
