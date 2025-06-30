@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. CONSOLIDACIÓN DE BASE DE DATOS COMPLETADA: Eliminación definitiva de tabla company_configs
+  - MIGRACIÓN EXITOSA: Todos los datos de configuración de empresa movidos a tabla companies
+  - BACKEND ACTUALIZADO: Todas las funciones ahora usan companies table directamente
+  - TABLA ELIMINADA: company_configs completamente removida de la base de datos usando DROP TABLE
+  - SISTEMA LIMPIO: Ya no existen referencias a company_config en código ni base de datos
+  - FUNCIONALIDAD PRESERVADA: Cálculos de vacaciones y configuraciones funcionando normalmente
+  - CONSOLIDACIÓN TOTAL: Arquitectura simplificada con una sola tabla para datos de empresa
 - June 30, 2025. TAMAÑOS DE AVATARES FINALMENTE AJUSTADOS: Equilibrio perfecto entre visibilidad y proporción
   - ITERACIÓN FINAL: Ajustados a tamaños óptimos tras feedback del usuario para mejor visibilidad
   - TAMAÑOS DEFINITIVOS: sm=30px, md=36px, lg=44px (equilibrio entre compacto y visible)
