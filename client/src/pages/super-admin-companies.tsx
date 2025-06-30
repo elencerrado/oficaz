@@ -293,9 +293,19 @@ export default function SuperAdminCompanies() {
                     )}
                     <Badge 
                       variant={company.subscription.status === 'active' ? 'default' : 'secondary'}
-                      className={company.subscription.status === 'active' ? 'bg-emerald-500' : 'bg-gray-500'}
+                      className={
+                        company.subscription.status === 'active' 
+                          ? 'bg-emerald-500' 
+                          : company.subscription.status === 'trial' 
+                            ? 'bg-blue-500' 
+                            : 'bg-gray-500'
+                      }
                     >
-                      {company.subscription.status === 'active' ? 'Activo' : 'Inactivo'}
+                      {company.subscription.status === 'active' 
+                        ? 'Activo' 
+                        : company.subscription.status === 'trial' 
+                          ? 'Prueba' 
+                          : 'Inactivo'}
                     </Badge>
                   </div>
                 </div>

@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. BUG CRÍTICO DE ELIMINACIÓN PERMANENTE RESUELTO: Sistema super admin completamente funcional
+  - PROBLEMA RESUELTO: Error en eliminación permanente por tablas inexistentes (document_notifications, custom_holidays)
+  - ENDPOINT CORREGIDO: /api/super-admin/companies/:id/delete-permanently actualizado para usar solo tablas existentes
+  - SISTEMA VERIFICADO: Eliminación completa funciona correctamente eliminando datos en cascada
+  - STATUS BADGES CORREGIDOS: Empresas trial ahora muestran "Prueba" (azul), activas "Activo" (verde), inactivas "Inactivo" (gris)
+  - FUNCIONALIDAD COMPLETA: Super admin puede eliminar empresas permanentemente sin errores de base de datos
 - June 30, 2025. UNIFICACIÓN DE EMAIL CORPORATIVO Y FACTURACIÓN COMPLETADA: Sistema completamente coherente implementado
   - BACKEND UNIFICADO: billing_email ahora usa directamente company.email eliminando fallbacks complejos
   - STRIPE INTEGRADO: Endpoints create-setup-intent y confirm-payment-method usan company.email para customers
