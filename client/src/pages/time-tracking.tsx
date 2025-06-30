@@ -28,7 +28,7 @@ import {
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, startOfWeek, addDays, subDays, differenceInMinutes } from 'date-fns';
+import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -146,6 +146,50 @@ export default function TimeTracking() {
   const handleCancelEdit = useCallback(() => {
     setEditingSession(null);
     setEditData({ clockIn: '', clockOut: '', date: '' });
+  }, []);
+
+  // Quick filter functions for stats cards
+  const handleResetFilters = useCallback(() => {
+    setDateFilter('all');
+    setSelectedEmployee('all');
+    setStartDate('');
+    setEndDate('');
+    setSelectedStartDate(null);
+    setSelectedEndDate(null);
+  }, []);
+
+  const handleTodayFilter = useCallback(() => {
+    const today = new Date();
+    setDateFilter('custom');
+    setSelectedEmployee('all');
+    setStartDate(format(startOfDay(today), 'yyyy-MM-dd'));
+    setEndDate(format(endOfDay(today), 'yyyy-MM-dd'));
+    setSelectedStartDate(startOfDay(today));
+    setSelectedEndDate(endOfDay(today));
+  }, []);
+
+  const handleThisWeekFilter = useCallback(() => {
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    setDateFilter('custom');
+    setSelectedEmployee('all');
+    setStartDate(format(startOfDay(weekStart), 'yyyy-MM-dd'));
+    setEndDate(format(endOfDay(weekEnd), 'yyyy-MM-dd'));
+    setSelectedStartDate(startOfDay(weekStart));
+    setSelectedEndDate(endOfDay(weekEnd));
+  }, []);
+
+  const handleThisMonthFilter = useCallback(() => {
+    const today = new Date();
+    const monthStart = startOfMonth(today);
+    const monthEnd = endOfMonth(today);
+    setDateFilter('custom');
+    setSelectedEmployee('all');
+    setStartDate(format(startOfDay(monthStart), 'yyyy-MM-dd'));
+    setEndDate(format(endOfDay(monthEnd), 'yyyy-MM-dd'));
+    setSelectedStartDate(startOfDay(monthStart));
+    setSelectedEndDate(endOfDay(monthEnd));
   }, []);
 
   // ⚠️ PROTECTED: Time calculation function - CRITICAL FOR ACCURACY
@@ -1377,6 +1421,7 @@ export default function TimeTracking() {
           value={`${employeesWithSessions}/${totalEmployees}`}
           color="green"
           icon={Users}
+          onClick={handleResetFilters}
         />
         
         <StatsCard
@@ -1385,6 +1430,7 @@ export default function TimeTracking() {
           value={`${averageHoursPerEmployee.toFixed(1)}h`}
           color="orange"
           icon={TrendingUp}
+          onClick={handleTodayFilter}
         />
         
         <StatsCard
@@ -1393,6 +1439,7 @@ export default function TimeTracking() {
           value={`${averageHoursPerWeek.toFixed(1)}h`}
           color="blue"
           icon={CalendarDays}
+          onClick={handleThisWeekFilter}
         />
         
         <StatsCard
@@ -1401,6 +1448,7 @@ export default function TimeTracking() {
           value={`${averageHoursPerMonth.toFixed(1)}h`}
           color="purple"
           icon={BarChart3}
+          onClick={handleThisMonthFilter}
         />
       </div>
 
