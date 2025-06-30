@@ -3489,6 +3489,149 @@ startxref
     }
   });
 
+  // DANGER ZONE: Delete company account permanently
+  app.delete('/api/account/delete-permanently', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      const { confirmationText } = req.body;
+
+      // Security confirmation check
+      if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
+        return res.status(400).json({ 
+          message: 'Confirmación incorrecta. Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"' 
+        });
+      }
+
+      console.log(`🚨 CRITICAL: Starting permanent deletion of company ${companyId} initiated by user ${userId}`);
+
+      // Get company data for logging
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      console.log(`🚨 DELETING COMPANY: ${company.name} (ID: ${companyId})`);
+
+      // 1. Delete all work sessions and break periods for all users in the company
+      await db.execute(sql`
+        DELETE FROM break_periods 
+        WHERE work_session_id IN (
+          SELECT id FROM work_sessions 
+          WHERE user_id IN (
+            SELECT id FROM users WHERE company_id = ${companyId}
+          )
+        )
+      `);
+      console.log('✅ Deleted break periods');
+
+      await db.execute(sql`
+        DELETE FROM work_sessions 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted work sessions');
+
+      // 2. Delete all vacation requests
+      await db.execute(sql`
+        DELETE FROM vacation_requests 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted vacation requests');
+
+      // 3. Delete all documents
+      await db.execute(sql`
+        DELETE FROM documents 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted documents');
+
+      // 4. Delete all messages (sent and received)
+      await db.execute(sql`
+        DELETE FROM messages 
+        WHERE sender_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        ) OR receiver_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted messages');
+
+      // 5. Delete all notifications
+      await db.execute(sql`
+        DELETE FROM notifications 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted notifications');
+
+      // 6. Delete all document notifications
+      await db.execute(sql`
+        DELETE FROM document_notifications 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted document notifications');
+
+      // 7. Delete all reminders
+      await db.execute(sql`
+        DELETE FROM reminders 
+        WHERE user_id IN (
+          SELECT id FROM users WHERE company_id = ${companyId}
+        )
+      `);
+      console.log('✅ Deleted reminders');
+
+      // 8. Delete all custom holidays
+      await db.execute(sql`
+        DELETE FROM custom_holidays 
+        WHERE company_id = ${companyId}
+      `);
+      console.log('✅ Deleted custom holidays');
+
+      // 9. Delete subscription
+      await db.execute(sql`
+        DELETE FROM subscriptions 
+        WHERE company_id = ${companyId}
+      `);
+      console.log('✅ Deleted subscription');
+
+      // 10. Delete all users from this company
+      await db.execute(sql`
+        DELETE FROM users 
+        WHERE company_id = ${companyId}
+      `);
+      console.log('✅ Deleted all users');
+
+      // 11. Finally, delete the company
+      await db.execute(sql`
+        DELETE FROM companies 
+        WHERE id = ${companyId}
+      `);
+      console.log('✅ Deleted company');
+
+      console.log(`🚨 PERMANENT DELETION COMPLETED: Company ${company.name} and all associated data has been permanently removed from the database`);
+
+      res.json({ 
+        success: true,
+        message: `La empresa "${company.name}" y todos sus datos han sido eliminados permanentemente.`
+      });
+
+    } catch (error) {
+      console.error('🚨 CRITICAL ERROR during permanent deletion:', error);
+      res.status(500).json({ 
+        message: 'Error crítico durante la eliminación. Contacta con el soporte técnico inmediatamente.' 
+      });
+    }
+  });
+
   // Public endpoint to validate invitation token
   app.get('/api/invitations/validate/:token', async (req, res) => {
     try {

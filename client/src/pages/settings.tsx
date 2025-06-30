@@ -487,7 +487,11 @@ const AccountManagement = () => {
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Pausar cuenta temporalmente
               </Button>
-              <Button variant="outline" className="justify-start border-red-200 text-red-700 hover:bg-red-50">
+              <Button 
+                variant="outline" 
+                className="justify-start border-red-200 text-red-700 hover:bg-red-50"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
                 <X className="mr-2 h-4 w-4" />
                 Cancelar cuenta permanentemente
               </Button>
@@ -508,6 +512,87 @@ const AccountManagement = () => {
           <PaymentMethodManager paymentMethods={paymentMethods || []} />
         </DialogContent>
       </Dialog>
+
+      {/* Modal de eliminación permanente */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center space-x-2">
+              <X className="h-5 w-5" />
+              <span>Eliminar cuenta permanentemente</span>
+            </DialogTitle>
+            <DialogDescription className="text-gray-700">
+              Esta acción eliminará completamente tu empresa y todos los datos asociados de forma permanente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                <div className="text-sm text-red-700">
+                  <p className="font-semibold mb-2">⚠️ ADVERTENCIA: Esta acción es irreversible</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Se eliminarán todos los usuarios y empleados</li>
+                    <li>• Se perderán todos los fichajes y datos de trabajo</li>
+                    <li>• Se eliminarán todas las vacaciones y documentos</li>
+                    <li>• Se borrarán todos los mensajes y notificaciones</li>
+                    <li>• Se cancelará automáticamente la suscripción</li>
+                    <li>• Los datos NO se pueden recuperar después</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="confirmationInput" className="text-sm font-medium text-gray-700">
+                Para confirmar, escribe exactamente: <span className="font-mono bg-gray-100 px-1 rounded">ELIMINAR PERMANENTEMENTE</span>
+              </Label>
+              <Input
+                id="confirmationInput"
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
+                placeholder="Escribe aquí..."
+                className="mt-2"
+                disabled={isDeleting}
+              />
+            </div>
+
+            <div className="flex space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setConfirmationText('');
+                  setIsDeleting(false);
+                }}
+                disabled={isDeleting}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={confirmationText !== 'ELIMINAR PERMANENTEMENTE' || isDeleting}
+                className="flex-1"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Eliminar para siempre
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -519,6 +604,11 @@ const AccountManagement = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Delete account modal states
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // User profile data
   const [profileData, setProfileData] = useState({
@@ -720,6 +810,63 @@ const AccountManagement = () => {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  // Permanent account deletion
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (confirmationText: string) => {
+      const response = await fetch('/api/account/delete-permanently', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ confirmationText }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar la cuenta');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Cuenta eliminada",
+        description: data.message,
+      });
+      
+      // Clear all auth data and redirect to landing
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Force page reload to landing
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al eliminar cuenta",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
+      toast({
+        title: "Error de confirmación",
+        description: 'Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"',
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDeleting(true);
+    deleteAccountMutation.mutate(confirmationText);
   };
 
   // Employee profile view for non-admin users
