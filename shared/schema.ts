@@ -295,18 +295,7 @@ export const systemNotifications = pgTable("notifications", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Legacy document notifications table (keep for backward compatibility)
-export const documentNotifications = pgTable("document_notifications", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  documentType: text("document_type").notNull(), // 'DNI', 'passport', etc.
-  message: text("message").notNull(),
-  dueDate: timestamp("due_date"),
-  priority: text("priority").notNull().default('medium'), // 'low', 'medium', 'high'
-  isCompleted: boolean("is_completed").default(false).notNull(),
-  createdBy: integer("created_by").references(() => users.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+
 
 // Reminders table - Google Keep style reminders
 export const reminders = pgTable("reminders", {
@@ -375,10 +364,7 @@ export const insertNotificationSchema = createInsertSchema(systemNotifications).
   updatedAt: true,
 });
 
-export const insertDocumentNotificationSchema = createInsertSchema(documentNotifications).omit({
-  id: true,
-  createdAt: true,
-});
+
 
 export const insertReminderSchema = createInsertSchema(reminders).omit({
   id: true,
@@ -489,7 +475,7 @@ export type VacationRequest = typeof vacationRequests.$inferSelect;
 export type Document = typeof documents.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type SystemNotification = typeof systemNotifications.$inferSelect;
-export type DocumentNotification = typeof documentNotifications.$inferSelect;
+
 
 
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
@@ -500,7 +486,7 @@ export type InsertVacationRequest = z.infer<typeof insertVacationRequestSchema>;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertSystemNotification = z.infer<typeof insertNotificationSchema>;
-export type InsertDocumentNotification = z.infer<typeof insertDocumentNotificationSchema>;
+
 export type InsertSuperAdmin = z.infer<typeof insertSuperAdminSchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 

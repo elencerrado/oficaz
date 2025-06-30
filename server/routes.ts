@@ -1357,17 +1357,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create document notifications for each employee
+      // Create document notifications for each employee using unified system
       const notifications = [];
       for (const employeeId of employeeIds) {
-        const notification = await storage.createDocumentNotification({
-          userId: employeeId,
+        const notification = await storage.createDocumentNotification(
+          employeeId,
           documentType,
-          message: message || `Por favor, sube tu ${documentType}`,
-          dueDate: dueDate ? new Date(dueDate) : null,
-          isCompleted: false,
-          createdBy: req.user!.id, // Add the admin who created the request
-        });
+          message || `Por favor, sube tu ${documentType}`,
+          req.user!.id, // createdBy
+          'medium', // priority
+          dueDate ? new Date(dueDate) : undefined // dueDate
+        );
         notifications.push(notification);
       }
 
@@ -2196,7 +2196,7 @@ startxref
     }
   });
 
-  // Legacy document notifications endpoints (backward compatibility)
+  // Document notifications using unified notifications system
   app.get('/api/document-notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
@@ -2221,7 +2221,7 @@ startxref
   app.patch('/api/document-notifications/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const notification = await storage.markDocumentNotificationCompleted(id);
+      const notification = await storage.markNotificationCompleted(id);
       
       if (!notification) {
         return res.status(404).json({ message: 'Notification not found' });
@@ -2236,7 +2236,7 @@ startxref
   app.delete('/api/document-notifications/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteDocumentNotification(id);
+      const success = await storage.deleteNotification(id);
       
       if (!success) {
         return res.status(404).json({ message: 'Notification not found' });

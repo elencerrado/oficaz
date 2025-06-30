@@ -3,8 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import { eq, and, or, desc, sql, lte, isNotNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
-  Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, DocumentNotification, SystemNotification,
-  InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertDocumentNotification, InsertSystemNotification,
+  Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
+  InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertSystemNotification,
   Reminder, InsertReminder, SuperAdmin, InsertSuperAdmin, 
   Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan
 } from '@shared/schema';
@@ -80,12 +80,11 @@ export interface IStorage {
   getUnreadNotificationCount(userId: number): Promise<number>;
   getUnreadNotificationCountByCategory(userId: number, category: string): Promise<number>;
 
-  // Document Notifications (legacy - backward compatibility) 
-  getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]>;
-  getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]>;
-  createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification>;
-  markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined>;
-  deleteDocumentNotification(id: number): Promise<boolean>;
+  // Document Notifications using unified notifications system
+  getDocumentNotificationsByUser(userId: number): Promise<SystemNotification[]>;
+  getDocumentNotificationsByCompany(companyId: number): Promise<SystemNotification[]>;
+  createDocumentNotification(userId: number, documentType: string, message: string, createdBy: number, priority?: string, dueDate?: Date): Promise<SystemNotification>;
+  deleteNotification(id: number): Promise<boolean>;
 
   // Custom Holidays - using any type for now since schema is not fully defined
   getCustomHolidaysByCompany(companyId: number): Promise<any[]>;
@@ -485,96 +484,69 @@ export class DrizzleStorage implements IStorage {
     return result.count;
   }
 
-  // Document Notifications methods
-  async getDocumentNotificationsByUser(userId: number): Promise<DocumentNotification[]> {
+  // Document Notifications methods using unified notifications
+  async getDocumentNotificationsByUser(userId: number): Promise<SystemNotification[]> {
+    return await db.select().from(schema.systemNotifications)
+      .where(and(
+        eq(schema.systemNotifications.userId, userId),
+        eq(schema.systemNotifications.type, 'document')
+      ))
+      .orderBy(desc(schema.systemNotifications.createdAt));
+  }
+
+  async getDocumentNotificationsByCompany(companyId: number): Promise<SystemNotification[]> {
     const results = await db.execute(sql`
       SELECT 
-        dn.id,
-        dn.user_id as "userId",
-        dn.document_type as "documentType", 
-        dn.message,
-        dn.is_completed as "isCompleted",
-        dn.due_date as "dueDate",
-        dn.created_at as "createdAt",
+        n.*,
         u.full_name as "userFullName"
-      FROM document_notifications dn
-      LEFT JOIN users u ON dn.user_id = u.id  
-      WHERE dn.user_id = ${userId}
-      ORDER BY dn.created_at DESC
+      FROM notifications n
+      LEFT JOIN users u ON n.user_id = u.id  
+      WHERE u.company_id = ${companyId} AND n.type = 'document'
+      ORDER BY n.created_at DESC
     `);
 
     return results.rows.map((row: any) => ({
       id: row.id,
-      userId: row.userId,
-      documentType: row.documentType,
+      userId: row.user_id,
+      type: row.type,
+      category: row.category,
+      title: row.title,
       message: row.message,
-      isCompleted: row.isCompleted,
-      dueDate: row.dueDate,
-      createdAt: row.createdAt,
-      user: {
-        id: row.userId,
-        fullName: row.userFullName || 'Empleado',
-        email: ''
-      }
-    })) as DocumentNotification[];
+      actionUrl: row.action_url,
+      dueDate: row.due_date,
+      priority: row.priority,
+      isRead: row.is_read,
+      isCompleted: row.is_completed,
+      metadata: row.metadata,
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    })) as SystemNotification[];
   }
 
-  async getDocumentNotificationsByCompany(companyId: number): Promise<DocumentNotification[]> {
-    const results = await db.execute(sql`
-      SELECT 
-        dn.id,
-        dn.user_id as "userId",
-        dn.document_type as "documentType", 
-        dn.message,
-        dn.is_completed as "isCompleted",
-        dn.due_date as "dueDate",
-        dn.created_at as "createdAt",
-        u.full_name as "userFullName",
-        d.id as "documentId",
-        d.file_name as "documentFileName",
-        d.original_name as "documentOriginalName",
-        d.created_at as "documentUploadedAt"
-      FROM document_notifications dn
-      LEFT JOIN users u ON dn.user_id = u.id  
-      LEFT JOIN documents d ON d.user_id = dn.user_id 
-        AND d.original_name ILIKE CONCAT('%', dn.document_type, '%')
-        AND d.created_at > dn.created_at
-      WHERE u.company_id = ${companyId}
-      ORDER BY dn.created_at DESC
-    `);
-
-    return results.rows.map((row: any) => ({
-      id: row.id,
-      userId: row.userId,
-      documentType: row.documentType,
-      message: row.message,
-      isCompleted: row.isCompleted,
-      dueDate: row.dueDate,
-      createdAt: row.createdAt,
-      user: {
-        id: row.userId,
-        fullName: row.userFullName || 'Empleado',
-        email: ''
-      },
-      document: row.documentId ? {
-        id: row.documentId,
-        fileName: row.documentFileName,
-        originalName: row.documentOriginalName,
-        uploadedAt: row.documentUploadedAt
-      } : null
-    })) as DocumentNotification[];
-  }
-
-  async createDocumentNotification(notification: InsertDocumentNotification): Promise<DocumentNotification> {
+  async createDocumentNotification(userId: number, documentType: string, message: string, createdBy: number, priority: string = 'medium', dueDate?: Date): Promise<SystemNotification> {
+    const notification: InsertSystemNotification = {
+      userId,
+      type: 'document',
+      category: 'documents',
+      title: `Documento solicitado: ${documentType}`,
+      message,
+      priority,
+      dueDate,
+      isRead: false,
+      isCompleted: false,
+      metadata: JSON.stringify({ documentType }),
+      createdBy
+    };
+    
     const [result] = await db
-      .insert(schema.documentNotifications)
+      .insert(schema.systemNotifications)
       .values(notification)
       .returning();
     return result;
   }
 
   async markNotificationCompleted(id: number): Promise<SystemNotification | undefined> {
-    // This method is for the unified notification system
     const [result] = await db.update(schema.systemNotifications)
       .set({ isCompleted: true, updatedAt: new Date() })
       .where(eq(schema.systemNotifications.id, id))
@@ -582,19 +554,9 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
-  // Legacy document notification method (backward compatibility)
-  async markDocumentNotificationCompleted(id: number): Promise<DocumentNotification | undefined> {
-    const [result] = await db
-      .update(schema.documentNotifications)
-      .set({ isCompleted: true })
-      .where(eq(schema.documentNotifications.id, id))
-      .returning();
-    return result;
-  }
-
-  async deleteDocumentNotification(id: number): Promise<boolean> {
-    const result = await db.delete(schema.documentNotifications)
-      .where(eq(schema.documentNotifications.id, id));
+  async deleteNotification(id: number): Promise<boolean> {
+    const result = await db.delete(schema.systemNotifications)
+      .where(eq(schema.systemNotifications.id, id));
     return result.rowCount > 0;
   }
 

@@ -84,15 +84,21 @@ export default function Documents() {
     enabled: !!user,
   });
 
-  // Convert notifications to DocumentRequest format
-  const documentRequests: DocumentRequest[] = (documentNotifications as any[] || []).map((notification: any) => ({
-    id: notification.id,
-    type: notification.documentType,
-    message: notification.message,
-    dueDate: notification.dueDate,
-    priority: notification.priority,
-    completed: notification.isCompleted
-  }));
+  // Convert unified notifications to DocumentRequest format
+  const documentRequests: DocumentRequest[] = (documentNotifications as any[] || []).map((notification: any) => {
+    // Parse documentType from metadata or title
+    const metadata = notification.metadata ? JSON.parse(notification.metadata) : {};
+    const documentType = metadata.documentType || notification.title?.replace('Documento solicitado: ', '') || 'Documento';
+    
+    return {
+      id: notification.id,
+      type: documentType,
+      message: notification.message,
+      dueDate: notification.dueDate,
+      priority: notification.priority || 'medium',
+      completed: notification.isCompleted
+    };
+  });
 
   // Get pending document request
   const pendingRequest = documentRequests.find((req: any) => !req.completed);
