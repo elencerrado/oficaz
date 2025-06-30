@@ -498,9 +498,18 @@ export class DrizzleStorage implements IStorage {
     const results = await db.execute(sql`
       SELECT 
         n.*,
-        u.full_name as "userFullName"
+        u.full_name as "userFullName",
+        d.id as "documentId",
+        d.original_name as "documentOriginalName",
+        d.file_size as "documentFileSize",
+        d.created_at as "documentCreatedAt"
       FROM notifications n
       LEFT JOIN users u ON n.user_id = u.id  
+      LEFT JOIN documents d ON (
+        d.user_id = n.user_id AND 
+        d.created_at > n.created_at AND
+        n.is_completed = true
+      )
       WHERE u.company_id = ${companyId} AND n.type = 'document'
       ORDER BY n.created_at DESC
     `);
@@ -520,7 +529,25 @@ export class DrizzleStorage implements IStorage {
       metadata: row.metadata,
       createdBy: row.created_by,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      // Add user information for frontend
+      user: row.userFullName ? { fullName: row.userFullName } : undefined,
+      // Add document information when available
+      document: row.documentId ? {
+        id: row.documentId,
+        originalName: row.documentOriginalName,
+        fileSize: row.documentFileSize,
+        createdAt: row.documentCreatedAt
+      } : undefined,
+      // Add documentType from metadata for frontend compatibility
+      documentType: (() => {
+        try {
+          const metadata = row.metadata ? JSON.parse(row.metadata) : {};
+          return metadata.documentType || row.title?.replace('Documento solicitado: ', '') || 'Documento';
+        } catch {
+          return row.title?.replace('Documento solicitado: ', '') || 'Documento';
+        }
+      })()
     })) as SystemNotification[];
   }
 
