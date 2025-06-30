@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. PROBLEMA CRÍTICO DE COMANDOS SED SOLUCIONADO: Restauración precisa de tamaños de botones completada
+  - CAUSA IDENTIFICADA: Comando sed anterior cambió accidentalmente Button components de size="sm" a size="md"
+  - SOLUCIÓN APLICADA: Corrección selectiva para restaurar solo Button components a size="sm" manteniendo UserAvatar size="md"
+  - MÉTODO UTILIZADO: Comando sed específico para Button con patrón /Button/,/onClick/ para precision quirúrgica
+  - AVATARES PRESERVADOS: Todos los UserAvatar mantienen correctamente size="md" (40px) según estándar unificado
+  - RESULTADO FINAL: Botones con size="sm" para UI compacta, avatares con size="md" para visibilidad perfecta
+  - LECCIÓN TÉCNICA: Los comandos sed requieren patrones precisos para evitar efectos colaterales en componentes similares
 - June 30, 2025. SISTEMA DE AVATARES COMPLETAMENTE UNIFICADO: Consistencia total de tamaños y formas garantizada
   - PROBLEMA RAÍZ IDENTIFICADO: Componente Avatar de shadcn/ui tenía tamaño fijo h-10 w-10 (40px) vs UserAvatar dinámico (32px/40px/48px)
   - SOLUCIÓN DEFINITIVA: Aplicadas propiedades anti-deformación idénticas a componente Avatar de shadcn

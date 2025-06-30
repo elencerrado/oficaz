@@ -509,7 +509,7 @@ export default function EmployeesSimple() {
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <UserAvatar fullName={employee.fullName || ''} size="lg" />
+                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>

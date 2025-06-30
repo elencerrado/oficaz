@@ -770,7 +770,7 @@ export default function Messages() {
                 </Button>
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
-                  size="md" 
+                  size="sm" 
                   userId={selectedChatUser?.id}
                 />
                 <div>
@@ -981,7 +981,7 @@ export default function Messages() {
                         
                         <UserAvatar 
                           fullName={employee.fullName || ''} 
-                          size="sm" 
+                          size="md" 
                           userId={employee.id}
                         />
                         
@@ -1089,7 +1089,7 @@ export default function Messages() {
                       <div className="flex items-center space-x-4">
                         <UserAvatar 
                           fullName={manager.fullName || ''} 
-                          size="lg" 
+                          size="md" 
                           userId={manager.id}
                         />
                         
@@ -1155,7 +1155,7 @@ export default function Messages() {
                 </Button>
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
-                  size="md" 
+                  size="sm" 
                   userId={selectedChatUser?.id}
                 />
                 <div>
