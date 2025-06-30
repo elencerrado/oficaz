@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- June 30, 2025. SISTEMA DE AVATARES COMPLETAMENTE UNIFICADO: Consistencia total de tamaños y formas garantizada
+  - PROBLEMA RAÍZ IDENTIFICADO: Componente Avatar de shadcn/ui tenía tamaño fijo h-10 w-10 (40px) vs UserAvatar dinámico (32px/40px/48px)
+  - SOLUCIÓN DEFINITIVA: Aplicadas propiedades anti-deformación idénticas a componente Avatar de shadcn
+  - PROPIEDADES CRÍTICAS AÑADIDAS: min-w/min-h/max-w/max-h-[40px], flexShrink: 0, aspectRatio: '1'
+  - LIMPIEZA DE CÓDIGO: Eliminadas importaciones innecesarias de Avatar en mobile-header.tsx y employees-simple.tsx
+  - CONSISTENCIA GARANTIZADA: Ambos sistemas de avatares (UserAvatar y shadcn Avatar) ahora perfectamente alineados
+  - SISTEMA BLINDADO: Resistente a deformaciones por CSS externo en cualquier contexto de layout
+  - RESULTADO FINAL: Tamaños uniformes y formas circulares perfectas en toda la aplicación
 - June 30, 2025. PROBLEMA CRÍTICO DE AVATARES ELÍPTICOS RESUELTO: Refuerzo anti-deformación implementado
   - PROBLEMA IDENTIFICADO: UserAvatar se deformaba a elipses en pantallas pequeñas por layout constraints
   - SOLUCIÓN ROBUSTA: Agregadas propiedades CSS críticas para mantener forma circular perfecta:

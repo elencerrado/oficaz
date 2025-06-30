@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
@@ -65,7 +64,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
           <Menu className="text-gray-600" size={20} />
         </Button>
         {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-        {shouldShowLogo ? (
+        {shouldShowLogo && company.logoUrl ? (
           <img 
             src={company.logoUrl} 
             alt={company.name} 
