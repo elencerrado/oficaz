@@ -182,6 +182,18 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. TAMAÑOS DE AVATARES UNIFICADOS COMPLETAMENTE: Sistema estandarizado a 40px para máxima consistencia
+  - PROBLEMA RESUELTO: Diferencias de tamaño entre páginas (fichajes vs vacaciones vs mensajes)
+  - SOLUCIÓN TÉCNICA: UserAvatar ahora usa tamaño fijo 40px independientemente del prop size
+  - RESULTADO: Todos los avatares (sm/md/lg) ahora tienen dimensiones idénticas 40x40px
+  - MEJORA VISUAL: Tamaño aumentado de 30-44px a 40px uniforme para mejor visibilidad
+  - CONSISTENCIA TOTAL: Mismas dimensiones en fichajes, vacaciones, mensajes, empleados y todas las páginas
+- July 1, 2025. BUG CRÍTICO DE TRANSFORMACIÓN DE DATOS RESUELTO: Campo profilePicture perdido en agrupación
+  - PROBLEMA IDENTIFICADO: time-tracking.tsx perdía campo profilePicture durante agrupación de sesiones por día
+  - CAUSA TÉCNICA: Línea 1720 no incluía profilePicture en objeto de agrupación sessionsByDay
+  - SOLUCIÓN APLICADA: Agregado profilePicture: session.profilePicture a lógica de agrupación
+  - VERIFICACIÓN: Andrés González ahora muestra foto consistentemente en fichajes y vacaciones
+  - SISTEMA BLINDADO: Avatar photo-only funcionando correctamente en toda la aplicación
 - July 1, 2025. SISTEMA DE AVATARES COMPLETAMENTE REDISEÑADO: Solo avatares tipo foto en toda la aplicación
   - ELIMINADOS AVATARES DE INICIALES: Ya no existen divs con texto, todo son imágenes
   - SISTEMA UNIFICADO: profilePicture real o avatar generado automáticamente con UI Avatars API

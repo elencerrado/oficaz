@@ -158,14 +158,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     return colorPairs[id % colorPairs.length];
   };
 
-  // Tamaños dinámicos en pixeles para estilos inline - AJUSTADOS para visibilidad óptima
+  // Tamaño unificado más grande para todos los avatares - CONSISTENCIA TOTAL
   const getSizePixels = (size: 'sm' | 'md' | 'lg') => {
-    switch (size) {
-      case 'sm': return { size: 30, fontSize: 12, border: 2 };
-      case 'md': return { size: 36, fontSize: 13, border: 2 };
-      case 'lg': return { size: 44, fontSize: 15, border: 3 };
-      default: return { size: 30, fontSize: 12, border: 2 };
-    }
+    // TODOS los tamaños ahora usan las mismas dimensiones para máxima consistencia
+    return { size: 40, fontSize: 14, border: 2 };
   };
 
   // Si no se necesita upload, usar el renderizado simple original
