@@ -185,11 +185,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 - July 1, 2025. BUG CRÍTICO DE DISPLAY DE ROLES EN CHAT RESUELTO: Sistema de mensajes empleado completamente funcional
   - PROBLEMA RESUELTO: Admin Andrés aparecía como "sin cargo definido" en chat de empleados
   - CAUSA IDENTIFICADA: Múltiples ubicaciones usaban campos inexistentes (jobTitle, position) en base de datos
-  - SOLUCIÓN APLICADA: Corregidas TODAS las instancias para usar descripciones basadas en rol
-  - MAPEO ESPAÑOL IMPLEMENTADO: admin="Director General", manager="Responsable", employee="Empleado"
+  - SOLUCIÓN APLICADA: Sistema ahora usa campo position dinámico del perfil con fallback inteligente
+  - BACKEND CORREGIDO: /api/managers endpoint ahora incluye campo position para datos completos
+  - FRONTEND CORREGIDO: Todas las ubicaciones usan position || fallback role-based descriptions
+  - MAPEO ESPAÑOL FALLBACK: admin="Director General", manager="Responsable", employee="Empleado"
   - UBICACIONES CORREGIDAS: getRoleDisplay función, lista de managers, header de chat individual
-  - FUNCIONALIDAD RESTAURADA: Chat empleado ahora muestra roles correctos en todas las vistas
-  - SISTEMA VERIFICADO: Todos los roles se muestran correctamente con iconos de colores distintivos
+  - FUNCIONALIDAD RESTAURADA: Chat muestra cargo real del perfil o fallback según rol
+  - SISTEMA VERIFICADO: Roles dinámicos funcionando correctamente en todas las vistas del chat
 - June 30, 2025. BUG CRÍTICO DE DESCARGA DE DOCUMENTOS RESUELTO: Sistema empleado completamente funcional
   - PROBLEMA RESUELTO: Error "invalid or expired token" en descarga de documentos empleado
   - CAUSA IDENTIFICADA: Frontend enviaba token por query param pero backend solo aceptaba headers Authorization

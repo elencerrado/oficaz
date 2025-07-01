@@ -365,20 +365,21 @@ export default function Messages() {
 
 
 
-  // Role display helper with icons - shows role-based descriptions
+  // Role display helper with icons - shows position from user profile
   const getRoleDisplay = useCallback((person: any) => {
     if (!person) return null;
     
     const role = person.role || 'employee';
     
-    // Map roles to Spanish descriptions
-    const roleDescriptions = {
-      admin: 'Director General',
-      manager: 'Responsable',
-      employee: 'Empleado'
-    };
-    
-    const displayText = roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+    // Use position field if available, otherwise fallback to role-based descriptions
+    const displayText = person.position || (() => {
+      const roleDescriptions = {
+        admin: 'Director General',
+        manager: 'Responsable',
+        employee: 'Empleado'
+      };
+      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+    })();
     
     const roleConfig = {
       admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
@@ -1113,7 +1114,7 @@ export default function Messages() {
                             )}
                           </div>
                           <div className="text-white/70 text-xs mt-1">
-                            {(() => {
+                            {manager.position || (() => {
                               const role = manager.role || 'employee';
                               const roleDescriptions = {
                                 admin: 'Director General',
@@ -1179,7 +1180,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-white/70">
-                    {(() => {
+                    {selectedChatUser?.position || (() => {
                       const role = selectedChatUser?.role || 'employee';
                       const roleDescriptions = {
                         admin: 'Director General',
