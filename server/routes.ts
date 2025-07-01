@@ -15,6 +15,7 @@ import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, in
 import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { subscriptions, companies } from '@shared/schema';
+import { sendEmployeeWelcomeEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -657,6 +658,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error(`[SECURITY] Login error: ${error.message}`);
       res.status(400).json({ message: 'Error en el inicio de sesión' });
+    }
+  });
+
+  // Employee activation routes
+  app.get('/api/auth/verify-activation-token', async (req, res) => {
+    try {
+      const { token } = req.query;
+
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ message: 'Token requerido' });
+      }
+
+      const activationToken = await storage.getActivationToken(token);
+      if (!activationToken) {
+        return res.status(404).json({ message: 'Token inválido o expirado' });
+      }
+
+      // Get user and company information
+      const user = await storage.getUser(activationToken.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      const company = await storage.getCompany(user.companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      res.json({
+        employeeName: user.fullName,
+        companyName: company.name,
+        email: activationToken.email
+      });
+    } catch (error: any) {
+      console.error('Error verifying activation token:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/auth/activate-account', async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token y contraseña requeridos' });
+      }
+
+      // Verify token
+      const activationToken = await storage.getActivationToken(token);
+      if (!activationToken) {
+        return res.status(404).json({ message: 'Token inválido o expirado' });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Update user with password and mark as activated
+      await storage.updateUser(activationToken.userId, {
+        password: hashedPassword,
+        isPendingActivation: false,
+        activatedAt: new Date()
+      });
+
+      // Mark token as used
+      await storage.markTokenAsUsed(activationToken.id);
+
+      res.json({ 
+        success: true, 
+        message: 'Cuenta activada correctamente' 
+      });
+    } catch (error: any) {
+      console.error('Error activating account:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
 
@@ -1705,7 +1779,12 @@ startxref
 
   app.post('/api/employees', authenticateToken, requireRole(['admin', 'manager']), async (req, res) => {
     try {
-      const { companyEmail, fullName, dni, role, password, companyPhone, startDate, totalVacationDays } = req.body;
+      const { companyEmail, fullName, dni, role, companyPhone, startDate, totalVacationDays } = req.body;
+      
+      // Validate required fields
+      if (!fullName || !dni || !companyEmail) {
+        return res.status(400).json({ message: 'Nombre completo, DNI y email son obligatorios' });
+      }
       
       // Check if user already exists within the same company by DNI
       const existingUser = await storage.getUserByDniAndCompany(dni, (req as AuthRequest).user!.companyId);
@@ -1718,12 +1797,10 @@ startxref
         return res.status(400).json({ message: 'Email ya existe' });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
+      // Create user without password (pending activation)
       const user = await storage.createUser({
         companyEmail,
-        password: hashedPassword,
+        password: '', // Empty password initially 
         fullName,
         dni,
         role: role || 'employee',
@@ -1731,11 +1808,47 @@ startxref
         companyPhone: companyPhone || null,
         startDate: startDate ? new Date(startDate) : new Date(),
         isActive: true,
+        isPendingActivation: true,
         totalVacationDays: totalVacationDays || "22.0",
         createdBy: (req as AuthRequest).user!.id,
       });
 
-      res.status(201).json({ ...user, password: undefined });
+      // Create activation token
+      const activationToken = await storage.createActivationToken({
+        userId: user.id,
+        email: companyEmail,
+        token: crypto.randomBytes(32).toString('hex'),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        createdBy: (req as AuthRequest).user!.id
+      });
+
+      // Get company information for email
+      const company = await storage.getCompany((req as AuthRequest).user!.companyId);
+      if (!company) {
+        return res.status(500).json({ message: 'Error obteniendo información de empresa' });
+      }
+
+      // Send activation email
+      const activationLink = `${req.protocol}://${req.get('host')}/employee-activation?token=${activationToken.token}`;
+      
+      const emailSent = await sendEmployeeWelcomeEmail(
+        companyEmail,
+        fullName,
+        company.name,
+        activationToken.token,
+        activationLink
+      );
+
+      if (!emailSent) {
+        console.error('Failed to send activation email for employee:', companyEmail);
+        // Don't fail the creation, just log the error
+      }
+
+      res.status(201).json({ 
+        ...user, 
+        password: undefined,
+        message: `Empleado creado exitosamente. Se ha enviado un email de activación a ${companyEmail}`
+      });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

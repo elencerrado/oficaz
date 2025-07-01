@@ -6,7 +6,8 @@ import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
   InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertSystemNotification,
   Reminder, InsertReminder, SuperAdmin, InsertSuperAdmin, 
-  Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan
+  Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan,
+  EmployeeActivationToken, InsertEmployeeActivationToken
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -98,6 +99,14 @@ export interface IStorage {
   updateReminder(id: number, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
   deleteReminder(id: number): Promise<boolean>;
   getActiveReminders(userId: number): Promise<Reminder[]>;
+
+  // Employee Activation Tokens
+  createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
+  getActivationToken(token: string): Promise<EmployeeActivationToken | undefined>;
+  getActivationTokenByUserId(userId: number): Promise<EmployeeActivationToken | undefined>;
+  markTokenAsUsed(id: number): Promise<EmployeeActivationToken | undefined>;
+  deleteActivationToken(id: number): Promise<boolean>;
+  cleanupExpiredTokens(): Promise<number>;
 
   // Super Admin operations
   getSuperAdminByEmail(email: string): Promise<SuperAdmin | undefined>;
@@ -1033,6 +1042,58 @@ export class DrizzleStorage implements IStorage {
   async deleteCustomHoliday(id: number): Promise<boolean> {
     // Stub implementation - would delete from holidays table
     return true;
+  }
+
+  // Employee Activation Tokens operations
+  async createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken> {
+    const [result] = await db.insert(schema.employeeActivationTokens).values(token).returning();
+    return result;
+  }
+
+  async getActivationToken(token: string): Promise<EmployeeActivationToken | undefined> {
+    const [result] = await db.select().from(schema.employeeActivationTokens)
+      .where(
+        and(
+          eq(schema.employeeActivationTokens.token, token),
+          eq(schema.employeeActivationTokens.used, false),
+          sql`${schema.employeeActivationTokens.expiresAt} > NOW()`
+        )
+      );
+    return result;
+  }
+
+  async getActivationTokenByUserId(userId: number): Promise<EmployeeActivationToken | undefined> {
+    const [result] = await db.select().from(schema.employeeActivationTokens)
+      .where(
+        and(
+          eq(schema.employeeActivationTokens.userId, userId),
+          eq(schema.employeeActivationTokens.used, false),
+          sql`${schema.employeeActivationTokens.expiresAt} > NOW()`
+        )
+      )
+      .orderBy(desc(schema.employeeActivationTokens.createdAt));
+    return result;
+  }
+
+  async markTokenAsUsed(id: number): Promise<EmployeeActivationToken | undefined> {
+    const [result] = await db
+      .update(schema.employeeActivationTokens)
+      .set({ used: true })
+      .where(eq(schema.employeeActivationTokens.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteActivationToken(id: number): Promise<boolean> {
+    const result = await db.delete(schema.employeeActivationTokens)
+      .where(eq(schema.employeeActivationTokens.id, id));
+    return result.rowCount > 0;
+  }
+
+  async cleanupExpiredTokens(): Promise<number> {
+    const result = await db.delete(schema.employeeActivationTokens)
+      .where(sql`${schema.employeeActivationTokens.expiresAt} <= NOW()`);
+    return result.rowCount;
   }
 }
 

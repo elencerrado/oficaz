@@ -183,6 +183,10 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true), // Lo introduce admin/manager
   createdBy: integer("created_by"), // Automático (admin o manager)
   
+  // Activación de empleado
+  isPendingActivation: boolean("is_pending_activation").notNull().default(true), // true hasta que cree contraseña
+  activatedAt: timestamp("activated_at"), // Fecha de activación de la cuenta
+  
   // Dirección
   postalAddress: text("postal_address"), // Lo escribe el empleado
   
@@ -309,6 +313,18 @@ export const reminders = pgTable("reminders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Employee activation tokens for password setup
+export const employeeActivationTokens = pgTable("employee_activation_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  token: text("token").notNull().unique(),
+  email: text("email").notNull(), // Email where the invitation was sent
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdBy: integer("created_by").references(() => users.id).notNull(), // Admin/Manager who created the employee
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -363,6 +379,11 @@ export const insertReminderSchema = createInsertSchema(reminders).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertEmployeeActivationTokenSchema = createInsertSchema(employeeActivationTokens).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertSuperAdminSchema = createInsertSchema(superAdmins).omit({
@@ -485,6 +506,8 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
+export type EmployeeActivationToken = typeof employeeActivationTokens.$inferSelect;
+export type InsertEmployeeActivationToken = z.infer<typeof insertEmployeeActivationTokenSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;
