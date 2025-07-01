@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, or, desc, sql, lte, isNotNull } from 'drizzle-orm';
+import { eq, and, or, desc, sql, lte, isNotNull, isNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
@@ -891,15 +891,19 @@ export class DrizzleStorage implements IStorage {
   async getActiveReminders(userId: number): Promise<any[]> {
     const now = new Date();
     
-    // Query reminders that should be active (reminder_date <= current time)
+    // Query reminders that should be active:
+    // 1. Reminders without specific date (reminder_date is null)
+    // 2. Reminders with date that has already passed or is current
     const activeReminders = await db.select().from(schema.reminders)
       .where(
         and(
           eq(schema.reminders.userId, userId),
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
-          isNotNull(schema.reminders.reminderDate),
-          lte(schema.reminders.reminderDate, now)
+          or(
+            sql`${schema.reminders.reminderDate} IS NULL`,  // No specific date - show immediately
+            lte(schema.reminders.reminderDate, now) // Date has passed - show now
+          )
         )
       )
       .orderBy(schema.reminders.reminderDate);

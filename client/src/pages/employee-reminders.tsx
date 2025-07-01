@@ -33,7 +33,8 @@ interface Reminder {
   reminderDate?: string;
   priority: 'low' | 'medium' | 'high';
   color: string;
-  status: 'active' | 'completed' | 'archived';
+  isCompleted: boolean;
+  isArchived: boolean;
   isPinned: boolean;
   createdAt: string;
 }
@@ -150,8 +151,8 @@ export default function EmployeeReminders() {
 
   // Update status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      return await apiRequest('PATCH', `/api/reminders/${id}`, { status });
+    mutationFn: async ({ id, updates }: { id: number; updates: { isCompleted?: boolean; isArchived?: boolean } }) => {
+      return await apiRequest('PATCH', `/api/reminders/${id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
@@ -207,7 +208,13 @@ export default function EmployeeReminders() {
   const filteredReminders = (reminders || []).filter(reminder => {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || reminder.status === statusFilter;
+    
+    const matchesStatus = 
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && !reminder.isCompleted && !reminder.isArchived) ||
+      (statusFilter === 'completed' && reminder.isCompleted) ||
+      (statusFilter === 'archived' && reminder.isArchived);
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -225,7 +232,7 @@ export default function EmployeeReminders() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const companyAlias = company?.alias || 'test';
+  const companyAlias = company?.companyAlias || 'test';
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
@@ -423,7 +430,7 @@ export default function EmployeeReminders() {
           <div className="space-y-3">
             {sortedReminders.map((reminder) => {
               const PriorityIcon = priorityIcons[reminder.priority];
-              const isOverdue = reminder.reminderDate && isPast(new Date(reminder.reminderDate)) && reminder.status === 'active';
+              const isOverdue = reminder.reminderDate && isPast(new Date(reminder.reminderDate)) && !reminder.isCompleted && !reminder.isArchived;
               
               return (
                 <div
@@ -460,8 +467,8 @@ export default function EmployeeReminders() {
                           variant="outline" 
                           className="text-xs border-white/30 text-white/70"
                         >
-                          {reminder.status === 'active' ? 'Activo' : 
-                           reminder.status === 'completed' ? 'Completado' : 'Archivado'}
+                          {!reminder.isCompleted && !reminder.isArchived ? 'Activo' : 
+                           reminder.isCompleted ? 'Completado' : 'Archivado'}
                         </Badge>
                       </div>
                     </div>
@@ -485,11 +492,11 @@ export default function EmployeeReminders() {
                         <Edit className="h-4 w-4" />
                       </Button>
                       
-                      {reminder.status === 'active' && (
+                      {!reminder.isCompleted && !reminder.isArchived && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateStatusMutation.mutate({ id: reminder.id, status: 'completed' })}
+                          onClick={() => updateStatusMutation.mutate({ id: reminder.id, updates: { isCompleted: true } })}
                           className="h-8 w-8 p-0 text-white/60 hover:text-green-400 hover:bg-white/10"
                         >
                           <CheckCircle className="h-4 w-4" />
@@ -499,7 +506,7 @@ export default function EmployeeReminders() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => updateStatusMutation.mutate({ id: reminder.id, status: 'archived' })}
+                        onClick={() => updateStatusMutation.mutate({ id: reminder.id, updates: { isArchived: true } })}
                         className="h-8 w-8 p-0 text-white/60 hover:text-gray-400 hover:bg-white/10"
                       >
                         <Archive className="h-4 w-4" />
