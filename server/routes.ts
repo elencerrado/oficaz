@@ -930,20 +930,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email ya existe' });
       }
 
-      // Generate a temporary password (should be replaced with proper onboarding)
-      const tempPassword = 'TempPass123!';
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
+      // Create user without password (pending activation)
       const user = await storage.createUser({
         companyEmail,
-        password: hashedPassword,
+        password: '', // Empty password initially 
         fullName,
         dni,
         role: role || 'employee',
         companyId: (req as AuthRequest).user!.companyId,
         companyPhone: companyPhone || null,
         startDate: startDate ? new Date(startDate) : new Date(),
-        isActive: status === 'active',
+        isActive: true,
+        isPendingActivation: true,
         totalVacationDays: "22.0", // Default vacation days
         personalEmail: personalEmail || null,
         personalPhone: personalPhone || null,
@@ -954,7 +952,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: (req as AuthRequest).user!.id,
       });
 
-      res.status(201).json({ ...user, password: undefined });
+      // Create activation token
+      const activationToken = await storage.createActivationToken({
+        userId: user.id,
+        email: companyEmail,
+        token: crypto.randomBytes(32).toString('hex'),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        createdBy: (req as AuthRequest).user!.id
+      });
+
+      // Get company information for email
+      const company = await storage.getCompany((req as AuthRequest).user!.companyId);
+      if (!company) {
+        return res.status(500).json({ message: 'Error obteniendo información de empresa' });
+      }
+
+      // Send activation email
+      const activationLink = `${req.protocol}://${req.get('host')}/employee-activation?token=${activationToken.token}`;
+      
+      console.log(`📧 Attempting to send activation email to: ${companyEmail}`);
+      console.log(`📧 Employee name: ${fullName}`);
+      console.log(`📧 Company name: ${company.name}`);
+      console.log(`📧 Activation link: ${activationLink}`);
+      
+      const emailSent = await sendEmployeeWelcomeEmail(
+        companyEmail,
+        fullName,
+        company.name,
+        activationToken.token,
+        activationLink
+      );
+
+      if (!emailSent) {
+        console.error('❌ Failed to send activation email for employee:', companyEmail);
+        // Don't fail the creation, just log the error
+      } else {
+        console.log(`✅ Activation email sent successfully to: ${companyEmail}`);
+      }
+
+      res.status(201).json({ 
+        ...user, 
+        password: undefined,
+        message: `Empleado creado exitosamente. Se ha enviado un email de activación a ${companyEmail}`
+      });
     } catch (error: any) {
       console.error('User creation error:', error);
       res.status(500).json({ message: error.message });
