@@ -867,7 +867,7 @@ export default function Landing() {
                   
                   {/* CTA Button */}
                   <div className="mt-auto">
-                    {registrationSettings?.publicRegistrationEnabled ? (
+                    {(registrationSettings?.publicRegistrationEnabled && plan.name !== 'Master') ? (
                       <Link href="/request-code">
                         <button className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
                           plan.popular
@@ -878,9 +878,15 @@ export default function Landing() {
                         </button>
                       </Link>
                     ) : (
-                      <div className="w-full py-4 px-6 rounded-2xl font-bold text-lg bg-gray-500/30 text-gray-300 border border-gray-400/30 cursor-not-allowed">
-                        Registro No Disponible
-                      </div>
+                      <button 
+                        onClick={() => setIsContactFormOpen(true)}
+                        className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                          plan.popular || plan.name === 'Master'
+                            ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
+                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
+                        }`}>
+                        {plan.name === 'Master' ? 'Contactar' : 'Contacta'}
+                      </button>
                     )}
                   </div>
                 </div>
