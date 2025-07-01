@@ -199,20 +199,22 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           justifyContent: 'center',
           userSelect: 'none',
           flexShrink: 0,
-          aspectRatio: '1'
+          aspectRatio: '1',
+          position: 'relative'
         } as React.CSSProperties}
       >
         <img 
           src={avatarSrc} 
           alt={fullName}
           style={{
-            width: 'calc(100% + 4px)',
-            height: 'calc(100% + 4px)',
-            marginLeft: '-2px',
-            marginTop: '-2px',
+            width: 'calc(100% + 6px)',
+            height: 'calc(100% + 6px)',
+            position: 'absolute',
+            top: '-3px',
+            left: '-3px',
             objectFit: 'cover',
             display: 'block',
-            clipPath: 'circle(calc(50% - 2px) at 50% 50%)'
+            clipPath: 'circle(calc(50% - 3px) at 50% 50%)'
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -294,20 +296,22 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            position: 'relative'
           } as React.CSSProperties}
         >
           <img 
             src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
-              width: 'calc(100% + 4px)',
-              height: 'calc(100% + 4px)',
-              marginLeft: '-2px',
-              marginTop: '-2px',
+              width: 'calc(100% + 6px)',
+              height: 'calc(100% + 6px)',
+              position: 'absolute',
+              top: '-3px',
+              left: '-3px',
               objectFit: 'cover',
               display: 'block',
-              clipPath: 'circle(calc(50% - 2px) at 50% 50%)'
+              clipPath: 'circle(calc(50% - 3px) at 50% 50%)'
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
