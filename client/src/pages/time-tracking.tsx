@@ -1809,6 +1809,13 @@ export default function TimeTracking() {
                       <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 border-b border-gray-100 h-12">
                         <td className="py-2 px-4">
                           <div className="flex items-center gap-3">
+                            {/* DEBUG: Temporary logging */}
+                            {console.log('DEBUG time-tracking UserAvatar data:', {
+                              userName: dayData.userName,
+                              userId: dayData.userId,
+                              profilePicture: dayData.profilePicture,
+                              fullDayData: dayData
+                            })}
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
                               size="md"
