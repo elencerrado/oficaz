@@ -18,10 +18,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [localProfilePicture, setLocalProfilePicture] = useState<string | null>(profilePicture || null);
   
-  // Efecto para sincronizar con las props
+  // Sincronizar estado local con props cuando cambian
   useEffect(() => {
-    // Este efecto permite que el avatar se actualice cuando cambian los datos del servidor
+    setLocalProfilePicture(profilePicture || null);
   }, [profilePicture]);
 
   // Mutations para subir y eliminar fotos
@@ -38,9 +39,21 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
     onSuccess: (data) => {
-      // Invalidación selectiva solo de los datos esenciales que contienen fotos
+      // Actualizar estado local inmediatamente
+      if (data?.profilePicture) {
+        setLocalProfilePicture(data.profilePicture);
+      }
+      
+      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      
+      // Forzar recarga completa del cache de React Query
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
       
       toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
     },
@@ -62,9 +75,19 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       }
     },
     onSuccess: () => {
-      // Invalidación selectiva solo de los datos esenciales que contienen fotos
+      // Actualizar estado local inmediatamente para eliminar la foto
+      setLocalProfilePicture(null);
+      
+      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      
+      // Forzar recarga completa del cache de React Query
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
       
       toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
     },
@@ -149,8 +172,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     const colors = getUserColors(userId);
     const sizeConfig = getSizePixels(size);
     
-    // SOLO AVATARES CON FOTO - generar imagen si no hay foto real
-    const avatarSrc = profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
+    // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
+    const avatarSrc = localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
     
     return (
       <div 
@@ -294,7 +317,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           />
           {/* Imagen encima */}
           <img 
-            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
+            src={localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
               position: 'absolute',
@@ -356,7 +379,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       </button>
       
       {/* Botón de eliminar foto cuando hay una */}
-      {profilePicture && !isUploading && (
+      {localProfilePicture && !isUploading && (
         <button
           onClick={(e) => {
             e.stopPropagation();
