@@ -182,11 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- July 1, 2025. LIMPIEZA FINAL DE AVATARES COMPLETADA: Eliminados puntos verdes y círculos de fondo de color  
+- July 1, 2025. SISTEMA DE AVATARES PERFECCIONADO: Círculos de fondo únicos con fotos encima y funcionalidad completa
+  - IMPLEMENTADO: Círculo de fondo con color único por empleado (posición absoluta z-index 1)
+  - FOTOS ENCIMA: Imagen de avatar posicionada sobre el fondo con padding de 3px (z-index 2)
+  - FUNCIONALIDAD UPLOAD: Botones de subir y eliminar foto funcionando con cambios instantáneos
+  - ESTADO LOCAL: Usuario ve cambios inmediatos sin recargar página usando localProfilePicture
+  - FALLBACK ROBUSTO: Canvas local cuando falla servicio externo UI Avatars
   - ELIMINADO: Punto verde de estado online del perfil de empleado por solicitud del usuario
-  - LIMPIEZA COMPLETA: Quitados círculos de fondo de color en UserAvatar que causaban puntos verdes
-  - SISTEMA SIMPLIFICADO: Solo imágenes de avatar sin elementos overlay o indicadores de estado
-  - RESULTADO: Sistema de avatares completamente limpio sin elementos visuales no deseados
+  - RESULTADO FINAL: Sistema visual atractivo con colores únicos + fotos + upload instantáneo
 - July 1, 2025. BUG CRÍTICO DE TRANSFORMACIÓN DE DATOS RESUELTO: Campo profilePicture perdido en agrupación
   - PROBLEMA IDENTIFICADO: time-tracking.tsx perdía campo profilePicture durante agrupación de sesiones por día
   - CAUSA TÉCNICA: Línea 1720 no incluía profilePicture en objeto de agrupación sessionsByDay
