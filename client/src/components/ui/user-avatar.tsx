@@ -191,31 +191,39 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           minHeight: `${sizeConfig.size}px`,
           maxWidth: `${sizeConfig.size}px`,
           maxHeight: `${sizeConfig.size}px`,
-          borderRadius: '50%',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          position: 'relative',
           userSelect: 'none',
           flexShrink: 0,
-          aspectRatio: '1',
-          position: 'relative'
+          aspectRatio: '1'
         } as React.CSSProperties}
       >
+        {/* Círculo de fondo de color */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            backgroundColor: colors.bg,
+            zIndex: 1
+          } as React.CSSProperties}
+        />
+        {/* Imagen encima */}
         <img 
           src={avatarSrc} 
           alt={fullName}
           style={{
-            width: '100%',
-            height: '100%',
             position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            top: '3px',
+            left: '3px',
+            width: `${sizeConfig.size - 6}px`,
+            height: `${sizeConfig.size - 6}px`,
             objectFit: 'cover',
             display: 'block',
             borderRadius: '50%',
-            border: `3px solid ${colors.bg}`
+            zIndex: 2
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -298,28 +306,36 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           style={{
             width: '100%',
             height: '100%',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             position: 'relative'
           } as React.CSSProperties}
         >
+          {/* Círculo de fondo de color */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              backgroundColor: colors.bg,
+              zIndex: 1
+            } as React.CSSProperties}
+          />
+          {/* Imagen encima */}
           <img 
             src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
-              width: '100%',
-              height: '100%',
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: '3px',
+              left: '3px',
+              width: `${sizeConfig.size - 6}px`,
+              height: `${sizeConfig.size - 6}px`,
               objectFit: 'cover',
               display: 'block',
               borderRadius: '50%',
-              border: `3px solid ${colors.bg}`
+              zIndex: 2
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
