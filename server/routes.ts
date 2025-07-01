@@ -910,7 +910,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emergencyContactPhone
       } = req.body;
       
-      console.log('📧 EXTRACTED EMAIL:', { companyEmail, personalEmail });
+      // Determine which email to use for activation (corporate or personal)
+      const activationEmail = companyEmail || personalEmail;
+      console.log('📧 EXTRACTED EMAIL:', { companyEmail, personalEmail, activationEmail });
 
       // Validate user limit
       const subscription = await storage.getSubscriptionByCompanyId((req as AuthRequest).user!.companyId);
@@ -929,7 +931,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'DNI ya existe en tu empresa' });
       }
 
-      const existingEmail = await storage.getUserByEmail(companyEmail);
+      if (!activationEmail) {
+        return res.status(400).json({ message: 'Debe proporcionar al menos un email (corporativo o personal)' });
+      }
+
+      const existingEmail = await storage.getUserByEmail(activationEmail);
       if (existingEmail) {
         return res.status(400).json({ message: 'Email ya existe' });
       }
@@ -959,7 +965,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create activation token
       const activationToken = await storage.createActivationToken({
         userId: user.id,
-        email: companyEmail,
+        email: activationEmail,
         token: crypto.randomBytes(32).toString('hex'),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         createdBy: (req as AuthRequest).user!.id
@@ -974,13 +980,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send activation email
       const activationLink = `${req.protocol}://${req.get('host')}/employee-activation?token=${activationToken.token}`;
       
-      console.log(`📧 Attempting to send activation email to: ${companyEmail}`);
+      console.log(`📧 Attempting to send activation email to: ${activationEmail}`);
       console.log(`📧 Employee name: ${fullName}`);
       console.log(`📧 Company name: ${company.name}`);
       console.log(`📧 Activation link: ${activationLink}`);
       
       const emailSent = await sendEmployeeWelcomeEmail(
-        companyEmail,
+        activationEmail,
         fullName,
         company.name,
         activationToken.token,
@@ -988,16 +994,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (!emailSent) {
-        console.error('❌ Failed to send activation email for employee:', companyEmail);
+        console.error('❌ Failed to send activation email for employee:', activationEmail);
         // Don't fail the creation, just log the error
       } else {
-        console.log(`✅ Activation email sent successfully to: ${companyEmail}`);
+        console.log(`✅ Activation email sent successfully to: ${activationEmail}`);
       }
 
       res.status(201).json({ 
         ...user, 
         password: undefined,
-        message: `Empleado creado exitosamente. Se ha enviado un email de activación a ${companyEmail}`
+        message: `Empleado creado exitosamente. Se ha enviado un email de activación a ${activationEmail}`
       });
     } catch (error: any) {
       console.error('User creation error:', error);
