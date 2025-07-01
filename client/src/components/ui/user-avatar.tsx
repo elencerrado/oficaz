@@ -206,8 +206,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           src={avatarSrc} 
           alt={fullName}
           style={{
-            width: '100%',
-            height: '100%',
+            width: 'calc(100% + 2px)',
+            height: 'calc(100% + 2px)',
+            marginLeft: '-1px',
+            marginTop: '-1px',
             borderRadius: '50%',
             objectFit: 'cover',
             display: 'block'
@@ -299,8 +301,10 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
-              width: '100%',
-              height: '100%',
+              width: 'calc(100% + 2px)',
+              height: 'calc(100% + 2px)',
+              marginLeft: '-1px',
+              marginTop: '-1px',
               borderRadius: '50%',
               objectFit: 'cover',
               display: 'block'
