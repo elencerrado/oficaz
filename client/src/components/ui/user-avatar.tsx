@@ -60,7 +60,12 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
       queryClient.refetchQueries({ queryKey: ['/api/employees'] });
       
-      toast({ title: "Foto actualizada", description: "Tu foto de perfil se ha actualizado correctamente" });
+      // Forzar re-render del componente para mostrar la nueva imagen inmediatamente
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+      toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
     },
     onError: () => {
       toast({ title: "Error", description: "No se pudo actualizar la foto", variant: "destructive" });
@@ -385,6 +390,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
         className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200 disabled:opacity-50"
+        style={{ zIndex: 10 }}
         title="Cambiar foto"
       >
         <Camera className="w-3 h-3" />
@@ -398,6 +404,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             deletePhotoMutation.mutate();
           }}
           className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200"
+          style={{ zIndex: 10 }}
           title="Eliminar foto"
         >
           <X className="w-3 h-3" />
