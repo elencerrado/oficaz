@@ -892,6 +892,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User creation endpoint (for employee creation from employees-simple.tsx)
   app.post('/api/users', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
+      console.log('📧 REQUEST BODY:', JSON.stringify(req.body, null, 2));
+      
       const {
         fullName,
         dni,
@@ -907,6 +909,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emergencyContactName,
         emergencyContactPhone
       } = req.body;
+      
+      console.log('📧 EXTRACTED EMAIL:', { companyEmail, personalEmail });
 
       // Validate user limit
       const subscription = await storage.getSubscriptionByCompanyId((req as AuthRequest).user!.companyId);
