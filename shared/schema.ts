@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, j
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Companies table - consolidada con configuraciones
+// Companies table - consolidada con configuraciones y datos de facturación
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -28,6 +28,14 @@ export const companies = pgTable("companies", {
   timezone: text("timezone").default("Europe/Madrid").notNull(),
   customAiRules: text("custom_ai_rules").default(""),
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
+  // Campos migrados desde account_info (datos de facturación)
+  accountId: text("account_id").unique(), // OFZ-2024-001234 format
+  billingName: text("billing_name"),
+  billingAddress: text("billing_address"),
+  billingCity: text("billing_city"),
+  billingPostalCode: text("billing_postal_code"),
+  billingCountry: text("billing_country").default("ES"),
+  taxId: text("tax_id"), // CIF/NIF for billing (puede ser diferente al CIF de empresa)
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -80,22 +88,7 @@ export const subscriptions = pgTable("subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Account information - extends company data with account-specific details
-export const accountInfo = pgTable("account_info", {
-  id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull().unique(),
-  accountId: text("account_id").notNull().unique(), // OFZ-2024-001234 format
-  registrationDate: timestamp("registration_date").defaultNow().notNull(),
-  billingEmail: text("billing_email").notNull(),
-  billingName: text("billing_name").notNull(),
-  billingAddress: text("billing_address"),
-  billingCity: text("billing_city"),
-  billingPostalCode: text("billing_postal_code"),
-  billingCountry: text("billing_country").default("ES"),
-  taxId: text("tax_id"), // CIF/NIF for billing
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Tabla account_info eliminada - campos consolidados en companies
 
 // Payment methods
 export const paymentMethods = pgTable("payment_methods", {
@@ -391,11 +384,7 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   updatedAt: true,
 });
 
-export const insertAccountInfoSchema = createInsertSchema(accountInfo).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// Schema insertAccountInfoSchema eliminado - datos consolidados en companies
 
 export const insertPaymentMethodSchema = createInsertSchema(paymentMethods).omit({
   id: true,
@@ -501,8 +490,7 @@ export type LoginData = z.infer<typeof loginSchema>;
 export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;
 export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;
 
-export type AccountInfo = typeof accountInfo.$inferSelect;
-export type InsertAccountInfo = typeof accountInfo.$inferInsert;
+// Tipos AccountInfo e InsertAccountInfo eliminados - datos consolidados en companies
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type InsertPaymentMethod = typeof paymentMethods.$inferInsert;
 export type Invoice = typeof invoices.$inferSelect;
