@@ -96,6 +96,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact form endpoint (public)
+  app.post('/api/contact', async (req, res) => {
+    try {
+      const { name, email, phone, subject, message } = req.body;
+
+      // Validación básica
+      if (!name || !email || !subject || !message) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Todos los campos obligatorios deben estar completos' 
+        });
+      }
+
+      // Validación de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email no válido' 
+        });
+      }
+
+      // Configurar Nodemailer con Hostinger SMTP
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.hostinger.com',
+        port: 465,
+        secure: true, // SSL
+        auth: {
+          user: 'soy@oficaz.es',
+          pass: 'Sanisidro@2025',
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+
+      // Cargar logo en base64
+      const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+      const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+
+      // Crear contenido del email
+      const emailSubject = `[CONTACTO] ${subject}`;
+      
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Nuevo contacto desde la web</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+            
+            <!-- Header con logo -->
+            <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+              <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+            </div>
+            
+            <!-- Contenido -->
+            <div style="padding: 30px 20px;">
+              <h1 style="color: #1f2937; font-size: 24px; font-weight: 700; margin: 0 0 20px 0;">
+                🔔 Nuevo mensaje de contacto
+              </h1>
+              
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h2 style="color: #374151; font-size: 18px; margin: 0 0 15px 0;">
+                  ${subject}
+                </h2>
+                <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+                  ${message}
+                </p>
+              </div>
+
+              <!-- Datos del contacto -->
+              <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                <p style="color: #1976d2; font-weight: 600; margin: 0 0 15px 0; font-size: 16px;">
+                  📞 Datos de contacto
+                </p>
+                <div style="color: #374151; line-height: 1.8; font-size: 14px;">
+                  <p style="margin: 5px 0;"><strong>Nombre:</strong> ${name}</p>
+                  <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+                  ${phone ? `<p style="margin: 5px 0;"><strong>Teléfono:</strong> ${phone}</p>` : ''}
+                </div>
+              </div>
+
+              <!-- Instrucciones -->
+              <div style="margin: 25px 0; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <p style="margin: 0; font-size: 14px; color: #856404;">
+                  <strong>💡 Recordatorio:</strong> Responde directamente a este email para contactar con la persona.
+                </p>
+              </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 12px; margin: 0 0 5px 0;">
+                Mensaje enviado desde <strong>oficaz.es</strong>
+              </p>
+              <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                La plataforma de gestión empresarial para equipos modernos
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const textContent = `
+Nuevo mensaje de contacto desde oficaz.es
+
+ASUNTO: ${subject}
+
+MENSAJE:
+${message}
+
+DATOS DE CONTACTO:
+- Nombre: ${name}
+- Email: ${email}
+${phone ? `- Teléfono: ${phone}` : ''}
+
+---
+Responde directamente a este email para contactar con la persona.
+      `;
+
+      const mailOptions = {
+        from: '"Contacto Oficaz" <soy@oficaz.es>',
+        to: 'soy@oficaz.es',
+        replyTo: email, // Para poder responder directamente
+        subject: emailSubject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      console.log(`📧 Enviando formulario de contacto desde: ${email}`);
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Formulario de contacto enviado exitosamente`);
+
+      res.json({ 
+        success: true, 
+        message: 'Mensaje enviado correctamente' 
+      });
+
+    } catch (error) {
+      console.error('❌ Error enviando formulario de contacto:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor' 
+      });
+    }
+  });
+
   // User validation endpoints
   app.post('/api/validate-user', async (req, res) => {
     try {

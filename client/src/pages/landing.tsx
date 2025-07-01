@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import ContactForm from '@/components/contact-form';
 import oficazWhiteLogo from '@assets/Imagotipo Oficaz white_1750407614936.png';
 import { 
   Clock, 
@@ -23,13 +24,15 @@ import {
   Globe,
   TrendingUp,
   CreditCard,
-  Shield
+  Shield,
+  Mail
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
   // Check if public registration is enabled
   const { data: registrationSettings } = useQuery({
@@ -180,8 +183,13 @@ export default function Landing() {
                     </Button>
                   </Link>
                 ) : (
-                  <Button size="sm" className="bg-gray-400 cursor-not-allowed font-medium px-6 rounded-lg" disabled>
-                    Registro Cerrado
+                  <Button 
+                    size="sm" 
+                    onClick={() => setIsContactFormOpen(true)}
+                    className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-6 py-2 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg hover:shadow-xl hover:shadow-[#007AFF]/30 transition-all duration-300 hover:scale-105"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Contacta
                   </Button>
                 )}
                 <Link href="/login">
@@ -201,8 +209,12 @@ export default function Landing() {
                   </Button>
                 </Link>
               ) : (
-                <Button size="sm" className="bg-gray-400 cursor-not-allowed font-medium px-3 rounded-lg" disabled>
-                  Cerrado
+                <Button 
+                  size="sm" 
+                  onClick={() => setIsContactFormOpen(true)}
+                  className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white font-semibold px-3 shadow-lg shadow-[#007AFF]/25 border-0 rounded-lg"
+                >
+                  <Mail className="w-4 h-4" />
                 </Button>
               )}
               <Link href="/login">
@@ -1020,6 +1032,12 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* Contact Form Modal */}
+      <ContactForm 
+        isOpen={isContactFormOpen} 
+        onClose={() => setIsContactFormOpen(false)} 
+      />
     </div>
   );
 }
