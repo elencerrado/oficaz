@@ -24,7 +24,9 @@ import {
   Mail,
   User,
   Minus,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { DatePickerDayEmployee } from '@/components/ui/date-picker';
@@ -39,6 +41,8 @@ export default function EmployeesSimple() {
   const [statusFilter, setStatusFilter] = useState('activos'); // Default to active
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [editEmployee, setEditEmployee] = useState({
     companyEmail: '',
     companyPhone: '',
@@ -88,6 +92,29 @@ export default function EmployeesSimple() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el empleado.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Mutation for deleting employee
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: (employeeId: number) => apiRequest('DELETE', `/api/employees/${employeeId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      toast({
+        title: 'Empleado Eliminado',
+        description: 'El empleado y todos sus datos han sido eliminados permanentemente.',
+      });
+      setShowDeleteModal(false);
+      setShowEditModal(false);
+      setDeleteConfirmText('');
+      setSelectedEmployee(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo eliminar el empleado.',
         variant: 'destructive',
       });
     },
@@ -148,6 +175,18 @@ export default function EmployeesSimple() {
       emergencyContactName: editEmployee.emergencyContactName,
       emergencyContactPhone: editEmployee.emergencyContactPhone,
     });
+  };
+
+  const adjustVacationDays = (increment: number) => {
+    const currentAdjustment = editEmployee.vacationDaysAdjustment || 0;
+    const newAdjustment = Math.max(-50, Math.min(50, currentAdjustment + increment));
+    setEditEmployee({ ...editEmployee, vacationDaysAdjustment: newAdjustment });
+  };
+
+  const handleDeleteEmployee = () => {
+    if (deleteConfirmText === 'ELIMINAR PERMANENTEMENTE' && selectedEmployee) {
+      deleteEmployeeMutation.mutate(selectedEmployee.id);
+    }
   };
 
   // Function to handle creating new employee
@@ -239,18 +278,6 @@ export default function EmployeesSimple() {
   });
 
   const totalUsers = (employeeList || []).filter((employee: any) => employee.role !== 'admin').length;
-
-  // Function to adjust vacation days
-  const adjustVacationDays = (amount: number) => {
-    setEditEmployee(prev => {
-      const currentAdjustment = Number(prev.vacationDaysAdjustment) || 0;
-      const newAdjustment = currentAdjustment + amount;
-      return {
-        ...prev,
-        vacationDaysAdjustment: newAdjustment
-      };
-    });
-  };
 
   // Function to handle opening edit modal
   const handleEditEmployee = (employee: any) => {
@@ -1038,16 +1065,102 @@ export default function EmployeesSimple() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
-                <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={updateEmployeeMutation.isPending}>
-                  Cancelar
+              <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 mt-6">
+                {/* Delete Button on Left */}
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteModal(true)} 
+                  disabled={updateEmployeeMutation.isPending || deleteEmployeeMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Eliminar Empleado
                 </Button>
-                <Button onClick={handleSaveEmployee} disabled={updateEmployeeMutation.isPending}>
-                  {updateEmployeeMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
-                </Button>
+                
+                {/* Save/Cancel Buttons on Right */}
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={updateEmployeeMutation.isPending}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleSaveEmployee} disabled={updateEmployeeMutation.isPending}>
+                    {updateEmployeeMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Confirmar Eliminación</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-red-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    ¡Atención! Esta acción no se puede deshacer
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>
+                      Estás a punto de eliminar permanentemente al empleado{' '}
+                      <strong>{selectedEmployee?.fullName}</strong> y todos sus datos asociados:
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li>Registros de tiempo y fichajes</li>
+                      <li>Solicitudes de vacaciones</li>
+                      <li>Documentos subidos</li>
+                      <li>Mensajes y comunicaciones</li>
+                      <li>Cuenta de usuario y acceso</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmText" className="text-sm font-medium">
+                Para confirmar, escribe: <strong>ELIMINAR PERMANENTEMENTE</strong>
+              </Label>
+              <Input
+                id="confirmText"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Escribe ELIMINAR PERMANENTEMENTE"
+                className="font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteConfirmText('');
+              }}
+              disabled={deleteEmployeeMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEmployee}
+              disabled={
+                deleteConfirmText !== 'ELIMINAR PERMANENTEMENTE' || 
+                deleteEmployeeMutation.isPending
+              }
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteEmployeeMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

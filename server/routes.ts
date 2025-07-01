@@ -2274,6 +2274,78 @@ startxref
     }
   });
 
+  // Delete employee (admin/manager only)
+  app.delete('/api/employees/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: 'ID de empleado inválido' });
+      }
+
+      // Get the employee to verify they exist and belong to same company
+      const employee = await storage.getUser(userId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Empleado no encontrado' });
+      }
+
+      // Prevent self-deletion
+      if (userId === req.user!.id) {
+        return res.status(400).json({ message: 'No puedes eliminarte a ti mismo' });
+      }
+
+      // Delete all related data in order of dependencies
+      console.log(`🗑️ Deleting employee ${userId} and all related data...`);
+
+      // 1. Delete break periods (depends on work sessions)
+      await db.execute(sql`
+        DELETE FROM break_periods 
+        WHERE work_session_id IN (
+          SELECT id FROM work_sessions WHERE user_id = ${userId}
+        )
+      `);
+
+      // 2. Delete work sessions
+      await db.execute(sql`DELETE FROM work_sessions WHERE user_id = ${userId}`);
+
+      // 3. Delete vacation requests
+      await db.execute(sql`DELETE FROM vacation_requests WHERE user_id = ${userId}`);
+
+      // 4. Delete documents
+      await db.execute(sql`DELETE FROM documents WHERE user_id = ${userId}`);
+
+      // 5. Delete messages (both sent and received)
+      await db.execute(sql`DELETE FROM messages WHERE sender_id = ${userId} OR receiver_id = ${userId}`);
+
+      // 6. Delete reminders
+      await db.execute(sql`DELETE FROM reminders WHERE user_id = ${userId}`);
+
+      // 7. Delete activation tokens
+      await db.execute(sql`DELETE FROM employee_activation_tokens WHERE user_id = ${userId}`);
+
+      // 8. Finally delete the user
+      const deletedUser = await storage.deleteUser(userId);
+
+      if (!deletedUser) {
+        return res.status(500).json({ message: 'Error al eliminar el empleado' });
+      }
+
+      console.log(`✅ Employee ${userId} and all related data deleted successfully`);
+
+      res.json({ 
+        message: 'Empleado eliminado permanentemente',
+        deletedUser: {
+          id: deletedUser.id,
+          fullName: deletedUser.fullName,
+          dni: deletedUser.dni
+        }
+      });
+    } catch (error: any) {
+      console.error('Error deleting employee:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Unified notifications endpoints
   app.get('/api/notifications', authenticateToken, async (req: AuthRequest, res) => {
     try {

@@ -37,6 +37,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsersByCompany(companyId: number): Promise<User[]>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<User | undefined>;
 
   // Work Sessions
   createWorkSession(session: InsertWorkSession): Promise<WorkSession>;
@@ -219,6 +220,11 @@ export class DrizzleStorage implements IStorage {
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(schema.users).set(updates).where(eq(schema.users.id, id)).returning();
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<User | undefined> {
+    const [user] = await db.delete(schema.users).where(eq(schema.users.id, id)).returning();
     return user;
   }
 
