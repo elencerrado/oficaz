@@ -191,7 +191,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           minHeight: `${sizeConfig.size}px`,
           maxWidth: `${sizeConfig.size}px`,
           maxHeight: `${sizeConfig.size}px`,
-          border: `${sizeConfig.border}px solid ${colors.bg}`,
           borderRadius: '50%',
           overflow: 'hidden',
           display: 'flex',
@@ -215,7 +214,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             transform: 'translate(-50%, -50%)',
             objectFit: 'cover',
             display: 'block',
-            borderRadius: '50%'
+            borderRadius: '50%',
+            border: `${sizeConfig.border}px solid ${colors.bg}`
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -298,7 +298,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           style={{
             width: '100%',
             height: '100%',
-            border: `${sizeConfig.border}px solid ${colors.bg}`,
             borderRadius: '50%',
             overflow: 'hidden',
             display: 'flex',
@@ -319,7 +318,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               transform: 'translate(-50%, -50%)',
               objectFit: 'cover',
               display: 'block',
-              borderRadius: '50%'
+              borderRadius: '50%',
+              border: `${sizeConfig.border}px solid ${colors.bg}`
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
