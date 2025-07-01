@@ -883,7 +883,7 @@ export default function Landing() {
                         className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 ${
                           plan.popular || plan.name === 'Master'
                             ? 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
-                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/30 hover:border-white/50 backdrop-blur-sm'
+                            : 'bg-gradient-to-r from-[#007AFF] to-cyan-500 hover:from-[#0056CC] hover:to-cyan-600 text-white shadow-2xl shadow-[#007AFF]/30 hover:scale-105'
                         }`}>
                         {plan.name === 'Master' ? 'Contactar' : 'Contacta'}
                       </button>
