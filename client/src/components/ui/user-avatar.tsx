@@ -207,14 +207,15 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           src={avatarSrc} 
           alt={fullName}
           style={{
-            width: 'calc(100% + 6px)',
-            height: 'calc(100% + 6px)',
+            width: '100%',
+            height: '100%',
             position: 'absolute',
-            top: '-3px',
-            left: '-3px',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
             objectFit: 'cover',
             display: 'block',
-            clipPath: 'circle(calc(50% - 3px) at 50% 50%)'
+            borderRadius: '50%'
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -304,14 +305,15 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
-              width: 'calc(100% + 6px)',
-              height: 'calc(100% + 6px)',
+              width: '100%',
+              height: '100%',
               position: 'absolute',
-              top: '-3px',
-              left: '-3px',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               objectFit: 'cover',
               display: 'block',
-              clipPath: 'circle(calc(50% - 3px) at 50% 50%)'
+              borderRadius: '50%'
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
