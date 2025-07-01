@@ -182,6 +182,32 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. BUG CRÍTICO DE TRANSFORMACIÓN DE DATOS RESUELTO: Campo profilePicture perdido en agrupación
+  - PROBLEMA IDENTIFICADO: time-tracking.tsx perdía campo profilePicture durante agrupación de sesiones por día
+  - CAUSA TÉCNICA: Línea 1720 no incluía profilePicture en objeto de agrupación sessionsByDay
+  - SOLUCIÓN APLICADA: Agregado profilePicture: session.profilePicture a lógica de agrupación
+  - VERIFICACIÓN: Andrés González ahora muestra foto consistentemente en fichajes y vacaciones
+  - SISTEMA BLINDADO: Avatar photo-only funcionando correctamente en toda la aplicación
+- July 1, 2025. SISTEMA DE AVATARES COMPLETAMENTE REDISEÑADO: Solo avatares tipo foto en toda la aplicación
+  - ELIMINADOS AVATARES DE INICIALES: Ya no existen divs con texto, todo son imágenes
+  - SISTEMA UNIFICADO: profilePicture real o avatar generado automáticamente con UI Avatars API
+  - COLORES ÚNICOS PRESERVADOS: Servicio externo usa los colores distintivos de cada empleado
+  - FALLBACK ROBUSTO: Canvas local como backup si falla servicio externo
+  - APARIENCIA PROFESIONAL: Todos los avatares tienen look de "foto" consistente
+  - APLICADO EN TODA LA APP: Fichajes, mensajes, empleados, vacaciones - sistema 100% foto
+- July 1, 2025. INCONSISTENCIA VISUAL DE AVATARES CORREGIDA DEFINITIVAMENTE: Estructura unificada implementada
+  - PROBLEMA RESUELTO: Avatar sin foto (línea 235) ahora usa misma estructura que avatar con foto (línea 189)
+  - ESTRUCTURA UNIFICADA: Ambos tipos usan contenedor exterior (borde+padding+fondo blanco) + contenedor interior
+  - ESTÉTICA CONSISTENTE: Eliminada diferencia visual entre avatares con/sin foto en fichajes admin
+  - SISTEMA BLINDADO: Todos los avatares en aplicación siguen exactamente la misma lógica visual
+  - RESULTADO FINAL: Perfecta armonía visual entre avatares con fotos reales vs iniciales de colores
+- July 1, 2025. SISTEMA DE AVATARES COMPLETAMENTE FINALIZADO: Display de fotos de perfil funcional en toda la aplicación
+  - COMPLETADAS TODAS LAS CORRECCIONES: Todas las instancias de UserAvatar ahora incluyen profilePicture prop
+  - PÁGINAS ACTUALIZADAS: messages.tsx (8 instancias), vacation-management.tsx, mobile-header.tsx, messages-backup.tsx (3 instancias)
+  - SISTEMA UNIFICADO: Display consistente de fotos de perfil vs iniciales de colores en toda la aplicación
+  - FUNCIONALIDAD COMPLETA: Avatares muestran fotos reales cuando están disponibles o fallback a iniciales con colores únicos
+  - VERIFICACIÓN EXITOSA: Confirmado que no quedan instancias sin profilePicture prop en el sistema
+  - PATRÓN TÉCNICO: profilePicture={user?.profilePicture} aplicado sistemáticamente en todos los componentes UserAvatar
 - July 1, 2025. BOTÓN "DESCARGAR DATOS" ELIMINADO: Removido de página de configuración según solicitud del usuario
   - ELIMINADO: Botón "Descargar datos de la empresa" de sección Gestión de cuenta
   - SIMPLIFICACIÓN: Solo queda botón "Cambiar plan de suscripción" en opciones avanzadas

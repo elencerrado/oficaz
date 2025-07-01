@@ -1827,7 +1827,8 @@ startxref
         fullName: mgr.fullName, 
         email: mgr.companyEmail, 
         role: mgr.role,
-        position: mgr.position
+        position: mgr.position,
+        profilePicture: mgr.profilePicture
       }));
       res.json(sanitizedManagers);
     } catch (error: any) {
