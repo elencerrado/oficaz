@@ -371,18 +371,14 @@ export default function Messages() {
     
     const role = person.role || 'employee';
     
-    // DEBUG: Log para verificar datos
-    console.log('getRoleDisplay called with:', { person, role });
-    
     // Map roles to Spanish descriptions
     const roleDescriptions = {
-      admin: 'Administrador',
+      admin: 'Director General',
       manager: 'Responsable',
       employee: 'Empleado'
     };
     
     const displayText = roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-    console.log('Display text:', displayText);
     
     const roleConfig = {
       admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
@@ -1117,7 +1113,15 @@ export default function Messages() {
                             )}
                           </div>
                           <div className="text-white/70 text-xs mt-1">
-                            {manager.jobTitle || manager.position || 'Sin cargo definido'}
+                            {(() => {
+                              const role = manager.role || 'employee';
+                              const roleDescriptions = {
+                                admin: 'Director General',
+                                manager: 'Responsable', 
+                                employee: 'Empleado'
+                              };
+                              return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+                            })()}
                           </div>
                         </div>
                         
@@ -1175,7 +1179,15 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-white/70">
-                    {selectedChatUser?.jobTitle || selectedChatUser?.position || 'Sin cargo definido'}
+                    {(() => {
+                      const role = selectedChatUser?.role || 'employee';
+                      const roleDescriptions = {
+                        admin: 'Director General',
+                        manager: 'Responsable', 
+                        employee: 'Empleado'
+                      };
+                      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+                    })()}
                   </div>
                 </div>
               </div>
