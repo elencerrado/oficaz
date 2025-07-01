@@ -547,7 +547,7 @@ export default function EmployeesSimple() {
                     }}
                   >
                     <div className="flex items-center space-x-3">
-                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} />
+                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>
@@ -584,7 +584,7 @@ export default function EmployeesSimple() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} />
+                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
                       <div>
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -785,7 +785,7 @@ export default function EmployeesSimple() {
               {/* Employee Header */}
               <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
                 <div className="flex items-center gap-3">
-                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} />
+                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
                     <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">

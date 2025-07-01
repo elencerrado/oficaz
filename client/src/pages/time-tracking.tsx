@@ -1813,6 +1813,7 @@ export default function TimeTracking() {
                               fullName={dayData.userName || 'Usuario Desconocido'} 
                               size="md"
                               userId={dayData.userId}
+                              profilePicture={dayData.profilePicture}
                             />
                             <div className="font-medium text-gray-900">
                               {dayData.userName || 'Usuario Desconocido'}

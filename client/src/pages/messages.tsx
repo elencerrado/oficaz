@@ -553,6 +553,7 @@ export default function Messages() {
                         fullName={employee.fullName || ''} 
                         size="md" 
                         userId={employee.id}
+                        profilePicture={employee.profilePicture}
                       />
                       
                       <div className="flex-1 min-w-0">
@@ -584,6 +585,7 @@ export default function Messages() {
                         fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
                         size="md" 
                         userId={selectedChat}
+                        profilePicture={filteredEmployees.find(e => e.id === selectedChat)?.profilePicture}
                       />
                       <div>
                         <h3 className="heading-4">
@@ -742,6 +744,7 @@ export default function Messages() {
                           fullName={employee.fullName || ''} 
                           size="md" 
                           userId={employee.id}
+                          profilePicture={employee.profilePicture}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate">
@@ -781,6 +784,7 @@ export default function Messages() {
                   fullName={selectedChatUser?.fullName || ''} 
                   size="sm" 
                   userId={selectedChatUser?.id}
+                  profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div>
                   <h3 className="font-semibold text-gray-900">
@@ -992,6 +996,7 @@ export default function Messages() {
                           fullName={employee.fullName || ''} 
                           size="md" 
                           userId={employee.id}
+                          profilePicture={employee.profilePicture}
                         />
                         
                         <div className="flex-1 min-w-0">
@@ -1100,6 +1105,7 @@ export default function Messages() {
                           fullName={manager.fullName || ''} 
                           size="md" 
                           userId={manager.id}
+                          profilePicture={manager.profilePicture}
                         />
                         
                         <div className="flex-1 min-w-0">
@@ -1174,6 +1180,7 @@ export default function Messages() {
                   fullName={selectedChatUser?.fullName || ''} 
                   size="sm" 
                   userId={selectedChatUser?.id}
+                  profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div>
                   <h3 className="font-semibold text-white">

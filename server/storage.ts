@@ -299,6 +299,7 @@ export class DrizzleStorage implements IStorage {
       status: schema.workSessions.status,
       createdAt: schema.workSessions.createdAt,
       userName: schema.users.fullName,
+      profilePicture: schema.users.profilePicture,
     }).from(schema.workSessions)
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))

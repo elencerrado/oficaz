@@ -97,7 +97,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 lg:h-10 lg:w-10 rounded-lg">
-              <UserAvatar fullName={user?.fullName || ''} size="sm" userId={user?.id} />
+              <UserAvatar fullName={user?.fullName || ''} size="sm" userId={user?.id} profilePicture={user?.profilePicture} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
