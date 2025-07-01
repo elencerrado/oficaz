@@ -161,7 +161,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   // Tamaño unificado más grande para todos los avatares - CONSISTENCIA TOTAL
   const getSizePixels = (size: 'sm' | 'md' | 'lg') => {
     // TODOS los tamaños ahora usan las mismas dimensiones para máxima consistencia
-    return { size: 40, fontSize: 14, border: 2 };
+    return { size: 40, fontSize: 14, border: 3 };
   };
 
   // Si no se necesita upload, usar el renderizado simple original
@@ -206,13 +206,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           src={avatarSrc} 
           alt={fullName}
           style={{
-            width: 'calc(100% + 2px)',
-            height: 'calc(100% + 2px)',
-            marginLeft: '-1px',
-            marginTop: '-1px',
-            borderRadius: '50%',
+            width: '100%',
+            height: '100%',
             objectFit: 'cover',
-            display: 'block'
+            display: 'block',
+            clipPath: 'circle(50% at 50% 50%)'
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -301,13 +299,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
             alt={fullName}
             style={{
-              width: 'calc(100% + 2px)',
-              height: 'calc(100% + 2px)',
-              marginLeft: '-1px',
-              marginTop: '-1px',
-              borderRadius: '50%',
+              width: '100%',
+              height: '100%',
               objectFit: 'cover',
-              display: 'block'
+              display: 'block',
+              clipPath: 'circle(50% at 50% 50%)'
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
