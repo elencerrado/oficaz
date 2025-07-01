@@ -182,6 +182,16 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. BOTÓN "DESCARGAR DATOS" ELIMINADO: Removido de página de configuración según solicitud del usuario
+  - ELIMINADO: Botón "Descargar datos de la empresa" de sección Gestión de cuenta
+  - SIMPLIFICACIÓN: Solo queda botón "Cambiar plan de suscripción" en opciones avanzadas
+  - INTERFAZ MÁS LIMPIA: Reducida complejidad innecesaria en página de configuración
+- July 1, 2025. SISTEMA DE ESTADO LOCAL PARA AVATARES COMPLETADO: Cambios inmediatos sin recargar página
+  - IMPLEMENTADO: useState para localProfilePicture en componente UserAvatar
+  - MUTACIONES OPTIMIZADAS: Upload y delete actualizan estado local inmediatamente
+  - RENDERIZADO INMEDIATO: Todas las imágenes usan estado local en lugar de props
+  - BOTONES DINÁMICOS: Aparecen/desaparecen según estado local sin delay
+  - UX MEJORADA: Cambios de avatar visibles instantáneamente en toda la aplicación
 - July 1, 2025. TAMAÑOS DE AVATARES UNIFICADOS COMPLETAMENTE: Sistema estandarizado a 40px para máxima consistencia
   - PROBLEMA RESUELTO: Diferencias de tamaño entre páginas (fichajes vs vacaciones vs mensajes)
   - SOLUCIÓN TÉCNICA: UserAvatar ahora usa tamaño fijo 40px independientemente del prop size

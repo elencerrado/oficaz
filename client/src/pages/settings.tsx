@@ -470,10 +470,6 @@ const AccountManagement = () => {
               <Crown className="mr-2 h-4 w-4" />
               Cambiar plan de suscripción
             </Button>
-            <Button variant="outline" className="justify-start">
-              <FileText className="mr-2 h-4 w-4" />
-              Descargar datos de la empresa
-            </Button>
           </div>
           
           {/* Danger Zone */}
