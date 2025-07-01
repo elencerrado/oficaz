@@ -230,7 +230,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       );
     }
     
-    // Si no hay foto, mostrar iniciales con fondo de color - ESTILOS INLINE PUROS
+    // Si no hay foto, mostrar iniciales con la misma estructura que con foto - ESTILOS INLINE PUROS
     return (
       <div 
         style={{
@@ -240,20 +240,36 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           minHeight: `${sizeConfig.size}px`,
           maxWidth: `${sizeConfig.size}px`,
           maxHeight: `${sizeConfig.size}px`,
+          border: `${sizeConfig.border}px solid ${colors.bg}`,
+          padding: '2px',
+          backgroundColor: 'white',
           borderRadius: '50%',
-          backgroundColor: colors.bg,
-          color: colors.text,
+          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontWeight: '500',
-          fontSize: `${sizeConfig.fontSize}px`,
           userSelect: 'none',
           flexShrink: 0,
           aspectRatio: '1'
         } as React.CSSProperties}
       >
-        {getInitials(fullName)}
+        <div 
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            backgroundColor: colors.bg,
+            color: colors.text,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '500',
+            fontSize: `${sizeConfig.fontSize}px`,
+            userSelect: 'none'
+          } as React.CSSProperties}
+        >
+          {getInitials(fullName)}
+        </div>
       </div>
     );
   }

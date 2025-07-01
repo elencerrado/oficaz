@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. INCONSISTENCIA VISUAL DE AVATARES CORREGIDA DEFINITIVAMENTE: Estructura unificada implementada
+  - PROBLEMA RESUELTO: Avatar sin foto (línea 235) ahora usa misma estructura que avatar con foto (línea 189)
+  - ESTRUCTURA UNIFICADA: Ambos tipos usan contenedor exterior (borde+padding+fondo blanco) + contenedor interior
+  - ESTÉTICA CONSISTENTE: Eliminada diferencia visual entre avatares con/sin foto en fichajes admin
+  - SISTEMA BLINDADO: Todos los avatares en aplicación siguen exactamente la misma lógica visual
+  - RESULTADO FINAL: Perfecta armonía visual entre avatares con fotos reales vs iniciales de colores
 - July 1, 2025. SISTEMA DE AVATARES COMPLETAMENTE FINALIZADO: Display de fotos de perfil funcional en toda la aplicación
   - COMPLETADAS TODAS LAS CORRECCIONES: Todas las instancias de UserAvatar ahora incluyen profilePicture prop
   - PÁGINAS ACTUALIZADAS: messages.tsx (8 instancias), vacation-management.tsx, mobile-header.tsx, messages-backup.tsx (3 instancias)
