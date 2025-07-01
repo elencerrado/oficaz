@@ -229,8 +229,7 @@ export default function EmployeeProfile() {
                 className="hidden"
               />
               
-              {/* Indicador de estado online */}
-              <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
+
             </div>
             
             <div className="flex-1">

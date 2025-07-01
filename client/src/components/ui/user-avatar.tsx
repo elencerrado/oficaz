@@ -184,45 +184,29 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           minHeight: `${sizeConfig.size}px`,
           maxWidth: `${sizeConfig.size}px`,
           maxHeight: `${sizeConfig.size}px`,
-          position: 'relative',
+          borderRadius: '50%',
+          overflow: 'hidden',
           userSelect: 'none',
           flexShrink: 0,
           aspectRatio: '1'
         } as React.CSSProperties}
       >
-        {/* Círculo de fondo de color */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            borderRadius: '50%',
-            backgroundColor: colors.bg,
-            zIndex: 1
-          } as React.CSSProperties}
-        />
-        {/* Imagen encima */}
+        {/* Solo imagen, sin círculo de fondo */}
         <img 
           src={avatarSrc} 
           alt={fullName}
           style={{
-            position: 'absolute',
-            top: '3px',
-            left: '3px',
-            width: `${sizeConfig.size - 6}px`,
-            height: `${sizeConfig.size - 6}px`,
+            width: '100%',
+            height: '100%',
             objectFit: 'cover',
             display: 'block',
-            borderRadius: '50%',
-            zIndex: 2
+            borderRadius: '50%'
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
             const target = e.target as HTMLImageElement;
             const canvas = document.createElement('canvas');
-            const size = sizeConfig.size - 4; // Ajustar por padding
+            const size = sizeConfig.size;
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
@@ -295,69 +279,44 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
         onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
       >
-        <div 
+        {/* Solo imagen, sin círculo de fondo */}
+        <img 
+          src={localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
+          alt={fullName}
           style={{
             width: '100%',
             height: '100%',
-            position: 'relative'
+            objectFit: 'cover',
+            display: 'block',
+            borderRadius: '50%'
           } as React.CSSProperties}
-        >
-          {/* Círculo de fondo de color */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              backgroundColor: colors.bg,
-              zIndex: 1
-            } as React.CSSProperties}
-          />
-          {/* Imagen encima */}
-          <img 
-            src={localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
-            alt={fullName}
-            style={{
-              position: 'absolute',
-              top: '3px',
-              left: '3px',
-              width: `${sizeConfig.size - 6}px`,
-              height: `${sizeConfig.size - 6}px`,
-              objectFit: 'cover',
-              display: 'block',
-              borderRadius: '50%',
-              zIndex: 2
-            } as React.CSSProperties}
-            onError={(e) => {
-              // Si falla el servicio externo, usar avatar local generado con canvas
-              const target = e.target as HTMLImageElement;
-              const canvas = document.createElement('canvas');
-              const size = sizeConfig.size - sizeConfig.border * 2; // Ajustar por border
-              canvas.width = size;
-              canvas.height = size;
-              const ctx = canvas.getContext('2d');
+          onError={(e) => {
+            // Si falla el servicio externo, usar avatar local generado con canvas
+            const target = e.target as HTMLImageElement;
+            const canvas = document.createElement('canvas');
+            const size = sizeConfig.size;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+              // Fondo circular
+              ctx.fillStyle = colors.bg;
+              ctx.beginPath();
+              ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+              ctx.fill();
               
-              if (ctx) {
-                // Fondo circular
-                ctx.fillStyle = colors.bg;
-                ctx.beginPath();
-                ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Texto iniciales
-                ctx.fillStyle = colors.text;
-                ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(getInitials(fullName), size/2, size/2);
-                
-                target.src = canvas.toDataURL();
-              }
-            }}
-          />
-        </div>
+              // Texto iniciales
+              ctx.fillStyle = colors.text;
+              ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(getInitials(fullName), size/2, size/2);
+              
+              target.src = canvas.toDataURL();
+            }
+          }}
+        />
         
         {/* Overlay con icono de cámara cuando está uploading */}
         {isUploading && (
