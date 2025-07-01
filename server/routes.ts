@@ -952,7 +952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startDate: startDate ? new Date(startDate) : new Date(),
         isActive: true,
         isPendingActivation: true,
-        totalVacationDays: "22.0", // Default vacation days
+        totalVacationDays: "0", // Will be calculated after user creation
         personalEmail: personalEmail || null,
         personalPhone: personalPhone || null,
         postalAddress: postalAddress || null,
@@ -960,6 +960,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emergencyContactPhone: emergencyContactPhone || null,
         position: position || null,
         createdBy: (req as AuthRequest).user!.id,
+      });
+
+      // Calculate proportional vacation days based on start date
+      const calculatedVacationDays = await storage.calculateVacationDays(user.id);
+      
+      // Update user with calculated vacation days
+      await storage.updateUser(user.id, {
+        totalVacationDays: calculatedVacationDays.toString()
       });
 
       // Create activation token
