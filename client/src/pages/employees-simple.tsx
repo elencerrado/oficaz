@@ -785,7 +785,7 @@ export default function EmployeesSimple() {
               {/* Employee Header */}
               <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
                 <div className="flex items-center gap-3">
-                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} />
+                  <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} showUpload={true} />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
                     <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">

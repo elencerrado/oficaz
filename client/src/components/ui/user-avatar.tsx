@@ -248,9 +248,15 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     );
   }
 
-  // Renderizado con opciones de upload
+  // Renderizado con opciones de upload - TAMAÑO ESPECIAL PARA UPLOAD
   const colors = getUserColors(userId);
-  const sizeConfig = getSizePixels(size);
+  const baseSizeConfig = getSizePixels(size);
+  // Avatar de upload es más grande (60px en lugar de 40px para md)
+  const sizeConfig = {
+    size: 60,
+    border: 3,
+    fontSize: 18
+  };
   
   return (
     <div className="relative">
