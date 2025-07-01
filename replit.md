@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. COMPRESIÓN AUTOMÁTICA DE IMÁGENES IMPLEMENTADA: Todas las fotos de perfil se procesan automáticamente
+  - SHARP INTEGRADO: Librería profesional para procesamiento de imágenes instalada y configurada
+  - TAMAÑO MÁXIMO: Todas las imágenes se redimensionan automáticamente a máximo 200x200 píxeles
+  - CALIDAD OPTIMIZADA: JPEG a 85% de calidad con progressive encoding para carga rápida
+  - ASPECT RATIO PRESERVADO: fit: 'inside' mantiene proporciones sin distorsión
+  - NO AGRANDAMIENTO: withoutEnlargement evita pixelado en imágenes pequeñas
+  - FORMATO CONSISTENTE: Todas las fotos se convierten a JPEG para uniformidad
+  - RENDIMIENTO MEJORADO: Archivos más pequeños mejoran velocidad de carga en toda la aplicación
+  - LIMPIEZA AUTOMÁTICA: Archivos originales se eliminan tras procesamiento para ahorrar espacio
 - July 1, 2025. AVATAR PERFIL EMPLEADO OPTIMIZADO: Tamaño ajustado a 80px tras feedback del usuario
   - TAMAÑO AJUSTADO: Avatar en perfil empleado reducido a 80px (w-20 h-20) para proporción perfecta
   - BOTONES DUPLICADOS ELIMINADOS: Removidos botones externos de upload/delete, UserAvatar ya los incluye

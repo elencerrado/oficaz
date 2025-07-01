@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
+import sharp from 'sharp';
 import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
@@ -2205,13 +2206,24 @@ startxref
         return res.status(400).json({ error: 'El archivo es demasiado grande. Tamaño máximo: 5MB.' });
       }
 
-      // Generate unique filename using target user ID
-      const fileExtension = path.extname(req.file.originalname);
-      const filename = `profile_${targetUserId}_${Date.now()}${fileExtension}`;
+      // Generate unique filename for processed image (always JPEG for consistency)
+      const filename = `profile_${targetUserId}_${Date.now()}.jpg`;
       const newPath = path.join(uploadDir, filename);
 
-      // Move file to permanent location
-      fs.renameSync(req.file.path, newPath);
+      // Process and compress image to 200x200 max using Sharp
+      await sharp(req.file.path)
+        .resize(200, 200, {
+          fit: 'inside', // Mantiene aspect ratio, no distorsiona
+          withoutEnlargement: true // No agranda imágenes pequeñas
+        })
+        .jpeg({ 
+          quality: 85, // Buena calidad con tamaño optimizado
+          progressive: true 
+        })
+        .toFile(newPath);
+
+      // Remove original uploaded file after processing
+      fs.unlinkSync(req.file.path);
 
       // Update target user's profile picture in database
       const profilePictureUrl = `/uploads/${filename}`;
