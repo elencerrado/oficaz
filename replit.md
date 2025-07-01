@@ -182,8 +182,8 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- July 1, 2025. AVATAR PERFIL EMPLEADO EXPANDIDO: Tamaño aumentado a 128px para mejor visibilidad
-  - TAMAÑO AUMENTADO: Avatar en perfil empleado aumentado de 80px (w-20 h-20) a 128px (w-32 h-32)
+- July 1, 2025. AVATAR PERFIL EMPLEADO EXPANDIDO: Tamaño aumentado a 256px para mejor visibilidad
+  - TAMAÑO AUMENTADO: Avatar en perfil empleado aumentado de 80px (w-20 h-20) a 256px (w-64 h-64)
   - VERIFICACIÓN COMPLETA: Confirmado que foto de Juan José se carga correctamente desde `/uploads/profile_5_1751365910135.jpg`
   - SISTEMA FUNCIONANDO: Círculo de fondo único + foto superpuesta + botones upload/delete operativos
   - LOGS DEPURACIÓN: Añadidos y posteriormente eliminados logs para confirmar funcionamiento correcto
