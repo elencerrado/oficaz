@@ -152,10 +152,21 @@ export default function EmployeesSimple() {
 
   // Function to handle creating new employee
   const handleCreateEmployee = () => {
-    if (!newEmployee.fullName.trim() || !newEmployee.dni.trim()) {
+    // Validate required fields
+    if (!newEmployee.fullName.trim() || !newEmployee.dni.trim() || !newEmployee.role) {
       toast({
         title: 'Campos Obligatorios',
-        description: 'El nombre completo y el DNI son obligatorios.',
+        description: 'El nombre completo, DNI/NIE y tipo de usuario son obligatorios.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate at least one email is provided
+    if (!newEmployee.companyEmail?.trim() && !newEmployee.personalEmail?.trim()) {
+      toast({
+        title: 'Email Requerido',
+        description: 'Debe proporcionar al menos un email (corporativo o personal) para enviar las credenciales de activación.',
         variant: 'destructive',
       });
       return;
@@ -596,206 +607,126 @@ export default function EmployeesSimple() {
           </DialogHeader>
           
           <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Left Column - Required & Corporate Fields */}
-              <div className="space-y-4">
-                {/* Required Fields */}
-                <div className="bg-white border border-red-200 rounded-xl p-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
-                      <AlertCircle className="h-3 w-3 text-red-600" />
-                    </div>
-                    Campos Obligatorios
-                  </h4>
+            {/* Simplified Form Layout */}
+            <div className="space-y-6">
+              {/* Required Fields */}
+              <div className="bg-white border border-red-200 rounded-xl p-6">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
+                    <Shield className="h-3 w-3 text-red-600" />
+                  </div>
+                  Campos Obligatorios
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="newFullName" className="text-sm font-medium text-gray-700">
+                      Nombre Completo <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="newFullName"
+                      value={newEmployee.fullName}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, fullName: e.target.value })}
+                      placeholder="Juan Pérez García"
+                      className="mt-1"
+                      required
+                    />
+                  </div>
                   
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="newFullName" className="text-sm font-medium text-gray-700">Nombre Completo *</Label>
-                      <Input
-                        id="newFullName"
-                        value={newEmployee.fullName}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, fullName: e.target.value })}
-                        placeholder="Juan José Ramírez Martín"
-                        className="mt-1"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newDni" className="text-sm font-medium text-gray-700">DNI/NIE *</Label>
-                      <Input
-                        id="newDni"
-                        value={newEmployee.dni}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, dni: e.target.value })}
-                        placeholder="12345678A"
-                        className="mt-1"
-                        required
+                  <div>
+                    <Label htmlFor="newDni" className="text-sm font-medium text-gray-700">
+                      DNI/NIE <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="newDni"
+                      value={newEmployee.dni}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, dni: e.target.value })}
+                      placeholder="12345678Z"
+                      className="mt-1"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">
+                      Fecha de Incorporación <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="mt-1">
+                      <DatePickerDayEmployee
+                        date={newEmployee.startDate}
+                        onDateChange={(date) => setNewEmployee({ ...newEmployee, startDate: date || new Date() })}
+                        placeholder="Seleccionar fecha"
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* Corporate Fields */}
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Shield className="h-3 w-3 text-blue-600" />
-                    </div>
-                    Información Corporativa
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="newCompanyEmail" className="text-sm font-medium text-gray-700">Email Corporativo</Label>
-                      <Input
-                        id="newCompanyEmail"
-                        type="email"
-                        value={newEmployee.companyEmail}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, companyEmail: e.target.value })}
-                        placeholder="empleado@empresa.com"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newCompanyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
-                      <Input
-                        id="newCompanyPhone"
-                        value={newEmployee.companyPhone}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, companyPhone: e.target.value })}
-                        placeholder="666 666 666"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newPosition" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
-                      <Input
-                        id="newPosition"
-                        value={newEmployee.position}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, position: e.target.value })}
-                        placeholder="Administrativo, Técnico, etc."
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
-                      <div className="mt-1">
-                        <DatePickerDayEmployee
-                          date={newEmployee.startDate}
-                          onDateChange={(date) => setNewEmployee({ ...newEmployee, startDate: date || new Date() })}
-                          placeholder="Seleccionar fecha"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newStatus" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
-                      <Select 
-                        value={newEmployee.status}
-                        onValueChange={(value) => setNewEmployee({ ...newEmployee, status: value })}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Seleccionar estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">Activo</SelectItem>
-                          <SelectItem value="inactive">Inactivo</SelectItem>
-                          <SelectItem value="on_leave">De baja</SelectItem>
-                          <SelectItem value="on_vacation">De vacaciones</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="newRole" className="text-sm font-medium text-gray-700">Tipo de Usuario</Label>
-                      <Select 
-                        value={newEmployee.role}
-                        onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Seleccionar tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="employee">Empleado</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="admin">Administrador</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div>
+                    <Label htmlFor="newRole" className="text-sm font-medium text-gray-700">
+                      Tipo de Usuario <span className="text-red-500">*</span>
+                    </Label>
+                    <Select 
+                      value={newEmployee.role}
+                      onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
+                    >
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue placeholder="Seleccionar tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="employee">Empleado</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Personal Info */}
-              <div className="space-y-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                      <User className="h-3 w-3 text-green-600" />
-                    </div>
-                    Información Personal
-                  </h4>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="newPersonalEmail" className="text-sm font-medium text-gray-700">Email Personal</Label>
-                      <Input
-                        id="newPersonalEmail"
-                        type="email"
-                        value={newEmployee.personalEmail}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, personalEmail: e.target.value })}
-                        placeholder="email@personal.com"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newPersonalPhone" className="text-sm font-medium text-gray-700">Teléfono Personal</Label>
-                      <Input
-                        id="newPersonalPhone"
-                        value={newEmployee.personalPhone}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, personalPhone: e.target.value })}
-                        placeholder="+34 666 666 666"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newAddress" className="text-sm font-medium text-gray-700">Dirección</Label>
-                      <Input
-                        id="newAddress"
-                        value={newEmployee.address}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, address: e.target.value })}
-                        placeholder="Calle, número, ciudad..."
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newEmergencyContactName" className="text-sm font-medium text-gray-700">Persona de Contacto</Label>
-                      <Input
-                        id="newEmergencyContactName"
-                        value={newEmployee.emergencyContactName}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, emergencyContactName: e.target.value })}
-                        placeholder="Nombre del contacto de emergencia"
-                        className="mt-1"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="newEmergencyContactPhone" className="text-sm font-medium text-gray-700">Teléfono de Contacto</Label>
-                      <Input
-                        id="newEmergencyContactPhone"
-                        value={newEmployee.emergencyContactPhone}
-                        onChange={(e) => setNewEmployee({ ...newEmployee, emergencyContactPhone: e.target.value })}
-                        placeholder="+34 666 666 666"
-                        className="mt-1"
-                      />
-                    </div>
+              {/* Email for Activation */}
+              <div className="bg-white border border-blue-200 rounded-xl p-6">
+                <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Mail className="h-3 w-3 text-blue-600" />
                   </div>
+                  Email de Activación
+                </h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  <span className="text-red-500">*</span> Debe proporcionar al menos uno de estos emails donde se enviará el correo de bienvenida para configurar la contraseña
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="newCompanyEmail" className="text-sm font-medium text-gray-700">
+                      Email Corporativo
+                    </Label>
+                    <Input
+                      id="newCompanyEmail"
+                      type="email"
+                      value={newEmployee.companyEmail}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, companyEmail: e.target.value })}
+                      placeholder="empleado@empresa.com"
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="newPersonalEmail" className="text-sm font-medium text-gray-700">
+                      Email Personal
+                    </Label>
+                    <Input
+                      id="newPersonalEmail"
+                      type="email"
+                      value={newEmployee.personalEmail}
+                      onChange={(e) => setNewEmployee({ ...newEmployee, personalEmail: e.target.value })}
+                      placeholder="email@personal.com"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-3 text-center">
+                  <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    Al menos uno de los emails es obligatorio
+                  </span>
                 </div>
               </div>
             </div>
