@@ -371,6 +371,9 @@ export default function Messages() {
     
     const role = person.role || 'employee';
     
+    // DEBUG: Log para verificar datos
+    console.log('getRoleDisplay called with:', { person, role });
+    
     // Map roles to Spanish descriptions
     const roleDescriptions = {
       admin: 'Administrador',
@@ -379,6 +382,7 @@ export default function Messages() {
     };
     
     const displayText = roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+    console.log('Display text:', displayText);
     
     const roleConfig = {
       admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
