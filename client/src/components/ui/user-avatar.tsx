@@ -176,15 +176,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
     const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
     
-    // Debug logs
-    console.log('UserAvatar DEBUG (simple render):', {
-      fullName,
-      userId,
-      profilePicture,
-      localProfilePicture,
-      avatarSrc,
-      className
-    });
     
     return (
       <div 

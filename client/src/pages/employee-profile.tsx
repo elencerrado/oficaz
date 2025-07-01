@@ -184,7 +184,7 @@ export default function EmployeeProfile() {
                 size="lg"
                 userId={user?.id}
                 profilePicture={user?.profilePicture}
-                className="w-20 h-20 shadow-lg"
+                className="w-32 h-32 shadow-lg"
               />
               
               {/* Photo controls overlay */}
