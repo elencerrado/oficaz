@@ -48,6 +48,13 @@ export default function EmployeeActivation() {
   // Verify token validity
   const { data: tokenData, isLoading: isVerifying, error: tokenError } = useQuery({
     queryKey: ['/api/auth/verify-activation-token', token],
+    queryFn: async () => {
+      const response = await fetch(`/api/auth/verify-activation-token?token=${encodeURIComponent(token)}`);
+      if (!response.ok) {
+        throw new Error('Token inválido o expirado');
+      }
+      return response.json();
+    },
     enabled: !!token,
     retry: false
   });
