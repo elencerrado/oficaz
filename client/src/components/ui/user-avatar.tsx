@@ -183,54 +183,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     const colors = getUserColors(userId);
     const sizeConfig = getSizePixels(size);
     
-    // Si hay foto de perfil, mostrarla con borde de color único - ESTILOS INLINE PUROS
-    if (profilePicture) {
-      return (
-        <div 
-          style={{
-            width: `${sizeConfig.size}px`,
-            height: `${sizeConfig.size}px`,
-            minWidth: `${sizeConfig.size}px`,
-            minHeight: `${sizeConfig.size}px`,
-            maxWidth: `${sizeConfig.size}px`,
-            maxHeight: `${sizeConfig.size}px`,
-            border: `${sizeConfig.border}px solid ${colors.bg}`,
-            padding: '2px',
-            backgroundColor: 'white',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            userSelect: 'none',
-            flexShrink: 0,
-            aspectRatio: '1'
-          } as React.CSSProperties}
-        >
-          <img 
-            src={profilePicture} 
-            alt={fullName}
-            style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              display: 'block'
-            } as React.CSSProperties}
-            onError={(e) => {
-              // Si la imagen falla al cargar, reemplazar con iniciales
-              const target = e.target as HTMLImageElement;
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = `<div style="width: 100%; height: 100%; border-radius: 50%; background-color: ${colors.bg}; color: ${colors.text}; display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: ${sizeConfig.fontSize}px; user-select: none;">${getInitials(fullName)}</div>`;
-              }
-            }}
-          />
-        </div>
-      );
-    }
+    // SOLO AVATARES CON FOTO - generar imagen si no hay foto real
+    const avatarSrc = profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
     
-    // Si no hay foto, mostrar iniciales con la misma estructura que con foto - ESTILOS INLINE PUROS
     return (
       <div 
         style={{
@@ -253,23 +208,43 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           aspectRatio: '1'
         } as React.CSSProperties}
       >
-        <div 
+        <img 
+          src={avatarSrc} 
+          alt={fullName}
           style={{
             width: '100%',
             height: '100%',
             borderRadius: '50%',
-            backgroundColor: colors.bg,
-            color: colors.text,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: '500',
-            fontSize: `${sizeConfig.fontSize}px`,
-            userSelect: 'none'
+            objectFit: 'cover',
+            display: 'block'
           } as React.CSSProperties}
-        >
-          {getInitials(fullName)}
-        </div>
+          onError={(e) => {
+            // Si falla el servicio externo, usar avatar local generado con canvas
+            const target = e.target as HTMLImageElement;
+            const canvas = document.createElement('canvas');
+            const size = sizeConfig.size - 4; // Ajustar por padding
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+              // Fondo circular
+              ctx.fillStyle = colors.bg;
+              ctx.beginPath();
+              ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+              ctx.fill();
+              
+              // Texto iniciales
+              ctx.fillStyle = colors.text;
+              ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(getInitials(fullName), size/2, size/2);
+              
+              target.src = canvas.toDataURL();
+            }
+          }}
+        />
       </div>
     );
   }
@@ -314,57 +289,58 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
         onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
       >
-        {profilePicture ? (
-          <div 
-            style={{
-              width: '100%',
-              height: '100%',
-              border: `${sizeConfig.border}px solid ${colors.bg}`,
-              padding: '2px',
-              backgroundColor: 'white',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            } as React.CSSProperties}
-          >
-            <img 
-              src={profilePicture} 
-              alt={fullName}
-              style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                display: 'block'
-              } as React.CSSProperties}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </div>
-        ) : (
-          <div 
+        <div 
+          style={{
+            width: '100%',
+            height: '100%',
+            border: `${sizeConfig.border}px solid ${colors.bg}`,
+            padding: '2px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          } as React.CSSProperties}
+        >
+          <img 
+            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
+            alt={fullName}
             style={{
               width: '100%',
               height: '100%',
               borderRadius: '50%',
-              backgroundColor: colors.bg,
-              color: colors.text,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '500',
-              fontSize: `${sizeConfig.fontSize}px`,
-              userSelect: 'none',
-              flexShrink: 0,
-              aspectRatio: '1'
+              objectFit: 'cover',
+              display: 'block'
             } as React.CSSProperties}
-          >
-            {getInitials(fullName)}
-          </div>
-        )}
+            onError={(e) => {
+              // Si falla el servicio externo, usar avatar local generado con canvas
+              const target = e.target as HTMLImageElement;
+              const canvas = document.createElement('canvas');
+              const size = sizeConfig.size - 4; // Ajustar por padding
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
+              
+              if (ctx) {
+                // Fondo circular
+                ctx.fillStyle = colors.bg;
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Texto iniciales
+                ctx.fillStyle = colors.text;
+                ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(getInitials(fullName), size/2, size/2);
+                
+                target.src = canvas.toDataURL();
+              }
+            }}
+          />
+        </div>
         
         {/* Overlay con icono de cámara cuando está uploading */}
         {isUploading && (

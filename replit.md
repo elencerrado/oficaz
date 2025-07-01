@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. SISTEMA DE AVATARES COMPLETAMENTE REDISEÑADO: Solo avatares tipo foto en toda la aplicación
+  - ELIMINADOS AVATARES DE INICIALES: Ya no existen divs con texto, todo son imágenes
+  - SISTEMA UNIFICADO: profilePicture real o avatar generado automáticamente con UI Avatars API
+  - COLORES ÚNICOS PRESERVADOS: Servicio externo usa los colores distintivos de cada empleado
+  - FALLBACK ROBUSTO: Canvas local como backup si falla servicio externo
+  - APARIENCIA PROFESIONAL: Todos los avatares tienen look de "foto" consistente
+  - APLICADO EN TODA LA APP: Fichajes, mensajes, empleados, vacaciones - sistema 100% foto
 - July 1, 2025. INCONSISTENCIA VISUAL DE AVATARES CORREGIDA DEFINITIVAMENTE: Estructura unificada implementada
   - PROBLEMA RESUELTO: Avatar sin foto (línea 235) ahora usa misma estructura que avatar con foto (línea 189)
   - ESTRUCTURA UNIFICADA: Ambos tipos usan contenedor exterior (borde+padding+fondo blanco) + contenedor interior
