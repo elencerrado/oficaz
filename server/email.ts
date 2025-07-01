@@ -48,6 +48,8 @@ export async function sendEmployeeWelcomeEmail(
   activationLink: string
 ): Promise<boolean> {
   try {
+    console.log(`📧 Starting sendEmployeeWelcomeEmail for: ${employeeEmail}`);
+    
     // Configure Nodemailer with Hostinger SMTP
     const transporter = nodemailer.createTransport({
       host: 'smtp.hostinger.com',
@@ -63,8 +65,10 @@ export async function sendEmployeeWelcomeEmail(
     });
 
     // Read logo file and convert to base64
+    console.log(`📧 Reading logo file...`);
     const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
     const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+    console.log(`📧 Logo loaded successfully, size: ${logoBase64.length} characters`);
 
     const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
     
@@ -170,8 +174,15 @@ Este email fue enviado desde Oficaz - La plataforma de gestión empresarial para
       html: htmlContent,
     };
 
-    await transporter.sendMail(mailOptions);
+    console.log(`📧 Attempting to send email with options:`, {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
+    const result = await transporter.sendMail(mailOptions);
     console.log(`✅ Employee welcome email sent successfully to ${employeeEmail}`);
+    console.log(`📧 SMTP Response:`, result);
     return true;
 
   } catch (error) {

@@ -1831,6 +1831,11 @@ startxref
       // Send activation email
       const activationLink = `${req.protocol}://${req.get('host')}/employee-activation?token=${activationToken.token}`;
       
+      console.log(`📧 Attempting to send activation email to: ${companyEmail}`);
+      console.log(`📧 Employee name: ${fullName}`);
+      console.log(`📧 Company name: ${company.name}`);
+      console.log(`📧 Activation link: ${activationLink}`);
+      
       const emailSent = await sendEmployeeWelcomeEmail(
         companyEmail,
         fullName,
@@ -1840,8 +1845,10 @@ startxref
       );
 
       if (!emailSent) {
-        console.error('Failed to send activation email for employee:', companyEmail);
+        console.error('❌ Failed to send activation email for employee:', companyEmail);
         // Don't fail the creation, just log the error
+      } else {
+        console.log(`✅ Activation email sent successfully to: ${companyEmail}`);
       }
 
       res.status(201).json({ 
