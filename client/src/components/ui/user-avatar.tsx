@@ -42,6 +42,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       // Actualizar estado local inmediatamente
       if (data?.profilePicture) {
         setLocalProfilePicture(data.profilePicture);
+        
+        // Forzar re-render adicional
+        setTimeout(() => {
+          setLocalProfilePicture(data.profilePicture);
+        }, 100);
       }
       
       // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
@@ -93,6 +98,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       // Forzar recarga completa del cache de React Query
       queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
       queryClient.refetchQueries({ queryKey: ['/api/employees'] });
+      
+      // Forzar re-render del componente
+      setTimeout(() => {
+        setLocalProfilePicture(null);
+      }, 100);
       
       toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
     },
