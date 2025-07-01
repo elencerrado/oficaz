@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. BUG CRÍTICO DE DISPLAY DE ROLES EN CHAT RESUELTO: Sistema de mensajes empleado completamente funcional
+  - PROBLEMA RESUELTO: Admin Andrés aparecía como "sin cargo definido" en chat de empleados
+  - CAUSA IDENTIFICADA: getRoleDisplay buscaba campos inexistentes (jobTitle, position) en base de datos
+  - SOLUCIÓN APLICADA: Función corregida para usar descripciones basadas en rol (admin → "Administrador")
+  - MAPEO ESPAÑOL IMPLEMENTADO: admin="Administrador", manager="Responsable", employee="Empleado"
+  - FUNCIONALIDAD RESTAURADA: Chat empleado ahora muestra roles correctos en lista y conversaciones
+  - SISTEMA VERIFICADO: Todos los roles se muestran correctamente con iconos de colores distintivos
 - June 30, 2025. BUG CRÍTICO DE DESCARGA DE DOCUMENTOS RESUELTO: Sistema empleado completamente funcional
   - PROBLEMA RESUELTO: Error "invalid or expired token" en descarga de documentos empleado
   - CAUSA IDENTIFICADA: Frontend enviaba token por query param pero backend solo aceptaba headers Authorization

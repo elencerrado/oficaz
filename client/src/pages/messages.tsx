@@ -365,12 +365,20 @@ export default function Messages() {
 
 
 
-  // Role display helper with icons - shows actual data from database
+  // Role display helper with icons - shows role-based descriptions
   const getRoleDisplay = useCallback((person: any) => {
     if (!person) return null;
     
     const role = person.role || 'employee';
-    const displayText = person.jobTitle || person.position || 'Sin cargo definido';
+    
+    // Map roles to Spanish descriptions
+    const roleDescriptions = {
+      admin: 'Administrador',
+      manager: 'Responsable',
+      employee: 'Empleado'
+    };
+    
+    const displayText = roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
     
     const roleConfig = {
       admin: { color: 'bg-red-500', letter: 'A', size: 'text-[10px]' },
