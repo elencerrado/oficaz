@@ -215,7 +215,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             objectFit: 'cover',
             display: 'block',
             borderRadius: '50%',
-            boxShadow: `0 0 0 ${sizeConfig.border}px ${colors.bg}`
+            boxShadow: `0 0 0 4px #FF0000`
           } as React.CSSProperties}
           onError={(e) => {
             // Si falla el servicio externo, usar avatar local generado con canvas
@@ -319,7 +319,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               objectFit: 'cover',
               display: 'block',
               borderRadius: '50%',
-              boxShadow: `0 0 0 ${sizeConfig.border}px ${colors.bg}`
+              boxShadow: `0 0 0 4px #FF0000`
             } as React.CSSProperties}
             onError={(e) => {
               // Si falla el servicio externo, usar avatar local generado con canvas
