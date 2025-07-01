@@ -109,7 +109,7 @@ export default function EmployeesSimple() {
         companyEmail: '',
         companyPhone: '',
         position: '',
-        startDate: '',
+        startDate: new Date(),
         status: 'active',
         role: 'employee',
         personalEmail: '',
