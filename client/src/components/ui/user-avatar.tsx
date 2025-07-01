@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,11 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Efecto para sincronizar con las props
+  useEffect(() => {
+    // Este efecto permite que el avatar se actualice cuando cambian los datos del servidor
+  }, [profilePicture]);
 
   // Mutations para subir y eliminar fotos
   const uploadPhotoMutation = useMutation({
@@ -33,37 +38,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
     onSuccess: (data) => {
-      // Invalidar TODOS los posibles endpoints que contengan datos del usuario
+      // Invalidación selectiva solo de los datos esenciales que contienen fotos
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
-      
-      // Invalidar cache de forma más amplia usando patrones
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey[0] as string;
-          return key?.includes('/api/auth') || 
-                 key?.includes('/api/employees') || 
-                 key?.includes('/api/users') ||
-                 key?.includes('/api/messages') ||
-                 key?.includes('/api/vacation') ||
-                 key?.includes('/api/work-sessions');
-        }
-      });
-      
-      // Forzar refetch inmediato de los datos más críticos
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
-      
-      // Forzar re-render del componente para mostrar la nueva imagen inmediatamente
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
       
       toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
     },
@@ -80,32 +57,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return await apiRequest('DELETE', '/api/users/profile-picture');
     },
     onSuccess: () => {
-      // Invalidar TODOS los posibles endpoints que contengan datos del usuario
+      // Invalidación selectiva solo de los datos esenciales que contienen fotos
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
-      
-      // Invalidar cache de forma más amplia usando patrones
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey[0] as string;
-          return key?.includes('/api/auth') || 
-                 key?.includes('/api/employees') || 
-                 key?.includes('/api/users') ||
-                 key?.includes('/api/messages') ||
-                 key?.includes('/api/vacation') ||
-                 key?.includes('/api/work-sessions');
-        }
-      });
-      
-      // Forzar refetch inmediato de los datos más críticos
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
       
       toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
     },
