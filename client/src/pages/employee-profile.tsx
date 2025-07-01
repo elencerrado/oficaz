@@ -184,52 +184,9 @@ export default function EmployeeProfile() {
                 size="lg"
                 userId={user?.id}
                 profilePicture={user?.profilePicture}
-                className="w-64 h-64 shadow-lg"
+                showUpload={true}
+                className="w-32 h-32 shadow-lg"
               />
-              
-              {/* Photo controls overlay */}
-              <div className="absolute -bottom-2 -right-2 flex gap-1">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="w-8 h-8 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white border-2 border-white shadow-lg"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadProfilePictureMutation.isPending}
-                >
-                  {uploadProfilePictureMutation.isPending ? (
-                    <LoadingSpinner className="w-3 h-3" />
-                  ) : (
-                    <Camera className="w-3 h-3" />
-                  )}
-                </Button>
-                
-                {user?.profilePicture && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="w-8 h-8 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white border-2 border-white shadow-lg"
-                    onClick={handleDeletePhoto}
-                    disabled={deleteProfilePictureMutation.isPending}
-                  >
-                    {deleteProfilePictureMutation.isPending ? (
-                      <LoadingSpinner className="w-3 h-3" />
-                    ) : (
-                      <Trash2 className="w-3 h-3" />
-                    )}
-                  </Button>
-                )}
-              </div>
-              
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              
-
             </div>
             
             <div className="flex-1">

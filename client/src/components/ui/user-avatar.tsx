@@ -251,15 +251,31 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     );
   }
 
-  // Renderizado con opciones de upload - TAMAÑO ESPECIAL PARA UPLOAD
+  // Renderizado con opciones de upload - USAR TAMAÑO DEL CLASSNAME SI ESTÁ PRESENTE
   const colors = getUserColors(userId);
   const baseSizeConfig = getSizePixels(size);
-  // Avatar de upload es más grande (60px en lugar de 40px para md)
-  const sizeConfig = {
+  
+  // Si hay className con w-64 h-64, extraer el tamaño
+  let sizeConfig = {
     size: 60,
     border: 3,
     fontSize: 18
   };
+  
+  // Detectar tamaño desde className (w-64 h-64 = 256px)
+  if (className && className.includes('w-64') && className.includes('h-64')) {
+    sizeConfig = {
+      size: 256,
+      border: 6,
+      fontSize: 48
+    };
+  } else if (className && className.includes('w-32') && className.includes('h-32')) {
+    sizeConfig = {
+      size: 128,
+      border: 4,
+      fontSize: 24
+    };
+  }
   
   return (
     <div className="relative">
