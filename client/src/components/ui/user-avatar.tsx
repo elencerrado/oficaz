@@ -67,8 +67,13 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
   const deletePhotoMutation = useMutation({
     mutationFn: async () => {
-      // Si tenemos un userId específico (admin eliminando para empleado), lo enviamos como parámetro
-      if (userId) {
+      // Solo usar el endpoint con ID específico si el usuario actual es admin/manager Y está gestionando otro usuario
+      // Si es el propio usuario o no es admin, usar el endpoint personal
+      const currentUser = await apiRequest('GET', '/api/auth/me');
+      const isAdmin = currentUser.user.role === 'admin' || currentUser.user.role === 'manager';
+      const isDifferentUser = userId && userId !== currentUser.user.id;
+      
+      if (isAdmin && isDifferentUser) {
         return await apiRequest('DELETE', `/api/users/${userId}/profile-picture`);
       } else {
         return await apiRequest('DELETE', '/api/users/profile-picture');
