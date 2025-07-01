@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 1, 2025. BUG CRÍTICO DE CONTEXTO DE AUTENTICACIÓN RESUELTO: Sistema de avatares completamente funcional
+  - PROBLEMA IDENTIFICADO: Dashboard empleado no actualizaba avatar tras cambio de foto por contexto de autenticación estático
+  - CAUSA TÉCNICA: useAuth no refrescaba datos del usuario después de mutaciones de foto de perfil
+  - SOLUCIÓN IMPLEMENTADA: Función refreshUser() agregada al contexto de autenticación
+  - INTEGRACIÓN COMPLETADA: UserAvatar ahora llama refreshUser() tras upload/delete exitoso
+  - RESULTADO FINAL: Cambios de avatar se reflejan inmediatamente en dashboard y toda la aplicación
+  - TÉCNICA APLICADA: Actualización de localStorage + estado de React + invalidación de cache
 - July 1, 2025. COMPRESIÓN AUTOMÁTICA DE IMÁGENES IMPLEMENTADA: Todas las fotos de perfil se procesan automáticamente
   - SHARP INTEGRADO: Librería profesional para procesamiento de imágenes instalada y configurada
   - TAMAÑO MÁXIMO: Todas las imágenes se redimensionan automáticamente a máximo 200x200 píxeles

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { Camera, X } from 'lucide-react';
 
 interface UserAvatarProps {
@@ -15,6 +16,7 @@ interface UserAvatarProps {
 
 export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false }: UserAvatarProps) {
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -48,6 +50,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           setLocalProfilePicture(data.profilePicture);
         }, 100);
       }
+      
+      // CRÍTICO: Actualizar contexto de autenticación para el dashboard
+      refreshUser();
       
       // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
@@ -87,6 +92,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     onSuccess: () => {
       // Actualizar estado local inmediatamente para eliminar la foto
       setLocalProfilePicture(null);
+      
+      // CRÍTICO: Actualizar contexto de autenticación para el dashboard
+      refreshUser();
       
       // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });

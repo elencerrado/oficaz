@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (dniOrEmail: string, password: string, companyAlias?: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
   subscription: any;
@@ -107,6 +108,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearAuthData();
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setCompany(data.company);
+        setAuthData({ ...data, token });
+        
+        // También actualizar localStorage
+        const currentAuthData = getAuthData();
+        if (currentAuthData) {
+          const updatedAuthData = { ...currentAuthData, user: data.user, company: data.company };
+          localStorage.setItem('authData', JSON.stringify(updatedAuthData));
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+
   console.log('AuthProvider rendering with:', {
     user: user?.fullName,
     company: company?.name,
@@ -123,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      refreshUser,
       isLoading,
       isAuthenticated: !!(user && company && token),
     }}>
