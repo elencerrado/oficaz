@@ -159,8 +159,8 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
   // Si no se necesita upload, usar el renderizado simple original
   if (!showUpload) {
-    // Si hay clases personalizadas, usarlas completamente
-    if (className) {
+    // Si hay clases personalizadas Y NO hay foto real, usar renderizado de iniciales
+    if (className && !profilePicture && !localProfilePicture) {
       return (
         <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
           {getInitials(fullName)}
@@ -173,7 +173,18 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     const sizeConfig = getSizePixels(size);
     
     // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
-    const avatarSrc = localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
+    // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
+    const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
+    
+    // Debug logs
+    console.log('UserAvatar DEBUG (simple render):', {
+      fullName,
+      userId,
+      profilePicture,
+      localProfilePicture,
+      avatarSrc,
+      className
+    });
     
     return (
       <div 
@@ -306,7 +317,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         />
         {/* Imagen encima del fondo */}
         <img 
-          src={localProfilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
+          src={localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
           alt={fullName}
           style={{
             position: 'absolute',
