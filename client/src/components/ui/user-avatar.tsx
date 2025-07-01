@@ -192,8 +192,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           maxWidth: `${sizeConfig.size}px`,
           maxHeight: `${sizeConfig.size}px`,
           border: `${sizeConfig.border}px solid ${colors.bg}`,
-          padding: '2px',
-          backgroundColor: 'white',
           borderRadius: '50%',
           overflow: 'hidden',
           display: 'flex',
@@ -290,8 +288,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             width: '100%',
             height: '100%',
             border: `${sizeConfig.border}px solid ${colors.bg}`,
-            padding: '2px',
-            backgroundColor: 'white',
             borderRadius: '50%',
             overflow: 'hidden',
             display: 'flex',
@@ -313,7 +309,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
               // Si falla el servicio externo, usar avatar local generado con canvas
               const target = e.target as HTMLImageElement;
               const canvas = document.createElement('canvas');
-              const size = sizeConfig.size - 4; // Ajustar por padding
+              const size = sizeConfig.size - sizeConfig.border * 2; // Ajustar por border
               canvas.width = size;
               canvas.height = size;
               const ctx = canvas.getContext('2d');
