@@ -106,15 +106,15 @@ export default function ContactForm({ isOpen, onClose }: ContactFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md mx-4">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Mail className="w-5 h-5 text-[#007AFF]" />
             Contacta con nosotros
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1 overflow-y-auto">
           {/* Nombre */}
           <div className="space-y-2">
             <Label htmlFor="name" className="flex items-center gap-2">
