@@ -45,6 +45,7 @@ import SuperAdminCompanies from "@/pages/super-admin-companies";
 import SuperAdminInvitations from "@/pages/super-admin-invitations";
 import InvitationRegister from "@/pages/invitation-register";
 import QuickAccess from "@/pages/quick-access";
+import EmployeeActivation from "@/pages/employee-activation";
 
 
 function DashboardRouter() {
@@ -185,6 +186,12 @@ function Router() {
       <Route path="/registro/invitacion/:token">
         <PublicRoute>
           <InvitationRegister />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/employee-activation">
+        <PublicRoute>
+          <EmployeeActivation />
         </PublicRoute>
       </Route>
 
