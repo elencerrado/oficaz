@@ -2162,6 +2162,33 @@ startxref
         return res.status(400).json({ error: 'No se ha proporcionado ningún archivo' });
       }
 
+      // Determine target user ID (for admin uploading for employees or user uploading for themselves)
+      const targetUserId = req.body.targetEmployeeId ? parseInt(req.body.targetEmployeeId) : req.user!.id;
+      const isAdminUpload = req.body.targetEmployeeId && targetUserId !== req.user!.id;
+
+      // Security check: If admin is uploading for an employee, verify permissions and same company
+      if (isAdminUpload) {
+        const user = req.user!;
+        if (!['admin', 'manager'].includes(user.role)) {
+          fs.unlinkSync(req.file.path);
+          return res.status(403).json({ error: 'Solo admins y managers pueden subir fotos para otros empleados' });
+        }
+
+        const targetEmployee = await storage.getUser(targetUserId);
+        if (!targetEmployee) {
+          fs.unlinkSync(req.file.path);
+          return res.status(404).json({ error: 'Empleado no encontrado' });
+        }
+
+        if (targetEmployee.companyId !== user.companyId) {
+          fs.unlinkSync(req.file.path);
+          console.log(`SECURITY VIOLATION: User ${user.id} from company ${user.companyId} attempted to upload profile picture for employee ${targetUserId} from company ${targetEmployee.companyId}`);
+          return res.status(403).json({ error: 'No puedes subir fotos para empleados de otras empresas' });
+        }
+
+        console.log(`ADMIN PROFILE UPLOAD: User ${user.id} (${user.role}) uploading profile picture for employee ${targetUserId} within company ${user.companyId}`);
+      }
+
       // Validate file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(req.file.mimetype)) {
@@ -2177,17 +2204,17 @@ startxref
         return res.status(400).json({ error: 'El archivo es demasiado grande. Tamaño máximo: 5MB.' });
       }
 
-      // Generate unique filename
+      // Generate unique filename using target user ID
       const fileExtension = path.extname(req.file.originalname);
-      const filename = `profile_${req.user!.id}_${Date.now()}${fileExtension}`;
+      const filename = `profile_${targetUserId}_${Date.now()}${fileExtension}`;
       const newPath = path.join(uploadDir, filename);
 
       // Move file to permanent location
       fs.renameSync(req.file.path, newPath);
 
-      // Update user profile picture in database
+      // Update target user's profile picture in database
       const profilePictureUrl = `/uploads/${filename}`;
-      const updatedUser = await storage.updateUser(req.user!.id, { 
+      const updatedUser = await storage.updateUser(targetUserId, { 
         profilePicture: profilePictureUrl 
       });
 

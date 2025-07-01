@@ -24,6 +24,12 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('profilePicture', file);
+      
+      // Si tenemos un userId específico (admin subiendo para empleado), lo enviamos como targetEmployeeId
+      if (userId) {
+        formData.append('targetEmployeeId', userId.toString());
+      }
+      
       return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
     onSuccess: (data) => {
