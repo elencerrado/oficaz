@@ -1,10 +1,13 @@
 import sgMail from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
+import * as fs from 'fs';
+import * as path from 'path';
 
-// Initialize SendGrid
+// Initialize SendGrid (fallback)
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 } else {
-  console.warn('SENDGRID_API_KEY not found. Email functionality will be disabled.');
+  console.warn('SENDGRID_API_KEY not found. Using Nodemailer instead.');
 }
 
 interface EmailParams {
@@ -44,97 +47,135 @@ export async function sendEmployeeWelcomeEmail(
   activationToken: string,
   activationLink: string
 ): Promise<boolean> {
-  const fromEmail: string = process.env.SENDGRID_FROM_EMAIL || 'noreply@oficaz.com';
-  
-  const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
-  
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Bienvenido a ${companyName}</title>
-    </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-      
-      <div style="text-align: center; margin-bottom: 30px;">
-        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" 
-             alt="Oficaz" style="height: 40px; max-width: 150px;">
-        <h1 style="color: #007AFF; margin: 10px 0;">¡Bienvenido a ${companyName}!</h1>
-      </div>
+  try {
+    // Configure Nodemailer with Hostinger SMTP
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: 'soy@oficaz.es',
+        pass: 'Sanisidro@2025',
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
 
-      <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h2 style="color: #333; margin-top: 0;">Hola ${employeeName},</h2>
-        <p>Te damos la bienvenida al equipo de <strong>${companyName}</strong>. Tu cuenta ha sido creada y ahora necesitas configurar tu contraseña para acceder a la plataforma Oficaz.</p>
-      </div>
+    // Read logo file and convert to base64
+    const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+    const logoBase64 = fs.readFileSync(logoPath).toString('base64');
 
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${activationLink}" 
-           style="background: #007AFF; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-          Configurar mi contraseña
-        </a>
-      </div>
+    const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Bienvenido a ${companyName}</title>
+      </head>
+      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          
+          <!-- Header with logo -->
+          <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
+            <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 30px 20px;">
+            <h1 style="color: #1f2937; font-size: 24px; font-weight: 700; margin: 0 0 20px 0; text-align: center;">
+              ¡Bienvenido a ${companyName}!
+            </h1>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">
+                Hola <strong>${employeeName}</strong>,
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
+                Te damos la bienvenida al equipo de <strong>${companyName}</strong>. Tu cuenta ha sido creada y ahora necesitas configurar tu contraseña para acceder a la plataforma Oficaz.
+              </p>
+            </div>
 
-      <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <p style="margin: 0; font-size: 14px;">
-          <strong>¿Qué puedes hacer en Oficaz?</strong><br>
-          • Fichar entrada y salida<br>
-          • Solicitar vacaciones<br>
-          • Gestionar documentos<br>
-          • Comunicarte con tu equipo
-        </p>
-      </div>
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${activationLink}" 
+                 style="background: #007AFF; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">
+                Configurar mi contraseña
+              </a>
+            </div>
 
-      <div style="margin: 30px 0; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-        <p style="margin: 0; font-size: 14px;">
-          <strong>Importante:</strong> Este enlace de activación expirará en 7 días. Si tienes problemas para acceder, contacta con tu administrador.
-        </p>
-      </div>
+            <!-- Features -->
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <p style="color: #1976d2; font-weight: 600; margin: 0 0 10px 0; font-size: 16px;">
+                ¿Qué puedes hacer en Oficaz?
+              </p>
+              <ul style="color: #374151; margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>Fichar entrada y salida</li>
+                <li>Solicitar vacaciones</li>
+                <li>Gestionar documentos</li>
+                <li>Comunicarte con tu equipo</li>
+              </ul>
+            </div>
 
-      <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-      
-      <div style="text-align: center; color: #666; font-size: 12px;">
-        <p>Este email fue enviado desde <strong>Oficaz</strong><br>
-        La plataforma de gestión empresarial para equipos modernos</p>
-        
-        <p style="margin-top: 20px;">
-          Si no solicitaste esta cuenta, puedes ignorar este email.
-        </p>
-      </div>
+            <!-- Warning -->
+            <div style="margin: 25px 0; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+              <p style="margin: 0; font-size: 14px; color: #856404;">
+                <strong>Importante:</strong> Este enlace de activación expirará en 7 días. Si tienes problemas para acceder, contacta con tu administrador.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0 0 5px 0;">
+              Este email fue enviado desde <strong>Oficaz</strong>
+            </p>
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">
+              La plataforma de gestión empresarial para equipos modernos
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
 
-    </body>
-    </html>
-  `;
+    const textContent = `
+Bienvenido a ${companyName}
 
-  const textContent = `
-    ¡Bienvenido a ${companyName}!
+Hola ${employeeName},
 
-    Hola ${employeeName},
+Te damos la bienvenida al equipo de ${companyName}. Tu cuenta ha sido creada y ahora necesitas configurar tu contraseña para acceder a la plataforma Oficaz.
 
-    Te damos la bienvenida al equipo de ${companyName}. Tu cuenta ha sido creada y ahora necesitas configurar tu contraseña para acceder a la plataforma Oficaz.
+Configura tu contraseña usando este enlace: ${activationLink}
 
-    Para configurar tu contraseña, haz clic en el siguiente enlace:
-    ${activationLink}
+¿Qué puedes hacer en Oficaz?
+• Fichar entrada y salida
+• Solicitar vacaciones  
+• Gestionar documentos
+• Comunicarte con tu equipo
 
-    ¿Qué puedes hacer en Oficaz?
-    • Fichar entrada y salida
-    • Solicitar vacaciones
-    • Gestionar documentos
-    • Comunicarte con tu equipo
+Importante: Este enlace de activación expirará en 7 días. Si tienes problemas para acceder, contacta con tu administrador.
 
-    IMPORTANTE: Este enlace de activación expirará en 7 días. Si tienes problemas para acceder, contacta con tu administrador.
+Este email fue enviado desde Oficaz - La plataforma de gestión empresarial para equipos modernos
+    `;
 
-    Este email fue enviado desde Oficaz - La plataforma de gestión empresarial para equipos modernos.
+    const mailOptions = {
+      from: '"Oficaz" <soy@oficaz.es>',
+      to: employeeEmail,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    };
 
-    Si no solicitaste esta cuenta, puedes ignorar este email.
-  `;
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Employee welcome email sent successfully to ${employeeEmail}`);
+    return true;
 
-  return await sendEmail({
-    to: employeeEmail,
-    from: fromEmail,
-    subject,
-    html: htmlContent,
-    text: textContent
-  });
+  } catch (error) {
+    console.error('❌ Error sending employee welcome email:', error);
+    return false;
+  }
 }
