@@ -54,7 +54,12 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
   const deletePhotoMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('DELETE', '/api/users/profile-picture');
+      // Si tenemos un userId específico (admin eliminando para empleado), lo enviamos como parámetro
+      if (userId) {
+        return await apiRequest('DELETE', `/api/users/${userId}/profile-picture`);
+      } else {
+        return await apiRequest('DELETE', '/api/users/profile-picture');
+      }
     },
     onSuccess: () => {
       // Invalidación selectiva solo de los datos esenciales que contienen fotos

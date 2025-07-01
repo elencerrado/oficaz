@@ -2273,6 +2273,52 @@ startxref
     }
   });
 
+  // Delete profile picture for specific user (admin/manager only)
+  app.delete('/api/users/:id/profile-picture', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      
+      // Verificar que el usuario objetivo pertenece a la misma empresa
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+      
+      if (targetUser.companyId !== req.user!.companyId) {
+        return res.status(403).json({ error: 'No tienes permisos para eliminar la foto de este usuario' });
+      }
+
+      // Remove profile picture from database
+      const updatedUser = await storage.updateUser(targetUserId, { 
+        profilePicture: null 
+      });
+
+      if (!updatedUser) {
+        return res.status(500).json({ error: 'Error al eliminar la foto de perfil de la base de datos' });
+      }
+
+      // Delete file from filesystem if it exists
+      if (targetUser.profilePicture) {
+        const filePath = path.join(process.cwd(), 'uploads', path.basename(targetUser.profilePicture));
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (fileError) {
+          console.warn('Warning: Could not delete profile picture file:', fileError);
+          // Continue anyway as database update was successful
+        }
+      }
+
+      res.json({ 
+        message: 'Foto de perfil eliminada correctamente' 
+      });
+    } catch (error: any) {
+      console.error('Error deleting user profile picture:', error);
+      res.status(500).json({ error: 'Error al eliminar la foto de perfil' });
+    }
+  });
+
   // Calculate vacation days for a user
   app.post('/api/users/:id/calculate-vacation', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
