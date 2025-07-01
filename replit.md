@@ -182,12 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- July 1, 2025. AVATAR PERFIL EMPLEADO EXPANDIDO: Tamaño aumentado a 256px para mejor visibilidad
-  - TAMAÑO AUMENTADO: Avatar en perfil empleado aumentado de 80px (w-20 h-20) a 256px (w-64 h-64)
-  - VERIFICACIÓN COMPLETA: Confirmado que foto de Juan José se carga correctamente desde `/uploads/profile_5_1751365910135.jpg`
-  - SISTEMA FUNCIONANDO: Círculo de fondo único + foto superpuesta + botones upload/delete operativos
-  - LOGS DEPURACIÓN: Añadidos y posteriormente eliminados logs para confirmar funcionamiento correcto
-  - RESULTADO FINAL: Avatar grande y visible con todas las funcionalidades implementadas
+- July 1, 2025. AVATAR PERFIL EMPLEADO OPTIMIZADO: Tamaño ajustado a 80px tras feedback del usuario
+  - TAMAÑO AJUSTADO: Avatar en perfil empleado reducido a 80px (w-20 h-20) para proporción perfecta
+  - BOTONES DUPLICADOS ELIMINADOS: Removidos botones externos de upload/delete, UserAvatar ya los incluye
+  - DETECCIÓN AUTOMÁTICA: UserAvatar detecta w-20/w-32/w-64 en className para tamaños 80px/128px/256px
+  - SISTEMA UNIFICADO: Solo UserAvatar con showUpload=true, sin controles externos adicionales
+  - VERIFICACIÓN COMPLETA: Foto de Juan José carga correctamente con círculo de fondo único
+  - RESULTADO FINAL: Avatar con tamaño apropiado y funcionalidad completa integrada
 - July 1, 2025. SISTEMA DE AVATARES PERFECCIONADO: Círculos de fondo únicos con fotos encima y funcionalidad completa
   - IMPLEMENTADO: Círculo de fondo con color único por empleado (posición absoluta z-index 1)
   - FOTOS ENCIMA: Imagen de avatar posicionada sobre el fondo con padding de 3px (z-index 2)

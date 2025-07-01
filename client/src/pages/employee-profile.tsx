@@ -185,7 +185,7 @@ export default function EmployeeProfile() {
                 userId={user?.id}
                 profilePicture={user?.profilePicture}
                 showUpload={true}
-                className="w-32 h-32 shadow-lg"
+                className="w-20 h-20 shadow-lg"
               />
             </div>
             

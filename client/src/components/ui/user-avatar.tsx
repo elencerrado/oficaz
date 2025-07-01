@@ -262,7 +262,7 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     fontSize: 18
   };
   
-  // Detectar tamaño desde className (w-64 h-64 = 256px)
+  // Detectar tamaño desde className
   if (className && className.includes('w-64') && className.includes('h-64')) {
     sizeConfig = {
       size: 256,
@@ -274,6 +274,12 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       size: 128,
       border: 4,
       fontSize: 24
+    };
+  } else if (className && className.includes('w-20') && className.includes('h-20')) {
+    sizeConfig = {
+      size: 80,
+      border: 3,
+      fontSize: 16
     };
   }
   
