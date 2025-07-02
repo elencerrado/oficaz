@@ -14,6 +14,7 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<any> {
   const authHeaders = getAuthHeaders();
+  console.log('🔑 Auth headers for request:', authHeaders, 'URL:', url);
   const headers: Record<string, string> = {};
   
   // Solo establecer Content-Type para JSON, FormData lo maneja automáticamente

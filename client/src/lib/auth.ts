@@ -53,11 +53,13 @@ export function getAuthHeaders(): HeadersInit {
   // Check for super admin token first (for super admin operations)
   const superAdminToken = localStorage.getItem('superAdminToken');
   if (superAdminToken) {
+    console.log('🔑 Using super admin token');
     return { Authorization: `Bearer ${superAdminToken}` };
   }
   
   // Fall back to regular user token
   const authData = getAuthData();
+  console.log('🔑 Auth data:', authData ? 'exists' : 'missing', 'Token:', authData?.token ? 'exists' : 'missing');
   return authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
 }
 
