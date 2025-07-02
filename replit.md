@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. SISTEMA DE FEATURES Y MENÚ LATERAL COMPLETAMENTE CORREGIDO: Problemas críticos de acceso resueltos
+  - CORREGIDO: Configuración ahora siempre accesible sin verificación de features (núcleo del sistema)
+  - AGREGADA: Feature logoUpload a tabla features global con configuración pro_enabled=true, master_enabled=true
+  - ACTUALIZADA: Suscripción empresa Pro incluye logoUpload en features JSON para funcionalidad completa
+  - MAPEO CRÍTICO: checkFeatureAccess maneja correctamente mapping frontend→backend (timeTracking→time)
+  - FEATURES CORE: Panel Principal, Configuración, Empleados siempre disponibles sin restricciones
+  - RESULTADO: Sistema de restricciones completamente funcional con Pro plan teniendo acceso a logoUpload
 - July 2, 2025. LIMPIEZA ESQUEMA COMPANIES COMPLETADA: Eliminadas columnas redundantes para usar datos corporativos unificados
   - ELIMINADAS: billing_name, billing_address, billing_city, tax_id de tabla companies
   - ACTUALIZADO MAPEO: billing_name→name, billing_address→address, billing_city→province, tax_id→cif  
