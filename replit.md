@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. ICONO FLAMA IMPLEMENTADO CON COLORES POR PLAN: Crown reemplazado completamente por icono personalizado
+  - IMPORTADO: Icono flama (icon flam_1751450814463.png) desde assets del usuario
+  - FUNCIÓN COLORES: getPlanIconColor() para colores dinámicos según plan (basic=verde, pro=naranja, master=rojo)
+  - FILTROS CSS: hue-rotate aplicado dinámicamente (basic=120deg, pro=40deg, master=340deg)
+  - RELACIÓN ASPECTO: object-contain añadido para preservar proporciones originales del icono
+  - UBICACIONES: Crown reemplazado en display principal de plan Y modal de cambio de plan
+  - RESULTADO: Icono único personalizado con identidad visual diferenciada por nivel de plan
 - July 2, 2025. LIMPIEZA DE CÓDIGO COMPLETADA: Elemento p innecesario eliminado de settings.tsx
   - ELIMINADO: Componente p redundante en línea 179-181 que mostraba información de fecha de fin del plan
   - INTERFAZ SIMPLIFICADA: Header de plan ahora solo muestra título sin información redundante de fechas

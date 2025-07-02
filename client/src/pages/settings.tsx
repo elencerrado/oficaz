@@ -191,7 +191,7 @@ const AccountManagement = () => {
                 <img 
                   src={flameIcon} 
                   alt="Plan icon" 
-                  className="h-6 w-6"
+                  className="h-6 w-6 object-contain"
                   style={{ filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})` }}
                 />
                 <div>
@@ -544,7 +544,7 @@ const AccountManagement = () => {
               <img 
                 src={flameIcon} 
                 alt="Plan icon" 
-                className="h-5 w-5"
+                className="h-5 w-5 object-contain"
                 style={{ filter: 'hue-rotate(40deg)' }}
               />
               <span>Cambiar plan de suscripción</span>
