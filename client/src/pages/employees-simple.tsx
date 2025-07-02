@@ -256,6 +256,8 @@ export default function EmployeesSimple() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  console.log('SUBSCRIPTION QUERY RESULT:', subscription);
+
   const employeeList = employees as any[];
   const filteredEmployees = (employeeList || []).filter((employee: any) => {
     // First check if it's not an admin
@@ -363,10 +365,10 @@ export default function EmployeesSimple() {
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal  
-            const maxUsers = (subscription as any)?.maxUsers;
+            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log('DESKTOP BUTTON VALUES:', { maxUsers, currentUserCount, condition: maxUsers && currentUserCount >= maxUsers });
+            console.log('DESKTOP BUTTON VALUES:', { maxUsers, currentUserCount, subscription: subscription, condition: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
@@ -385,10 +387,10 @@ export default function EmployeesSimple() {
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal
-            const maxUsers = (subscription as any)?.maxUsers;
+            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log('MOBILE BUTTON VALUES:', { maxUsers, currentUserCount, condition: maxUsers && currentUserCount >= maxUsers });
+            console.log('MOBILE BUTTON VALUES:', { maxUsers, currentUserCount, subscription: subscription, condition: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
