@@ -875,8 +875,8 @@ export default function Landing() {
                     <h3 className="text-3xl font-bold text-white mb-3">{plan.name}</h3>
                     <p className="text-white/70 mb-6">{plan.description}</p>
                     <div className="mb-6">
-                      <span className="text-6xl font-black text-white">€{plan.price}</span>
-                      <span className="text-white/70 text-xl">/mes</span>
+                      <span className="text-4xl md:text-5xl font-black text-white">€{plan.price}</span>
+                      <span className="text-white/70 text-lg">/mes</span>
                     </div>
                   </div>
                   
