@@ -29,17 +29,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // EMERGENCY CLEANUP: Force clear any corrupted auth on login page load (but preserve new tokens)
-  useEffect(() => {
-    const forceCleanup = () => {
-      // Only clear old auth data, not everything
-      const keysToRemove = ['authData', 'superAdminToken', 'token', 'user', 'company'];
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      sessionStorage.clear();
-      console.log('🧹 Selective cleanup: Corrupted auth data cleared');
-    };
-    forceCleanup();
-  }, []);
+  // Note: No automatic cleanup on login page to prevent token deletion
   
   // Extract company alias from URL
   const [match, params] = useRoute('/:companyAlias/login');
