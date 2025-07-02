@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +19,9 @@ import {
   Plane,
   PartyPopper,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Bell,
+  AlertCircle
 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -29,6 +32,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -156,6 +160,29 @@ export default function AdminDashboard() {
       }, {});
       
       return Object.values(messagesBySender).slice(0, 4);
+    },
+  });
+
+  // Fetch active reminders
+  const { data: activeReminders } = useQuery({
+    queryKey: ['/api/reminders/active'],
+    enabled: hasAccess('reminders'),
+    select: (data: any[]) => {
+      if (!data?.length) return [];
+      
+      // Show only first 3 active reminders, sorted by date
+      return data
+        .filter((reminder: any) => !reminder.isCompleted && !reminder.isArchived)
+        .sort((a: any, b: any) => {
+          // Prioritize reminders with dates
+          if (a.reminderDate && !b.reminderDate) return -1;
+          if (!a.reminderDate && b.reminderDate) return 1;
+          if (a.reminderDate && b.reminderDate) {
+            return new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime();
+          }
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        })
+        .slice(0, 3);
     },
   });
 
@@ -553,6 +580,105 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          {/* Recent Messages */}
+          {hasAccess('messages') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Últimos Mensajes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {(() => {
+                    const receivedMessages = messages?.filter((message: any) => message.senderId !== user?.id) || [];
+                    
+                    return receivedMessages.length > 0 ? (
+                      receivedMessages.map((message: any) => (
+                        <div 
+                          key={message.id} 
+                          className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                          onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
+                        >
+                          <UserAvatar 
+                            fullName={message.senderName || 'Empleado'}
+                            userId={message.senderId} 
+                            size="sm" 
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>
+                            <p className="text-sm text-gray-500 truncate">{message.content}</p>
+                            <p className="text-xs text-gray-400">{formatTime(parseISO(message.createdAt))}</p>
+                          </div>
+                          {!message.isRead && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No hay mensajes recientes</p>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Active Reminders */}
+          {hasAccess('reminders') && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Recordatorios Próximos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {activeReminders && activeReminders.length > 0 ? (
+                    activeReminders.map((reminder: any) => (
+                      <div 
+                        key={reminder.id} 
+                        className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                        onClick={() => setLocation('/test/recordatorios')}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          reminder.priority === 'high' ? 'bg-red-100' : 
+                          reminder.priority === 'medium' ? 'bg-orange-100' : 'bg-blue-100'
+                        }`}>
+                          {reminder.priority === 'high' ? (
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                          ) : (
+                            <Bell className="h-4 w-4 text-blue-600" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{reminder.title}</p>
+                          {reminder.content && (
+                            <p className="text-sm text-gray-500 truncate">{reminder.content}</p>
+                          )}
+                          <p className="text-xs text-gray-400">
+                            {reminder.reminderDate 
+                              ? format(parseISO(reminder.reminderDate), 'dd MMM, HH:mm', { locale: es })
+                              : 'Sin fecha'
+                            }
+                          </p>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${
+                          reminder.priority === 'high' ? 'bg-red-500' : 
+                          reminder.priority === 'medium' ? 'bg-orange-500' : 'bg-blue-500'
+                        }`}></div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No hay recordatorios activos</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Recent Clock-ins */}
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/test/fichajes')}>
             <CardHeader>
@@ -586,49 +712,6 @@ export default function AdminDashboard() {
                 ) : (
                   <p className="text-gray-500 text-center py-4">No hay fichajes recientes</p>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Messages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Últimos Mensajes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {(() => {
-                  const receivedMessages = messages?.filter((message: any) => message.senderId !== user?.id) || [];
-                  
-                  return receivedMessages.length > 0 ? (
-                    receivedMessages.map((message: any) => (
-                      <div 
-                        key={message.id} 
-                        className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
-                        onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
-                      >
-                        <UserAvatar 
-                          fullName={message.senderName || 'Empleado'}
-                          userId={message.senderId} 
-                          size="sm" 
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>
-                          <p className="text-sm text-gray-500 truncate">{message.content}</p>
-                          <p className="text-xs text-gray-400">{formatTime(parseISO(message.createdAt))}</p>
-                        </div>
-                        {!message.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-center py-4">No hay mensajes recientes</p>
-                  );
-                })()}
               </div>
             </CardContent>
           </Card>

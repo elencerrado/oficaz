@@ -890,10 +890,11 @@ export class DrizzleStorage implements IStorage {
 
   async getActiveReminders(userId: number): Promise<any[]> {
     const now = new Date();
+    const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
     
     // Query reminders that should be active:
     // 1. Reminders without specific date (reminder_date is null)
-    // 2. Reminders with date that has already passed or is current
+    // 2. Reminders with date that has already passed or is coming in the next 7 days
     const activeReminders = await db.select().from(schema.reminders)
       .where(
         and(
@@ -902,7 +903,7 @@ export class DrizzleStorage implements IStorage {
           eq(schema.reminders.isArchived, false),
           or(
             sql`${schema.reminders.reminderDate} IS NULL`,  // No specific date - show immediately
-            lte(schema.reminders.reminderDate, now) // Date has passed - show now
+            lte(schema.reminders.reminderDate, nextWeek) // Date is within next 7 days
           )
         )
       )
