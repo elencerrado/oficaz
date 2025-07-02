@@ -38,11 +38,26 @@ import { TrialManagerSimple } from '@/components/TrialManagerSimple';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
+import flameIcon from '@assets/icon flam_1751450814463.png';
 
 export default function Settings() {
   const { user, company, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
+
+  // Function to get plan icon color
+  const getPlanIconColor = (plan: string) => {
+    switch(plan?.toLowerCase()) {
+      case 'basic':
+        return '#10B981'; // Verde
+      case 'pro':
+        return '#F59E0B'; // Naranja/Amarillo
+      case 'master':
+        return '#DC2626'; // Rojo
+      default:
+        return '#6B7280'; // Gris por defecto
+    }
+  };
 
   // Query for subscription plans
   const { data: subscriptionPlans } = useQuery({
@@ -173,7 +188,12 @@ const AccountManagement = () => {
           <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Crown className="h-6 w-6 text-blue-600" />
+                <img 
+                  src={flameIcon} 
+                  alt="Plan icon" 
+                  className="h-6 w-6"
+                  style={{ filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})` }}
+                />
                 <div>
                   <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 </div>
@@ -521,7 +541,12 @@ const AccountManagement = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              <Crown className="h-5 w-5 text-amber-500" />
+              <img 
+                src={flameIcon} 
+                alt="Plan icon" 
+                className="h-5 w-5"
+                style={{ filter: 'hue-rotate(40deg)' }}
+              />
               <span>Cambiar plan de suscripción</span>
             </DialogTitle>
             <DialogDescription>
