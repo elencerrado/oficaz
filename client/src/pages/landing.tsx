@@ -97,61 +97,105 @@ export default function Landing() {
     }
   ];
 
-  // Combine static plan data with dynamic pricing
+  // Combine static plan data with dynamic pricing and user limits
   const getPlansWithDynamicPricing = () => {
-    const staticPlansData = [
-      {
-        name: "Basic",
-        description: "Perfecto para pequeñas empresas",
-        features: [
-          "Hasta 15 empleados",
-          "Control de tiempo básico",
-          "Gestión de vacaciones",
-          "Mensajería interna",
-          "Soporte por email"
-        ],
-        popular: false
-      },
-      {
-        name: "Pro",
-        description: "Ideal para empresas en crecimiento",
-        features: [
-          "Hasta 50 empleados",
-          "Todas las funciones Basic",
-          "Gestión de documentos",
-          "Reportes avanzados",
-          "Logos personalizados",
-          "Soporte prioritario"
-        ],
-        popular: true
-      },
-      {
-        name: "Master",
-        description: "Para grandes organizaciones",
-        features: [
-          "Empleados ilimitados",
-          "Todas las funciones Pro",
-          "Integraciones avanzadas",
-          "Personalización completa",
-          "Soporte 24/7",
-          "Gerente de cuenta dedicado"
-        ],
-        popular: false
-      }
-    ];
-
-    // Merge static data with dynamic pricing
+    // Merge static data with dynamic pricing and user limits
     if (!subscriptionPlans || !Array.isArray(subscriptionPlans)) {
-      return staticPlansData.map(plan => ({ ...plan, price: "..." }));
+      return [
+        {
+          name: "Basic",
+          description: "Perfecto para pequeñas empresas",
+          features: [
+            "Hasta ... empleados",
+            "Control de tiempo básico",
+            "Gestión de vacaciones",
+            "Mensajería interna",
+            "Soporte por email"
+          ],
+          popular: false,
+          price: "..."
+        },
+        {
+          name: "Pro",
+          description: "Ideal para empresas en crecimiento",
+          features: [
+            "Hasta ... empleados",
+            "Todas las funciones Basic",
+            "Gestión de documentos",
+            "Reportes avanzados",
+            "Logos personalizados",
+            "Soporte prioritario"
+          ],
+          popular: true,
+          price: "..."
+        },
+        {
+          name: "Master",
+          description: "Para grandes organizaciones",
+          features: [
+            "Empleados ilimitados",
+            "Todas las funciones Pro",
+            "Integraciones avanzadas",
+            "Personalización completa",
+            "Soporte 24/7",
+            "Gerente de cuenta dedicado"
+          ],
+          popular: false,
+          price: "..."
+        }
+      ];
     }
     
-    return staticPlansData.map(staticPlan => {
-      const dynamicPlan = subscriptionPlans.find(
-        (dbPlan: any) => dbPlan.name.toLowerCase() === staticPlan.name.toLowerCase()
-      );
+    const staticPlansFeatures = {
+      basic: [
+        "Control de tiempo básico",
+        "Gestión de vacaciones",
+        "Mensajería interna",
+        "Soporte por email"
+      ],
+      pro: [
+        "Todas las funciones Basic",
+        "Gestión de documentos",
+        "Reportes avanzados",
+        "Logos personalizados",
+        "Soporte prioritario"
+      ],
+      master: [
+        "Todas las funciones Pro",
+        "Integraciones avanzadas",
+        "Personalización completa",
+        "Soporte 24/7",
+        "Gerente de cuenta dedicado"
+      ]
+    };
+
+    const staticPlansDescriptions = {
+      basic: "Perfecto para pequeñas empresas",
+      pro: "Ideal para empresas en crecimiento",
+      master: "Para grandes organizaciones"
+    };
+
+    const popularPlans = {
+      basic: false,
+      pro: true,
+      master: false
+    };
+    
+    return subscriptionPlans.map((dbPlan: any) => {
+      const planKey = dbPlan.name.toLowerCase() as keyof typeof staticPlansFeatures;
+      const userLimit = dbPlan.maxUsers 
+        ? `Hasta ${dbPlan.maxUsers} empleados`
+        : "Empleados ilimitados";
+      
       return {
-        ...staticPlan,
-        price: dynamicPlan ? parseFloat(dynamicPlan.pricePerUser).toString() : "..."
+        name: dbPlan.displayName || dbPlan.name,
+        description: staticPlansDescriptions[planKey] || dbPlan.name,
+        features: [
+          userLimit,
+          ...staticPlansFeatures[planKey] || []
+        ],
+        popular: popularPlans[planKey] || false,
+        price: parseFloat(dbPlan.pricePerUser).toString()
       };
     });
   };
