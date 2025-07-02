@@ -212,7 +212,7 @@ export default function EmployeesSimple() {
     }
 
     // Check user limit - CRITICAL SECURITY: Count ALL users (backend already includes all users)
-    const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
+    const maxUsers = (subscription as any)?.max_users;
     const currentUserCount = employeeList?.length || 0; // This is ALL users from /api/employees
     
 
@@ -363,10 +363,8 @@ export default function EmployeesSimple() {
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal  
-            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
+            const maxUsers = (subscription as any)?.max_users;
             const currentUserCount = employeeList?.length || 0;
-            
-            console.log('DESKTOP BUTTON CLICKED:', { subscription, maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
@@ -385,10 +383,8 @@ export default function EmployeesSimple() {
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal
-            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
+            const maxUsers = (subscription as any)?.max_users;
             const currentUserCount = employeeList?.length || 0;
-            
-            console.log('MOBILE BUTTON CLICKED:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
