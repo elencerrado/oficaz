@@ -301,19 +301,22 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#059669',
               color: '#ffffff',
-              padding: isMobile ? '4px 8px' : '8px 14px',
-              fontSize: isMobile ? '10px' : '12px',
+              padding: isMobile ? '1px 3px' : '8px 14px',
+              fontSize: isMobile ? '7px' : '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: isMobile ? '3px' : '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: isMobile ? '2px' : '5px',
+              gap: isMobile ? '1px' : '5px',
               boxShadow: '0 1px 3px rgba(5, 150, 105, 0.3)',
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap',
-              flex: isMobile ? '1' : 'auto'
+              flex: isMobile ? '0 0 auto' : 'auto',
+              height: isMobile ? '16px' : 'auto',
+              minWidth: isMobile ? '16px' : 'auto',
+              maxWidth: isMobile ? '35px' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#047857';
@@ -326,8 +329,8 @@ export function ReminderBanner() {
               e.target.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
             }}
           >
-            <CheckCircle style={{ width: '14px', height: '14px' }} />
-            Hecho
+            <CheckCircle style={{ width: isMobile ? '8px' : '14px', height: isMobile ? '8px' : '14px' }} />
+            {isMobile ? 'OK' : 'Hecho'}
           </Button>
           
           <Button
@@ -337,16 +340,18 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#f3f4f6',
               color: '#6b7280',
-              padding: isMobile ? '4px 6px' : '8px 10px',
-              fontSize: isMobile ? '10px' : '12px',
+              padding: isMobile ? '1px 3px' : '8px 10px',
+              fontSize: isMobile ? '7px' : '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: isMobile ? '3px' : '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s ease',
-              minWidth: isMobile ? '28px' : 'auto'
+              minWidth: isMobile ? '16px' : 'auto',
+              height: isMobile ? '16px' : 'auto',
+              maxWidth: isMobile ? '20px' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#e5e7eb';
@@ -358,8 +363,8 @@ export function ReminderBanner() {
             }}
           >
             <X style={{ 
-              width: isMobile ? '10px' : '14px', 
-              height: isMobile ? '10px' : '14px' 
+              width: isMobile ? '8px' : '14px', 
+              height: isMobile ? '8px' : '14px' 
             }} />
           </Button>
         </div>
