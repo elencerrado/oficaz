@@ -37,13 +37,43 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     return false;
   }
   
+  // Core features that are ALWAYS available in any plan (never restricted)
+  const alwaysAvailableFeatures: (keyof SubscriptionFeatures)[] = [
+    'timeTracking', // Panel Principal siempre disponible, Fichajes siempre disponible
+    // Note: Configuración y Empleados no se verifican con features, están disponibles por rol
+  ];
+  
+  if (alwaysAvailableFeatures.includes(feature)) {
+    console.log('Feature always available:', { feature });
+    return true;
+  }
+  
+  // Map frontend feature names to database feature names
+  const featureMapping: Record<keyof SubscriptionFeatures, string> = {
+    timeTracking: 'time',
+    messages: 'messages',
+    documents: 'documents',
+    vacation: 'vacation',
+    reminders: 'reminders',
+    timeEditingPermissions: 'employee_time_edit_permission',
+    analytics: 'reports',
+    customization: 'customization',
+    logoUpload: 'logoUpload',
+    api: 'api',
+    employee_time_edit_permission: 'employee_time_edit_permission'
+  };
+  
+  // Get the database feature name
+  const dbFeatureName = featureMapping[feature] || feature;
+  
   // For both trial and active subscriptions, use the features configured in the database
   // Trial periods should have same features as the chosen plan, just time-limited
-  const hasFeature = subscription.features[feature] || false;
+  const hasFeature = (subscription.features as any)[dbFeatureName] || false;
   console.log('Feature access:', { 
     status: subscription.status, 
     plan: subscription.plan, 
     feature, 
+    dbFeatureName,
     hasFeature, 
     features: subscription.features 
   });
