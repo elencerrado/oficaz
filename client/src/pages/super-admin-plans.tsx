@@ -38,6 +38,7 @@ const featureIcons = {
   messages: MessageSquare,
   documents: FileText,
   vacation: Calendar,
+  time: Clock,
   timeTracking: Clock,
   timeEditingPermissions: Clock,
   analytics: BarChart3,
@@ -62,6 +63,18 @@ const featureLabels = {
   employee_time_edit_permission: 'Permisos edición tiempo empleados',
 };
 
+interface Feature {
+  id: number;
+  key: string;
+  name: string;
+  description: string;
+  category: string;
+  isActive: boolean;
+  basicEnabled: boolean;
+  proEnabled: boolean;
+  masterEnabled: boolean;
+}
+
 export default function SuperAdminPlans() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,7 +83,7 @@ export default function SuperAdminPlans() {
   const [editingPrice, setEditingPrice] = useState<number | null>(null);
   const [editingMaxUsers, setEditingMaxUsers] = useState<number | null>(null);
 
-  const { data: plans, isLoading } = useQuery({
+  const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
@@ -80,6 +93,21 @@ export default function SuperAdminPlans() {
         },
       });
       if (!response.ok) throw new Error('Failed to fetch plans');
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const { data: dbFeatures, isLoading: featuresLoading } = useQuery<Feature[]>({
+    queryKey: ['/api/super-admin/features'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/features', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch features');
       return response.json();
     },
     retry: false,
@@ -119,18 +147,70 @@ export default function SuperAdminPlans() {
     },
   });
 
-  const handleFeatureToggle = (planId: number, feature: string, enabled: boolean) => {
+  const updateFeatureMutation = useMutation({
+    mutationFn: async ({ featureId, data }: { featureId: number; data: any }) => {
+      const response = await fetch(`/api/super-admin/features/${featureId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al actualizar la feature');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Feature actualizada",
+        description: "La configuración de la feature ha sido actualizada exitosamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/features'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-plans'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Error al actualizar la feature: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFeatureToggle = (planId: number, featureKey: string, enabled: boolean) => {
+    // Buscar la feature en la base de datos por su key
+    const feature = dbFeatures?.find(f => f.key === featureKey);
+    if (!feature) return;
+
+    // Buscar el plan para determinar qué columna actualizar
     const plan = plans?.find((p: SubscriptionPlan) => p.id === planId);
     if (!plan) return;
 
-    const updatedFeatures = {
-      ...plan.features,
-      [feature]: enabled
-    };
+    let updateData: any = {};
+    
+    // Determinar qué columna actualizar según el nombre del plan
+    switch (plan.name.toLowerCase()) {
+      case 'basic':
+        updateData = { basicEnabled: enabled };
+        break;
+      case 'pro':
+        updateData = { proEnabled: enabled };
+        break;
+      case 'master':
+        updateData = { masterEnabled: enabled };
+        break;
+      default:
+        console.error('Plan name not recognized:', plan.name);
+        return;
+    }
 
-    updatePlanMutation.mutate({
-      id: planId,
-      data: { features: updatedFeatures }
+    updateFeatureMutation.mutate({
+      featureId: feature.id,
+      data: updateData
     });
   };
 
@@ -164,7 +244,7 @@ export default function SuperAdminPlans() {
     setEditingMaxUsers(null);
   };
 
-  if (isLoading) {
+  if (plansLoading || featuresLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
@@ -172,19 +252,16 @@ export default function SuperAdminPlans() {
     );
   }
 
-  const features = [
-    { key: 'timeTracking', label: 'Fichajes', icon: Clock },
-    { key: 'timeEditingPermissions', label: '└ Editar horas empleados', icon: Clock, isSubFeature: true },
-    { key: 'employee_time_edit_permission', label: '└ Permisos edición tiempo empleados', icon: Clock, isSubFeature: true },
-    { key: 'vacation', label: 'Vacaciones', icon: Calendar },
-    { key: 'documents', label: 'Documentos', icon: FileText },
-    { key: 'messages', label: 'Mensajes', icon: MessageSquare },
-    { key: 'reminders', label: 'Recordatorios', icon: Bell },
-    { key: 'customization', label: 'Personalización', icon: Settings },
-    { key: 'logoUpload', label: '└ Subir logo', icon: Upload, isSubFeature: true },
-    { key: 'analytics', label: 'Analíticas', icon: BarChart3 },
-    { key: 'api', label: 'API', icon: Zap },
-  ];
+  // Crear lista de features desde la base de datos con iconos correspondientes
+  const features = dbFeatures?.map(feature => ({
+    key: feature.key,
+    label: feature.name,
+    icon: featureIcons[feature.key as keyof typeof featureIcons] || Settings,
+    dbId: feature.id,
+    basicEnabled: feature.basicEnabled,
+    proEnabled: feature.proEnabled,
+    masterEnabled: feature.masterEnabled
+  })) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
@@ -303,15 +380,31 @@ export default function SuperAdminPlans() {
                           </span>
                         </div>
                       </td>
-                      {plans?.map((plan: SubscriptionPlan) => (
-                        <td key={`${plan.id}-${feature.key}`} className="py-4 px-4 text-center">
-                          <Switch
-                            checked={plan.features[feature.key] || false}
-                            onCheckedChange={(enabled) => handleFeatureToggle(plan.id, feature.key, enabled)}
-                            disabled={updatePlanMutation.isPending}
-                          />
-                        </td>
-                      ))}
+                      {plans?.map((plan: SubscriptionPlan) => {
+                        // Determinar si la feature está habilitada para este plan
+                        let isEnabled = false;
+                        switch (plan.name.toLowerCase()) {
+                          case 'basic':
+                            isEnabled = feature.basicEnabled;
+                            break;
+                          case 'pro':
+                            isEnabled = feature.proEnabled;
+                            break;
+                          case 'master':
+                            isEnabled = feature.masterEnabled;
+                            break;
+                        }
+                        
+                        return (
+                          <td key={`${plan.id}-${feature.key}`} className="py-4 px-4 text-center">
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={(enabled) => handleFeatureToggle(plan.id, feature.key, enabled)}
+                              disabled={updateFeatureMutation.isPending}
+                            />
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
