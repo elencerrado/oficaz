@@ -605,6 +605,7 @@ export default function AdminDashboard() {
                             fullName={message.senderName || 'Empleado'}
                             userId={message.senderId} 
                             size="sm" 
+                            profilePicture={message.senderProfilePicture}
                           />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>

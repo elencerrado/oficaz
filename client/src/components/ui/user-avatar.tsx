@@ -186,10 +186,6 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     const colors = getUserColors(userId);
     const sizeConfig = getSizePixels(size);
     
-    // SIEMPRE mostrar avatares tipo foto con círculo de fondo de color único
-    // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
-    const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
-    
     return (
       <div 
         style={{
@@ -218,48 +214,99 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             zIndex: 1
           } as React.CSSProperties}
         />
-        {/* Imagen encima del fondo */}
-        <img 
-          src={avatarSrc} 
-          alt={fullName}
-          style={{
-            position: 'absolute',
-            top: '3px',
-            left: '3px',
-            width: `${sizeConfig.size - 6}px`,
-            height: `${sizeConfig.size - 6}px`,
-            objectFit: 'cover',
-            display: 'block',
-            borderRadius: '50%',
-            zIndex: 2
-          } as React.CSSProperties}
-          onError={(e) => {
-            // Si falla el servicio externo, usar avatar local generado con canvas
-            const target = e.target as HTMLImageElement;
-            const canvas = document.createElement('canvas');
-            const size = sizeConfig.size - 6;
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            
-            if (ctx) {
-              // Fondo circular
-              ctx.fillStyle = colors.bg;
-              ctx.beginPath();
-              ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
-              ctx.fill();
+        
+        {/* Mostrar foto real si está disponible */}
+        {(localProfilePicture || profilePicture) ? (
+          <img 
+            src={(localProfilePicture || profilePicture) as string} 
+            alt={fullName}
+            style={{
+              position: 'absolute',
+              top: '3px',
+              left: '3px',
+              width: `${sizeConfig.size - 6}px`,
+              height: `${sizeConfig.size - 6}px`,
+              objectFit: 'cover',
+              display: 'block',
+              borderRadius: '50%',
+              zIndex: 2
+            } as React.CSSProperties}
+            onError={(e) => {
+              // Si falla cargar la foto real, usar servicio UI Avatars
+              const target = e.target as HTMLImageElement;
+              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
               
-              // Texto iniciales
-              ctx.fillStyle = colors.text;
-              ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(getInitials(fullName), size/2, size/2);
+              target.onerror = () => {
+                // Si también falla UI Avatars, usar canvas local
+                const canvas = document.createElement('canvas');
+                const size = sizeConfig.size - 6;
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                if (ctx) {
+                  // Fondo circular
+                  ctx.fillStyle = colors.bg;
+                  ctx.beginPath();
+                  ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+                  ctx.fill();
+                  
+                  // Texto iniciales
+                  ctx.fillStyle = colors.text;
+                  ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(getInitials(fullName), size/2, size/2);
+                  
+                  target.src = canvas.toDataURL();
+                }
+              };
+            }}
+          />
+        ) : (
+          /* Usar servicio UI Avatars como respaldo cuando no hay foto real */
+          <img 
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`}
+            alt={fullName}
+            style={{
+              position: 'absolute',
+              top: '3px',
+              left: '3px',
+              width: `${sizeConfig.size - 6}px`,
+              height: `${sizeConfig.size - 6}px`,
+              objectFit: 'cover',
+              display: 'block',
+              borderRadius: '50%',
+              zIndex: 2
+            } as React.CSSProperties}
+            onError={(e) => {
+              // Si falla UI Avatars, usar canvas local
+              const target = e.target as HTMLImageElement;
+              const canvas = document.createElement('canvas');
+              const size = sizeConfig.size - 6;
+              canvas.width = size;
+              canvas.height = size;
+              const ctx = canvas.getContext('2d');
               
-              target.src = canvas.toDataURL();
-            }
-          }}
-        />
+              if (ctx) {
+                // Fondo circular
+                ctx.fillStyle = colors.bg;
+                ctx.beginPath();
+                ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Texto iniciales
+                ctx.fillStyle = colors.text;
+                ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(getInitials(fullName), size/2, size/2);
+                
+                target.src = canvas.toDataURL();
+              }
+            }}
+          />
+        )}
       </div>
     );
   }

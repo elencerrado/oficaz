@@ -1920,12 +1920,13 @@ startxref
     try {
       const messages = await storage.getMessagesByUser(req.user!.id);
       
-      // Add sender names to messages
+      // Add sender names and profile pictures to messages
       const messagesWithNames = await Promise.all(messages.map(async (message: any) => {
         const sender = await storage.getUser(message.senderId);
         return {
           ...message,
-          senderName: sender?.fullName || 'Usuario desconocido'
+          senderName: sender?.fullName || 'Usuario desconocido',
+          senderProfilePicture: sender?.profilePicture || null
         };
       }));
       
