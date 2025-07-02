@@ -212,7 +212,7 @@ export default function EmployeesSimple() {
     }
 
     // Check user limit - CRITICAL SECURITY: Count ALL users (backend already includes all users)
-    const maxUsers = (subscription as any)?.max_users;
+    const maxUsers = (subscription as any)?.maxUsers;
     const currentUserCount = employeeList?.length || 0; // This is ALL users from /api/employees
     
 
@@ -363,7 +363,7 @@ export default function EmployeesSimple() {
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal  
-            const maxUsers = (subscription as any)?.max_users;
+            const maxUsers = (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
             if (maxUsers && currentUserCount >= maxUsers) {
@@ -383,7 +383,7 @@ export default function EmployeesSimple() {
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal
-            const maxUsers = (subscription as any)?.max_users;
+            const maxUsers = (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
             if (maxUsers && currentUserCount >= maxUsers) {
