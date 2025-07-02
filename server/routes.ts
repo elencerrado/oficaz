@@ -1067,10 +1067,12 @@ Responde directamente a este email para contactar con la persona.
       const activationEmail = companyEmail || personalEmail;
       console.log('📧 EXTRACTED EMAIL:', { companyEmail, personalEmail, activationEmail });
 
-      // Validate user limit
+      // Validate user limit - CRITICAL SECURITY: Count ALL users including admins
       const subscription = await storage.getSubscriptionByCompanyId((req as AuthRequest).user!.companyId);
       const currentEmployees = await storage.getUsersByCompany((req as AuthRequest).user!.companyId);
-      const currentUserCount = currentEmployees.filter((emp: any) => emp.role !== 'admin').length;
+      const currentUserCount = currentEmployees.length; // Count ALL users including admins
+      
+      console.log(`🔒 USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${subscription?.maxUsers}`);
       
       if (subscription?.maxUsers && currentUserCount >= subscription.maxUsers) {
         return res.status(400).json({ 

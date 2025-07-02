@@ -211,9 +211,11 @@ export default function EmployeesSimple() {
       return;
     }
 
-    // Check user limit
-    const maxUsers = user?.subscription?.maxUsers;
-    const currentUserCount = employeeList?.length || 0;
+    // Check user limit - CRITICAL SECURITY: Count ALL users (backend already includes all users)
+    const maxUsers = (subscription as any)?.maxUsers;
+    const currentUserCount = employeeList?.length || 0; // This is ALL users from /api/employees
+    
+    console.log(`🔒 FRONTEND USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
     
     if (maxUsers && currentUserCount >= maxUsers) {
       toast({
@@ -246,6 +248,12 @@ export default function EmployeesSimple() {
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager')
+  });
+
+  // Query to get subscription info for user limits
+  const { data: subscription } = useQuery({
+    queryKey: ['/api/account/subscription'],
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const employeeList = employees as any[];
