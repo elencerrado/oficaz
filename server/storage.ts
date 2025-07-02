@@ -136,6 +136,9 @@ export interface IStorage {
   getAllInvitationLinks(): Promise<any[]>;
   deleteInvitationLink(id: number): Promise<boolean>;
   markInvitationAsUsed(id: number): Promise<boolean>;
+  
+  // Features operations
+  getCompanyFeatures(companyId: number, planName: string): Promise<any>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -767,7 +770,7 @@ export class DrizzleStorage implements IStorage {
       return undefined;
     }
 
-    // Get the plan features from subscription_plans table
+    // Get the plan from subscription_plans table
     const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, subscription.plan));
     
     if (!plan) {
@@ -775,12 +778,66 @@ export class DrizzleStorage implements IStorage {
       return subscription;
     }
 
-    // Return subscription with features from the plan
+    // Get features for this subscription
+    const features = await this.getCompanyFeatures(companyId, subscription.plan);
+
+    // Return subscription with features from the new system
     return {
       ...subscription,
-      features: plan.features,
+      features,
       maxUsers: plan.maxUsers
     };
+  }
+
+  async getCompanyFeatures(companyId: number, planName: string): Promise<any> {
+    // Get the plan ID
+    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, planName));
+    
+    if (!plan) {
+      return {};
+    }
+
+    // For Master plan, check if company has custom features enabled
+    if (planName === 'master') {
+      // Get custom company features if any exist
+      const companyFeatures = await db
+        .select({
+          key: schema.features.key,
+          isEnabled: schema.companyFeatures.isEnabled,
+        })
+        .from(schema.companyFeatures)
+        .innerJoin(schema.features, eq(schema.companyFeatures.featureId, schema.features.id))
+        .where(eq(schema.companyFeatures.companyId, companyId));
+
+      if (companyFeatures.length > 0) {
+        // Return company-specific features for Master plan
+        const customFeatures: any = {};
+        companyFeatures.forEach(feature => {
+          customFeatures[feature.key] = feature.isEnabled;
+        });
+        return customFeatures;
+      }
+    }
+
+    // For Basic/Pro plans or Master without custom features, get default plan features
+    const planFeatures = await db
+      .select({
+        key: schema.features.key,
+        isEnabled: schema.planFeatures.isEnabled,
+      })
+      .from(schema.planFeatures)
+      .innerJoin(schema.features, eq(schema.planFeatures.featureId, schema.features.id))
+      .where(and(
+        eq(schema.planFeatures.planId, plan.id),
+        eq(schema.planFeatures.isEnabled, true)
+      ));
+
+    const features: any = {};
+    planFeatures.forEach(feature => {
+      features[feature.key] = feature.isEnabled;
+    });
+
+    return features;
   }
 
   async updateCompanySubscription(companyId: number, updates: any): Promise<any | undefined> {
@@ -798,7 +855,18 @@ export class DrizzleStorage implements IStorage {
 
   // Subscription Plans operations
   async getAllSubscriptionPlans(): Promise<any[]> {
-    return await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.pricePerUser);
+    const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.pricePerUser);
+    
+    // Add features to each plan from the new features system
+    const plansWithFeatures = await Promise.all(plans.map(async (plan) => {
+      const features = await this.getCompanyFeatures(0, plan.name); // Use 0 as company ID for plan defaults
+      return {
+        ...plan,
+        features
+      };
+    }));
+    
+    return plansWithFeatures;
   }
 
   async getSubscriptionPlan(id: number): Promise<any | undefined> {

@@ -3270,15 +3270,8 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
-      // Get subscription with dynamic max_users from subscription_plans
-      const result = await db.execute(sql`
-        SELECT s.*, sp.max_users as dynamic_max_users, sp.features as plan_features
-        FROM subscriptions s
-        LEFT JOIN subscription_plans sp ON s.plan = sp.name
-        WHERE s.company_id = ${companyId}
-      `);
-      
-      const subscription = result.rows[0];
+      // Use the new getCompanySubscription method that includes features from new system
+      const subscription = await storage.getCompanySubscription(companyId);
       if (!subscription) {
         // Return actual subscription based on company usage
         const nextYear = new Date().getFullYear() + 1;
@@ -4544,6 +4537,112 @@ startxref
     } catch (error) {
       console.error('Error checking cancellation status:', error);
       res.status(500).json({ message: 'Error checking cancellation status' });
+    }
+  });
+
+  // Get all features for super admin management
+  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const features = await db.select().from(schema.features).orderBy(schema.features.category, schema.features.name);
+      res.json(features);
+    } catch (error) {
+      console.error('Error fetching features:', error);
+      res.status(500).json({ error: 'Error fetching features' });
+    }
+  });
+
+  // Get company features for a specific Master plan company
+  app.get('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      
+      // Verify company exists and has Master plan
+      const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+      if (!subscription || subscription.plan !== 'master') {
+        return res.status(400).json({ error: 'Company must have Master plan for custom features' });
+      }
+
+      // Get all features with their status for this company
+      const features = await db
+        .select({
+          id: schema.features.id,
+          key: schema.features.key,
+          name: schema.features.name,
+          description: schema.features.description,
+          category: schema.features.category,
+          isEnabled: schema.companyFeatures.isEnabled,
+          notes: schema.companyFeatures.notes,
+          enabledAt: schema.companyFeatures.enabledAt,
+        })
+        .from(schema.features)
+        .leftJoin(schema.companyFeatures, and(
+          eq(schema.companyFeatures.featureId, schema.features.id),
+          eq(schema.companyFeatures.companyId, companyId)
+        ))
+        .orderBy(schema.features.category, schema.features.name);
+
+      res.json({ company, features });
+    } catch (error) {
+      console.error('Error fetching company features:', error);
+      res.status(500).json({ error: 'Error fetching company features' });
+    }
+  });
+
+  // Update company features for Master plan
+  app.post('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { featureId, isEnabled, notes } = req.body;
+      
+      // Verify company has Master plan
+      const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+      if (!subscription || subscription.plan !== 'master') {
+        return res.status(400).json({ error: 'Company must have Master plan for custom features' });
+      }
+
+      // Check if company feature already exists
+      const [existingFeature] = await db
+        .select()
+        .from(schema.companyFeatures)
+        .where(and(
+          eq(schema.companyFeatures.companyId, companyId),
+          eq(schema.companyFeatures.featureId, featureId)
+        ));
+
+      if (existingFeature) {
+        // Update existing feature
+        await db
+          .update(schema.companyFeatures)
+          .set({
+            isEnabled,
+            notes,
+            enabledBy: req.superAdmin!.id,
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(schema.companyFeatures.companyId, companyId),
+            eq(schema.companyFeatures.featureId, featureId)
+          ));
+      } else {
+        // Create new company feature
+        await db.insert(schema.companyFeatures).values({
+          companyId,
+          featureId,
+          isEnabled,
+          notes,
+          enabledBy: req.superAdmin!.id,
+        });
+      }
+
+      res.json({ message: 'Company feature updated successfully' });
+    } catch (error) {
+      console.error('Error updating company feature:', error);
+      res.status(500).json({ error: 'Error updating company feature' });
     }
   });
 

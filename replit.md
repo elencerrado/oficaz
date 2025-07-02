@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. SISTEMA DE FEATURES COMPLETAMENTE REESTRUCTURADO: Migración exitosa de JSON a tablas relacionales
+  - NUEVAS TABLAS: features, plan_features, company_features para gestión granular de funcionalidades
+  - MIGRACIÓN COMPLETA: Datos movidos desde subscription_plans.features a nuevas tablas relacionales
+  - FUNCIONALIDADES POR PLAN: Basic (vacation, time, notifications), Pro (añade messages, documents, reminders), Master (todas)
+  - PERSONALIZACIÓN MASTER: Empresas Master pueden tener features custom habilitadas/deshabilitadas por super admin
+  - ENDPOINTS SUPER ADMIN: /api/super-admin/features, /api/super-admin/companies/:id/features para gestión
+  - SISTEMA ROBUSTO: getCompanyFeatures() detecta plan y devuelve features desde plan_features o company_features
+  - LANDING DINÁMICO: API público ahora incluye features reales desde nuevas tablas en lugar de JSON
+  - FUNCIONALIDAD PRESERVADA: Toda la app mantiene funcionamiento idéntico con nuevo sistema de datos
 - July 2, 2025. PRECIOS DINÁMICOS IMPLEMENTADOS EN LANDING PAGE: Sistema de precios desde base de datos completamente funcional
   - ENDPOINT PÚBLICO: /api/public/subscription-plans creado sin autenticación para landing page
   - PRECIOS EXACTOS: Landing page muestra valores precisos (19.99, 39.99, 99.90) sin redondeo

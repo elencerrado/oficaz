@@ -52,14 +52,47 @@ export const superAdmins = pgTable("super_admins", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Subscription plans configuration
+// Features table - cada funcionalidad es una fila independiente
+export const features = pgTable("features", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 50 }).notNull().unique(), // messages, documents, vacation, etc
+  name: varchar("name", { length: 100 }).notNull(), // "Mensajería interna", "Gestión de documentos", etc
+  description: text("description"), // Descripción detallada de la funcionalidad
+  category: varchar("category", { length: 50 }).notNull(), // "communication", "management", "admin", etc
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Plan features - define qué features tiene cada plan por defecto
+export const planFeatures = pgTable("plan_features", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id").references(() => subscriptionPlans.id, { onDelete: "cascade" }).notNull(),
+  featureId: integer("feature_id").references(() => features.id, { onDelete: "cascade" }).notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Company features - para empresas Master con configuraciones personalizadas
+export const companyFeatures = pgTable("company_features", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  featureId: integer("feature_id").references(() => features.id, { onDelete: "cascade" }).notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(true),
+  enabledAt: timestamp("enabled_at").defaultNow(),
+  enabledBy: integer("enabled_by").references(() => superAdmins.id), // super admin que habilitó
+  notes: text("notes"), // notas del super admin sobre por qué se habilitó/deshabilitó
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Subscription plans configuration - sin columna features (movida a planFeatures)
 export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 50 }).notNull(), // Basic, Pro, Master
   displayName: varchar("display_name", { length: 100 }).notNull(),
   pricePerUser: decimal("price_per_user", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
   maxUsers: integer("max_users"), // null = unlimited
-  features: jsonb("features").notNull().default({}), // {messages: true, documents: true, vacation: true, etc}
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -400,6 +433,23 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
 });
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFeatureSchema = createInsertSchema(features).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPlanFeatureSchema = createInsertSchema(planFeatures).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCompanyFeatureSchema = createInsertSchema(companyFeatures).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
