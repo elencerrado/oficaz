@@ -367,9 +367,15 @@ export default function EmployeesSimple() {
             // CRITICAL: Force fresh subscription data
             queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
             
-            // Get fresh data directly from API
-            const freshSubscription = await fetch('/api/account/subscription').then(r => r.json());
-            const maxUsers = freshSubscription?.max_users || freshSubscription?.maxUsers;
+            // Get fresh data directly from API with auth token
+            const token = localStorage.getItem('token');
+            const freshSubscription = await fetch('/api/account/subscription', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }).then(r => r.json());
+            
+            const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
             const currentUserCount = employeeList?.length || 0;
             
             console.log('USER LIMIT CHECK:', { 
@@ -393,12 +399,26 @@ export default function EmployeesSimple() {
         {/* Mobile: Button and count in same line, compact */}
         <div className="flex sm:hidden items-center justify-between">
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
-          <Button onClick={() => {
-            // CRITICAL: Check user limit BEFORE opening modal
-            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
+          <Button onClick={async () => {
+            // CRITICAL: Force fresh subscription data
+            queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+            
+            // Get fresh data directly from API with auth token
+            const token = localStorage.getItem('token');
+            const freshSubscription = await fetch('/api/account/subscription', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }).then(r => r.json());
+            
+            const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
             const currentUserCount = employeeList?.length || 0;
             
-
+            console.log('USER LIMIT CHECK MOBILE:', { 
+              maxUsers, 
+              currentUserCount, 
+              freshSubscription 
+            });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
