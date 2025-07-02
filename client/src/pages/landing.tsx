@@ -167,7 +167,7 @@ export default function Landing() {
       const additionalFeatures: { [key: string]: string[] } = {
         basic: ["Soporte por email"],
         pro: ["Soporte prioritario"],
-        master: ["Soporte 24/7", "Gerente de cuenta dedicado"]
+        master: ["Soporte 24/7", "Funcionalidades personalizadas"]
       };
       return additionalFeatures[planKey] || [];
     };
