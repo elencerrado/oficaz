@@ -800,7 +800,6 @@ Responde directamente a este email para contactar con la persona.
         token,
         company: company ? {
           ...company,
-          employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
           workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
           defaultVacationDays: Number(company.defaultVacationDays) || 30,
           vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
@@ -1028,7 +1027,6 @@ Responde directamente a este email para contactar con la persona.
         company: company ? {
           ...company,
           // Ensure all configuration fields are included and properly typed
-          employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
           workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
           defaultVacationDays: Number(company.defaultVacationDays) || 30,
           vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
@@ -2184,7 +2182,6 @@ startxref
         address, 
         province,
         logoUrl,
-        employeeTimeEditPermission,
         workingHoursPerDay,
         defaultVacationDays,
         vacationDaysPerMonth
@@ -2226,7 +2223,6 @@ startxref
         address,
         province,
         logoUrl,
-        employeeTimeEditPermission,
         workingHoursPerDay,
         defaultVacationDays,
         vacationDaysPerMonth
@@ -4107,6 +4103,72 @@ startxref
       res.json({ message: 'Invitación eliminada correctamente' });
     } catch (error) {
       console.error('Error deleting invitation:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Endpoint to manage company custom features
+  app.patch('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { featureKey, enabled } = req.body;
+
+      if (!featureKey || typeof enabled !== 'boolean') {
+        return res.status(400).json({ message: 'featureKey y enabled son requeridos' });
+      }
+
+      // Get current custom features
+      const [company] = await db.select({
+        customFeatures: schema.companies.customFeatures
+      }).from(schema.companies).where(eq(schema.companies.id, companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      // Update custom features
+      const currentCustomFeatures = (company.customFeatures as any) || {};
+      const updatedCustomFeatures = {
+        ...currentCustomFeatures,
+        [featureKey]: enabled
+      };
+
+      // Update company
+      await db.update(schema.companies)
+        .set({
+          customFeatures: updatedCustomFeatures,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companies.id, companyId));
+
+      res.json({ 
+        message: `Feature ${featureKey} ${enabled ? 'habilitada' : 'deshabilitada'} correctamente`,
+        customFeatures: updatedCustomFeatures
+      });
+    } catch (error) {
+      console.error('Error updating custom features:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Get company custom features
+  app.get('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+
+      const [company] = await db.select({
+        customFeatures: schema.companies.customFeatures
+      }).from(schema.companies).where(eq(schema.companies.id, companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      res.json({ 
+        customFeatures: (company.customFeatures as any) || {}
+      });
+    } catch (error) {
+      console.error('Error fetching custom features:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });

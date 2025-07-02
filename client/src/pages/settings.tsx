@@ -1745,21 +1745,18 @@ const AccountManagement = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label>Permisos de edición de horarios</Label>
-                    <div className="mt-1 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Info className="h-4 w-4 text-blue-600" />
-                        <p className="text-sm text-blue-700">
-                          Esta funcionalidad está ahora controlada por el sistema de features. 
-                          {hasAccess('employee_time_edit_permission') 
-                            ? 'Los empleados pueden editar sus horarios según tu plan actual.'
-                            : 'Los empleados no pueden editar horarios en tu plan actual.'
-                          }
-                        </p>
+                  {hasAccess('employee_time_edit_permission') && (
+                    <div>
+                      <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <p className="text-sm text-green-700">
+                            <strong>Funcionalidad habilitada:</strong> Los empleados pueden editar sus horarios según tu plan actual.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                   
                   <div>
                     <Label htmlFor="workingHours">Horas de trabajo por día</Label>

@@ -28,6 +28,7 @@ interface SubscriptionPlan {
     api?: boolean;
     reminders?: boolean;
     employee_time_edit_permission?: boolean;
+    employee_time_edit?: boolean;
   };
   isActive: boolean;
   createdAt: string;
@@ -47,6 +48,7 @@ const featureIcons = {
   api: Zap,
   reminders: Bell,
   employee_time_edit_permission: Clock,
+  employee_time_edit: Clock,
 };
 
 const featureLabels = {
@@ -61,6 +63,7 @@ const featureLabels = {
   api: 'API',
   reminders: 'Recordatorios',
   employee_time_edit_permission: 'Permisos edición tiempo empleados',
+  employee_time_edit: 'Empleados pueden editar sus tiempos',
 };
 
 interface Feature {

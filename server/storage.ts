@@ -778,11 +778,28 @@ export class DrizzleStorage implements IStorage {
       return subscription;
     }
 
-    // Use features directly from subscription table (they're already in correct format)
-    // The subscription.features field already contains the complete features object
+    // Get company custom_features to override plan features
+    const [company] = await db.select({
+      customFeatures: schema.companies.customFeatures
+    }).from(schema.companies).where(eq(schema.companies.id, companyId));
+
+    // Start with plan features from subscription
+    let finalFeatures = { ...subscription.features };
+
+    // Apply company custom_features overrides if they exist
+    if (company?.customFeatures && typeof company.customFeatures === 'object') {
+      // Custom features should override plan features
+      // Format: { "employee_time_edit": true, "reports": false, etc }
+      finalFeatures = {
+        ...finalFeatures,
+        ...company.customFeatures
+      };
+    }
+
     return {
       ...subscription,
-      maxUsers: plan.maxUsers
+      maxUsers: plan.maxUsers,
+      features: finalFeatures
     };
   }
 
