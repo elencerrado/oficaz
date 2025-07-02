@@ -870,9 +870,7 @@ export class DrizzleStorage implements IStorage {
 
       const features: any = {};
       featuresData.forEach(feature => {
-        if (feature.isEnabled) {
-          features[feature.key] = true;
-        }
+        features[feature.key] = feature.isEnabled;
       });
 
       return {
