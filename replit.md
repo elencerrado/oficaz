@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. PRECIOS DINÁMICOS IMPLEMENTADOS EN LANDING PAGE: Sistema de precios desde base de datos completamente funcional
+  - ENDPOINT PÚBLICO: /api/public/subscription-plans creado sin autenticación para landing page
+  - PRECIOS REALES: Landing page ahora toma valores dinámicos desde tabla subscription_plans
+  - FALLBACK SEGURO: Sistema muestra "..." mientras carga o si falla la conexión
+  - INTEGRACIÓN COMPLETA: Combina datos estáticos (descripción, features) con precios dinámicos de BD
+  - ACTUALIZACIÓN AUTOMÁTICA: Precios se actualizan automáticamente al modificar super admin
 - July 2, 2025. ICONO FLAMA IMPLEMENTADO CON COLORES POR PLAN: Crown reemplazado completamente por icono personalizado
   - IMPORTADO: Icono flama (icon flam_1751450814463.png) desde assets del usuario
   - FUNCIÓN COLORES: getPlanIconColor() para colores dinámicos según plan (basic=verde, pro=naranja, master=rojo)

@@ -44,6 +44,16 @@ export default function Landing() {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  // Get dynamic pricing from database
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['/api/public/subscription-plans'],
+    queryFn: async () => {
+      const response = await fetch('/api/public/subscription-plans');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+  });
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
@@ -87,49 +97,66 @@ export default function Landing() {
     }
   ];
 
-  const plans = [
-    {
-      name: "Basic",
-      price: "29",
-      description: "Perfecto para pequeñas empresas",
-      features: [
-        "Hasta 15 empleados",
-        "Control de tiempo básico",
-        "Gestión de vacaciones",
-        "Mensajería interna",
-        "Soporte por email"
-      ],
-      popular: false
-    },
-    {
-      name: "Pro",
-      price: "59",
-      description: "Ideal para empresas en crecimiento",
-      features: [
-        "Hasta 50 empleados",
-        "Todas las funciones Basic",
-        "Gestión de documentos",
-        "Reportes avanzados",
-        "Logos personalizados",
-        "Soporte prioritario"
-      ],
-      popular: true
-    },
-    {
-      name: "Master",
-      price: "149",
-      description: "Para grandes organizaciones",
-      features: [
-        "Empleados ilimitados",
-        "Todas las funciones Pro",
-        "Integraciones avanzadas",
-        "Personalización completa",
-        "Soporte 24/7",
-        "Gerente de cuenta dedicado"
-      ],
-      popular: false
+  // Combine static plan data with dynamic pricing
+  const getPlansWithDynamicPricing = () => {
+    const staticPlansData = [
+      {
+        name: "Basic",
+        description: "Perfecto para pequeñas empresas",
+        features: [
+          "Hasta 15 empleados",
+          "Control de tiempo básico",
+          "Gestión de vacaciones",
+          "Mensajería interna",
+          "Soporte por email"
+        ],
+        popular: false
+      },
+      {
+        name: "Pro",
+        description: "Ideal para empresas en crecimiento",
+        features: [
+          "Hasta 50 empleados",
+          "Todas las funciones Basic",
+          "Gestión de documentos",
+          "Reportes avanzados",
+          "Logos personalizados",
+          "Soporte prioritario"
+        ],
+        popular: true
+      },
+      {
+        name: "Master",
+        description: "Para grandes organizaciones",
+        features: [
+          "Empleados ilimitados",
+          "Todas las funciones Pro",
+          "Integraciones avanzadas",
+          "Personalización completa",
+          "Soporte 24/7",
+          "Gerente de cuenta dedicado"
+        ],
+        popular: false
+      }
+    ];
+
+    // Merge static data with dynamic pricing
+    if (!subscriptionPlans || !Array.isArray(subscriptionPlans)) {
+      return staticPlansData.map(plan => ({ ...plan, price: "..." }));
     }
-  ];
+    
+    return staticPlansData.map(staticPlan => {
+      const dynamicPlan = subscriptionPlans.find(
+        (dbPlan: any) => dbPlan.name.toLowerCase() === staticPlan.name.toLowerCase()
+      );
+      return {
+        ...staticPlan,
+        price: dynamicPlan ? Math.round(dynamicPlan.pricePerUser).toString() : "..."
+      };
+    });
+  };
+
+  const plans = getPlansWithDynamicPricing();
 
   const testimonials = [
     {

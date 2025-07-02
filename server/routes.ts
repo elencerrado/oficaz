@@ -3636,7 +3636,18 @@ startxref
     }
   });
 
-  // Endpoint público para obtener planes de suscripción disponibles
+  // Endpoint público para obtener planes de suscripción disponibles (sin autenticación)
+  app.get('/api/public/subscription-plans', async (req, res) => {
+    try {
+      const plans = await storage.getAllSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Endpoint para obtener planes de suscripción (con autenticación)
   app.get('/api/subscription-plans', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const plans = await storage.getAllSubscriptionPlans();
