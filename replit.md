@@ -182,6 +182,10 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. LIMPIEZA DE CÓDIGO COMPLETADA: Elemento p innecesario eliminado de settings.tsx
+  - ELIMINADO: Componente p redundante en línea 179-181 que mostraba información de fecha de fin del plan
+  - INTERFAZ SIMPLIFICADA: Header de plan ahora solo muestra título sin información redundante de fechas
+  - CÓDIGO MÁS LIMPIO: Eliminada lógica innecesaria que no aportaba valor al usuario
 - July 2, 2025. POPUP PROFESIONAL IMPLEMENTADO: Dialog de shadcn/ui reemplaza alert() para límites de usuarios
   - ELIMINADO: alert() nativo reemplazado por Dialog profesional con iconos y estilo moderno
   - DISEÑO MEJORADO: Dialog con AlertTriangle icon, título claro "Límite de usuarios alcanzado"

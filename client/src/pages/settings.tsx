@@ -176,9 +176,6 @@ const AccountManagement = () => {
                 <Crown className="h-6 w-6 text-blue-600" />
                 <div>
                   <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
-                  <p className="text-sm text-gray-600">
-                    {subscription?.end_date ? `Activo hasta: ${formatDate(subscription.end_date)}` : 'Plan activo'}
-                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
