@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. SISTEMA CUSTOM FEATURES POR EMPRESA IMPLEMENTADO COMPLETAMENTE: Override granular de features independiente del plan
+  - BACKEND MEJORADO: getSubscriptionByCompanyId ahora combina features del plan + companies.customFeatures 
+  - ENDPOINTS CREADOS: GET/PATCH /api/companies/custom-features para gestión de características personalizadas
+  - BUG CRÍTICO RESUELTO: employee-time-tracking.tsx usaba employee_time_edit_permission en lugar de employee_time_edit
+  - LÓGICA PERSONALIZACIÓN: Companies pueden habilitar/deshabilitar features específicas independientemente del plan
+  - DEMOSTRACIÓN: Plan "pro" con employee_time_edit=false para mostrar restricciones por empresa
+  - ARQUITECTURA DUAL: Subscription plan features como base + custom_features como override específico
 - July 2, 2025. SISTEMA DE FEATURES Y MENÚ LATERAL COMPLETAMENTE CORREGIDO: Problemas críticos de acceso resueltos
   - CORREGIDO: Configuración ahora siempre accesible sin verificación de features (núcleo del sistema)
   - AGREGADA: Feature logoUpload a tabla features global con configuración pro_enabled=true, master_enabled=true
