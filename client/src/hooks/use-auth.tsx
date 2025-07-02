@@ -45,6 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (response.ok) {
             const data = await response.json();
             console.log('Auth data verified:', { user: data.user?.fullName, company: data.company?.name, logoUrl: data.company?.logoUrl, subscription: data.subscription });
+            
+            // CRITICAL FIX: Check for corrupted user data (undefined role, invalid ID)
+            if (!data.user || !data.user.id || data.user.id === 4 || !data.user.role) {
+              console.log('🚨 CORRUPTED USER DATA DETECTED - FORCING LOGOUT');
+              // Force complete cleanup
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.href = '/login';
+              return;
+            }
+            
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);

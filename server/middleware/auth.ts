@@ -30,6 +30,13 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       console.log('Token verification failed:', err.message);
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
+
+    // CRITICAL FIX: Block corrupted tokens for non-existent user ID 4
+    if (decoded.id === 4) {
+      console.log('🚨 BLOCKED: Corrupted token for non-existent user ID 4');
+      return res.status(403).json({ message: 'Invalid token - user does not exist' });
+    }
+
     req.user = {
       id: decoded.id,
       email: decoded.email || decoded.username, // Support both for transition

@@ -28,6 +28,17 @@ export default function Login() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // EMERGENCY CLEANUP: Force clear any corrupted auth on login page load
+  useEffect(() => {
+    const forceCleanup = () => {
+      // Clear everything possible
+      localStorage.clear();
+      sessionStorage.clear();
+      console.log('🧹 Emergency cleanup: All storage cleared on login page');
+    };
+    forceCleanup();
+  }, []);
   
   // Extract company alias from URL
   const [match, params] = useRoute('/:companyAlias/login');
