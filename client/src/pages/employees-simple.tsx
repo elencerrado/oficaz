@@ -215,7 +215,7 @@ export default function EmployeesSimple() {
     const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
     const currentUserCount = employeeList?.length || 0; // This is ALL users from /api/employees
     
-    console.log(`🔒 FRONTEND USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
+
     
     if (maxUsers && currentUserCount >= maxUsers) {
       toast({
@@ -366,12 +366,7 @@ export default function EmployeesSimple() {
             const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log('DEBUGGING SUBSCRIPTION:', {
-              subscription,
-              maxUsers,
-              currentUserCount,
-              shouldBlock: maxUsers && currentUserCount >= maxUsers
-            });
+            console.log('DESKTOP BUTTON CLICKED:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
@@ -393,12 +388,7 @@ export default function EmployeesSimple() {
             const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log('MOBILE DEBUGGING SUBSCRIPTION:', {
-              subscription,
-              maxUsers,
-              currentUserCount,
-              shouldBlock: maxUsers && currentUserCount >= maxUsers
-            });
+
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);

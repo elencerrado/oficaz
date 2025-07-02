@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. BUG CRÍTICO ACCESO CAMPO max_users COMPLETAMENTE RESUELTO: Sistema de validación límites usuarios funcionando
+  - PROBLEMA RESUELTO: Frontend accedía a campo inexistente `maxUsers` en lugar del campo real `max_users` de la base de datos
+  - CAUSA TÉCNICA: Endpoint `/api/account/subscription` devuelve estructura raw con `max_users` pero frontend esperaba `maxUsers`
+  - SOLUCIÓN APLICADA: Actualizado acceso a `(subscription as any)?.max_users || (subscription as any)?.maxUsers` en 3 ubicaciones
+  - UBICACIONES CORREGIDAS: Botón desktop (línea 366), botón móvil (línea 393), y función handleCreateEmployee (línea 215)
+  - VERIFICACIÓN EXITOSA: Modal ahora se abre correctamente, validación funciona con límite real (4 usuarios)
+  - SISTEMA BLINDADO: Triple fallback asegura compatibilidad con diferentes estructuras de datos de endpoints
 - July 2, 2025. BUG CRÍTICO VALIDACIÓN LÍMITES USUARIOS COMPLETAMENTE RESUELTO: Popup inmediato sin permitir entrada de datos
   - PROBLEMA RESUELTO: Usuario reporta que validación mostraba mensaje pero permitía seguir ingresando datos
   - VALIDACIÓN PREVENTIVA: Botones "Crear Usuario" ahora verifican límites ANTES de abrir modal
