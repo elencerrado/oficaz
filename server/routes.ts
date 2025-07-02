@@ -3270,8 +3270,8 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
-      // Use the new getCompanySubscription method that includes features from new system
-      const subscription = await storage.getCompanySubscription(companyId);
+      // Use the new getSubscriptionByCompanyId method that includes features from new system
+      const subscription = await storage.getSubscriptionByCompanyId(companyId);
       if (!subscription) {
         // Return actual subscription based on company usage
         const nextYear = new Date().getFullYear() + 1;
@@ -4551,95 +4551,100 @@ startxref
     }
   });
 
-  // Get company features for a specific Master plan company
+  // Get company features for a specific company
   app.get('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const companyId = parseInt(req.params.id);
       
-      // Verify company exists and has Master plan
+      // Verify company exists
       const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
       if (!company) {
         return res.status(404).json({ error: 'Company not found' });
       }
       
       const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
-      if (!subscription || subscription.plan !== 'master') {
-        return res.status(400).json({ error: 'Company must have Master plan for custom features' });
+      if (!subscription) {
+        return res.status(404).json({ error: 'Subscription not found' });
       }
 
-      // Get all features with their status for this company
-      const features = await db
+      // Get all available features
+      const allFeatures = await db
         .select({
           id: schema.features.id,
           key: schema.features.key,
           name: schema.features.name,
           description: schema.features.description,
           category: schema.features.category,
-          isEnabled: schema.companyFeatures.isEnabled,
-          notes: schema.companyFeatures.notes,
-          enabledAt: schema.companyFeatures.enabledAt,
         })
         .from(schema.features)
-        .leftJoin(schema.companyFeatures, and(
-          eq(schema.companyFeatures.featureId, schema.features.id),
-          eq(schema.companyFeatures.companyId, companyId)
-        ))
         .orderBy(schema.features.category, schema.features.name);
 
-      res.json({ company, features });
+      // Get plan default features
+      const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, subscription.plan));
+      const planFeatures = await db
+        .select({
+          key: schema.features.key,
+          isEnabled: schema.planFeatures.isEnabled,
+        })
+        .from(schema.planFeatures)
+        .innerJoin(schema.features, eq(schema.planFeatures.featureId, schema.features.id))
+        .where(eq(schema.planFeatures.planId, plan?.id || 0));
+
+      const planFeaturesMap: any = {};
+      planFeatures.forEach(feature => {
+        planFeaturesMap[feature.key] = feature.isEnabled;
+      });
+
+      // Get company custom features
+      const customFeatures = company.customFeatures || {};
+
+      // Combine features with their current status
+      const features = allFeatures.map(feature => ({
+        ...feature,
+        isEnabled: customFeatures[feature.key] !== undefined 
+          ? customFeatures[feature.key] 
+          : planFeaturesMap[feature.key] || false,
+        isCustom: customFeatures[feature.key] !== undefined,
+      }));
+
+      res.json({ company, subscription, features });
     } catch (error) {
       console.error('Error fetching company features:', error);
       res.status(500).json({ error: 'Error fetching company features' });
     }
   });
 
-  // Update company features for Master plan
+  // Update company features
   app.post('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const companyId = parseInt(req.params.id);
-      const { featureId, isEnabled, notes } = req.body;
+      const { featureKey, isEnabled } = req.body;
       
-      // Verify company has Master plan
-      const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
-      if (!subscription || subscription.plan !== 'master') {
-        return res.status(400).json({ error: 'Company must have Master plan for custom features' });
+      // Verify company exists
+      const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
       }
 
-      // Check if company feature already exists
-      const [existingFeature] = await db
-        .select()
-        .from(schema.companyFeatures)
-        .where(and(
-          eq(schema.companyFeatures.companyId, companyId),
-          eq(schema.companyFeatures.featureId, featureId)
-        ));
+      // Get current custom features or initialize empty object
+      const currentCustomFeatures = company.customFeatures || {};
+      
+      // Update the specific feature
+      const updatedCustomFeatures = {
+        ...currentCustomFeatures,
+        [featureKey]: isEnabled
+      };
 
-      if (existingFeature) {
-        // Update existing feature
-        await db
-          .update(schema.companyFeatures)
-          .set({
-            isEnabled,
-            notes,
-            enabledBy: req.superAdmin!.id,
-            updatedAt: new Date(),
-          })
-          .where(and(
-            eq(schema.companyFeatures.companyId, companyId),
-            eq(schema.companyFeatures.featureId, featureId)
-          ));
-      } else {
-        // Create new company feature
-        await db.insert(schema.companyFeatures).values({
-          companyId,
-          featureId,
-          isEnabled,
-          notes,
-          enabledBy: req.superAdmin!.id,
-        });
-      }
+      // Update the company's custom features
+      await db
+        .update(schema.companies)
+        .set({
+          customFeatures: updatedCustomFeatures,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.companies.id, companyId));
 
-      res.json({ message: 'Company feature updated successfully' });
+      res.json({ success: true, customFeatures: updatedCustomFeatures });
     } catch (error) {
       console.error('Error updating company feature:', error);
       res.status(500).json({ error: 'Error updating company feature' });

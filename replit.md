@@ -182,13 +182,18 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- July 2, 2025. SISTEMA DE FEATURES COMPLETAMENTE REESTRUCTURADO: Migración exitosa de JSON a tablas relacionales
-  - NUEVAS TABLAS: features, plan_features, company_features para gestión granular de funcionalidades
-  - MIGRACIÓN COMPLETA: Datos movidos desde subscription_plans.features a nuevas tablas relacionales
+- July 2, 2025. SISTEMA DE FEATURES FINALIZADO CON COLUMNA customFeatures: Simplificación a columna única en companies
+  - REESTRUCTURACIÓN COMPLETA: Eliminada tabla company_features, ahora se usa companies.customFeatures (JSONB)
+  - SISTEMA SIMPLIFICADO: Features personalizadas por empresa almacenadas directamente en tabla companies
   - FUNCIONALIDADES POR PLAN: Basic (vacation, time, notifications), Pro (añade messages, documents, reminders), Master (todas)
-  - PERSONALIZACIÓN MASTER: Empresas Master pueden tener features custom habilitadas/deshabilitadas por super admin
-  - ENDPOINTS SUPER ADMIN: /api/super-admin/features, /api/super-admin/companies/:id/features para gestión
-  - SISTEMA ROBUSTO: getCompanyFeatures() detecta plan y devuelve features desde plan_features o company_features
+  - PERSONALIZACIÓN UNIVERSAL: Cualquier empresa puede tener features custom (ej: empresa Basic con mensajes habilitado)
+  - ENDPOINTS ACTUALIZADOS: /api/super-admin/companies/:id/features gestiona customFeatures en companies.customFeatures
+  - SISTEMA ROBUSTO: getCompanyFeatures() detecta customFeatures o usa plan_features por defecto
+  - MIGRACIÓN EXITOSA: Datos preservados (empresa Master con reports=false como personalización)
+  - TABLA ELIMINADA: company_features completamente removida, BD más limpia y eficiente
+- July 2, 2025. SISTEMA DE FEATURES COMPLETAMENTE REESTRUCTURADO: Migración exitosa de JSON a tablas relacionales
+  - NUEVAS TABLAS: features, plan_features para gestión granular de funcionalidades por plan
+  - MIGRACIÓN COMPLETA: Datos movidos desde subscription_plans.features a nuevas tablas relacionales
   - LANDING DINÁMICO: API público ahora incluye features reales desde nuevas tablas en lugar de JSON
   - FUNCIONALIDAD PRESERVADA: Toda la app mantiene funcionamiento idéntico con nuevo sistema de datos
 - July 2, 2025. PRECIOS DINÁMICOS IMPLEMENTADOS EN LANDING PAGE: Sistema de precios desde base de datos completamente funcional

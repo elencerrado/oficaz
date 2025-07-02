@@ -36,6 +36,10 @@ export const companies = pgTable("companies", {
   billingPostalCode: text("billing_postal_code"),
   billingCountry: text("billing_country").default("ES"),
   taxId: text("tax_id"), // CIF/NIF for billing (puede ser diferente al CIF de empresa)
+  
+  // Features personalizadas por empresa (override del plan por defecto)
+  customFeatures: jsonb("custom_features").default('{}'), // {messages: true, documents: false, etc}
+  
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -73,18 +77,7 @@ export const planFeatures = pgTable("plan_features", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Company features - para empresas Master con configuraciones personalizadas
-export const companyFeatures = pgTable("company_features", {
-  id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
-  featureId: integer("feature_id").references(() => features.id, { onDelete: "cascade" }).notNull(),
-  isEnabled: boolean("is_enabled").notNull().default(true),
-  enabledAt: timestamp("enabled_at").defaultNow(),
-  enabledBy: integer("enabled_by").references(() => superAdmins.id), // super admin que habilitó
-  notes: text("notes"), // notas del super admin sobre por qué se habilitó/deshabilitó
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Tabla company_features eliminada - ahora usamos companies.customFeatures
 
 // Subscription plans configuration - sin columna features (movida a planFeatures)
 export const subscriptionPlans = pgTable("subscription_plans", {
@@ -449,11 +442,7 @@ export const insertPlanFeatureSchema = createInsertSchema(planFeatures).omit({
   createdAt: true,
 });
 
-export const insertCompanyFeatureSchema = createInsertSchema(companyFeatures).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+// insertCompanyFeatureSchema eliminado - ahora usamos companies.customFeatures
 
 // Schema insertAccountInfoSchema eliminado - datos consolidados en companies
 

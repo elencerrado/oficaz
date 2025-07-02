@@ -797,29 +797,20 @@ export class DrizzleStorage implements IStorage {
       return {};
     }
 
-    // For Master plan, check if company has custom features enabled
-    if (planName === 'master') {
-      // Get custom company features if any exist
-      const companyFeatures = await db
-        .select({
-          key: schema.features.key,
-          isEnabled: schema.companyFeatures.isEnabled,
-        })
-        .from(schema.companyFeatures)
-        .innerJoin(schema.features, eq(schema.companyFeatures.featureId, schema.features.id))
-        .where(eq(schema.companyFeatures.companyId, companyId));
-
-      if (companyFeatures.length > 0) {
-        // Return company-specific features for Master plan
-        const customFeatures: any = {};
-        companyFeatures.forEach(feature => {
-          customFeatures[feature.key] = feature.isEnabled;
-        });
-        return customFeatures;
-      }
+    // Get the company to check for custom features
+    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
+    
+    if (!company) {
+      return {};
     }
 
-    // For Basic/Pro plans or Master without custom features, get default plan features
+    // Check if company has custom features configured
+    if (company.customFeatures && Object.keys(company.customFeatures).length > 0) {
+      // Return custom features configured for this company
+      return company.customFeatures;
+    }
+
+    // For companies without custom features, get default plan features
     const planFeatures = await db
       .select({
         key: schema.features.key,
