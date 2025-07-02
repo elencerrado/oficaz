@@ -3270,8 +3270,12 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
+      // Get subscription with dynamic max_users from subscription_plans
       const result = await db.execute(sql`
-        SELECT * FROM subscriptions WHERE company_id = ${companyId}
+        SELECT s.*, sp.max_users as dynamic_max_users, sp.features as plan_features
+        FROM subscriptions s
+        LEFT JOIN subscription_plans sp ON s.plan = sp.name
+        WHERE s.company_id = ${companyId}
       `);
       
       const subscription = result.rows[0];
@@ -3295,7 +3299,13 @@ startxref
         return res.json(realSubscription);
       }
 
-      res.json(subscription);
+      // Override max_users with dynamic value from subscription_plans
+      const finalSubscription = {
+        ...subscription,
+        max_users: subscription.dynamic_max_users || subscription.max_users // Use dynamic value if available
+      };
+
+      res.json(finalSubscription);
     } catch (error) {
       console.error('Error fetching subscription:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
