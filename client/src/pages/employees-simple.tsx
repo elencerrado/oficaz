@@ -366,7 +366,7 @@ export default function EmployeesSimple() {
             const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log('DESKTOP BUTTON CLICKED:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
+            console.log('DESKTOP BUTTON CLICKED:', { subscription, maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
@@ -388,7 +388,7 @@ export default function EmployeesSimple() {
             const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-
+            console.log('MOBILE BUTTON CLICKED:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
