@@ -778,13 +778,10 @@ export class DrizzleStorage implements IStorage {
       return subscription;
     }
 
-    // Get features for this subscription
-    const features = await this.getCompanyFeatures(companyId, subscription.plan);
-
-    // Return subscription with features from the new system
+    // Use features directly from subscription table (they're already in correct format)
+    // The subscription.features field already contains the complete features object
     return {
       ...subscription,
-      features,
       maxUsers: plan.maxUsers
     };
   }

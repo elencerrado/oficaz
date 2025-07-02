@@ -15,7 +15,7 @@ import { authenticateToken, requireRole, generateToken, AuthRequest } from './mi
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { subscriptions, companies } from '@shared/schema';
+import { subscriptions, companies, features } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
@@ -4540,145 +4540,9 @@ startxref
     }
   });
 
-  // Get all features for super admin management
-  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: any, res) => {
-    try {
-      const features = await db.select().from(schema.features).orderBy(schema.features.category, schema.features.name);
-      res.json(features);
-    } catch (error) {
-      console.error('Error fetching features:', error);
-      res.status(500).json({ error: 'Error fetching features' });
-    }
-  });
 
-  // Get company features for a specific company
-  app.get('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      
-      // Verify company exists
-      const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
-      if (!company) {
-        return res.status(404).json({ error: 'Company not found' });
-      }
-      
-      const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
-      if (!subscription) {
-        return res.status(404).json({ error: 'Subscription not found' });
-      }
 
-      // Get all available features
-      const allFeatures = await db
-        .select({
-          id: schema.features.id,
-          key: schema.features.key,
-          name: schema.features.name,
-          description: schema.features.description,
-          category: schema.features.category,
-        })
-        .from(schema.features)
-        .orderBy(schema.features.category, schema.features.name);
 
-      // Get plan default features
-      const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, subscription.plan));
-      const planFeatures = await db
-        .select({
-          key: schema.features.key,
-          isEnabled: schema.planFeatures.isEnabled,
-        })
-        .from(schema.planFeatures)
-        .innerJoin(schema.features, eq(schema.planFeatures.featureId, schema.features.id))
-        .where(eq(schema.planFeatures.planId, plan?.id || 0));
-
-      const planFeaturesMap: any = {};
-      planFeatures.forEach(feature => {
-        planFeaturesMap[feature.key] = feature.isEnabled;
-      });
-
-      // Get company custom features
-      const customFeatures = company.customFeatures || {};
-
-      // Combine features with their current status
-      const features = allFeatures.map(feature => ({
-        ...feature,
-        isEnabled: customFeatures[feature.key] !== undefined 
-          ? customFeatures[feature.key] 
-          : planFeaturesMap[feature.key] || false,
-        isCustom: customFeatures[feature.key] !== undefined,
-      }));
-
-      res.json({ company, subscription, features });
-    } catch (error) {
-      console.error('Error fetching company features:', error);
-      res.status(500).json({ error: 'Error fetching company features' });
-    }
-  });
-
-  // Update company features
-  app.post('/api/super-admin/companies/:id/features', authenticateSuperAdmin, async (req: any, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      const { featureKey, isEnabled } = req.body;
-      
-      // Verify company exists
-      const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
-      if (!company) {
-        return res.status(404).json({ error: 'Company not found' });
-      }
-
-      // Get current custom features or initialize empty object
-      const currentCustomFeatures = company.customFeatures || {};
-      
-      // Update the specific feature
-      const updatedCustomFeatures = {
-        ...currentCustomFeatures,
-        [featureKey]: isEnabled
-      };
-
-      // Update the company's custom features
-      await db
-        .update(schema.companies)
-        .set({
-          customFeatures: updatedCustomFeatures,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.companies.id, companyId));
-
-      res.json({ success: true, customFeatures: updatedCustomFeatures });
-    } catch (error) {
-      console.error('Error updating company feature:', error);
-      res.status(500).json({ error: 'Error updating company feature' });
-    }
-  });
-
-  // Update a specific feature
-  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: any, res) => {
-    try {
-      const featureId = parseInt(req.params.id);
-      const updates = req.body;
-      
-      // Validate feature exists
-      const [feature] = await db.select().from(schema.features).where(eq(schema.features.id, featureId));
-      if (!feature) {
-        return res.status(404).json({ error: 'Feature not found' });
-      }
-
-      // Update feature
-      const [updatedFeature] = await db
-        .update(schema.features)
-        .set({
-          ...updates,
-          updatedAt: new Date()
-        })
-        .where(eq(schema.features.id, featureId))
-        .returning();
-
-      res.json(updatedFeature);
-    } catch (error) {
-      console.error('Error updating feature:', error);
-      res.status(500).json({ error: 'Error updating feature' });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
