@@ -34,7 +34,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 export default function EmployeesSimple() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -368,7 +368,6 @@ export default function EmployeesSimple() {
             queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
             
             // Get fresh data directly from API with auth token
-            const token = localStorage.getItem('token');
             const freshSubscription = await fetch('/api/account/subscription', {
               headers: {
                 'Authorization': `Bearer ${token}`
@@ -404,7 +403,6 @@ export default function EmployeesSimple() {
             queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
             
             // Get fresh data directly from API with auth token
-            const token = localStorage.getItem('token');
             const freshSubscription = await fetch('/api/account/subscription', {
               headers: {
                 'Authorization': `Bearer ${token}`
