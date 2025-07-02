@@ -182,16 +182,17 @@ export function ReminderBanner() {
       style={{ 
         position: 'fixed',
         bottom: '20px',
-        right: '20px',
+        right: isMobile ? '4px' : '20px',
+        left: isMobile ? '4px' : 'auto',
         backgroundColor: '#ffffff',
         color: '#1a1a1a',
         padding: '0px',
         borderRadius: '16px',
         boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)',
         zIndex: 9999,
-        minWidth: '480px',
-        maxWidth: 'min(70vw, calc(100vw - 40px))',
-        width: 'fit-content',
+        minWidth: isMobile ? 'auto' : '480px',
+        maxWidth: isMobile ? 'calc(100vw - 8px)' : 'min(70vw, calc(100vw - 40px))',
+        width: isMobile ? 'auto' : 'fit-content',
         fontSize: '14px',
         fontWeight: '500',
         border: '1px solid #e2e8f0',
@@ -201,13 +202,15 @@ export function ReminderBanner() {
     >
       {/* Contenido responsive */}
       <div style={{ 
-        padding: isMobile ? '12px' : '20px 24px', 
+        padding: isMobile ? '8px' : '20px 24px', 
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: isMobile ? 'stretch' : 'flex-start',
-        gap: isMobile ? '8px' : '20px',
+        gap: isMobile ? '6px' : '20px',
         width: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        maxWidth: isMobile ? '100vw' : 'none',
+        overflow: 'hidden'
       }}>
         {/* Header: Título y fecha/hora */}
         <div style={{ 
@@ -236,17 +239,17 @@ export function ReminderBanner() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ 
-              fontSize: isMobile ? '13px' : '15px', 
+              fontSize: isMobile ? '11px' : '15px', 
               fontWeight: '700', 
               color: '#1f2937',
               marginBottom: '1px',
-              lineHeight: '1.2'
+              lineHeight: '1.1'
             }}>
               {firstReminder.title}
             </div>
             {firstReminder.reminderDate && (
               <div style={{ 
-                fontSize: isMobile ? '10px' : '12px', 
+                fontSize: isMobile ? '9px' : '12px', 
                 color: '#6b7280', 
                 fontWeight: '500'
               }}>
@@ -266,14 +269,14 @@ export function ReminderBanner() {
         }}>
           {firstReminder.content && (
             <div style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
+              fontSize: isMobile ? '10px' : '14px', 
               color: '#374151', 
-              lineHeight: isMobile ? '1.3' : '1.6',
+              lineHeight: isMobile ? '1.2' : '1.6',
               fontWeight: '400',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
               hyphens: 'auto',
-              maxHeight: isMobile ? '40px' : 'none',
+              maxHeight: isMobile ? '30px' : 'none',
               overflow: isMobile ? 'hidden' : 'visible'
             }}>
               {firstReminder.content}
