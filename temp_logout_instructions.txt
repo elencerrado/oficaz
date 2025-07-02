@@ -1,0 +1,25 @@
+
+// INSTRUCCIONES PARA EL USUARIO:
+// 1. Abre la consola del navegador (F12)
+// 2. Ve a la pestaña Console
+// 3. Pega este código y presiona Enter:
+
+window.forceLogout = function() {
+  // Clear all possible auth storage
+  localStorage.removeItem('authData');
+  localStorage.removeItem('superAdminToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('company');
+  
+  // Clear session storage as well
+  sessionStorage.clear();
+  
+  console.log('✓ Sesión limpiada completamente');
+  
+  // Reload page to reset state completely
+  window.location.href = '/login';
+};
+
+console.log('✓ Función forceLogout() disponible. Escribe: forceLogout()');
+

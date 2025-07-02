@@ -33,6 +33,22 @@ export function clearAuthData() {
   localStorage.removeItem('authData');
 }
 
+// Emergency function to force clear all authentication data
+export function forceLogout() {
+  // Clear all possible auth storage
+  localStorage.removeItem('authData');
+  localStorage.removeItem('superAdminToken');
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('company');
+  
+  // Clear session storage as well
+  sessionStorage.clear();
+  
+  // Reload page to reset state completely
+  window.location.href = '/login';
+}
+
 export function getAuthHeaders(): HeadersInit {
   // Check for super admin token first (for super admin operations)
   const superAdminToken = localStorage.getItem('superAdminToken');
