@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 
 export default function Settings() {
-  const { user, company, subscription } = useAuth();
+  const { user, company, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
 
@@ -969,7 +969,7 @@ const AccountManagement = () => {
       
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: "Plan actualizado",
         description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
@@ -977,9 +977,31 @@ const AccountManagement = () => {
       setIsPlanModalOpen(false);
       setIsChangingPlan(false);
       
-      // Invalidate auth and subscription queries to refresh the data
+      // Invalidate ALL subscription-related queries to refresh the data immediately
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+      
+      // Invalidate dashboard queries that depend on plan features
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      
+      // Force immediate refetch of critical subscription data
+      queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
+      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Refresh authentication context with updated subscription data
+      await refreshUser();
+      
+      // Update local state immediately
+      if (data.subscription) {
+        setSelectedPlan(data.subscription.plan);
+      }
     },
     onError: (error: Error) => {
       toast({

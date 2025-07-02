@@ -120,12 +120,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setUser(data.user);
         setCompany(data.company);
+        // Include subscription data in authData
         setAuthData({ ...data, token });
         
-        // También actualizar localStorage
+        // También actualizar localStorage con datos completos de suscripción
         const currentAuthData = getAuthData();
         if (currentAuthData) {
-          const updatedAuthData = { ...currentAuthData, user: data.user, company: data.company };
+          const updatedAuthData = { 
+            ...currentAuthData, 
+            user: data.user, 
+            company: data.company,
+            subscription: data.subscription 
+          };
           localStorage.setItem('authData', JSON.stringify(updatedAuthData));
         }
       }
