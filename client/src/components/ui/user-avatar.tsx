@@ -197,6 +197,16 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     
     // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
     // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
+    
+    // DEBUG: Temporal logging para identificar problema avatar
+    console.log('🖼️ UserAvatar DEBUG:', {
+      fullName,
+      userId,
+      localProfilePicture,
+      profilePicture,
+      showUpload
+    });
+    
     const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
     
     
