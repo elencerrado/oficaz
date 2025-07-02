@@ -915,6 +915,28 @@ export class DrizzleStorage implements IStorage {
     return result.rowCount > 0;
   }
 
+  // Features operations
+  async getAllFeatures(): Promise<any[]> {
+    try {
+      const features = await db.select().from(schema.features)
+        .where(eq(schema.features.isActive, true))
+        .orderBy(schema.features.category, schema.features.name);
+      return features || [];
+    } catch (error) {
+      console.error('Storage: error in getAllFeatures:', error);
+      return [];
+    }
+  }
+
+  async updateFeature(id: number, updates: any): Promise<any | undefined> {
+    const [feature] = await db
+      .update(schema.features)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.features.id, id))
+      .returning();
+    return feature;
+  }
+
   // Reminders operations
   async createReminder(reminder: any): Promise<any> {
     const [newReminder] = await db.insert(schema.reminders).values({

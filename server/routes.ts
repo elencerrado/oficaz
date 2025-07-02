@@ -3778,6 +3778,35 @@ startxref
     }
   });
 
+  // Super Admin - Features Management
+  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const features = await storage.getAllFeatures();
+      res.json(features);
+    } catch (error) {
+      console.error('Error fetching features:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+    try {
+      const featureId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const feature = await storage.updateFeature(featureId, updates);
+      
+      if (!feature) {
+        return res.status(404).json({ message: 'Feature no encontrada' });
+      }
+      
+      res.json(feature);
+    } catch (error) {
+      console.error('Error updating feature:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Super admin route to get individual company details
   app.get('/api/super-admin/companies/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {

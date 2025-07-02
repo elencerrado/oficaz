@@ -98,7 +98,7 @@ export default function SuperAdminPlans() {
     retry: false,
   });
 
-  const { data: dbFeatures, isLoading: featuresLoading } = useQuery<Feature[]>({
+  const { data: dbFeatures, isLoading: featuresLoading, error: featuresError } = useQuery<Feature[]>({
     queryKey: ['/api/super-admin/features'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
@@ -262,6 +262,8 @@ export default function SuperAdminPlans() {
     proEnabled: feature.proEnabled,
     masterEnabled: feature.masterEnabled
   })) || [];
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
