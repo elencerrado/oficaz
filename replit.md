@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. BUG CRÍTICO VALIDACIÓN LÍMITES USUARIOS COMPLETAMENTE RESUELTO: Popup inmediato sin permitir entrada de datos
+  - PROBLEMA RESUELTO: Usuario reporta que validación mostraba mensaje pero permitía seguir ingresando datos
+  - VALIDACIÓN PREVENTIVA: Botones "Crear Usuario" ahora verifican límites ANTES de abrir modal
+  - POPUP INMEDIATO: alert() nativo muestra mensaje de límite alcanzado sin permitir acceso al formulario
+  - BLOQUEO TOTAL: Modal NO se abre cuando límite alcanzado, previniendo entrada de datos innecesaria
+  - BACKEND+FRONTEND: Doble capa de seguridad con conteo correcto de TODOS los usuarios incluidos admins
+  - AMBOS BOTONES: Desktop y móvil implementan misma validación preventiva para consistencia total
+  - SISTEMA BLINDADO: Imposible bypassear límites desde frontend, backend también valida por seguridad
 - July 2, 2025. BANNER MÓVIL PROFESIONAL IMPLEMENTADO: Diseño responsivo con tamaños consistentes y funcionalidad completa
   - TAMAÑOS CONSISTENTES: Fuente 13px título, 11px fecha, 12px contenido en móvil para legibilidad óptima
   - BOTONES PROFESIONALES: Altura 32px, "OK" botón 70px ancho mínimo, botón X cuadrado 32x32px

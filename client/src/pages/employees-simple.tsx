@@ -361,7 +361,22 @@ export default function EmployeesSimple() {
         {/* Desktop: Button and count side by side */}
         <div className="hidden sm:flex items-center gap-3">
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
-          <Button onClick={() => setShowCreateModal(true)} size="sm">
+          <Button onClick={() => {
+            // Check user limit BEFORE opening modal - CRITICAL SECURITY
+            const maxUsers = (subscription as any)?.maxUsers;
+            const currentUserCount = employeeList?.length || 0;
+            
+            console.log(`🔒 BUTTON CLICK USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
+            
+            if (maxUsers && currentUserCount >= maxUsers) {
+              // Show immediate popup and prevent modal opening
+              alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              return; // Do NOT open modal
+            }
+            
+            // Only open modal if under limit
+            setShowCreateModal(true);
+          }} size="sm">
             <UserPlus className="h-4 w-4 mr-2" />
             Crear Usuario
           </Button>
@@ -370,7 +385,22 @@ export default function EmployeesSimple() {
         {/* Mobile: Button and count in same line, compact */}
         <div className="flex sm:hidden items-center justify-between">
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
-          <Button onClick={() => setShowCreateModal(true)} size="sm">
+          <Button onClick={() => {
+            // Check user limit BEFORE opening modal - CRITICAL SECURITY
+            const maxUsers = (subscription as any)?.maxUsers;
+            const currentUserCount = employeeList?.length || 0;
+            
+            console.log(`🔒 MOBILE BUTTON CLICK USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
+            
+            if (maxUsers && currentUserCount >= maxUsers) {
+              // Show immediate popup and prevent modal opening
+              alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              return; // Do NOT open modal
+            }
+            
+            // Only open modal if under limit
+            setShowCreateModal(true);
+          }} size="sm">
             <Plus className="h-4 w-4 mr-1" />
             Crear
           </Button>
