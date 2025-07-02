@@ -187,7 +187,7 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - FUNCIÓN COLORES: getPlanIconColor() para colores dinámicos según plan (basic=verde, pro=naranja, master=rojo)
   - FILTROS CSS: hue-rotate aplicado dinámicamente (basic=120deg, pro=40deg, master=340deg)
   - RELACIÓN ASPECTO: object-contain añadido para preservar proporciones originales del icono
-  - TAMAÑO AUMENTADO: Display principal h-8 w-8 (32px), modal h-7 w-7 (28px) para mayor prominencia
+  - TAMAÑO AUMENTADO: Display principal h-12 w-12 (48px), modal h-10 w-10 (40px) para mayor prominencia
   - ANIMACIÓN ENTRADA: animate-in zoom-in-95 duration-500 ease-out para efecto de aparición suave
   - UBICACIONES: Crown reemplazado en display principal de plan Y modal de cambio de plan
   - RESULTADO: Icono único personalizado con identidad visual diferenciada por nivel de plan
