@@ -30,12 +30,8 @@ export const companies = pgTable("companies", {
   allowManagersToGrantRoles: boolean("allow_managers_to_grant_roles").default(false).notNull(),
   // Campos migrados desde account_info (datos de facturación)
   accountId: text("account_id").unique(), // OFZ-2024-001234 format
-  billingName: text("billing_name"),
-  billingAddress: text("billing_address"),
-  billingCity: text("billing_city"),
   billingPostalCode: text("billing_postal_code"),
   billingCountry: text("billing_country").default("ES"),
-  taxId: text("tax_id"), // CIF/NIF for billing (puede ser diferente al CIF de empresa)
   
   // Features personalizadas por empresa (override del plan por defecto)
   customFeatures: jsonb("custom_features").default('{}'), // {messages: true, documents: false, etc}

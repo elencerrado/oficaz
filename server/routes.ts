@@ -3247,13 +3247,13 @@ startxref
         company_id: companyId,
         account_id: company.accountId || `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
-        billing_name: company.billingName || admin?.fullName || req.user!.fullName,
+        billing_name: company.name || admin?.fullName || req.user!.fullName,
         billing_email: company.email, // Email de empresa unificado con facturación
-        billing_address: company.billingAddress || company.address || `Calle Principal ${companyId}, 1º A`,
-        billing_city: company.billingCity || company.province || 'Madrid',
+        billing_address: company.address || `Calle Principal ${companyId}, 1º A`,
+        billing_city: company.province || 'Madrid',
         billing_postal_code: company.billingPostalCode || (company.province === 'sevilla' ? '41001' : '28020'),
         billing_country: company.billingCountry || 'ES',
-        tax_id: company.taxId || company.cif,
+        tax_id: company.cif,
         updated_at: new Date().toISOString()
       };
       

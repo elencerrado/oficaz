@@ -327,13 +327,13 @@ const AccountManagement = () => {
                   <span className="font-medium">Nombre:</span> {user?.fullName}
                 </div>
                 <div>
-                  <span className="font-medium">CIF/NIF:</span> {accountInfo?.tax_id}
+                  <span className="font-medium">CIF/NIF:</span> {accountInfo?.cif}
                 </div>
                 <div className="md:col-span-2">
-                  <span className="font-medium">Dirección:</span> {accountInfo?.billing_address}
+                  <span className="font-medium">Dirección:</span> {accountInfo?.address}
                 </div>
                 <div>
-                  <span className="font-medium">Ciudad:</span> {accountInfo?.billing_city}
+                  <span className="font-medium">Ciudad:</span> {accountInfo?.province}
                 </div>
                 <div>
                   <span className="font-medium">Código postal:</span> {accountInfo?.billing_postal_code}

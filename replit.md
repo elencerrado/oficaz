@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. LIMPIEZA ESQUEMA COMPANIES COMPLETADA: Eliminadas columnas redundantes para usar datos corporativos unificados
+  - ELIMINADAS: billing_name, billing_address, billing_city, tax_id de tabla companies
+  - ACTUALIZADO MAPEO: billing_name→name, billing_address→address, billing_city→province, tax_id→cif  
+  - FRONTEND CORREGIDO: settings.tsx usa cif, address, province en lugar de campos eliminados
+  - BACKEND CORREGIDO: server/routes.ts usa campos unificados para datos de facturación de Stripe
+  - MIGRACIÓN BD: Columnas eliminadas exitosamente con ALTER TABLE sin pérdida de datos
+  - ARQUITECTURA SIMPLIFICADA: Un solo conjunto de campos corporativos para empresa Y facturación
 - July 2, 2025. MIGRACIÓN EMPLOYEE_TIME_EDIT_PERMISSION COMPLETADA: Funcionalidad transferida completamente al sistema de features
   - ELIMINADO: Campo employeeTimeEditPermission de tabla companies y toda referencia en código
   - MIGRADO: Funcionalidad ahora controlada por employee_time_edit_permission en sistema de features
