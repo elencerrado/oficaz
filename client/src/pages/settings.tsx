@@ -44,6 +44,12 @@ export default function Settings() {
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
 
+  // Query for subscription plans
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
 
 
 // Component for Account Management
@@ -466,7 +472,11 @@ const AccountManagement = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" className="justify-start">
+            <Button 
+              variant="outline" 
+              className="justify-start"
+              onClick={() => setIsPlanModalOpen(true)}
+            >
               <Crown className="mr-2 h-4 w-4" />
               Cambiar plan de suscripción
             </Button>
@@ -506,6 +516,133 @@ const AccountManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <PaymentMethodManager paymentMethods={paymentMethods || []} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de cambio de plan */}
+      <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Crown className="h-5 w-5 text-amber-500" />
+              <span>Cambiar plan de suscripción</span>
+            </DialogTitle>
+            <DialogDescription>
+              Selecciona el plan que mejor se adapte a las necesidades de tu empresa.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid gap-4 py-4">
+              {subscriptionPlans && subscriptionPlans.filter((plan: any) => plan.name !== 'master').map((plan: any) => (
+                <div 
+                  key={plan.name}
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPlan === plan.name 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedPlan(plan.name)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-4 h-4 rounded-full border-2 ${
+                        selectedPlan === plan.name 
+                          ? 'border-blue-500 bg-blue-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {selectedPlan === plan.name && (
+                          <div className="w-full h-full rounded-full bg-blue-500 scale-50"></div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          Plan {plan.displayName}
+                          {subscription?.plan === plan.name && (
+                            <Badge variant="secondary" className="ml-2">Actual</Badge>
+                          )}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {plan.name === 'basic' 
+                            ? 'Ideal para equipos pequeños y medianos' 
+                            : 'Perfecto para empresas grandes con necesidades avanzadas'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">€{plan.pricePerUser}</div>
+                      <div className="text-sm text-gray-500">por mes</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 text-sm text-gray-600">
+                    <div className="flex items-center space-x-1 mb-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>Hasta {plan.maxUsers} usuarios</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>
+                        {plan.name === 'basic' 
+                          ? 'Funcionalidades esenciales incluidas' 
+                          : 'Todas las funcionalidades avanzadas incluidas'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedPlan !== subscription?.plan && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <Info className="h-5 w-5 text-blue-500 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-semibold mb-1">Cambio de plan</p>
+                    <p>
+                      {selectedPlan === 'pro' && subscription?.plan === 'basic' 
+                        ? 'Al cambiar al Plan Pro tendrás acceso inmediato a todas las funcionalidades avanzadas.'
+                        : 'Al cambiar al Plan Basic, algunas funcionalidades avanzadas se desactivarán.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsPlanModalOpen(false);
+                  setSelectedPlan(subscription?.plan || 'basic');
+                }}
+                disabled={isChangingPlan}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleChangePlan}
+                disabled={selectedPlan === subscription?.plan || isChangingPlan}
+                className="flex-1"
+              >
+                {isChangingPlan ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                    Cambiando...
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-4 w-4 mr-2" />
+                    Cambiar a {selectedPlan === 'basic' ? 'Basic' : 'Pro'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -605,6 +742,11 @@ const AccountManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Plan change modal states
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(subscription?.plan || 'basic');
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
   
   // User profile data
   const [profileData, setProfileData] = useState({
@@ -808,6 +950,47 @@ const AccountManagement = () => {
     }
   };
 
+  // Plan change mutation
+  const changePlanMutation = useMutation({
+    mutationFn: async (newPlan: string) => {
+      const response = await fetch('/api/subscription/change-plan', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cambiar el plan');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Plan actualizado",
+        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
+      });
+      setIsPlanModalOpen(false);
+      setIsChangingPlan(false);
+      
+      // Invalidate auth and subscription queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cambiar plan",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsChangingPlan(false);
+    },
+  });
+
   // Permanent account deletion
   const deleteAccountMutation = useMutation({
     mutationFn: async (confirmationText: string) => {
@@ -864,6 +1047,18 @@ const AccountManagement = () => {
     setIsDeleting(true);
     deleteAccountMutation.mutate(confirmationText);
   };
+
+  const handleChangePlan = () => {
+    setIsChangingPlan(true);
+    changePlanMutation.mutate(selectedPlan);
+  };
+
+  // Initialize selected plan when subscription data loads
+  useEffect(() => {
+    if (subscription?.plan) {
+      setSelectedPlan(subscription.plan);
+    }
+  }, [subscription?.plan]);
 
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {

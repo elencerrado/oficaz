@@ -3634,6 +3634,64 @@ startxref
     }
   });
 
+  // Change subscription plan
+  app.patch('/api/subscription/change-plan', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { plan } = req.body;
+
+      if (!plan || !['basic', 'pro'].includes(plan)) {
+        return res.status(400).json({ message: 'Plan inválido. Debe ser "basic" o "pro".' });
+      }
+
+      // Get company and current subscription
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company?.subscription) {
+        return res.status(404).json({ message: 'Suscripción no encontrada' });
+      }
+
+      // Don't allow changing to the same plan
+      if (company.subscription.plan === plan) {
+        return res.status(400).json({ message: 'Ya estás en este plan' });
+      }
+
+      // Get the new plan features from subscription_plans table
+      const planResult = await db.execute(sql`
+        SELECT features, max_users, price_per_user 
+        FROM subscription_plans 
+        WHERE name = ${plan}
+      `);
+
+      if (planResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Plan no encontrado en la base de datos' });
+      }
+
+      const newPlanData = planResult.rows[0];
+
+      // Update the subscription plan and features
+      await db.execute(sql`
+        UPDATE subscriptions 
+        SET 
+          plan = ${plan},
+          features = ${JSON.stringify(newPlanData.features)},
+          max_users = ${newPlanData.max_users},
+          updated_at = NOW()
+        WHERE company_id = ${company.id}
+      `);
+
+      res.json({
+        success: true,
+        message: `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`,
+        plan: plan,
+        features: newPlanData.features,
+        maxUsers: newPlanData.max_users
+      });
+    } catch (error) {
+      console.error('Error changing subscription plan:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Super Admin - Subscription Plans Management
   app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {
