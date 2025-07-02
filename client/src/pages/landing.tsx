@@ -931,6 +931,7 @@ export default function Landing() {
           <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-4xl mx-auto leading-relaxed">
             No más horas perdidas enviando archivos, controlando horarios manualmente, 
             calculando vacaciones o realizando tareas repetitivas que te roban tiempo. 
+            <br />
             <span className="text-white font-semibold">Oficaz automatiza lo tedioso para que te enfoques en lo importante.</span>
           </p>
           
