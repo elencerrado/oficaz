@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Users, 
@@ -43,6 +43,8 @@ export default function EmployeesSimple() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showLimitDialog, setShowLimitDialog] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
   const [editEmployee, setEditEmployee] = useState({
     companyEmail: '',
     companyPhone: '',
@@ -384,7 +386,8 @@ export default function EmployeesSimple() {
             });
             
             if (maxUsers && currentUserCount >= maxUsers) {
-              alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              setShowLimitDialog(true);
               return; // Do NOT open modal
             }
             
@@ -419,7 +422,8 @@ export default function EmployeesSimple() {
             });
             
             if (maxUsers && currentUserCount >= maxUsers) {
-              alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              setShowLimitDialog(true);
               return; // Do NOT open modal
             }
             
@@ -1223,6 +1227,44 @@ export default function EmployeesSimple() {
               {deleteEmployeeMutation.isPending ? 'Eliminando...' : 'Eliminar Permanentemente'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para mostrar límite de usuarios alcanzado */}
+      <Dialog open={showLimitDialog} onOpenChange={setShowLimitDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold text-gray-900">
+                  Límite de usuarios alcanzado
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-600">
+                  No puedes crear más usuarios en tu plan actual.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="text-sm text-gray-700 whitespace-pre-line">
+                {limitMessage}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowLimitDialog(false)}
+              className="w-full"
+            >
+              Entendido
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

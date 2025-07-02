@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. POPUP PROFESIONAL IMPLEMENTADO: Dialog de shadcn/ui reemplaza alert() para límites de usuarios
+  - ELIMINADO: alert() nativo reemplazado por Dialog profesional con iconos y estilo moderno
+  - DISEÑO MEJORADO: Dialog con AlertTriangle icon, título claro "Límite de usuarios alcanzado"
+  - UX PROFESIONAL: Descripción clara, mensaje en caja gris, botón "Entendido" ancho completo
+  - FUNCIONALIDAD PRESERVADA: Misma validación preventiva pero con interfaz elegante
+  - RESPONSIVE: Dialog adapta tamaño y funciona perfectamente en móvil y desktop
+  - RESULTADO FINAL: Experiencia usuario mucho más profesional y consistente con el diseño de la app
 - July 2, 2025. BUG CRÍTICO CAMPO max_users RESUELTO DEFINITIVAMENTE: Sistema validación límites usuarios 100% funcional
   - PROBLEMA RAÍZ: API `/api/account/subscription` devuelve snake_case (`max_users`) pero código accedía camelCase (`maxUsers`)
   - SOLUCIÓN APLICADA: Fallback seguro `max_users || maxUsers` en ambos botones (desktop + móvil)
