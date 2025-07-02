@@ -212,7 +212,7 @@ export default function EmployeesSimple() {
     }
 
     // Check user limit - CRITICAL SECURITY: Count ALL users (backend already includes all users)
-    const maxUsers = (subscription as any)?.maxUsers;
+    const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
     const currentUserCount = employeeList?.length || 0; // This is ALL users from /api/employees
     
     console.log(`🔒 FRONTEND USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
@@ -362,13 +362,16 @@ export default function EmployeesSimple() {
         <div className="hidden sm:flex items-center gap-3">
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
-            // CRITICAL: Check user limit BEFORE opening modal
-            alert('CLICK DETECTADO! Revisando límites...');
-            
-            const maxUsers = (subscription as any)?.maxUsers;
+            // CRITICAL: Check user limit BEFORE opening modal  
+            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            alert(`Datos: ${currentUserCount} usuarios actuales, límite: ${maxUsers}`);
+            console.log('DEBUGGING SUBSCRIPTION:', {
+              subscription,
+              maxUsers,
+              currentUserCount,
+              shouldBlock: maxUsers && currentUserCount >= maxUsers
+            });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
@@ -387,12 +390,15 @@ export default function EmployeesSimple() {
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
             // CRITICAL: Check user limit BEFORE opening modal
-            alert('MOBILE CLICK DETECTADO! Revisando límites...');
-            
-            const maxUsers = (subscription as any)?.maxUsers;
+            const maxUsers = (subscription as any)?.max_users || (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            alert(`MOBILE - Datos: ${currentUserCount} usuarios actuales, límite: ${maxUsers}`);
+            console.log('MOBILE DEBUGGING SUBSCRIPTION:', {
+              subscription,
+              maxUsers,
+              currentUserCount,
+              shouldBlock: maxUsers && currentUserCount >= maxUsers
+            });
             
             if (maxUsers && currentUserCount >= maxUsers) {
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
