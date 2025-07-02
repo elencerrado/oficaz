@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. COMPACTACIÓN MÓVIL COMPLETADA: Banner de recordatorios ultra compacto para dispositivos móviles
+  - PADDING REDUCIDO: De 16px a 12px en móvil para menor ocupación de espacio
+  - GAPS MINIMIZADOS: Entre elementos reducidos de 12px a 8px (header) y 6px a 4px (botones)
+  - ICONOS COMPACTOS: Tamaño reducido de 14px a 12px en móvil con padding de círculo reducido
+  - TIPOGRAFÍA MICRO: Título 14px→13px, fecha 11px→10px, contenido 13px→12px en móvil
+  - BOTONES MINIMALISTAS: Padding 6px/10px→4px/8px, fuente 11px→10px, gap interno 3px→2px
+  - ALTURA CONTENIDO: Limitada a 40px (desde 60px) para evitar expansión vertical
+  - ICONOS X: Reducidos a 10px en móvil para máxima compactación
+  - RESULTADO: Banner que cabe completamente en pantallas móviles sin overflow horizontal
 - July 2, 2025. OPTIMIZACIÓN DE RESPONSIVIDAD COMPLETADA: useIsMobile hook implementado en ReminderBanner
   - REEMPLAZADAS: Todas las referencias a window.innerWidth <= 768 en reminder-banner.tsx por hook useIsMobile()
   - COMPATIBILIDAD SSR: Eliminadas llamadas directas a window.innerWidth para mejor server-side rendering
