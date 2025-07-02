@@ -191,9 +191,9 @@ export function ReminderBanner() {
         boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)',
         zIndex: 9999,
         minWidth: isMobile ? 'auto' : '480px',
-        maxWidth: isMobile ? 'calc(100vw - 8px)' : 'min(70vw, calc(100vw - 40px))',
-        width: isMobile ? 'auto' : 'fit-content',
-        fontSize: '14px',
+        maxWidth: isMobile ? 'calc(100vw - 16px)' : 'min(70vw, calc(100vw - 40px))',
+        width: isMobile ? 'calc(100vw - 16px)' : 'fit-content',
+        fontSize: isMobile ? '13px' : '14px',
         fontWeight: '500',
         border: '1px solid #e2e8f0',
         overflow: 'hidden',
@@ -202,14 +202,14 @@ export function ReminderBanner() {
     >
       {/* Contenido responsive */}
       <div style={{ 
-        padding: isMobile ? '8px' : '20px 24px', 
+        padding: isMobile ? '12px' : '20px 24px', 
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: isMobile ? 'stretch' : 'flex-start',
-        gap: isMobile ? '6px' : '20px',
+        gap: isMobile ? '8px' : '20px',
         width: '100%',
         boxSizing: 'border-box',
-        maxWidth: isMobile ? '100vw' : 'none',
+        maxWidth: isMobile ? '100%' : 'none',
         overflow: 'hidden'
       }}>
         {/* Header: Título y fecha/hora */}
@@ -239,7 +239,7 @@ export function ReminderBanner() {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ 
-              fontSize: isMobile ? '11px' : '15px', 
+              fontSize: isMobile ? '13px' : '15px', 
               fontWeight: '700', 
               color: '#1f2937',
               marginBottom: '1px',
@@ -249,7 +249,7 @@ export function ReminderBanner() {
             </div>
             {firstReminder.reminderDate && (
               <div style={{ 
-                fontSize: isMobile ? '9px' : '12px', 
+                fontSize: isMobile ? '11px' : '12px', 
                 color: '#6b7280', 
                 fontWeight: '500'
               }}>
@@ -269,14 +269,14 @@ export function ReminderBanner() {
         }}>
           {firstReminder.content && (
             <div style={{ 
-              fontSize: isMobile ? '10px' : '14px', 
+              fontSize: isMobile ? '12px' : '14px', 
               color: '#374151', 
-              lineHeight: isMobile ? '1.2' : '1.6',
+              lineHeight: isMobile ? '1.3' : '1.6',
               fontWeight: '400',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
               hyphens: 'auto',
-              maxHeight: isMobile ? '30px' : 'none',
+              maxHeight: isMobile ? '32px' : 'none',
               overflow: isMobile ? 'hidden' : 'visible'
             }}>
               {firstReminder.content}
@@ -301,22 +301,20 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#059669',
               color: '#ffffff',
-              padding: isMobile ? '3px 6px' : '8px 14px',
-              fontSize: isMobile ? '10px' : '12px',
+              padding: isMobile ? '6px 12px' : '8px 14px',
+              fontSize: isMobile ? '12px' : '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: isMobile ? '4px' : '6px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: isMobile ? '2px' : '5px',
+              gap: isMobile ? '4px' : '5px',
               boxShadow: '0 1px 3px rgba(5, 150, 105, 0.3)',
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap',
-              flex: isMobile ? '0 0 auto' : 'auto',
-              height: isMobile ? '20px' : 'auto',
-              minWidth: isMobile ? '18px' : 'auto',
-              maxWidth: isMobile ? '45px' : 'auto'
+              height: isMobile ? '32px' : 'auto',
+              minWidth: isMobile ? '70px' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#047857';
@@ -340,18 +338,17 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#f3f4f6',
               color: '#6b7280',
-              padding: isMobile ? '3px 6px' : '8px 10px',
-              fontSize: isMobile ? '10px' : '12px',
+              padding: isMobile ? '6px' : '8px 10px',
+              fontSize: isMobile ? '12px' : '12px',
               fontWeight: '600',
               border: 'none',
-              borderRadius: isMobile ? '4px' : '6px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s ease',
-              minWidth: isMobile ? '18px' : 'auto',
-              height: isMobile ? '20px' : 'auto',
-              maxWidth: isMobile ? '24px' : 'auto'
+              height: isMobile ? '32px' : 'auto',
+              width: isMobile ? '32px' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#e5e7eb';
@@ -363,8 +360,8 @@ export function ReminderBanner() {
             }}
           >
             <X style={{ 
-              width: isMobile ? '10px' : '14px', 
-              height: isMobile ? '10px' : '14px' 
+              width: isMobile ? '14px' : '14px', 
+              height: isMobile ? '14px' : '14px' 
             }} />
           </Button>
         </div>
