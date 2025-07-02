@@ -88,16 +88,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? { dniOrEmail, password, companyAlias }
       : { dniOrEmail, password };
       
+    console.log('🔐 Login attempt starting...');
     const data = await apiRequest('POST', '/api/auth/login', loginData);
+    console.log('🔐 Login response received:', { hasToken: !!data.token, hasUser: !!data.user });
     
     // Save auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
     setAuthData(data);
+    console.log('🔐 Auth data saved to localStorage');
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
+    console.log('🔐 Auth state updated, token length:', data.token?.length);
     
     return data;
   };
