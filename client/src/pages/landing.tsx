@@ -146,54 +146,74 @@ export default function Landing() {
       ];
     }
     
-    const staticPlansFeatures = {
-      basic: [
-        "Control de tiempo básico",
-        "Gestión de vacaciones",
-        "Mensajería interna",
-        "Soporte por email"
-      ],
-      pro: [
-        "Todas las funciones Basic",
-        "Gestión de documentos",
-        "Reportes avanzados",
-        "Logos personalizados",
-        "Soporte prioritario"
-      ],
-      master: [
-        "Todas las funciones Pro",
-        "Integraciones avanzadas",
-        "Personalización completa",
-        "Soporte 24/7",
-        "Gerente de cuenta dedicado"
-      ]
+    const getFeatureDisplayName = (featureKey: string) => {
+      const featureNames: { [key: string]: string } = {
+        timeTracking: "Control de tiempo",
+        vacation: "Gestión de vacaciones",
+        messages: "Mensajería interna",
+        documents: "Gestión de documentos",
+        reminders: "Recordatorios personalizados",
+        logoUpload: "Logos personalizados",
+        reports: "Reportes avanzados",
+        analytics: "Análisis de datos",
+        customization: "Personalización avanzada",
+        timeEditingPermissions: "Edición de horarios",
+        api: "API personalizada"
+      };
+      return featureNames[featureKey] || featureKey;
     };
 
-    const staticPlansDescriptions = {
+    const getAdditionalFeatures = (planKey: string) => {
+      const additionalFeatures: { [key: string]: string[] } = {
+        basic: ["Soporte por email"],
+        pro: ["Soporte prioritario"],
+        master: ["Soporte 24/7", "Gerente de cuenta dedicado"]
+      };
+      return additionalFeatures[planKey] || [];
+    };
+
+    const staticPlansDescriptions: { [key: string]: string } = {
       basic: "Perfecto para pequeñas empresas",
       pro: "Ideal para empresas en crecimiento",
       master: "Para grandes organizaciones"
     };
 
-    const popularPlans = {
+    const popularPlans: { [key: string]: boolean } = {
       basic: false,
       pro: true,
       master: false
     };
     
     return subscriptionPlans.map((dbPlan: any) => {
-      const planKey = dbPlan.name.toLowerCase() as keyof typeof staticPlansFeatures;
+      const planKey = dbPlan.name.toLowerCase();
       const userLimit = dbPlan.maxUsers 
         ? `Hasta ${dbPlan.maxUsers} empleados`
         : "Empleados ilimitados";
       
+      // Generate features from database configuration
+      const dynamicFeatures = [];
+      
+      // Add user limit first
+      dynamicFeatures.push(userLimit);
+      
+      // Add features based on what's enabled in the database
+      if (dbPlan.features) {
+        Object.entries(dbPlan.features).forEach(([featureKey, isEnabled]) => {
+          if (isEnabled) {
+            const displayName = getFeatureDisplayName(featureKey);
+            dynamicFeatures.push(displayName);
+          }
+        });
+      }
+      
+      // Add plan-specific additional features
+      const additionalFeatures = getAdditionalFeatures(planKey);
+      dynamicFeatures.push(...additionalFeatures);
+      
       return {
         name: dbPlan.displayName || dbPlan.name,
         description: staticPlansDescriptions[planKey] || dbPlan.name,
-        features: [
-          userLimit,
-          ...staticPlansFeatures[planKey] || []
-        ],
+        features: dynamicFeatures,
         popular: popularPlans[planKey] || false,
         price: parseFloat(dbPlan.pricePerUser).toString()
       };
