@@ -797,7 +797,7 @@ const AccountManagement = () => {
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
     workingHoursPerDay: 8,
-    employeeTimeEditPermission: 'no' as 'yes' | 'no'
+    // employeeTimeEditPermission movido a sistema de features
   });
 
   // Initialize form data when company data loads
@@ -813,7 +813,7 @@ const AccountManagement = () => {
         address: company.address || '',
         province: company.province || '',
         logoUrl: company.logoUrl || '',
-        employeeTimeEditPermission: company.employeeTimeEditPermission || 'no',
+        // employeeTimeEditPermission ahora manejado por sistema de features
         workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
         vacationDaysPerMonth: Number(company.vacationDaysPerMonth) || 2.5,
@@ -1746,45 +1746,19 @@ const AccountManagement = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="timeEditPermission">Los empleados pueden editar sus horas</Label>
-                    {hasAccess('timeEditingPermissions') ? (
-                      <Select 
-                        value={companyData.employeeTimeEditPermission} 
-                        onValueChange={(value: 'yes' | 'no') => 
-                          setCompanyData(prev => ({ ...prev, employeeTimeEditPermission: value }))
-                        }
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="yes">Sí</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="mt-1">
-                        <div className="p-3 bg-gray-100 border rounded-lg text-gray-500 cursor-not-allowed">
-                          No - No disponible en tu plan
-                        </div>
-                        <div className="flex items-center gap-2 mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                          <AlertCircle className="h-4 w-4 text-amber-600" />
-                          <p className="text-sm text-amber-700">
-                            Esta funcionalidad requiere el plan Pro o superior. Los empleados no pueden editar sus horarios.
-                          </p>
-                        </div>
+                    <Label>Permisos de edición de horarios</Label>
+                    <div className="mt-1 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Info className="h-4 w-4 text-blue-600" />
+                        <p className="text-sm text-blue-700">
+                          Esta funcionalidad está ahora controlada por el sistema de features. 
+                          {hasAccess('employee_time_edit_permission') 
+                            ? 'Los empleados pueden editar sus horarios según tu plan actual.'
+                            : 'Los empleados no pueden editar horarios en tu plan actual.'
+                          }
+                        </p>
                       </div>
-                    )}
-                    {hasAccess('timeEditingPermissions') ? (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {companyData.employeeTimeEditPermission === 'yes' && 'Los empleados pueden editar sus horarios registrados'}
-                        {companyData.employeeTimeEditPermission === 'no' && 'Solo administradores y managers pueden modificar horarios'}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Solo administradores y managers pueden modificar horarios
-                      </p>
-                    )}
+                    </div>
                   </div>
                   
                   <div>

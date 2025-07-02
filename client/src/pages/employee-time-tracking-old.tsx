@@ -131,7 +131,7 @@ export default function EmployeeTimeTracking() {
   });
 
   // Check if user can edit time entries based on company configuration
-  const canEditTime = company?.employeeTimeEditPermission === 'yes';
+  const canEditTime = hasAccess('employee_time_edit_permission');
 
 
 

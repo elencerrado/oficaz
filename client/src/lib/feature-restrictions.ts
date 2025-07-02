@@ -11,6 +11,7 @@ export interface SubscriptionFeatures {
   logoUpload: boolean;
   api: boolean;
   reminders: boolean;
+  employee_time_edit_permission: boolean;
 }
 
 export interface Subscription {
@@ -62,7 +63,8 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     customization: 'Master',
     logoUpload: 'Pro',
     api: 'Master',
-    reminders: 'Pro'
+    reminders: 'Pro',
+    employee_time_edit_permission: 'Master'
   };
   
   return featurePlanMap[feature] || 'Pro';
@@ -80,7 +82,8 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     customization: 'Personalización',
     logoUpload: 'Subir logo',
     api: 'API',
-    reminders: 'Recordatorios'
+    reminders: 'Recordatorios',
+    employee_time_edit_permission: 'Permisos edición tiempo empleados'
   };
 
   return `La funcionalidad de ${featureNames[feature]} no está disponible en tu plan actual. Contacta con el administrador para actualizar tu suscripción.`;

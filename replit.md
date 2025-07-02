@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. MIGRACIÓN EMPLOYEE_TIME_EDIT_PERMISSION COMPLETADA: Funcionalidad transferida completamente al sistema de features
+  - ELIMINADO: Campo employeeTimeEditPermission de tabla companies y toda referencia en código
+  - MIGRADO: Funcionalidad ahora controlada por employee_time_edit_permission en sistema de features
+  - ACTUALIZADO: SubscriptionFeatures interface incluye nueva funcionalidad con mapeo Master plan
+  - SIMPLIFICADO: Página settings ahora muestra mensaje informativo en lugar de formulario de configuración
+  - UNIFICADO: Toda lógica de permisos ahora usa sistema único de features sin duplicación
+  - CONSISTENCIA: employee-time-tracking.tsx usa hasAccess('employee_time_edit_permission') correctamente
+  - ARQUITECTURA LIMPIA: Eliminada complejidad dual entre companies.* y features system
 - July 2, 2025. SISTEMA DE FEATURES FINALIZADO CON COLUMNAS DIRECTAS: Arquitectura completamente simplificada
   - ELIMINACIÓN TABLA RELACIONAL: plan_features eliminada, ahora columnas directas (basicEnabled, proEnabled, masterEnabled) en features
   - MIGRACIÓN EXITOSA: Datos preservados desde plan_features a nuevas columnas (Basic: vacation+time+notifications, Pro: añade messages+documents+reminders, Master: todas)

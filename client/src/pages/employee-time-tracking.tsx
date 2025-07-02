@@ -245,7 +245,7 @@ export default function EmployeeTimeTracking() {
   // ⚠️ END PROTECTED SECTION - Statistical calculation functions
 
   // Check if user can edit time
-  const canEditTime = user?.company?.employeeTimeEditPermission === 'yes';
+  const canEditTime = hasAccess('employee_time_edit_permission');
 
   // Get sessions for current month
   const monthSessions = sessions.filter((session: WorkSession) => {
