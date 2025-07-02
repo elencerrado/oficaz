@@ -191,13 +191,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - ALTURA CONTENIDO: Limitada a 40px (desde 60px) para evitar expansión vertical
   - ICONOS X: Reducidos a 10px en móvil para máxima compactación
   - RESULTADO: Banner que cabe completamente en pantallas móviles sin overflow horizontal
-- July 2, 2025. BOTONES MÓVILES ULTRA-COMPACTOS FINALIZADOS: Diseño minimalista para pantallas pequeñas
-  - TAMAÑO DRÁSTICAMENTE REDUCIDO: Botones de 16px altura con padding 1px/3px vs 18px previos
-  - ANCHO LIMITADO: Botón OK máximo 35px, botón X máximo 20px para diseño estrecho
-  - TIPOGRAFÍA MICRO: Fuente 7px en móvil, texto "OK" en lugar de "Hecho" para brevedad
-  - ICONOS MÍNIMOS: CheckCircle y X reducidos a 8px en móvil para máxima compactación
-  - BORDES SUTILES: borderRadius 3px en móvil vs 6px desktop para estética minimalista
-  - RESULTADO FINAL: Botones discretos que no dominan visualmente en pantallas pequeñas
+- July 2, 2025. BOTONES MÓVILES EQUILIBRADOS FINALIZADOS: Balance perfecto entre compacto y usable
+  - TAMAÑO ÓPTIMO: Botones de 20px altura con padding 3px/6px para buena usabilidad táctil
+  - ANCHO CONTROLADO: Botón OK máximo 45px, botón X máximo 24px sin ser demasiado estrechos
+  - TIPOGRAFÍA LEGIBLE: Fuente 10px en móvil, texto "OK" mantiene legibilidad
+  - ICONOS PROPORCIONADOS: CheckCircle y X de 10px en móvil para visibilidad adecuada
+  - BORDES SUAVES: borderRadius 4px en móvil para estética moderna pero accesible
+  - RESULTADO FINAL: Botones compactos pero usables que no frustran al usuario en móvil
 - July 2, 2025. OPTIMIZACIÓN DE RESPONSIVIDAD COMPLETADA: useIsMobile hook implementado en ReminderBanner
   - REEMPLAZADAS: Todas las referencias a window.innerWidth <= 768 en reminder-banner.tsx por hook useIsMobile()
   - COMPATIBILIDAD SSR: Eliminadas llamadas directas a window.innerWidth para mejor server-side rendering
