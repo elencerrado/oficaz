@@ -362,29 +362,19 @@ export default function EmployeesSimple() {
         <div className="hidden sm:flex items-center gap-3">
           <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
-            // Check user limit BEFORE opening modal - CRITICAL SECURITY
-            console.log('🔒 BUTTON CLICK DEBUG:', {
-              subscription,
-              subscriptionData: subscription,
-              employees: employeeList,
-              employeeCount: employeeList?.length
-            });
+            // CRITICAL: Check user limit BEFORE opening modal
+            alert('CLICK DETECTADO! Revisando límites...');
             
             const maxUsers = (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log(`🔒 BUTTON CLICK USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
-            console.log('🔒 VALIDATION RESULT:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
+            alert(`Datos: ${currentUserCount} usuarios actuales, límite: ${maxUsers}`);
             
             if (maxUsers && currentUserCount >= maxUsers) {
-              // Show immediate popup and prevent modal opening
-              console.log('🔒 BLOCKING MODAL - LIMIT REACHED');
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
               return; // Do NOT open modal
             }
             
-            // Only open modal if under limit
-            console.log('🔒 ALLOWING MODAL - UNDER LIMIT');
             setShowCreateModal(true);
           }} size="sm">
             <UserPlus className="h-4 w-4 mr-2" />
@@ -396,29 +386,19 @@ export default function EmployeesSimple() {
         <div className="flex sm:hidden items-center justify-between">
           <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
           <Button onClick={() => {
-            // Check user limit BEFORE opening modal - CRITICAL SECURITY
-            console.log('🔒 MOBILE BUTTON CLICK DEBUG:', {
-              subscription,
-              subscriptionData: subscription,
-              employees: employeeList,
-              employeeCount: employeeList?.length
-            });
+            // CRITICAL: Check user limit BEFORE opening modal
+            alert('MOBILE CLICK DETECTADO! Revisando límites...');
             
             const maxUsers = (subscription as any)?.maxUsers;
             const currentUserCount = employeeList?.length || 0;
             
-            console.log(`🔒 MOBILE BUTTON CLICK USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${maxUsers}`);
-            console.log('🔒 MOBILE VALIDATION RESULT:', { maxUsers, currentUserCount, shouldBlock: maxUsers && currentUserCount >= maxUsers });
+            alert(`MOBILE - Datos: ${currentUserCount} usuarios actuales, límite: ${maxUsers}`);
             
             if (maxUsers && currentUserCount >= maxUsers) {
-              // Show immediate popup and prevent modal opening
-              console.log('🔒 MOBILE BLOCKING MODAL - LIMIT REACHED');
               alert(`⚠️ LÍMITE DE USUARIOS ALCANZADO\n\nNo puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
               return; // Do NOT open modal
             }
             
-            // Only open modal if under limit
-            console.log('🔒 MOBILE ALLOWING MODAL - UNDER LIMIT');
             setShowCreateModal(true);
           }} size="sm">
             <Plus className="h-4 w-4 mr-1" />
