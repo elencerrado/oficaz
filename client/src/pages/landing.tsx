@@ -151,7 +151,7 @@ export default function Landing() {
       );
       return {
         ...staticPlan,
-        price: dynamicPlan ? Math.round(parseFloat(dynamicPlan.pricePerUser)).toString() : "..."
+        price: dynamicPlan ? parseFloat(dynamicPlan.pricePerUser).toString() : "..."
       };
     });
   };

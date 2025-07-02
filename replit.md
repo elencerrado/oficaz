@@ -184,7 +184,7 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 - July 2, 2025. PRECIOS DINÁMICOS IMPLEMENTADOS EN LANDING PAGE: Sistema de precios desde base de datos completamente funcional
   - ENDPOINT PÚBLICO: /api/public/subscription-plans creado sin autenticación para landing page
-  - PRECIOS REALES: Landing page ahora toma valores dinámicos desde tabla subscription_plans
+  - PRECIOS EXACTOS: Landing page muestra valores precisos (19.99, 39.99, 99.90) sin redondeo
   - FALLBACK SEGURO: Sistema muestra "..." mientras carga o si falla la conexión
   - INTEGRACIÓN COMPLETA: Combina datos estáticos (descripción, features) con precios dinámicos de BD
   - ACTUALIZACIÓN AUTOMÁTICA: Precios se actualizan automáticamente al modificar super admin
