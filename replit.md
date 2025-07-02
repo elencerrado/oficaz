@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. COMPONENTE USERAVATAR COMPLETAMENTE UNIFICADO: Misma estructura visual en toda la aplicación
+  - PROBLEMA RESUELTO: Eliminada duplicación de lógica entre avatares con/sin upload
+  - COMPONENTE ÚNICO: Ahora todos los avatares usan exactamente la misma estructura visual
+  - ESTRUCTURA ESTÁNDAR: Círculo de fondo de color único + imagen encima en todos los casos
+  - FUNCIONALIDAD CONDICIONAL: Botones de upload solo aparecen cuando showUpload={true}
+  - SISTEMA BLINDADO: Un solo punto de mantenimiento para toda la lógica de avatares
+  - RESULTADO FINAL: Consistencia visual perfecta entre avatares de listas vs perfiles
 - July 1, 2025. BUG CRÍTICO DE CONTEXTO DE AUTENTICACIÓN RESUELTO: Sistema de avatares completamente funcional
   - PROBLEMA IDENTIFICADO: Dashboard empleado no actualizaba avatar tras cambio de foto por contexto de autenticación estático
   - CAUSA TÉCNICA: useAuth no refrescaba datos del usuario después de mutaciones de foto de perfil

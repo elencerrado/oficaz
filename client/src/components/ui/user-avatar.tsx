@@ -1,17 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Camera, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { Camera, X } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface UserAvatarProps {
   fullName: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  userId?: number; // Para generar color único por empleado
-  profilePicture?: string | null; // URL de la foto de perfil
-  showUpload?: boolean; // Mostrar opción de subir foto
+  userId?: number;
+  profilePicture?: string | null;
+  showUpload?: boolean;
 }
 
 export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false }: UserAvatarProps) {
@@ -44,173 +44,143 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       // Actualizar estado local inmediatamente
       if (data?.profilePicture) {
         setLocalProfilePicture(data.profilePicture);
-        
-        // Forzar re-render adicional
-        setTimeout(() => {
-          setLocalProfilePicture(data.profilePicture);
-        }, 100);
+        // Refrescar datos del usuario si es su propia foto
+        refreshUser?.();
+        // Invalidar queries relacionadas
+        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
       }
-      
-      // CRÍTICO: Actualizar contexto de autenticación para el dashboard
-      refreshUser();
-      
-      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      
-      // Forzar recarga completa del cache de React Query
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
-      
-      toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "No se pudo actualizar la foto", variant: "destructive" });
-    },
-    onSettled: () => {
       setIsUploading(false);
     },
+    onError: (error: any) => {
+      setIsUploading(false);
+      toast({
+        title: "Error",
+        description: error.message || "Error al subir la foto",
+        variant: "destructive",
+      });
+    }
   });
 
   const deletePhotoMutation = useMutation({
     mutationFn: async () => {
-      // Solo usar el endpoint con ID específico si el usuario actual es admin/manager Y está gestionando otro usuario
-      // Si es el propio usuario o no es admin, usar el endpoint personal
-      const currentUser = await apiRequest('GET', '/api/auth/me');
-      const isAdmin = currentUser.user.role === 'admin' || currentUser.user.role === 'manager';
-      const isDifferentUser = userId && userId !== currentUser.user.id;
-      
-      if (isAdmin && isDifferentUser) {
+      // Si tenemos userId específico (admin eliminando foto de empleado), usarlo
+      if (userId) {
         return await apiRequest('DELETE', `/api/users/${userId}/profile-picture`);
       } else {
         return await apiRequest('DELETE', '/api/users/profile-picture');
       }
     },
     onSuccess: () => {
-      // Actualizar estado local inmediatamente para eliminar la foto
+      // Actualizar estado local inmediatamente
       setLocalProfilePicture(null);
-      
-      // CRÍTICO: Actualizar contexto de autenticación para el dashboard
-      refreshUser();
-      
-      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      // Refrescar datos del usuario si es su propia foto
+      refreshUser?.();
+      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      
-      // Forzar recarga completa del cache de React Query
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
-      
-      // Forzar re-render del componente
-      setTimeout(() => {
-        setLocalProfilePicture(null);
-      }, 100);
-      
-      toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
     },
-    onError: () => {
-      toast({ title: "Error", description: "No se pudo eliminar la foto", variant: "destructive" });
-    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al eliminar la foto",
+        variant: "destructive",
+      });
+    }
   });
 
-  // Manejar selección de archivo
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ title: "Error", description: "El archivo debe ser menor a 5MB", variant: "destructive" });
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        toast({ title: "Error", description: "Solo se permiten archivos de imagen", variant: "destructive" });
-        return;
-      }
       setIsUploading(true);
       uploadPhotoMutation.mutate(file);
     }
   };
 
-  // Extraer iniciales del nombre completo
+  // Función para obtener iniciales del nombre
   const getInitials = (name: string) => {
-    const words = name.trim().split(/\s+/);
-    if (words.length === 1) {
-      return words[0].substring(0, 2).toUpperCase();
-    }
-    // Tomar primera letra del primer nombre y primera del último apellido
-    return (words[0][0] + (words[words.length - 1][0] || '')).toUpperCase();
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  // Colores únicos para cada empleado usando estilos inline agresivos
-  const getUserColors = (id?: number) => {
-    if (!id) return { bg: '#007AFF', text: '#FFFFFF' }; // Oficaz primary color
+  // Función para obtener colores únicos por userId
+  const getUserColors = (userId?: number) => {
+    if (!userId) {
+      return { bg: '#007AFF', text: '#FFFFFF' };
+    }
     
-    const colorPairs = [
-      { bg: '#3B82F6', text: '#FFFFFF' },  // blue-500
-      { bg: '#10B981', text: '#FFFFFF' },  // emerald-500  
-      { bg: '#8B5CF6', text: '#FFFFFF' },  // purple-500
-      { bg: '#F97316', text: '#FFFFFF' },  // orange-500
-      { bg: '#EC4899', text: '#FFFFFF' },  // pink-500
-      { bg: '#14B8A6', text: '#FFFFFF' },  // teal-500
-      { bg: '#6366F1', text: '#FFFFFF' },  // indigo-500
-      { bg: '#EF4444', text: '#FFFFFF' },  // red-500
-      { bg: '#06B6D4', text: '#FFFFFF' },  // cyan-500
-      { bg: '#F59E0B', text: '#FFFFFF' },  // amber-500
-      { bg: '#84CC16', text: '#FFFFFF' },  // lime-500
-      { bg: '#F43F5E', text: '#FFFFFF' },  // rose-500
-      { bg: '#8B5CF6', text: '#FFFFFF' },  // violet-500
-      { bg: '#0EA5E9', text: '#FFFFFF' },  // sky-500
-      { bg: '#22C55E', text: '#FFFFFF' },  // green-500
-      { bg: '#EAB308', text: '#000000' },  // yellow-500 (texto negro)
-      { bg: '#D946EF', text: '#FFFFFF' },  // fuchsia-500
-      { bg: '#64748B', text: '#FFFFFF' },  // slate-500
+    const colors = [
+      { bg: '#3B82F6', text: '#FFFFFF' }, // Blue
+      { bg: '#10B981', text: '#FFFFFF' }, // Emerald
+      { bg: '#F59E0B', text: '#FFFFFF' }, // Amber
+      { bg: '#EF4444', text: '#FFFFFF' }, // Red
+      { bg: '#8B5CF6', text: '#FFFFFF' }, // Violet
+      { bg: '#06B6D4', text: '#FFFFFF' }, // Cyan
+      { bg: '#84CC16', text: '#FFFFFF' }, // Lime
+      { bg: '#F97316', text: '#FFFFFF' }, // Orange
+      { bg: '#EC4899', text: '#FFFFFF' }, // Pink
+      { bg: '#6366F1', text: '#FFFFFF' }, // Indigo
+      { bg: '#14B8A6', text: '#FFFFFF' }, // Teal
+      { bg: '#A855F7', text: '#FFFFFF' }, // Purple
+      { bg: '#22C55E', text: '#FFFFFF' }, // Green
+      { bg: '#EAB308', text: '#FFFFFF' }, // Yellow
+      { bg: '#DC2626', text: '#FFFFFF' }, // Red-600
+      { bg: '#2563EB', text: '#FFFFFF' }, // Blue-600
+      { bg: '#7C3AED', text: '#FFFFFF' }, // Violet-600
+      { bg: '#059669', text: '#FFFFFF' }  // Emerald-600
     ];
     
-    return colorPairs[id % colorPairs.length];
+    return colors[userId % colors.length];
   };
 
-  // Tamaño unificado más grande para todos los avatares - CONSISTENCIA TOTAL
-  const getSizePixels = (size: 'sm' | 'md' | 'lg') => {
-    // TODOS los tamaños ahora usan las mismas dimensiones para máxima consistencia
-    return { size: 40, fontSize: 14, border: 3 };
-  };
-
-  // Si no se necesita upload, usar el renderizado simple original
-  if (!showUpload) {
-    // Si hay clases personalizadas Y NO hay foto real, usar renderizado de iniciales
-    if (className && !profilePicture && !localProfilePicture) {
-      return (
-        <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
-          {getInitials(fullName)}
-        </div>
-      );
+  // Función para obtener tamaños según el prop size
+  const getSizePixels = (size: string) => {
+    switch (size) {
+      case 'sm': return { size: 32, fontSize: 12, border: 2 };
+      case 'lg': return { size: 48, fontSize: 16, border: 3 };
+      default: return { size: 40, fontSize: 14, border: 2 };
     }
+  };
 
-    // Usar colores únicos con estilos inline SUPER agresivos
-    const colors = getUserColors(userId);
-    const sizeConfig = getSizePixels(size);
-    
-    // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
-    // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
-    
-    // DEBUG: Temporal logging para identificar problema avatar
-    console.log('🖼️ UserAvatar DEBUG:', {
-      fullName,
-      userId,
-      localProfilePicture,
-      profilePicture,
-      showUpload
-    });
-    
-    const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
-    
-    
+  // Si hay clases personalizadas Y NO hay foto real, usar renderizado de iniciales
+  if (className && !profilePicture && !localProfilePicture) {
     return (
+      <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
+        {getInitials(fullName)}
+      </div>
+    );
+  }
+
+  // Usar colores únicos con estilos inline SUPER agresivos
+  const colors = getUserColors(userId);
+  const sizeConfig = getSizePixels(size);
+  
+  // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
+  // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
+  const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
+  
+  return (
+    <div className={showUpload ? "relative" : ""}>
+      {/* Input oculto para seleccionar archivos - SOLO si showUpload */}
+      {showUpload && (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      )}
+      
+      {/* Avatar principal - MISMO COMPONENTE PARA TODOS */}
       <div 
         style={{
           width: `${sizeConfig.size}px`,
@@ -221,9 +191,15 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
           maxHeight: `${sizeConfig.size}px`,
           position: 'relative',
           userSelect: 'none',
+          cursor: showUpload ? 'pointer' : 'default',
+          transition: showUpload ? 'opacity 0.2s' : 'none',
+          opacity: 1,
           flexShrink: 0,
           aspectRatio: '1'
         } as React.CSSProperties}
+        onClick={showUpload ? () => fileInputRef.current?.click() : undefined}
+        onMouseEnter={showUpload ? (e) => e.currentTarget.style.opacity = '0.8' : undefined}
+        onMouseLeave={showUpload ? (e) => e.currentTarget.style.opacity = '1' : undefined}
       >
         {/* Círculo de fondo de color único */}
         <div
@@ -280,162 +256,44 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             }
           }}
         />
-      </div>
-    );
-  }
-
-  // Renderizado con opciones de upload - USAR TAMAÑO DEL CLASSNAME SI ESTÁ PRESENTE
-  const colors = getUserColors(userId);
-  const baseSizeConfig = getSizePixels(size);
-  
-  // Si hay className con w-64 h-64, extraer el tamaño
-  let sizeConfig = {
-    size: 60,
-    border: 3,
-    fontSize: 18
-  };
-  
-  // Detectar tamaño desde className
-  if (className && className.includes('w-64') && className.includes('h-64')) {
-    sizeConfig = {
-      size: 256,
-      border: 6,
-      fontSize: 48
-    };
-  } else if (className && className.includes('w-32') && className.includes('h-32')) {
-    sizeConfig = {
-      size: 128,
-      border: 4,
-      fontSize: 24
-    };
-  } else if (className && className.includes('w-20') && className.includes('h-20')) {
-    sizeConfig = {
-      size: 80,
-      border: 3,
-      fontSize: 16
-    };
-  }
-  
-  return (
-    <div className="relative">
-      {/* Input oculto para seleccionar archivos */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      
-      {/* Avatar principal - ESTILOS INLINE PUROS */}
-      <div 
-        style={{
-          width: `${sizeConfig.size}px`,
-          height: `${sizeConfig.size}px`,
-          minWidth: `${sizeConfig.size}px`,
-          minHeight: `${sizeConfig.size}px`,
-          maxWidth: `${sizeConfig.size}px`,
-          maxHeight: `${sizeConfig.size}px`,
-          position: 'relative',
-          userSelect: 'none',
-          cursor: 'pointer',
-          transition: 'opacity 0.2s',
-          opacity: 1,
-          flexShrink: 0,
-          aspectRatio: '1'
-        } as React.CSSProperties}
-        onClick={() => fileInputRef.current?.click()}
-        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
-        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-      >
-        {/* Círculo de fondo de color único */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            width: '100%',
-            height: '100%',
-            borderRadius: '50%',
-            backgroundColor: colors.bg,
-            zIndex: 1
-          } as React.CSSProperties}
-        />
-        {/* Imagen encima del fondo */}
-        <img 
-          src={localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
-          alt={fullName}
-          style={{
-            position: 'absolute',
-            top: '3px',
-            left: '3px',
-            width: `${sizeConfig.size - 6}px`,
-            height: `${sizeConfig.size - 6}px`,
-            objectFit: 'cover',
-            display: 'block',
-            borderRadius: '50%',
-            zIndex: 2
-          } as React.CSSProperties}
-          onError={(e) => {
-            // Si falla el servicio externo, usar avatar local generado con canvas
-            const target = e.target as HTMLImageElement;
-            const canvas = document.createElement('canvas');
-            const size = sizeConfig.size - 6;
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            
-            if (ctx) {
-              // Fondo circular
-              ctx.fillStyle = colors.bg;
-              ctx.beginPath();
-              ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
-              ctx.fill();
-              
-              // Texto iniciales
-              ctx.fillStyle = colors.text;
-              ctx.font = `bold ${sizeConfig.fontSize}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(getInitials(fullName), size/2, size/2);
-              
-              target.src = canvas.toDataURL();
-            }
-          }}
-        />
         
-        {/* Overlay con icono de cámara cuando está uploading */}
-        {isUploading && (
+        {/* Overlay con icono de cámara cuando está uploading - SOLO si showUpload */}
+        {showUpload && isUploading && (
           <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
       
-      {/* Botón de cámara */}
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-        className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200 disabled:opacity-50"
-        style={{ zIndex: 10 }}
-        title="Cambiar foto"
-      >
-        <Camera className="w-3 h-3" />
-      </button>
-      
-      {/* Botón de eliminar foto cuando hay una */}
-      {localProfilePicture && !isUploading && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            deletePhotoMutation.mutate();
-          }}
-          className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200"
-          style={{ zIndex: 10 }}
-          title="Eliminar foto"
-        >
-          <X className="w-3 h-3" />
-        </button>
+      {/* Botones de upload - SOLO si showUpload */}
+      {showUpload && (
+        <>
+          {/* Botón de cámara */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200 disabled:opacity-50"
+            style={{ zIndex: 10 }}
+            title="Cambiar foto"
+          >
+            <Camera className="w-3 h-3" />
+          </button>
+          
+          {/* Botón de eliminar foto cuando hay una */}
+          {localProfilePicture && !isUploading && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deletePhotoMutation.mutate();
+              }}
+              className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-colors duration-200"
+              style={{ zIndex: 10 }}
+              title="Eliminar foto"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </>
       )}
     </div>
   );
