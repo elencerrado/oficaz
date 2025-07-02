@@ -810,22 +810,27 @@ export class DrizzleStorage implements IStorage {
       return company.customFeatures;
     }
 
-    // For companies without custom features, get default plan features
-    const planFeatures = await db
+    // For companies without custom features, get default plan features from columns
+    const planColumn = planName === 'basic' ? 'basicEnabled' : 
+                      planName === 'pro' ? 'proEnabled' : 
+                      planName === 'master' ? 'masterEnabled' : 'basicEnabled';
+    
+    const featuresData = await db
       .select({
         key: schema.features.key,
-        isEnabled: schema.planFeatures.isEnabled,
+        isEnabled: planName === 'basic' ? schema.features.basicEnabled :
+                  planName === 'pro' ? schema.features.proEnabled :
+                  planName === 'master' ? schema.features.masterEnabled :
+                  schema.features.basicEnabled,
       })
-      .from(schema.planFeatures)
-      .innerJoin(schema.features, eq(schema.planFeatures.featureId, schema.features.id))
-      .where(and(
-        eq(schema.planFeatures.planId, plan.id),
-        eq(schema.planFeatures.isEnabled, true)
-      ));
+      .from(schema.features)
+      .where(eq(schema.features.isActive, true));
 
     const features: any = {};
-    planFeatures.forEach(feature => {
-      features[feature.key] = feature.isEnabled;
+    featuresData.forEach(feature => {
+      if (feature.isEnabled) {
+        features[feature.key] = true;
+      }
     });
 
     return features;
@@ -848,9 +853,28 @@ export class DrizzleStorage implements IStorage {
   async getAllSubscriptionPlans(): Promise<any[]> {
     const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.pricePerUser);
     
-    // Add features to each plan from the new features system
+    // Add features to each plan from direct columns in features table
     const plansWithFeatures = await Promise.all(plans.map(async (plan) => {
-      const features = await this.getCompanyFeatures(0, plan.name); // Use 0 as company ID for plan defaults
+      const planName = plan.name.toLowerCase();
+      
+      const featuresData = await db
+        .select({
+          key: schema.features.key,
+          isEnabled: planName === 'basic' ? schema.features.basicEnabled :
+                    planName === 'pro' ? schema.features.proEnabled :
+                    planName === 'master' ? schema.features.masterEnabled :
+                    schema.features.basicEnabled,
+        })
+        .from(schema.features)
+        .where(eq(schema.features.isActive, true));
+
+      const features: any = {};
+      featuresData.forEach(feature => {
+        if (feature.isEnabled) {
+          features[feature.key] = true;
+        }
+      });
+
       return {
         ...plan,
         features

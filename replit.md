@@ -182,15 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
-- July 2, 2025. SISTEMA DE FEATURES FINALIZADO CON COLUMNA customFeatures: Simplificación a columna única en companies
-  - REESTRUCTURACIÓN COMPLETA: Eliminada tabla company_features, ahora se usa companies.customFeatures (JSONB)
-  - SISTEMA SIMPLIFICADO: Features personalizadas por empresa almacenadas directamente en tabla companies
-  - FUNCIONALIDADES POR PLAN: Basic (vacation, time, notifications), Pro (añade messages, documents, reminders), Master (todas)
-  - PERSONALIZACIÓN UNIVERSAL: Cualquier empresa puede tener features custom (ej: empresa Basic con mensajes habilitado)
-  - ENDPOINTS ACTUALIZADOS: /api/super-admin/companies/:id/features gestiona customFeatures en companies.customFeatures
-  - SISTEMA ROBUSTO: getCompanyFeatures() detecta customFeatures o usa plan_features por defecto
-  - MIGRACIÓN EXITOSA: Datos preservados (empresa Master con reports=false como personalización)
-  - TABLA ELIMINADA: company_features completamente removida, BD más limpia y eficiente
+- July 2, 2025. SISTEMA DE FEATURES FINALIZADO CON COLUMNAS DIRECTAS: Arquitectura completamente simplificada
+  - ELIMINACIÓN TABLA RELACIONAL: plan_features eliminada, ahora columnas directas (basicEnabled, proEnabled, masterEnabled) en features
+  - MIGRACIÓN EXITOSA: Datos preservados desde plan_features a nuevas columnas (Basic: vacation+time+notifications, Pro: añade messages+documents+reminders, Master: todas)
+  - SISTEMA DUAL SIMPLIFICADO: features con columnas por plan + companies.customFeatures para personalizaciones
+  - ENDPOINTS OPTIMIZADOS: getAllSubscriptionPlans() usa columnas directas en lugar de JOIN complejos
+  - PERSONALIZACIÓN UNIVERSAL: Cualquier empresa puede tener features custom independientemente del plan
+  - BD ULTRA LIMPIA: Solo 2 elementos para features (tabla features con columnas por plan + customFeatures JSONB en companies)
+  - ARQUITECTURA FINAL: Preferencia del usuario por columnas directas en lugar de tablas relacionales completamente implementada
 - July 2, 2025. SISTEMA DE FEATURES COMPLETAMENTE REESTRUCTURADO: Migración exitosa de JSON a tablas relacionales
   - NUEVAS TABLAS: features, plan_features para gestión granular de funcionalidades por plan
   - MIGRACIÓN COMPLETA: Datos movidos desde subscription_plans.features a nuevas tablas relacionales

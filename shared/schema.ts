@@ -63,19 +63,18 @@ export const features = pgTable("features", {
   name: varchar("name", { length: 100 }).notNull(), // "Mensajería interna", "Gestión de documentos", etc
   description: text("description"), // Descripción detallada de la funcionalidad
   category: varchar("category", { length: 50 }).notNull(), // "communication", "management", "admin", etc
+  
+  // Habilitación por plan - columnas directas para cada plan
+  basicEnabled: boolean("basic_enabled").notNull().default(false),
+  proEnabled: boolean("pro_enabled").notNull().default(false),
+  masterEnabled: boolean("master_enabled").notNull().default(false),
+  
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Plan features - define qué features tiene cada plan por defecto
-export const planFeatures = pgTable("plan_features", {
-  id: serial("id").primaryKey(),
-  planId: integer("plan_id").references(() => subscriptionPlans.id, { onDelete: "cascade" }).notNull(),
-  featureId: integer("feature_id").references(() => features.id, { onDelete: "cascade" }).notNull(),
-  isEnabled: boolean("is_enabled").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+// Tabla planFeatures eliminada - ahora usamos columnas directas en features (basicEnabled, proEnabled, masterEnabled)
 
 // Tabla company_features eliminada - ahora usamos companies.customFeatures
 
@@ -437,10 +436,7 @@ export const insertFeatureSchema = createInsertSchema(features).omit({
   updatedAt: true,
 });
 
-export const insertPlanFeatureSchema = createInsertSchema(planFeatures).omit({
-  id: true,
-  createdAt: true,
-});
+// insertPlanFeatureSchema eliminado - ahora usamos columnas directas en features
 
 // insertCompanyFeatureSchema eliminado - ahora usamos companies.customFeatures
 
