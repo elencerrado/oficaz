@@ -182,23 +182,13 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
 
   // Si no se necesita upload, usar el renderizado simple original
   if (!showUpload) {
-    // Si hay clases personalizadas Y NO hay foto real, usar renderizado de iniciales
-    if (className && !profilePicture && !localProfilePicture) {
-      return (
-        <div className={`rounded-full flex items-center justify-center font-medium select-none ${className}`}>
-          {getInitials(fullName)}
-        </div>
-      );
-    }
-
-    // Usar colores únicos con estilos inline SUPER agresivos
+    // Usar colores únicos con estilos inline SUPER agresivos para TODOS los avatares
     const colors = getUserColors(userId);
     const sizeConfig = getSizePixels(size);
     
-    // SOLO AVATARES CON FOTO - usar estado local para actualizaciones inmediatas
+    // SIEMPRE mostrar avatares tipo foto con círculo de fondo de color único
     // Si hay foto real (local o profilePicture), usarla. Si no, usar servicio externo con fallback
     const avatarSrc = localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`;
-    
     
     return (
       <div 
