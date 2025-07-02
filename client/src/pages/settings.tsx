@@ -521,7 +521,7 @@ const AccountManagement = () => {
 
       {/* Modal de cambio de plan */}
       <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Crown className="h-5 w-5 text-amber-500" />
