@@ -22,12 +22,12 @@ interface SubscriptionPlan {
     vacation?: boolean;
     timeTracking?: boolean;
     timeEditingPermissions?: boolean;
-    reports?: boolean;
     analytics?: boolean;
     customization?: boolean;
     logoUpload?: boolean;
     api?: boolean;
     reminders?: boolean;
+    employee_time_edit_permission?: boolean;
   };
   isActive: boolean;
   createdAt: string;
@@ -40,12 +40,12 @@ const featureIcons = {
   vacation: Calendar,
   timeTracking: Clock,
   timeEditingPermissions: Clock,
-  reports: BarChart3,
   analytics: BarChart3,
   customization: Settings,
   logoUpload: Upload,
   api: Zap,
   reminders: Bell,
+  employee_time_edit_permission: Clock,
 };
 
 const featureLabels = {
@@ -54,11 +54,12 @@ const featureLabels = {
   vacation: 'Vacaciones',
   timeTracking: 'Fichajes',
   timeEditingPermissions: 'Editar horas empleados',
-  reports: 'Reportes',
   analytics: 'Analíticas',
   customization: 'Personalización',
   logoUpload: 'Subir logo',
   api: 'API',
+  reminders: 'Recordatorios',
+  employee_time_edit_permission: 'Permisos edición tiempo empleados',
 };
 
 export default function SuperAdminPlans() {
@@ -174,13 +175,13 @@ export default function SuperAdminPlans() {
   const features = [
     { key: 'timeTracking', label: 'Fichajes', icon: Clock },
     { key: 'timeEditingPermissions', label: '└ Editar horas empleados', icon: Clock, isSubFeature: true },
+    { key: 'employee_time_edit_permission', label: '└ Permisos edición tiempo empleados', icon: Clock, isSubFeature: true },
     { key: 'vacation', label: 'Vacaciones', icon: Calendar },
     { key: 'documents', label: 'Documentos', icon: FileText },
     { key: 'messages', label: 'Mensajes', icon: MessageSquare },
     { key: 'reminders', label: 'Recordatorios', icon: Bell },
     { key: 'customization', label: 'Personalización', icon: Settings },
     { key: 'logoUpload', label: '└ Subir logo', icon: Upload, isSubFeature: true },
-    { key: 'reports', label: 'Reportes', icon: BarChart3 },
     { key: 'analytics', label: 'Analíticas', icon: BarChart3 },
     { key: 'api', label: 'API', icon: Zap },
   ];

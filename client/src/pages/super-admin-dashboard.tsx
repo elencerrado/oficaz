@@ -266,6 +266,20 @@ export default function SuperAdminDashboard() {
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+                onClick={() => setLocation('/super-admin/features')}
+              >
+                <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                  <Settings className="h-6 w-6 text-green-400" />
+                </div>
+                <div className="text-center">
+                  <p className="font-medium">Gestión de Features</p>
+                  <p className="text-xs text-white/60">Configurar funcionalidades</p>
+                </div>
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
               >
                 <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <Building2 className="h-6 w-6 text-blue-400" />

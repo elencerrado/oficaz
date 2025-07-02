@@ -5,7 +5,6 @@ export interface SubscriptionFeatures {
   vacation: boolean;
   timeTracking: boolean;
   timeEditingPermissions: boolean;
-  reports: boolean;
   analytics: boolean;
   customization: boolean;
   logoUpload: boolean;
@@ -58,7 +57,6 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     vacation: 'Basic',
     timeTracking: 'Basic',
     timeEditingPermissions: 'Pro',
-    reports: 'Pro',
     analytics: 'Pro',
     customization: 'Master',
     logoUpload: 'Pro',
@@ -77,7 +75,6 @@ export const getFeatureRestrictionMessage = (feature: keyof SubscriptionFeatures
     vacation: 'Vacaciones',
     timeTracking: 'Fichajes',
     timeEditingPermissions: 'Editar horas empleados',
-    reports: 'Reportes',
     analytics: 'Analíticas',
     customization: 'Personalización',
     logoUpload: 'Subir logo',

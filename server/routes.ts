@@ -4651,6 +4651,35 @@ startxref
     }
   });
 
+  // Update a specific feature
+  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const featureId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      // Validate feature exists
+      const [feature] = await db.select().from(schema.features).where(eq(schema.features.id, featureId));
+      if (!feature) {
+        return res.status(404).json({ error: 'Feature not found' });
+      }
+
+      // Update feature
+      const [updatedFeature] = await db
+        .update(schema.features)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.features.id, featureId))
+        .returning();
+
+      res.json(updatedFeature);
+    } catch (error) {
+      console.error('Error updating feature:', error);
+      res.status(500).json({ error: 'Error updating feature' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
