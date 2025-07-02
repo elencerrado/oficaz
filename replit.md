@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. OPTIMIZACIÓN DE RESPONSIVIDAD COMPLETADA: useIsMobile hook implementado en ReminderBanner
+  - REEMPLAZADAS: Todas las referencias a window.innerWidth <= 768 en reminder-banner.tsx por hook useIsMobile()
+  - COMPATIBILIDAD SSR: Eliminadas llamadas directas a window.innerWidth para mejor server-side rendering
+  - HOOK CENTRALIZADO: Lógica de detección móvil unificada con debounce para mejor rendimiento
+  - RESPONSIVE OPTIMIZADO: Paddings, tamaños de fuente, gaps y botones adaptativos usando variable isMobile
+  - CONSISTENCIA TÉCNICA: Patrón establecido para futuros componentes que requieran detección móvil
 - July 1, 2025. BUG CRÍTICO DE CONTEXTO DE AUTENTICACIÓN RESUELTO: Sistema de avatares completamente funcional
   - PROBLEMA IDENTIFICADO: Dashboard empleado no actualizaba avatar tras cambio de foto por contexto de autenticación estático
   - CAUSA TÉCNICA: useAuth no refrescaba datos del usuario después de mutaciones de foto de perfil

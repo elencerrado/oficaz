@@ -8,6 +8,23 @@ import { format, isToday, isTomorrow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuth } from '@/hooks/use-auth';
 
+// Hook para detectar si estamos en móvil
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkSize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
+  }, []);
+
+  return isMobile;
+};
+
 interface ActiveReminder {
   id: number;
   title: string;
@@ -34,6 +51,7 @@ export function ReminderBanner() {
   const queryClient = useQueryClient();
   const { user, token, isLoading: authLoading } = useAuth();
   const isAuthenticated = !!(user && token);
+  const isMobile = useIsMobile();
 
   // Fetch active reminders with reduced polling for better performance
   const { data: activeReminders = [], isLoading, error } = useQuery({
@@ -181,49 +199,54 @@ export function ReminderBanner() {
         animation: 'slideInRight 0.4s ease-out'
       }}
     >
-      {/* Contenido con layout de 3 columnas */}
+      {/* Contenido responsive */}
       <div style={{ 
-        padding: '20px 24px', 
+        padding: isMobile ? '16px' : '20px 24px', 
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: '20px',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'flex-start',
+        gap: isMobile ? '12px' : '20px',
         width: '100%',
         boxSizing: 'border-box'
       }}>
-        {/* Columna 1: Título y fecha/hora */}
+        {/* Header: Título y fecha/hora */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           gap: '12px',
-          flexBasis: '200px',
+          flexBasis: isMobile ? 'auto' : '200px',
           flexShrink: 0
         }}>
           <div 
             style={{ 
               backgroundColor: firstReminder.color || '#6366f1',
               borderRadius: '50%',
-              padding: '8px',
+              padding: isMobile ? '6px' : '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}
           >
-            <PriorityIcon style={{ width: '16px', height: '16px', color: '#ffffff' }} />
+            <PriorityIcon style={{ 
+              width: isMobile ? '14px' : '16px', 
+              height: isMobile ? '14px' : '16px', 
+              color: '#ffffff' 
+            }} />
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ 
-              fontSize: '15px', 
+              fontSize: isMobile ? '14px' : '15px', 
               fontWeight: '700', 
               color: '#1f2937',
-              marginBottom: '4px',
+              marginBottom: '2px',
               lineHeight: '1.2'
             }}>
               {firstReminder.title}
             </div>
             {firstReminder.reminderDate && (
               <div style={{ 
-                fontSize: '12px', 
+                fontSize: isMobile ? '11px' : '12px', 
                 color: '#6b7280', 
                 fontWeight: '500'
               }}>
@@ -233,35 +256,40 @@ export function ReminderBanner() {
           </div>
         </div>
         
-        {/* Columna 2: Contenido del recordatorio */}
+        {/* Contenido del recordatorio */}
         <div style={{ 
           minWidth: '0', 
           wordWrap: 'break-word',
           flex: '1',
-          marginRight: '16px'
+          marginRight: isMobile ? '0' : '16px',
+          order: isMobile ? 2 : 1
         }}>
           {firstReminder.content && (
             <div style={{ 
-              fontSize: '14px', 
+              fontSize: isMobile ? '13px' : '14px', 
               color: '#374151', 
-              lineHeight: '1.6',
+              lineHeight: isMobile ? '1.4' : '1.6',
               fontWeight: '400',
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
-              hyphens: 'auto'
+              hyphens: 'auto',
+              maxHeight: isMobile ? '60px' : 'none',
+              overflow: isMobile ? 'hidden' : 'visible'
             }}>
               {firstReminder.content}
             </div>
           )}
         </div>
         
-        {/* Columna 3: Botones de acción */}
+        {/* Botones de acción */}
         <div style={{ 
           display: 'flex', 
-          gap: '8px', 
+          gap: isMobile ? '6px' : '8px', 
           flexShrink: 0,
-          alignSelf: 'flex-start',
-          minWidth: '140px'
+          alignSelf: isMobile ? 'stretch' : 'flex-start',
+          justifyContent: isMobile ? 'flex-end' : 'flex-start',
+          minWidth: isMobile ? 'auto' : '140px',
+          order: isMobile ? 3 : 2
         }}>
           <Button
             variant="ghost"
@@ -270,18 +298,19 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#059669',
               color: '#ffffff',
-              padding: '8px 14px',
-              fontSize: '12px',
+              padding: isMobile ? '6px 10px' : '8px 14px',
+              fontSize: isMobile ? '11px' : '12px',
               fontWeight: '600',
               border: 'none',
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
+              gap: isMobile ? '3px' : '5px',
               boxShadow: '0 1px 3px rgba(5, 150, 105, 0.3)',
               transition: 'all 0.2s ease',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              flex: isMobile ? '1' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#047857';
@@ -305,15 +334,16 @@ export function ReminderBanner() {
             style={{ 
               backgroundColor: '#f3f4f6',
               color: '#6b7280',
-              padding: '8px 10px',
-              fontSize: '12px',
+              padding: isMobile ? '6px 8px' : '8px 10px',
+              fontSize: isMobile ? '11px' : '12px',
               fontWeight: '600',
               border: 'none',
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              minWidth: isMobile ? '32px' : 'auto'
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = '#e5e7eb';
@@ -324,7 +354,10 @@ export function ReminderBanner() {
               e.target.style.color = '#6b7280';
             }}
           >
-            <X style={{ width: '14px', height: '14px' }} />
+            <X style={{ 
+              width: window.innerWidth <= 768 ? '12px' : '14px', 
+              height: window.innerWidth <= 768 ? '12px' : '14px' 
+            }} />
           </Button>
         </div>
       </div>
