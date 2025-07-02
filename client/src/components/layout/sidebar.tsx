@@ -85,8 +85,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { 
       name: 'Configuración', 
       href: `/${companyAlias}/configuracion`, 
-      icon: Settings,
-      feature: 'customization' as const
+      icon: Settings
+      // Configuración siempre disponible - no requiere verificación de features
     },
   ];
 
