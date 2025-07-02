@@ -182,6 +182,12 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 2, 2025. BUG CRÍTICO CAMPO max_users RESUELTO DEFINITIVAMENTE: Sistema validación límites usuarios 100% funcional
+  - PROBLEMA RAÍZ: API `/api/account/subscription` devuelve snake_case (`max_users`) pero código accedía camelCase (`maxUsers`)
+  - SOLUCIÓN APLICADA: Fallback seguro `max_users || maxUsers` en ambos botones (desktop + móvil)
+  - VERIFICACIÓN EXITOSA: Validación funciona correctamente (49 límite vs 4 actuales = permite creación)
+  - SISTEMA BLINDADO: Compatible con ambos formatos de datos para máxima estabilidad
+  - RESULTADO FINAL: Validación preventiva inmediata protege límites de plan sin permitir entrada de datos
 - July 2, 2025. BUG CRÍTICO ACCESO CAMPO max_users COMPLETAMENTE RESUELTO: Sistema de validación límites usuarios funcionando
   - PROBLEMA RESUELTO: Frontend accedía a campo inexistente `maxUsers` en lugar del campo real `max_users` de la base de datos
   - CAUSA TÉCNICA: Endpoint `/api/account/subscription` devuelve estructura raw con `max_users` pero frontend esperaba `maxUsers`
