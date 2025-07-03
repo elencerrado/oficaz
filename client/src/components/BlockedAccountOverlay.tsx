@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { PaymentMethodManager } from './PaymentMethodManager';
 
 interface BlockedAccountOverlayProps {
@@ -20,6 +20,7 @@ interface BlockedAccountOverlayProps {
 export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOverlayProps) {
   const [selectedPlan, setSelectedPlan] = useState(trialStatus.plan || 'basic');
   const [showPaymentManager, setShowPaymentManager] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: subscriptionPlans = [] } = useQuery({
     queryKey: ['/api/subscription-plans'],
@@ -41,6 +42,18 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
     if (!Array.isArray(subscriptionPlans)) return planName;
     const plan = subscriptionPlans.find((p: any) => p.name === planName);
     return plan?.displayName || planName;
+  };
+
+  // Function to invalidate all relevant queries after successful payment
+  const handlePaymentSuccess = async () => {
+    // Invalidate all subscription-related queries to refresh the state
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
+    
+    // Close the payment manager modal
+    setShowPaymentManager(false);
   };
 
   return (
@@ -158,6 +171,7 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
           </DialogHeader>
           <PaymentMethodManager 
             paymentMethods={Array.isArray(paymentMethods) ? paymentMethods : []} 
+            onPaymentSuccess={handlePaymentSuccess}
           />
         </DialogContent>
       </Dialog>

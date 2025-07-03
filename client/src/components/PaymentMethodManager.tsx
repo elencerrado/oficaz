@@ -22,13 +22,14 @@ interface PaymentMethod {
 
 interface PaymentMethodManagerProps {
   paymentMethods: PaymentMethod[];
+  onPaymentSuccess?: () => void;
 }
 
 
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
 
-export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerProps) {
+export function PaymentMethodManager({ paymentMethods, onPaymentSuccess }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -125,6 +126,11 @@ export function PaymentMethodManager({ paymentMethods }: PaymentMethodManagerPro
       title: "¡Método de pago añadido!",
       description: "Tu tarjeta se ha añadido correctamente.",
     });
+    
+    // Call the parent's onPaymentSuccess callback if provided
+    if (onPaymentSuccess) {
+      onPaymentSuccess();
+    }
   };
 
   const handlePaymentCancel = () => {
