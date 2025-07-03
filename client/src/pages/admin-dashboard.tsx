@@ -170,9 +170,8 @@ export default function AdminDashboard() {
     select: (data: any[]) => {
       if (!data?.length) return [];
       
-      // Show only first 3 active reminders, sorted by date
+      // Show only first 3 active reminders - backend already filters active ones
       return data
-        .filter((reminder: any) => !reminder.isCompleted && !reminder.isArchived)
         .sort((a: any, b: any) => {
           // Prioritize reminders with dates
           if (a.reminderDate && !b.reminderDate) return -1;

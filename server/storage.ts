@@ -1009,17 +1009,20 @@ export class DrizzleStorage implements IStorage {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
     
-    // Query reminders that should show banner:
-    // ONLY reminders that have showBanner = true AND have a date set AND date is within next 7 days
+    // Get all active reminders (not completed, not archived)
+    // Include reminders that:
+    // - Have no date (always show)
+    // - Have date within next 7 days
     const activeReminders = await db.select().from(schema.reminders)
       .where(
         and(
           eq(schema.reminders.userId, userId),
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
-          eq(schema.reminders.showBanner, true), // Must have showBanner enabled
-          sql`${schema.reminders.reminderDate} IS NOT NULL`, // Must have a date configured
-          lte(schema.reminders.reminderDate, nextWeek) // Date is within next 7 days
+          or(
+            sql`${schema.reminders.reminderDate} IS NULL`, // No date - show always
+            lte(schema.reminders.reminderDate, nextWeek) // Has date within 7 days
+          )
         )
       )
       .orderBy(schema.reminders.reminderDate);
