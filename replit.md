@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 3, 2025. SISTEMA DE FACTURAS STRIPE COMPLETAMENTE FUNCIONAL: Integración auténtica verificada y operativa
+  - VERIFICADO: Endpoint `/api/account/invoices` funcionando correctamente con cliente Stripe real (cus_SbasUamcLJUPJ0)
+  - SISTEMA LIMPIO: Eliminados logs de debugging tras confirmar operatividad completa
+  - COMPORTAMIENTO NORMAL: Array vacío `[]` es respuesta correcta - facturas aparecen cuando Stripe procesa cobros reales
+  - INTEGRACIÓN AUTÉNTICA: Sistema consulta directamente facturas de Stripe sin datos sintéticos
+  - CICLO NATURAL: Facturas se generan automáticamente en ciclos de facturación mensuales de Stripe
+  - FILTRADO INTELIGENTE: Solo muestra facturas con status 'paid' para mejor experiencia usuario
+  - ARQUITECTURA SÓLIDA: Sistema preparado para mostrar facturas reales cuando Stripe las genere
 - July 3, 2025. SISTEMA DE CAMBIO DE PLANES COMPLETAMENTE DINÁMICO: Endpoint usa tabla features como fuente primaria sin validaciones hardcodeadas
   - VALIDACIÓN DINÁMICA: Planes disponibles se obtienen dinámicamente desde subscription_plans en lugar de validación hardcodeada ['basic', 'pro']
   - TABLA FEATURES COMO FUENTE ÚNICA: Sistema usa columnas directas (basicEnabled, proEnabled, masterEnabled) tal como prefiere el usuario

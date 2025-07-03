@@ -3411,7 +3411,6 @@ startxref
   app.get('/api/account/invoices', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const companyId = req.user!.companyId;
-      console.log('DEBUG - Fetching invoices for company:', companyId);
       
       // Get admin user to find Stripe customer ID
       const userResult = await db.execute(sql`
@@ -3422,15 +3421,10 @@ startxref
       `);
       
       const user = userResult.rows[0] as any;
-      console.log('DEBUG - User from DB:', user);
-      console.log('DEBUG - Stripe customer ID:', user?.stripe_customer_id);
       
       if (!user?.stripe_customer_id) {
-        console.log('DEBUG - No Stripe customer ID found, returning empty array');
         return res.json([]);
       }
-
-
 
       try {
         // Get invoices from Stripe
