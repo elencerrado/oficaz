@@ -3275,6 +3275,10 @@ startxref
         billing_postal_code: company.billingPostalCode || (company.province === 'sevilla' ? '41001' : '28020'),
         billing_country: company.billingCountry || 'ES',
         tax_id: company.cif,
+        // Frontend compatibility fields (same data with expected names)
+        cif: company.cif,
+        address: company.address || `Calle Principal ${companyId}, 1º A`,
+        province: company.province || 'Madrid',
         updated_at: new Date().toISOString()
       };
       
