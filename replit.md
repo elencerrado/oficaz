@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 3, 2025. SISTEMA DE FACTURAS PRORRATEADAS CORREGIDO: Facturas reales en Stripe en lugar de PaymentIntents
+  - PROBLEMA CRÍTICO RESUELTO: Pagos prorrateados ahora crean facturas reales de Stripe (invoices) no PaymentIntents
+  - STRIPE INVOICE ITEMS: Sistema usa invoiceItems.create() + invoices.create() + finalize + pay para facturas auténticas
+  - HISTORIAL VISIBLE: Facturas prorrateadas aparecen correctamente en historial de facturación
+  - DESCRIPCIÓN DETALLADA: Facturas incluyen "Upgrade to [Plan] - Prorated amount (X days remaining)"
+  - LOGS AÑADIDOS: Sistema registra invoice ID y status para debugging y verificación
+  - TESTING EXITOSO: Verificado que genera facturas reales tras cambios Pro→Basic→Pro
 - July 3, 2025. SISTEMA DE FACTURACIÓN PRORRATEADA IMPLEMENTADO COMPLETAMENTE: Cambios de plan con cobros y créditos automáticos
   - UPGRADE (Basic→Pro): Calcula diferencia prorrateada por días restantes del mes actual y cobra inmediatamente
   - DOWNGRADE (Pro→Basic): Calcula diferencia prorrateada y aplica crédito automático en próxima factura 
