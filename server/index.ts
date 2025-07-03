@@ -25,9 +25,13 @@ app.use(helmet({
 // CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'development' 
   ? ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:5000']
-  : process.env.REPLIT_DOMAINS ? 
-    process.env.REPLIT_DOMAINS.split(',').map(domain => `https://${domain}`) : 
-    true;
+  : [
+      // Replit domains
+      ...(process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',').map(domain => `https://${domain}`) : []),
+      // Custom domain
+      'https://oficaz.es',
+      'https://www.oficaz.es'
+    ];
 
 app.use(cors({
   origin: allowedOrigins,
@@ -39,17 +43,25 @@ app.use(cors({
 // Force HTTPS in production and set security headers
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
-    // Redirect HTTP to HTTPS
-    if (req.header('x-forwarded-proto') !== 'https') {
-      return res.redirect(301, `https://${req.header('host')}${req.url}`);
+    const host = req.header('host');
+    const proto = req.header('x-forwarded-proto') || req.header('x-forwarded-protocol') || req.protocol;
+    
+    // Redirect HTTP to HTTPS for all domains including custom domains
+    if (proto !== 'https' && host !== 'localhost') {
+      return res.redirect(301, `https://${host}${req.url}`);
     }
     
     // Set additional security headers for HTTPS
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from DENY to SAMEORIGIN
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Additional header for custom domains
+    if (host === 'oficaz.es' || host === 'www.oficaz.es') {
+      res.setHeader('Access-Control-Allow-Origin', `https://${host}`);
+    }
     
     next();
   });
