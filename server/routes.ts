@@ -3711,8 +3711,8 @@ startxref
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
-      // Don't allow changing to the same plan
-      if (company.subscription.plan === plan) {
+      // Don't allow changing to the same plan UNLESS the account is blocked
+      if (company.subscription.plan === plan && company.subscription.status !== 'blocked') {
         return res.status(400).json({ message: 'Ya estás en este plan' });
       }
 

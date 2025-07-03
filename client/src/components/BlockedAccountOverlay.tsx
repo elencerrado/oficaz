@@ -18,14 +18,15 @@ interface BlockedAccountOverlayProps {
 }
 
 export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOverlayProps) {
-  const [selectedPlan, setSelectedPlan] = useState(trialStatus.plan || 'basic');
-  const [showPaymentManager, setShowPaymentManager] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: subscriptionPlans = [] } = useQuery({
     queryKey: ['/api/subscription-plans'],
     retry: false,
   });
+
+  const [selectedPlan, setSelectedPlan] = useState(trialStatus.plan || 'basic');
+  const [showPaymentManager, setShowPaymentManager] = useState(false);
 
   const { data: paymentMethods = [] } = useQuery({
     queryKey: ['/api/account/payment-methods'],
