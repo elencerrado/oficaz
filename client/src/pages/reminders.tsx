@@ -41,6 +41,7 @@ interface Reminder {
   isCompleted: boolean;
   isArchived: boolean;
   isPinned: boolean;
+  showBanner: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -86,7 +87,8 @@ export default function Reminders() {
     content: '',
     reminderDate: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    color: '#ffffff'
+    color: '#ffffff',
+    showBanner: false
   });
 
   // Fetch reminders
@@ -169,7 +171,8 @@ export default function Reminders() {
       content: '',
       reminderDate: '',
       priority: 'medium',
-      color: '#ffffff'
+      color: '#ffffff',
+      showBanner: false
     });
     setSelectedColor('#ffffff');
     setEditingReminder(null);
@@ -206,20 +209,20 @@ export default function Reminders() {
     const submitData = {
       ...reminderData,
       color: selectedColor,
-      reminderDate: processedDate
+      reminderDate: processedDate || undefined
     };
 
     // Remove undefined values to avoid issues
     Object.keys(submitData).forEach(key => {
-      if (submitData[key] === undefined) {
-        delete submitData[key];
+      if ((submitData as any)[key] === undefined) {
+        delete (submitData as any)[key];
       }
     });
 
     if (editingReminder) {
-      updateReminderMutation.mutate({ id: editingReminder.id, data: submitData });
+      updateReminderMutation.mutate({ id: editingReminder.id, data: submitData as any });
     } else {
-      createReminderMutation.mutate(submitData);
+      createReminderMutation.mutate(submitData as any);
     }
   };
 
@@ -252,7 +255,8 @@ export default function Reminders() {
       content: reminder.content || '',
       reminderDate: localDateTimeString,
       priority: reminder.priority,
-      color: reminder.color
+      color: reminder.color,
+      showBanner: reminder.showBanner || false
     });
     setSelectedColor(reminder.color);
     setIsDialogOpen(true);
@@ -299,7 +303,7 @@ export default function Reminders() {
   };
 
   // Filter reminders - protect against null data
-  const filteredReminders = (reminders || []).filter((reminder: Reminder) => {
+  const filteredReminders = Array.isArray(reminders) ? reminders.filter((reminder: Reminder) => {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reminder.content?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -310,7 +314,7 @@ export default function Reminders() {
       (filterStatus === 'archived' && reminder.isArchived);
 
     return matchesSearch && matchesFilter;
-  });
+  }) : [];
 
   // Sort reminders: pinned first, then by date
   const sortedReminders = filteredReminders.sort((a: Reminder, b: Reminder) => {

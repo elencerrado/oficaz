@@ -329,6 +329,7 @@ export const reminders = pgTable("reminders", {
   isArchived: boolean("is_archived").default(false).notNull(),
   isPinned: boolean("is_pinned").default(false).notNull(),
   notificationShown: boolean("notification_shown").default(false).notNull(),
+  showBanner: boolean("show_banner").default(false).notNull(),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
