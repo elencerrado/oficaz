@@ -623,12 +623,22 @@ const AccountManagement = () => {
                   <Info className="h-5 w-5 text-blue-500 mt-0.5" />
                   <div className="text-sm text-blue-700">
                     <p className="font-semibold mb-1">Cambio de plan</p>
-                    <p>
-                      {selectedPlan === 'pro' && subscription?.plan === 'basic' 
-                        ? 'Al cambiar al Plan Pro tendrás acceso inmediato a todas las funcionalidades avanzadas.'
-                        : 'Al cambiar al Plan Basic, algunas funcionalidades avanzadas se desactivarán.'
-                      }
-                    </p>
+                    <div className="space-y-2">
+                      <p>
+                        {selectedPlan === 'pro' && subscription?.plan === 'basic' 
+                          ? 'Al cambiar al Plan Pro tendrás acceso inmediato a todas las funcionalidades avanzadas.'
+                          : 'Al cambiar al Plan Basic, algunas funcionalidades avanzadas se desactivarán.'
+                        }
+                      </p>
+                      <div className="bg-white/70 rounded-md p-3 border border-blue-200">
+                        <p className="font-medium text-blue-800 mb-1">Facturación inteligente:</p>
+                        <ul className="text-xs text-blue-600 space-y-1">
+                          <li>• <strong>Upgrade (Basic→Pro):</strong> Se cobrará la diferencia prorrateada por los días restantes del mes</li>
+                          <li>• <strong>Downgrade (Pro→Basic):</strong> Se aplicará un crédito en tu próxima factura</li>
+                          <li>• <strong>Cambios menores:</strong> El nuevo precio se aplicará en el próximo ciclo</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -992,9 +1002,17 @@ const AccountManagement = () => {
       return response.json();
     },
     onSuccess: async (data) => {
+      // Show success message with prorated billing info if available
+      const baseMessage = `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`;
+      let description = baseMessage;
+      
+      if (data.message && data.message !== baseMessage) {
+        description = data.message;
+      }
+      
       toast({
         title: "Plan actualizado",
-        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
+        description: description,
       });
       setIsPlanModalOpen(false);
       setIsChangingPlan(false);

@@ -3743,6 +3743,74 @@ startxref
       }
 
       const newPlanData = planResult.rows[0];
+      const currentPlanData = await db.execute(sql`
+        SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
+      `);
+
+      let proratedAmount = 0;
+      let immediatePaymentRequired = false;
+      let creditApplied = false;
+
+      // Calculate prorated amount if changing between different plans
+      if (company.subscription.plan !== plan && currentPlanData.rows.length > 0) {
+        const currentPrice = parseFloat(currentPlanData.rows[0].price_per_user);
+        const newPrice = parseFloat(newPlanData.price_per_user);
+        const priceDifference = newPrice - currentPrice;
+
+        // Calculate days remaining in current billing cycle
+        const nextPaymentDate = new Date(company.subscription.nextPaymentDate);
+        const today = new Date();
+        const daysRemaining = Math.max(0, Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+        const totalDaysInMonth = 30; // Approximate billing cycle
+        
+        if (priceDifference > 0 && daysRemaining > 0) {
+          // Upgrading - charge prorated amount immediately
+          proratedAmount = (priceDifference * daysRemaining) / totalDaysInMonth;
+          immediatePaymentRequired = true;
+        } else if (priceDifference < 0 && daysRemaining > 0) {
+          // Downgrading - apply credit for next billing cycle
+          proratedAmount = Math.abs(priceDifference * daysRemaining) / totalDaysInMonth;
+          creditApplied = true;
+        }
+      }
+
+      // If immediate payment is required and user has a payment method, process the payment
+      if (immediatePaymentRequired && proratedAmount > 0.50) { // Minimum charge threshold
+        try {
+          // Get user's default payment method
+          const adminResult = await db.execute(sql`
+            SELECT id, stripe_customer_id 
+            FROM users 
+            WHERE company_id = ${company.id} AND role = 'admin' 
+            LIMIT 1
+          `);
+          const admin = adminResult.rows[0];
+          if (admin?.stripe_customer_id) {
+            const paymentMethods = await stripe.paymentMethods.list({
+              customer: String(admin.stripe_customer_id),
+              type: 'card',
+            });
+
+            if (paymentMethods.data.length > 0) {
+              // Create and confirm payment for prorated amount
+              const paymentIntent = await stripe.paymentIntents.create({
+                amount: Math.round(proratedAmount * 100), // Convert to cents
+                currency: 'eur',
+                customer: String(admin.stripe_customer_id),
+                payment_method: paymentMethods.data[0].id,
+                confirm: true,
+                automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+                description: `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan - Prorated amount`,
+              });
+
+              console.log(`Prorated payment processed: €${proratedAmount.toFixed(2)} for upgrade to ${plan}`);
+            }
+          }
+        } catch (paymentError) {
+          console.error('Error processing prorated payment:', paymentError);
+          // Continue with plan change even if payment fails - will be charged in next cycle
+        }
+      }
 
       // Update the subscription plan and features
       await db.execute(sql`
@@ -3764,12 +3832,26 @@ startxref
         WHERE id = ${company.id}
       `);
 
+      // Prepare response message based on payment scenario
+      let responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`;
+      
+      if (immediatePaymentRequired && proratedAmount > 0.50) {
+        responseMessage += `. Se ha cobrado €${proratedAmount.toFixed(2)} por el tiempo restante del mes.`;
+      } else if (creditApplied && proratedAmount > 0.50) {
+        responseMessage += `. Se aplicará un crédito de €${proratedAmount.toFixed(2)} en tu próxima factura.`;
+      } else if (company.subscription.plan !== plan) {
+        responseMessage += `. El nuevo precio se aplicará en tu próximo ciclo de facturación.`;
+      }
+
       res.json({
         success: true,
-        message: `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`,
+        message: responseMessage,
         plan: plan,
         features: planFeatures,
-        maxUsers: newPlanData.max_users
+        maxUsers: newPlanData.max_users,
+        proratedAmount: proratedAmount,
+        immediatePaymentRequired: immediatePaymentRequired,
+        creditApplied: creditApplied
       });
     } catch (error) {
       console.error('Error changing subscription plan:', error);

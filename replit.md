@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 3, 2025. SISTEMA DE FACTURACIÓN PRORRATEADA IMPLEMENTADO COMPLETAMENTE: Cambios de plan con cobros y créditos automáticos
+  - UPGRADE (Basic→Pro): Calcula diferencia prorrateada por días restantes del mes actual y cobra inmediatamente
+  - DOWNGRADE (Pro→Basic): Calcula diferencia prorrateada y aplica crédito automático en próxima factura 
+  - UMBRAL MÍNIMO: Solo procesa pagos/créditos superiores a €0.50 para evitar microtransacciones
+  - MENSAJES DINÁMICOS: Sistema informa al usuario sobre cobros inmediatos, créditos aplicados o cambios en próximo ciclo
+  - INTEGRACIÓN STRIPE: PaymentIntents automáticos para upgrades con método de pago por defecto
+  - INTERFAZ MEJORADA: Modal de cambio de plan explica sistema de facturación inteligente y prorrateo
+  - FUNCIONAMIENTO VERIFICADO: Cambio Pro→Basic completado exitosamente aplicando nueva configuración de funcionalidades
 - July 3, 2025. SISTEMA DE FACTURAS STRIPE COMPLETAMENTE FUNCIONAL: Integración auténtica verificada y operativa
   - VERIFICADO: Endpoint `/api/account/invoices` funcionando correctamente con cliente Stripe real (cus_SbasUamcLJUPJ0)
   - SISTEMA LIMPIO: Eliminados logs de debugging tras confirmar operatividad completa
