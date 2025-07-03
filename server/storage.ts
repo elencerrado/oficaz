@@ -797,9 +797,9 @@ export class DrizzleStorage implements IStorage {
     const allFeatures = await db.select().from(schema.features);
     let finalFeatures: any = {};
     
-    // Build features object based on plan - use column names like basic_enabled, pro_enabled, master_enabled
+    // Build features object based on plan - use column names like basicEnabled, proEnabled, masterEnabled
     for (const feature of allFeatures) {
-      const planColumnName = `${subscription.plan}_enabled` as keyof typeof feature;
+      const planColumnName = `${subscription.plan}Enabled` as keyof typeof feature;
       const isEnabled = feature[planColumnName] as boolean;
       
       // Map display names to internal names
