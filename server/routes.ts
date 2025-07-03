@@ -3411,6 +3411,8 @@ startxref
   app.get('/api/account/invoices', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const companyId = req.user!.companyId;
+      console.log('DEBUG - Fetching invoices for company:', companyId);
+      
       // Get admin user to find Stripe customer ID
       const userResult = await db.execute(sql`
         SELECT stripe_customer_id
@@ -3420,24 +3422,12 @@ startxref
       `);
       
       const user = userResult.rows[0] as any;
+      console.log('DEBUG - User from DB:', user);
+      console.log('DEBUG - Stripe customer ID:', user?.stripe_customer_id);
       
       if (!user?.stripe_customer_id) {
-        // Return demo invoices when no Stripe customer exists
-        const demoInvoices = [
-          {
-            id: 'demo_1',
-            invoice_number: 'DEMO-2025-001',
-            amount: '29.99',
-            currency: 'EUR',
-            status: 'paid',
-            description: 'Plan Premium - Factura de demostración',
-            created_at: new Date(2025, 5, 1).toISOString(),
-            paid_at: new Date(2025, 4, 30).toISOString(),
-            download_url: null,
-            is_demo: true
-          }
-        ];
-        return res.json(demoInvoices);
+        console.log('DEBUG - No Stripe customer ID found, returning empty array');
+        return res.json([]);
       }
 
 
