@@ -3520,31 +3520,36 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
+      // Get subscription and company data for unified date calculation
       const result = await db.execute(sql`
         SELECT 
-          trial_start_date,
-          trial_end_date,
-          is_trial_active,
-          status,
-          plan,
-          stripe_subscription_id,
-          next_payment_date
-        FROM subscriptions 
-        WHERE company_id = ${companyId}
+          s.is_trial_active,
+          s.status,
+          s.plan,
+          s.stripe_subscription_id,
+          s.next_payment_date,
+          c.created_at as company_created_at
+        FROM subscriptions s
+        JOIN companies c ON s.company_id = c.id
+        WHERE s.company_id = ${companyId}
       `);
       
-      const subscription = result.rows[0];
-      if (!subscription) {
+      const data = result.rows[0];
+      if (!data) {
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
+      // Calculate trial dates from companies.created_at (single source of truth)
       const now = new Date();
-      const trialEndDate = new Date(subscription.trial_end_date);
+      const registrationDate = new Date(data.company_created_at);
+      const trialEndDate = new Date(registrationDate);
+      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
+      
       const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       const isTrialExpired = daysRemaining <= 0;
 
       // Auto-block if trial expired
-      if (isTrialExpired && subscription.is_trial_active && subscription.status === 'trial') {
+      if (isTrialExpired && data.is_trial_active && data.status === 'trial') {
         await db.execute(sql`
           UPDATE subscriptions 
           SET status = 'blocked', is_trial_active = false 
@@ -3553,14 +3558,14 @@ startxref
       }
 
       res.json({
-        isTrialActive: subscription.is_trial_active && !isTrialExpired,
+        isTrialActive: data.is_trial_active && !isTrialExpired,
         daysRemaining: Math.max(0, daysRemaining),
-        trialEndDate: subscription.trial_end_date,
-        nextPaymentDate: subscription.next_payment_date,
-        status: isTrialExpired && subscription.status === 'trial' ? 'blocked' : subscription.status,
-        plan: subscription.plan,
-        hasPaymentMethod: !!subscription.stripe_subscription_id,
-        isBlocked: subscription.status === 'blocked' || (isTrialExpired && subscription.status === 'trial')
+        trialEndDate: trialEndDate.toISOString(),
+        nextPaymentDate: data.next_payment_date,
+        status: isTrialExpired && data.status === 'trial' ? 'blocked' : data.status,
+        plan: data.plan,
+        hasPaymentMethod: !!data.stripe_subscription_id,
+        isBlocked: data.status === 'blocked' || (isTrialExpired && data.status === 'trial')
       });
     } catch (error) {
       console.error('Error fetching trial status:', error);
