@@ -3174,7 +3174,7 @@ startxref
           customer: stripeCustomerId,
           items: [{ price: price.id }],
           trial_end: Math.floor(trialEndDate.getTime() / 1000), // Convert to Unix timestamp
-          payment_behavior: 'default_incomplete',
+          default_payment_method: setupIntent.payment_method as string, // Use the payment method from setup
           expand: ['latest_invoice.payment_intent'],
         };
       } else {
@@ -3187,13 +3187,31 @@ startxref
         stripeSubscriptionParams = {
           customer: stripeCustomerId,
           items: [{ price: price.id }],
-          payment_behavior: 'default_incomplete',
+          default_payment_method: setupIntent.payment_method as string, // Use the payment method from setup
+          payment_behavior: 'default_incomplete', // This will create a payment intent that needs confirmation
           expand: ['latest_invoice.payment_intent'],
         };
       }
 
       // Create recurring subscription in Stripe with exact timing
       const subscription = await stripe.subscriptions.create(stripeSubscriptionParams);
+
+      // If there's a payment intent that needs confirmation, confirm it now
+      if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
+        const invoice = subscription.latest_invoice as any;
+        if (invoice.payment_intent && typeof invoice.payment_intent === 'object') {
+          const paymentIntent = invoice.payment_intent;
+          console.log('Payment Intent Status:', paymentIntent.status);
+          
+          if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'requires_confirmation') {
+            console.log('Confirming payment intent:', paymentIntent.id);
+            await stripe.paymentIntents.confirm(paymentIntent.id, {
+              payment_method: setupIntent.payment_method as string,
+            });
+            console.log('Payment intent confirmed successfully');
+          }
+        }
+      }
 
       // Update database with Stripe subscription info and activate
       await db.execute(sql`
