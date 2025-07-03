@@ -689,7 +689,6 @@ export class DrizzleStorage implements IStorage {
         subscriptionPlan: schema.subscriptions.plan,
         subscriptionStatus: schema.subscriptions.status,
         subscriptionMaxUsers: schema.subscriptions.maxUsers,
-        subscriptionStartDate: schema.subscriptions.startDate,
         subscriptionEndDate: schema.subscriptions.endDate,
       })
       .from(schema.companies)
@@ -708,7 +707,6 @@ export class DrizzleStorage implements IStorage {
         plan: row.subscriptionPlan || 'basic',
         status: row.subscriptionStatus || 'active',
         maxUsers: row.subscriptionMaxUsers || 5,
-        startDate: row.subscriptionStartDate?.toISOString() || new Date().toISOString(),
         endDate: row.subscriptionEndDate?.toISOString(),
       },
       createdAt: row.createdAt?.toISOString() || new Date().toISOString(),
@@ -779,13 +777,27 @@ export class DrizzleStorage implements IStorage {
       return subscription;
     }
 
-    // Get company custom_features to override plan features
+    // Get company created_at date and custom_features to override plan features
     const [company] = await db.select({
+      createdAt: schema.companies.createdAt,
       customFeatures: schema.companies.customFeatures
     }).from(schema.companies).where(eq(schema.companies.id, companyId));
 
+    if (!company?.createdAt) {
+      console.warn(`Company ${companyId} has no createdAt date`);
+      return subscription;
+    }
+
+    // Calculate trial dates from companies.created_at (single source of truth)
+    const registrationDate = new Date(company.createdAt);
+    const trialEndDate = new Date(registrationDate);
+    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
+
     // Start with plan features from subscription
-    let finalFeatures = { ...subscription.features };
+    let finalFeatures: any = {};
+    if (subscription.features && typeof subscription.features === 'object') {
+      finalFeatures = { ...subscription.features };
+    }
 
     // Apply company custom_features overrides if they exist
     if (company?.customFeatures && typeof company.customFeatures === 'object') {
@@ -800,7 +812,11 @@ export class DrizzleStorage implements IStorage {
     return {
       ...subscription,
       maxUsers: plan.maxUsers,
-      features: finalFeatures
+      features: finalFeatures,
+      // Add calculated dates from companies.created_at
+      startDate: registrationDate.toISOString(),
+      trialStartDate: registrationDate.toISOString(),
+      trialEndDate: trialEndDate.toISOString(),
     };
   }
 

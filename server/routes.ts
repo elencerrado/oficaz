@@ -624,6 +624,24 @@ Responde directamente a este email para contactar con la persona.
         createdBy: null, // First admin user has no creator
       });
 
+      // Create subscription - dates are calculated from companies.created_at
+      // Get default plan features for basic plan
+      const basicPlan = await storage.getSubscriptionPlan('basic');
+      const defaultFeatures = basicPlan ? JSON.parse(basicPlan.features) : {
+        time: true,
+        vacation: true,
+        notifications: true
+      };
+      
+      const subscription = await storage.createSubscription({
+        companyId: company.id,
+        plan: 'basic',
+        status: 'trial',
+        isTrialActive: true,
+        maxUsers: 5, // Default for basic plan
+        features: defaultFeatures,
+      });
+
       const token = generateToken({
         id: user.id,
         username: user.companyEmail, // Use company email for token compatibility
@@ -648,7 +666,7 @@ Responde directamente a este email para contactar con la persona.
       res.status(201).json({
         user: { ...user, password: undefined },
         token,
-        company,
+        company: { ...company, subscription },
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -947,20 +965,6 @@ Responde directamente a este email para contactar con la persona.
         phone: data.phone || null,
         address: data.address || null,
         logoUrl: data.logoUrl || null,
-      });
-
-      // Create default company configuration
-      await storage.createCompanyConfig?.({
-        companyId: company.id,
-        workingHoursStart: '08:00',
-        workingHoursEnd: '17:00',
-        workingDays: [1, 2, 3, 4, 5],
-        payrollSendDays: '1',
-        defaultVacationPolicy: '2.5',
-        language: 'es',
-        timezone: 'Europe/Madrid',
-        customAiRules: '',
-        allowManagersToGrantRoles: false,
       });
 
       // Hash password

@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 3, 2025. ARQUITECTURA DE FECHAS COMPLETAMENTE UNIFICADA: Sistema calculation dinámico desde companies.created_at implementado
+  - ELIMINADOS: Campos redundantes startDate, trialStartDate de tabla subscriptions para simplificar esquema
+  - FUENTE ÚNICA: companies.created_at es la única fecha de registro, todas las fechas se calculan dinámicamente
+  - FUNCIÓN ACTUALIZADA: getSubscriptionByCompanyId calcula trial dates desde registration date + 14 días
+  - ENDPOINT CORREGIDO: Company registration simplificado sin fechas duplicadas en subscription
+  - CONSISTENCIA TOTAL: Registration date = trial start date, trial end = registration + 14 días
+  - ARQUITECTURA LIMPIA: Eliminada complejidad de múltiples fechas sincronizadas manualmente
+  - CÁLCULO DINÁMICO: trialEndDate = companies.created_at + 14 días, siempre preciso y consistente
 - July 2, 2025. SISTEMA CUSTOM FEATURES POR EMPRESA IMPLEMENTADO COMPLETAMENTE: Override granular de features independiente del plan
   - BACKEND MEJORADO: getSubscriptionByCompanyId ahora combina features del plan + companies.customFeatures 
   - ENDPOINTS CREADOS: GET/PATCH /api/companies/custom-features para gestión de características personalizadas
