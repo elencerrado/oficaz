@@ -210,15 +210,8 @@ export default function Reminders() {
     const submitData = {
       ...reminderData,
       color: selectedColor,
-      reminderDate: processedDate || undefined
+      reminderDate: processedDate // null when empty, ISO string when has date
     };
-
-    // Remove undefined values to avoid issues
-    Object.keys(submitData).forEach(key => {
-      if ((submitData as any)[key] === undefined) {
-        delete (submitData as any)[key];
-      }
-    });
 
     if (editingReminder) {
       updateReminderMutation.mutate({ id: editingReminder.id, data: submitData as any });
@@ -394,6 +387,22 @@ export default function Reminders() {
                     />
                   </div>
 
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showBanner"
+                      checked={reminderData.showBanner}
+                      onCheckedChange={(checked) => 
+                        setReminderData(prev => ({ ...prev, showBanner: checked as boolean }))
+                      }
+                    />
+                    <Label htmlFor="showBanner" className="text-sm font-medium">
+                      Mostrar aviso
+                    </Label>
+                    <div className="text-xs text-gray-500 ml-2">
+                      (Solo si tiene fecha configurada)
+                    </div>
+                  </div>
+
                   <div>
                     <Label htmlFor="priority">Prioridad</Label>
                     <Select value={reminderData.priority} onValueChange={(value: any) => setReminderData(prev => ({ ...prev, priority: value }))}>
@@ -422,22 +431,6 @@ export default function Reminders() {
                           onClick={() => setSelectedColor(color)}
                         />
                       ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="showBanner"
-                      checked={reminderData.showBanner}
-                      onCheckedChange={(checked) => 
-                        setReminderData(prev => ({ ...prev, showBanner: checked as boolean }))
-                      }
-                    />
-                    <Label htmlFor="showBanner" className="text-sm font-medium">
-                      Mostrar banner
-                    </Label>
-                    <div className="text-xs text-gray-500 ml-2">
-                      (Solo si tiene fecha configurada)
                     </div>
                   </div>
                 </div>
