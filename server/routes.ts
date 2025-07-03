@@ -3750,6 +3750,7 @@ startxref
       let proratedAmount = 0;
       let immediatePaymentRequired = false;
       let creditApplied = false;
+      let daysRemaining = 0;
 
       // Calculate prorated amount if changing between different plans
       if (company.subscription.plan !== plan && currentPlanData.rows.length > 0) {
@@ -3760,7 +3761,7 @@ startxref
         // Calculate days remaining in current billing cycle
         const nextPaymentDate = new Date(company.subscription.nextPaymentDate);
         const today = new Date();
-        const daysRemaining = Math.max(0, Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+        daysRemaining = Math.max(0, Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
         const totalDaysInMonth = 30; // Approximate billing cycle
         
         if (priceDifference > 0 && daysRemaining > 0) {
@@ -3792,18 +3793,31 @@ startxref
             });
 
             if (paymentMethods.data.length > 0) {
-              // Create and confirm payment for prorated amount
-              const paymentIntent = await stripe.paymentIntents.create({
+              // Create invoice item for prorated amount
+              await stripe.invoiceItems.create({
+                customer: String(admin.stripe_customer_id),
                 amount: Math.round(proratedAmount * 100), // Convert to cents
                 currency: 'eur',
-                customer: String(admin.stripe_customer_id),
-                payment_method: paymentMethods.data[0].id,
-                confirm: true,
-                automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-                description: `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan - Prorated amount`,
+                description: `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan - Prorated amount (${daysRemaining} days remaining)`,
               });
 
-              console.log(`Prorated payment processed: €${proratedAmount.toFixed(2)} for upgrade to ${plan}`);
+              // Create and finalize invoice
+              const invoice = await stripe.invoices.create({
+                customer: String(admin.stripe_customer_id),
+                auto_advance: true, // Automatically finalize and attempt payment
+                collection_method: 'charge_automatically',
+                default_payment_method: paymentMethods.data[0].id,
+              });
+
+              // Finalize and pay the invoice if invoice ID exists
+              if (invoice?.id) {
+                const invoiceId = invoice.id;
+                await stripe.invoices.finalizeInvoice(invoiceId);
+                const paidInvoice = await stripe.invoices.pay(invoiceId);
+
+                console.log(`Prorated invoice created and paid: €${proratedAmount.toFixed(2)} for upgrade to ${plan}`);
+                console.log(`Invoice ID: ${invoiceId}, Status: ${paidInvoice.status}`);
+              }
             }
           }
         } catch (paymentError) {
