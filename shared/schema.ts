@@ -33,7 +33,8 @@ export const companies = pgTable("companies", {
   billingPostalCode: text("billing_postal_code"),
   billingCountry: text("billing_country").default("ES"),
   
-  // Features personalizadas por empresa (override del plan por defecto)
+  // Plan y features personalizadas por empresa
+  plan: varchar("plan", { length: 50 }).notNull().default("basic"), // basic, pro, master
   customFeatures: jsonb("custom_features").default('{}'), // {messages: true, documents: false, etc}
   
   updatedAt: timestamp("updated_at").defaultNow(),

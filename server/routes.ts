@@ -3722,6 +3722,15 @@ startxref
         WHERE company_id = ${company.id}
       `);
 
+      // Also update the plan field in companies table for consistency
+      await db.execute(sql`
+        UPDATE companies 
+        SET 
+          plan = ${plan},
+          updated_at = NOW()
+        WHERE id = ${company.id}
+      `);
+
       res.json({
         success: true,
         message: `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`,
