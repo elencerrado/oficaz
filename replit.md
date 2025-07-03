@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 3, 2025. SISTEMA DE CAMBIO DE PLANES COMPLETAMENTE DINÁMICO: Endpoint usa tabla features como fuente primaria sin validaciones hardcodeadas
+  - VALIDACIÓN DINÁMICA: Planes disponibles se obtienen dinámicamente desde subscription_plans en lugar de validación hardcodeada ['basic', 'pro']
+  - TABLA FEATURES COMO FUENTE ÚNICA: Sistema usa columnas directas (basicEnabled, proEnabled, masterEnabled) tal como prefiere el usuario
+  - CONSTRUCCIÓN AUTOMÁTICA: Features se construyen dinámicamente usando `${plan}_enabled` para cualquier plan existente
+  - ENDPOINT UNIVERSAL: Funciona automáticamente con basic, pro, master o cualquier plan nuevo sin modificar código
+  - VERIFICACIÓN EXITOSA: Plan master ahora funciona completamente (10→100 usuarios, todas las features habilitadas)
+  - ARQUITECTURA LIMPIA: Sistema sin validaciones hardcodeadas, completamente basado en base de datos
 - July 3, 2025. ARQUITECTURA DE FECHAS COMPLETAMENTE UNIFICADA: Sistema calculation dinámico desde companies.created_at implementado
   - ELIMINADOS: Campos redundantes startDate, trialStartDate de tabla subscriptions para simplificar esquema
   - FUENTE ÚNICA: companies.created_at es la única fecha de registro, todas las fechas se calculan dinámicamente

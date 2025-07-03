@@ -3683,8 +3683,20 @@ startxref
       const userId = req.user!.id;
       const { plan } = req.body;
 
-      if (!plan || !['basic', 'pro'].includes(plan)) {
-        return res.status(400).json({ message: 'Plan inválido. Debe ser "basic" o "pro".' });
+      if (!plan) {
+        return res.status(400).json({ message: 'Plan requerido.' });
+      }
+
+      // Get available plans from subscription_plans table
+      const availablePlansResult = await db.execute(sql`
+        SELECT name FROM subscription_plans WHERE name IS NOT NULL
+      `);
+      const availablePlans = availablePlansResult.rows.map(row => row.name);
+
+      if (!availablePlans.includes(plan)) {
+        return res.status(400).json({ 
+          message: `Plan inválido. Debe ser uno de: ${availablePlans.join(', ')}.` 
+        });
       }
 
       // Get company and current subscription
@@ -3698,9 +3710,24 @@ startxref
         return res.status(400).json({ message: 'Ya estás en este plan' });
       }
 
-      // Get the new plan features from subscription_plans table
+      // 1. Get features from features table (PRIMARY SOURCE for functionality)
+      const featuresResult = await db.execute(sql`
+        SELECT key, basic_enabled, pro_enabled, master_enabled
+        FROM features 
+        WHERE is_active = true
+      `);
+
+      // Build features object based on the plan using features table
+      const planFeatures: Record<string, boolean> = {};
+      for (const feature of featuresResult.rows) {
+        const enabledColumnName = `${plan}_enabled`;
+        const enabled = feature[enabledColumnName as keyof typeof feature];
+        planFeatures[feature.key as string] = Boolean(enabled);
+      }
+
+      // 2. Get plan settings from subscription_plans table (SECONDARY DATA for limits/pricing)
       const planResult = await db.execute(sql`
-        SELECT features, max_users, price_per_user 
+        SELECT max_users, price_per_user 
         FROM subscription_plans 
         WHERE name = ${plan}
       `);
@@ -3716,7 +3743,7 @@ startxref
         UPDATE subscriptions 
         SET 
           plan = ${plan},
-          features = ${JSON.stringify(newPlanData.features)},
+          features = ${JSON.stringify(planFeatures)},
           max_users = ${newPlanData.max_users},
           updated_at = NOW()
         WHERE company_id = ${company.id}
@@ -3735,7 +3762,7 @@ startxref
         success: true,
         message: `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`,
         plan: plan,
-        features: newPlanData.features,
+        features: planFeatures,
         maxUsers: newPlanData.max_users
       });
     } catch (error) {
