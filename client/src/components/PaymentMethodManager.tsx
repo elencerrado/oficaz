@@ -10,6 +10,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { StripePaymentForm } from './StripePaymentForm';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { useAuth } from '@/hooks/use-auth';
 
 interface PaymentMethod {
   id: string;
@@ -37,6 +38,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { refreshUser } = useAuth();
 
 
 
@@ -129,12 +131,27 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
         console.log('Plan changed successfully to:', selectedPlan);
       }
       
-      // Then close modal and invalidate cache
+      // Then close modal and invalidate ALL relevant cache
       setIsAddingCard(false);
       setClientSecret(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Invalidate all subscription and auth related queries
+      await queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+      
+      // Force complete data refetch
+      await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/account/trial-status'] });
+      
+      // Force refresh user authentication context and wait for complete update
+      await refreshUser();
+      
+      // Small delay to ensure all state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
         title: "¡Suscripción activada!",
