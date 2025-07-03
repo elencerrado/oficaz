@@ -29,7 +29,52 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Note: No automatic cleanup on login page to prevent token deletion
+  // CRITICAL: Clean up corrupted tokens for user ID 4 (non-existent user)
+  useEffect(() => {
+    const cleanupCorruptedTokens = () => {
+      const authData = localStorage.getItem('authData');
+      if (authData) {
+        try {
+          const parsed = JSON.parse(authData);
+          // Check if token belongs to non-existent user ID 4
+          if (parsed.user?.id === 4 || (parsed.token && parsed.token.includes('.'))) {
+            const payload = JSON.parse(atob(parsed.token.split('.')[1]));
+            if (payload.userId === 4) {
+              console.log('🧹 Removing corrupted token for user ID 4');
+              localStorage.clear();
+              sessionStorage.clear();
+              return;
+            }
+          }
+        } catch (error) {
+          // If we can't parse it, it's corrupted - clear it
+          console.log('🧹 Removing unparseable auth data');
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+      }
+      
+      // Also check individual storage items that might be corrupted
+      const keys = ['authData', 'superAdminToken', 'token', 'user', 'company'];
+      keys.forEach(key => {
+        const item = localStorage.getItem(key);
+        if (item && item.includes('4')) { // Quick check for user ID 4
+          try {
+            const parsed = JSON.parse(item);
+            if (parsed.id === 4 || parsed.userId === 4) {
+              console.log(`🧹 Removing corrupted ${key} for user ID 4`);
+              localStorage.removeItem(key);
+            }
+          } catch (error) {
+            // If we can't parse, it might be corrupted
+            console.log(`🧹 Removing unparseable ${key}`);
+            localStorage.removeItem(key);
+          }
+        }
+      });
+    };
+    cleanupCorruptedTokens();
+  }, []);
   
   // Extract company alias from URL
   const [match, params] = useRoute('/:companyAlias/login');
@@ -239,6 +284,21 @@ export default function Login() {
               ) : (
                 'Iniciar sesión'
               )}
+            </Button>
+
+            {/* Emergency cleanup button */}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full mt-3 text-xs py-2 text-gray-600 border-gray-300"
+              onClick={() => {
+                console.log('🚨 FORCE CLEANUP - Clearing all storage');
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload();
+              }}
+            >
+              🧹 Limpiar Caché (Si hay problemas de login)
             </Button>
 
             {/* Register Link */}
