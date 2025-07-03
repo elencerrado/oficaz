@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Bell, 
   Plus, 
@@ -421,6 +422,22 @@ export default function Reminders() {
                           onClick={() => setSelectedColor(color)}
                         />
                       ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="showBanner"
+                      checked={reminderData.showBanner}
+                      onCheckedChange={(checked) => 
+                        setReminderData(prev => ({ ...prev, showBanner: checked as boolean }))
+                      }
+                    />
+                    <Label htmlFor="showBanner" className="text-sm font-medium">
+                      Mostrar banner
+                    </Label>
+                    <div className="text-xs text-gray-500 ml-2">
+                      (Solo si tiene fecha configurada)
                     </div>
                   </div>
                 </div>
