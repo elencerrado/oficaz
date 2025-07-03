@@ -11,27 +11,15 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
-// Security middleware - Professional SaaS level
+// Security middleware - Simplified for deployment stability
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "blob:"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
-      connectSrc: ["'self'", "ws:", "wss:", "https:", "https://api.stripe.com"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
-    },
-  },
+  contentSecurityPolicy: false, // Disable CSP temporarily to avoid mixed content issues
   crossOriginEmbedderPolicy: false,
-  hsts: {
+  hsts: process.env.NODE_ENV === 'production' ? {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
-  }
+  } : false
 }));
 
 // CORS configuration
@@ -48,14 +36,22 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Force HTTPS in production
+// Force HTTPS in production and set security headers
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
+    // Redirect HTTP to HTTPS
     if (req.header('x-forwarded-proto') !== 'https') {
-      res.redirect(`https://${req.header('host')}${req.url}`);
-    } else {
-      next();
+      return res.redirect(301, `https://${req.header('host')}${req.url}`);
     }
+    
+    // Set additional security headers for HTTPS
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    next();
   });
 }
 
