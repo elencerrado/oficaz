@@ -23,13 +23,15 @@ interface PaymentMethod {
 interface PaymentMethodManagerProps {
   paymentMethods: PaymentMethod[];
   onPaymentSuccess?: () => void;
+  selectedPlan?: string;
+  selectedPlanPrice?: number;
 }
 
 
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
 
-export function PaymentMethodManager({ paymentMethods, onPaymentSuccess }: PaymentMethodManagerProps) {
+export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan = "basic", selectedPlanPrice = 29.99 }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -118,18 +120,38 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess }: Payme
     setIsAddingCard(true);
   };
 
-  const handlePaymentSuccess = () => {
-    setIsAddingCard(false);
-    setClientSecret(null);
-    queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
-    toast({
-      title: "¡Método de pago añadido!",
-      description: "Tu tarjeta se ha añadido correctamente.",
-    });
-    
-    // Call the parent's onPaymentSuccess callback if provided
-    if (onPaymentSuccess) {
-      onPaymentSuccess();
+  const handlePaymentSuccess = async () => {
+    try {
+      // First, change the plan to the selected one
+      if (selectedPlan) {
+        console.log('Changing plan to:', selectedPlan);
+        await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
+        console.log('Plan changed successfully to:', selectedPlan);
+      }
+      
+      // Then close modal and invalidate cache
+      setIsAddingCard(false);
+      setClientSecret(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+      toast({
+        title: "¡Suscripción activada!",
+        description: `Tu plan ${selectedPlan?.toUpperCase()} se ha activado correctamente.`,
+      });
+      
+      // Call the parent's onPaymentSuccess callback if provided
+      if (onPaymentSuccess) {
+        onPaymentSuccess();
+      }
+    } catch (error: any) {
+      console.error('Error during payment success flow:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Hubo un problema al activar tu suscripción.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -276,8 +298,8 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess }: Payme
           {clientSecret ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <StripePaymentForm
-                planName="Basic"
-                planPrice={29.99}
+                planName={selectedPlan}
+                planPrice={selectedPlanPrice}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
               />

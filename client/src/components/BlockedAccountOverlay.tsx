@@ -46,11 +46,25 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
 
   // Function to invalidate all relevant queries after successful payment
   const handlePaymentSuccess = async () => {
-    // Invalidate all subscription-related queries to refresh the state
+    // Invalidate ALL subscription-related queries to refresh the state
     await queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
     await queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/companies/custom-features'] });
+    
+    // Invalidate feature-dependent queries that might be cached
+    await queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+    await queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+    
+    // Force immediate refetch of critical queries to update UI
+    await queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
+    await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
     
     // Close the payment manager modal
     setShowPaymentManager(false);
@@ -172,6 +186,8 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
           <PaymentMethodManager 
             paymentMethods={Array.isArray(paymentMethods) ? paymentMethods : []} 
             onPaymentSuccess={handlePaymentSuccess}
+            selectedPlan={selectedPlan}
+            selectedPlanPrice={getPlanPrice(selectedPlan)}
           />
         </DialogContent>
       </Dialog>
