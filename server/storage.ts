@@ -1209,43 +1209,33 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getCompanyByUserId(userId: number): Promise<any | undefined> {
-    const [result] = await db
-      .select({
-        company: schema.companies,
-        subscription: {
-          id: schema.subscriptions.id,
-          companyId: schema.subscriptions.companyId,
-          plan: schema.subscriptions.plan,
-          status: schema.subscriptions.status,
-          endDate: schema.subscriptions.endDate,
-          isTrialActive: schema.subscriptions.isTrialActive,
-          stripeCustomerId: schema.subscriptions.stripeCustomerId,
-          stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
-          firstPaymentDate: schema.subscriptions.firstPaymentDate,
-          nextPaymentDate: schema.subscriptions.nextPaymentDate,
-          maxUsers: schema.subscriptions.maxUsers,
-          useCustomSettings: schema.subscriptions.useCustomSettings,
-          customPricePerUser: schema.subscriptions.customPricePerUser,
-          createdAt: schema.subscriptions.createdAt,
-          updatedAt: schema.subscriptions.updatedAt,
-          startDate: schema.subscriptions.startDate,
-          trialStartDate: schema.subscriptions.trialStartDate,
-          trialEndDate: schema.subscriptions.trialEndDate
-        }
-      })
-      .from(schema.companies)
-      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-      .innerJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
-      .where(eq(schema.users.id, userId));
-    
-    if (result) {
-      return {
-        ...result.company,
-        subscription: result.subscription
-      };
+    // First get the user to find their company
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+    console.log('DEBUG - getCompanyByUserId user:', user);
+    if (!user) {
+      console.log('DEBUG - No user found for userId:', userId);
+      return undefined;
     }
+
+    // Get the company
+    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, user.companyId));
+    console.log('DEBUG - getCompanyByUserId company:', company);
+    if (!company) {
+      console.log('DEBUG - No company found for companyId:', user.companyId);
+      return undefined;
+    }
+
+    // Get the subscription
+    const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, company.id));
+    console.log('DEBUG - getCompanyByUserId subscription:', subscription);
     
-    return undefined;
+    const result = {
+      ...company,
+      subscription: subscription || null
+    };
+    console.log('DEBUG - getCompanyByUserId result:', result);
+    
+    return result;
   }
 
   // Custom Holidays operations - stub implementations since holidays schema not fully defined

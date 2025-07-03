@@ -3619,13 +3619,6 @@ startxref
       // Here you would verify the payment with Stripe
       // For demo purposes, we'll assume payment succeeded
       
-      // Get plan features
-      const planResult = await db.execute(sql`
-        SELECT features FROM subscription_plans WHERE name = ${plan}
-      `);
-      
-      const planFeatures = planResult.rows[0]?.features || {};
-      
       // Update subscription to active
       await db.execute(sql`
         UPDATE subscriptions 
@@ -3633,7 +3626,6 @@ startxref
           status = 'active',
           is_trial_active = false,
           plan = ${plan},
-          features = ${JSON.stringify(planFeatures)},
           next_payment_date = ${new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)}, -- 30 days from now
           stripe_subscription_id = ${paymentIntentId},
           updated_at = NOW()
@@ -3678,8 +3670,10 @@ startxref
   // Change subscription plan
   app.patch('/api/subscription/change-plan', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      console.log('DEBUG - Change plan endpoint reached, user:', req.user);
       const userId = req.user!.id;
       const { plan } = req.body;
+      console.log('DEBUG - Change plan request:', { userId, plan });
 
       if (!plan) {
         return res.status(400).json({ message: 'Plan requerido.' });
@@ -3698,8 +3692,11 @@ startxref
       }
 
       // Get company and current subscription
+      console.log('DEBUG - Change plan: Getting company for userId:', userId);
       const company = await storage.getCompanyByUserId(userId);
+      console.log('DEBUG - Change plan: Retrieved company:', JSON.stringify(company, null, 2));
       if (!company?.subscription) {
+        console.log('DEBUG - Change plan: No subscription found, company:', company);
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
@@ -3823,12 +3820,11 @@ startxref
         }
       }
 
-      // Update the subscription plan and features
+      // Update the subscription plan
       await db.execute(sql`
         UPDATE subscriptions 
         SET 
           plan = ${plan},
-          features = ${JSON.stringify(planFeatures)},
           max_users = ${newPlanData.max_users},
           updated_at = NOW()
         WHERE company_id = ${company.id}
@@ -4037,7 +4033,7 @@ startxref
         };
         
         if (updates.plan) updateData.plan = updates.plan;
-        if (updates.features) updateData.features = updates.features;
+        // features are now managed dynamically from features table - no longer stored in subscriptions
         if (updates.maxUsers !== undefined) updateData.maxUsers = updates.maxUsers;
         if (updates.customPricePerUser !== undefined) updateData.customPricePerUser = updates.customPricePerUser;
         

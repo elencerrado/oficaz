@@ -13,15 +13,19 @@ export interface AuthRequest extends Request {
 }
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+  console.log('DEBUG - AuthToken: Processing request for', req.method, req.path);
   const authHeader = req.headers['authorization'];
   let token = authHeader && authHeader.split(' ')[1];
+  console.log('DEBUG - AuthToken: Token from header:', token ? 'present' : 'missing');
   
   // Support token in query params for PDF viewing
   if (!token && req.query.token) {
     token = req.query.token as string;
+    console.log('DEBUG - AuthToken: Token from query:', token ? 'present' : 'missing');
   }
 
   if (!token) {
+    console.log('DEBUG - AuthToken: No token found');
     return res.status(401).json({ message: 'Access token required' });
   }
 
@@ -30,6 +34,8 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       console.log('Token verification failed:', err.message);
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
+
+    console.log('DEBUG - AuthToken: Token decoded successfully:', JSON.stringify(decoded, null, 2));
 
     // CRITICAL FIX: Block corrupted tokens for non-existent user ID 4
     if (decoded.id === 4) {
@@ -43,6 +49,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       role: decoded.role,
       companyId: decoded.companyId,
     };
+    console.log('DEBUG - AuthToken: User set:', req.user);
     next();
   });
 }
