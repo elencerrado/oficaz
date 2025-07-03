@@ -625,21 +625,13 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Create subscription - dates are calculated from companies.created_at
-      // Get default plan features for basic plan
-      const basicPlan = await storage.getSubscriptionPlan('basic');
-      const defaultFeatures = basicPlan ? JSON.parse(basicPlan.features) : {
-        time: true,
-        vacation: true,
-        notifications: true
-      };
-      
+      // Features are now constructed dynamically from features table
       const subscription = await storage.createSubscription({
         companyId: company.id,
         plan: 'basic',
         status: 'trial',
         isTrialActive: true,
         maxUsers: 5, // Default for basic plan
-        features: defaultFeatures,
       });
 
       const token = generateToken({
@@ -2853,7 +2845,7 @@ startxref
   app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
-      const { plan, maxUsers, features, useCustomSettings, customPricePerUser } = req.body;
+      const { plan, maxUsers, useCustomSettings, customPricePerUser } = req.body;
       
       console.log('Updating subscription for company:', companyId, 'Updates:', req.body);
       
@@ -2869,7 +2861,7 @@ startxref
       const updates: any = {};
       if (plan) updates.plan = plan;
       if (maxUsers !== undefined) updates.maxUsers = maxUsers;
-      if (features) updates.features = features;
+      // Features are now managed dynamically from features table
       if (useCustomSettings !== undefined) updates.useCustomSettings = useCustomSettings;
       if (customPricePerUser !== undefined) updates.customPricePerUser = customPricePerUser;
       

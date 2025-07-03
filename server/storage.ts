@@ -975,16 +975,7 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.subscriptionPlans.id, id))
       .returning();
     
-    // Si se actualiza un plan, también actualizamos las funcionalidades en las suscripciones de las empresas
-    if (updates.features && plan) {
-      await db
-        .update(schema.subscriptions)
-        .set({ 
-          features: updates.features,
-          updatedAt: new Date()
-        })
-        .where(eq(schema.subscriptions.plan, plan.name));
-    }
+    // Features are now managed dynamically from features table
     
     return plan;
   }
@@ -1221,7 +1212,26 @@ export class DrizzleStorage implements IStorage {
     const [result] = await db
       .select({
         company: schema.companies,
-        subscription: schema.subscriptions
+        subscription: {
+          id: schema.subscriptions.id,
+          companyId: schema.subscriptions.companyId,
+          plan: schema.subscriptions.plan,
+          status: schema.subscriptions.status,
+          endDate: schema.subscriptions.endDate,
+          isTrialActive: schema.subscriptions.isTrialActive,
+          stripeCustomerId: schema.subscriptions.stripeCustomerId,
+          stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
+          firstPaymentDate: schema.subscriptions.firstPaymentDate,
+          nextPaymentDate: schema.subscriptions.nextPaymentDate,
+          maxUsers: schema.subscriptions.maxUsers,
+          useCustomSettings: schema.subscriptions.useCustomSettings,
+          customPricePerUser: schema.subscriptions.customPricePerUser,
+          createdAt: schema.subscriptions.createdAt,
+          updatedAt: schema.subscriptions.updatedAt,
+          startDate: schema.subscriptions.startDate,
+          trialStartDate: schema.subscriptions.trialStartDate,
+          trialEndDate: schema.subscriptions.trialEndDate
+        }
       })
       .from(schema.companies)
       .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
