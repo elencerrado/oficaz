@@ -28,6 +28,7 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
+import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
 export default function AdminDashboard() {
@@ -88,6 +89,13 @@ export default function AdminDashboard() {
   // Fetch payment methods to determine if user has payment method
   const { data: paymentMethods } = useQuery({
     queryKey: ['/api/account/payment-methods'],
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
+  // Fetch trial status for blocking overlay
+  const { data: trialStatus } = useQuery({
+    queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
     refetchInterval: 60000,
   });
@@ -410,6 +418,11 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <TrialManager />
       </div>
+
+      {/* Blocked Account Overlay */}
+      {trialStatus?.isBlocked && (
+        <BlockedAccountOverlay trialStatus={trialStatus} />
+      )}
 
       {/* Subscription Termination Warning - Discrete */}
       {cancellationStatus?.scheduledForCancellation && 
