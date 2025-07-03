@@ -100,6 +100,7 @@ export interface IStorage {
   updateReminder(id: number, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
   deleteReminder(id: number): Promise<boolean>;
   getActiveReminders(userId: number): Promise<Reminder[]>;
+  getDashboardReminders(userId: number): Promise<Reminder[]>;
 
   // Employee Activation Tokens
   createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
@@ -1009,11 +1010,29 @@ export class DrizzleStorage implements IStorage {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
     
-    // Get all active reminders (not completed, not archived)
-    // Include reminders that:
-    // - Have no date (always show)
-    // - Have date within next 7 days
+    // Query reminders for BANNER display: must have showBanner=true AND date set
     const activeReminders = await db.select().from(schema.reminders)
+      .where(
+        and(
+          eq(schema.reminders.userId, userId),
+          eq(schema.reminders.isCompleted, false),
+          eq(schema.reminders.isArchived, false),
+          eq(schema.reminders.showBanner, true), // ONLY show reminders with banner enabled
+          sql`${schema.reminders.reminderDate} IS NOT NULL`, // Must have a date configured
+          lte(schema.reminders.reminderDate, nextWeek) // Date is within next 7 days
+        )
+      )
+      .orderBy(schema.reminders.reminderDate);
+    
+    return activeReminders;
+  }
+
+  async getDashboardReminders(userId: number): Promise<any[]> {
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
+    
+    // Query reminders for DASHBOARD display: all active reminders (regardless of showBanner)
+    const dashboardReminders = await db.select().from(schema.reminders)
       .where(
         and(
           eq(schema.reminders.userId, userId),
@@ -1027,7 +1046,7 @@ export class DrizzleStorage implements IStorage {
       )
       .orderBy(schema.reminders.reminderDate);
     
-    return activeReminders;
+    return dashboardReminders;
   }
 
   // Registration Settings operations

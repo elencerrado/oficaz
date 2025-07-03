@@ -2989,6 +2989,27 @@ startxref
     }
   });
 
+  // Get dashboard reminders (for admin dashboard) - all active reminders
+  app.get('/api/reminders/dashboard', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const dashboardReminders = await storage.getDashboardReminders(userId);
+      
+      // Add anti-cache headers for real-time updates
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString()
+      });
+      
+      res.json(dashboardReminders);
+    } catch (error) {
+      console.error("Error fetching dashboard reminders:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard reminders" });
+    }
+  });
+
   // Stripe payment setup intent endpoint
   app.post('/api/account/create-setup-intent', authenticateToken, async (req: AuthRequest, res) => {
     try {

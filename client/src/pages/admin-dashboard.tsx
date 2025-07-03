@@ -163,9 +163,9 @@ export default function AdminDashboard() {
     },
   });
 
-  // Fetch active reminders
+  // Fetch active reminders for dashboard
   const { data: activeReminders } = useQuery({
-    queryKey: ['/api/reminders/active'],
+    queryKey: ['/api/reminders/dashboard'],
     enabled: hasAccess('reminders'),
     select: (data: any[]) => {
       if (!data?.length) return [];
