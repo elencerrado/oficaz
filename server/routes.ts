@@ -3711,8 +3711,13 @@ startxref
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
-      // Don't allow changing to the same plan UNLESS the account is blocked
-      if (company.subscription.plan === plan && company.subscription.status !== 'blocked') {
+      // Don't allow changing to the same plan UNLESS the account is blocked or trial expired
+      const isTrialExpired = company.subscription.status === 'trial' && 
+        new Date() > new Date(company.subscription.trialEndDate);
+      
+      if (company.subscription.plan === plan && 
+          company.subscription.status !== 'blocked' && 
+          !isTrialExpired) {
         return res.status(400).json({ message: 'Ya estás en este plan' });
       }
 

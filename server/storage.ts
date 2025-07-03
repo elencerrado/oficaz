@@ -793,10 +793,55 @@ export class DrizzleStorage implements IStorage {
     const trialEndDate = new Date(registrationDate);
     trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
 
-    // Start with plan features from subscription
+    // Get features from features table based on current plan
+    const allFeatures = await db.select().from(schema.features);
     let finalFeatures: any = {};
-    if (subscription.features && typeof subscription.features === 'object') {
-      finalFeatures = { ...subscription.features };
+    
+    // Build features object based on plan - use column names like basic_enabled, pro_enabled, master_enabled
+    for (const feature of allFeatures) {
+      const planColumnName = `${subscription.plan}_enabled` as keyof typeof feature;
+      const isEnabled = feature[planColumnName] as boolean;
+      
+      // Map display names to internal names
+      let featureName = '';
+      switch (feature.name) {
+        case 'Control horario':
+          featureName = 'time';
+          break;
+        case 'Gestión de vacaciones':
+          featureName = 'vacation';
+          break;
+        case 'Notificaciones':
+          featureName = 'notifications';
+          break;
+        case 'Mensajería interna':
+          featureName = 'messages';
+          break;
+        case 'Gestión de documentos':
+          featureName = 'documents';
+          break;
+        case 'Recordatorios':
+          featureName = 'reminders';
+          break;
+        case 'Subida de logo empresarial':
+          featureName = 'logoUpload';
+          break;
+        case 'Informes y estadísticas':
+          featureName = 'reports';
+          break;
+        case 'Permisos de edición de tiempo empleados':
+          featureName = 'employee_time_edit_permission';
+          break;
+        case 'employee_time_edit':
+          featureName = 'employee_time_edit';
+          break;
+        default:
+          continue; // Skip unknown features
+      }
+      
+      if (featureName) {
+        finalFeatures[featureName] = isEnabled;
+      }
     }
 
     // Apply company custom_features overrides if they exist
