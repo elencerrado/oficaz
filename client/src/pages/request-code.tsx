@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -22,6 +22,8 @@ type EmailData = z.infer<typeof emailSchema>;
 export default function RequestCode() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [emailMessage, setEmailMessage] = useState('');
 
   // Check if public registration is enabled
   const { data: registrationSettings, isLoading: isLoadingSettings } = useQuery({
@@ -42,6 +44,51 @@ export default function RequestCode() {
       email: '',
     },
   });
+
+  // Función para verificar disponibilidad del email
+  const checkEmailAvailability = useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) {
+      setEmailStatus('idle');
+      setEmailMessage('');
+      return;
+    }
+
+    setEmailStatus('checking');
+    setEmailMessage('');
+
+    try {
+      const response = await fetch('/api/auth/check-email-availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (result.available) {
+        setEmailStatus('available');
+        setEmailMessage('Email disponible');
+      } else {
+        setEmailStatus('unavailable');
+        setEmailMessage(result.error || 'Este email ya está registrado');
+      }
+    } catch (error) {
+      setEmailStatus('idle');
+      setEmailMessage('');
+    }
+  }, []);
+
+  // Debounce para la verificación del email
+  useEffect(() => {
+    const email = form.watch('email');
+    const timeoutId = setTimeout(() => {
+      checkEmailAvailability(email);
+    }, 500); // Esperar 500ms después de que el usuario deje de escribir
+
+    return () => clearTimeout(timeoutId);
+  }, [form.watch('email'), checkEmailAvailability]);
 
   const handleSubmit = async (data: EmailData) => {
     setIsLoading(true);
@@ -170,14 +217,45 @@ export default function RequestCode() {
                 <Input
                   id="email"
                   type="email"
-                  className="pl-10 rounded-xl"
+                  className={`pl-10 pr-10 rounded-xl ${
+                    emailStatus === 'available' ? 'border-green-500 focus:border-green-500' :
+                    emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' :
+                    ''
+                  }`}
                   {...form.register('email')}
                   placeholder="admin@miempresa.com"
                 />
+                {/* Estado visual del email */}
+                <div className="absolute right-3 top-3">
+                  {emailStatus === 'checking' && (
+                    <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                  )}
+                  {emailStatus === 'available' && (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  )}
+                  {emailStatus === 'unavailable' && (
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  )}
+                </div>
               </div>
+              
+              {/* Mensajes de validación */}
               {form.formState.errors.email && (
                 <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
               )}
+              {emailMessage && emailStatus === 'unavailable' && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <XCircle className="h-3 w-3" />
+                  {emailMessage}
+                </p>
+              )}
+              {emailMessage && emailStatus === 'available' && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  {emailMessage}
+                </p>
+              )}
+              
               <p className="text-xs text-gray-500">
                 Te enviaremos un código de verificación. Mantendremos tu sesión activa mientras verificas.
               </p>
@@ -186,7 +264,7 @@ export default function RequestCode() {
             <Button 
               type="submit" 
               className="w-full rounded-xl" 
-              disabled={isLoading}
+              disabled={isLoading || emailStatus === 'unavailable' || emailStatus === 'checking'}
             >
               {isLoading ? 'Enviando código...' : 'Enviar código de verificación'}
               <ArrowRight className="h-4 w-4 ml-2" />

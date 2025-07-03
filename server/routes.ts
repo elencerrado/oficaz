@@ -293,6 +293,38 @@ Responde directamente a este email para contactar con la persona.
     used: boolean 
   }>();
 
+  // Endpoint to check if email is available for registration
+  app.post('/api/auth/check-email-availability', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ available: false, error: 'Email válido requerido' });
+      }
+
+      // Check if email is already registered
+      const existingUser = await storage.getUserByEmail(email);
+      
+      if (existingUser) {
+        return res.json({ 
+          available: false, 
+          error: 'Este email ya está registrado' 
+        });
+      }
+
+      return res.json({ 
+        available: true,
+        message: 'Email disponible' 
+      });
+    } catch (error) {
+      console.error('Error checking email availability:', error);
+      return res.status(500).json({ 
+        available: false, 
+        error: 'Error interno del servidor' 
+      });
+    }
+  });
+
   app.post('/api/auth/request-verification-code', async (req, res) => {
     try {
       const { email } = req.body;
