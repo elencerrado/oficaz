@@ -18,26 +18,46 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"], // Required for Vite dev + Stripe
-      connectSrc: ["'self'", "ws:", "wss:", "https://api.stripe.com"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      connectSrc: ["'self'", "ws:", "wss:", "https:", "https://api.stripe.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
     },
   },
-  crossOriginEmbedderPolicy: false, // Required for development
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
 }));
 
 // CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'development' 
+  ? ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:5000']
+  : process.env.REPLIT_DOMAINS ? 
+    process.env.REPLIT_DOMAINS.split(',').map(domain => `https://${domain}`) : 
+    true;
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'development' 
-    ? ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:5000']
-    : true,
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Force HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      res.redirect(`https://${req.header('host')}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
 
 // Global rate limiting
 const globalLimiter = rateLimit({
