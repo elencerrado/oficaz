@@ -64,11 +64,9 @@ export async function sendEmployeeWelcomeEmail(
       }
     });
 
-    // Read logo file and convert to base64
-    console.log(`📧 Reading logo file...`);
-    const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-    const logoBase64 = fs.readFileSync(logoPath).toString('base64');
-    console.log(`📧 Logo loaded successfully, size: ${logoBase64.length} characters`);
+    // Use static logo URL for better email client compatibility
+    const logoUrl = 'https://oficaz.es/email-logo.png';
+    console.log('📧 Using static logo URL for welcome email:', logoUrl);
 
     const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
     
@@ -85,7 +83,7 @@ export async function sendEmployeeWelcomeEmail(
           
           <!-- Header with logo -->
           <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
-            <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+            <img src="${logoUrl}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px; display: block; margin: 0 auto;" />
           </div>
           
           <!-- Content -->

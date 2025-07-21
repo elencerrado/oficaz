@@ -132,9 +132,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      // Cargar logo en base64
-      const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-      const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+      // Use static logo URL for email compatibility
+      const logoUrl = 'https://oficaz.es/email-logo.png';
 
       // Crear contenido del email
       const emailSubject = `[CONTACTO] ${subject}`;
@@ -152,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             <!-- Header con logo -->
             <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
-              <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+              <img src="${logoUrl}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px; display: block; margin: 0 auto;" />
             </div>
             
             <!-- Contenido -->
@@ -402,7 +401,10 @@ Responde directamente a este email para contactar con la persona.
         });
 
         // Use static logo URL for better email client compatibility
-        const logoUrl = `${req.protocol}://${req.get('host')}/email-logo.png`;
+        const host = req.get('host');
+        const logoUrl = host && host.includes('localhost') 
+          ? `${req.protocol}://${host}/email-logo.png`
+          : 'https://oficaz.es/email-logo.png';
         console.log('📧 Using static logo URL for verification email:', logoUrl);
 
         const mailOptions = {
@@ -4183,9 +4185,8 @@ startxref
           }
         });
 
-        // Read logo file and convert to base64
-        const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+        // Use static logo URL for email compatibility
+        const logoUrl = 'https://oficaz.es/email-logo.png';
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -4205,7 +4206,7 @@ startxref
                 
                 <!-- Header with logo -->
                 <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
-                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px;" />
+                  <img src="${logoUrl}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px; display: block; margin: 0 auto;" />
                 </div>
                 
                 <!-- Content -->
