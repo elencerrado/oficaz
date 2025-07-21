@@ -401,20 +401,9 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Read logo file and convert to base64
-        let logoBase64 = '';
-        try {
-          const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-          if (fs.existsSync(logoPath)) {
-            logoBase64 = fs.readFileSync(logoPath).toString('base64');
-            console.log('📧 Verification email logo loaded successfully, size:', logoBase64.length, 'characters');
-          } else {
-            console.log('⚠️ Logo file not found at:', logoPath);
-          }
-        } catch (error) {
-          console.error('❌ Error loading logo for verification email:', error);
-          logoBase64 = ''; // Fallback to no logo
-        }
+        // Use static logo URL for better email client compatibility
+        const logoUrl = `${req.protocol}://${req.get('host')}/email-logo.png`;
+        console.log('📧 Using static logo URL for verification email:', logoUrl);
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -434,7 +423,7 @@ Responde directamente a este email para contactar con la persona.
                 
                 <!-- Compact header with logo -->
                 <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  ${logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px;" />` : '<h3 style="color: #007AFF; margin: 0; font-size: 16px; font-weight: 600;">Oficaz</h3>'}
+                  <img src="${logoUrl}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px; display: block; margin: 0 auto;" />
                 </div>
 
                 <!-- Compact main content -->
