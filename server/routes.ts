@@ -3732,14 +3732,13 @@ startxref
         return res.status(404).json({ message: 'Suscripción no encontrada' });
       }
 
-      // Don't allow changing to the same plan UNLESS the account is blocked or trial expired
-      const isTrialExpired = company.subscription.status === 'trial' && 
-        new Date() > new Date(company.subscription.trialEndDate);
-      
-      if (company.subscription.plan === plan && 
-          company.subscription.status !== 'blocked' && 
-          !isTrialExpired) {
-        return res.status(400).json({ message: 'Ya estás en este plan' });
+      // CRITICAL FIX: Prevent billing loop by strictly blocking same-plan changes
+      // This was causing multiple Stripe invoices when users rapidly switched plans
+      if (company.subscription.plan === plan) {
+        console.log(`BILLING LOOP PREVENTION: Blocking change to same plan '${plan}' for company ${company.id}`);
+        return res.status(400).json({ 
+          message: `Ya estás suscrito al plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}. No se requieren cambios.` 
+        });
       }
 
       // 1. Get features from features table (PRIMARY SOURCE for functionality)
@@ -3801,55 +3800,12 @@ startxref
         }
       }
 
-      // If immediate payment is required and user has a payment method, process the payment
-      if (immediatePaymentRequired && proratedAmount > 0.50) { // Minimum charge threshold
-        try {
-          // Get user's default payment method
-          const adminResult = await db.execute(sql`
-            SELECT id, stripe_customer_id 
-            FROM users 
-            WHERE company_id = ${company.id} AND role = 'admin' 
-            LIMIT 1
-          `);
-          const admin = adminResult.rows[0];
-          if (admin?.stripe_customer_id) {
-            const paymentMethods = await stripe.paymentMethods.list({
-              customer: String(admin.stripe_customer_id),
-              type: 'card',
-            });
-
-            if (paymentMethods.data.length > 0) {
-              // Create invoice item for prorated amount
-              await stripe.invoiceItems.create({
-                customer: String(admin.stripe_customer_id),
-                amount: Math.round(proratedAmount * 100), // Convert to cents
-                currency: 'eur',
-                description: `Upgrade to ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan - Prorated amount (${daysRemaining} days remaining)`,
-              });
-
-              // Create and finalize invoice
-              const invoice = await stripe.invoices.create({
-                customer: String(admin.stripe_customer_id),
-                auto_advance: true, // Automatically finalize and attempt payment
-                collection_method: 'charge_automatically',
-                default_payment_method: paymentMethods.data[0].id,
-              });
-
-              // Finalize and pay the invoice if invoice ID exists
-              if (invoice?.id) {
-                const invoiceId = invoice.id;
-                await stripe.invoices.finalizeInvoice(invoiceId);
-                const paidInvoice = await stripe.invoices.pay(invoiceId);
-
-                console.log(`Prorated invoice created and paid: €${proratedAmount.toFixed(2)} for upgrade to ${plan}`);
-                console.log(`Invoice ID: ${invoiceId}, Status: ${paidInvoice.status}`);
-              }
-            }
-          }
-        } catch (paymentError) {
-          console.error('Error processing prorated payment:', paymentError);
-          // Continue with plan change even if payment fails - will be charged in next cycle
-        }
+      // DISABLED: Prorated billing system temporarily disabled to prevent billing loops
+      // This was causing multiple 0€ invoices and incorrect charges when switching plans repeatedly
+      // Only allow plan changes without immediate billing for now
+      if (false && immediatePaymentRequired && proratedAmount > 0.50) {
+        // This entire section is disabled to prevent billing loop issue
+        console.log('BILLING DISABLED: Prorated billing system temporarily disabled');
       }
 
       // Update the subscription plan
@@ -3871,14 +3827,11 @@ startxref
         WHERE id = ${company.id}
       `);
 
-      // Prepare response message based on payment scenario
+      // Prepare response message - prorated billing disabled
       let responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`;
       
-      if (immediatePaymentRequired && proratedAmount > 0.50) {
-        responseMessage += `. Se ha cobrado €${proratedAmount.toFixed(2)} por el tiempo restante del mes.`;
-      } else if (creditApplied && proratedAmount > 0.50) {
-        responseMessage += `. Se aplicará un crédito de €${proratedAmount.toFixed(2)} en tu próxima factura.`;
-      } else if (company.subscription.plan !== plan) {
+      // Prorated billing system is disabled to prevent billing loops
+      if (company.subscription.plan !== plan) {
         responseMessage += `. El nuevo precio se aplicará en tu próximo ciclo de facturación.`;
       }
 

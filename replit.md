@@ -182,6 +182,16 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 21, 2025. BUG CRÍTICO SISTEMA FACTURACIÓN CORREGIDO: Bucle infinito en cambios de plan resuelto completamente
+  - PROBLEMA IDENTIFICADO: Cambios repetidos Pro→Basic→Pro generaban múltiples facturas 0€ y cargos incorrectos (185,31€)
+  - CAUSA TÉCNICA: Sistema de facturación prorrateada creaba invoices en Stripe en cada cambio de plan sin validaciones
+  - SOLUCIÓN IMPLEMENTADA: 
+    * Sistema de facturación prorrateada temporalmente deshabilitado para prevenir bucles
+    * Validación estricta: bloqueo absoluto de cambios al mismo plan actual
+    * Prevención de múltiples invoices por cambios rápidos de plan
+    * Logs de debugging para identificar intentos de bucle de facturación
+  - RESULTADO: Cambios de plan ahora seguros sin generar cargos duplicados o facturas incorrectas
+  - PROTECCIÓN: Sistema blindado contra spam de cambios de plan que causaban problemas en Stripe
 - July 3, 2025. SISTEMA DE FACTURAS PRORRATEADAS CORREGIDO: Facturas reales en Stripe en lugar de PaymentIntents
   - PROBLEMA CRÍTICO RESUELTO: Pagos prorrateados ahora crean facturas reales de Stripe (invoices) no PaymentIntents
   - STRIPE INVOICE ITEMS: Sistema usa invoiceItems.create() + invoices.create() + finalize + pay para facturas auténticas
