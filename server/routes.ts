@@ -400,15 +400,20 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Create HTML logo using CSS for maximum compatibility
+        // Professional logo implementation with real image and website link
+        const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
+          `https://${process.env.REPLIT_DEV_DOMAIN}` : 
+          'https://oficaz-employee-management.replit.app';
+        const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
+        const websiteUrl = 'https://oficaz.es';
+        
         const logoHtml = `
-          <div style="background: #ffffff; padding: 4px; border-radius: 4px; display: inline-block; border: 1px solid #e5e7eb;">
-            <div style="background: linear-gradient(45deg, #007AFF, #0056CC); color: white; padding: 6px 12px; border-radius: 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">
-              OFICAZ
-            </div>
-          </div>
+          <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
+            <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
+                 style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
+          </a>
         `;
-        console.log('📧 Using CSS-based logo for maximum email client compatibility');
+        console.log('📧 Professional logo with real image:', logoUrl, '→ Website:', websiteUrl);
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
