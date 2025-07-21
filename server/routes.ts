@@ -400,21 +400,15 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Load real Oficaz logo with base64 for email compatibility
-        let logoBase64 = '';
-        let logoSrc = '';
-        try {
-          const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-          if (fs.existsSync(logoPath)) {
-            logoBase64 = fs.readFileSync(logoPath).toString('base64');
-            logoSrc = `data:image/png;base64,${logoBase64}`;
-            console.log('📧 Real Oficaz logo loaded for email, size:', logoBase64.length, 'characters');
-          } else {
-            console.error('❌ Logo file not found at:', logoPath);
-          }
-        } catch (error) {
-          console.error('❌ Error loading Oficaz logo:', error);
-        }
+        // Create HTML logo using CSS for maximum compatibility
+        const logoHtml = `
+          <div style="background: #ffffff; padding: 4px; border-radius: 4px; display: inline-block; border: 1px solid #e5e7eb;">
+            <div style="background: linear-gradient(45deg, #007AFF, #0056CC); color: white; padding: 6px 12px; border-radius: 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.5px;">
+              OFICAZ
+            </div>
+          </div>
+        `;
+        console.log('📧 Using CSS-based logo for maximum email client compatibility');
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -434,10 +428,7 @@ Responde directamente a este email para contactar con la persona.
                 
                 <!-- Compact header with logo -->
                 <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  ${logoSrc ? 
-                    `<img src="${logoSrc}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px; display: block; margin: 0 auto; border: none; outline: none;" />` : 
-                    `<div style="height: 20px; display: flex; align-items: center; justify-content: center;"><span style="color: #007AFF; font-size: 16px; font-weight: 600;">Oficaz</span></div>`
-                  }
+                  ${logoHtml}
                 </div>
 
                 <!-- Compact main content -->
