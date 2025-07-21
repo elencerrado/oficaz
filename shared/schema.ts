@@ -483,7 +483,7 @@ export const companyRegistrationSchema = z.object({
   companyName: z.string().min(1, "Nombre de empresa requerido"),
   cif: z.string().min(1, "CIF requerido"),
   companyEmail: z.string().email("Email inválido"),
-  contactName: z.string().min(1, "Nombre de contacto requerido"),
+  contactName: z.string().optional(),
   companyAlias: z.string().min(1, "Alias de empresa requerido").regex(/^[a-zA-Z0-9-]+$/, "Solo letras, números y guiones"),
   phone: z.string().optional(),
   contactPhone: z.string().optional(),
@@ -504,6 +504,9 @@ export const companyRegistrationSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
   confirmPassword: z.string(),
   
+  // Contact person information
+  sameAsAdmin: z.boolean().optional(),
+  
   // Step 1 data (for plan recommendation)
   teamSize: z.string().optional(),
   interestedFeatures: z.array(z.string()).optional(),
@@ -512,11 +515,19 @@ export const companyRegistrationSchema = z.object({
   selectedPlan: z.string().min(1, "Plan de suscripción requerido"),
   
   // Optional tokens for registration
-  verificationToken: z.string().optional(),
-  invitationToken: z.string().optional(),
+  verificationToken: z.string().nullable().optional(),
+  invitationToken: z.string().nullable().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
+}).refine((data) => {
+  if (data.sameAsAdmin === false && (!data.contactName || data.contactName.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Nombre de contacto requerido cuando no es el mismo administrador",
+  path: ["contactName"],
 });
 
 // Types

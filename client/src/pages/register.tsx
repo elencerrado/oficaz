@@ -279,7 +279,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         ...formData, 
         ...data,
         verificationToken: byInvitation ? null : verificationToken,
-        invitationToken: byInvitation ? invitationToken : null
+        invitationToken: byInvitation ? invitationToken : null,
+        // Set contactName to adminFullName if sameAsAdmin is true
+        contactName: formData.sameAsAdmin ? formData.adminFullName : formData.contactName
       };
       
       console.log('Final registration data:', finalData);
@@ -956,6 +958,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   {step4Form.formState.errors.selectedPlan.message}
                 </p>
               )}
+
+              {/* Free trial notice */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                <div className="flex items-center mb-2">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                  <h4 className="font-medium text-green-900">14 días de prueba gratuitos</h4>
+                </div>
+                <p className="text-sm text-green-700">
+                  Podrás usar Oficaz completamente gratis durante 14 días. No se cobrará nada hasta que termine tu período de prueba.
+                </p>
+              </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <h4 className="font-medium text-blue-900 mb-2">¿Por qué esta recomendación?</h4>
