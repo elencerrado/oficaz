@@ -678,6 +678,94 @@ const AccountManagement = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Modal de confirmación de cambio de plan con preview */}
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-orange-500" />
+              <span>Confirmar cambio de plan</span>
+            </DialogTitle>
+            <DialogDescription>
+              Revisa los detalles del cambio antes de confirmar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {planPreview && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <span className="text-sm text-gray-500">Plan actual:</span>
+                    <p className="font-semibold text-gray-900">{planPreview.currentPlan?.displayName}</p>
+                    <p className="text-sm text-gray-600">€{planPreview.currentPlan?.pricePerUser}/mes</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-gray-500">Nuevo plan:</span>
+                    <p className="font-semibold text-gray-900">{planPreview.newPlan?.displayName}</p>
+                    <p className="text-sm text-gray-600">€{planPreview.newPlan?.pricePerUser}/mes</p>
+                  </div>
+                </div>
+                
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Cargo inmediato:</span>
+                    <span className="font-semibold text-gray-900">
+                      {planPreview.immediateCharge > 0 ? `€${planPreview.immediateCharge.toFixed(2)}` : 'Sin cargo'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{planPreview.immediateChargeDescription}</p>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <Info className="h-4 w-4 text-blue-500 mt-0.5" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-medium mb-1">
+                      {planPreview.changeType === 'upgrade' ? 'Upgrade' : 
+                       planPreview.changeType === 'downgrade' ? 'Downgrade' : 'Cambio lateral'}
+                    </p>
+                    <p className="text-xs">{planPreview.billingDescription}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowConfirmation(false);
+                    setPlanPreview(null);
+                  }}
+                  disabled={isChangingPlan}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={confirmPlanChange}
+                  disabled={isChangingPlan}
+                  className="flex-1"
+                >
+                  {isChangingPlan ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Confirmar cambio
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Modal de eliminación permanente */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="max-w-md">
@@ -779,6 +867,8 @@ const AccountManagement = () => {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(subscription?.plan || 'basic');
   const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [planPreview, setPlanPreview] = useState(null);
   
   // User profile data
   const [profileData, setProfileData] = useState({
@@ -982,6 +1072,38 @@ const AccountManagement = () => {
     }
   };
 
+  // Preview plan change mutation
+  const previewPlanMutation = useMutation({
+    mutationFn: async (plan: string) => {
+      const response = await fetch('/api/subscription/preview-plan-change', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener preview del plan');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setPlanPreview(data);
+      setShowConfirmation(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al obtener información del plan",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Plan change mutation
   const changePlanMutation = useMutation({
     mutationFn: async (newPlan: string) => {
@@ -1016,6 +1138,8 @@ const AccountManagement = () => {
       });
       setIsPlanModalOpen(false);
       setIsChangingPlan(false);
+      setShowConfirmation(false);
+      setPlanPreview(null);
       
       // Invalidate ALL subscription-related queries to refresh the data immediately
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
@@ -1111,6 +1235,11 @@ const AccountManagement = () => {
   };
 
   const handleChangePlan = () => {
+    // First get preview of the plan change
+    previewPlanMutation.mutate(selectedPlan);
+  };
+
+  const confirmPlanChange = () => {
     setIsChangingPlan(true);
     changePlanMutation.mutate(selectedPlan);
   };

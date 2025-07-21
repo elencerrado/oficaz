@@ -3699,6 +3699,95 @@ startxref
     }
   });
 
+  // Preview plan change - calculate exact charges without executing the change
+  app.post('/api/subscription/preview-plan-change', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { plan } = req.body;
+      console.log('DEBUG - Preview plan change request:', { userId, plan });
+
+      if (!plan) {
+        return res.status(400).json({ message: 'Plan requerido.' });
+      }
+
+      // Get available plans from subscription_plans table
+      const availablePlansResult = await db.execute(sql`
+        SELECT name FROM subscription_plans WHERE name IS NOT NULL
+      `);
+      const availablePlans = availablePlansResult.rows.map(row => row.name);
+
+      if (!availablePlans.includes(plan)) {
+        return res.status(400).json({ 
+          message: `Plan inválido. Debe ser uno de: ${availablePlans.join(', ')}.` 
+        });
+      }
+
+      // Get company and current subscription
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company?.subscription) {
+        return res.status(404).json({ message: 'Suscripción no encontrada' });
+      }
+
+      // Check if it's the same plan
+      if (company.subscription.plan === plan) {
+        return res.status(400).json({ 
+          message: `Ya estás suscrito al plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}. No se requieren cambios.` 
+        });
+      }
+
+      // Get plan details
+      const newPlanResult = await db.execute(sql`
+        SELECT name, display_name, price_per_user, max_users 
+        FROM subscription_plans 
+        WHERE name = ${plan}
+      `);
+
+      const currentPlanResult = await db.execute(sql`
+        SELECT name, display_name, price_per_user 
+        FROM subscription_plans 
+        WHERE name = ${company.subscription.plan}
+      `);
+
+      if (newPlanResult.rows.length === 0 || currentPlanResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Plan no encontrado' });
+      }
+
+      const newPlan = newPlanResult.rows[0] as any;
+      const currentPlan = currentPlanResult.rows[0] as any;
+
+      // Calculate exact charge - currently disabled for simplified billing
+      const currentPrice = parseFloat(currentPlan.price_per_user);
+      const newPrice = parseFloat(newPlan.price_per_user);
+      const priceDifference = newPrice - currentPrice;
+
+      let previewData = {
+        currentPlan: {
+          name: currentPlan.name,
+          displayName: currentPlan.display_name,
+          pricePerUser: currentPrice
+        },
+        newPlan: {
+          name: newPlan.name,
+          displayName: newPlan.display_name,
+          pricePerUser: newPrice,
+          maxUsers: newPlan.max_users
+        },
+        changeType: priceDifference > 0 ? 'upgrade' : (priceDifference < 0 ? 'downgrade' : 'lateral'),
+        priceDifference: Math.abs(priceDifference),
+        immediateCharge: 0, // Currently disabled - simplified billing
+        immediateChargeDescription: 'Sin cargo inmediato',
+        billingDescription: 'El nuevo precio se aplicará en tu próximo ciclo de facturación.',
+        effectiveDate: 'Inmediato',
+        nextBillingDate: company.subscription.nextPaymentDate
+      };
+
+      res.json(previewData);
+    } catch (error) {
+      console.error('Error previewing plan change:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Change subscription plan
   app.patch('/api/subscription/change-plan', authenticateToken, async (req: AuthRequest, res) => {
     try {
@@ -3772,41 +3861,8 @@ startxref
         SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
       `);
 
-      let proratedAmount = 0;
-      let immediatePaymentRequired = false;
-      let creditApplied = false;
-      let daysRemaining = 0;
-
-      // Calculate prorated amount if changing between different plans
-      if (company.subscription.plan !== plan && currentPlanData.rows.length > 0) {
-        const currentPrice = parseFloat(currentPlanData.rows[0].price_per_user);
-        const newPrice = parseFloat(newPlanData.price_per_user);
-        const priceDifference = newPrice - currentPrice;
-
-        // Calculate days remaining in current billing cycle
-        const nextPaymentDate = new Date(company.subscription.nextPaymentDate);
-        const today = new Date();
-        daysRemaining = Math.max(0, Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-        const totalDaysInMonth = 30; // Approximate billing cycle
-        
-        if (priceDifference > 0 && daysRemaining > 0) {
-          // Upgrading - charge prorated amount immediately
-          proratedAmount = (priceDifference * daysRemaining) / totalDaysInMonth;
-          immediatePaymentRequired = true;
-        } else if (priceDifference < 0 && daysRemaining > 0) {
-          // Downgrading - apply credit for next billing cycle
-          proratedAmount = Math.abs(priceDifference * daysRemaining) / totalDaysInMonth;
-          creditApplied = true;
-        }
-      }
-
-      // DISABLED: Prorated billing system temporarily disabled to prevent billing loops
-      // This was causing multiple 0€ invoices and incorrect charges when switching plans repeatedly
-      // Only allow plan changes without immediate billing for now
-      if (false && immediatePaymentRequired && proratedAmount > 0.50) {
-        // This entire section is disabled to prevent billing loop issue
-        console.log('BILLING DISABLED: Prorated billing system temporarily disabled');
-      }
+      // SIMPLIFIED PLAN CHANGE: No prorated billing to prevent confusion and billing loops
+      // All plan changes will take effect in the next billing cycle
 
       // Update the subscription plan
       await db.execute(sql`
@@ -3827,23 +3883,16 @@ startxref
         WHERE id = ${company.id}
       `);
 
-      // Prepare response message - prorated billing disabled
+      // Prepare response message - simplified billing
       let responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`;
-      
-      // Prorated billing system is disabled to prevent billing loops
-      if (company.subscription.plan !== plan) {
-        responseMessage += `. El nuevo precio se aplicará en tu próximo ciclo de facturación.`;
-      }
+      responseMessage += `. El nuevo precio se aplicará en tu próximo ciclo de facturación.`;
 
       res.json({
         success: true,
         message: responseMessage,
         plan: plan,
         features: planFeatures,
-        maxUsers: newPlanData.max_users,
-        proratedAmount: proratedAmount,
-        immediatePaymentRequired: immediatePaymentRequired,
-        creditApplied: creditApplied
+        maxUsers: newPlanData.max_users
       });
     } catch (error) {
       console.error('Error changing subscription plan:', error);
