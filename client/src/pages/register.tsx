@@ -70,12 +70,20 @@ const step3Schema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
   confirmPassword: z.string().min(8, 'Confirma tu contraseña'),
   sameAsAdmin: z.boolean().default(true),
-  contactName: z.string().min(1, 'El nombre de contacto es requerido'),
+  contactName: z.string().optional(),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Las contraseñas no coinciden',
   path: ['confirmPassword'],
+}).refine((data) => {
+  if (!data.sameAsAdmin && !data.contactName) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'El nombre de contacto es requerido cuando no es el mismo administrador',
+  path: ['contactName'],
 });
 
 const step4Schema = z.object({
@@ -240,6 +248,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const handleStep3Submit = async (data: Step3Data) => {
     try {
       setValidatingStep3(true);
+      
+      console.log('Step 3 data:', data);
+      console.log('Step 3 form errors:', step3Form.formState.errors);
       
       // Validate admin user fields for uniqueness
       const emailAvailable = await validateUserField('email', data.adminEmail);
@@ -830,6 +841,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       />
                     </div>
                   </div>
+                )}
+                
+                {!step3Form.watch('sameAsAdmin') && step3Form.formState.errors.contactName && (
+                  <p className="text-sm text-red-600">{step3Form.formState.errors.contactName.message}</p>
                 )}
               </div>
 
