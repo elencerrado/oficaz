@@ -667,10 +667,11 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Create subscription - dates are calculated from companies.created_at
-      // Features are now constructed dynamically from features table
+      // Use selectedPlan from the wizard, default to 'basic' for backwards compatibility
+      const selectedPlan = data.selectedPlan || 'basic';
       const subscription = await storage.createSubscription({
         companyId: company.id,
-        plan: 'basic',
+        plan: selectedPlan,
         status: 'trial',
         isTrialActive: true,
         maxUsers: 5, // Default for basic plan

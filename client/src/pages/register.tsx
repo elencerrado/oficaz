@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useLocation, useSearch } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield } from 'lucide-react';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield, Star, Crown } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -60,6 +61,7 @@ const step2Schema = z.object({
 const step3Schema = z.object({
   adminFullName: z.string().min(2, 'El nombre completo debe tener al menos 2 caracteres'),
   adminEmail: z.string().email('Email no válido'),
+  adminDni: z.string().min(8, 'El DNI/NIE es requerido'),
   password: z.string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
@@ -68,7 +70,7 @@ const step3Schema = z.object({
     .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
   confirmPassword: z.string().min(8, 'Confirma tu contraseña'),
   sameAsAdmin: z.boolean().default(true),
-  contactName: z.string().optional(),
+  contactName: z.string().min(1, 'El nombre de contacto es requerido'),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -76,11 +78,16 @@ const step3Schema = z.object({
   path: ['confirmPassword'],
 });
 
+const step4Schema = z.object({
+  selectedPlan: z.string().min(1, 'Selecciona un plan de suscripción'),
+});
+
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
+type Step4Data = z.infer<typeof step4Schema>;
 
-type FormData = Step1Data & Step2Data & Step3Data;
+type FormData = Step1Data & Step2Data & Step3Data & Step4Data;
 
 interface RegisterProps {
   byInvitation?: boolean;
@@ -150,6 +157,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     defaultValues: {
       adminFullName: '',
       adminEmail: '',
+      adminDni: '',
       password: '',
       confirmPassword: '',
       sameAsAdmin: true,
@@ -159,7 +167,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     },
   });
 
-  const progressPercentage = (currentStep / 3) * 100;
+  // Step 4 form
+  const step4Form = useForm<Step4Data>({
+    resolver: zodResolver(step4Schema),
+    defaultValues: {
+      selectedPlan: '',
+    },
+  });
+
+  const progressPercentage = (currentStep / 4) * 100;
 
   const features = [
     { id: 'timeTracking', name: 'Fichajes', icon: Calendar, description: 'Control de horarios y asistencia' },
@@ -233,24 +249,37 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         return;
       }
 
-      // All validations passed, proceed with registration
+      // All validations passed, continue to plan selection
+      setFormData(prev => ({ ...prev, ...data }));
+      setCurrentStep(4);
+    } catch (error: any) {
+      console.error('Validation error:', error.message || 'Error al verificar los datos');
+    } finally {
+      setValidatingStep3(false);
+    }
+  };
+
+  const handleStep4Submit = async (data: Step4Data) => {
+    try {
       setIsLoading(true);
+      
+      // Prepare final registration data
       const finalData = { 
         ...formData, 
         ...data,
         verificationToken: byInvitation ? null : verificationToken,
         invitationToken: byInvitation ? invitationToken : null
       };
+      
+      console.log('Final registration data:', finalData);
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       
       if (response.ok) {
-
         setLocation('/dashboard');
       }
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
     } finally {
-      setValidatingStep3(false);
       setIsLoading(false);
     }
   };
@@ -258,6 +287,42 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const goToStep = (step: number) => {
     setCurrentStep(step);
   };
+
+  // Fetch subscription plans
+  const { data: subscriptionPlans = [] } = useQuery({
+    queryKey: ['/api/public/subscription-plans'],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Plan recommendation logic based on step 1 answers
+  const getRecommendedPlan = () => {
+    const { teamSize, interestedFeatures } = formData;
+    
+    // Basic scoring system
+    let score = 0;
+    
+    // Team size scoring
+    if (teamSize === '1-5') score += 1;
+    else if (teamSize === '6-15') score += 2;
+    else if (teamSize === '16-50') score += 3;
+    else if (teamSize === '51+') score += 4;
+    
+    // Features scoring
+    const featureCount = interestedFeatures?.length || 0;
+    if (featureCount >= 3) score += 2;
+    else if (featureCount >= 2) score += 1;
+    
+    // Advanced features boost
+    if (interestedFeatures?.includes('documents')) score += 1;
+    if (interestedFeatures?.includes('messages')) score += 1;
+    
+    // Recommendation logic
+    if (score >= 6) return 'master';
+    else if (score >= 3) return 'pro';
+    else return 'basic';
+  };
+
+  const recommendedPlan = getRecommendedPlan();
 
   return (
     <div
@@ -288,14 +353,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             
             <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Configurar tu empresa</CardTitle>
             <CardDescription className="text-xs md:text-sm text-gray-600 mt-1">
-              Proceso rápido en 3 pasos - Solo toma un minuto
+              Proceso rápido en 4 pasos - Solo toma un minuto
             </CardDescription>
           </div>
           
           {/* Progress bar */}
           <div className="w-full">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs md:text-sm font-medium text-gray-500">Paso {currentStep} de 3</span>
+              <span className="text-xs md:text-sm font-medium text-gray-500">Paso {currentStep} de 4</span>
               <span className="text-xs md:text-sm font-medium text-gray-500">{Math.round(progressPercentage)}%</span>
             </div>
             <Progress value={progressPercentage} className="h-1.5 md:h-2" />
@@ -323,9 +388,17 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
                 currentStep >= 3 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
               }`}>
-                3
+                {currentStep > 3 ? <CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3" /> : '3'}
               </div>
               <span className="text-xs font-medium hidden sm:block">Administrador</span>
+            </div>
+            <div className={`flex items-center space-x-1 md:space-x-2 ${currentStep >= 4 ? 'text-oficaz-primary' : 'text-gray-400'}`}>
+              <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center border-2 text-xs ${
+                currentStep >= 4 ? 'bg-oficaz-primary border-oficaz-primary text-white' : 'border-gray-300'
+              }`}>
+                4
+              </div>
+              <span className="text-xs font-medium hidden sm:block">Plan</span>
             </div>
           </div>
         </CardHeader>
@@ -630,6 +703,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <p className="text-sm text-red-600">{step3Form.formState.errors.adminEmail.message}</p>
                   )}
                 </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="adminDni">DNI/NIE del administrador *</Label>
+                  <Input
+                    id="adminDni"
+                    className="rounded-xl"
+                    {...step3Form.register('adminDni')}
+                    placeholder="12345678Z"
+                  />
+                  <p className="text-xs text-gray-500">DNI español o NIE para extranjeros</p>
+                  {step3Form.formState.errors.adminDni && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminDni.message}</p>
+                  )}
+                </div>
               </div>
 
               {/* Password requirements */}
@@ -747,9 +834,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               </div>
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
-                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading || validatingStep3}>
-                  {validatingStep3 ? 'Verificando datos...' : isLoading ? 'Creando cuenta...' : 'Crear empresa'}
-                  <CheckCircle className="h-4 w-4 ml-2" />
+                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={validatingStep3}>
+                  {validatingStep3 ? 'Verificando datos...' : 'Continuar'}
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
                 <Button 
                   type="button" 
@@ -761,6 +848,121 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   }} 
                   className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1"
                   disabled={isLoading || validatingStep3}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Atrás
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Step 4: Plan Selection */}
+          {currentStep === 4 && (
+            <form onSubmit={step4Form.handleSubmit(handleStep4Submit)} className="space-y-6">
+              <div className="text-center mb-6">
+                <Crown className="h-12 w-12 text-oficaz-primary mx-auto mb-3" />
+                <h3 className="text-lg font-semibold mb-1">Elige tu plan</h3>
+                <p className="text-sm text-gray-600">
+                  Basado en tus respuestas, te recomendamos el plan{' '}
+                  <Badge variant="secondary" className="mx-1 capitalize">{recommendedPlan}</Badge>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {subscriptionPlans.map((plan: any) => {
+                  const isRecommended = plan.name === recommendedPlan;
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`relative border rounded-xl p-4 cursor-pointer transition-all ${
+                        step4Form.watch('selectedPlan') === plan.name
+                          ? 'border-oficaz-primary bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      } ${isRecommended ? 'ring-2 ring-oficaz-primary ring-opacity-50' : ''}`}
+                      onClick={() => step4Form.setValue('selectedPlan', plan.name)}
+                    >
+                      {isRecommended && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <Badge className="bg-oficaz-primary text-white">
+                            <Star className="h-3 w-3 mr-1" />
+                            Recomendado
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      <div className="text-center">
+                        <h4 className="font-semibold text-lg capitalize">{plan.displayName}</h4>
+                        <div className="text-2xl font-bold text-oficaz-primary mt-2">
+                          €{plan.pricePerUser}
+                          <span className="text-sm font-normal text-gray-500">/mes</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Hasta {plan.maxUsers} usuarios
+                        </p>
+                      </div>
+                      
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center text-xs">
+                          <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                          <span>Fichajes y control horario</span>
+                        </div>
+                        {plan.features?.vacation && (
+                          <div className="flex items-center text-xs">
+                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                            <span>Gestión de vacaciones</span>
+                          </div>
+                        )}
+                        {plan.features?.documents && (
+                          <div className="flex items-center text-xs">
+                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                            <span>Gestión de documentos</span>
+                          </div>
+                        )}
+                        {plan.features?.messages && (
+                          <div className="flex items-center text-xs">
+                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                            <span>Mensajería interna</span>
+                          </div>
+                        )}
+                        {plan.features?.reminders && (
+                          <div className="flex items-center text-xs">
+                            <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
+                            <span>Recordatorios</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {step4Form.formState.errors.selectedPlan && (
+                <p className="text-sm text-red-600 text-center">
+                  {step4Form.formState.errors.selectedPlan.message}
+                </p>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h4 className="font-medium text-blue-900 mb-2">¿Por qué esta recomendación?</h4>
+                <p className="text-sm text-blue-700">
+                  Basándose en que tu equipo tiene {formData.teamSize?.replace('-', ' a ')} empleados
+                  {formData.interestedFeatures && formData.interestedFeatures.length > 0 && 
+                    ` y estás interesado en ${formData.interestedFeatures.length} funcionalidades`
+                  }, el plan {recommendedPlan} ofrece la mejor relación calidad-precio para tus necesidades.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+                <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading}>
+                  {isLoading ? 'Creando empresa...' : 'Crear empresa'}
+                  <CheckCircle className="h-4 w-4 ml-2" />
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => goToStep(3)} 
+                  className="w-full sm:flex-1 rounded-xl px-8 order-2 sm:order-1"
+                  disabled={isLoading}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Atrás

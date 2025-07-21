@@ -487,8 +487,9 @@ export const companyRegistrationSchema = z.object({
   companyAlias: z.string().min(1, "Alias de empresa requerido").regex(/^[a-zA-Z0-9-]+$/, "Solo letras, números y guiones"),
   phone: z.string().optional(),
   contactPhone: z.string().optional(),
+  contactEmail: z.string().optional(),
   address: z.string().optional(),
-  province: z.string().optional(),
+  province: z.string().min(1, "Provincia requerida"),
   logoUrl: z.string().optional(),
   
   // Admin user fields
@@ -496,8 +497,19 @@ export const companyRegistrationSchema = z.object({
   adminEmail: z.string().email("Email admin requerido"),
   adminDni: z.string().min(1, "DNI/NIE requerido"),
   adminPhoneNumber: z.string().optional(),
-  password: z.string().min(6, "Contraseña debe tener al menos 6 caracteres"),
+  password: z.string().min(8, "Contraseña debe tener al menos 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una minúscula") 
+    .regex(/[0-9]/, "Debe contener al menos un número")
+    .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
   confirmPassword: z.string(),
+  
+  // Step 1 data (for plan recommendation)
+  teamSize: z.string().optional(),
+  interestedFeatures: z.array(z.string()).optional(),
+  
+  // Step 4 data (selected plan)
+  selectedPlan: z.string().min(1, "Plan de suscripción requerido"),
   
   // Optional tokens for registration
   verificationToken: z.string().optional(),
