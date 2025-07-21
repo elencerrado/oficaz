@@ -402,8 +402,19 @@ Responde directamente a este email para contactar con la persona.
         });
 
         // Read logo file and convert to base64
-        const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
-        const logoBase64 = fs.readFileSync(logoPath).toString('base64');
+        let logoBase64 = '';
+        try {
+          const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+          if (fs.existsSync(logoPath)) {
+            logoBase64 = fs.readFileSync(logoPath).toString('base64');
+            console.log('📧 Verification email logo loaded successfully, size:', logoBase64.length, 'characters');
+          } else {
+            console.log('⚠️ Logo file not found at:', logoPath);
+          }
+        } catch (error) {
+          console.error('❌ Error loading logo for verification email:', error);
+          logoBase64 = ''; // Fallback to no logo
+        }
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -423,7 +434,7 @@ Responde directamente a este email para contactar con la persona.
                 
                 <!-- Compact header with logo -->
                 <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  <img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px;" />
+                  ${logoBase64 ? `<img src="data:image/png;base64,${logoBase64}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px;" />` : '<h3 style="color: #007AFF; margin: 0; font-size: 16px; font-weight: 600;">Oficaz</h3>'}
                 </div>
 
                 <!-- Compact main content -->
@@ -3788,6 +3799,14 @@ startxref
     }
   });
 
+  // Helper function to check if plan change is a downgrade
+  function checkIsDowngrade(currentPlan: string, newPlan: string): boolean {
+    const planHierarchy = { 'basic': 1, 'pro': 2, 'master': 3 };
+    const currentLevel = planHierarchy[currentPlan as keyof typeof planHierarchy] || 0;
+    const newLevel = planHierarchy[newPlan as keyof typeof planHierarchy] || 0;
+    return newLevel < currentLevel;
+  }
+
   // Change subscription plan
   app.patch('/api/subscription/change-plan', authenticateToken, async (req: AuthRequest, res) => {
     try {
@@ -3861,31 +3880,56 @@ startxref
         SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
       `);
 
-      // SIMPLIFIED PLAN CHANGE: No prorated billing to prevent confusion and billing loops
-      // All plan changes will take effect in the next billing cycle
+      // DOWNGRADE LOGIC: Retain current plan features until next billing cycle
+      const currentPlan = company.subscription.plan;
+      const isDowngrade = checkIsDowngrade(currentPlan, plan);
+      
+      if (isDowngrade) {
+        // For downgrades, retain current features until next billing cycle
+        const nextPaymentDate = company.subscription.nextPaymentDate 
+          ? new Date(company.subscription.nextPaymentDate)
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Default to 30 days from now
+        
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET 
+            next_plan = ${plan},
+            current_effective_plan = ${currentPlan},
+            plan_change_date = ${nextPaymentDate.toISOString()},
+            max_users = ${newPlanData.max_users},
+            updated_at = NOW()
+          WHERE company_id = ${company.id}
+        `);
+        
+        // Don't update companies table plan yet for downgrades
+        responseMessage = `Cambio programado exitosamente. Mantendrás las características de ${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} hasta el ${nextPaymentDate.toLocaleDateString('es-ES')}. `;
+        responseMessage += `A partir de esa fecha tendrás las características del plan ${plan.charAt(0).toUpperCase() + plan.slice(1)}.`;
+      } else {
+        // For upgrades, apply immediately
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET 
+            plan = ${plan},
+            current_effective_plan = NULL,
+            next_plan = NULL,
+            plan_change_date = NULL,
+            max_users = ${newPlanData.max_users},
+            updated_at = NOW()
+          WHERE company_id = ${company.id}
+        `);
 
-      // Update the subscription plan
-      await db.execute(sql`
-        UPDATE subscriptions 
-        SET 
-          plan = ${plan},
-          max_users = ${newPlanData.max_users},
-          updated_at = NOW()
-        WHERE company_id = ${company.id}
-      `);
-
-      // Also update the plan field in companies table for consistency
-      await db.execute(sql`
-        UPDATE companies 
-        SET 
-          plan = ${plan},
-          updated_at = NOW()
-        WHERE id = ${company.id}
-      `);
-
-      // Prepare response message - simplified billing
-      let responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}`;
-      responseMessage += `. El nuevo precio se aplicará en tu próximo ciclo de facturación.`;
+        // Update companies table for upgrades
+        await db.execute(sql`
+          UPDATE companies 
+          SET 
+            plan = ${plan},
+            updated_at = NOW()
+          WHERE id = ${company.id}
+        `);
+        
+        responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}. `;
+        responseMessage += `Las nuevas características están disponibles inmediatamente.`;
+      }
 
       res.json({
         success: true,

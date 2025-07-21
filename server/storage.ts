@@ -793,13 +793,28 @@ export class DrizzleStorage implements IStorage {
     const trialEndDate = new Date(registrationDate);
     trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
 
-    // Get features from features table based on current plan
+    // Determine effective plan for features
+    // If there's a planned downgrade, use currentEffectivePlan until the change date
+    // Otherwise use the regular plan
+    let effectivePlan = subscription.currentEffectivePlan || subscription.plan;
+    
+    // Check if we should apply plan change (if plan_change_date has passed)
+    if (subscription.planChangeDate && subscription.nextPlan) {
+      const changeDate = new Date(subscription.planChangeDate);
+      const now = new Date();
+      if (now >= changeDate) {
+        // The change date has passed, apply the next plan
+        effectivePlan = subscription.nextPlan;
+      }
+    }
+    
+    // Get features from features table based on effective plan
     const allFeatures = await db.select().from(schema.features);
     let finalFeatures: any = {};
     
-    // Build features object based on plan - use column names like basicEnabled, proEnabled, masterEnabled
+    // Build features object based on effective plan - use column names like basicEnabled, proEnabled, masterEnabled
     for (const feature of allFeatures) {
-      const planColumnName = `${subscription.plan}Enabled` as keyof typeof feature;
+      const planColumnName = `${effectivePlan}Enabled` as keyof typeof feature;
       const isEnabled = feature[planColumnName] as boolean;
       
       // Map display names to internal names

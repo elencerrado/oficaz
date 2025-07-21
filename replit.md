@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 21, 2025. SISTEMA DE DOWNGRADE INTELIGENTE IMPLEMENTADO: Retención de características Pro hasta próximo ciclo de facturación
+  - FUNCIONALIDAD NUEVA: Usuarios que hacen downgrade (Pro→Basic) mantienen características Pro hasta el próximo ciclo de facturación
+  - LÓGICA INTELIGENTE: Sistema diferencia upgrades (inmediatos) vs downgrades (programados)
+  - NUEVOS CAMPOS BD: current_effective_plan, next_plan, plan_change_date en tabla subscriptions
+  - MENSAJES INFORMATIVOS: Sistema explica claramente cuándo se aplicarán los cambios de plan
+  - EXPERIENCIA MEJORADA: No pérdida inmediata de funcionalidades al hacer downgrade, transición suave
+  - EMAILS DE VERIFICACIÓN CORREGIDOS: Logo en emails ahora carga correctamente con manejo robusto de errores
 - July 21, 2025. BUG CRÍTICO SISTEMA FACTURACIÓN CORREGIDO: Bucle infinito en cambios de plan resuelto completamente
   - PROBLEMA IDENTIFICADO: Cambios repetidos Pro→Basic→Pro generaban múltiples facturas 0€ y cargos incorrectos (185,31€)
   - CAUSA TÉCNICA: Sistema de facturación prorrateada creaba invoices en Stripe en cada cambio de plan sin validaciones

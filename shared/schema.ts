@@ -92,6 +92,9 @@ export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).unique().notNull(),
   plan: varchar("plan", { length: 50 }).notNull(), // free, basic, pro, master
+  currentEffectivePlan: varchar("current_effective_plan", { length: 50 }), // Plan actual con características activas hasta próximo ciclo
+  nextPlan: varchar("next_plan", { length: 50 }), // Plan que se activará en el próximo ciclo de facturación
+  planChangeDate: timestamp("plan_change_date"), // Fecha cuando se efectuará el cambio de plan
   status: varchar("status", { length: 50 }).default("trial").notNull(), // trial, active, inactive, suspended, blocked
   endDate: timestamp("end_date"),
   isTrialActive: boolean("is_trial_active").default(true).notNull(),
@@ -415,7 +418,6 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  features: true,
 });
 
 export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
