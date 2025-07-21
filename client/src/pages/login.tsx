@@ -286,20 +286,7 @@ export default function Login() {
               )}
             </Button>
 
-            {/* Emergency cleanup button */}
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full mt-3 text-xs py-2 text-gray-600 border-gray-300"
-              onClick={() => {
-                console.log('🚨 FORCE CLEANUP - Clearing all storage');
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.reload();
-              }}
-            >
-              🧹 Limpiar Caché (Si hay problemas de login)
-            </Button>
+
 
             {/* Register Link */}
             <div className="text-center mt-6">
