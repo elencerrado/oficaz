@@ -64,9 +64,17 @@ export async function sendEmployeeWelcomeEmail(
       }
     });
 
-    // Use static logo URL for better email client compatibility
-    const logoUrl = 'https://oficaz.es/email-logo.png';
-    console.log('📧 Using static logo URL for welcome email:', logoUrl);
+    // Use styled text logo for universal email client compatibility
+    const logoHtml = `
+      <div style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); 
+                  padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,122,255,0.2);">
+        <span style="color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+                     font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+          OFICAZ
+        </span>
+      </div>
+    `;
+    console.log('📧 Using styled text logo for universal email client compatibility');
 
     const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
     
@@ -83,7 +91,7 @@ export async function sendEmployeeWelcomeEmail(
           
           <!-- Header with logo -->
           <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
-            <img src="${logoUrl}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px; display: block; margin: 0 auto;" />
+            ${logoHtml}
           </div>
           
           <!-- Content -->

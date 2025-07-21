@@ -400,12 +400,17 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Use static logo URL for better email client compatibility
-        const host = req.get('host');
-        const logoUrl = host && host.includes('localhost') 
-          ? `${req.protocol}://${host}/email-logo.png`
-          : 'https://oficaz.es/email-logo.png';
-        console.log('📧 Using static logo URL for verification email:', logoUrl);
+        // Use styled text logo for universal email client compatibility
+        const logoHtml = `
+          <div style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); 
+                      padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,122,255,0.2);">
+            <span style="color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+                         font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+              OFICAZ
+            </span>
+          </div>
+        `;
+        console.log('📧 Using styled text logo for universal email client compatibility');
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -425,7 +430,7 @@ Responde directamente a este email para contactar con la persona.
                 
                 <!-- Compact header with logo -->
                 <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  <img src="${logoUrl}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px; display: block; margin: 0 auto;" />
+                  ${logoHtml}
                 </div>
 
                 <!-- Compact main content -->
