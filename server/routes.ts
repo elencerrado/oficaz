@@ -400,17 +400,21 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Use styled text logo for universal email client compatibility
-        const logoHtml = `
-          <div style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); 
-                      padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,122,255,0.2);">
-            <span style="color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
-                         font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-              OFICAZ
-            </span>
-          </div>
-        `;
-        console.log('📧 Using styled text logo for universal email client compatibility');
+        // Load real Oficaz logo with base64 for email compatibility
+        let logoBase64 = '';
+        let logoSrc = '';
+        try {
+          const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+          if (fs.existsSync(logoPath)) {
+            logoBase64 = fs.readFileSync(logoPath).toString('base64');
+            logoSrc = `data:image/png;base64,${logoBase64}`;
+            console.log('📧 Real Oficaz logo loaded for email, size:', logoBase64.length, 'characters');
+          } else {
+            console.error('❌ Logo file not found at:', logoPath);
+          }
+        } catch (error) {
+          console.error('❌ Error loading Oficaz logo:', error);
+        }
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -430,7 +434,10 @@ Responde directamente a este email para contactar con la persona.
                 
                 <!-- Compact header with logo -->
                 <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  ${logoHtml}
+                  ${logoSrc ? 
+                    `<img src="${logoSrc}" alt="Oficaz" style="height: 20px; width: auto; max-width: 100px; display: block; margin: 0 auto; border: none; outline: none;" />` : 
+                    `<div style="height: 20px; display: flex; align-items: center; justify-content: center;"><span style="color: #007AFF; font-size: 16px; font-weight: 600;">Oficaz</span></div>`
+                  }
                 </div>
 
                 <!-- Compact main content -->

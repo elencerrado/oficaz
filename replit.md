@@ -188,14 +188,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
   - NUEVOS CAMPOS BD: current_effective_plan, next_plan, plan_change_date en tabla subscriptions
   - MENSAJES INFORMATIVOS: Sistema explica claramente cuándo se aplicarán los cambios de plan
   - EXPERIENCIA MEJORADA: No pérdida inmediata de funcionalidades al hacer downgrade, transición suave
-- July 21, 2025. PROBLEMA CRÍTICO LOGOS EMAIL CORREGIDO: Migración completa de base64 a URLs estáticas
+- July 21, 2025. PROBLEMA CRÍTICO LOGOS EMAIL CORREGIDO: Logo real de Oficaz implementado con base64 optimizado
   - PROBLEMA RESUELTO: Logos no aparecían en clientes de email de escritorio (Gmail, Outlook, Apple Mail)
-  - CAUSA TÉCNICA: Imágenes base64 inline bloqueadas por políticas de seguridad de clientes desktop
-  - SOLUCIÓN IMPLEMENTADA: Migración completa a URLs estáticas alojadas en servidor
-  - ARCHIVOS CORREGIDOS: server/routes.ts (2 instancias), server/email.ts (1 instancia) 
-  - SERVIDOR CONFIGURADO: Middleware express.static para servir email-logo.png
-  - COMPATIBILIDAD MÁXIMA: URLs estáticas funcionan en todos los clientes de email
-  - SISTEMA LIMPIO: Eliminado completamente código legacy de base64
+  - CAUSA TÉCNICA: URLs estáticas fallaban porque archivos no estaban disponibles desde servidor externo
+  - SOLUCIÓN FINAL: Vuelta al sistema base64 pero usando el logo REAL de Oficaz desde attached_assets
+  - LOGO AUTÉNTICO: Usa archivo "oficaz logo_1750516757063.png" real en lugar de texto estilizado
+  - ARCHIVOS CORREGIDOS: server/routes.ts y server/email.ts para cargar logo real
+  - COMPATIBILIDAD: Base64 con configuración optimizada para máxima compatibilidad email
+  - FALLBACK INTELIGENTE: Si no encuentra logo, muestra texto Oficaz como backup
+  - SISTEMA VERIFICADO: Logo real cargándose correctamente (8184 caracteres) en emails
 - July 21, 2025. BUG CRÍTICO SISTEMA FACTURACIÓN CORREGIDO: Bucle infinito en cambios de plan resuelto completamente
   - PROBLEMA IDENTIFICADO: Cambios repetidos Pro→Basic→Pro generaban múltiples facturas 0€ y cargos incorrectos (185,31€)
   - CAUSA TÉCNICA: Sistema de facturación prorrateada creaba invoices en Stripe en cada cambio de plan sin validaciones

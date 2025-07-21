@@ -64,17 +64,21 @@ export async function sendEmployeeWelcomeEmail(
       }
     });
 
-    // Use styled text logo for universal email client compatibility
-    const logoHtml = `
-      <div style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); 
-                  padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,122,255,0.2);">
-        <span style="color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
-                     font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
-          OFICAZ
-        </span>
-      </div>
-    `;
-    console.log('📧 Using styled text logo for universal email client compatibility');
+    // Load real Oficaz logo with base64 for email compatibility
+    let logoBase64 = '';
+    let logoSrc = '';
+    try {
+      const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+      if (fs.existsSync(logoPath)) {
+        logoBase64 = fs.readFileSync(logoPath).toString('base64');
+        logoSrc = `data:image/png;base64,${logoBase64}`;
+        console.log('📧 Real Oficaz logo loaded for welcome email, size:', logoBase64.length, 'characters');
+      } else {
+        console.error('❌ Logo file not found at:', logoPath);
+      }
+    } catch (error) {
+      console.error('❌ Error loading Oficaz logo:', error);
+    }
 
     const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
     
@@ -91,7 +95,10 @@ export async function sendEmployeeWelcomeEmail(
           
           <!-- Header with logo -->
           <div style="background-color: #ffffff; padding: 15px; text-align: center; border-bottom: 1px solid #e5e7eb;">
-            ${logoHtml}
+            ${logoSrc ? 
+              `<img src="${logoSrc}" alt="Oficaz" style="height: 35px; width: auto; max-width: 150px; display: block; margin: 0 auto; border: none; outline: none;" />` : 
+              `<div style="height: 35px; display: flex; align-items: center; justify-content: center;"><span style="color: #007AFF; font-size: 20px; font-weight: 600;">Oficaz</span></div>`
+            }
           </div>
           
           <!-- Content -->
