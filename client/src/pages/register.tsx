@@ -17,6 +17,7 @@ import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft,
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import { useAuth } from '@/hooks/use-auth';
 
 // Validation function for company uniqueness
 const validateCompanyField = async (field: string, value: string) => {
@@ -107,6 +108,7 @@ interface RegisterProps {
 export default function Register({ byInvitation = false, invitationEmail, invitationToken, invitationWelcomeMessage }: RegisterProps = {}) {
   const [, setLocation] = useLocation();
   const search = useSearch();
+  const { register } = useAuth();
 
   const [isLoading, setIsLoading] = useState(false);
   const [validatingStep2, setValidatingStep2] = useState(false);
@@ -285,13 +287,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       };
       
       console.log('Final registration data:', finalData);
-      const response = await apiRequest('POST', '/api/auth/register', finalData);
       
-      if (response.ok) {
+      try {
+        await register(finalData);
         console.log('Registration successful, redirecting to dashboard');
         setLocation('/dashboard');
-      } else {
-        console.error('Registration failed with response:', response);
+      } catch (error: any) {
+        console.error('Registration failed:', error);
+        alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
       }
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
