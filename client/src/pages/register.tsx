@@ -288,10 +288,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       const response = await apiRequest('POST', '/api/auth/register', finalData);
       
       if (response.ok) {
+        console.log('Registration successful, redirecting to dashboard');
         setLocation('/dashboard');
+      } else {
+        console.error('Registration failed with response:', response);
       }
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
+      // Show user-friendly error message
+      alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
     } finally {
       setIsLoading(false);
     }

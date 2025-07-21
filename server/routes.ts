@@ -572,7 +572,9 @@ Responde directamente a este email para contactar con la persona.
   // Auth routes
   app.post('/api/auth/register', async (req, res) => {
     try {
+      console.log('Registration attempt with body:', JSON.stringify(req.body, null, 2));
       const data = companyRegistrationSchema.parse(req.body);
+      console.log('Schema validation passed, data:', JSON.stringify(data, null, 2));
       const { verificationToken, invitationToken } = req.body;
       
       // Validate token (either verification or invitation)

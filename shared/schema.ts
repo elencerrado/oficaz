@@ -515,8 +515,8 @@ export const companyRegistrationSchema = z.object({
   selectedPlan: z.string().min(1, "Plan de suscripción requerido"),
   
   // Optional tokens for registration
-  verificationToken: z.string().nullable().optional(),
-  invitationToken: z.string().nullable().optional(),
+  verificationToken: z.string().optional().nullable(),
+  invitationToken: z.string().optional().nullable(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
