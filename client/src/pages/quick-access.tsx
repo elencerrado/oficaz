@@ -32,7 +32,7 @@ const quickUsers: QuickUser[] = [
   {
     id: "admin-test",
     name: "Andrés González Rubio",
-    email: "12345678Z",
+    email: "a.gonzalez@test.com",
     password: "123456",
     role: "Administrador",
     company: "Test Company",
