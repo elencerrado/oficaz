@@ -14,8 +14,8 @@ import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
-import { eq, and, desc, sql } from 'drizzle-orm';
-import { subscriptions, companies, features } from '@shared/schema';
+import { eq, and, desc, sql, not, inArray } from 'drizzle-orm';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
@@ -45,6 +45,290 @@ const upload = multer({
   dest: uploadDir,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
+
+// ⚠️ PROTECTED - DO NOT MODIFY
+// Demo data generation for new companies
+async function generateDemoData(companyId: number) {
+  try {
+    console.log('🎭 Generating demo data for company:', companyId);
+    
+    // Mark company as having demo data
+    await db.update(companies)
+      .set({ hasDemoData: true })
+      .where(eq(companies.id, companyId));
+    
+    // Demo employees data - 4 employees (2 men, 2 women)
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    
+    const demoEmployees = [
+      // Men
+      {
+        fullName: "Carlos Martínez López",
+        companyEmail: "carlos.martinez@demo.com",
+        dni: "12345678A",
+        position: "Desarrollador Senior",
+        role: "employee" as const,
+        startDate: new Date(currentYear - 2, 3, 15), // 2 años atrás
+      },
+      {
+        fullName: "Miguel Fernández García",
+        companyEmail: "miguel.fernandez@demo.com", 
+        dni: "87654321B",
+        position: "Diseñador UX/UI",
+        role: "manager" as const,
+        startDate: new Date(currentYear - 1, 8, 10), // 1 año atrás
+      },
+      // Women
+      {
+        fullName: "Ana Rodríguez Sánchez",
+        companyEmail: "ana.rodriguez@demo.com",
+        dni: "11111111C", 
+        position: "Analista de Datos",
+        role: "employee" as const,
+        startDate: new Date(currentYear - 1, 1, 20), // 1 año atrás
+      },
+      {
+        fullName: "Laura González Martín",
+        companyEmail: "laura.gonzalez@demo.com",
+        dni: "22222222D",
+        position: "Coordinadora de Proyectos", 
+        role: "employee" as const,
+        startDate: new Date(currentYear, 0, 8), // Este año
+      }
+    ];
+
+    // Create demo employees
+    const createdEmployees = [];
+    for (const employeeData of demoEmployees) {
+      const hashedPassword = await bcrypt.hash('Demo123!', 10);
+      
+      const employee = await storage.createUser({
+        companyEmail: employeeData.companyEmail,
+        password: hashedPassword,
+        fullName: employeeData.fullName,
+        dni: employeeData.dni,
+        position: employeeData.position,
+        role: employeeData.role,
+        companyId: companyId,
+        startDate: employeeData.startDate,
+        isActive: true,
+        totalVacationDays: "25.0",
+        createdBy: null,
+      });
+      
+      createdEmployees.push(employee);
+      console.log(`👤 Created demo employee: ${employee.fullName}`);
+    }
+
+    // Generate demo data for current month
+    await generateCurrentMonthDemoData(companyId, createdEmployees);
+    
+    console.log('✅ Demo data generation completed for company:', companyId);
+    
+  } catch (error) {
+    console.error('❌ Error generating demo data:', error);
+  }
+}
+
+// Generate realistic demo data for the current month
+async function generateCurrentMonthDemoData(companyId: number, employees: any[]) {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  // Generate work sessions for current month
+  for (const employee of employees) {
+    await generateDemoWorkSessions(employee, currentYear, currentMonth, daysInMonth);
+  }
+  
+  // Generate vacation requests
+  await generateDemoVacationRequests(companyId, employees);
+  
+  // Generate messages
+  await generateDemoMessages(companyId, employees);
+  
+  // Generate reminders
+  await generateDemoReminders(companyId, employees);
+  
+  console.log('📊 Generated current month demo data for', employees.length, 'employees');
+}
+
+// Generate realistic work sessions for an employee
+async function generateDemoWorkSessions(employee: any, year: number, month: number, daysInMonth: number) {
+  const workDays = [1, 2, 3, 4, 5]; // Monday to Friday
+  
+  for (let day = 1; day <= Math.min(daysInMonth, new Date().getDate()); day++) {
+    const date = new Date(year, month, day);
+    const dayOfWeek = date.getDay();
+    
+    // Skip weekends
+    if (!workDays.includes(dayOfWeek)) continue;
+    
+    // 90% chance of working on weekdays
+    if (Math.random() > 0.9) continue;
+    
+    // Generate realistic work hours (8:00-18:00 range)
+    const startHour = 8 + Math.floor(Math.random() * 2); // 8-9 AM
+    const startMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+    const workHours = 7.5 + Math.random() * 1.5; // 7.5-9 hours
+    
+    const clockInTime = new Date(date);
+    clockInTime.setHours(startHour, startMinute, 0, 0);
+    
+    const clockOutTime = new Date(clockInTime);
+    clockOutTime.setTime(clockOutTime.getTime() + workHours * 60 * 60 * 1000);
+    
+    // Create work session
+    await storage.createWorkSession({
+      userId: employee.id,
+      clockInTime,
+      clockOutTime,
+      totalHours: Number(workHours.toFixed(1)),
+    });
+    
+    // 60% chance of having a break
+    if (Math.random() < 0.6) {
+      const breakStart = new Date(clockInTime.getTime() + (3 + Math.random() * 2) * 60 * 60 * 1000);
+      const breakDuration = 30 + Math.random() * 60; // 30-90 minutes
+      const breakEnd = new Date(breakStart.getTime() + breakDuration * 60 * 1000);
+      
+      await storage.createBreakPeriod({
+        userId: employee.id,
+        startTime: breakStart,
+        endTime: breakEnd,
+      });
+    }
+  }
+}
+
+// Generate demo vacation requests
+async function generateDemoVacationRequests(companyId: number, employees: any[]) {
+  const now = new Date();
+  const vacationRequests = [
+    // Approved vacation from earlier this month
+    {
+      employee: employees[0],
+      startDate: new Date(now.getFullYear(), now.getMonth(), 5),
+      endDate: new Date(now.getFullYear(), now.getMonth(), 7),
+      status: 'approved' as const,
+      reason: 'Vacaciones familiares',
+    },
+    // Pending vacation for next month
+    {
+      employee: employees[1], 
+      startDate: new Date(now.getFullYear(), now.getMonth() + 1, 15),
+      endDate: new Date(now.getFullYear(), now.getMonth() + 1, 19),
+      status: 'pending' as const,
+      reason: 'Descanso personal',
+    },
+    // Approved vacation for later this month
+    {
+      employee: employees[2],
+      startDate: new Date(now.getFullYear(), now.getMonth(), 28),
+      endDate: new Date(now.getFullYear(), now.getMonth() + 1, 2),
+      status: 'approved' as const,
+      reason: 'Puente largo',
+    }
+  ];
+  
+  for (const request of vacationRequests) {
+    await storage.createVacationRequest({
+      userId: request.employee.id,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      status: request.status,
+      reason: request.reason,
+      createdBy: request.employee.id,
+    });
+  }
+  
+  console.log('🏖️ Generated', vacationRequests.length, 'demo vacation requests');
+}
+
+// Generate demo messages
+async function generateDemoMessages(companyId: number, employees: any[]) {
+  const demoMessages = [
+    {
+      sender: employees[0],
+      content: '¡Hola equipo! ¿Cómo va el proyecto de la nueva funcionalidad?',
+      isToAllEmployees: true,
+    },
+    {
+      sender: employees[1],
+      recipient: employees[2],
+      content: 'Ana, ¿podrías revisar los datos del último informe? Gracias.',
+      isToAllEmployees: false,
+    },
+    {
+      sender: employees[2],
+      content: 'He terminado el análisis de datos. Los resultados están muy prometedores.',
+      isToAllEmployees: true,
+    },
+    {
+      sender: employees[3],
+      recipient: employees[0],
+      content: 'Carlos, necesito coordinar contigo las fechas del próximo sprint.',
+      isToAllEmployees: false,
+    }
+  ];
+  
+  for (const message of demoMessages) {
+    await storage.createMessage({
+      senderId: message.sender.id,
+      recipientId: message.recipient?.id || null,
+      content: message.content,
+      isToAllEmployees: message.isToAllEmployees,
+    });
+  }
+  
+  console.log('💬 Generated', demoMessages.length, 'demo messages');
+}
+
+// Generate demo reminders
+async function generateDemoReminders(companyId: number, employees: any[]) {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  nextWeek.setHours(14, 0, 0, 0);
+  
+  const demoReminders = [
+    {
+      title: 'Reunión de equipo',
+      description: 'Reunión semanal para revisar el progreso del proyecto',
+      dueDateTime: tomorrow,
+      employee: employees[0],
+    },
+    {
+      title: 'Entrega de informe mensual',
+      description: 'Completar y enviar el informe de análisis de datos',
+      dueDateTime: nextWeek,
+      employee: employees[2],
+    },
+    {
+      title: 'Revisión de diseños',
+      description: 'Presentar los nuevos mockups al cliente',
+      dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      employee: employees[1],
+    }
+  ];
+  
+  for (const reminder of demoReminders) {
+    await storage.createReminder({
+      title: reminder.title,
+      description: reminder.description,
+      dueDateTime: reminder.dueDateTime,
+      userId: reminder.employee.id,
+      createdBy: reminder.employee.id,
+    });
+  }
+  
+  console.log('⏰ Generated', demoReminders.length, 'demo reminders');
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Company validation endpoints
@@ -678,6 +962,9 @@ Responde directamente a este email para contactar con la persona.
         isTrialActive: true,
         maxUsers: 5, // Default for basic plan
       });
+
+      // Generate demo data for new company
+      await generateDemoData(company.id);
 
       const token = generateToken({
         id: user.id,
@@ -4877,9 +5164,90 @@ startxref
     }
   });
 
+  // Demo data management endpoints
+  app.get('/api/demo-data/status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
+      res.json({ hasDemoData: company.hasDemoData || false });
+    } catch (error) {
+      console.error('Error checking demo data status:', error);
+      res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
+    }
+  });
 
+  app.delete('/api/demo-data/clear', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
 
+      if (!company.hasDemoData) {
+        return res.status(400).json({ message: 'No hay datos de prueba para eliminar' });
+      }
 
+      console.log('🧹 Clearing demo data for company:', company.id);
+
+      // Get demo employees (exclude admin user)
+      const adminUser = await storage.getUser(userId);
+      const demoEmployees = await db.select()
+        .from(users)
+        .where(and(
+          eq(users.companyId, company.id),
+          not(eq(users.id, userId)) // Exclude admin
+        ));
+
+      const demoEmployeeIds = demoEmployees.map(emp => emp.id);
+
+      if (demoEmployeeIds.length > 0) {
+        // Delete demo data in proper order to respect foreign keys
+        await db.delete(breakPeriods)
+          .where(inArray(breakPeriods.userId, demoEmployeeIds));
+        
+        await db.delete(workSessions)
+          .where(inArray(workSessions.userId, demoEmployeeIds));
+        
+        await db.delete(vacationRequests)
+          .where(inArray(vacationRequests.userId, demoEmployeeIds));
+        
+        await db.delete(messages)
+          .where(inArray(messages.senderId, demoEmployeeIds));
+        
+        await db.delete(reminders)
+          .where(inArray(reminders.userId, demoEmployeeIds));
+        
+        await db.delete(documents)
+          .where(inArray(documents.userId, demoEmployeeIds));
+        
+        // Delete demo employees
+        await db.delete(users)
+          .where(and(
+            eq(users.companyId, company.id),
+            not(eq(users.id, userId)) // Keep admin
+          ));
+      }
+
+      // Mark company as no longer having demo data
+      await db.update(companies)
+        .set({ hasDemoData: false })
+        .where(eq(companies.id, company.id));
+
+      console.log('✅ Demo data cleared for company:', company.id);
+      res.json({ message: 'Datos de prueba eliminados correctamente' });
+
+    } catch (error) {
+      console.error('Error clearing demo data:', error);
+      res.status(500).json({ message: 'Error al eliminar los datos de prueba' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

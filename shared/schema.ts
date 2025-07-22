@@ -37,6 +37,9 @@ export const companies = pgTable("companies", {
   plan: varchar("plan", { length: 50 }).notNull().default("basic"), // basic, pro, master
   customFeatures: jsonb("custom_features").default('{}'), // {messages: true, documents: false, etc}
   
+  // Datos de prueba
+  hasDemoData: boolean("has_demo_data").default(false).notNull(),
+  
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

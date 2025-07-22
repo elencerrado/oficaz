@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { ClockWidget } from '@/components/time-tracking/clock-widget';
 import { VacationModal } from '@/components/vacation/vacation-modal';
+import { DemoDataBanner } from '@/components/demo-data-banner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -104,6 +105,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Demo Data Banner */}
+      <DemoDataBanner />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
