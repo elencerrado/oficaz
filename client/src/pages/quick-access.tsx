@@ -120,7 +120,7 @@ export default function QuickAccess() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            dniOrEmail: user.email,
+            username: user.email,
             password: user.password,
             companyAlias: user.companyAlias
           }),
