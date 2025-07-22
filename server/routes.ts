@@ -416,10 +416,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
-      const { username, password, companyAlias, rememberMe } = req.body;
+      const { dniOrEmail, username, password, companyAlias, rememberMe } = req.body;
+      
+      // Support both dniOrEmail (frontend) and username (quickaccess) fields
+      const userIdentifier = dniOrEmail || username;
       
       // Validate required fields
-      if (!username || !password || !companyAlias) {
+      if (!userIdentifier || !password || !companyAlias) {
         return res.status(400).json({ message: 'Todos los campos son requeridos' });
       }
       
@@ -431,19 +434,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find user by different possible username formats
       let user;
-      if (username.includes('@')) {
+      if (userIdentifier.includes('@')) {
         // Email login
         user = await db.select().from(users)
           .where(and(
             eq(users.companyId, company.id),
-            eq(users.companyEmail, username.toLowerCase())
+            eq(users.companyEmail, userIdentifier.toLowerCase())
           ));
       } else {
         // DNI login
         user = await db.select().from(users)
           .where(and(
             eq(users.companyId, company.id),
-            eq(users.dni, username.toUpperCase())
+            eq(users.dni, userIdentifier.toUpperCase())
           ));
       }
 
@@ -539,6 +542,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error updating subscription plan:', error);
       res.status(500).json({ message: 'Error updating subscription plan' });
+    }
+  });
+
+  // Registration status endpoint
+  app.get('/api/registration-status', async (req, res) => {
+    try {
+      // For now, registration is always open
+      res.json({ open: true });
+    } catch (error: any) {
+      console.error('Error checking registration status:', error);
+      res.status(500).json({ message: 'Error checking registration status' });
+    }
+  });
+
+  // Public subscription plans endpoint
+  app.get('/api/public/subscription-plans', async (req, res) => {
+    try {
+      const plans = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.id);
+      res.json(plans);
+    } catch (error: any) {
+      console.error('Error fetching public subscription plans:', error);
+      res.status(500).json({ message: 'Error fetching subscription plans' });
     }
   });
 
