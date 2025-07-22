@@ -1011,13 +1011,16 @@ const AccountManagement = () => {
       if (data.company) {
         setCompanyData(prev => ({
           ...prev,
-          logoUrl: data.company.logoUrl || logoUrl
+          logoUrl: data.company.logoUrl
         }));
       }
       
       // Force immediate refresh of auth data to update company info including logo
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Refresh authentication context to update logo in all components
+      refreshUser();
     },
     onError: (error: Error) => {
       const errorMessage = error.message.includes('CIF') 
@@ -1060,6 +1063,9 @@ const AccountManagement = () => {
       
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Refresh authentication context to update logo in all components
+      refreshUser();
       
     } catch (error: any) {
       toast({
