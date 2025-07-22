@@ -3,9 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Euro, Users } from 'lucide-react';
+import { 
+  Pencil, Euro, Users, Settings, MessageSquare, FileText, 
+  Calendar, Clock, BarChart3, Palette, Upload, Zap, Bell
+} from 'lucide-react';
 
 interface SubscriptionPlan {
   id: number;
@@ -32,6 +36,47 @@ interface SubscriptionPlan {
   updatedAt: string;
 }
 
+interface Feature {
+  id: number;
+  key: string;
+  name: string;
+  basicEnabled: boolean;
+  proEnabled: boolean;
+  masterEnabled: boolean;
+}
+
+// Feature icons mapping
+const featureIcons = {
+  messages: MessageSquare,
+  documents: FileText,
+  vacation: Calendar,
+  time: Clock,
+  timeTracking: Clock,
+  analytics: BarChart3,
+  customization: Palette,
+  logoUpload: Upload,
+  api: Zap,
+  reminders: Bell,
+  employee_time_edit: Settings,
+  employee_time_edit_permission: Settings,
+};
+
+// Feature labels mapping
+const featureLabels = {
+  messages: 'Mensajes',
+  documents: 'Documentos',
+  vacation: 'Vacaciones',
+  time: 'Fichajes',
+  timeTracking: 'Fichajes',
+  analytics: 'Analíticas',
+  customization: 'Personalización',
+  logoUpload: 'Subida de Logo',
+  api: 'API',
+  reminders: 'Recordatorios',
+  employee_time_edit: 'Edición de Tiempos',
+  employee_time_edit_permission: 'Permisos de Edición',
+};
+
 export default function SuperAdminPlans() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -50,6 +95,21 @@ export default function SuperAdminPlans() {
         },
       });
       if (!response.ok) throw new Error('Failed to fetch plans');
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const { data: dbFeatures, isLoading: featuresLoading } = useQuery({
+    queryKey: ['/api/super-admin/features'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/features', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch features');
       return response.json();
     },
     retry: false,
@@ -91,6 +151,73 @@ export default function SuperAdminPlans() {
     },
   });
 
+  const updateFeatureMutation = useMutation({
+    mutationFn: async ({ featureId, data }: { featureId: number; data: any }) => {
+      const response = await fetch(`/api/super-admin/features/${featureId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('superAdminToken')}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al actualizar la feature');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Feature actualizada",
+        description: "La configuración de la feature ha sido actualizada exitosamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/features'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-plans'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Error al actualizar la feature: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFeatureToggle = (planId: number, featureKey: string, enabled: boolean) => {
+    // Buscar la feature en la base de datos por su key
+    const feature = dbFeatures?.find((f: Feature) => f.key === featureKey);
+    if (!feature) return;
+
+    // Buscar el plan para determinar qué columna actualizar
+    const plan = plans?.find((p: SubscriptionPlan) => p.id === planId);
+    if (!plan) return;
+
+    let updateData: any = {};
+    
+    // Determinar qué columna actualizar según el nombre del plan
+    switch (plan.name.toLowerCase()) {
+      case 'basic':
+        updateData = { basicEnabled: enabled };
+        break;
+      case 'pro':
+        updateData = { proEnabled: enabled };
+        break;
+      case 'master':
+        updateData = { masterEnabled: enabled };
+        break;
+      default:
+        console.error('Plan name not recognized:', plan.name);
+        return;
+    }
+
+    updateFeatureMutation.mutate({
+      featureId: feature.id,
+      data: updateData
+    });
+  };
+
   const handlePriceChange = (planId: number, newPrice: string) => {
     if (newPrice && !isNaN(parseFloat(newPrice))) {
       updatePlanMutation.mutate({
@@ -121,13 +248,24 @@ export default function SuperAdminPlans() {
     setEditingMaxUsers(null);
   };
 
-  if (plansLoading) {
+  if (plansLoading || featuresLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
       </div>
     );
   }
+
+  // Crear lista de features desde la base de datos con iconos correspondientes
+  const features = dbFeatures?.map((feature: Feature) => ({
+    key: feature.key,
+    label: feature.name,
+    icon: featureIcons[feature.key as keyof typeof featureIcons] || Settings,
+    dbId: feature.id,
+    basicEnabled: feature.basicEnabled,
+    proEnabled: feature.proEnabled,
+    masterEnabled: feature.masterEnabled
+  })) || [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
@@ -137,7 +275,7 @@ export default function SuperAdminPlans() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white">Gestión de Planes</h1>
-              <p className="text-white/60 mt-1">Configura los planes de suscripción y precios</p>
+              <p className="text-white/60 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
             </div>
             <Button 
               variant="ghost" 
@@ -150,140 +288,136 @@ export default function SuperAdminPlans() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="grid gap-6">
-          {plans?.map((plan: SubscriptionPlan) => (
-            <Card key={plan.id} className="bg-white/10 backdrop-blur-xl border-white/20">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {editingPlanName === plan.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={newDisplayName}
-                          onChange={(e) => setNewDisplayName(e.target.value)}
-                          className="h-8 bg-white/10 border-white/20 text-white"
-                          onBlur={() => saveName(plan.id)}
-                          onKeyDown={(e) => e.key === 'Enter' && saveName(plan.id)}
-                          autoFocus
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-white text-xl capitalize">
-                          {plan.displayName}
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-white/60 hover:text-white h-6 w-6 p-0"
-                          onClick={() => handleNameEdit(plan.id, plan.displayName)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                    <Badge 
-                      variant={plan.isActive ? "default" : "secondary"}
-                      className={plan.isActive ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}
-                    >
-                      {plan.isActive ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Precio */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Euro className="h-4 w-4 text-blue-400" />
-                      <label className="text-white/80 text-sm font-medium">Precio mensual</label>
-                    </div>
-                    {editingPrice === plan.id ? (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        defaultValue={plan.pricePerUser}
-                        className="bg-white/10 border-white/20 text-white"
-                        onBlur={(e) => handlePriceChange(plan.id, e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handlePriceChange(plan.id, e.currentTarget.value)}
-                        autoFocus
-                      />
-                    ) : (
-                      <div 
-                        className="cursor-pointer hover:bg-white/10 p-2 rounded border border-white/20"
-                        onClick={() => setEditingPrice(plan.id)}
-                      >
-                        <span className="text-white font-semibold text-lg">
-                          €{plan.pricePerUser}
-                        </span>
-                        <span className="text-white/60 text-sm ml-1">/mes</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Límite de usuarios */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-green-400" />
-                      <label className="text-white/80 text-sm font-medium">Límite de usuarios</label>
-                    </div>
-                    {editingMaxUsers === plan.id ? (
-                      <Input
-                        type="number"
-                        placeholder="Sin límite"
-                        defaultValue={plan.maxUsers || ''}
-                        className="bg-white/10 border-white/20 text-white"
-                        onBlur={(e) => handleMaxUsersChange(plan.id, e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleMaxUsersChange(plan.id, e.currentTarget.value)}
-                        autoFocus
-                      />
-                    ) : (
-                      <div 
-                        className="cursor-pointer hover:bg-white/10 p-2 rounded border border-white/20"
-                        onClick={() => setEditingMaxUsers(plan.id)}
-                      >
-                        <span className="text-white font-semibold text-lg">
-                          {plan.maxUsers || '∞'}
-                        </span>
-                        <span className="text-white/60 text-sm ml-1">usuarios</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Features disponibles */}
-                <div className="pt-4 border-t border-white/20">
-                  <h4 className="text-white/80 text-sm font-medium mb-3">Funcionalidades incluidas:</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {Object.entries(plan.features)
-                      .filter(([, enabled]) => enabled)
-                      .map(([feature]) => (
-                        <Badge 
-                          key={feature} 
-                          variant="outline" 
-                          className="border-white/20 text-white/80 bg-white/5"
-                        >
-                          {feature === 'timeTracking' ? 'Fichajes' :
-                           feature === 'vacation' ? 'Vacaciones' :
-                           feature === 'messages' ? 'Mensajes' :
-                           feature === 'documents' ? 'Documentos' :
-                           feature === 'reminders' ? 'Recordatorios' :
-                           feature === 'analytics' ? 'Analíticas' :
-                           feature === 'logoUpload' ? 'Logo personalizado' :
-                           feature === 'api' ? 'API' :
-                           feature === 'customization' ? 'Personalización' :
-                           feature === 'employee_time_edit' ? 'Edición de tiempos' :
-                           feature}
-                        </Badge>
-                      ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Plans Configuration Table */}
+        <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+          <CardHeader>
+            <CardTitle className="text-white">Configuración de Planes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/20">
+                    <th className="text-left py-4 px-4 text-white font-medium">Funcionalidad</th>
+                    {plans?.map((plan: SubscriptionPlan) => (
+                      <th key={plan.id} className="text-center py-4 px-4 min-w-[180px]">
+                        <div className="space-y-2">
+                          {editingPlanName === plan.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={newDisplayName}
+                                onChange={(e) => setNewDisplayName(e.target.value)}
+                                className="h-8 bg-white/10 border-white/20 text-white text-center"
+                                onBlur={() => saveName(plan.id)}
+                                onKeyDown={(e) => e.key === 'Enter' && saveName(plan.id)}
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <div 
+                              className="cursor-pointer hover:bg-white/10 px-2 py-1 rounded"
+                              onClick={() => handleNameEdit(plan.id, plan.displayName)}
+                            >
+                              <h3 className="text-white font-semibold text-lg capitalize">
+                                {plan.displayName}
+                              </h3>
+                            </div>
+                          )}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-center gap-1">
+                              <Euro className="h-3 w-3 text-yellow-400" />
+                              {editingPrice === plan.id ? (
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  defaultValue={plan.pricePerUser}
+                                  className="h-7 w-20 bg-white/10 border-white/20 text-white text-center text-xs"
+                                  onBlur={(e) => handlePriceChange(plan.id, e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handlePriceChange(plan.id, e.currentTarget.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className="cursor-pointer hover:bg-white/10 px-1 rounded text-white text-sm"
+                                  onClick={() => setEditingPrice(plan.id)}
+                                >
+                                  {plan.pricePerUser}
+                                </span>
+                              )}
+                              <span className="text-white/60 text-xs">€ fijo/mes</span>
+                            </div>
+                            <div className="flex items-center justify-center gap-1">
+                              <Users className="h-3 w-3 text-blue-400" />
+                              {editingMaxUsers === plan.id ? (
+                                <Input
+                                  type="number"
+                                  placeholder="∞"
+                                  defaultValue={plan.maxUsers || ''}
+                                  className="h-7 w-16 bg-white/10 border-white/20 text-white text-center text-xs"
+                                  onBlur={(e) => handleMaxUsersChange(plan.id, e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && handleMaxUsersChange(plan.id, e.currentTarget.value)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span 
+                                  className="cursor-pointer hover:bg-white/10 px-1 rounded text-white text-xs"
+                                  onClick={() => setEditingMaxUsers(plan.id)}
+                                >
+                                  {plan.maxUsers || '∞'}
+                                </span>
+                              )}
+                              <span className="text-white/60 text-xs">usuarios</span>
+                            </div>
+                          </div>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {features.map((feature) => (
+                    <tr key={feature.key} className="border-b border-white/10 hover:bg-white/5">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <feature.icon className="h-5 w-5 text-white/70" />
+                          <span className="font-medium text-white">
+                            {feature.label}
+                          </span>
+                        </div>
+                      </td>
+                      {plans?.map((plan: SubscriptionPlan) => {
+                        // Determinar si la feature está habilitada para este plan
+                        let isEnabled = false;
+                        switch (plan.name.toLowerCase()) {
+                          case 'basic':
+                            isEnabled = feature.basicEnabled;
+                            break;
+                          case 'pro':
+                            isEnabled = feature.proEnabled;
+                            break;
+                          case 'master':
+                            isEnabled = feature.masterEnabled;
+                            break;
+                        }
+                        
+                        return (
+                          <td key={`${plan.id}-${feature.key}`} className="py-4 px-4 text-center">
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={(enabled) => handleFeatureToggle(plan.id, feature.key, enabled)}
+                              disabled={updateFeatureMutation.isPending}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
