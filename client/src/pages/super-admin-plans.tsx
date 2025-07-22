@@ -376,7 +376,7 @@ export default function SuperAdminPlans() {
                   </tr>
                 </thead>
                 <tbody>
-                  {features.map((feature) => (
+                  {features.map((feature: any) => (
                     <tr key={feature.key} className="border-b border-white/10 hover:bg-white/5">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
