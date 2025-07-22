@@ -23,16 +23,16 @@ const quickUsers: QuickUser[] = [
   {
     id: "super-admin",
     name: "Super Admin",
-    email: "admin@oficaz.com",
-    password: "admin123",
+    email: "superadmin",
+    password: "SuperAdmin2025!",
     role: "Super Administrador",
     icon: <Crown className="w-5 h-5" />,
     color: "bg-gradient-to-r from-purple-500 to-pink-500"
   },
   {
     id: "admin-test",
-    name: "Admin Test Company",
-    email: "admin@test.com",
+    name: "Andrés González Rubio",
+    email: "12345678Z",
     password: "123456",
     role: "Administrador",
     company: "Test Company",
@@ -42,8 +42,8 @@ const quickUsers: QuickUser[] = [
   },
   {
     id: "marta-perez",
-    name: "Marta Pérez García",
-    email: "marta.perez@test.com",
+    name: "Ana Rodríguez Sánchez",
+    email: "ana.rodriguez@test.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -53,8 +53,8 @@ const quickUsers: QuickUser[] = [
   },
   {
     id: "juan-ramirez",
-    name: "Juan José Ramírez Martín",
-    email: "juanramirez2@gmail.com",
+    name: "Carlos Martínez López",
+    email: "carlos.martinez@test.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -94,17 +94,23 @@ export default function QuickAccess() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: user.email,
+            username: user.email,
             password: user.password
           }),
         });
 
         if (response.ok) {
           const result = await response.json();
-          localStorage.setItem('superAdminToken', result.token);
+          localStorage.setItem('token', result.token);
+          localStorage.setItem('authData', JSON.stringify({
+            token: result.token,
+            user: result.user,
+            company: null
+          }));
           setLocation("/super-admin/dashboard");
         } else {
-          throw new Error('Super admin login failed');
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Super admin login failed');
         }
       } else {
         // Regular user login - simulate the normal login flow

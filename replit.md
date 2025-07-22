@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 22, 2025. SISTEMA SUPER ADMIN Y DEMO COMPLETAMENTE FUNCIONAL: Acceso rápido y generación de datos operativo
+  - CORREGIDO: QuickAccess ahora usa credenciales correctas (username: "superadmin", password: "SuperAdmin2025!")
+  - PROBLEMA RESUELTO: Campo 'email' cambiado a 'username' en payload de super admin login
+  - TOKEN STORAGE: Sistema de almacenamiento de tokens unificado con authData para super admin
+  - RUTA /FAST: Completamente operativa para acceso rápido de testing con interface mejorada
+  - DEMO DATA: Sistema de generación dinámica de datos demo protegido con autenticación
+  - ENDPOINTS OPERATIVOS: /api/demo-data/generate, /status, /clear requieren token válido
+  - DEBUGGING: Logs de autenticación activados para identificar problemas de tokens
+  - VERIFICADO: Super admin dashboard carga correctamente con estadísticas y lista de empresas
 - July 22, 2025. BUG CRÍTICO AUTENTICACIÓN POST-REGISTRO RESUELTO: Features ahora aparecen habilitadas inmediatamente tras registro
   - PROBLEMA IDENTIFICADO: Usuarios reportaban features deshabilitadas tras registro hasta recargar página manualmente
   - CAUSA TÉCNICA: Endpoint /api/auth/register no devolvía datos de suscripción, contexto no se actualizaba inmediatamente
