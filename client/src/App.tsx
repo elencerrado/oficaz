@@ -40,7 +40,7 @@ import AccessDenied from "@/pages/access-denied";
 import SuperAdminLogin from "@/pages/super-admin-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import SuperAdminPlans from "@/pages/super-admin-plans";
-import SuperAdminFeatures from "@/pages/super-admin-features";
+
 import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
 import SuperAdminCompanies from "@/pages/super-admin-companies";
 import SuperAdminInvitations from "@/pages/super-admin-invitations";
@@ -130,7 +130,7 @@ function Router() {
         <Route path="/super-admin/login" component={SuperAdminLogin} />
         <Route path="/super-admin/dashboard" component={SuperAdminDashboard} />
         <Route path="/super-admin/plans" component={SuperAdminPlans} />
-        <Route path="/super-admin/features" component={SuperAdminFeatures} />
+
         <Route path="/super-admin/companies" component={SuperAdminCompanies} />
         <Route path="/super-admin/companies/:id">
           {(params) => <SuperAdminCompanyDetail companyId={params.id} />}
