@@ -63,6 +63,7 @@ const step3Schema = z.object({
   adminFullName: z.string().min(2, 'El nombre completo debe tener al menos 2 caracteres'),
   adminEmail: z.string().email('Email no válido'),
   adminDni: z.string().min(8, 'El DNI/NIE es requerido'),
+  adminPhone: z.string().min(9, 'El teléfono debe tener al menos 9 dígitos'),
   password: z.string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
@@ -168,6 +169,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       adminFullName: '',
       adminEmail: '',
       adminDni: '',
+      adminPhone: '',
       password: '',
       confirmPassword: '',
       sameAsAdmin: true,
@@ -725,7 +727,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   )}
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <Label htmlFor="adminDni">DNI/NIE del administrador *</Label>
                   <Input
                     id="adminDni"
@@ -736,6 +738,20 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <p className="text-xs text-gray-500">DNI español o NIE para extranjeros</p>
                   {step3Form.formState.errors.adminDni && (
                     <p className="text-sm text-red-600">{step3Form.formState.errors.adminDni.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adminPhone">Teléfono empresarial *</Label>
+                  <Input
+                    id="adminPhone"
+                    className="rounded-xl"
+                    {...step3Form.register('adminPhone')}
+                    placeholder="+34 600 000 000"
+                  />
+                  <p className="text-xs text-gray-500">Teléfono de contacto de la empresa</p>
+                  {step3Form.formState.errors.adminPhone && (
+                    <p className="text-sm text-red-600">{step3Form.formState.errors.adminPhone.message}</p>
                   )}
                 </div>
               </div>

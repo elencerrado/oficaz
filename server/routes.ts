@@ -1018,7 +1018,7 @@ Responde directamente a este email para contactar con la persona.
         password: hashedPassword,
         fullName: data.adminFullName,
         dni: data.adminDni || 'PENDING-DNI',
-        companyPhone: data.adminPhoneNumber || null,
+        companyPhone: data.adminPhone || null,
         companyId: company.id,
         role: 'admin',
         startDate,

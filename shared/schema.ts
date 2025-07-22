@@ -496,7 +496,7 @@ export const companyRegistrationSchema = z.object({
   adminFullName: z.string().min(1, "Nombre completo requerido"),
   adminEmail: z.string().email("Email admin requerido"),
   adminDni: z.string().min(1, "DNI/NIE requerido"),
-  adminPhoneNumber: z.string().optional(),
+  adminPhone: z.string().optional(),
   password: z.string().min(8, "Contraseña debe tener al menos 8 caracteres")
     .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
     .regex(/[a-z]/, "Debe contener al menos una minúscula") 
