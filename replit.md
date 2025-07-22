@@ -182,6 +182,13 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 22, 2025. BUG CRÍTICO AUTENTICACIÓN POST-REGISTRO RESUELTO: Features ahora aparecen habilitadas inmediatamente tras registro
+  - PROBLEMA IDENTIFICADO: Usuarios reportaban features deshabilitadas tras registro hasta recargar página manualmente
+  - CAUSA TÉCNICA: Endpoint /api/auth/register no devolvía datos de suscripción, contexto no se actualizaba inmediatamente
+  - SOLUCIÓN BACKEND: Agregado subscription data al response del registro usando getSubscriptionByCompanyId()
+  - SOLUCIÓN FRONTEND: Función register() ahora llama /api/auth/me para refrescar datos completos post-registro
+  - RESULTADO FINAL: Dashboard admin muestra features habilitadas inmediatamente sin necesidad de recargar página
+  - CAMPO TELÉFONO: adminPhone implementado correctamente en formulario registro paso 3
 - July 21, 2025. SISTEMA DE DOWNGRADE INTELIGENTE IMPLEMENTADO: Retención de características Pro hasta próximo ciclo de facturación
   - FUNCIONALIDAD NUEVA: Usuarios que hacen downgrade (Pro→Basic) mantienen características Pro hasta el próximo ciclo de facturación
   - LÓGICA INTELIGENTE: Sistema diferencia upgrades (inmediatos) vs downgrades (programados)

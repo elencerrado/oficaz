@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await apiRequest('POST', '/api/auth/register', formData);
     console.log('🔐 Register response received:', { hasToken: !!data.token, hasUser: !!data.user });
     
-    // Save auth data to localStorage
+    // Save initial auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
     setAuthData(data);
     console.log('🔐 Auth data saved to localStorage');
@@ -121,6 +121,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCompany(data.company);
     setToken(data.token);
     console.log('🔐 Auth state updated after registration, token length:', data.token?.length);
+    
+    // Immediately refresh user data to get complete subscription info
+    try {
+      console.log('🔄 Refreshing user data to get complete subscription info...');
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
+      
+      if (response.ok) {
+        const completeData = await response.json();
+        console.log('✅ Complete user data refreshed:', { hasSubscription: !!completeData.subscription });
+        
+        // Update state with complete data including subscription
+        setUser(completeData.user);
+        setCompany(completeData.company);
+        
+        // Update authData with complete subscription info
+        const completeAuthData = { 
+          ...data, 
+          user: completeData.user, 
+          company: completeData.company,
+          subscription: completeData.subscription 
+        };
+        setAuthData(completeAuthData);
+        localStorage.setItem('authData', JSON.stringify(completeAuthData));
+        console.log('✅ Complete auth data saved with subscription info');
+      }
+    } catch (error) {
+      console.error('⚠️ Error refreshing user data after registration:', error);
+      // Registration still succeeded, just subscription data might be missing
+    }
     
     return data;
   };

@@ -1034,6 +1034,9 @@ Responde directamente a este email para contactar con la persona.
         companyId: user.companyId,
       });
 
+      // Get subscription data for immediate access to features
+      const subscription = await storage.getSubscriptionByCompanyId(company.id);
+
       res.status(201).json({ 
         message: 'Registro de empresa exitoso',
         user: {
@@ -1044,6 +1047,7 @@ Responde directamente a este email para contactar con la persona.
           companyId: user.companyId
         },
         company,
+        subscription,
         token
       });
     } catch (error: any) {
