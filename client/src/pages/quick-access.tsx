@@ -23,16 +23,16 @@ const quickUsers: QuickUser[] = [
   {
     id: "super-admin",
     name: "Super Admin",
-    email: "superadmin",
-    password: "SuperAdmin2025!",
+    email: "admin@oficaz.com",
+    password: "admin123",
     role: "Super Administrador",
     icon: <Crown className="w-5 h-5" />,
     color: "bg-gradient-to-r from-purple-500 to-pink-500"
   },
   {
     id: "admin-test",
-    name: "Andrés González Rubio",
-    email: "a.gonzalez@test.com",
+    name: "Admin Test Company",
+    email: "admin@test.com",
     password: "123456",
     role: "Administrador",
     company: "Test Company",
@@ -42,8 +42,8 @@ const quickUsers: QuickUser[] = [
   },
   {
     id: "marta-perez",
-    name: "Ana Rodríguez Sánchez",
-    email: "ana.rodriguez@test.com",
+    name: "Marta Pérez García",
+    email: "marta.perez@test.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -53,8 +53,8 @@ const quickUsers: QuickUser[] = [
   },
   {
     id: "juan-ramirez",
-    name: "Carlos Martínez López",
-    email: "carlos.martinez@test.com",
+    name: "Juan José Ramírez Martín",
+    email: "juanramirez2@gmail.com",
     password: "123456",
     role: "Empleado",
     company: "Test Company",
@@ -94,23 +94,17 @@ export default function QuickAccess() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            username: user.email,
+            email: user.email,
             password: user.password
           }),
         });
 
         if (response.ok) {
           const result = await response.json();
-          localStorage.setItem('token', result.token);
-          localStorage.setItem('authData', JSON.stringify({
-            token: result.token,
-            user: result.user,
-            company: null
-          }));
+          localStorage.setItem('superAdminToken', result.token);
           setLocation("/super-admin/dashboard");
         } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Super admin login failed');
+          throw new Error('Super admin login failed');
         }
       } else {
         // Regular user login - simulate the normal login flow
@@ -120,7 +114,7 @@ export default function QuickAccess() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            username: user.email,
+            dniOrEmail: user.email,
             password: user.password,
             companyAlias: user.companyAlias
           }),

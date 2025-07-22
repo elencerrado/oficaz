@@ -15,7 +15,7 @@ import { authenticateToken, requireRole, generateToken, AuthRequest } from './mi
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, desc, sql, not, inArray } from 'drizzle-orm';
-import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, subscriptionPlans, features as featuresTable } from '@shared/schema';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
@@ -180,8 +180,8 @@ async function generateDemoWorkSessions(employees: any[], creationDate: Date) {
       // Create work session
       const session = await storage.createWorkSession({
         userId: employee.id,
-        clockIn: clockInTime,
-        clockOut: clockOutTime,
+        clockInTime,
+        clockOutTime,
         totalHours: workHours.toFixed(1),
       });
       
@@ -416,15 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
-      const { dniOrEmail, username, password, companyAlias, rememberMe } = req.body;
-      
-      // Support both dniOrEmail (frontend) and username (quickaccess) fields
-      const userIdentifier = dniOrEmail || username;
-      
-      // Validate required fields
-      if (!userIdentifier || !password || !companyAlias) {
-        return res.status(400).json({ message: 'Todos los campos son requeridos' });
-      }
+      const { username, password, companyAlias, rememberMe } = req.body;
       
       // Find company by alias
       const [company] = await db.select().from(companies).where(eq(companies.companyAlias, companyAlias));
@@ -434,19 +426,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find user by different possible username formats
       let user;
-      if (userIdentifier.includes('@')) {
+      if (username.includes('@')) {
         // Email login
         user = await db.select().from(users)
           .where(and(
             eq(users.companyId, company.id),
-            eq(users.companyEmail, userIdentifier.toLowerCase())
+            eq(users.companyEmail, username.toLowerCase())
           ));
       } else {
         // DNI login
         user = await db.select().from(users)
           .where(and(
             eq(users.companyId, company.id),
-            eq(users.dni, userIdentifier.toUpperCase())
+            eq(users.dni, username.toUpperCase())
           ));
       }
 
@@ -465,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate token
       const token = generateToken({
         id: foundUser.id,
-        username: foundUser.companyEmail,
+        email: foundUser.companyEmail,
         role: foundUser.role,
         companyId: foundUser.companyId
       });
@@ -474,96 +466,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
-    }
-  });
-
-  // Super admin login endpoint
-  app.post('/api/super-admin/login', async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: 'Username y password son requeridos' });
-      }
-      
-      // Check super admin credentials (hardcoded for security)
-      if (username === 'superadmin' && password === 'SuperAdmin2025!') {
-        const token = generateToken({
-          id: 0,
-          username: 'superadmin@oficaz.com',
-          role: 'superadmin',
-          companyId: 0
-        });
-        
-        res.json({ 
-          token, 
-          user: { 
-            id: 0, 
-            email: 'superadmin@oficaz.com', 
-            role: 'superadmin' 
-          } 
-        });
-      } else {
-        res.status(401).json({ message: 'Credenciales de super admin incorrectas' });
-      }
-    } catch (error: any) {
-      console.error('Super admin login error:', error);
-      res.status(500).json({ message: 'Error interno del servidor' });
-    }
-  });
-
-  // Get all subscription plans (super admin)
-  app.get('/api/super-admin/subscription-plans', authenticateToken, requireRole(['superadmin']), async (req, res) => {
-    try {
-      const plans = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.id);
-      const features = await db.select().from(featuresTable).orderBy(featuresTable.id);
-      
-      res.json({ plans, features });
-    } catch (error: any) {
-      console.error('Error fetching subscription plans:', error);
-      res.status(500).json({ message: 'Error fetching subscription plans' });
-    }
-  });
-
-  // Update subscription plan (super admin)
-  app.patch('/api/super-admin/subscription-plans/:id', authenticateToken, requireRole(['superadmin']), async (req, res) => {
-    try {
-      const planId = parseInt(req.params.id);
-      const { pricePerUser, maxUsers } = req.body;
-      
-      await db.update(subscriptionPlans)
-        .set({ 
-          pricePerUser: pricePerUser.toString(), 
-          maxUsers: maxUsers || null 
-        })
-        .where(eq(subscriptionPlans.id, planId));
-      
-      res.json({ success: true, message: 'Plan actualizado exitosamente' });
-    } catch (error: any) {
-      console.error('Error updating subscription plan:', error);
-      res.status(500).json({ message: 'Error updating subscription plan' });
-    }
-  });
-
-  // Registration status endpoint
-  app.get('/api/registration-status', async (req, res) => {
-    try {
-      // For now, registration is always open
-      res.json({ open: true });
-    } catch (error: any) {
-      console.error('Error checking registration status:', error);
-      res.status(500).json({ message: 'Error checking registration status' });
-    }
-  });
-
-  // Public subscription plans endpoint
-  app.get('/api/public/subscription-plans', async (req, res) => {
-    try {
-      const plans = await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.id);
-      res.json(plans);
-    } catch (error: any) {
-      console.error('Error fetching public subscription plans:', error);
-      res.status(500).json({ message: 'Error fetching subscription plans' });
     }
   });
 
