@@ -101,18 +101,12 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Panel Principal - TEST MINIMALISTA</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Panel Principal</h1>
       
-      <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-        <p className="text-green-800">🎯 TEST CRÍTICO: Si ves esto, el renderizado funciona básicamente</p>
-      </div>
+      {/* Demo Data Banner */}
+      <DemoDataBanner />
       
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-        <p className="text-blue-800">🔥 TEST: Segundo banner - comprobando si el problema está más abajo</p>
-      </div>
-    </div>
-  );
-}
+      {/* Generate Demo Data Button */}
       <div className="mb-6">
         <Card className="bg-orange-50 border-orange-200">
           <CardContent className="p-4">
