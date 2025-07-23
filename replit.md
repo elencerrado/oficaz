@@ -182,6 +182,14 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 23, 2025. BANNER DE DATOS DEMO IMPLEMENTADO: Sistema completo de notificación para empresas con datos de demostración
+  - PROBLEMA RESUELTO: Banner de datos demo ahora aparece correctamente en dashboard cuando empresa tiene datos demo
+  - COMPONENTE ELIMINADO: DemoDataBanner.tsx removido y reemplazado por implementación directa en dashboard
+  - BANNER INTEGRADO: Banner azul embebido directamente en dashboard.tsx con lógica condicional
+  - ENDPOINT VERIFICADO: /api/demo-data/status funciona correctamente con autenticación JWT
+  - FUNCIONALIDAD COMPLETA: Banner aparece automáticamente cuando hasDemoData=true, botón × para cerrar
+  - DISEÑO PROFESIONAL: Icono "D" azul, texto descriptivo, y botón de cierre funcional
+  - LÓGICA CONDICIONAL: showDemoBanner state controla visibilidad basada en respuesta del endpoint
 - July 22, 2025. BUG CRÍTICO AUTENTICACIÓN POST-REGISTRO RESUELTO: Features ahora aparecen habilitadas inmediatamente tras registro
   - PROBLEMA IDENTIFICADO: Usuarios reportaban features deshabilitadas tras registro hasta recargar página manualmente
   - CAUSA TÉCNICA: Endpoint /api/auth/register no devolvía datos de suscripción, contexto no se actualizaba inmediatamente
