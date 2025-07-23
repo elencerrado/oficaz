@@ -826,8 +826,8 @@ export default function Employees() {
                       const statusConfig = {
                         active: { label: 'Activo', color: 'bg-green-100 text-green-800', icon: CheckCircle },
                         inactive: { label: 'Inactivo', color: 'bg-gray-100 text-gray-800', icon: XCircle },
-                        on_leave: { label: 'De Baja', color: 'bg-orange-100 text-orange-800', icon: Pause },
-                        on_vacation: { label: 'De Vacaciones', color: 'bg-blue-100 text-blue-800', icon: Plane }
+                        leave: { label: 'De Baja', color: 'bg-orange-100 text-orange-800', icon: Pause },
+                        vacation: { label: 'De Vacaciones', color: 'bg-blue-100 text-blue-800', icon: Plane }
                       };
                       const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
                       const Icon = config.icon;
@@ -922,13 +922,13 @@ export default function Employees() {
                                 Inactivo
                               </span>
                             </SelectItem>
-                            <SelectItem value="on_leave">
+                            <SelectItem value="leave">
                               <span className="flex items-center gap-2">
                                 <Pause className="h-3 w-3 text-orange-600" />
                                 De Baja
                               </span>
                             </SelectItem>
-                            <SelectItem value="on_vacation">
+                            <SelectItem value="vacation">
                               <span className="flex items-center gap-2">
                                 <Plane className="h-3 w-3 text-blue-600" />
                                 De Vacaciones

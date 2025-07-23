@@ -316,8 +316,7 @@ export default function EmployeesSimple() {
     const translations: Record<string, string> = {
       'active': 'Activo',
       'inactive': 'Inactivo', 
-      'on_leave': 'De baja',
-      'on_vacation': 'De vacaciones',
+      'leave': 'De baja',
       'vacation': 'De vacaciones',
       // Spanish versions (in case they exist)
       'activo': 'Activo',
@@ -339,10 +338,9 @@ export default function EmployeesSimple() {
       case 'inactive':
       case 'inactivo': 
         return 'bg-gray-100 text-gray-800';
-      case 'on_leave':
+      case 'leave':
       case 'de baja': 
         return 'bg-red-100 text-red-800';
-      case 'on_vacation':
       case 'vacation':
       case 'de vacaciones': 
         return 'bg-blue-100 text-blue-800';
@@ -939,8 +937,8 @@ export default function EmployeesSimple() {
                           <SelectContent>
                             <SelectItem value="active">Activo</SelectItem>
                             <SelectItem value="inactive">Inactivo</SelectItem>
-                            <SelectItem value="on_leave">De baja</SelectItem>
-                            <SelectItem value="on_vacation">De vacaciones</SelectItem>
+                            <SelectItem value="leave">De baja</SelectItem>
+                            <SelectItem value="vacation">De vacaciones</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
