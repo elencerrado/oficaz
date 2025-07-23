@@ -156,6 +156,12 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
     await generateMonthlyWorkSessions(employee, currentMonth, false);
   }
   
+  // Generate activity for company registration date
+  await generateRegistrationDayActivity(employees, registrationDate);
+  
+  // Generate current day activity - some employees working today
+  await generateCurrentDayActivity(employees, now);
+  
   // Generate vacation requests (approved and pending)
   await generateRealisticVacationRequests(companyId, employees, registrationDate);
   
@@ -219,31 +225,171 @@ async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCo
     clockOutTime.setTime(clockOutTime.getTime() + workHours * 60 * 60 * 1000);
     
     // Create work session
-    await storage.createWorkSession({
+    const workSession = await storage.createWorkSession({
       userId: employee.id,
       clockInTime,
       clockOutTime,
       totalHours: Number(workHours.toFixed(1)),
     });
     
-    // Generate breaks (70% chance)
-    if (Math.random() < 0.7) {
+    // Generate breaks (70% chance) - Now properly create break periods
+    if (Math.random() < 0.7 && workSession) {
       const breakStart = new Date(clockInTime.getTime() + (2.5 + Math.random() * 2) * 60 * 60 * 1000);
       const breakDuration = 20 + Math.random() * 40; // 20-60 minutes
       const breakEnd = new Date(breakStart.getTime() + breakDuration * 60 * 1000);
       
       // Ensure break doesn't exceed work session
       if (breakEnd < clockOutTime) {
-        await storage.createBreakPeriod({
+        // Create break period directly in database
+        await db.insert(breakPeriods).values({
+          workSessionId: workSession.id,
           userId: employee.id,
-          startTime: breakStart,
-          endTime: breakEnd,
+          breakStart,
+          breakEnd,
+          duration: (breakDuration / 60).toFixed(2), // Convert to hours
+          status: 'completed'
         });
       }
     }
   }
   
   console.log(`📅 Generated work sessions for ${employee.fullName} - ${isCompleteMonth ? 'complete' : 'partial'} month`);
+}
+
+// Generate activity for company registration date
+async function generateRegistrationDayActivity(employees: any[], registrationDate: Date) {
+  const regDate = new Date(registrationDate);
+  const dayOfWeek = regDate.getDay();
+  
+  // Only generate if registration was on a weekday
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    console.log('📅 Registration was on weekend, skipping registration day activity');
+    return;
+  }
+  
+  // All employees working on registration day (company founding day)
+  for (const employee of employees) {
+    // Only employees who started before registration (existing employees)
+    if (new Date(employee.startDate) <= regDate) {
+      const startHour = 8 + Math.floor(Math.random() * 2); // 8:00-9:59
+      const workHours = 7.5 + Math.random() * 1; // 7.5-8.5 hours
+      const startMinute = Math.floor(Math.random() * 4) * 15;
+      
+      const clockInTime = new Date(regDate);
+      clockInTime.setHours(startHour, startMinute, 0, 0);
+      
+      const clockOutTime = new Date(clockInTime);
+      clockOutTime.setTime(clockOutTime.getTime() + workHours * 60 * 60 * 1000);
+      
+      const workSession = await storage.createWorkSession({
+        userId: employee.id,
+        clockInTime,
+        clockOutTime,
+        totalHours: Number(workHours.toFixed(1)),
+      });
+      
+      // Add lunch break for founding day
+      if (workSession) {
+        const breakStart = new Date(clockInTime.getTime() + 4 * 60 * 60 * 1000); // 4 hours after start
+        const breakEnd = new Date(breakStart.getTime() + 45 * 60 * 1000); // 45 min lunch
+        
+        await db.insert(breakPeriods).values({
+          workSessionId: workSession.id,
+          userId: employee.id,
+          breakStart,
+          breakEnd,
+          duration: '0.75', // 45 minutes = 0.75 hours
+          status: 'completed'
+        });
+      }
+    }
+  }
+  
+  console.log('🏢 Generated registration day activity for founding employees');
+}
+
+// Generate current day activity - some employees working today
+async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
+  const today = new Date(currentDate);
+  const dayOfWeek = today.getDay();
+  
+  // Only generate if today is a weekday
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    console.log('📅 Today is weekend, skipping current day activity');
+    return;
+  }
+  
+  // Select working employees for today (exclude vacation employee)
+  const workingEmployees = employees.filter(emp => emp.status === 'working');
+  
+  // 2-3 employees working today (realistic for demo)
+  const employeesToWork = workingEmployees.slice(0, Math.min(3, workingEmployees.length));
+  
+  for (const employee of employeesToWork) {
+    const startHour = 8 + Math.floor(Math.random() * 2); // 8:00-9:59
+    const startMinute = Math.floor(Math.random() * 4) * 15;
+    
+    const clockInTime = new Date(today);
+    clockInTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Some employees still working (no clock out), others finished
+    const shouldFinishWork = Math.random() > 0.5; // 50% chance
+    
+    if (shouldFinishWork) {
+      // Completed work session
+      const workHours = 7.5 + Math.random() * 1;
+      const clockOutTime = new Date(clockInTime);
+      clockOutTime.setTime(clockOutTime.getTime() + workHours * 60 * 60 * 1000);
+      
+      const workSession = await storage.createWorkSession({
+        userId: employee.id,
+        clockInTime,
+        clockOutTime,
+        totalHours: Number(workHours.toFixed(1)),
+      });
+      
+      // Add break for completed sessions
+      if (workSession && Math.random() > 0.5) {
+        const breakStart = new Date(clockInTime.getTime() + (2 + Math.random() * 2) * 60 * 60 * 1000);
+        const breakDuration = 15 + Math.random() * 30; // 15-45 minutes
+        const breakEnd = new Date(breakStart.getTime() + breakDuration * 60 * 1000);
+        
+        await db.insert(breakPeriods).values({
+          workSessionId: workSession.id,
+          userId: employee.id,
+          breakStart,
+          breakEnd,
+          duration: (breakDuration / 60).toFixed(2),
+          status: 'completed'
+        });
+      }
+    } else {
+      // Active work session (still working)
+      const workSession = await storage.createWorkSession({
+        userId: employee.id,
+        clockInTime,
+        clockOutTime: null, // Still working
+        totalHours: null,
+      });
+      
+      // Maybe on a break right now
+      if (workSession && Math.random() > 0.7) {
+        const now = new Date();
+        const breakStart = new Date(now.getTime() - 20 * 60 * 1000); // Started 20 min ago
+        
+        await db.insert(breakPeriods).values({
+          workSessionId: workSession.id,
+          userId: employee.id,
+          breakStart,
+          breakEnd: null, // Currently on break
+          duration: null,
+          status: 'active'
+        });
+      }
+    }
+  }
+  
+  console.log(`💼 Generated current day activity for ${employeesToWork.length} working employees`);
 }
 
 // Generate demo vacation requests
