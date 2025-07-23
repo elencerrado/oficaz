@@ -5508,6 +5508,31 @@ startxref
     }
   });
 
+  // Temporary endpoint to force regenerate demo data with improvements
+  app.post('/api/demo-data/force-regenerate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      console.log('🔄 Force regenerating demo data with improvements for company:', company.id);
+
+      // Generate comprehensive demo data (ignoring hasDemoData flag)
+      await generateDemoData(company.id);
+      
+      res.json({ 
+        success: true, 
+        message: '✅ Datos demo regenerados con mejoras: períodos de descanso, actividad actual, empleados trabajando hoy y uno de vacaciones.'
+      });
+    } catch (error) {
+      console.error('Error force regenerating demo data:', error);
+      res.status(500).json({ message: 'Error al regenerar los datos de prueba: ' + (error as any).message });
+    }
+  });
+
   app.delete('/api/demo-data/clear', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
