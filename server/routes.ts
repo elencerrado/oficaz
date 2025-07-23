@@ -67,12 +67,15 @@ async function generateDemoData(companyId: number) {
       .set({ hasDemoData: true })
       .where(eq(companies.id, companyId));
     
+    // Generate unique identifiers to avoid conflicts
+    const uniqueId = Date.now();
+    
     // Demo employees data - 4 realistic employees
     const demoEmployees = [
       {
         fullName: "María García López",
-        companyEmail: "maria.garcia@demo.com",
-        dni: "12345678A",
+        companyEmail: `maria.garcia.${uniqueId}@demo.com`,
+        dni: `${uniqueId.toString().slice(-8)}A`,
         position: "Desarrolladora Senior",
         role: "employee" as const,
         status: "working", // Currently working
@@ -80,8 +83,8 @@ async function generateDemoData(companyId: number) {
       },
       {
         fullName: "Carlos Rodríguez Martín",
-        companyEmail: "carlos.rodriguez@demo.com", 
-        dni: "87654321B",
+        companyEmail: `carlos.rodriguez.${uniqueId + 1}@demo.com`, 
+        dni: `${(uniqueId + 1).toString().slice(-8)}B`,
         position: "Jefe de Proyectos",
         role: "manager" as const,
         status: "working", // Currently working
@@ -89,8 +92,8 @@ async function generateDemoData(companyId: number) {
       },
       {
         fullName: "Ana Fernández Silva",
-        companyEmail: "ana.fernandez@demo.com",
-        dni: "11111111C", 
+        companyEmail: `ana.fernandez.${uniqueId + 2}@demo.com`,
+        dni: `${(uniqueId + 2).toString().slice(-8)}C`, 
         position: "Analista de Marketing",
         role: "employee" as const,
         status: "vacation", // Currently on vacation
@@ -98,8 +101,8 @@ async function generateDemoData(companyId: number) {
       },
       {
         fullName: "David López Ruiz",
-        companyEmail: "david.lopez@demo.com",
-        dni: "22222222D",
+        companyEmail: `david.lopez.${uniqueId + 3}@demo.com`,
+        dni: `${(uniqueId + 3).toString().slice(-8)}D`,
         position: "Diseñador UX/UI", 
         role: "employee" as const,
         status: "working", // Currently working
@@ -227,9 +230,10 @@ async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCo
     // Create work session
     const workSession = await storage.createWorkSession({
       userId: employee.id,
-      clockInTime,
-      clockOutTime,
+      clockIn: clockInTime,
+      clockOut: clockOutTime,
       totalHours: Number(workHours.toFixed(1)),
+      status: 'completed',
     });
     
     // Generate breaks (70% chance) - Now properly create break periods
@@ -283,9 +287,10 @@ async function generateRegistrationDayActivity(employees: any[], registrationDat
       
       const workSession = await storage.createWorkSession({
         userId: employee.id,
-        clockInTime,
-        clockOutTime,
+        clockIn: clockInTime,
+        clockOut: clockOutTime,
         totalHours: Number(workHours.toFixed(1)),
+        status: "completed",
       });
       
       // Add lunch break for founding day
@@ -343,9 +348,10 @@ async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
       
       const workSession = await storage.createWorkSession({
         userId: employee.id,
-        clockInTime,
-        clockOutTime,
+        clockIn: clockInTime,
+        clockOut: clockOutTime,
         totalHours: Number(workHours.toFixed(1)),
+        status: "completed",
       });
       
       // Add break for completed sessions
@@ -367,9 +373,10 @@ async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
       // Active work session (still working)
       const workSession = await storage.createWorkSession({
         userId: employee.id,
-        clockInTime,
-        clockOutTime: null, // Still working
+        clockIn: clockInTime,
+        clockOut: null, // Still working
         totalHours: null,
+        status: 'active',
       });
       
       // Maybe on a break right now
