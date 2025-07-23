@@ -1,79 +1,81 @@
-import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info, Trash2, Loader2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import { CheckCircle, Info, Loader2, X, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 
-interface DemoDataBannerProps {
-  className?: string;
+interface DemoDataStatus {
+  hasDemoData: boolean;
 }
 
-export function DemoDataBanner({ className = '' }: DemoDataBannerProps) {
-  const queryClient = useQueryClient();
+export function DemoDataBanner() {
+  const [isVisible, setIsVisible] = useState(true);
 
-  // Query to check if company has demo data
-  const { data: demoStatus, isLoading } = useQuery({
+  const { data: demoStatus, isLoading, error, refetch } = useQuery<DemoDataStatus>({
     queryKey: ['/api/demo-data/status'],
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
   });
 
-  // Mutation to clear demo data
-  const clearDemoDataMutation = useMutation({
-    mutationFn: () => fetch('/api/demo-data/clear', { 
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    }).then(res => res.json()),
-    onSuccess: () => {
-      // Invalidate queries to refresh the dashboard
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
-    },
-  });
-
-  // Don't show banner if loading or no demo data
-  if (isLoading || !(demoStatus as any)?.hasDemoData) {
+  // Don't show banner if not visible, loading failed, or no demo data
+  if (!isVisible || error || !demoStatus?.hasDemoData) {
     return null;
   }
 
-  const handleClearDemoData = () => {
-    if (confirm('¿Estás seguro de que quieres eliminar todos los datos de prueba? Esta acción no se puede deshacer.')) {
-      clearDemoDataMutation.mutate();
-    }
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const handleDismiss = () => {
+    setIsVisible(false);
   };
 
   return (
-    <div className={`${className}`}>
-      <Alert className="bg-blue-50 border-blue-200 mb-6">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="flex items-center justify-between">
-          <div className="text-blue-800">
-            <strong>Datos de demostración activos:</strong> Tu empresa incluye empleados y datos de ejemplo para que puedas probar todas las funcionalidades. 
-            Puedes eliminarlos cuando estés listo para empezar con datos reales.
-          </div>
-          <Button
-            onClick={handleClearDemoData}
-            disabled={clearDemoDataMutation.isPending}
-            variant="outline"
-            size="sm"
-            className="ml-4 border-blue-300 text-blue-700 hover:bg-blue-100 flex-shrink-0"
-          >
-            {clearDemoDataMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
             ) : (
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Info className="h-5 w-5 text-blue-400" />
             )}
-            Limpiar datos de prueba
-          </Button>
-        </AlertDescription>
-      </Alert>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-blue-800">
+              Datos de demostración activos
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <p>
+                Esta empresa está utilizando datos de demostración que incluyen:
+              </p>
+              <ul className="mt-2 ml-4 space-y-1 list-disc">
+                <li>Empleados de ejemplo con fichajes realistas del mes anterior y actual</li>
+                <li>Solicitudes de vacaciones aprobadas y pendientes</li>
+                <li>Mensajes bidireccionales entre empleados y administradores</li>
+                <li>Recordatorios y documentos de muestra</li>
+              </ul>
+              <p className="mt-2 text-xs text-blue-600">
+                Los datos demo se generan basándose en la fecha de registro de la empresa para mayor realismo.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 ml-4">
+          <button
+            onClick={handleRefresh}
+            className="text-blue-400 hover:text-blue-600 p-1"
+            title="Actualizar estado"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleDismiss}
+            className="text-blue-400 hover:text-blue-600 p-1"
+            title="Cerrar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

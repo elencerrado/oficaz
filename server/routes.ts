@@ -5471,19 +5471,22 @@ startxref
     }
   });
 
-  // Demo data management endpoints
+  // Demo data management endpoints  
   app.get('/api/demo-data/status', authenticateToken, async (req: AuthRequest, res) => {
     try {
+      console.log('🔍 demo-data/status - Checking for user:', req.user?.id);
       const userId = req.user!.id;
       const company = await storage.getCompanyByUserId(userId);
       
       if (!company) {
+        console.log('❌ demo-data/status - Company not found for user:', userId);
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
+      console.log('✅ demo-data/status - Company found:', company.name, 'hasDemoData:', company.hasDemoData);
       res.json({ hasDemoData: company.hasDemoData || false });
     } catch (error) {
-      console.error('Error checking demo data status:', error);
+      console.error('❌ demo-data/status - Error:', error);
       res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
     }
   });
