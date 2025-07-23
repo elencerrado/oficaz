@@ -107,21 +107,20 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
             <p className="text-gray-500 mt-1">
-              ¡Bienvenido de nuevo, {user?.fullName?.split(' ')[0]}! Esto es lo que está pasando hoy.
+              ¡Bienvenido de nuevo, {user?.fullName?.split(' ')[0] || 'Usuario'}! Esto es lo que está pasando hoy.
             </p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
               <p className="text-sm text-gray-500">Hora Actual</p>
               <p className="text-lg font-semibold text-gray-900">
-                {formatTime(currentTime)}
+                {currentTime ? formatTime(currentTime) : '--:--'}
               </p>
             </div>
             <div className="w-px h-8 bg-gray-300"></div>
             <Button 
               className="bg-oficaz-primary hover:bg-blue-700"
               onClick={() => {
-                // This would trigger clock in functionality
                 console.log('Quick clock in');
               }}
             >
@@ -132,11 +131,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Demo Data Banner */}
+      {/* TEST: Simple div after header */}
       <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-        <p className="text-green-800">🎯 TEST: Banner placeholder funcionando</p>
+        <p className="text-green-800">🎯 TEST: Banner después del header funcionando</p>
       </div>
-      <DemoDataBanner />
       
       {/* Generate Demo Data Button - Always Visible for Testing */}
       <div className="mb-6">
