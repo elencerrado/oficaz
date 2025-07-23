@@ -5533,6 +5533,18 @@ startxref
     }
   });
 
+  // Temporary endpoint for testing - generates demo data for company 12
+  app.post('/api/demo-data/test-generate', async (req, res) => {
+    try {
+      console.log('🧪 TEST: Generating demo data for company 12');
+      await generateDemoData(12);
+      res.json({ success: true, message: 'Demo data generated for company 12' });
+    } catch (error) {
+      console.error('Error in test generate:', error);
+      res.status(500).json({ message: 'Error: ' + (error as any).message });
+    }
+  });
+
   app.delete('/api/demo-data/clear', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;

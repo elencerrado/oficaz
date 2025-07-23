@@ -135,40 +135,38 @@ export default function Dashboard() {
       {/* Demo Data Banner */}
       <DemoDataBanner />
       
-      {/* Generate Demo Data Button - Visible to All */}
-      {stats && (stats as any)?.totalEmployees <= 1 && (
-        <div className="mb-6">
-          <Card className="bg-orange-50 border-orange-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-orange-800 mb-1">¿Tu empresa está vacía?</h3>
-                  <p className="text-sm text-orange-700">
-                    Genera empleados y datos de ejemplo para probar todas las funcionalidades de Oficaz.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => generateDemoDataMutation.mutate()}
-                  disabled={generateDemoDataMutation.isPending}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
-                >
-                  {generateDemoDataMutation.isPending ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <Users className="mr-2" size={16} />
-                      Generar Datos Demo
-                    </>
-                  )}
-                </Button>
+      {/* Generate Demo Data Button - Always Visible for Testing */}
+      <div className="mb-6">
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-orange-800 mb-1">Generar Datos Demo</h3>
+                <p className="text-sm text-orange-700">
+                  Crea empleados y datos de ejemplo para probar todas las funcionalidades de Oficaz.
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              <Button
+                onClick={() => generateDemoDataMutation.mutate()}
+                disabled={generateDemoDataMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {generateDemoDataMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Users className="mr-2" size={16} />
+                    Generar Datos Demo
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
