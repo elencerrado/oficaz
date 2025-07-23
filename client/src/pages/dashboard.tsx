@@ -104,7 +104,26 @@ export default function Dashboard() {
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">Panel Principal</h1>
       
       {/* Demo Data Banner */}
-      <DemoDataBanner />
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="mr-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">D</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-blue-800 font-semibold">Datos de demostración activos</h3>
+              <p className="text-blue-700 text-sm">
+                Esta cuenta incluye empleados y datos de ejemplo para explorar todas las funcionalidades.
+              </p>
+            </div>
+          </div>
+          <button className="text-blue-400 hover:text-blue-600 ml-4">
+            <span className="text-lg">&times;</span>
+          </button>
+        </div>
+      </div>
       
       {/* Generate Demo Data Button */}
       <div className="mb-6">

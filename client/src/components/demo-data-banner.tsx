@@ -7,18 +7,21 @@ interface DemoDataStatus {
 }
 
 export function DemoDataBanner() {
-  console.log('🎯 DemoDataBanner COMPONENT RENDERING');
+  console.log('🎯 DemoDataBanner COMPONENT RENDERING - FORCED');
   
   const [isVisible, setIsVisible] = useState(true);
-  const [hasData, setHasData] = useState(false);
+  const [hasData, setHasData] = useState(true); // FORCED TRUE FOR TESTING
 
   // Check demo data status
   useEffect(() => {
+    console.log('🎯 DemoDataBanner useEffect RUNNING');
     const checkDemoData = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('🎯 Token exists:', !!token);
         if (!token) return;
 
+        console.log('🎯 Making request to /api/demo-data/status');
         const response = await fetch('/api/demo-data/status', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -26,22 +29,30 @@ export function DemoDataBanner() {
           }
         });
         
+        console.log('🎯 Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('🎯 Demo data status:', data);
+          console.log('🎯 Demo data status RECEIVED:', data);
           setHasData(data.hasDemoData);
+        } else {
+          console.log('🎯 Response not OK:', response.status);
         }
       } catch (error) {
-        console.error('Error checking demo data:', error);
+        console.error('🎯 Error checking demo data:', error);
       }
     };
 
     checkDemoData();
   }, []);
 
+  console.log('🎯 DemoDataBanner render state:', { isVisible, hasData });
+
   if (!isVisible || !hasData) {
+    console.log('🎯 DemoDataBanner NOT RENDERING - isVisible:', isVisible, 'hasData:', hasData);
     return null;
   }
+
+  console.log('🎯 DemoDataBanner RENDERING BANNER');
 
   return (
     <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
