@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ClockWidget } from '@/components/time-tracking/clock-widget';
 import { VacationModal } from '@/components/vacation/vacation-modal';
 import { DemoDataBanner } from '@/components/demo-data-banner';
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isVacationModalOpen, setIsVacationModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['/api/dashboard/stats'],
@@ -31,6 +32,31 @@ export default function Dashboard() {
 
   const { data: recentMessages } = useQuery({
     queryKey: ['/api/messages'],
+  });
+
+  // Mutation to generate demo data
+  const generateDemoDataMutation = useMutation({
+    mutationFn: () => fetch('/api/demo-data/generate', { 
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    }).then(res => res.json()),
+    onSuccess: () => {
+      // Invalidate all queries to refresh the dashboard
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      alert('¡Datos demo generados exitosamente! Recarga la página para ver los empleados y datos de ejemplo.');
+    },
+    onError: (error) => {
+      console.error('Error generating demo data:', error);
+      alert('Error al generar datos demo. Por favor intenta de nuevo.');
+    }
   });
 
   useEffect(() => {
@@ -108,6 +134,39 @@ export default function Dashboard() {
 
       {/* Demo Data Banner */}
       <DemoDataBanner />
+      
+      {/* Generate Demo Data Button - Temporary */}
+      <div className="mb-6">
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-orange-800 mb-1">¿Tu empresa está vacía?</h3>
+                <p className="text-sm text-orange-700">
+                  Genera empleados y datos de ejemplo para probar todas las funcionalidades de Oficaz.
+                </p>
+              </div>
+              <Button
+                onClick={() => generateDemoDataMutation.mutate()}
+                disabled={generateDemoDataMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {generateDemoDataMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Users className="mr-2" size={16} />
+                    Generar Datos Demo
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
