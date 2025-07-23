@@ -148,16 +148,21 @@ export default function Landing() {
     
     const getFeatureDisplayName = (featureKey: string) => {
       const featureNames: { [key: string]: string } = {
-        timeTracking: "Control de tiempo",
+        // Core features - these keys come from the database
+        time: "Control de tiempo",
+        timeTracking: "Control de tiempo", 
         vacation: "Gestión de vacaciones",
         messages: "Mensajería interna",
         documents: "Gestión de documentos",
+        notifications: "Notificaciones",
         reminders: "Recordatorios personalizados",
         logoUpload: "Logos personalizados",
         reports: "Reportes avanzados",
         analytics: "Análisis de datos",
         customization: "Personalización avanzada",
         timeEditingPermissions: "Edición de horarios",
+        employee_time_edit: "Edición de fichajes",
+        employee_time_edit_permission: "Permisos de edición",
         api: "API personalizada"
       };
       return featureNames[featureKey] || featureKey;
@@ -196,10 +201,33 @@ export default function Landing() {
       // Add user limit first
       dynamicFeatures.push(userLimit);
       
-      // Add features based on what's enabled in the database
+      // Define the order of features - modify this array to change the order
+      const featureOrder = [
+        'time',
+        'vacation', 
+        'messages',
+        'documents',
+        'notifications',
+        'reminders',
+        'logoUpload',
+        'reports',
+        'employee_time_edit',
+        'employee_time_edit_permission'
+      ];
+      
+      // Add features based on what's enabled in the database, respecting the order
       if (dbPlan.features) {
+        // First add features in the defined order
+        featureOrder.forEach(featureKey => {
+          if (dbPlan.features[featureKey]) {
+            const displayName = getFeatureDisplayName(featureKey);
+            dynamicFeatures.push(displayName);
+          }
+        });
+        
+        // Then add any remaining features not in the order (for future features)
         Object.entries(dbPlan.features).forEach(([featureKey, isEnabled]) => {
-          if (isEnabled) {
+          if (isEnabled && !featureOrder.includes(featureKey)) {
             const displayName = getFeatureDisplayName(featureKey);
             dynamicFeatures.push(displayName);
           }
