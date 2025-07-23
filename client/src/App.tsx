@@ -47,6 +47,7 @@ import SuperAdminInvitations from "@/pages/super-admin-invitations";
 import InvitationRegister from "@/pages/invitation-register";
 import QuickAccess from "@/pages/quick-access";
 import EmployeeActivation from "@/pages/employee-activation";
+import DashboardTest from "@/pages/dashboard-test";
 
 
 function DashboardRouter() {
@@ -56,8 +57,8 @@ function DashboardRouter() {
     return <EmployeeDashboard />;
   }
   
-  // Admin/Manager - just return AdminDashboard component without layout
-  return <AdminDashboard />;
+  // TEMPORARY: Use test dashboard to debug rendering issues
+  return <DashboardTest />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
