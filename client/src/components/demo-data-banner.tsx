@@ -1,47 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, Info, Loader2, X, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
-
-interface DemoDataStatus {
-  hasDemoData: boolean;
-}
+import { Info, X } from 'lucide-react';
 
 export function DemoDataBanner() {
-  const [isVisible, setIsVisible] = useState(true);
-
-  const { data: demoStatus, isLoading, error, refetch } = useQuery<DemoDataStatus>({
-    queryKey: ['/api/demo-data/status'],
-    staleTime: 30000, // 30 seconds
-    refetchOnWindowFocus: false,
-  });
-
-  // Don't show banner if not visible, loading failed, or no demo data
-  if (!isVisible || error || !demoStatus?.hasDemoData) {
-    return null;
-  }
-
-  const handleRefresh = () => {
-    refetch();
-  };
-
-  const handleDismiss = () => {
-    setIsVisible(false);
-  };
-
+  console.log('🎯 DemoDataBanner COMPONENT RENDERING');
+  
   return (
     <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
-            ) : (
-              <Info className="h-5 w-5 text-blue-400" />
-            )}
+            <Info className="h-5 w-5 text-blue-400" />
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-medium text-blue-800">
-              Datos de demostración activos
+              Datos de demostración activos (Test)
             </h3>
             <div className="mt-2 text-sm text-blue-700">
               <p>
@@ -61,14 +32,6 @@ export function DemoDataBanner() {
         </div>
         <div className="flex items-center space-x-2 ml-4">
           <button
-            onClick={handleRefresh}
-            className="text-blue-400 hover:text-blue-600 p-1"
-            title="Actualizar estado"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleDismiss}
             className="text-blue-400 hover:text-blue-600 p-1"
             title="Cerrar"
           >

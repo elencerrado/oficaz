@@ -133,6 +133,9 @@ export default function Dashboard() {
       </div>
 
       {/* Demo Data Banner */}
+      <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+        <p className="text-green-800">🎯 TEST: Banner placeholder funcionando</p>
+      </div>
       <DemoDataBanner />
       
       {/* Generate Demo Data Button - Always Visible for Testing */}
