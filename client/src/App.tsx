@@ -47,7 +47,7 @@ import SuperAdminInvitations from "@/pages/super-admin-invitations";
 import InvitationRegister from "@/pages/invitation-register";
 import QuickAccess from "@/pages/quick-access";
 import EmployeeActivation from "@/pages/employee-activation";
-import DashboardTest from "@/pages/dashboard-test";
+
 
 
 function DashboardRouter() {
@@ -57,8 +57,7 @@ function DashboardRouter() {
     return <EmployeeDashboard />;
   }
   
-  // TEMPORARY: Use test dashboard to debug rendering issues
-  return <DashboardTest />;
+  return <AdminDashboard />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -77,19 +76,31 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // TEMPORARY: Simplified layout for debugging
+  // Employee gets simplified view without sidebar - direct render
+  if (user?.role === 'employee') {
+    return (
+      <>
+        <ReminderBanner />
+        {children}
+      </>
+    );
+  }
+
+  // Admin/Manager gets full layout with sidebar
   return (
-    <div style={{ padding: '20px', backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      <div style={{ 
-        backgroundColor: 'yellow', 
-        padding: '10px', 
-        marginBottom: '20px',
-        border: '2px solid red'
-      }}>
-        🚨 LAYOUT DEBUG: AppLayout está funcionando - Usuario: {user?.fullName}
-      </div>
-      {children}
+    <div className="min-h-screen bg-gray-50">
+      <ReminderBanner />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
+      <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
+      
+      <main className="lg:ml-64 min-h-screen pt-16 bg-gray-50">
+        {children}
+      </main>
     </div>
   );
 }
@@ -334,7 +345,6 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
-          <ReminderBanner />
           <CookieBanner />
         </TooltipProvider>
       </AuthProvider>
