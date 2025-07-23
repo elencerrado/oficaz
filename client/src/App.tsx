@@ -77,31 +77,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Employee gets simplified view without sidebar - direct render
-  if (user?.role === 'employee') {
-    return (
-      <>
-        <ReminderBanner />
-        {children}
-      </>
-    );
-  }
-
-  // Admin/Manager gets full layout with sidebar
+  // TEMPORARY: Simplified layout for debugging
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ReminderBanner />
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-      <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
-      
-      <main className="lg:ml-64 min-h-screen pt-16 bg-gray-50">
-        {children}
-      </main>
+    <div style={{ padding: '20px', backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <div style={{ 
+        backgroundColor: 'yellow', 
+        padding: '10px', 
+        marginBottom: '20px',
+        border: '2px solid red'
+      }}>
+        🚨 LAYOUT DEBUG: AppLayout está funcionando - Usuario: {user?.fullName}
+      </div>
+      {children}
     </div>
   );
 }
