@@ -219,7 +219,10 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getUsersByCompany(companyId: number): Promise<User[]> {
-    return db.select().from(schema.users).where(eq(schema.users.companyId, companyId));
+    console.log(`🔍 DEBUG getUsersByCompany: Looking for users with companyId=${companyId}`);
+    const result = await db.select().from(schema.users).where(eq(schema.users.companyId, companyId));
+    console.log(`🔍 DEBUG getUsersByCompany: Found ${result.length} users:`, result.map(u => ({ id: u.id, name: u.fullName, role: u.role })));
+    return result;
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
