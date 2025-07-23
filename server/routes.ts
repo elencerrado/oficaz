@@ -50,51 +50,60 @@ const upload = multer({
 // Demo data generation for new companies
 async function generateDemoData(companyId: number) {
   try {
-    console.log('🎭 Generating demo data for company:', companyId);
+    console.log('🎭 Generating comprehensive demo data for company:', companyId);
+    
+    // Get company registration date for dynamic data generation
+    const company = await db.select().from(companies).where(eq(companies.id, companyId)).limit(1);
+    if (!company[0]) {
+      console.error('Company not found for demo data generation');
+      return;
+    }
+    
+    const registrationDate = new Date(company[0].createdAt);
+    console.log('📅 Company registered on:', registrationDate.toISOString());
     
     // Mark company as having demo data
     await db.update(companies)
       .set({ hasDemoData: true })
       .where(eq(companies.id, companyId));
     
-    // Demo employees data - 4 employees (2 men, 2 women)
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    
+    // Demo employees data - 4 realistic employees
     const demoEmployees = [
-      // Men
       {
-        fullName: "Carlos Martínez López",
-        companyEmail: "carlos.martinez@demo.com",
+        fullName: "María García López",
+        companyEmail: "maria.garcia@demo.com",
         dni: "12345678A",
-        position: "Desarrollador Senior",
+        position: "Desarrolladora Senior",
         role: "employee" as const,
-        startDate: new Date(currentYear - 2, 3, 15), // 2 años atrás
+        status: "working", // Currently working
+        startDate: new Date(registrationDate.getTime() - 365 * 24 * 60 * 60 * 1000), // 1 year before company registration
       },
       {
-        fullName: "Miguel Fernández García",
-        companyEmail: "miguel.fernandez@demo.com", 
+        fullName: "Carlos Rodríguez Martín",
+        companyEmail: "carlos.rodriguez@demo.com", 
         dni: "87654321B",
-        position: "Diseñador UX/UI",
+        position: "Jefe de Proyectos",
         role: "manager" as const,
-        startDate: new Date(currentYear - 1, 8, 10), // 1 año atrás
+        status: "working", // Currently working
+        startDate: new Date(registrationDate.getTime() - 200 * 24 * 60 * 60 * 1000), // 200 days before
       },
-      // Women
       {
-        fullName: "Ana Rodríguez Sánchez",
-        companyEmail: "ana.rodriguez@demo.com",
+        fullName: "Ana Fernández Silva",
+        companyEmail: "ana.fernandez@demo.com",
         dni: "11111111C", 
-        position: "Analista de Datos",
+        position: "Analista de Marketing",
         role: "employee" as const,
-        startDate: new Date(currentYear - 1, 1, 20), // 1 año atrás
+        status: "vacation", // Currently on vacation
+        startDate: new Date(registrationDate.getTime() - 180 * 24 * 60 * 60 * 1000), // 180 days before
       },
       {
-        fullName: "Laura González Martín",
-        companyEmail: "laura.gonzalez@demo.com",
+        fullName: "David López Ruiz",
+        companyEmail: "david.lopez@demo.com",
         dni: "22222222D",
-        position: "Coordinadora de Proyectos", 
+        position: "Diseñador UX/UI", 
         role: "employee" as const,
-        startDate: new Date(currentYear, 0, 8), // Este año
+        status: "working", // Currently working
+        startDate: new Date(registrationDate.getTime() - 90 * 24 * 60 * 60 * 1000), // 90 days before
       }
     ];
 
@@ -117,62 +126,91 @@ async function generateDemoData(companyId: number) {
         createdBy: null,
       });
       
-      createdEmployees.push(employee);
-      console.log(`👤 Created demo employee: ${employee.fullName}`);
+      createdEmployees.push({ ...employee, status: employeeData.status });
+      console.log(`👤 Created demo employee: ${employee.fullName} (${employeeData.status})`);
     }
 
-    // Generate demo data for current month
-    await generateCurrentMonthDemoData(companyId, createdEmployees);
+    // Generate comprehensive demo data based on registration date
+    await generateComprehensiveDemoData(companyId, createdEmployees, registrationDate);
     
-    console.log('✅ Demo data generation completed for company:', companyId);
+    console.log('✅ Comprehensive demo data generation completed for company:', companyId);
     
   } catch (error) {
     console.error('❌ Error generating demo data:', error);
   }
 }
 
-// Generate realistic demo data for the current month
-async function generateCurrentMonthDemoData(companyId: number, employees: any[]) {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+// Generate comprehensive demo data based on company registration date
+async function generateComprehensiveDemoData(companyId: number, employees: any[], registrationDate: Date) {
+  console.log('📊 Generating comprehensive demo data...');
   
-  // Generate work sessions for current month
+  const now = new Date();
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  // Generate work sessions for previous month and current month
   for (const employee of employees) {
-    await generateDemoWorkSessions(employee, currentYear, currentMonth, daysInMonth);
+    // Previous month data (complete month)
+    await generateMonthlyWorkSessions(employee, previousMonth, true);
+    // Current month data (up to today)
+    await generateMonthlyWorkSessions(employee, currentMonth, false);
   }
   
-  // Generate vacation requests
-  await generateDemoVacationRequests(companyId, employees);
+  // Generate vacation requests (approved and pending)
+  await generateRealisticVacationRequests(companyId, employees, registrationDate);
   
-  // Generate messages
-  await generateDemoMessages(companyId, employees);
+  // Generate bidirectional messages (employee-admin communication)
+  await generateBidirectionalMessages(companyId, employees);
   
-  // Generate reminders
+  // Generate reminders for employees
   await generateDemoReminders(companyId, employees);
   
-  console.log('📊 Generated current month demo data for', employees.length, 'employees');
+  console.log('✅ Generated comprehensive demo data for', employees.length, 'employees');
 }
 
 // Generate realistic work sessions for an employee
-async function generateDemoWorkSessions(employee: any, year: number, month: number, daysInMonth: number) {
+// Generate realistic work sessions for a complete month or up to current date
+async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCompleteMonth: boolean) {
+  const year = monthStart.getFullYear();
+  const month = monthStart.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const maxDay = isCompleteMonth ? daysInMonth : Math.min(daysInMonth, today.getDate());
+  
   const workDays = [1, 2, 3, 4, 5]; // Monday to Friday
   
-  for (let day = 1; day <= Math.min(daysInMonth, new Date().getDate()); day++) {
+  for (let day = 1; day <= maxDay; day++) {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
     
     // Skip weekends
     if (!workDays.includes(dayOfWeek)) continue;
     
-    // 90% chance of working on weekdays
-    if (Math.random() > 0.9) continue;
+    // Skip if employee is on vacation (Ana Fernández Silva in current month)
+    if (employee.status === "vacation" && !isCompleteMonth && day >= 20 && day <= 25) {
+      continue;
+    }
     
-    // Generate realistic work hours (8:00-18:00 range)
-    const startHour = 8 + Math.floor(Math.random() * 2); // 8-9 AM
+    // 95% attendance rate for working employees
+    if (Math.random() > 0.95) continue;
+    
+    // Generate realistic work patterns based on employee
+    let startHour, workHours;
+    if (employee.fullName.includes("María")) {
+      // Early starter
+      startHour = 8 + Math.floor(Math.random() * 1); // 8:00-8:59
+      workHours = 8 + Math.random() * 0.5; // 8-8.5 hours
+    } else if (employee.fullName.includes("Carlos")) {
+      // Manager - longer hours
+      startHour = 8 + Math.floor(Math.random() * 1.5); // 8:00-9:29
+      workHours = 8.5 + Math.random() * 1; // 8.5-9.5 hours
+    } else {
+      // Regular schedule
+      startHour = 8 + Math.floor(Math.random() * 2); // 8:00-9:59
+      workHours = 7.5 + Math.random() * 1; // 7.5-8.5 hours
+    }
+    
     const startMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
-    const workHours = 7.5 + Math.random() * 1.5; // 7.5-9 hours
     
     const clockInTime = new Date(date);
     clockInTime.setHours(startHour, startMinute, 0, 0);
@@ -188,53 +226,88 @@ async function generateDemoWorkSessions(employee: any, year: number, month: numb
       totalHours: Number(workHours.toFixed(1)),
     });
     
-    // 60% chance of having a break
-    if (Math.random() < 0.6) {
-      const breakStart = new Date(clockInTime.getTime() + (3 + Math.random() * 2) * 60 * 60 * 1000);
-      const breakDuration = 30 + Math.random() * 60; // 30-90 minutes
+    // Generate breaks (70% chance)
+    if (Math.random() < 0.7) {
+      const breakStart = new Date(clockInTime.getTime() + (2.5 + Math.random() * 2) * 60 * 60 * 1000);
+      const breakDuration = 20 + Math.random() * 40; // 20-60 minutes
       const breakEnd = new Date(breakStart.getTime() + breakDuration * 60 * 1000);
       
-      await storage.createBreakPeriod({
-        userId: employee.id,
-        startTime: breakStart,
-        endTime: breakEnd,
-      });
+      // Ensure break doesn't exceed work session
+      if (breakEnd < clockOutTime) {
+        await storage.createBreakPeriod({
+          userId: employee.id,
+          startTime: breakStart,
+          endTime: breakEnd,
+        });
+      }
     }
   }
+  
+  console.log(`📅 Generated work sessions for ${employee.fullName} - ${isCompleteMonth ? 'complete' : 'partial'} month`);
 }
 
 // Generate demo vacation requests
-async function generateDemoVacationRequests(companyId: number, employees: any[]) {
+// Generate realistic vacation requests with different statuses
+async function generateRealisticVacationRequests(companyId: number, employees: any[], registrationDate: Date) {
   const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
   const vacationRequests = [
-    // Approved vacation from earlier this month
+    // 1. APPROVED - Previous month vacation (María García)
     {
-      employee: employees[0],
-      startDate: new Date(now.getFullYear(), now.getMonth(), 5),
-      endDate: new Date(now.getFullYear(), now.getMonth(), 7),
+      employee: employees[0], // María García López
+      startDate: new Date(currentYear, currentMonth - 1, 15),
+      endDate: new Date(currentYear, currentMonth - 1, 19), // 5 days
       status: 'approved' as const,
-      reason: 'Vacaciones familiares',
+      reason: 'Vacaciones de verano planificadas',
+      createdAt: new Date(currentYear, currentMonth - 2, 20), // Requested 2 months ago
     },
-    // Pending vacation for next month
+    
+    // 2. APPROVED - Current month vacation (Ana Fernández - currently on vacation)
     {
-      employee: employees[1], 
-      startDate: new Date(now.getFullYear(), now.getMonth() + 1, 15),
-      endDate: new Date(now.getFullYear(), now.getMonth() + 1, 19),
+      employee: employees[2], // Ana Fernández Silva
+      startDate: new Date(currentYear, currentMonth, 20),
+      endDate: new Date(currentYear, currentMonth, 25), // 6 days
+      status: 'approved' as const,
+      reason: 'Descanso personal programado',
+      createdAt: new Date(currentYear, currentMonth, 1), // Requested at beginning of month
+    },
+    
+    // 3. PENDING - Next month vacation (David López)
+    {
+      employee: employees[3], // David López Ruiz
+      startDate: new Date(currentYear, currentMonth + 1, 10),
+      endDate: new Date(currentYear, currentMonth + 1, 14), // 5 days
       status: 'pending' as const,
-      reason: 'Descanso personal',
+      reason: 'Vacaciones familiares de fin de año',
+      createdAt: new Date(currentYear, currentMonth, now.getDate() - 3), // Requested 3 days ago
     },
-    // Approved vacation for later this month
+    
+    // 4. PENDING - Future vacation (Carlos Rodríguez)
     {
-      employee: employees[2],
-      startDate: new Date(now.getFullYear(), now.getMonth(), 28),
-      endDate: new Date(now.getFullYear(), now.getMonth() + 1, 2),
+      employee: employees[1], // Carlos Rodríguez Martín
+      startDate: new Date(currentYear, currentMonth + 2, 8),
+      endDate: new Date(currentYear, currentMonth + 2, 12), // 5 days
+      status: 'pending' as const,
+      reason: 'Puente extendido planificado',
+      createdAt: new Date(currentYear, currentMonth, now.getDate() - 1), // Requested yesterday
+    },
+    
+    // 5. APPROVED - Historical vacation from previous months
+    {
+      employee: employees[1], // Carlos Rodríguez Martín
+      startDate: new Date(currentYear, currentMonth - 2, 3),
+      endDate: new Date(currentYear, currentMonth - 2, 7), // 5 days
       status: 'approved' as const,
-      reason: 'Puente largo',
+      reason: 'Descanso tras proyecto importante',
+      createdAt: new Date(currentYear, currentMonth - 3, 15),
     }
   ];
   
   for (const request of vacationRequests) {
-    await storage.createVacationRequest({
+    // Create vacation request with realistic creation date
+    const vacationRequest = await storage.createVacationRequest({
       userId: request.employee.id,
       startDate: request.startDate,
       endDate: request.endDate,
@@ -242,48 +315,129 @@ async function generateDemoVacationRequests(companyId: number, employees: any[])
       reason: request.reason,
       createdBy: request.employee.id,
     });
+    
+    // Update creation date to be realistic
+    if (vacationRequest) {
+      await db.execute(sql`
+        UPDATE vacation_requests 
+        SET created_at = ${request.createdAt.toISOString()}
+        WHERE id = ${vacationRequest.id}
+      `);
+    }
   }
   
-  console.log('🏖️ Generated', vacationRequests.length, 'demo vacation requests');
+  console.log('🏖️ Generated', vacationRequests.length, 'realistic vacation requests (approved & pending)');
 }
 
 // Generate demo messages
-async function generateDemoMessages(companyId: number, employees: any[]) {
+// Generate bidirectional messages between employees and admin
+async function generateBidirectionalMessages(companyId: number, employees: any[]) {
+  const now = new Date();
+  
+  // Get admin user for the company (the user who just registered)
+  const adminUsers = await db.select()
+    .from(users)
+    .where(and(
+      eq(users.companyId, companyId),
+      eq(users.role, 'admin')
+    ));
+  
+  if (!adminUsers.length) {
+    console.log('No admin found for company, skipping messages');
+    return;
+  }
+  
+  const admin = adminUsers[0];
+  
   const demoMessages = [
+    // 1. Admin to all employees
     {
-      sender: employees[0],
-      content: '¡Hola equipo! ¿Cómo va el proyecto de la nueva funcionalidad?',
+      sender: admin,
+      content: '¡Bienvenidos al nuevo sistema Oficaz! Aquí podrán gestionar sus fichajes, vacaciones y comunicarse con el equipo. Cualquier duda, estoy disponible.',
       isToAllEmployees: true,
+      sentAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     },
+    
+    // 2. Employee to admin (María García)
     {
-      sender: employees[1],
-      recipient: employees[2],
-      content: 'Ana, ¿podrías revisar los datos del último informe? Gracias.',
+      sender: employees[0], // María García
+      recipient: admin,
+      content: 'Hola! He estado probando el sistema de fichajes y me parece muy intuitivo. ¿Hay alguna función especial para reportar horas extra?',
       isToAllEmployees: false,
+      sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
     },
+    
+    // 3. Admin response to María
     {
-      sender: employees[2],
-      content: 'He terminado el análisis de datos. Los resultados están muy prometedores.',
-      isToAllEmployees: true,
-    },
-    {
-      sender: employees[3],
+      sender: admin,
       recipient: employees[0],
-      content: 'Carlos, necesito coordinar contigo las fechas del próximo sprint.',
+      content: 'Me alegra que te guste el sistema, María. Las horas extra se calculan automáticamente cuando superas las 8 horas diarias. También puedes ver el detalle en la sección de reportes.',
       isToAllEmployees: false,
+      sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 4 days ago + 2 hours
+    },
+    
+    // 4. Manager to all employees (Carlos)
+    {
+      sender: employees[1], // Carlos Rodríguez (manager)
+      content: 'Equipo, recordad que las solicitudes de vacaciones deben enviarse con al menos 15 días de antelación. Ana, que disfrutes tu descanso esta semana.',
+      isToAllEmployees: true,
+      sentAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    },
+    
+    // 5. Employee request to admin (David López)
+    {
+      sender: employees[3], // David López
+      recipient: admin,
+      content: 'Buenos días. He enviado una solicitud de vacaciones para el mes que viene. ¿Podrías revisarla cuando tengas un momento? Gracias.',
+      isToAllEmployees: false,
+      sentAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+    },
+    
+    // 6. Admin response to David
+    {
+      sender: admin,
+      recipient: employees[3],
+      content: 'Perfecto David, he visto tu solicitud. Está todo correcto, la aprobaré en cuanto revise la planificación del equipo. Te confirmo hoy mismo.',
+      isToAllEmployees: false,
+      sentAt: new Date(now.getTime() - 22 * 60 * 60 * 1000), // 22 hours ago
+    },
+    
+    // 7. Employee on vacation to team (Ana)
+    {
+      sender: employees[2], // Ana Fernández
+      content: 'Hola equipo! Aunque estoy de vacaciones, he visto que han llegado los datos del último proyecto. Si necesitáis algo urgente, podéis escribirme.',
+      isToAllEmployees: true,
+      sentAt: new Date(now.getTime() - 5 * 60 * 60 * 1000), // 5 hours ago
+    },
+    
+    // 8. Recent admin message
+    {
+      sender: admin,
+      content: 'Recordatorio: mañana viernes es el último día para fichar las horas de la semana. Que tengáis un buen día.',
+      isToAllEmployees: true,
+      sentAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
     }
   ];
   
   for (const message of demoMessages) {
-    await storage.createMessage({
+    const createdMessage = await storage.createMessage({
       senderId: message.sender.id,
       recipientId: message.recipient?.id || null,
       content: message.content,
       isToAllEmployees: message.isToAllEmployees,
     });
+    
+    // Update message timestamp to be realistic
+    if (createdMessage) {
+      await db.execute(sql`
+        UPDATE messages 
+        SET created_at = ${message.sentAt.toISOString()}
+        WHERE id = ${createdMessage.id}
+      `);
+    }
   }
   
-  console.log('💬 Generated', demoMessages.length, 'demo messages');
+  console.log('💬 Generated', demoMessages.length, 'bidirectional demo messages (employee-admin communication)');
 }
 
 // Generate demo reminders
@@ -5178,6 +5332,33 @@ startxref
     } catch (error) {
       console.error('Error checking demo data status:', error);
       res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
+    }
+  });
+
+  // Generate demo data manually (for testing)
+  app.post('/api/demo-data/generate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      if (company.hasDemoData) {
+        return res.status(400).json({ message: 'La empresa ya tiene datos de prueba. Elimínalos primero si quieres regenerarlos.' });
+      }
+
+      // Generate comprehensive demo data
+      await generateDemoData(company.id);
+      
+      res.json({ 
+        success: true, 
+        message: 'Datos de demostración generados correctamente. Incluye fichajes del mes anterior y actual, empleados con estados realistas, vacaciones aprobadas y pendientes, y comunicación bidireccional.'
+      });
+    } catch (error) {
+      console.error('Error generating demo data:', error);
+      res.status(500).json({ message: 'Error al generar los datos de prueba: ' + (error as any).message });
     }
   });
 
