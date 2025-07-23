@@ -101,42 +101,18 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
-      {/* Top Bar */}
-      <div className="bg-white shadow-sm border-b border-gray-200 -mx-6 -mt-6 px-6 py-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
-            <p className="text-gray-500 mt-1">
-              ¡Bienvenido de nuevo, {user?.fullName?.split(' ')[0] || 'Usuario'}! Esto es lo que está pasando hoy.
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Hora Actual</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {currentTime ? formatTime(currentTime) : '--:--'}
-              </p>
-            </div>
-            <div className="w-px h-8 bg-gray-300"></div>
-            <Button 
-              className="bg-oficaz-primary hover:bg-blue-700"
-              onClick={() => {
-                console.log('Quick clock in');
-              }}
-            >
-              <Clock className="mr-2" size={16} />
-              Marcar Entrada Rápida
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* TEST: Simple div after header */}
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Panel Principal - TEST MINIMALISTA</h1>
+      
       <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-        <p className="text-green-800">🎯 TEST: Banner después del header funcionando</p>
+        <p className="text-green-800">🎯 TEST CRÍTICO: Si ves esto, el renderizado funciona básicamente</p>
       </div>
       
-      {/* Generate Demo Data Button - Always Visible for Testing */}
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+        <p className="text-blue-800">🔥 TEST: Segundo banner - comprobando si el problema está más abajo</p>
+      </div>
+    </div>
+  );
+}
       <div className="mb-6">
         <Card className="bg-orange-50 border-orange-200">
           <CardContent className="p-4">
