@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { DemoDeleteDialog } from '@/components/demo-delete-dialog';
 
 interface DemoDataStatus {
   hasDemoData: boolean;
 }
 
 export function GlobalDemoBanner() {
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
   const { user, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
 
   // Query to check demo data status
   const { data: demoStatus, isLoading } = useQuery<DemoDataStatus>({
@@ -22,25 +20,12 @@ export function GlobalDemoBanner() {
     refetchOnWindowFocus: false,
   });
 
-  // Mutation to delete demo data
-  const deleteDemoDataMutation = useMutation({
-    mutationFn: () => apiRequest('/api/demo-data', { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
-      setIsDeleting(false);
-    },
-    onError: (error) => {
-      console.error('Error deleting demo data:', error);
-      setIsDeleting(false);
-    }
-  });
+  const handleOpenDeleteDialog = () => {
+    setShowDeleteDialog(true);
+  };
 
-  const handleDeleteDemoData = () => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar todos los datos de demostración? Esta acción no se puede deshacer.')) {
-      return;
-    }
-    setIsDeleting(true);
-    deleteDemoDataMutation.mutate();
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
   };
 
   // Don't show banner if user is not authenticated or has no demo data
@@ -65,13 +50,17 @@ export function GlobalDemoBanner() {
         <Button
           size="sm"
           variant="outline"
-          onClick={handleDeleteDemoData}
-          disabled={isDeleting}
+          onClick={handleOpenDeleteDialog}
           className="text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
         >
-          {isDeleting ? 'Eliminando...' : 'Borrar datos demo'}
+          Borrar datos demo
         </Button>
       </div>
+      
+      <DemoDeleteDialog 
+        isOpen={showDeleteDialog} 
+        onClose={handleCloseDeleteDialog} 
+      />
     </div>
   );
 }
