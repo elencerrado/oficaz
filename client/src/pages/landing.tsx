@@ -384,62 +384,80 @@ export default function Landing() {
                style={{ minHeight: '100vh' }}>
         {/* Spectacular 3D Grid Background with Function Icons */}
         <div className="absolute inset-0">
-          {/* Multiple layers of floating icons for depth */}
-          <div className="absolute inset-0">
-            {/* Layer 1 - Large primary icons */}
-            <div className="absolute top-20 left-20 w-32 h-32 bg-blue-500/15 rounded-2xl flex items-center justify-center animate-pulse">
-              <Clock className="w-16 h-16 text-blue-300/80" />
-            </div>
-            <div className="absolute top-32 right-32 w-28 h-28 bg-green-500/15 rounded-2xl flex items-center justify-center animate-pulse" style={{ animationDelay: '0.5s' }}>
-              <Users className="w-14 h-14 text-green-300/80" />
-            </div>
-            <div className="absolute bottom-40 left-32 w-24 h-24 bg-purple-500/15 rounded-2xl flex items-center justify-center animate-pulse" style={{ animationDelay: '1s' }}>
-              <FileText className="w-12 h-12 text-purple-300/80" />
-            </div>
-            <div className="absolute bottom-32 right-20 w-28 h-28 bg-orange-500/15 rounded-2xl flex items-center justify-center animate-pulse" style={{ animationDelay: '1.5s' }}>
-              <MessageSquare className="w-14 h-14 text-orange-300/80" />
-            </div>
-            
-            {/* Layer 2 - Medium supporting icons */}
-            <div className="absolute top-60 left-1/3 w-20 h-20 bg-cyan-500/12 rounded-xl flex items-center justify-center animate-pulse" style={{ animationDelay: '2s' }}>
-              <Calendar className="w-10 h-10 text-cyan-300/70" />
-            </div>
-            <div className="absolute top-96 right-1/4 w-24 h-24 bg-amber-500/12 rounded-xl flex items-center justify-center animate-pulse" style={{ animationDelay: '2.5s' }}>
-              <Shield className="w-12 h-12 text-amber-300/70" />
-            </div>
-            <div className="absolute bottom-60 left-1/4 w-20 h-20 bg-indigo-500/12 rounded-xl flex items-center justify-center animate-pulse" style={{ animationDelay: '3s' }}>
-              <TrendingUp className="w-10 h-10 text-indigo-300/70" />
-            </div>
-            <div className="absolute top-1/2 right-12 w-18 h-18 bg-rose-500/12 rounded-xl flex items-center justify-center animate-pulse" style={{ animationDelay: '3.5s' }}>
-              <Building2 className="w-9 h-9 text-rose-300/70" />
-            </div>
-            
-            {/* Layer 3 - Small accent icons */}
-            <div className="absolute top-1/3 left-12 w-16 h-16 bg-yellow-500/10 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '4s' }}>
-              <Zap className="w-8 h-8 text-yellow-300/60" />
-            </div>
-            <div className="absolute bottom-20 left-1/2 w-16 h-16 bg-teal-500/10 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '4.5s' }}>
-              <Settings className="w-8 h-8 text-teal-300/60" />
-            </div>
-            <div className="absolute top-40 left-2/3 w-14 h-14 bg-pink-500/10 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '5s' }}>
-              <Globe className="w-7 h-7 text-pink-300/60" />
-            </div>
-            <div className="absolute bottom-80 right-1/3 w-16 h-16 bg-emerald-500/10 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '5.5s' }}>
-              <CreditCard className="w-8 h-8 text-emerald-300/60" />
-            </div>
-            
-            {/* Additional scattered icons for richness */}
-            <div className="absolute top-80 left-1/2 w-12 h-12 bg-violet-500/8 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '6s' }}>
-              <Smartphone className="w-6 h-6 text-violet-300/50" />
-            </div>
-            <div className="absolute top-1/4 right-1/2 w-14 h-14 bg-orange-500/8 rounded-lg flex items-center justify-center animate-pulse" style={{ animationDelay: '6.5s' }}>
-              <Mail className="w-7 h-7 text-orange-300/50" />
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '1000px' }}>
+              <div 
+                className="grid grid-cols-6 gap-6 w-full h-full max-w-4xl mx-auto" 
+                style={{ 
+                  transform: 'rotateX(20deg) rotateY(-10deg)',
+                  transformStyle: 'preserve-3d'
+                }}
+              >
+                {/* Row 1 */}
+                <div className="w-20 h-20 bg-blue-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(20px)' }}>
+                  <Clock className="w-10 h-10 text-blue-200" />
+                </div>
+                <div className="w-20 h-20 bg-green-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(15px)', animationDelay: '0.5s' }}>
+                  <Users className="w-10 h-10 text-green-200" />
+                </div>
+                <div className="w-20 h-20 bg-purple-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(25px)', animationDelay: '1s' }}>
+                  <FileText className="w-10 h-10 text-purple-200" />
+                </div>
+                <div className="w-20 h-20 bg-orange-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(10px)', animationDelay: '1.5s' }}>
+                  <MessageSquare className="w-10 h-10 text-orange-200" />
+                </div>
+                <div className="w-20 h-20 bg-cyan-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(18px)', animationDelay: '2s' }}>
+                  <Calendar className="w-10 h-10 text-cyan-200" />
+                </div>
+                <div className="w-20 h-20 bg-amber-500/30 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(22px)', animationDelay: '2.5s' }}>
+                  <Shield className="w-10 h-10 text-amber-200" />
+                </div>
+                
+                {/* Row 2 */}
+                <div className="w-20 h-20 bg-indigo-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(12px)', animationDelay: '3s' }}>
+                  <TrendingUp className="w-10 h-10 text-indigo-200" />
+                </div>
+                <div className="w-20 h-20 bg-rose-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(28px)', animationDelay: '3.5s' }}>
+                  <Building2 className="w-10 h-10 text-rose-200" />
+                </div>
+                <div className="w-20 h-20 bg-yellow-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(16px)', animationDelay: '4s' }}>
+                  <Zap className="w-10 h-10 text-yellow-200" />
+                </div>
+                <div className="w-20 h-20 bg-teal-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(24px)', animationDelay: '4.5s' }}>
+                  <Settings className="w-10 h-10 text-teal-200" />
+                </div>
+                <div className="w-20 h-20 bg-pink-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(14px)', animationDelay: '5s' }}>
+                  <Globe className="w-10 h-10 text-pink-200" />
+                </div>
+                <div className="w-20 h-20 bg-emerald-500/25 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(20px)', animationDelay: '5.5s' }}>
+                  <CreditCard className="w-10 h-10 text-emerald-200" />
+                </div>
+                
+                {/* Row 3 */}
+                <div className="w-20 h-20 bg-violet-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(26px)', animationDelay: '6s' }}>
+                  <Smartphone className="w-10 h-10 text-violet-200" />
+                </div>
+                <div className="w-20 h-20 bg-orange-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(11px)', animationDelay: '6.5s' }}>
+                  <Mail className="w-10 h-10 text-orange-200" />
+                </div>
+                <div className="w-20 h-20 bg-blue-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(19px)', animationDelay: '7s' }}>
+                  <CheckCircle className="w-10 h-10 text-blue-200" />
+                </div>
+                <div className="w-20 h-20 bg-green-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(23px)', animationDelay: '7.5s' }}>
+                  <Star className="w-10 h-10 text-green-200" />
+                </div>
+                <div className="w-20 h-20 bg-purple-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(17px)', animationDelay: '8s' }}>
+                  <Play className="w-10 h-10 text-purple-200" />
+                </div>
+                <div className="w-20 h-20 bg-cyan-500/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(21px)', animationDelay: '8.5s' }}>
+                  <ArrowRight className="w-10 h-10 text-cyan-200" />
+                </div>
+              </div>
             </div>
           </div>
-          
-          {/* Enhanced radial fade overlay for text readability */}
+          {/* Radial fade overlay for text readability */}
           <div className="absolute inset-0" style={{
-            background: 'radial-gradient(circle at center, rgba(0,0,0,0.65) 25%, rgba(0,0,0,0.25) 65%, rgba(0,0,0,0.05) 95%)'
+            background: 'radial-gradient(circle at center, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 90%)'
           }}></div>
         </div>
         
