@@ -14,8 +14,6 @@ export function GlobalDemoBanner() {
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  console.log('🟢 GlobalDemoBanner ALWAYS RENDERS - isAuthenticated:', isAuthenticated, 'user role:', user?.role, 'timestamp:', Date.now());
-
   // Query to check demo data status
   const { data: demoStatus, isLoading } = useQuery<DemoDataStatus>({
     queryKey: ['/api/demo-data/status'],
@@ -23,9 +21,6 @@ export function GlobalDemoBanner() {
     staleTime: 30000, // Cache for 30 seconds
     refetchOnWindowFocus: false,
   });
-
-  console.log('🔧 Demo data query - enabled:', isAuthenticated && user?.role === 'admin', 'data:', demoStatus, 'loading:', isLoading);
-  console.log('🔧 GlobalDemoBanner debug - isAuthenticated:', isAuthenticated, 'user:', user, 'demoStatus:', demoStatus);
 
   // Mutation to delete demo data
   const deleteDemoDataMutation = useMutation({
@@ -49,54 +44,31 @@ export function GlobalDemoBanner() {
   };
 
   // Don't show banner if user is not authenticated or has no demo data
-  console.log('🔧 Render check - isAuthenticated:', isAuthenticated, 'hasDemoData:', demoStatus?.hasDemoData, 'user role:', user?.role);
-  
   if (!isAuthenticated || user?.role !== 'admin' || !demoStatus?.hasDemoData) {
-    console.log('🔧 Banner not showing - conditions not met');
     return null;
   }
-  
-  console.log('🔧 Banner SHOULD BE VISIBLE!');
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-        backgroundColor: '#2563eb',
-        color: 'white',
-        padding: '12px 16px',
-        fontSize: '14px',
-        fontWeight: '500',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}
-    >
-      <span>
-        🗂️ Estás utilizando datos de demostración. 
-      </span>
-      <Button
-        size="sm"
-        variant="destructive"
-        onClick={handleDeleteDemoData}
-        disabled={isDeleting}
-        style={{
-          backgroundColor: '#dc2626',
-          color: 'white',
-          border: 'none',
-          padding: '4px 8px',
-          fontSize: '12px'
-        }}
-      >
-        <Trash2 size={12} className="mr-1" />
-        {isDeleting ? 'Eliminando...' : 'Eliminar datos demo'}
-      </Button>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 px-4 py-2">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          <span className="text-sm text-gray-700 font-medium">
+            Datos de demostración activos
+          </span>
+        </div>
+        
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDeleteDemoData}
+          disabled={isDeleting}
+          className="text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+        >
+          <Trash2 size={12} className="mr-1" />
+          {isDeleting ? 'Eliminando...' : 'Eliminar'}
+        </Button>
+      </div>
     </div>
   );
 }

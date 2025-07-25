@@ -13,6 +13,7 @@ import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
+import { useDemoBanner } from "@/hooks/use-demo-banner";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -79,6 +80,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { showBanner } = useDemoBanner();
+
+  // Calculate padding-top dynamically
+  const paddingTop = showBanner ? 'pt-[120px]' : 'pt-16'; // 56px banner + 64px header = 120px
 
   // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {
@@ -100,7 +105,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
       
-      <main className="lg:ml-64 min-h-screen pt-16 bg-gray-50">
+      <main className={`lg:ml-64 min-h-screen ${paddingTop} bg-gray-50`}>
         {children}
       </main>
     </div>
