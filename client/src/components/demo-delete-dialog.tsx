@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2, Users } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DemoDeleteDialogProps {
   isOpen: boolean;
@@ -13,17 +14,8 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
   const queryClient = useQueryClient();
   
   const deleteDemoDataMutation = useMutation({
-    mutationFn: () => fetch('/api/demo-data/clear', { 
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    }).then(res => {
-      if (!res.ok) {
-        throw new Error('Error al eliminar datos demo');
-      }
-      return res.json();
+    mutationFn: () => apiRequest('/api/demo-data/clear', { 
+      method: 'DELETE'
     }),
     onSuccess: () => {
       // Invalidate specific queries to refresh the data and hide banner
