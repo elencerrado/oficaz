@@ -30,7 +30,14 @@ interface PaymentMethodManagerProps {
 
 
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
+// Lazy load Stripe only when needed to avoid blocking render
+let stripePromise: Promise<any> | null = null;
+const getStripe = () => {
+  if (!stripePromise) {
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
+  }
+  return stripePromise;
+};
 
 export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan = "basic", selectedPlanPrice = 29.99 }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
@@ -313,7 +320,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
             </DialogDescription>
           </DialogHeader>
           {clientSecret ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <Elements stripe={getStripe()} options={{ clientSecret }}>
               <StripePaymentForm
                 planName={selectedPlan}
                 planPrice={selectedPlanPrice}

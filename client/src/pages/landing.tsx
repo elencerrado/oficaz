@@ -6,30 +6,30 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense } from 'react';
 
-// Lazy load ContactForm for better initial load performance
+// Lazy load non-critical components for better initial load performance
 const ContactForm = lazy(() => import('@/components/contact-form'));
 import oficazWhiteLogo from '@assets/Imagotipo Oficaz white_1750407614936.png';
-// Optimized icon imports - only what's actually used
+// Optimized icon imports - critical and frequently used icons
 import { 
   Clock, 
   Users, 
-  FileText, 
-  MessageSquare, 
-  Calendar,
-  Settings,
-  Zap,
   CheckCircle,
-  Star,
   ArrowRight,
   Play,
   ChevronRight,
+  Star,
+  Calendar,
+  FileText,
+  MessageSquare,
+  Shield,
+  TrendingUp,
   Building2,
   Smartphone,
   Globe,
-  TrendingUp,
-  CreditCard,
-  Shield,
-  Mail
+  Mail,
+  Settings,
+  Zap,
+  CreditCard
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -38,6 +38,15 @@ export default function Landing() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
+  // Defer API calls until after critical content renders
+  const [shouldLoadData, setShouldLoadData] = useState(false);
+  
+  useEffect(() => {
+    // Defer data loading to prevent blocking initial render
+    const timer = setTimeout(() => setShouldLoadData(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Check if public registration is enabled - defer after critical content loads
   const { data: registrationSettings } = useQuery({
     queryKey: ['/api/registration-status'],
@@ -45,10 +54,13 @@ export default function Landing() {
       const response = await fetch('/api/registration-status');
       return response.json();
     },
-    staleTime: 1000 * 60 * 15, // 15 minutes - increased cache
+    enabled: shouldLoadData, // Only execute after initial render
+    staleTime: 1000 * 60 * 60, // 60 minutes - much longer cache
+    gcTime: 1000 * 60 * 60 * 2, // 2 hours garbage collection time
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    refetchInterval: false, // Disable automatic refetching
   });
 
   // Get dynamic pricing from database - defer after initial render
@@ -58,10 +70,13 @@ export default function Landing() {
       const response = await fetch('/api/public/subscription-plans');
       return response.json();
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes - increased cache
+    enabled: shouldLoadData, // Only execute after initial render
+    staleTime: 1000 * 60 * 60, // 60 minutes - much longer cache
+    gcTime: 1000 * 60 * 60 * 4, // 4 hours garbage collection time
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
+    refetchInterval: false, // Disable automatic refetching
   });
 
   useEffect(() => {
