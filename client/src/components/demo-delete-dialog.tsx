@@ -68,7 +68,7 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
               disabled={deleteDemoDataMutation.isPending}
             >
               <Users className="mr-2 h-4 w-4" />
-              Continuar con datos demo
+              Continuar con demo
             </Button>
             <Button
               onClick={handleDelete}
@@ -83,7 +83,7 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
               ) : (
                 <>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Borrar datos demo
+                  Borrar demo
                 </>
               )}
             </Button>
