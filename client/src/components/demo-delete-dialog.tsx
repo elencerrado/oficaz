@@ -19,10 +19,19 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
         'Authorization': `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json'
       }
-    }).then(res => res.json()),
+    }).then(res => {
+      if (!res.ok) {
+        throw new Error('Error al eliminar datos demo');
+      }
+      return res.json();
+    }),
     onSuccess: () => {
-      // Invalidate all queries to refresh the data
-      queryClient.invalidateQueries();
+      // Invalidate specific queries to refresh the data and hide banner
+      queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/dashboard'] });
       onClose();
     },
     onError: (error) => {
