@@ -60,11 +60,11 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
             </div>
           </div>
 
-          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full sm:w-auto sm:flex-1"
+              className="w-full"
               disabled={deleteDemoDataMutation.isPending}
             >
               <Users className="mr-2 h-4 w-4" />
@@ -73,7 +73,7 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
             <Button
               onClick={handleDelete}
               disabled={deleteDemoDataMutation.isPending}
-              className="w-full sm:w-auto sm:flex-1 bg-red-600 hover:bg-red-700 text-white"
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
             >
               {deleteDemoDataMutation.isPending ? (
                 <>
