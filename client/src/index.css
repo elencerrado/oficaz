@@ -66,29 +66,114 @@
 .hero-icon {
   width: 10rem;
   height: 10rem;
-  background: rgba(59, 130, 246, 0.15);
-  border-radius: 1.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
-  font-size: 4rem;
   animation: heroIconPulse 2s infinite;
   transform-style: preserve-3d;
+  position: relative;
 }
 
-.hero-icon-1 { background: rgba(59, 130, 246, 0.25); animation-delay: 0s; }
-.hero-icon-2 { background: rgba(34, 197, 94, 0.25); animation-delay: 0.5s; }
-.hero-icon-3 { background: rgba(147, 51, 234, 0.25); animation-delay: 1s; }
-.hero-icon-4 { background: rgba(249, 115, 22, 0.25); animation-delay: 1.5s; }
-.hero-icon-5 { background: rgba(6, 182, 212, 0.2); animation-delay: 2s; }
-.hero-icon-6 { background: rgba(245, 158, 11, 0.2); animation-delay: 2.5s; }
-.hero-icon-7 { background: rgba(99, 102, 241, 0.2); animation-delay: 3s; }
-.hero-icon-8 { background: rgba(244, 63, 94, 0.2); animation-delay: 3.5s; }
-.hero-icon-9 { background: rgba(234, 179, 8, 0.15); animation-delay: 4s; }
-.hero-icon-10 { background: rgba(20, 184, 166, 0.15); animation-delay: 4.5s; }
-.hero-icon-11 { background: rgba(236, 72, 153, 0.15); animation-delay: 5s; }
-.hero-icon-12 { background: rgba(16, 185, 129, 0.15); animation-delay: 5.5s; }
+/* Geometric Shapes - Modern and Clean */
+.hero-shape-circle {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(59, 130, 246, 0.1));
+  border-radius: 50%;
+  animation-delay: 0s;
+}
+
+.hero-shape-square {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
+  border-radius: 1.5rem;
+  animation-delay: 0.5s;
+}
+
+.hero-shape-diamond {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(147, 51, 234, 0.1));
+  transform: rotate(45deg);
+  border-radius: 1rem;
+  animation-delay: 1s;
+}
+
+.hero-shape-hexagon {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
+  clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+  animation-delay: 1.5s;
+}
+
+.hero-shape-triangle {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(6, 182, 212, 0.1));
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  animation-delay: 2s;
+}
+
+.hero-shape-star {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation-delay: 2.5s;
+}
+
+.hero-shape-oval {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.1));
+  border-radius: 50%;
+  transform: scaleX(1.4);
+  animation-delay: 3s;
+}
+
+.hero-shape-cross {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.3), rgba(244, 63, 94, 0.1));
+  clip-path: polygon(40% 0%, 60% 0%, 60% 40%, 100% 40%, 100% 60%, 60% 60%, 60% 100%, 40% 100%, 40% 60%, 0% 60%, 0% 40%, 40% 40%);
+  animation-delay: 3.5s;
+}
+
+.hero-shape-rhombus {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(234, 179, 8, 0.1));
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  animation-delay: 4s;
+}
+
+.hero-shape-octagon {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.25), rgba(20, 184, 166, 0.1));
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  animation-delay: 4.5s;
+}
+
+.hero-shape-heart {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(236, 72, 153, 0.1));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  transform: rotate(-45deg);
+  animation-delay: 5s;
+}
+
+.hero-shape-heart::before {
+  content: '';
+  position: absolute;
+  width: 5rem;
+  height: 8rem;
+  background: inherit;
+  left: 5rem;
+  transform: rotate(-45deg);
+  transform-origin: 0 100%;
+  border-radius: 5rem 5rem 0 0;
+}
+
+.hero-shape-heart::after {
+  content: '';
+  position: absolute;
+  width: 5rem;
+  height: 8rem;
+  background: inherit;
+  left: 0;
+  transform: rotate(45deg);
+  transform-origin: 100% 100%;
+  border-radius: 5rem 5rem 0 0;
+}
+
+.hero-shape-arrow {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(16, 185, 129, 0.1));
+  clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%);
+  animation-delay: 5.5s;
+}
 
 @keyframes heroIconPulse {
   0%, 100% { opacity: 0.6; }

@@ -382,9 +382,9 @@ export default function Landing() {
       {/* Hero Section - Responsive Height */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
                style={{ minHeight: '100vh' }}>
-        {/* Optimized 3D Grid Background - CSS Pure Performance */}
+        {/* Optimized 3D Background - Simple geometric shapes */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 opacity-12">
+          <div className="absolute inset-0 opacity-15">
             <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '2000px' }}>
               <div 
                 className="hero-icons-grid" 
@@ -393,21 +393,21 @@ export default function Landing() {
                   transformStyle: 'preserve-3d'
                 }}
               >
-                {/* Pure CSS Icons - Much lighter bundle */}
-                <div className="hero-icon hero-icon-1" style={{ transform: 'translateZ(60px)' }}>⏰</div>
-                <div className="hero-icon hero-icon-2" style={{ transform: 'translateZ(45px)' }}>👥</div>
-                <div className="hero-icon hero-icon-3" style={{ transform: 'translateZ(75px)' }}>📄</div>
-                <div className="hero-icon hero-icon-4" style={{ transform: 'translateZ(30px)' }}>💬</div>
+                {/* Simple geometric shapes - high impact, zero JS weight */}
+                <div className="hero-icon hero-shape-circle" style={{ transform: 'translateZ(60px)' }}></div>
+                <div className="hero-icon hero-shape-square" style={{ transform: 'translateZ(45px)' }}></div>
+                <div className="hero-icon hero-shape-diamond" style={{ transform: 'translateZ(75px)' }}></div>
+                <div className="hero-icon hero-shape-hexagon" style={{ transform: 'translateZ(30px)' }}></div>
                 
-                <div className="hero-icon hero-icon-5" style={{ transform: 'translateZ(50px)' }}>📅</div>
-                <div className="hero-icon hero-icon-6" style={{ transform: 'translateZ(65px)' }}>🛡️</div>
-                <div className="hero-icon hero-icon-7" style={{ transform: 'translateZ(35px)' }}>📈</div>
-                <div className="hero-icon hero-icon-8" style={{ transform: 'translateZ(80px)' }}>🏢</div>
+                <div className="hero-icon hero-shape-triangle" style={{ transform: 'translateZ(50px)' }}></div>
+                <div className="hero-icon hero-shape-star" style={{ transform: 'translateZ(65px)' }}></div>
+                <div className="hero-icon hero-shape-oval" style={{ transform: 'translateZ(35px)' }}></div>
+                <div className="hero-icon hero-shape-cross" style={{ transform: 'translateZ(80px)' }}></div>
                 
-                <div className="hero-icon hero-icon-9" style={{ transform: 'translateZ(40px)' }}>⚡</div>
-                <div className="hero-icon hero-icon-10" style={{ transform: 'translateZ(70px)' }}>⚙️</div>
-                <div className="hero-icon hero-icon-11" style={{ transform: 'translateZ(55px)' }}>🌐</div>
-                <div className="hero-icon hero-icon-12" style={{ transform: 'translateZ(85px)' }}>💳</div>
+                <div className="hero-icon hero-shape-rhombus" style={{ transform: 'translateZ(40px)' }}></div>
+                <div className="hero-icon hero-shape-octagon" style={{ transform: 'translateZ(70px)' }}></div>
+                <div className="hero-icon hero-shape-heart" style={{ transform: 'translateZ(55px)' }}></div>
+                <div className="hero-icon hero-shape-arrow" style={{ transform: 'translateZ(85px)' }}></div>
               </div>
             </div>
           </div>
