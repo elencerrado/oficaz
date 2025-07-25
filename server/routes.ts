@@ -5483,8 +5483,10 @@ startxref
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
-      console.log('✅ demo-data/status - Company found:', company.name, 'hasDemoData:', company.hasDemoData);
-      res.json({ hasDemoData: company.hasDemoData || false });
+      // Fix field mapping: database field is has_demo_data (snake_case)
+      const hasDemoData = company.has_demo_data || false;
+      console.log('✅ demo-data/status - Company found:', company.name, 'has_demo_data:', hasDemoData);
+      res.json({ hasDemoData });
     } catch (error) {
       console.error('❌ demo-data/status - Error:', error);
       res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
@@ -5501,7 +5503,7 @@ startxref
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
 
-      if (company.hasDemoData) {
+      if (company.has_demo_data) {
         return res.status(400).json({ message: 'La empresa ya tiene datos de prueba. Elimínalos primero si quieres regenerarlos.' });
       }
 
