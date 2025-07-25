@@ -14,7 +14,7 @@ export function DemoDeleteDialog({ isOpen, onClose }: DemoDeleteDialogProps) {
   const queryClient = useQueryClient();
   
   const deleteDemoDataMutation = useMutation({
-    mutationFn: () => apiRequest('/api/demo-data/clear', 'DELETE'),
+    mutationFn: () => apiRequest('DELETE', '/api/demo-data/clear'),
     onSuccess: () => {
       // Invalidate specific queries to refresh the data and hide banner
       queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
