@@ -21,7 +21,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
   // Calcular posición del header dinámicamente
-  const headerTopClass = showBanner ? 'top-14' : 'top-0'; // 56px del banner = 14 * 4px = top-14
+  const headerTopClass = showBanner ? 'top-15' : 'top-0'; // 60px del banner = 15 * 4px = top-15
   
   const [currentTime, setCurrentTime] = useState(new Date());
 

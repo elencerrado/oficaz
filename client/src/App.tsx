@@ -83,8 +83,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { showBanner } = useDemoBanner();
 
   // Calculate padding-top dynamically
-  // Header is positioned at top-14 (56px) when banner is shown, so padding is 56px + header height
-  const paddingTop = showBanner ? 'pt-[116px]' : 'pt-16'; // 56px banner + 60px header = 116px
+  // Header is positioned at top-15 (60px) when banner is shown, so padding is 60px + header height
+  const paddingTop = showBanner ? 'pt-[120px]' : 'pt-16'; // 60px banner + 60px header = 120px
 
   // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {

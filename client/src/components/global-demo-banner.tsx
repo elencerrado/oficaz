@@ -49,13 +49,17 @@ export function GlobalDemoBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 px-4 py-2">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200 px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <span className="text-sm text-gray-700 font-medium">
-            Datos de demostración activos
-          </span>
+          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-sm font-bold">✓</span>
+          </div>
+          <div>
+            <p className="text-sm text-gray-700 font-medium">
+              Te hemos añadido algunos datos de demostración para que curiosees cómo funciona la app
+            </p>
+          </div>
         </div>
         
         <Button
@@ -65,8 +69,7 @@ export function GlobalDemoBanner() {
           disabled={isDeleting}
           className="text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
         >
-          <Trash2 size={12} className="mr-1" />
-          {isDeleting ? 'Eliminando...' : 'Eliminar'}
+          {isDeleting ? 'Eliminando...' : 'Borrar datos demo'}
         </Button>
       </div>
     </div>

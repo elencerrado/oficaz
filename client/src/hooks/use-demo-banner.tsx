@@ -22,6 +22,6 @@ export function useDemoBanner() {
 
   return {
     showBanner,
-    bannerHeight: 56 // Height of the banner in pixels
+    bannerHeight: 60 // Height of the banner in pixels (py-3 = 12px top + 12px bottom + content)
   };
 }
