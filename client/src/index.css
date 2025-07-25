@@ -52,6 +52,49 @@
   @apply bg-blue-500 text-white !important;
 }
 
+/* Hero Icons Grid - Optimized CSS Performance */
+.hero-icons-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4rem;
+  width: 100%;
+  height: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.hero-icon {
+  width: 10rem;
+  height: 10rem;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  font-size: 4rem;
+  animation: heroIconPulse 2s infinite;
+  transform-style: preserve-3d;
+}
+
+.hero-icon-1 { background: rgba(59, 130, 246, 0.25); animation-delay: 0s; }
+.hero-icon-2 { background: rgba(34, 197, 94, 0.25); animation-delay: 0.5s; }
+.hero-icon-3 { background: rgba(147, 51, 234, 0.25); animation-delay: 1s; }
+.hero-icon-4 { background: rgba(249, 115, 22, 0.25); animation-delay: 1.5s; }
+.hero-icon-5 { background: rgba(6, 182, 212, 0.2); animation-delay: 2s; }
+.hero-icon-6 { background: rgba(245, 158, 11, 0.2); animation-delay: 2.5s; }
+.hero-icon-7 { background: rgba(99, 102, 241, 0.2); animation-delay: 3s; }
+.hero-icon-8 { background: rgba(244, 63, 94, 0.2); animation-delay: 3.5s; }
+.hero-icon-9 { background: rgba(234, 179, 8, 0.15); animation-delay: 4s; }
+.hero-icon-10 { background: rgba(20, 184, 166, 0.15); animation-delay: 4.5s; }
+.hero-icon-11 { background: rgba(236, 72, 153, 0.15); animation-delay: 5s; }
+.hero-icon-12 { background: rgba(16, 185, 129, 0.15); animation-delay: 5.5s; }
+
+@keyframes heroIconPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 /* Fix iPhone white areas */
 html, body {
   background: #232B36 !important;

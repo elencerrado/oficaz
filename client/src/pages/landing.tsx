@@ -382,62 +382,36 @@ export default function Landing() {
       {/* Hero Section - Responsive Height */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
                style={{ minHeight: '100vh' }}>
-        {/* Spectacular 3D Grid Background with Function Icons - GIGANTIC VERSION */}
+        {/* Optimized 3D Grid Background - CSS Pure Performance */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 opacity-15">
+          <div className="absolute inset-0 opacity-12">
             <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: '2000px' }}>
               <div 
-                className="grid grid-cols-4 gap-16 w-full h-full max-w-6xl mx-auto" 
+                className="hero-icons-grid" 
                 style={{ 
                   transform: 'rotateX(25deg) rotateY(-15deg)',
                   transformStyle: 'preserve-3d'
                 }}
               >
-                {/* Row 1 - GIGANTIC ICONS */}
-                <div className="w-40 h-40 bg-blue-500/25 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(60px)' }}>
-                  <Clock className="w-24 h-24 text-blue-200" />
-                </div>
-                <div className="w-40 h-40 bg-green-500/25 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(45px)', animationDelay: '0.5s' }}>
-                  <Users className="w-24 h-24 text-green-200" />
-                </div>
-                <div className="w-40 h-40 bg-purple-500/25 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(75px)', animationDelay: '1s' }}>
-                  <FileText className="w-24 h-24 text-purple-200" />
-                </div>
-                <div className="w-40 h-40 bg-orange-500/25 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(30px)', animationDelay: '1.5s' }}>
-                  <MessageSquare className="w-24 h-24 text-orange-200" />
-                </div>
+                {/* Pure CSS Icons - Much lighter bundle */}
+                <div className="hero-icon hero-icon-1" style={{ transform: 'translateZ(60px)' }}>⏰</div>
+                <div className="hero-icon hero-icon-2" style={{ transform: 'translateZ(45px)' }}>👥</div>
+                <div className="hero-icon hero-icon-3" style={{ transform: 'translateZ(75px)' }}>📄</div>
+                <div className="hero-icon hero-icon-4" style={{ transform: 'translateZ(30px)' }}>💬</div>
                 
-                {/* Row 2 - GIGANTIC ICONS */}
-                <div className="w-40 h-40 bg-cyan-500/20 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(50px)', animationDelay: '2s' }}>
-                  <Calendar className="w-24 h-24 text-cyan-200" />
-                </div>
-                <div className="w-40 h-40 bg-amber-500/20 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(65px)', animationDelay: '2.5s' }}>
-                  <Shield className="w-24 h-24 text-amber-200" />
-                </div>
-                <div className="w-40 h-40 bg-indigo-500/20 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(35px)', animationDelay: '3s' }}>
-                  <TrendingUp className="w-24 h-24 text-indigo-200" />
-                </div>
-                <div className="w-40 h-40 bg-rose-500/20 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(80px)', animationDelay: '3.5s' }}>
-                  <Building2 className="w-24 h-24 text-rose-200" />
-                </div>
+                <div className="hero-icon hero-icon-5" style={{ transform: 'translateZ(50px)' }}>📅</div>
+                <div className="hero-icon hero-icon-6" style={{ transform: 'translateZ(65px)' }}>🛡️</div>
+                <div className="hero-icon hero-icon-7" style={{ transform: 'translateZ(35px)' }}>📈</div>
+                <div className="hero-icon hero-icon-8" style={{ transform: 'translateZ(80px)' }}>🏢</div>
                 
-                {/* Row 3 - GIGANTIC ICONS */}
-                <div className="w-40 h-40 bg-yellow-500/15 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(40px)', animationDelay: '4s' }}>
-                  <Zap className="w-24 h-24 text-yellow-200" />
-                </div>
-                <div className="w-40 h-40 bg-teal-500/15 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(70px)', animationDelay: '4.5s' }}>
-                  <Settings className="w-24 h-24 text-teal-200" />
-                </div>
-                <div className="w-40 h-40 bg-pink-500/15 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(55px)', animationDelay: '5s' }}>
-                  <Globe className="w-24 h-24 text-pink-200" />
-                </div>
-                <div className="w-40 h-40 bg-emerald-500/15 rounded-3xl flex items-center justify-center backdrop-blur-sm animate-pulse" style={{ transform: 'translateZ(85px)', animationDelay: '5.5s' }}>
-                  <CreditCard className="w-24 h-24 text-emerald-200" />
-                </div>
+                <div className="hero-icon hero-icon-9" style={{ transform: 'translateZ(40px)' }}>⚡</div>
+                <div className="hero-icon hero-icon-10" style={{ transform: 'translateZ(70px)' }}>⚙️</div>
+                <div className="hero-icon hero-icon-11" style={{ transform: 'translateZ(55px)' }}>🌐</div>
+                <div className="hero-icon hero-icon-12" style={{ transform: 'translateZ(85px)' }}>💳</div>
               </div>
             </div>
           </div>
-          {/* Enhanced radial fade overlay for text readability with giant icons */}
+          {/* Enhanced radial fade overlay for text readability */}
           <div className="absolute inset-0" style={{
             background: 'radial-gradient(circle at center, rgba(0,0,0,0.75) 15%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.15) 85%)'
           }}></div>
