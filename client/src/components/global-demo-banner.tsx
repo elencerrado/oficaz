@@ -1,116 +1,102 @@
-import { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 interface DemoDataStatus {
   hasDemoData: boolean;
 }
 
 export function GlobalDemoBanner() {
-  const [hasDemoData, setHasDemoData] = useState<boolean>(false);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
 
-  // Check demo data status
-  useEffect(() => {
-    if (!isAuthenticated) return;
+  console.log('🟢 GlobalDemoBanner ALWAYS RENDERS - isAuthenticated:', isAuthenticated, 'user role:', user?.role, 'timestamp:', Date.now());
 
-    const checkDemoData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
+  // Query to check demo data status
+  const { data: demoStatus, isLoading } = useQuery<DemoDataStatus>({
+    queryKey: ['/api/demo-data/status'],
+    enabled: isAuthenticated && user?.role === 'admin',
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false,
+  });
 
-        const response = await fetch('/api/demo-data/status', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+  console.log('🔧 Demo data query - enabled:', isAuthenticated && user?.role === 'admin', 'data:', demoStatus, 'loading:', isLoading);
+  console.log('🔧 GlobalDemoBanner debug - isAuthenticated:', isAuthenticated, 'user:', user, 'demoStatus:', demoStatus);
 
-        if (response.ok) {
-          const data: DemoDataStatus = await response.json();
-          setHasDemoData(data.hasDemoData);
-          setIsVisible(data.hasDemoData);
-        }
-      } catch (error) {
-        console.error('Error checking demo data:', error);
-      }
-    };
+  // Mutation to delete demo data
+  const deleteDemoDataMutation = useMutation({
+    mutationFn: () => apiRequest('/api/demo-data', { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/demo-data/status'] });
+      setIsDeleting(false);
+    },
+    onError: (error) => {
+      console.error('Error deleting demo data:', error);
+      setIsDeleting(false);
+    }
+  });
 
-    checkDemoData();
-  }, [isAuthenticated]);
-
-  const handleDeleteDemoData = async () => {
+  const handleDeleteDemoData = () => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar todos los datos de demostración? Esta acción no se puede deshacer.')) {
       return;
     }
-
     setIsDeleting(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch('/api/demo-data', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        setIsVisible(false);
-        setHasDemoData(false);
-        // Refresh the page to update all data
-        window.location.reload();
-      } else {
-        alert('Error al eliminar los datos de demostración');
-      }
-    } catch (error) {
-      console.error('Error deleting demo data:', error);
-      alert('Error al eliminar los datos de demostración');
-    } finally {
-      setIsDeleting(false);
-    }
+    deleteDemoDataMutation.mutate();
   };
 
   // Don't show banner if user is not authenticated or has no demo data
-  if (!isAuthenticated || !isVisible || !hasDemoData) {
+  console.log('🔧 Render check - isAuthenticated:', isAuthenticated, 'hasDemoData:', demoStatus?.hasDemoData, 'user role:', user?.role);
+  
+  if (!isAuthenticated || user?.role !== 'admin' || !demoStatus?.hasDemoData) {
+    console.log('🔧 Banner not showing - conditions not met');
     return null;
   }
+  
+  console.log('🔧 Banner SHOULD BE VISIBLE!');
 
   return (
-    <div className="bg-blue-600 text-white py-2 px-4 relative z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-bold">D</span>
-          </div>
-          <div>
-            <span className="font-medium">Datos de demostración activos</span>
-            <span className="ml-2 text-blue-100">
-              Esta cuenta incluye empleados y datos de ejemplo para explorar las funcionalidades
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleDeleteDemoData}
-            disabled={isDeleting}
-            className="flex items-center space-x-1 bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50"
-          >
-            <Trash2 size={14} />
-            <span>{isDeleting ? 'Eliminando...' : 'Borrar datos demo'}</span>
-          </button>
-          <button
-            onClick={() => setIsVisible(false)}
-            className="text-blue-200 hover:text-white transition-colors"
-          >
-            <span className="text-lg">&times;</span>
-          </button>
-        </div>
-      </div>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        backgroundColor: '#2563eb',
+        color: 'white',
+        padding: '12px 16px',
+        fontSize: '14px',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}
+    >
+      <span>
+        🗂️ Estás utilizando datos de demostración. 
+      </span>
+      <Button
+        size="sm"
+        variant="destructive"
+        onClick={handleDeleteDemoData}
+        disabled={isDeleting}
+        style={{
+          backgroundColor: '#dc2626',
+          color: 'white',
+          border: 'none',
+          padding: '4px 8px',
+          fontSize: '12px'
+        }}
+      >
+        <Trash2 size={12} className="mr-1" />
+        {isDeleting ? 'Eliminando...' : 'Eliminar datos demo'}
+      </Button>
     </div>
   );
 }
