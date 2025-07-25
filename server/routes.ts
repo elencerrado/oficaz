@@ -14,7 +14,7 @@ import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
-import { eq, and, desc, sql, not, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, not, inArray, count } from 'drizzle-orm';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
@@ -5573,7 +5573,6 @@ startxref
       console.log('🧹 Clearing demo data for company:', company.id);
 
       // Get demo employees (exclude admin user)
-      const adminUser = await storage.getUser(userId);
       const demoEmployees = await db.select()
         .from(users)
         .where(and(
@@ -5584,31 +5583,72 @@ startxref
       const demoEmployeeIds = demoEmployees.map(emp => emp.id);
 
       if (demoEmployeeIds.length > 0) {
-        // Delete demo data in proper order to respect foreign keys
+        console.log('🗑️ Deleting demo data for employee IDs:', demoEmployeeIds);
+        
+        // Delete ALL data in proper cascade order to handle foreign key constraints
+        // Must delete in this exact order to avoid constraint violations
+        
+        // Step 1: Delete break periods first (many foreign key references)
         await db.delete(breakPeriods)
           .where(inArray(breakPeriods.userId, demoEmployeeIds));
+        console.log('✅ Deleted break periods');
         
+        // Step 2: Delete work sessions 
         await db.delete(workSessions)
           .where(inArray(workSessions.userId, demoEmployeeIds));
+        console.log('✅ Deleted work sessions');
         
+        // Step 3: Delete vacation requests
         await db.delete(vacationRequests)
           .where(inArray(vacationRequests.userId, demoEmployeeIds));
+        console.log('✅ Deleted vacation requests');
         
+        // Step 4: Delete messages
         await db.delete(messages)
           .where(inArray(messages.senderId, demoEmployeeIds));
+        console.log('✅ Deleted messages');
         
-        await db.delete(reminders)
-          .where(inArray(reminders.userId, demoEmployeeIds));
+        // Step 5: Delete reminders (often gets regenerated, delete multiple times if needed)
+        let reminderDeleteAttempts = 0;
+        let remainingReminders = 0;
+        do {
+          reminderDeleteAttempts++;
+          const result = await db.delete(reminders)
+            .where(inArray(reminders.userId, demoEmployeeIds));
+          
+          // Check if any reminders remain
+          const reminderCheck = await db.select({ count: count() })
+            .from(reminders)
+            .where(inArray(reminders.userId, demoEmployeeIds));
+          remainingReminders = reminderCheck[0]?.count || 0;
+          
+          console.log(`🔄 Reminder deletion attempt ${reminderDeleteAttempts}, remaining: ${remainingReminders}`);
+          
+          if (remainingReminders > 0 && reminderDeleteAttempts < 3) {
+            // Wait a brief moment before retry
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        } while (remainingReminders > 0 && reminderDeleteAttempts < 3);
         
+        console.log('✅ Deleted reminders');
+        
+        // Step 6: Delete documents
         await db.delete(documents)
           .where(inArray(documents.userId, demoEmployeeIds));
+        console.log('✅ Deleted documents');
         
-        // Delete demo employees
+        // Step 7: Final attempt to delete any remaining break periods that might have regenerated
+        await db.delete(breakPeriods)
+          .where(inArray(breakPeriods.userId, demoEmployeeIds));
+        console.log('✅ Final cleanup of break periods');
+        
+        // Step 8: Delete demo employees (this should now work without foreign key violations)
         await db.delete(users)
           .where(and(
             eq(users.companyId, company.id),
             not(eq(users.id, userId)) // Keep admin
           ));
+        console.log('✅ Deleted demo employees');
       }
 
       // Mark company as no longer having demo data
@@ -5616,12 +5656,12 @@ startxref
         .set({ hasDemoData: false })
         .where(eq(companies.id, company.id));
 
-      console.log('✅ Demo data cleared for company:', company.id);
+      console.log('✅ Demo data cleared successfully for company:', company.id);
       res.json({ message: 'Datos de prueba eliminados correctamente' });
 
     } catch (error) {
-      console.error('Error clearing demo data:', error);
-      res.status(500).json({ message: 'Error al eliminar los datos de prueba' });
+      console.error('❌ Error clearing demo data:', error);
+      res.status(500).json({ message: 'Error al eliminar los datos de prueba: ' + (error as any).message });
     }
   });
 
