@@ -5,6 +5,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useDemoBanner } from '@/hooks/use-demo-banner';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 interface MobileHeaderProps {
@@ -14,9 +15,13 @@ interface MobileHeaderProps {
 export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { user, company, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
+  const { showBanner } = useDemoBanner();
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
+  
+  // Calcular posición del header dinámicamente
+  const headerTopClass = showBanner ? 'top-14' : 'top-0'; // 56px del banner = 14 * 4px = top-14
   
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -57,7 +62,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center">
+    <header className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center`}>
       {/* Left Section */}
       <div className="flex items-center justify-start">
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
