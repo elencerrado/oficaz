@@ -5483,9 +5483,9 @@ startxref
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
-      // Fix field mapping: database field is has_demo_data (snake_case)
-      const hasDemoData = company.has_demo_data || false;
-      console.log('✅ demo-data/status - Company found:', company.name, 'has_demo_data:', hasDemoData);
+      // Fix field mapping: Drizzle converts has_demo_data to hasDemoData automatically
+      const hasDemoData = company.hasDemoData || false;
+      console.log('✅ demo-data/status - Company found:', company.name, 'hasDemoData:', hasDemoData);
       res.json({ hasDemoData });
     } catch (error) {
       console.error('❌ demo-data/status - Error:', error);
@@ -5503,7 +5503,7 @@ startxref
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
 
-      if (company.has_demo_data) {
+      if (company.hasDemoData) {
         return res.status(400).json({ message: 'La empresa ya tiene datos de prueba. Elimínalos primero si quieres regenerarlos.' });
       }
 

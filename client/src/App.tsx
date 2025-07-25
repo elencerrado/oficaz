@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
+import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
@@ -343,6 +344,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          <GlobalDemoBanner />
           <Toaster />
           <Router />
           <CookieBanner />
