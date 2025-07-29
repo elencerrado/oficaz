@@ -4132,30 +4132,42 @@ startxref
     try {
       const companyId = req.user!.companyId;
       
-      // Get real-time stats from actual data
-      const employeeCount = await db.execute(sql`
-        SELECT COUNT(*) as count FROM users WHERE company_id = ${companyId} AND is_active = true
-      `);
+      // Get real-time stats from actual data using proper ORM
+      const employeeCount = await db.select({ count: count() })
+        .from(users)
+        .where(and(eq(users.companyId, companyId), eq(users.isActive, true)));
       
-      const timeEntriesCount = await db.execute(sql`
-        SELECT COUNT(*) as count FROM work_sessions 
-        WHERE user_id IN (SELECT id FROM users WHERE company_id = ${companyId})
-        AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
-      `);
+      const companyUsers = await db.select({ id: users.id })
+        .from(users)
+        .where(eq(users.companyId, companyId));
       
-      const documentsCount = await db.execute(sql`
-        SELECT COUNT(*) as count FROM documents 
-        WHERE user_id IN (SELECT id FROM users WHERE company_id = ${companyId})
-        AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
-      `);
+      const userIds = companyUsers.map(u => u.id);
+      
+      const timeEntriesCount = userIds.length > 0 
+        ? await db.select({ count: count() })
+            .from(workSessions)
+            .where(and(
+              inArray(workSessions.userId, userIds),
+              sql`created_at >= DATE_TRUNC('month', CURRENT_DATE)`
+            ))
+        : [{ count: 0 }];
+      
+      const documentsCount = userIds.length > 0
+        ? await db.select({ count: count() })
+            .from(documents)
+            .where(and(
+              inArray(documents.userId, userIds),
+              sql`created_at >= DATE_TRUNC('month', CURRENT_DATE)`
+            ))
+        : [{ count: 0 }];
 
       const currentStats = {
-        employee_count: parseInt((employeeCount.rows[0] as any)?.count || '0'),
-        active_employees: parseInt((employeeCount.rows[0] as any)?.count || '0'),
-        time_entries_count: parseInt((timeEntriesCount.rows[0] as any)?.count || '0'),
-        documents_uploaded: parseInt((documentsCount.rows[0] as any)?.count || '0'),
+        employee_count: parseInt(String(employeeCount[0]?.count || 0)),
+        active_employees: parseInt(String(employeeCount[0]?.count || 0)),
+        time_entries_count: parseInt(String(timeEntriesCount[0]?.count || 0)),
+        documents_uploaded: parseInt(String(documentsCount[0]?.count || 0)),
         storage_used_mb: '0.5', // Placeholder - would need actual file size calculation
-        api_calls: parseInt((timeEntriesCount.rows[0] as any)?.count || '0') * 2
+        api_calls: parseInt(String(timeEntriesCount[0]?.count || 0)) * 2
       };
 
       res.json({
@@ -4241,12 +4253,12 @@ startxref
       
       const pricePerUser = planPricing[plan] || 3.00;
       
-      // Get employee count
-      const employeeResult = await db.execute(sql`
-        SELECT COUNT(*) as count FROM users WHERE company_id = ${companyId} AND is_active = true
-      `);
+      // Get employee count using proper ORM
+      const employeeResult = await db.select({ count: count() })
+        .from(users)
+        .where(and(eq(users.companyId, companyId), eq(users.isActive, true)));
       
-      const employeeCount = parseInt(employeeResult.rows[0]?.count || '1');
+      const employeeCount = parseInt(String(employeeResult[0]?.count || 1));
       const totalAmount = Math.max(pricePerUser * employeeCount, pricePerUser); // Minimum 1 user
       
       // Here you would integrate with Stripe to create payment intent
@@ -4480,8 +4492,8 @@ startxref
       const planResult = await db.execute(sql`
         SELECT max_users, price_per_user 
         FROM subscription_plans 
-        WHERE name = ${plan}
-      `);
+        WHERE name = $1
+      `, [plan]);
 
       if (planResult.rows.length === 0) {
         return res.status(404).json({ message: 'Plan no encontrado en la base de datos' });
@@ -4489,8 +4501,8 @@ startxref
 
       const newPlanData = planResult.rows[0];
       const currentPlanData = await db.execute(sql`
-        SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
-      `);
+        SELECT price_per_user FROM subscription_plans WHERE name = $1
+      `, [company.subscription.plan]);
 
       // DOWNGRADE LOGIC: Retain current plan features until next billing cycle
       const currentPlan = company.subscription.plan;
@@ -5049,108 +5061,73 @@ startxref
 
       console.log(`🚨 DELETING COMPANY: ${company.name} (ID: ${companyId})`);
 
-      // 1. Delete all work sessions and break periods for all users in the company
-      await db.execute(sql`
-        DELETE FROM break_periods 
-        WHERE work_session_id IN (
-          SELECT id FROM work_sessions 
-          WHERE user_id IN (
-            SELECT id FROM users WHERE company_id = ${companyId}
-          )
-        )
-      `);
-      console.log('✅ Deleted break periods');
+      // Get all user IDs for this company first
+      const companyUsers = await db.select({ id: users.id })
+        .from(users)
+        .where(eq(users.companyId, companyId));
+      
+      const userIds = companyUsers.map(u => u.id);
+      
+      if (userIds.length > 0) {
+        // 1. Delete all break periods for work sessions of company users
+        const workSessionsResult = await db.select({ id: workSessions.id })
+          .from(workSessions)
+          .where(inArray(workSessions.userId, userIds));
+        
+        const workSessionIds = workSessionsResult.map(ws => ws.id);
+        
+        if (workSessionIds.length > 0) {
+          await db.delete(breakPeriods)
+            .where(inArray(breakPeriods.workSessionId, workSessionIds));
+          console.log('✅ Deleted break periods');
+        }
 
-      await db.execute(sql`
-        DELETE FROM work_sessions 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted work sessions');
+        // 2. Delete all work sessions
+        await db.delete(workSessions)
+          .where(inArray(workSessions.userId, userIds));
+        console.log('✅ Deleted work sessions');
 
-      // 2. Delete all vacation requests
-      await db.execute(sql`
-        DELETE FROM vacation_requests 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted vacation requests');
+        // 3. Delete all vacation requests
+        await db.delete(vacationRequests)
+          .where(inArray(vacationRequests.userId, userIds));
+        console.log('✅ Deleted vacation requests');
 
-      // 3. Delete all documents
-      await db.execute(sql`
-        DELETE FROM documents 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted documents');
+        // 4. Delete all documents
+        await db.delete(documents)
+          .where(inArray(documents.userId, userIds));
+        console.log('✅ Deleted documents');
 
-      // 4. Delete all messages (sent and received)
-      await db.execute(sql`
-        DELETE FROM messages 
-        WHERE sender_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        ) OR receiver_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
+        // 5. Delete all messages (sent and received)
+        await db.delete(messages)
+          .where(or(
+            inArray(messages.senderId, userIds),
+            inArray(messages.receiverId, userIds)
+          ));
+      }
       console.log('✅ Deleted messages');
 
-      // 5. Delete all notifications
-      await db.execute(sql`
-        DELETE FROM notifications 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted notifications');
+      // 6. Delete all reminders
+      if (userIds.length > 0) {
+        await db.delete(reminders)
+          .where(inArray(reminders.userId, userIds));
+        console.log('✅ Deleted reminders');
+      }
 
-      // 6. Delete all document notifications
-      await db.execute(sql`
-        DELETE FROM document_notifications 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted document notifications');
-
-      // 7. Delete all reminders
-      await db.execute(sql`
-        DELETE FROM reminders 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted reminders');
-
-      // 8. Delete all custom holidays
-      await db.execute(sql`
-        DELETE FROM custom_holidays 
-        WHERE company_id = ${companyId}
-      `);
-      console.log('✅ Deleted custom holidays');
-
-      // 9. Delete subscription
-      await db.execute(sql`
-        DELETE FROM subscriptions 
-        WHERE company_id = ${companyId}
-      `);
+      // 7. Delete subscription
+      await db.delete(subscriptions)
+        .where(eq(subscriptions.companyId, companyId));
       console.log('✅ Deleted subscription');
 
-      // 10. Delete all users from this company
-      await db.execute(sql`
-        DELETE FROM users 
-        WHERE company_id = ${companyId}
-      `);
-      console.log('✅ Deleted all users');
+      // 8. Delete all users from this company
+      if (userIds.length > 0) {
+        await db.delete(users)
+          .where(eq(users.companyId, companyId));
+        console.log('✅ Deleted all users');
+      }
 
-      // 11. Finally, delete the company
-      await db.execute(sql`
-        DELETE FROM companies 
-        WHERE id = ${companyId}
-      `);
+      // 9. Finally, delete the company
+      await db.delete(companies)
+        .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
 
       console.log(`🚨 PERMANENT DELETION COMPLETED: Company ${company.name} and all associated data has been permanently removed from the database`);
@@ -5191,98 +5168,71 @@ startxref
 
       // Delete in the correct order to respect foreign key constraints
       
-      // 1. Delete all break periods
-      await db.execute(sql`
-        DELETE FROM break_periods 
-        WHERE work_session_id IN (
-          SELECT ws.id FROM work_sessions ws
-          JOIN users u ON ws.user_id = u.id
-          WHERE u.company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted break periods');
+      // Get all user IDs for this company first (Super Admin deletion)
+      const companyUsersForAdmin = await db.select({ id: users.id })
+        .from(users)
+        .where(eq(users.companyId, companyId));
+      
+      const userIdsForAdmin = companyUsersForAdmin.map(u => u.id);
+      
+      if (userIdsForAdmin.length > 0) {
+        // 1. Delete all break periods for work sessions of company users
+        const workSessionsForAdmin = await db.select({ id: workSessions.id })
+          .from(workSessions)
+          .where(inArray(workSessions.userId, userIdsForAdmin));
+        
+        const workSessionIdsForAdmin = workSessionsForAdmin.map(ws => ws.id);
+        
+        if (workSessionIdsForAdmin.length > 0) {
+          await db.delete(breakPeriods)
+            .where(inArray(breakPeriods.workSessionId, workSessionIdsForAdmin));
+          console.log('✅ Deleted break periods');
+        }
 
-      // 2. Delete all work sessions
-      await db.execute(sql`
-        DELETE FROM work_sessions 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted work sessions');
+        // 2. Delete all work sessions
+        await db.delete(workSessions)
+          .where(inArray(workSessions.userId, userIdsForAdmin));
+        console.log('✅ Deleted work sessions');
 
-      // 3. Delete all vacation requests
-      await db.execute(sql`
-        DELETE FROM vacation_requests 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted vacation requests');
+        // 3. Delete all vacation requests
+        await db.delete(vacationRequests)
+          .where(inArray(vacationRequests.userId, userIdsForAdmin));
+        console.log('✅ Deleted vacation requests');
 
-      // 4. Delete all documents (files will be orphaned but that's acceptable)
-      await db.execute(sql`
-        DELETE FROM documents 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted documents');
+        // 4. Delete all documents
+        await db.delete(documents)
+          .where(inArray(documents.userId, userIdsForAdmin));
+        console.log('✅ Deleted documents');
 
-      // 5. Delete all messages (sent and received)
-      await db.execute(sql`
-        DELETE FROM messages 
-        WHERE sender_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        ) OR receiver_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted messages');
+        // 5. Delete all messages (sent and received)
+        await db.delete(messages)
+          .where(or(
+            inArray(messages.senderId, userIdsForAdmin),
+            inArray(messages.receiverId, userIdsForAdmin)
+          ));
+        console.log('✅ Deleted messages');
 
-      // 6. Delete all notifications
-      await db.execute(sql`
-        DELETE FROM notifications 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted notifications');
+        // 6. Delete all reminders
+        await db.delete(reminders)
+          .where(inArray(reminders.userId, userIdsForAdmin));
+        console.log('✅ Deleted reminders');
+      }
 
-      // 7. Delete all document notifications (skip if table doesn't exist)
-      // Note: document_notifications table doesn't exist in current schema
-
-      // 8. Delete all reminders
-      await db.execute(sql`
-        DELETE FROM reminders 
-        WHERE user_id IN (
-          SELECT id FROM users WHERE company_id = ${companyId}
-        )
-      `);
-      console.log('✅ Deleted reminders');
-
-      // 9. Delete all custom holidays (skip if table doesn't exist)
-      // Note: custom_holidays table doesn't exist in current schema
-
-      // 8. Delete subscription
-      await db.execute(sql`
-        DELETE FROM subscriptions 
-        WHERE company_id = ${companyId}
-      `);
+      // 7. Delete subscription
+      await db.delete(subscriptions)
+        .where(eq(subscriptions.companyId, companyId));
       console.log('✅ Deleted subscription');
 
-      // 9. Delete all users
-      await db.execute(sql`
-        DELETE FROM users 
-        WHERE company_id = ${companyId}
-      `);
-      console.log('✅ Deleted users');
+      // 8. Delete all users
+      if (userIdsForAdmin.length > 0) {
+        await db.delete(users)
+          .where(eq(users.companyId, companyId));
+        console.log('✅ Deleted users');
+      }
 
-      // 10. Finally, delete the company
-      await db.execute(sql`
-        DELETE FROM companies 
-        WHERE id = ${companyId}
-      `);
+      // 9. Finally, delete the company
+      await db.delete(companies)
+        .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
 
       console.log(`🚨 SUPER ADMIN PERMANENT DELETION COMPLETED: Company ${company[0].name} and all associated data has been permanently removed from the database`);
