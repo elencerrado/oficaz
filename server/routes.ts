@@ -14,8 +14,8 @@ import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
-import { eq, and, desc, sql, not, inArray, count } from 'drizzle-orm';
-import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents } from '@shared/schema';
+import { eq, and, or, desc, sql, not, inArray, count } from 'drizzle-orm';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
@@ -3238,31 +3238,43 @@ startxref
       // Delete all related data in order of dependencies
       console.log(`🗑️ Deleting employee ${userId} and all related data...`);
 
-      // 1. Delete break periods (depends on work sessions)
-      await db.execute(sql`
-        DELETE FROM break_periods 
-        WHERE work_session_id IN (
-          SELECT id FROM work_sessions WHERE user_id = ${userId}
-        )
-      `);
+      // 1. Delete break periods (depends on work sessions) using ORM for safety
+      const userWorkSessions = await db.select({ id: workSessions.id })
+        .from(workSessions)
+        .where(eq(workSessions.userId, userId));
+      
+      if (userWorkSessions.length > 0) {
+        const workSessionIds = userWorkSessions.map(ws => ws.id);
+        await db.delete(breakPeriods)
+          .where(inArray(breakPeriods.workSessionId, workSessionIds));
+      }
 
       // 2. Delete work sessions
-      await db.execute(sql`DELETE FROM work_sessions WHERE user_id = ${userId}`);
+      await db.delete(workSessions)
+        .where(eq(workSessions.userId, userId));
 
       // 3. Delete vacation requests
-      await db.execute(sql`DELETE FROM vacation_requests WHERE user_id = ${userId}`);
+      await db.delete(vacationRequests)
+        .where(eq(vacationRequests.userId, userId));
 
       // 4. Delete documents
-      await db.execute(sql`DELETE FROM documents WHERE user_id = ${userId}`);
+      await db.delete(documents)
+        .where(eq(documents.userId, userId));
 
       // 5. Delete messages (both sent and received)
-      await db.execute(sql`DELETE FROM messages WHERE sender_id = ${userId} OR receiver_id = ${userId}`);
+      await db.delete(messages)
+        .where(or(
+          eq(messages.senderId, userId),
+          eq(messages.receiverId, userId)
+        ));
 
       // 6. Delete reminders
-      await db.execute(sql`DELETE FROM reminders WHERE user_id = ${userId}`);
+      await db.delete(reminders)
+        .where(eq(reminders.userId, userId));
 
       // 7. Delete activation tokens
-      await db.execute(sql`DELETE FROM employee_activation_tokens WHERE user_id = ${userId}`);
+      await db.delete(employeeActivationTokens)
+        .where(eq(employeeActivationTokens.userId, userId));
 
       // 8. Finally delete the user
       const deletedUser = await storage.deleteUser(userId);
