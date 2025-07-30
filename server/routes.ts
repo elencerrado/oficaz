@@ -884,6 +884,51 @@ Responde directamente a este email para contactar con la persona.
   }>();
 
   // Endpoint to check if email is available for registration
+  // Diagnostic endpoint for email issues
+  app.get('/api/diagnostics/email', async (req, res) => {
+    try {
+      const host = req.get('host') || req.get('x-forwarded-host');
+      const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
+      
+      let baseUrl;
+      if (isCustomDomain) {
+        baseUrl = `https://${host}`;
+      } else if (process.env.REPLIT_DOMAINS) {
+        const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+        baseUrl = `https://${firstDomain}`;
+      } else if (process.env.REPLIT_DEV_DOMAIN) {
+        baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+      } else {
+        baseUrl = 'https://oficaz-employee-management.replit.app';
+      }
+
+      const diagnostics = {
+        timestamp: new Date().toISOString(),
+        host_header: req.get('host'),
+        x_forwarded_host: req.get('x-forwarded-host'),
+        user_agent: req.get('user-agent'),
+        is_custom_domain: isCustomDomain,
+        detected_base_url: baseUrl,
+        environment: {
+          REPLIT_DOMAINS: process.env.REPLIT_DOMAINS,
+          REPLIT_DEV_DOMAIN: process.env.REPLIT_DEV_DOMAIN,
+          NODE_ENV: process.env.NODE_ENV
+        },
+        smtp_config: {
+          host: 'smtp.hostinger.com',
+          port: 465,
+          secure: true,
+          auth_user: 'soy@oficaz.es'
+        }
+      };
+
+      res.json(diagnostics);
+    } catch (error) {
+      console.error('Diagnostics error:', error);
+      res.status(500).json({ error: 'Error in diagnostics endpoint' });
+    }
+  });
+
   app.post('/api/auth/check-email-availability', async (req, res) => {
     try {
       const { email } = req.body;
@@ -991,10 +1036,24 @@ Responde directamente a este email para contactar con la persona.
           }
         });
 
-        // Professional logo implementation with real image and website link
-        const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
-          `https://${process.env.REPLIT_DEV_DOMAIN}` : 
-          'https://oficaz-employee-management.replit.app';
+        // Professional logo implementation with robust domain detection
+        let baseUrl;
+        
+        // Check if running from custom domain by examining request headers
+        const host = req.get('host') || req.get('x-forwarded-host');
+        const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
+        
+        if (isCustomDomain) {
+          baseUrl = `https://${host}`;
+        } else if (process.env.REPLIT_DOMAINS) {
+          const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+          baseUrl = `https://${firstDomain}`;
+        } else if (process.env.REPLIT_DEV_DOMAIN) {
+          baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+        } else {
+          baseUrl = 'https://oficaz-employee-management.replit.app';
+        }
+        
         const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
         const websiteUrl = 'https://oficaz.es';
         
@@ -1004,7 +1063,12 @@ Responde directamente a este email para contactar con la persona.
                  style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
           </a>
         `;
-        console.log('📧 Professional logo with real image:', logoUrl, '→ Website:', websiteUrl);
+        console.log('📧* Professional logo with real image:', logoUrl, '→ Website:', websiteUrl);
+        console.log('📧* Base URL detected:', baseUrl);
+        console.log('📧* Host header:', host);
+        console.log('📧* Is custom domain:', isCustomDomain);
+        console.log('📧* Environment check - REPLIT_DOMAINS:', process.env.REPLIT_DOMAINS);
+        console.log('📧* Environment check - REPLIT_DEV_DOMAIN:', process.env.REPLIT_DEV_DOMAIN);
 
         const mailOptions = {
           from: '"Oficaz" <soy@oficaz.es>',
@@ -1073,10 +1137,26 @@ Responde directamente a este email para contactar con la persona.
           `,
         };
 
-        await transporter.sendMail(mailOptions);
+        console.log('📧* Attempting to send email with mailOptions:', {
+          from: mailOptions.from,
+          to: mailOptions.to,
+          subject: mailOptions.subject,
+          textLength: mailOptions.text?.length,
+          htmlLength: mailOptions.html?.length
+        });
+
+        const result = await transporter.sendMail(mailOptions);
         console.log(`✅ Email de verificación enviado a ${email}`);
+        console.log(`📧 SMTP Response:`, result);
       } catch (emailError) {
-        console.error('Error sending email:', emailError);
+        console.error('❌ Error sending verification email:', emailError);
+        console.error('❌ Full error details:', {
+          message: emailError.message,
+          code: emailError.code,
+          command: emailError.command,
+          response: emailError.response,
+          responseCode: emailError.responseCode
+        });
         // Fallback to console log
         console.log(`🔐 CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
         console.log(`⏰ Expira en 10 minutos`);

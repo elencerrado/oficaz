@@ -64,20 +64,54 @@ export async function sendEmployeeWelcomeEmail(
       }
     });
 
-    // Professional logo implementation with real image and website link
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN ? 
-      `https://${process.env.REPLIT_DEV_DOMAIN}` : 
-      'https://oficaz-employee-management.replit.app';
-    const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
+    // Professional logo implementation with base64 embedded image for maximum compatibility
+    let baseUrl;
+    if (process.env.REPLIT_DOMAINS) {
+      const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+      baseUrl = `https://${firstDomain}`;
+    } else if (process.env.REPLIT_DEV_DOMAIN) {
+      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    } else {
+      baseUrl = 'https://oficaz-employee-management.replit.app';
+    }
+    
+    // Use embedded base64 logo for maximum email client compatibility
+    let logoHtml;
+    try {
+      const logoPath = path.join(process.cwd(), 'attached_assets', 'oficaz logo_1750516757063.png');
+      if (fs.existsSync(logoPath)) {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuffer.toString('base64');
+        logoHtml = `
+          <a href="https://oficaz.es" style="text-decoration: none;" target="_blank">
+            <img src="data:image/png;base64,${logoBase64}" alt="Oficaz - Sistema de Gestión Empresarial" 
+                 style="height: 45px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
+          </a>
+        `;
+        console.log(`📧 Using embedded base64 logo (${logoBase64.length} chars)`);
+      } else {
+        logoHtml = `
+          <div style="text-align: center; padding: 10px;">
+            <h2 style="color: #007AFF; margin: 0; font-size: 24px; font-weight: bold;">Oficaz</h2>
+            <p style="color: #666; margin: 5px 0 0 0; font-size: 12px;">Sistema de Gestión Empresarial</p>
+          </div>
+        `;
+        console.log('📧 Using fallback text logo');
+      }
+    } catch (error) {
+      console.error('Error loading logo:', error);
+      logoHtml = `
+        <div style="text-align: center; padding: 10px;">
+          <h2 style="color: #007AFF; margin: 0; font-size: 24px; font-weight: bold;">Oficaz</h2>
+          <p style="color: #666; margin: 5px 0 0 0; font-size: 12px;">Sistema de Gestión Empresarial</p>
+        </div>
+      `;
+    }
+    
+    const logoUrl = `${baseUrl}/images/oficaz-logo.png`; // Keep for backwards compatibility
     const websiteUrl = 'https://oficaz.es';
     
-    const logoHtml = `
-      <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
-        <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
-             style="height: 45px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
-      </a>
-    `;
-    console.log('📧 Professional logo with real image:', logoUrl, '→ Website:', websiteUrl);
+    console.log('📧 Professional logo with base64 embedded → Website:', websiteUrl);
 
     const subject = `Bienvenido a ${companyName} - Configurar contraseña`;
     
