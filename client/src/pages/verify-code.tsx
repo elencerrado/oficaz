@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -25,6 +25,8 @@ export default function VerifyCode() {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [countdown, setCountdown] = useState(0);
+  const [canResend, setCanResend] = useState(true);
   
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
@@ -44,6 +46,24 @@ export default function VerifyCode() {
       setLocation('/request-code');
     }
   }, [sessionId, setLocation]);
+
+  // Countdown timer for resend button
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (countdown > 0) {
+      setCanResend(false);
+      timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+    } else {
+      setCanResend(true);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [countdown]);
 
   // Prevent page reload on mobile app switching
   useEffect(() => {
@@ -120,9 +140,45 @@ export default function VerifyCode() {
     }
   };
 
-  const handleResendCode = () => {
-    // Redirect to request-code page for new verification
-    setLocation('/request-code');
+  const handleResendCode = async () => {
+    if (!sessionId || !canResend || isResending) return;
+    
+    setIsResending(true);
+    setErrorMessage('');
+    
+    try {
+      const response = await fetch('/api/auth/resend-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        // Start 60 second countdown
+        setCountdown(60);
+        setErrorMessage('');
+        // Show success message temporarily
+        const successMsg = errorMessage;
+        setErrorMessage('');
+        setTimeout(() => {
+          // Clear any success message after 3 seconds
+        }, 3000);
+      } else {
+        if (result.remainingTime) {
+          setCountdown(result.remainingTime);
+        }
+        setErrorMessage(result.error || 'Error al reenviar el código');
+      }
+    } catch (error) {
+      console.error('Error resending code:', error);
+      setErrorMessage('Ha ocurrido un error inesperado al reenviar el código');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (!sessionId) {
@@ -196,10 +252,24 @@ export default function VerifyCode() {
                 variant="outline"
                 className="w-full rounded-xl"
                 onClick={handleResendCode}
-                disabled={isLoading}
+                disabled={isLoading || isResending || !canResend}
               >
-                Solicitar nuevo código
-                <RotateCcw className="h-4 w-4 ml-2" />
+                {isResending ? (
+                  <>
+                    Enviando...
+                    <RotateCcw className="h-4 w-4 ml-2 animate-spin" />
+                  </>
+                ) : !canResend ? (
+                  <>
+                    Reenviar en {countdown}s
+                    <Clock className="h-4 w-4 ml-2" />
+                  </>
+                ) : (
+                  <>
+                    Solicitar nuevo código
+                    <RotateCcw className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </Button>
             </div>
           </form>
@@ -221,10 +291,11 @@ export default function VerifyCode() {
               ¿No has recibido el código?{' '}
               <Button 
                 variant="link" 
-                onClick={() => setLocation('/request-code')}
-                className="p-0 h-auto text-blue-600 hover:text-blue-800"
+                onClick={handleResendCode}
+                disabled={!canResend || isResending}
+                className="p-0 h-auto text-blue-600 hover:text-blue-800 disabled:text-gray-400"
               >
-                Solicitar nuevo código
+                {!canResend ? `Esperar ${countdown}s` : 'Reenviar código'}
               </Button>
             </div>
           </div>

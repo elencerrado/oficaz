@@ -869,12 +869,131 @@ Responde directamente a este email para contactar con la persona.
   // Secure verification system
   const generateSecureToken = (): string => crypto.randomBytes(32).toString('hex');
   
+  // Helper function to send verification emails
+  const sendVerificationEmail = async (email: string, code: string, req: any) => {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: 'soy@oficaz.es',
+        pass: 'Sanisidro@2025', // Corrected password
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Professional logo implementation with robust domain detection
+    let baseUrl;
+    
+    // Check if running from custom domain by examining request headers
+    const host = req.get('host') || req.get('x-forwarded-host');
+    const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
+    
+    if (isCustomDomain) {
+      baseUrl = `https://${host}`;
+    } else if (process.env.REPLIT_DOMAINS) {
+      const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
+      baseUrl = `https://${firstDomain}`;
+    } else if (process.env.REPLIT_DEV_DOMAIN) {
+      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    } else {
+      baseUrl = 'https://oficaz-employee-management.replit.app';
+    }
+    
+    const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
+    const websiteUrl = 'https://oficaz.es';
+    
+    const logoHtml = `
+      <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
+        <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
+             style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
+      </a>
+    `;
+
+    const mailOptions = {
+      from: '"Oficaz" <soy@oficaz.es>',
+      to: email,
+      subject: 'Código de verificación - Oficaz',
+      text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Código de verificación - Oficaz</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+            
+            <!-- Compact header with logo -->
+            <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
+              ${logoHtml}
+            </div>
+
+            <!-- Compact main content -->
+            <div style="padding: 15px 20px;">
+              <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">Verificación de email</h2>
+              
+              <p style="color: #4a5568; font-size: 14px; line-height: 1.4; margin-bottom: 15px; text-align: center;">
+                Tu código de verificación para <strong>Oficaz</strong>:
+              </p>
+
+              <!-- Compact verification code box -->
+              <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 12px; padding: 20px 15px; text-align: center; margin: 15px 0; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);">
+                <div style="color: white; font-size: 28px; font-weight: 700; letter-spacing: 6px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                  ${code}
+                </div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px; font-weight: 500;">
+                  Válido por 10 minutos
+                </div>
+              </div>
+
+              <!-- Compact instructions -->
+              <div style="background: #FFF3CD; border-left: 4px solid #FFD43B; padding: 10px 12px; margin: 15px 0; border-radius: 4px;">
+                <p style="color: #856404; font-size: 13px; margin: 0; font-weight: 500;">
+                  Introduce este código en la página de verificación
+                </p>
+              </div>
+            </div>
+
+            <!-- Compact footer -->
+            <div style="background-color: #f8fafc; padding: 10px 15px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="color: #718096; font-size: 11px; margin: 0;">
+                © ${new Date().getFullYear()} Oficaz • Sistema de Gestión Empresarial
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    };
+
+    console.log('📧* Attempting to send email with mailOptions:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+      textLength: mailOptions.text?.length,
+      htmlLength: mailOptions.html?.length
+    });
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de verificación enviado a ${email}`);
+    console.log(`📧 SMTP Response:`, result);
+    
+    return result;
+  };
+  
   const verificationSessions = new Map<string, { 
+    email: string;
     emailHash: string; 
     code: string; 
     expires: number; 
     verified: boolean;
     attempts: number;
+    lastResent?: number;
   }>();
   
   const verificationTokens = new Map<string, { 
@@ -1014,6 +1133,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Store session with hashed data
       verificationSessions.set(sessionId, { 
+        email,
         emailHash, 
         code: crypto.createHash('sha256').update(code).digest('hex'), // Hash the code
         expires, 
@@ -1021,141 +1141,17 @@ Responde directamente a este email para contactar con la persona.
         attempts: 0
       });
 
-      // Send email with corrected Hostinger credentials
+      // Send email using helper function
       try {
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.hostinger.com',
-          port: 465,
-          secure: true, // SSL
-          auth: {
-            user: 'soy@oficaz.es',
-            pass: 'Sanisidro@2025', // Corrected password
-          },
-          tls: {
-            rejectUnauthorized: false
-          }
-        });
-
-        // Professional logo implementation with robust domain detection
-        let baseUrl;
-        
-        // Check if running from custom domain by examining request headers
-        const host = req.get('host') || req.get('x-forwarded-host');
-        const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
-        
-        if (isCustomDomain) {
-          baseUrl = `https://${host}`;
-        } else if (process.env.REPLIT_DOMAINS) {
-          const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-          baseUrl = `https://${firstDomain}`;
-        } else if (process.env.REPLIT_DEV_DOMAIN) {
-          baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-        } else {
-          baseUrl = 'https://oficaz-employee-management.replit.app';
-        }
-        
-        const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
-        const websiteUrl = 'https://oficaz.es';
-        
-        const logoHtml = `
-          <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
-            <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
-                 style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
-          </a>
-        `;
-        console.log('📧* Professional logo with real image:', logoUrl, '→ Website:', websiteUrl);
-        console.log('📧* Base URL detected:', baseUrl);
-        console.log('📧* Host header:', host);
-        console.log('📧* Is custom domain:', isCustomDomain);
-        console.log('📧* Environment check - REPLIT_DOMAINS:', process.env.REPLIT_DOMAINS);
-        console.log('📧* Environment check - REPLIT_DEV_DOMAIN:', process.env.REPLIT_DEV_DOMAIN);
-
-        const mailOptions = {
-          from: '"Oficaz" <soy@oficaz.es>',
-          to: email,
-          subject: 'Código de verificación - Oficaz',
-          text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Código de verificación - Oficaz</title>
-            </head>
-            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                
-                <!-- Compact header with logo -->
-                <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
-                  ${logoHtml}
-                </div>
-
-                <!-- Compact main content -->
-                <div style="padding: 15px 20px;">
-                  <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">Verificación de email</h2>
-                  
-                  <p style="color: #4a5568; font-size: 14px; line-height: 1.4; margin-bottom: 15px; text-align: center;">
-                    Tu código de verificación para <strong>Oficaz</strong>:
-                  </p>
-
-                  <!-- Compact verification code box -->
-                  <div style="background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%); border-radius: 12px; padding: 20px 15px; text-align: center; margin: 15px 0; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);">
-                    <h1 style="color: #ffffff; font-size: 36px; font-weight: bold; margin: 0; letter-spacing: 6px; font-family: 'Courier New', monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</h1>
-                    <p style="color: rgba(255,255,255,0.9); font-size: 11px; margin: 8px 0 0 0;">Expira en 10 minutos</p>
-                  </div>
-
-                  <div style="background-color: #f7fafc; border-left: 4px solid #007AFF; padding: 20px; border-radius: 8px; margin: 30px 0;">
-                    <p style="color: #4a5568; font-size: 14px; margin: 0; line-height: 1.5;">
-                      <strong>¿No solicitaste este código?</strong><br>
-                      Si no has solicitado crear una cuenta en Oficaz, puedes ignorar este email de forma segura.
-                    </p>
-                  </div>
-
-                  <p style="color: #718096; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
-                    Gracias por elegir Oficaz para la gestión de tu empresa.<br>
-                    El equipo de Oficaz
-                  </p>
-                </div>
-
-                <!-- Footer -->
-                <div style="background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;">
-                  <p style="color: #9ca3af; font-size: 12px; margin: 0; line-height: 1.5;">
-                    Este email fue enviado automáticamente desde <strong>Oficaz</strong><br>
-                    No respondas a este mensaje.
-                  </p>
-                  <div style="margin-top: 20px;">
-                    <div style="display: inline-block; background-color: #323A46; color: #ffffff; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">
-                      OFICAZ © 2025
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </body>
-            </html>
-          `,
-        };
-
-        console.log('📧* Attempting to send email with mailOptions:', {
-          from: mailOptions.from,
-          to: mailOptions.to,
-          subject: mailOptions.subject,
-          textLength: mailOptions.text?.length,
-          htmlLength: mailOptions.html?.length
-        });
-
-        const result = await transporter.sendMail(mailOptions);
-        console.log(`✅ Email de verificación enviado a ${email}`);
-        console.log(`📧 SMTP Response:`, result);
+        await sendVerificationEmail(email, code, req);
       } catch (emailError) {
         console.error('❌ Error sending verification email:', emailError);
         console.error('❌ Full error details:', {
-          message: emailError.message,
-          code: emailError.code,
-          command: emailError.command,
-          response: emailError.response,
-          responseCode: emailError.responseCode
+          message: (emailError as any).message,
+          code: (emailError as any).code,
+          command: (emailError as any).command,
+          response: (emailError as any).response,
+          responseCode: (emailError as any).responseCode
         });
         // Fallback to console log
         console.log(`🔐 CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
@@ -1170,6 +1166,66 @@ Responde directamente a este email para contactar con la persona.
     } catch (error) {
       console.error('Error sending verification code:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  app.post('/api/auth/resend-code', async (req, res) => {
+
+    try {
+      const { sessionId } = req.body;
+      
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID requerido' });
+      }
+
+      // Find existing session
+      const session = verificationSessions.get(sessionId);
+      if (!session) {
+        return res.status(400).json({ error: 'Sesión no encontrada o expirada' });
+      }
+
+      // Check if enough time has passed (1 minute minimum)
+      const now = Date.now();
+      const oneMinuteAgo = now - 60 * 1000;
+      
+      if (session.lastResent && session.lastResent > oneMinuteAgo) {
+        const remainingTime = Math.ceil((session.lastResent - oneMinuteAgo) / 1000);
+        return res.status(429).json({ 
+          error: `Debes esperar ${remainingTime} segundos antes de solicitar otro código`,
+          remainingTime 
+        });
+      }
+
+      // Generate new code
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Update session with new code and resend timestamp
+      session.code = newCode;
+      session.lastResent = now;
+      session.expires = now + 10 * 60 * 1000; // Extend expiry by 10 minutes
+      
+      // Send new verification code using existing email helper
+      try {
+        await sendVerificationEmail(session.email, newCode, req);
+        console.log('✅ Nuevo código de verificación enviado a', session.email);
+      } catch (emailError) {
+        console.error('❌ Error sending resend email:', emailError);
+        console.log(`🔐 CÓDIGO DE VERIFICACIÓN DE REENVÍO para ${session.email}: ${newCode}`);
+        console.log(`⏰ Expira en 10 minutos`);
+      }
+
+
+
+
+
+      res.json({ 
+        success: true, 
+        message: 'Nuevo código enviado correctamente'
+      });
+
+    } catch (error) {
+      console.error('Error resending verification code:', error);
+      res.status(500).json({ error: 'Error interno del servidor al reenviar código' });
     }
   });
 
