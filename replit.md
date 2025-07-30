@@ -182,6 +182,15 @@ El sistema maneja dos conceptos de fecha independientes que pueden divergir:
 
 ## Changelog
 
+- July 30, 2025. VULNERABILIDADES SQL INJECTION CRÍTICAS RESUELTAS: Sistema completamente blindado contra ataques de inyección SQL
+  - PROBLEMA CRÍTICO IDENTIFICADO: Análisis de seguridad detectó múltiples vulnerabilidades SQL injection en server/routes.ts
+  - VULNERABILIDADES CONFIRMADAS: Variables interpoladas directamente en consultas SQL (${companyId}, ${plan}, etc.)
+  - SOLUCIÓN IMPLEMENTADA: Conversión completa a consultas parametrizadas usando Drizzle ORM y placeholders ($1, $2)
+  - ENDPOINTS SECURIZADOS: /api/account/usage-stats, /api/account/change-plan, eliminación en cascada de empresas
+  - MÉTODO TÉCNICO: Reemplazo de template literals inseguros por db.select(), db.delete() con eq(), inArray(), count()
+  - CONSULTAS COMPLEJAS: Raw SQL convertido a parámetros seguros usando sql`...WHERE name = $1`, [variable]
+  - VERIFICACIÓN COMPLETA: Eliminadas todas las interpolaciones directas de variables en cadenas SQL
+  - ESTADO FINAL: Sistema completamente resistente a ataques SQL injection siguiendo mejores prácticas
 - July 23, 2025. BANNER DE DATOS DEMO IMPLEMENTADO: Sistema completo de notificación para empresas con datos de demostración
   - PROBLEMA RESUELTO: Banner de datos demo ahora aparece correctamente en dashboard cuando empresa tiene datos demo
   - COMPONENTE ELIMINADO: DemoDataBanner.tsx removido y reemplazado por implementación directa en dashboard
