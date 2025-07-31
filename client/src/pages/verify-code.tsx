@@ -261,7 +261,7 @@ export default function VerifyCode() {
                   </>
                 ) : !canResend ? (
                   <>
-                    Reenviar en {countdown}s
+                    Solicitar nuevo código ({countdown}s)
                     <Clock className="h-4 w-4 ml-2" />
                   </>
                 ) : (
@@ -287,17 +287,7 @@ export default function VerifyCode() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cambiar email
             </Button>
-            <div className="text-sm text-gray-500">
-              ¿No has recibido el código?{' '}
-              <Button 
-                variant="link" 
-                onClick={handleResendCode}
-                disabled={!canResend || isResending}
-                className="p-0 h-auto text-blue-600 hover:text-blue-800 disabled:text-gray-400"
-              >
-                {!canResend ? `Esperar ${countdown}s` : 'Reenviar código'}
-              </Button>
-            </div>
+
           </div>
 
           <div className="mt-4 text-center">
