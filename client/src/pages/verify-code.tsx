@@ -26,7 +26,7 @@ export default function VerifyCode() {
   const [isResending, setIsResending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(true);
+  const [canResend, setCanResend] = useState(false);
   
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
@@ -40,10 +40,14 @@ export default function VerifyCode() {
     },
   });
 
-  // Redirect if no sessionId provided
+  // Redirect if no sessionId provided and start initial countdown
   useEffect(() => {
     if (!sessionId) {
       setLocation('/request-code');
+    } else {
+      // Start initial 60 second countdown when page loads
+      setCountdown(60);
+      setCanResend(false);
     }
   }, [sessionId, setLocation]);
 
