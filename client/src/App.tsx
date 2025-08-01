@@ -50,6 +50,7 @@ import SuperAdminInvitations from "@/pages/super-admin-invitations";
 import InvitationRegister from "@/pages/invitation-register";
 import QuickAccess from "@/pages/quick-access";
 import EmployeeActivation from "@/pages/employee-activation";
+import TestEmail from "@/pages/test-email";
 
 
 
@@ -203,6 +204,10 @@ function Router() {
         <PublicRoute>
           <EmployeeActivation />
         </PublicRoute>
+      </Route>
+
+      <Route path="/test-email">
+        <TestEmail />
       </Route>
 
       {/* Company-specific routes */}

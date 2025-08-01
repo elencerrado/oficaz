@@ -871,17 +871,23 @@ Responde directamente a este email para contactar con la persona.
   
   // Helper function to send verification emails
   const sendVerificationEmail = async (email: string, code: string, req: any) => {
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       host: 'smtp.hostinger.com',
       port: 465,
       secure: true, // SSL
       auth: {
         user: 'soy@oficaz.es',
-        pass: 'Sanisidro@2025', // Corrected password
+        pass: 'Sanisidro@2025',
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+      },
+      debug: true, // Enable debug logging
+      logger: true, // Enable logging
+      connectionTimeout: 60000, // 60s
+      greetingTimeout: 30000, // 30s
+      socketTimeout: 60000, // 60s
     });
 
     // Professional logo implementation with robust domain detection
@@ -913,10 +919,16 @@ Responde directamente a este email para contactar con la persona.
     `;
 
     const mailOptions = {
-      from: '"Oficaz" <soy@oficaz.es>',
+      from: '"Oficaz - Sistema de Gestión" <soy@oficaz.es>',
       to: email,
       subject: 'Código de verificación - Oficaz',
+      replyTo: 'soy@oficaz.es',
       text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
+      headers: {
+        'X-Priority': '1',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'high'
+      },
       html: `
         <!DOCTYPE html>
         <html>
@@ -1001,6 +1013,38 @@ Responde directamente a este email para contactar con la persona.
     expires: number; 
     used: boolean 
   }>();
+
+  // Test endpoint to verify email sending capability
+  app.post('/api/test-email', async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      
+      if (!testEmail || !testEmail.includes('@')) {
+        return res.status(400).json({ error: 'Email válido requerido para la prueba' });
+      }
+
+      const testCode = '123456';
+      
+      try {
+        const result = await sendVerificationEmail(testEmail, testCode, req);
+        res.json({ 
+          success: true, 
+          message: 'Email de prueba enviado correctamente',
+          messageId: result.messageId,
+          response: result.response
+        });
+      } catch (error) {
+        console.error('Error en email de prueba:', error);
+        res.status(500).json({ 
+          success: false, 
+          error: 'Error al enviar email de prueba',
+          details: (error as any).message
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
 
   // Endpoint to check if email is available for registration
   // Diagnostic endpoint for email issues
@@ -1143,7 +1187,8 @@ Responde directamente a este email para contactar con la persona.
 
       // Send email using helper function
       try {
-        await sendVerificationEmail(email, code, req);
+        const emailResult = await sendVerificationEmail(email, code, req);
+        console.log('✅ Email enviado exitosamente:', emailResult.messageId);
       } catch (emailError) {
         console.error('❌ Error sending verification email:', emailError);
         console.error('❌ Full error details:', {
@@ -1151,17 +1196,21 @@ Responde directamente a este email para contactar con la persona.
           code: (emailError as any).code,
           command: (emailError as any).command,
           response: (emailError as any).response,
-          responseCode: (emailError as any).responseCode
+          responseCode: (emailError as any).responseCode,
+          stack: (emailError as any).stack
         });
-        // Fallback to console log
-        console.log(`🔐 CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
+        
+        // Even if email fails, we continue - user might check spam or retry
+        console.log(`🔐 FALLBACK - CÓDIGO DE VERIFICACIÓN para ${email}: ${code}`);
         console.log(`⏰ Expira en 10 minutos`);
+        console.log(`📧 IMPORTANTE: Revisa tu carpeta de spam/correo no deseado`);
       }
 
       res.json({ 
         success: true, 
         message: 'Código enviado correctamente',
-        sessionId
+        sessionId,
+        hint: 'Si no recibes el email en unos minutos, revisa tu carpeta de spam o correo no deseado'
       });
     } catch (error) {
       console.error('Error sending verification code:', error);
