@@ -1101,11 +1101,38 @@ export class DrizzleStorage implements IStorage {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
     
-    // Query reminders for DASHBOARD display: all active reminders (regardless of showBanner)
-    const dashboardReminders = await db.select().from(schema.reminders)
+    // Get user to check role and company
+    const user = await this.getUser(userId);
+    if (!user) return [];
+    
+    let dashboardReminders;
+    
+    // If admin/manager, show all company reminders; otherwise show only user's reminders
+    if (user.role === 'admin' || user.role === 'manager') {
+      dashboardReminders = await db.select({
+        id: schema.reminders.id,
+        userId: schema.reminders.userId,
+        companyId: schema.reminders.companyId,
+        title: schema.reminders.title,
+        content: schema.reminders.content,
+        reminderDate: schema.reminders.reminderDate,
+        priority: schema.reminders.priority,
+        color: schema.reminders.color,
+        isCompleted: schema.reminders.isCompleted,
+        isArchived: schema.reminders.isArchived,
+        isPinned: schema.reminders.isPinned,
+        notificationShown: schema.reminders.notificationShown,
+        showBanner: schema.reminders.showBanner,
+        createdBy: schema.reminders.createdBy,
+        createdAt: schema.reminders.createdAt,
+        updatedAt: schema.reminders.updatedAt,
+        userFullName: schema.users.fullName
+      })
+      .from(schema.reminders)
+      .leftJoin(schema.users, eq(schema.reminders.userId, schema.users.id))
       .where(
         and(
-          eq(schema.reminders.userId, userId),
+          eq(schema.reminders.companyId, user.companyId),
           eq(schema.reminders.isCompleted, false),
           eq(schema.reminders.isArchived, false),
           or(
@@ -1115,6 +1142,22 @@ export class DrizzleStorage implements IStorage {
         )
       )
       .orderBy(schema.reminders.reminderDate);
+    } else {
+      // Regular employee - only their reminders
+      dashboardReminders = await db.select().from(schema.reminders)
+        .where(
+          and(
+            eq(schema.reminders.userId, userId),
+            eq(schema.reminders.isCompleted, false),
+            eq(schema.reminders.isArchived, false),
+            or(
+              sql`${schema.reminders.reminderDate} IS NULL`, // No date - show always
+              lte(schema.reminders.reminderDate, nextWeek) // Has date within 7 days
+            )
+          )
+        )
+        .orderBy(schema.reminders.reminderDate);
+    }
     
     return dashboardReminders;
   }
