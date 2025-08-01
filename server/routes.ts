@@ -3725,11 +3725,24 @@ startxref
     try {
       const reminderId = parseInt(req.params.id);
       const userId = req.user!.id;
+      const userRole = req.user!.role;
       
-      // Check if reminder belongs to user
+      // Check if reminder exists
       const existingReminder = await storage.getReminder(reminderId);
-      if (!existingReminder || existingReminder.userId !== userId) {
+      if (!existingReminder) {
         return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      // Allow editing if:
+      // 1. User owns the reminder, OR
+      // 2. User created the reminder (createdBy), OR  
+      // 3. User is admin/manager
+      const canEdit = existingReminder.userId === userId || 
+                     existingReminder.createdBy === userId || 
+                     ['admin', 'manager'].includes(userRole);
+      
+      if (!canEdit) {
+        return res.status(403).json({ message: "Not authorized to edit this reminder" });
       }
       
       // Process date fields properly
