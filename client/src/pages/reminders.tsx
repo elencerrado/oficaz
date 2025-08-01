@@ -86,23 +86,46 @@ const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3 }: {
   const displayEmployees = assignedEmployees.slice(0, maxDisplay);
   const remainingCount = assignedEmployees.length - maxDisplay;
 
+  // Generate consistent colors for each user based on their ID
+  const getAvatarColor = (userId: number) => {
+    const colors = [
+      'bg-red-100 text-red-700',
+      'bg-blue-100 text-blue-700', 
+      'bg-green-100 text-green-700',
+      'bg-yellow-100 text-yellow-700',
+      'bg-purple-100 text-purple-700',
+      'bg-pink-100 text-pink-700',
+      'bg-indigo-100 text-indigo-700',
+      'bg-gray-100 text-gray-700'
+    ];
+    return colors[userId % colors.length];
+  };
+
   return (
-    <div className="flex items-center gap-1 mt-2">
+    <div className="flex items-center -space-x-1 mt-2">
       {displayEmployees.map((employee) => (
-        <Avatar key={employee.id} className="w-6 h-6 border border-white shadow-sm">
+        <Avatar 
+          key={employee.id} 
+          className="w-5 h-5 border-2 border-white shadow-sm hover:scale-110 transition-transform cursor-pointer"
+          title={employee.fullName}
+        >
           <AvatarImage 
             src={employee.profilePicture ? `/uploads/${employee.profilePicture}` : undefined} 
-            alt={employee.fullName} 
+            alt={employee.fullName}
+            className="object-cover"
           />
-          <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-            {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          <AvatarFallback className={`text-[10px] font-medium ${getAvatarColor(employee.id)}`}>
+            {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
       ))}
       
       {remainingCount > 0 && (
-        <div className="w-6 h-6 rounded-full bg-gray-200 border border-white shadow-sm flex items-center justify-center">
-          <span className="text-xs text-gray-600 font-medium">+{remainingCount}</span>
+        <div 
+          className="w-5 h-5 rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
+          title={`+${remainingCount} más`}
+        >
+          <span className="text-[9px] text-gray-600 font-bold">+{remainingCount}</span>
         </div>
       )}
     </div>
