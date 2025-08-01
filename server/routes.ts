@@ -3821,24 +3821,20 @@ startxref
       const { assignedUserIds } = req.body; // Array of user IDs to assign
       const assignedBy = req.user!.id;
       
+      if (!assignedUserIds || !Array.isArray(assignedUserIds)) {
+        return res.status(400).json({ message: "assignedUserIds array is required" });
+      }
+      
       // Check if reminder exists
       const existingReminder = await storage.getReminder(reminderId);
       if (!existingReminder) {
         return res.status(404).json({ message: "Reminder not found" });
       }
       
-      // Create assignments for each user
-      const assignments = [];
-      for (const assignedUserId of assignedUserIds) {
-        const assignment = await storage.createReminderAssignment({
-          reminderId,
-          assignedUserId,
-          assignedBy
-        });
-        assignments.push(assignment);
-      }
+      // Assign reminder to users using new array-based structure
+      const updatedReminder = await storage.assignReminderToUsers(reminderId, assignedUserIds, assignedBy);
       
-      res.json({ message: "Reminder assigned successfully", assignments });
+      res.json({ message: "Reminder assigned successfully", reminder: updatedReminder });
     } catch (error) {
       console.error("Error assigning reminder:", error);
       res.status(500).json({ message: "Failed to assign reminder" });
@@ -3859,9 +3855,9 @@ startxref
   app.delete('/api/reminders/:id/assign/:userId', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const reminderId = parseInt(req.params.id);
-      const assignedUserId = parseInt(req.params.userId);
+      const userIdToRemove = parseInt(req.params.userId);
       
-      const success = await storage.deleteReminderAssignment(reminderId, assignedUserId);
+      const success = await storage.removeUserFromReminderAssignment(reminderId, userIdToRemove);
       if (success) {
         res.json({ message: "Assignment removed successfully" });
       } else {

@@ -333,19 +333,15 @@ export const reminders = pgTable("reminders", {
   isPinned: boolean("is_pinned").default(false).notNull(),
   notificationShown: boolean("notification_shown").default(false).notNull(),
   showBanner: boolean("show_banner").default(false).notNull(),
+  assignedUserIds: integer("assigned_user_ids").array(), // Array of user IDs for assignments
+  assignedBy: integer("assigned_by").references(() => users.id), // Who assigned the reminder
+  assignedAt: timestamp("assigned_at"), // When it was assigned
   createdBy: integer("created_by").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Reminder assignments table - para asignar recordatorios a empleados específicos
-export const reminderAssignments = pgTable("reminder_assignments", {
-  id: serial("id").primaryKey(),
-  reminderId: integer("reminder_id").references(() => reminders.id, { onDelete: 'cascade' }).notNull(),
-  assignedUserId: integer("assigned_user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  assignedBy: integer("assigned_by").references(() => users.id).notNull(), // Admin/Manager que asignó
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+// Reminder assignments are now handled via assignedUserIds array in reminders table
 
 // Employee activation tokens for password setup
 export const employeeActivationTokens = pgTable("employee_activation_tokens", {
@@ -415,10 +411,7 @@ export const insertReminderSchema = createInsertSchema(reminders).omit({
   updatedAt: true,
 });
 
-export const insertReminderAssignmentSchema = createInsertSchema(reminderAssignments).omit({
-  id: true,
-  createdAt: true,
-});
+// Reminder assignment schema removed - now using assignedUserIds array in reminders
 
 export const insertEmployeeActivationTokenSchema = createInsertSchema(employeeActivationTokens).omit({
   id: true,

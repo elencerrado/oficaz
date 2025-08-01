@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, or, desc, sql, lte, isNotNull, isNull } from 'drizzle-orm';
+import { eq, and, or, desc, sql, lte, isNotNull, isNull, inArray } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
@@ -1408,52 +1408,90 @@ export class DrizzleStorage implements IStorage {
     return result.rowCount;
   }
 
-  // Reminder Assignments operations
-  async createReminderAssignment(assignment: any): Promise<any> {
-    const [newAssignment] = await db.insert(schema.reminderAssignments).values({
-      ...assignment,
-      createdAt: new Date()
-    }).returning();
-    return newAssignment;
+  // Reminder Assignments operations - now using arrays in reminders table
+  async assignReminderToUsers(reminderId: number, userIds: number[], assignedBy: number): Promise<any> {
+    const [updatedReminder] = await db.update(schema.reminders)
+      .set({
+        assignedUserIds: userIds,
+        assignedBy,
+        assignedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(schema.reminders.id, reminderId))
+      .returning();
+    return updatedReminder;
   }
 
   async getReminderAssignments(reminderId: number): Promise<any[]> {
-    return await db.select({
-      id: schema.reminderAssignments.id,
-      reminderId: schema.reminderAssignments.reminderId,
-      assignedUserId: schema.reminderAssignments.assignedUserId,
-      assignedBy: schema.reminderAssignments.assignedBy,
-      createdAt: schema.reminderAssignments.createdAt,
-      userName: schema.users.fullName,
-      userEmail: schema.users.email
+    const [reminder] = await db.select({
+      assignedUserIds: schema.reminders.assignedUserIds,
+      assignedBy: schema.reminders.assignedBy,
+      assignedAt: schema.reminders.assignedAt
     })
-    .from(schema.reminderAssignments)
-    .leftJoin(schema.users, eq(schema.reminderAssignments.assignedUserId, schema.users.id))
-    .where(eq(schema.reminderAssignments.reminderId, reminderId));
+    .from(schema.reminders)
+    .where(eq(schema.reminders.id, reminderId));
+
+    if (!reminder?.assignedUserIds?.length) {
+      return [];
+    }
+
+    // Get user details for assigned users
+    const users = await db.select({
+      id: schema.users.id,
+      fullName: schema.users.fullName,
+      email: schema.users.companyEmail
+    })
+    .from(schema.users)
+    .where(inArray(schema.users.id, reminder.assignedUserIds));
+
+    return users.map(user => ({
+      assignedUserId: user.id,
+      userName: user.fullName,
+      userEmail: user.email,
+      assignedBy: reminder.assignedBy,
+      assignedAt: reminder.assignedAt
+    }));
   }
 
-  async deleteReminderAssignment(reminderId: number, assignedUserId: number): Promise<boolean> {
+  async removeUserFromReminderAssignment(reminderId: number, userIdToRemove: number): Promise<boolean> {
     try {
-      const result = await db.delete(schema.reminderAssignments)
-        .where(
-          and(
-            eq(schema.reminderAssignments.reminderId, reminderId),
-            eq(schema.reminderAssignments.assignedUserId, assignedUserId)
-          )
-        );
-      return result.rowCount > 0;
+      const [reminder] = await db.select({ assignedUserIds: schema.reminders.assignedUserIds })
+        .from(schema.reminders)
+        .where(eq(schema.reminders.id, reminderId));
+
+      if (!reminder?.assignedUserIds?.length) {
+        return false;
+      }
+
+      const updatedUserIds = reminder.assignedUserIds.filter(id => id !== userIdToRemove);
+      
+      await db.update(schema.reminders)
+        .set({ 
+          assignedUserIds: updatedUserIds.length > 0 ? updatedUserIds : null,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.reminders.id, reminderId));
+
+      return true;
     } catch (error) {
-      console.error('Storage: error in deleteReminderAssignment:', error);
+      console.error('Storage: error in removeUserFromReminderAssignment:', error);
       return false;
     }
   }
 
-  async deleteAllReminderAssignments(reminderId: number): Promise<boolean> {
+  async clearAllReminderAssignments(reminderId: number): Promise<boolean> {
     try {
-      await db.delete(schema.reminderAssignments).where(eq(schema.reminderAssignments.reminderId, reminderId));
+      await db.update(schema.reminders)
+        .set({ 
+          assignedUserIds: null,
+          assignedBy: null,
+          assignedAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.reminders.id, reminderId));
       return true;
     } catch (error) {
-      console.error('Storage: error in deleteAllReminderAssignments:', error);
+      console.error('Storage: error in clearAllReminderAssignments:', error);
       return false;
     }
   }
@@ -1464,7 +1502,7 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.reminders.userId, userId))
       .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
-    // Get reminders assigned to the user
+    // Get reminders assigned to the user using the new array structure
     const assignedReminders = await db.select({
       id: schema.reminders.id,
       userId: schema.reminders.userId,
@@ -1479,17 +1517,17 @@ export class DrizzleStorage implements IStorage {
       isPinned: schema.reminders.isPinned,
       notificationShown: schema.reminders.notificationShown,
       showBanner: schema.reminders.showBanner,
+      assignedUserIds: schema.reminders.assignedUserIds,
+      assignedBy: schema.reminders.assignedBy,
+      assignedAt: schema.reminders.assignedAt,
       createdBy: schema.reminders.createdBy,
       createdAt: schema.reminders.createdAt,
       updatedAt: schema.reminders.updatedAt,
-      assignedBy: schema.reminderAssignments.assignedBy,
-      assignedAt: schema.reminderAssignments.createdAt,
       creatorName: schema.users.fullName
     })
-    .from(schema.reminderAssignments)
-    .innerJoin(schema.reminders, eq(schema.reminderAssignments.reminderId, schema.reminders.id))
+    .from(schema.reminders)
     .leftJoin(schema.users, eq(schema.reminders.createdBy, schema.users.id))
-    .where(eq(schema.reminderAssignments.assignedUserId, userId))
+    .where(sql`${userId} = ANY(${schema.reminders.assignedUserIds})`)
     .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
     // Combine and remove duplicates (in case a user is assigned their own reminder)
