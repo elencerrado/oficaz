@@ -325,7 +325,12 @@ export default function Reminders() {
       setIsAssignDialogOpen(false);
       toast({
         title: "Recordatorio asignado",
-        description: `Se ha asignado a ${selectedEmployees.length} empleado${selectedEmployees.length !== 1 ? 's' : ''}`,
+        description: (() => {
+          const countWithoutCurrentUser = selectedEmployees.filter(id => id !== user?.id).length;
+          return countWithoutCurrentUser > 0 ? 
+            `Se ha asignado a ${countWithoutCurrentUser} empleado${countWithoutCurrentUser !== 1 ? 's' : ''}` :
+            'Recordatorio asignado solo a ti';
+        })(),
       });
     } catch (error) {
       console.error('Error assigning reminder:', error);
@@ -658,7 +663,12 @@ export default function Reminders() {
                       
                       {reminderData.assignedUserIds.length > 0 && (
                         <div className="text-xs text-gray-500 mt-1">
-                          {reminderData.assignedUserIds.length} empleado{reminderData.assignedUserIds.length !== 1 ? 's' : ''} seleccionado{reminderData.assignedUserIds.length !== 1 ? 's' : ''}
+                          {(() => {
+                            const countWithoutCurrentUser = reminderData.assignedUserIds.filter(id => id !== user?.id).length;
+                            return countWithoutCurrentUser > 0 ? 
+                              `${countWithoutCurrentUser} empleado${countWithoutCurrentUser !== 1 ? 's' : ''} seleccionado${countWithoutCurrentUser !== 1 ? 's' : ''}` :
+                              'Solo tú estás asignado a este recordatorio';
+                          })()}
                         </div>
                       )}
                     </div>
@@ -918,7 +928,12 @@ export default function Reminders() {
                 onClick={handleAssignSubmit}
                 disabled={selectedEmployees.length === 0 || assignReminderMutation.isPending}
               >
-                {assignReminderMutation.isPending ? 'Asignando...' : `Asignar a ${selectedEmployees.length} empleado${selectedEmployees.length !== 1 ? 's' : ''}`}
+                {assignReminderMutation.isPending ? 'Asignando...' : (() => {
+                  const countWithoutCurrentUser = selectedEmployees.filter(id => id !== user?.id).length;
+                  return countWithoutCurrentUser > 0 ? 
+                    `Asignar a ${countWithoutCurrentUser} empleado${countWithoutCurrentUser !== 1 ? 's' : ''}` :
+                    'Asignar solo a ti';
+                })()}
               </Button>
             </DialogFooter>
           </DialogContent>
