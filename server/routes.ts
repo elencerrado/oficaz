@@ -131,6 +131,16 @@ async function generateDemoData(companyId: number) {
       
       createdEmployees.push({ ...employee, status: employeeData.status });
       console.log(`👤 Created demo employee: ${employee.fullName} (${employeeData.status})`);
+      
+      // Update employee status if needed (for vacation status)
+      if (employeeData.status === 'vacation') {
+        await db.execute(sql`
+          UPDATE users 
+          SET is_active = false 
+          WHERE id = ${employee.id}
+        `);
+        console.log(`🏖️ Set ${employee.fullName} as on vacation`);
+      }
     }
 
     // Generate comprehensive demo data based on registration date
@@ -480,14 +490,14 @@ async function generateRealisticVacationRequests(companyId: number, employees: a
       createdAt: new Date(currentYear, currentMonth - 2, 20), // Requested 2 months ago
     },
     
-    // 2. APPROVED - Current month vacation (Ana Fernández - currently on vacation)
+    // 2. APPROVED - Current vacation (Ana Fernández - currently on vacation)
     {
-      employee: employees[2], // Ana Fernández Silva
-      startDate: new Date(currentYear, currentMonth, 20),
-      endDate: new Date(currentYear, currentMonth, 25), // 6 days
+      employee: employees[2], // Ana Fernández Silva  
+      startDate: new Date(registrationDate.getTime() - 3 * 24 * 60 * 60 * 1000), // Started 3 days before registration
+      endDate: new Date(registrationDate.getTime() + 2 * 24 * 60 * 60 * 1000), // Ends 2 days after registration
       status: 'approved' as const,
       reason: 'Descanso personal programado',
-      createdAt: new Date(currentYear, currentMonth, 1), // Requested at beginning of month
+      createdAt: new Date(registrationDate.getTime() - 15 * 24 * 60 * 60 * 1000), // Requested 15 days before registration
     },
     
     // 3. PENDING - Next month vacation (David López)
@@ -529,7 +539,6 @@ async function generateRealisticVacationRequests(companyId: number, employees: a
       endDate: request.endDate,
       status: request.status,
       reason: request.reason,
-      createdBy: request.employee.id,
     });
     
     // Update creation date to be realistic
