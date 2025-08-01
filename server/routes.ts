@@ -908,7 +908,7 @@ Responde directamente a este email para contactar con la persona.
       baseUrl = 'https://oficaz-employee-management.replit.app';
     }
     
-    const logoUrl = `${baseUrl}/email-logo.png`;
+    const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
     const websiteUrl = 'https://oficaz.es';
     
     const logoHtml = `
