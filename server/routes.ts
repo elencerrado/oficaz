@@ -3697,7 +3697,18 @@ startxref
   app.get('/api/reminders', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const reminders = await storage.getRemindersByUser(userId);
+      const userRole = req.user!.role;
+      const companyId = req.user!.companyId;
+      
+      let reminders;
+      
+      // If admin/manager, show all company reminders; otherwise show only user's reminders
+      if (userRole === 'admin' || userRole === 'manager') {
+        reminders = await storage.getRemindersByCompany(companyId);
+      } else {
+        reminders = await storage.getRemindersByUser(userId);
+      }
+      
       res.json(reminders);
     } catch (error) {
       console.error("Error fetching reminders:", error);

@@ -96,6 +96,7 @@ export interface IStorage {
   // Reminders
   createReminder(reminder: InsertReminder): Promise<Reminder>;
   getRemindersByUser(userId: number): Promise<Reminder[]>;
+  getRemindersByCompany(companyId: number): Promise<Reminder[]>;
   getReminder(id: number): Promise<Reminder | undefined>;
   updateReminder(id: number, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
   deleteReminder(id: number): Promise<boolean>;
@@ -1040,6 +1041,32 @@ export class DrizzleStorage implements IStorage {
     return await db.select().from(schema.reminders)
       .where(eq(schema.reminders.userId, userId))
       .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+  }
+
+  async getRemindersByCompany(companyId: number): Promise<any[]> {
+    return await db.select({
+      id: schema.reminders.id,
+      userId: schema.reminders.userId,
+      companyId: schema.reminders.companyId,
+      title: schema.reminders.title,
+      content: schema.reminders.content,
+      reminderDate: schema.reminders.reminderDate,
+      priority: schema.reminders.priority,
+      color: schema.reminders.color,
+      isCompleted: schema.reminders.isCompleted,
+      isArchived: schema.reminders.isArchived,
+      isPinned: schema.reminders.isPinned,
+      notificationShown: schema.reminders.notificationShown,
+      showBanner: schema.reminders.showBanner,
+      createdBy: schema.reminders.createdBy,
+      createdAt: schema.reminders.createdAt,
+      updatedAt: schema.reminders.updatedAt,
+      userFullName: schema.users.fullName
+    })
+    .from(schema.reminders)
+    .leftJoin(schema.users, eq(schema.reminders.userId, schema.users.id))
+    .where(eq(schema.reminders.companyId, companyId))
+    .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
   }
 
   async getReminder(id: number): Promise<any | undefined> {
