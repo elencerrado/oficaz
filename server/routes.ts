@@ -162,8 +162,13 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   // Generate activity for company registration date
   await generateRegistrationDayActivity(employees, registrationDate);
   
-  // Generate current day activity - some employees working today
-  await generateCurrentDayActivity(employees, now);
+  // Generate current day activity - only if different from registration date to avoid duplicates
+  const isRegistrationToday = registrationDate.toDateString() === now.toDateString();
+  if (!isRegistrationToday) {
+    await generateCurrentDayActivity(employees, now);
+  } else {
+    console.log('📅 Registration date is today - skipping duplicate current day activity');
+  }
   
   // Generate vacation requests (approved and pending)
   await generateRealisticVacationRequests(companyId, employees, registrationDate);
@@ -293,6 +298,24 @@ async function generateRegistrationDayActivity(employees: any[], registrationDat
     return;
   }
   
+  // Check for existing sessions on registration date to prevent duplicates
+  const dayStart = new Date(regDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(regDate);
+  dayEnd.setHours(23, 59, 59, 999);
+  
+  const existingSessions = await db.select()
+    .from(workSessions)
+    .where(and(
+      gte(workSessions.clockIn, dayStart),
+      lt(workSessions.clockIn, dayEnd)
+    ));
+  
+  if (existingSessions.length > 0) {
+    console.log('📅 Registration day activity already exists, skipping to avoid duplicates');
+    return;
+  }
+
   // All employees working on registration day (company founding day)
   for (const employee of employees) {
     // Only employees who started before registration (existing employees)
@@ -343,6 +366,24 @@ async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
   // Only generate if today is a weekday
   if (dayOfWeek === 0 || dayOfWeek === 6) {
     console.log('📅 Today is weekend, skipping current day activity');
+    return;
+  }
+  
+  // Check for existing sessions on current date to prevent duplicates
+  const dayStart = new Date(today);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(today);
+  dayEnd.setHours(23, 59, 59, 999);
+  
+  const existingSessions = await db.select()
+    .from(workSessions)
+    .where(and(
+      gte(workSessions.clockIn, dayStart),
+      lt(workSessions.clockIn, dayEnd)
+    ));
+  
+  if (existingSessions.length > 0) {
+    console.log('📅 Current day activity already exists, skipping to avoid duplicates');
     return;
   }
   
