@@ -165,6 +165,7 @@ export default function Reminders() {
   const [selectedReminderForAssignment, setSelectedReminderForAssignment] = useState<Reminder | null>(null);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
+  const [assignDialogSearchTerm, setAssignDialogSearchTerm] = useState('');
   
   const [reminderData, setReminderData] = useState({
     title: '',
@@ -301,6 +302,7 @@ export default function Reminders() {
     console.log('handleAssignReminder called', reminder);
     setSelectedReminderForAssignment(reminder);
     setSelectedEmployees(reminder.assignedUserIds || []);
+    setAssignDialogSearchTerm('');
     setIsAssignDialogOpen(true);
   };
 
@@ -612,9 +614,7 @@ export default function Reminders() {
                           .filter(emp => emp.id !== user?.id)
                           .filter(emp => 
                             employeeSearchTerm === '' || 
-                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
-                            emp.email.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
-                            (emp.position && emp.position.toLowerCase().includes(employeeSearchTerm.toLowerCase()))
+                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase())
                           )
                           .map((employee) => (
                           <div key={employee.id} className="flex items-center space-x-2">
@@ -639,13 +639,7 @@ export default function Reminders() {
                               htmlFor={`form-employee-${employee.id}`}
                               className="flex-1 cursor-pointer text-sm font-medium leading-none"
                             >
-                              <div>
-                                <div className="font-medium">{employee.fullName}</div>
-                                <div className="text-xs text-gray-500">{employee.email}</div>
-                                {employee.position && (
-                                  <div className="text-xs text-gray-400">{employee.position}</div>
-                                )}
-                              </div>
+                              {employee.fullName}
                             </label>
                           </div>
                         ))}
@@ -654,9 +648,7 @@ export default function Reminders() {
                           .filter(emp => emp.id !== user?.id)
                           .filter(emp => 
                             employeeSearchTerm === '' || 
-                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
-                            emp.email.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
-                            (emp.position && emp.position.toLowerCase().includes(employeeSearchTerm.toLowerCase()))
+                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase())
                           ).length === 0 && employeeSearchTerm !== '' && (
                           <div className="text-center py-2 text-gray-500 text-sm">
                             No se encontraron empleados
@@ -830,7 +822,7 @@ export default function Reminders() {
                     currentUserId={user?.id}
                   />
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mt-4">
                     <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
                       {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
                     </Badge>
@@ -864,13 +856,30 @@ export default function Reminders() {
               </DialogDescription>
             </DialogHeader>
             
+            {/* Employee search for assignment dialog */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Buscar empleados..."
+                value={assignDialogSearchTerm}
+                onChange={(e) => setAssignDialogSearchTerm(e.target.value)}
+                className="pl-10 text-sm"
+              />
+            </div>
+            
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {employeesLoading && <p className="text-sm text-gray-500">Cargando empleados...</p>}
               {employeesError && <p className="text-sm text-red-500">Error cargando empleados: {String(employeesError)}</p>}
               {!employeesLoading && !employeesError && employees.filter(emp => emp.id !== user?.id).length === 0 && (
                 <p className="text-sm text-gray-500">No hay empleados disponibles para asignar</p>
               )}
-              {employees.filter(emp => emp.id !== user?.id).map((employee) => (
+              {employees
+                .filter(emp => emp.id !== user?.id)
+                .filter(emp => 
+                  assignDialogSearchTerm === '' || 
+                  emp.fullName.toLowerCase().includes(assignDialogSearchTerm.toLowerCase())
+                )
+                .map((employee) => (
                 <div key={employee.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`employee-${employee.id}`}
@@ -885,6 +894,17 @@ export default function Reminders() {
                   </label>
                 </div>
               ))}
+              
+              {employees
+                .filter(emp => emp.id !== user?.id)
+                .filter(emp => 
+                  assignDialogSearchTerm === '' || 
+                  emp.fullName.toLowerCase().includes(assignDialogSearchTerm.toLowerCase())
+                ).length === 0 && assignDialogSearchTerm !== '' && (
+                <div className="text-center py-2 text-gray-500 text-sm">
+                  No se encontraron empleados
+                </div>
+              )}
             </div>
             
             <DialogFooter>
