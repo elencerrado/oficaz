@@ -190,7 +190,7 @@ export default function Reminders() {
   // Assign reminder mutation
   const assignReminderMutation = useMutation({
     mutationFn: async ({ reminderId, userIds }: { reminderId: number; userIds: number[] }) => {
-      return await apiRequest('POST', '/api/reminders/assign', { reminderId, userIds });
+      return await apiRequest('POST', `/api/reminders/${reminderId}/assign`, { assignedUserIds: userIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });

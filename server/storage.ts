@@ -103,11 +103,11 @@ export interface IStorage {
   getActiveReminders(userId: number): Promise<Reminder[]>;
   getDashboardReminders(userId: number): Promise<Reminder[]>;
   
-  // Reminder Assignments
-  createReminderAssignment(assignment: InsertReminderAssignment): Promise<ReminderAssignment>;
-  getReminderAssignments(reminderId: number): Promise<ReminderAssignment[]>;
-  deleteReminderAssignment(reminderId: number, assignedUserId: number): Promise<boolean>;
-  deleteAllReminderAssignments(reminderId: number): Promise<boolean>;
+  // Reminder Assignments (using array-based approach)
+  assignReminderToUsers(reminderId: number, userIds: number[], assignedBy: number): Promise<any>;
+  removeUserFromReminderAssignment(reminderId: number, userId: number): Promise<boolean>;
+  clearReminderAssignments(reminderId: number): Promise<boolean>;
+  getReminderAssignments(reminderId: number): Promise<any[]>;
   getRemindersByUserWithAssignments(userId: number): Promise<any[]>;
 
   // Employee Activation Tokens
@@ -1106,9 +1106,7 @@ export class DrizzleStorage implements IStorage {
 
   async deleteReminder(id: number): Promise<boolean> {
     try {
-      // First delete all assignments for this reminder
-      await db.delete(schema.reminderAssignments).where(eq(schema.reminderAssignments.reminderId, id));
-      // Then delete the reminder itself
+      // Delete the reminder (assignments are now stored in array columns, no separate table)
       const result = await db.delete(schema.reminders).where(eq(schema.reminders.id, id));
       return result.rowCount > 0;
     } catch (error) {
@@ -1479,6 +1477,23 @@ export class DrizzleStorage implements IStorage {
     }
   }
 
+  async clearReminderAssignments(reminderId: number): Promise<boolean> {
+    try {
+      await db.update(schema.reminders)
+        .set({ 
+          assignedUserIds: null,
+          assignedBy: null,
+          assignedAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.reminders.id, reminderId));
+      return true;
+    } catch (error) {
+      console.error('Storage: error in clearReminderAssignments:', error);
+      return false;
+    }
+  }
+
   async clearAllReminderAssignments(reminderId: number): Promise<boolean> {
     try {
       await db.update(schema.reminders)
@@ -1536,10 +1551,7 @@ export class DrizzleStorage implements IStorage {
     
     assignedReminders.forEach(reminder => {
       if (!ownReminderIds.has(reminder.id)) {
-        allReminders.push({
-          ...reminder,
-          isAssigned: true
-        });
+        allReminders.push(reminder);
       }
     });
 
