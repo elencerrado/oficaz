@@ -290,10 +290,11 @@ export const documents = pgTable("documents", {
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").references(() => users.id).notNull(),
-  receiverId: integer("receiver_id").references(() => users.id).notNull(),
-  subject: text("subject").notNull(),
+  receiverId: integer("receiver_id").references(() => users.id), // nullable for company-wide messages
+  subject: text("subject"),
   content: text("content").notNull(),
   isRead: boolean("is_read").notNull().default(false),
+  isToAllEmployees: boolean("is_to_all_employees").notNull().default(false), // for company-wide messages
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

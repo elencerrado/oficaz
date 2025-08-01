@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import oficazLogo from '@/assets/oficaz-logo.png';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DemoLoadingOverlayProps {
   isVisible: boolean;
@@ -8,11 +8,12 @@ interface DemoLoadingOverlayProps {
 }
 
 const loadingSteps = [
-  { text: "Creando tu nuevo espacio...", duration: 3000 },
-  { text: "Generando empleados de demostración...", duration: 4000 },
-  { text: "Creando datos de ejemplo...", duration: 3500 },
-  { text: "Ya casi lo tenemos...", duration: 2500 },
-  { text: "Solo quedan un par de cosas...", duration: 2000 },
+  { text: "Creando tu nuevo espacio...", duration: 2500 },
+  { text: "Generando empleados de demostración...", duration: 3000 },
+  { text: "Creando fichajes de tiempo...", duration: 2500 },
+  { text: "Generando recordatorios y asignaciones...", duration: 2500 },
+  { text: "Creando mensajes de ejemplo...", duration: 2000 },
+  { text: "Ya casi lo tenemos...", duration: 1500 },
   { text: "¡Listo! Preparando tu espacio...", duration: 1000 }
 ];
 
@@ -37,17 +38,19 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
 
     // Start progress animation
     progressInterval = setInterval(() => {
-      elapsedTime += 100;
+      elapsedTime += 50;
       const newProgress = Math.min((elapsedTime / totalDuration) * 100, 100);
       setProgress(newProgress);
 
+      // Only complete when progress reaches exactly 100%
       if (newProgress >= 100) {
         clearInterval(progressInterval);
+        // Ensure we show 100% briefly before completing
         setTimeout(() => {
           onComplete?.();
-        }, 500);
+        }, 800);
       }
-    }, 100);
+    }, 50);
 
     // Handle step changes
     let currentStepTime = 0;
@@ -78,16 +81,9 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-        {/* Logo with pulse animation */}
+        {/* Professional loading spinner */}
         <div className="mb-6 flex justify-center">
-          <div className="relative">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="w-16 h-16 animate-pulse"
-            />
-            <div className="absolute inset-0 bg-oficaz-primary opacity-20 rounded-full animate-ping"></div>
-          </div>
+          <LoadingSpinner size="lg" />
         </div>
 
         {/* Loading text */}

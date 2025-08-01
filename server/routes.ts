@@ -14,7 +14,7 @@ import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
 import { db } from './db';
-import { eq, and, or, desc, sql, not, inArray, count } from 'drizzle-orm';
+import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens } from '@shared/schema';
 import { sendEmployeeWelcomeEmail } from './email';
 
@@ -188,12 +188,34 @@ async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCo
   
   const workDays = [1, 2, 3, 4, 5]; // Monday to Friday
   
+  // Check for existing sessions to prevent duplicates
+  const existingSessions = await db.select()
+    .from(workSessions)
+    .where(and(
+      eq(workSessions.userId, employee.id),
+      gte(workSessions.clockIn, monthStart),
+      lt(workSessions.clockIn, new Date(year, month + 1, 1))
+    ));
+  
+  const existingDates = new Set(
+    existingSessions.map(session => 
+      session.clockIn.toISOString().split('T')[0]
+    )
+  );
+  
   for (let day = 1; day <= maxDay; day++) {
     const date = new Date(year, month, day);
     const dayOfWeek = date.getDay();
+    const dateStr = date.toISOString().split('T')[0];
     
     // Skip weekends
     if (!workDays.includes(dayOfWeek)) continue;
+    
+    // Skip if already has session for this date
+    if (existingDates.has(dateStr)) {
+      console.log(`⚠️ Skipping duplicate session for ${employee.fullName} on ${dateStr}`);
+      continue;
+    }
     
     // Skip if employee is on vacation (Ana Fernández Silva in current month)
     if (employee.status === "vacation" && !isCompleteMonth && day >= 20 && day <= 25) {
@@ -257,7 +279,7 @@ async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCo
     }
   }
   
-  console.log(`📅 Generated work sessions for ${employee.fullName} - ${isCompleteMonth ? 'complete' : 'partial'} month`);
+  console.log(`📅 Generated work sessions for ${employee.fullName} - ${isCompleteMonth ? 'complete' : 'partial'} month (avoided duplicates)`);
 }
 
 // Generate activity for company registration date
@@ -593,8 +615,18 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
   console.log('💬 Generated', demoMessages.length, 'bidirectional demo messages (employee-admin communication)');
 }
 
-// Generate demo reminders
+// Generate demo reminders with varied assignments
 async function generateDemoReminders(companyId: number, employees: any[]) {
+  // Get admin user for creating company-wide reminders
+  const adminUsers = await db.select()
+    .from(users)
+    .where(and(
+      eq(users.companyId, companyId),
+      eq(users.role, 'admin')
+    ));
+  
+  const admin = adminUsers[0];
+  
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(9, 0, 0, 0);
@@ -604,37 +636,86 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
   nextWeek.setHours(14, 0, 0, 0);
   
   const demoReminders = [
+    // 1. Individual reminder - assigned to specific employee
     {
-      title: 'Reunión de equipo',
-      description: 'Reunión semanal para revisar el progreso del proyecto',
+      title: 'Reunión de equipo semanal',
+      description: 'Reunión para revisar el progreso del proyecto y planificar la próxima semana',
       dueDateTime: tomorrow,
-      employee: employees[0],
+      assignedEmployees: [employees[0]], // Solo María García
+      createdBy: admin,
+      color: '#FF6B6B',
+      priority: 'high' as const,
     },
+    // 2. Multiple employees - assigned to 2 people
     {
-      title: 'Entrega de informe mensual',
-      description: 'Completar y enviar el informe de análisis de datos',
+      title: 'Entrega de documentación técnica',
+      description: 'Completar y revisar toda la documentación del sistema antes de la presentación',
       dueDateTime: nextWeek,
-      employee: employees[2],
+      assignedEmployees: [employees[0], employees[1]], // María y Carlos
+      createdBy: admin,
+      color: '#4ECDC4',
+      priority: 'medium' as const,
     },
+    // 3. Individual reminder - different employee
     {
-      title: 'Revisión de diseños',
-      description: 'Presentar los nuevos mockups al cliente',
-      dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-      employee: employees[1],
+      title: 'Revisión de diseños con cliente',
+      description: 'Presentar los nuevos mockups y recoger feedback del cliente',
+      dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      assignedEmployees: [employees[2]], // Solo Ana Fernández
+      createdBy: admin,
+      color: '#45B7D1',
+      priority: 'high' as const,
+    },
+    // 4. Group task - assigned to 3 employees
+    {
+      title: 'Preparación presentación trimestral',
+      description: 'Recopilar datos y preparar la presentación de resultados del trimestre',
+      dueDateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      assignedEmployees: [employees[0], employees[1], employees[3]], // María, Carlos y David
+      createdBy: admin,
+      color: '#96CEB4',
+      priority: 'medium' as const,
+    },
+    // 5. Individual personal reminder
+    {
+      title: 'Formación en nuevas herramientas',
+      description: 'Completar el curso online de certificación en la nueva plataforma',
+      dueDateTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      assignedEmployees: [employees[3]], // Solo David López
+      createdBy: admin,
+      color: '#FECA57',
+      priority: 'low' as const,
+    },
+    // 6. Unassigned company reminder (admin only)
+    {
+      title: 'Revisión mensual de objetivos',
+      description: 'Evaluar el cumplimiento de objetivos del mes y planificar acciones correctivas',
+      dueDateTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      assignedEmployees: [], // Sin asignar - solo admin
+      createdBy: admin,
+      color: '#A8E6CF',
+      priority: 'medium' as const,
     }
   ];
   
   for (const reminder of demoReminders) {
-    await storage.createReminder({
+    // Create base reminder
+    const createdReminder = await storage.createReminder({
       title: reminder.title,
       description: reminder.description,
       dueDateTime: reminder.dueDateTime,
-      userId: reminder.employee.id,
-      createdBy: reminder.employee.id,
+      userId: reminder.createdBy.id, // Creator
+      companyId: companyId, // Add missing company ID
+      createdBy: reminder.createdBy.id,
+      color: reminder.color,
+      priority: reminder.priority,
+      assignedTo: reminder.assignedEmployees.length > 0 ? reminder.assignedEmployees.map(emp => emp.id) : null,
     });
+    
+    console.log(`⏰ Created reminder "${reminder.title}" assigned to ${reminder.assignedEmployees.length > 0 ? reminder.assignedEmployees.map(emp => emp.fullName).join(', ') : 'admin only'}`);
   }
   
-  console.log('⏰ Generated', demoReminders.length, 'demo reminders');
+  console.log('⏰ Generated', demoReminders.length, 'demo reminders with varied assignments');
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -5790,12 +5871,12 @@ startxref
     }
   });
 
-  // Temporary endpoint for testing - generates demo data for company 12
+  // Temporary endpoint for testing - generates demo data for company 15
   app.post('/api/demo-data/test-generate', async (req, res) => {
     try {
-      console.log('🧪 TEST: Generating demo data for company 12');
-      await generateDemoData(12);
-      res.json({ success: true, message: 'Demo data generated for company 12' });
+      console.log('🧪 TEST: Generating improved demo data for company 15');
+      await generateDemoData(15);
+      res.json({ success: true, message: 'Demo data generated for company 15 with improvements' });
     } catch (error) {
       console.error('Error in test generate:', error);
       res.status(500).json({ message: 'Error: ' + (error as any).message });
