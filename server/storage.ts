@@ -102,6 +102,13 @@ export interface IStorage {
   deleteReminder(id: number): Promise<boolean>;
   getActiveReminders(userId: number): Promise<Reminder[]>;
   getDashboardReminders(userId: number): Promise<Reminder[]>;
+  
+  // Reminder Assignments
+  createReminderAssignment(assignment: InsertReminderAssignment): Promise<ReminderAssignment>;
+  getReminderAssignments(reminderId: number): Promise<ReminderAssignment[]>;
+  deleteReminderAssignment(reminderId: number, assignedUserId: number): Promise<boolean>;
+  deleteAllReminderAssignments(reminderId: number): Promise<boolean>;
+  getRemindersByUserWithAssignments(userId: number): Promise<any[]>;
 
   // Employee Activation Tokens
   createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
@@ -1038,9 +1045,8 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getRemindersByUser(userId: number): Promise<any[]> {
-    return await db.select().from(schema.reminders)
-      .where(eq(schema.reminders.userId, userId))
-      .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+    // Use the new function that includes assignments
+    return await this.getRemindersByUserWithAssignments(userId);
   }
 
   async getRemindersByCompany(companyId: number): Promise<any[]> {
@@ -1099,8 +1105,16 @@ export class DrizzleStorage implements IStorage {
   }
 
   async deleteReminder(id: number): Promise<boolean> {
-    const result = await db.delete(schema.reminders).where(eq(schema.reminders.id, id));
-    return result.rowCount > 0;
+    try {
+      // First delete all assignments for this reminder
+      await db.delete(schema.reminderAssignments).where(eq(schema.reminderAssignments.reminderId, id));
+      // Then delete the reminder itself
+      const result = await db.delete(schema.reminders).where(eq(schema.reminders.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Storage: error in deleteReminder:', error);
+      return false;
+    }
   }
 
   async getActiveReminders(userId: number): Promise<any[]> {
@@ -1392,6 +1406,120 @@ export class DrizzleStorage implements IStorage {
     const result = await db.delete(schema.employeeActivationTokens)
       .where(sql`${schema.employeeActivationTokens.expiresAt} <= NOW()`);
     return result.rowCount;
+  }
+
+  // Reminder Assignments operations
+  async createReminderAssignment(assignment: any): Promise<any> {
+    const [newAssignment] = await db.insert(schema.reminderAssignments).values({
+      ...assignment,
+      createdAt: new Date()
+    }).returning();
+    return newAssignment;
+  }
+
+  async getReminderAssignments(reminderId: number): Promise<any[]> {
+    return await db.select({
+      id: schema.reminderAssignments.id,
+      reminderId: schema.reminderAssignments.reminderId,
+      assignedUserId: schema.reminderAssignments.assignedUserId,
+      assignedBy: schema.reminderAssignments.assignedBy,
+      createdAt: schema.reminderAssignments.createdAt,
+      userName: schema.users.fullName,
+      userEmail: schema.users.email
+    })
+    .from(schema.reminderAssignments)
+    .leftJoin(schema.users, eq(schema.reminderAssignments.assignedUserId, schema.users.id))
+    .where(eq(schema.reminderAssignments.reminderId, reminderId));
+  }
+
+  async deleteReminderAssignment(reminderId: number, assignedUserId: number): Promise<boolean> {
+    try {
+      const result = await db.delete(schema.reminderAssignments)
+        .where(
+          and(
+            eq(schema.reminderAssignments.reminderId, reminderId),
+            eq(schema.reminderAssignments.assignedUserId, assignedUserId)
+          )
+        );
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error('Storage: error in deleteReminderAssignment:', error);
+      return false;
+    }
+  }
+
+  async deleteAllReminderAssignments(reminderId: number): Promise<boolean> {
+    try {
+      await db.delete(schema.reminderAssignments).where(eq(schema.reminderAssignments.reminderId, reminderId));
+      return true;
+    } catch (error) {
+      console.error('Storage: error in deleteAllReminderAssignments:', error);
+      return false;
+    }
+  }
+
+  async getRemindersByUserWithAssignments(userId: number): Promise<any[]> {
+    // Get user's own reminders
+    const ownReminders = await db.select().from(schema.reminders)
+      .where(eq(schema.reminders.userId, userId))
+      .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+
+    // Get reminders assigned to the user
+    const assignedReminders = await db.select({
+      id: schema.reminders.id,
+      userId: schema.reminders.userId,
+      companyId: schema.reminders.companyId,
+      title: schema.reminders.title,
+      content: schema.reminders.content,
+      reminderDate: schema.reminders.reminderDate,
+      priority: schema.reminders.priority,
+      color: schema.reminders.color,
+      isCompleted: schema.reminders.isCompleted,
+      isArchived: schema.reminders.isArchived,
+      isPinned: schema.reminders.isPinned,
+      notificationShown: schema.reminders.notificationShown,
+      showBanner: schema.reminders.showBanner,
+      createdBy: schema.reminders.createdBy,
+      createdAt: schema.reminders.createdAt,
+      updatedAt: schema.reminders.updatedAt,
+      assignedBy: schema.reminderAssignments.assignedBy,
+      assignedAt: schema.reminderAssignments.createdAt,
+      creatorName: schema.users.fullName
+    })
+    .from(schema.reminderAssignments)
+    .innerJoin(schema.reminders, eq(schema.reminderAssignments.reminderId, schema.reminders.id))
+    .leftJoin(schema.users, eq(schema.reminders.createdBy, schema.users.id))
+    .where(eq(schema.reminderAssignments.assignedUserId, userId))
+    .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+
+    // Combine and remove duplicates (in case a user is assigned their own reminder)
+    const allReminders = [...ownReminders];
+    const ownReminderIds = new Set(ownReminders.map(r => r.id));
+    
+    assignedReminders.forEach(reminder => {
+      if (!ownReminderIds.has(reminder.id)) {
+        allReminders.push({
+          ...reminder,
+          isAssigned: true
+        });
+      }
+    });
+
+    return allReminders;
+  }
+
+  async getEmployeesByCompany(companyId: number): Promise<any[]> {
+    return await db.select({
+      id: schema.users.id,
+      fullName: schema.users.fullName,
+      email: schema.users.companyEmail,
+      role: schema.users.role,
+      position: schema.users.position,
+      profilePicture: schema.users.profilePicture
+    })
+    .from(schema.users)
+    .where(eq(schema.users.companyId, companyId))
+    .orderBy(schema.users.fullName);
   }
 }
 

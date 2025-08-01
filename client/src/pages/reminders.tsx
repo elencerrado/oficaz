@@ -24,7 +24,8 @@ import {
   Edit,
   X,
   Search,
-  Filter
+  Filter,
+  Users
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,17 @@ interface Reminder {
   showBanner: boolean;
   createdAt: string;
   updatedAt: string;
+  userId?: number;
+  userFullName?: string;
+}
+
+interface Employee {
+  id: number;
+  fullName: string;
+  email: string;
+  role: string;
+  position?: string;
+  profilePicture?: string;
 }
 
 const PRIORITY_COLORS = {
@@ -82,6 +94,9 @@ export default function Reminders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed' | 'archived'>('active');
   const [selectedColor, setSelectedColor] = useState('#ffffff');
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedReminderForAssignment, setSelectedReminderForAssignment] = useState<Reminder | null>(null);
+  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   
   const [reminderData, setReminderData] = useState({
     title: '',
@@ -96,6 +111,12 @@ export default function Reminders() {
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['/api/reminders'],
     retry: false,
+  });
+
+  // Fetch employees for assignment (only for admins/managers)
+  const { data: employees = [] } = useQuery<Employee[]>({
+    queryKey: ['/api/users/company'],
+    enabled: user?.role === 'admin' || user?.role === 'manager',
   });
 
   // Create reminder mutation
@@ -166,6 +187,30 @@ export default function Reminders() {
     },
   });
 
+  // Assign reminder mutation
+  const assignReminderMutation = useMutation({
+    mutationFn: async ({ reminderId, userIds }: { reminderId: number; userIds: number[] }) => {
+      return await apiRequest('POST', '/api/reminders/assign', { reminderId, userIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      setIsAssignDialogOpen(false);
+      setSelectedReminderForAssignment(null);
+      setSelectedEmployees([]);
+      toast({
+        title: "Recordatorio asignado",
+        description: "El recordatorio se ha asignado correctamente a los empleados seleccionados",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo asignar el recordatorio",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setReminderData({
       title: '',
@@ -177,6 +222,36 @@ export default function Reminders() {
     });
     setSelectedColor('#ffffff');
     setEditingReminder(null);
+  };
+
+  const handleAssignReminder = (reminder: Reminder) => {
+    setSelectedReminderForAssignment(reminder);
+    setSelectedEmployees([]);
+    setIsAssignDialogOpen(true);
+  };
+
+  const handleEmployeeToggle = (employeeId: number) => {
+    setSelectedEmployees(prev => 
+      prev.includes(employeeId) 
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    );
+  };
+
+  const handleAssignSubmit = () => {
+    if (!selectedReminderForAssignment || selectedEmployees.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes seleccionar al menos un empleado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    assignReminderMutation.mutate({
+      reminderId: selectedReminderForAssignment.id,
+      userIds: selectedEmployees
+    });
   };
 
   const handleSubmit = () => {
@@ -523,6 +598,17 @@ export default function Reminders() {
                       >
                         <Edit className="w-3 h-3" />
                       </Button>
+                      {(user?.role === 'admin' || user?.role === 'manager') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAssignReminder(reminder)}
+                          className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                          title="Asignar a empleados"
+                        >
+                          <Users className="w-3 h-3" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -596,6 +682,59 @@ export default function Reminders() {
             ))}
           </div>
         )}
+
+        {/* Assignment Dialog */}
+        <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Asignar Recordatorio</DialogTitle>
+              <DialogDescription>
+                Selecciona los empleados que recibirán este recordatorio: "{selectedReminderForAssignment?.title}"
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {employees.map((employee) => (
+                <div key={employee.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`employee-${employee.id}`}
+                    checked={selectedEmployees.includes(employee.id)}
+                    onCheckedChange={() => handleEmployeeToggle(employee.id)}
+                  />
+                  <label
+                    htmlFor={`employee-${employee.id}`}
+                    className="flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span>{employee.fullName}</span>
+                        <span className="text-xs text-gray-500">{employee.email}</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {employee.role}
+                      </Badge>
+                    </div>
+                  </label>
+                </div>
+              ))}
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAssignDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleAssignSubmit}
+                disabled={selectedEmployees.length === 0 || assignReminderMutation.isPending}
+              >
+                {assignReminderMutation.isPending ? 'Asignando...' : `Asignar a ${selectedEmployees.length} empleado${selectedEmployees.length !== 1 ? 's' : ''}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

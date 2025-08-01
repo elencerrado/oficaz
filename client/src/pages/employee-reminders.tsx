@@ -37,6 +37,11 @@ interface Reminder {
   isArchived: boolean;
   isPinned: boolean;
   createdAt: string;
+  // Assignment properties (for assigned reminders)
+  isAssigned?: boolean;
+  assignedBy?: number;
+  assignedAt?: string;
+  creatorName?: string;
 }
 
 const priorityIcons = {
@@ -470,6 +475,15 @@ export default function EmployeeReminders() {
                           {!reminder.isCompleted && !reminder.isArchived ? 'Activo' : 
                            reminder.isCompleted ? 'Completado' : 'Archivado'}
                         </Badge>
+                        
+                        {reminder.isAssigned && (
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs border-blue-400 text-blue-400"
+                          >
+                            Asignado{reminder.creatorName ? ` por ${reminder.creatorName}` : ''}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     
@@ -483,14 +497,16 @@ export default function EmployeeReminders() {
                         <Star className={`h-4 w-4 ${reminder.isPinned ? 'fill-current text-yellow-400' : ''}`} />
                       </Button>
                       
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(reminder)}
-                        className="h-8 w-8 p-0 text-white/60 hover:text-blue-400 hover:bg-white/10"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      {!reminder.isAssigned && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(reminder)}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-blue-400 hover:bg-white/10"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
                       
                       {!reminder.isCompleted && !reminder.isArchived && (
                         <Button
@@ -512,14 +528,16 @@ export default function EmployeeReminders() {
                         <Archive className="h-4 w-4" />
                       </Button>
                       
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteReminderMutation.mutate(reminder.id)}
-                        className="h-8 w-8 p-0 text-white/60 hover:text-red-400 hover:bg-white/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!reminder.isAssigned && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteReminderMutation.mutate(reminder.id)}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-red-400 hover:bg-white/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

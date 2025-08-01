@@ -3702,11 +3702,11 @@ startxref
       
       let reminders;
       
-      // If admin/manager, show all company reminders; otherwise show only user's reminders
+      // If admin/manager, show all company reminders; otherwise show user's reminders + assigned ones
       if (userRole === 'admin' || userRole === 'manager') {
         reminders = await storage.getRemindersByCompany(companyId);
       } else {
-        reminders = await storage.getRemindersByUser(userId);
+        reminders = await storage.getRemindersByUserWithAssignments(userId);
       }
       
       res.json(reminders);
@@ -3748,11 +3748,17 @@ startxref
     try {
       const reminderId = parseInt(req.params.id);
       const userId = req.user!.id;
+      const userRole = req.user!.role;
       
-      // Check if reminder belongs to user
+      // Check if reminder exists
       const existingReminder = await storage.getReminder(reminderId);
-      if (!existingReminder || existingReminder.userId !== userId) {
+      if (!existingReminder) {
         return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      // Only allow deletion if user owns the reminder OR is admin/manager
+      if (existingReminder.userId !== userId && userRole !== 'admin' && userRole !== 'manager') {
+        return res.status(403).json({ message: "Not authorized to delete this reminder" });
       }
       
       const deleted = await storage.deleteReminder(reminderId);
@@ -3805,6 +3811,77 @@ startxref
     } catch (error) {
       console.error("Error fetching dashboard reminders:", error);
       res.status(500).json({ message: "Failed to fetch dashboard reminders" });
+    }
+  });
+
+  // Reminder assignment endpoints - only for admin/manager
+  app.post('/api/reminders/:id/assign', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const { assignedUserIds } = req.body; // Array of user IDs to assign
+      const assignedBy = req.user!.id;
+      
+      // Check if reminder exists
+      const existingReminder = await storage.getReminder(reminderId);
+      if (!existingReminder) {
+        return res.status(404).json({ message: "Reminder not found" });
+      }
+      
+      // Create assignments for each user
+      const assignments = [];
+      for (const assignedUserId of assignedUserIds) {
+        const assignment = await storage.createReminderAssignment({
+          reminderId,
+          assignedUserId,
+          assignedBy
+        });
+        assignments.push(assignment);
+      }
+      
+      res.json({ message: "Reminder assigned successfully", assignments });
+    } catch (error) {
+      console.error("Error assigning reminder:", error);
+      res.status(500).json({ message: "Failed to assign reminder" });
+    }
+  });
+
+  app.get('/api/reminders/:id/assignments', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const assignments = await storage.getReminderAssignments(reminderId);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching reminder assignments:", error);
+      res.status(500).json({ message: "Failed to fetch assignments" });
+    }
+  });
+
+  app.delete('/api/reminders/:id/assign/:userId', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const assignedUserId = parseInt(req.params.userId);
+      
+      const success = await storage.deleteReminderAssignment(reminderId, assignedUserId);
+      if (success) {
+        res.json({ message: "Assignment removed successfully" });
+      } else {
+        res.status(404).json({ message: "Assignment not found" });
+      }
+    } catch (error) {
+      console.error("Error removing assignment:", error);
+      res.status(500).json({ message: "Failed to remove assignment" });
+    }
+  });
+
+  // Get employees for assignment (admin/manager only)
+  app.get('/api/users/employees', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const employees = await storage.getEmployeesByCompany(companyId);
+      res.json(employees);
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
 

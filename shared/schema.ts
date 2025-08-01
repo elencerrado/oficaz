@@ -338,6 +338,15 @@ export const reminders = pgTable("reminders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Reminder assignments table - para asignar recordatorios a empleados específicos
+export const reminderAssignments = pgTable("reminder_assignments", {
+  id: serial("id").primaryKey(),
+  reminderId: integer("reminder_id").references(() => reminders.id, { onDelete: 'cascade' }).notNull(),
+  assignedUserId: integer("assigned_user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  assignedBy: integer("assigned_by").references(() => users.id).notNull(), // Admin/Manager que asignó
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Employee activation tokens for password setup
 export const employeeActivationTokens = pgTable("employee_activation_tokens", {
   id: serial("id").primaryKey(),
@@ -404,6 +413,11 @@ export const insertReminderSchema = createInsertSchema(reminders).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertReminderAssignmentSchema = createInsertSchema(reminderAssignments).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertEmployeeActivationTokenSchema = createInsertSchema(employeeActivationTokens).omit({
@@ -563,6 +577,8 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
+export type ReminderAssignment = typeof reminderAssignments.$inferSelect;
+export type InsertReminderAssignment = z.infer<typeof insertReminderAssignmentSchema>;
 export type EmployeeActivationToken = typeof employeeActivationTokens.$inferSelect;
 export type InsertEmployeeActivationToken = z.infer<typeof insertEmployeeActivationTokenSchema>;
 
