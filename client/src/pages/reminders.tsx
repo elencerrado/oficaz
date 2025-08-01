@@ -495,14 +495,7 @@ export default function Reminders() {
         </p>
       </div>
 
-      <div className="flex justify-end mb-6">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Recordatorio
-            </Button>
-          </DialogTrigger>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -694,7 +687,6 @@ export default function Reminders() {
                 </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       {/* Filters and Search */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -719,6 +711,12 @@ export default function Reminders() {
               <SelectItem value="archived">Archivados</SelectItem>
             </SelectContent>
           </Select>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90 whitespace-nowrap">
+              <Plus className="w-4 h-4 mr-2" />
+              Crear
+            </Button>
+          </DialogTrigger>
         </div>
 
         {/* Reminders Grid */}
