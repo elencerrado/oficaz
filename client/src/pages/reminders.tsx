@@ -154,10 +154,12 @@ export default function Reminders() {
   });
 
   // Fetch employees for assignment (only for admins/managers)
-  const { data: employees = [] } = useQuery<Employee[]>({
-    queryKey: ['/api/users/company'],
+  const { data: employees = [], isLoading: employeesLoading, error: employeesError } = useQuery<Employee[]>({
+    queryKey: ['/api/users/employees'],
     enabled: user?.role === 'admin' || user?.role === 'manager',
   });
+
+
 
   // Create reminder mutation
   const createReminderMutation = useMutation({
@@ -374,7 +376,8 @@ export default function Reminders() {
       reminderDate: localDateTimeString,
       priority: reminder.priority,
       color: reminder.color,
-      showBanner: reminder.showBanner || false
+      showBanner: reminder.showBanner || false,
+      assignedUserIds: reminder.assignedUserIds || []
     });
     setSelectedColor(reminder.color);
     setIsDialogOpen(true);
@@ -557,6 +560,52 @@ export default function Reminders() {
                       ))}
                     </div>
                   </div>
+
+                  {/* Assignment section - only for admins/managers */}
+                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                    <div>
+                      <Label>Asignar a empleados</Label>
+                      <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
+                        {employees.map((employee) => (
+                          <div key={employee.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`form-employee-${employee.id}`}
+                              checked={reminderData.assignedUserIds.includes(employee.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setReminderData(prev => ({
+                                    ...prev,
+                                    assignedUserIds: [...prev.assignedUserIds, employee.id]
+                                  }));
+                                } else {
+                                  setReminderData(prev => ({
+                                    ...prev,
+                                    assignedUserIds: prev.assignedUserIds.filter(id => id !== employee.id)
+                                  }));
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`form-employee-${employee.id}`}
+                              className="flex-1 cursor-pointer text-sm font-medium leading-none"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span>{employee.fullName}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {employee.role}
+                                </Badge>
+                              </div>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      {reminderData.assignedUserIds.length > 0 && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {reminderData.assignedUserIds.length} empleado{reminderData.assignedUserIds.length !== 1 ? 's' : ''} seleccionado{reminderData.assignedUserIds.length !== 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <DialogFooter>
@@ -750,6 +799,11 @@ export default function Reminders() {
             </DialogHeader>
             
             <div className="space-y-3 max-h-60 overflow-y-auto">
+              {employeesLoading && <p className="text-sm text-gray-500">Cargando empleados...</p>}
+              {employeesError && <p className="text-sm text-red-500">Error cargando empleados: {String(employeesError)}</p>}
+              {!employeesLoading && !employeesError && employees.length === 0 && (
+                <p className="text-sm text-gray-500">No hay empleados disponibles para asignar</p>
+              )}
               {employees.map((employee) => (
                 <div key={employee.id} className="flex items-center space-x-2">
                   <Checkbox
