@@ -197,10 +197,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   ];
 
   const teamSizes = [
-    { value: '1-5', label: '1-5 empleados', description: 'Pequeño equipo' },
-    { value: '6-15', label: '6-15 empleados', description: 'Equipo mediano' },
-    { value: '16-50', label: '16-50 empleados', description: 'Empresa mediana' },
-    { value: '51+', label: '51+ empleados', description: 'Gran empresa' },
+    { value: '1-5', label: '1-5 personas', description: 'Pequeño equipo' },
+    { value: '6-15', label: '6-15 personas', description: 'Equipo mediano' },
+    { value: '16-50', label: '16-50 personas', description: 'Empresa mediana' },
+    { value: '51+', label: '51+ personas', description: 'Gran empresa' },
   ];
 
   const handleStep1Submit = (data: Step1Data) => {
@@ -432,7 +432,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
             <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
               <div className="text-center mb-4">
                 <Users className="h-6 w-6 md:h-8 md:w-8 text-oficaz-primary mx-auto mb-2" />
-                <h3 className="text-sm md:text-base font-semibold mb-1">Cuéntanos sobre tu equipo</h3>
+                <h3 className="text-sm md:text-base font-semibold mb-1">Queremos saber como es tu equipo</h3>
                 <p className="text-xs text-gray-600">Esto nos ayudará a personalizar la experiencia</p>
               </div>
 
@@ -482,8 +482,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
               {/* Features selection */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium">¿En qué funcionalidades estás más interesado?</Label>
-                <p className="text-xs text-gray-500">Selecciona todas las que te interesen</p>
+                <Label className="text-xs font-medium">¿Qué funcionalidades te interesan más?</Label>
+                <p className="text-xs text-gray-500">Selecciona todas las que quieras, sin miedo</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {features.map((feature) => {
                     const Icon = feature.icon;
@@ -543,7 +543,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="text-center mb-4 md:mb-6">
                 <Building className="h-8 w-8 md:h-12 md:w-12 text-oficaz-primary mx-auto mb-2 md:mb-3" />
                 <h3 className="text-base md:text-lg font-semibold mb-1">Datos de tu empresa</h3>
-                <p className="text-xs md:text-sm text-gray-600">Información básica para configurar tu cuenta</p>
+                <p className="text-xs md:text-sm text-gray-600">Solo alguna información básica para configurar tu cuenta</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -608,7 +608,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   <Label htmlFor="province">Provincia *</Label>
                   <Select value={step2Form.watch('province')} onValueChange={(value) => step2Form.setValue('province', value)}>
                     <SelectTrigger className="rounded-xl mt-2">
-                      <SelectValue placeholder="Seleccionar provincia" />
+                      <SelectValue placeholder="Selecciona tu provincia" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto">
                       <SelectItem value="alava">Álava</SelectItem>
@@ -694,13 +694,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="text-center mb-4 md:mb-6">
                 <Shield className="h-8 w-8 md:h-12 md:w-12 text-oficaz-primary mx-auto mb-2 md:mb-3" />
                 <h3 className="text-base md:text-lg font-semibold mb-1">Cuenta de administrador</h3>
-                <p className="text-xs md:text-sm text-gray-600">Crea tu cuenta personal de administrador</p>
+                <p className="text-xs md:text-sm text-gray-600">Ahora creemos los datos de tu usuario como administrador</p>
               </div>
 
               {/* Admin basic info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="adminFullName">Nombre completo *</Label>
+                  <Label htmlFor="adminFullName">Nombre completo del administrador *</Label>
                   <Input
                     id="adminFullName"
                     className="rounded-xl"

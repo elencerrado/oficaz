@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +17,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { user, company, subscription, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
+  const { showBanner, bannerHeight } = useDemoBanner();
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
@@ -105,10 +107,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
       
       {/* Sidebar */}
-      <nav className={`
-        fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-      `}>
+      <nav 
+        className={`
+          fixed left-0 w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+        `}
+        style={{
+          top: showBanner ? `${bannerHeight}px` : '0',
+          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh'
+        }}
+      >
         {/* Fixed Company header */}
         <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <div className="flex items-center space-x-3">
