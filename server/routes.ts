@@ -890,25 +890,8 @@ Responde directamente a este email para contactar con la persona.
       socketTimeout: 60000, // 60s
     });
 
-    // Professional logo implementation with robust domain detection
-    let baseUrl;
-    
-    // Check if running from custom domain by examining request headers
-    const host = req.get('host') || req.get('x-forwarded-host');
-    const isCustomDomain = host && (host.includes('oficaz.es') || !host.includes('replit'));
-    
-    if (isCustomDomain) {
-      baseUrl = `https://${host}`;
-    } else if (process.env.REPLIT_DOMAINS) {
-      const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0];
-      baseUrl = `https://${firstDomain}`;
-    } else if (process.env.REPLIT_DEV_DOMAIN) {
-      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
-    } else {
-      baseUrl = 'https://oficaz-employee-management.replit.app';
-    }
-    
-    const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
+    // Use static logo URL for email compatibility (this works!)
+    const logoUrl = 'https://oficaz.es/email-logo.png';
     const websiteUrl = 'https://oficaz.es';
     
     const logoHtml = `
