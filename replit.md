@@ -56,7 +56,7 @@ Preferred communication style: Simple, everyday language.
     - **Messaging System**: Internal company messaging, real-time updates, role-based routing, message history.
     - **Administrative Features**: Employee management, company settings, user role management, system statistics, customizable features per company.
     - **Subscription Management**: Dynamic plan changes (upgrade/downgrade), prorated billing, integration with Stripe for invoicing and payments.
-    - **Reminders System**: Google Keep-style reminders with notifications, prioritization, and customizable colors.
+    - **Reminders System**: Google Keep-style reminders with notifications, prioritization, customizable colors, and advanced assignment system. Admins/managers can assign reminders to multiple employees with proper permission controls.
 
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect
