@@ -871,6 +871,8 @@ Responde directamente a este email para contactar con la persona.
   
   // Helper function to send verification emails
   const sendVerificationEmail = async (email: string, code: string, req: any) => {
+    // ⚠️ PROTECTED NODEMAILER CONFIG - DO NOT MODIFY ⚠️
+    // MUST use createTransport (NOT createTransporter) - user confirmed working
     const transporter = nodemailer.createTransport({
       host: 'smtp.hostinger.com',
       port: 465,
@@ -889,9 +891,13 @@ Responde directamente a este email para contactar con la persona.
       greetingTimeout: 30000, // 30s
       socketTimeout: 60000, // 60s
     });
+    // ⚠️ END PROTECTED SECTION ⚠️
 
+    // ⚠️ PROTECTED EMAIL CONFIGURATION - DO NOT MODIFY ⚠️
     // Use static logo URL for email compatibility (this works!)
+    // User confirmed: "ya funciona el mail, guarda esta configuracion a muerte"
     const logoUrl = 'https://oficaz.es/email-logo.png';
+    // ⚠️ END PROTECTED SECTION ⚠️
     const websiteUrl = 'https://oficaz.es';
     
     const logoHtml = `

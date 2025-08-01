@@ -23,6 +23,14 @@ Preferred communication style: Simple, everyday language.
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
+### Email System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+- **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
+- **Never use dynamic domain detection for email logos** - it breaks the email display
+- **Email template padding**: Use increased padding for mobile compatibility
+- **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
+- **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
+
+
 ## System Architecture
 
 ### Frontend Architecture
