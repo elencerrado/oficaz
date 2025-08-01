@@ -566,7 +566,7 @@ export default function Reminders() {
                     <div>
                       <Label>Asignar a empleados</Label>
                       <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                        {employees.map((employee) => (
+                        {employees.filter(emp => emp.id !== user?.id).map((employee) => (
                           <div key={employee.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={`form-employee-${employee.id}`}
@@ -589,12 +589,7 @@ export default function Reminders() {
                               htmlFor={`form-employee-${employee.id}`}
                               className="flex-1 cursor-pointer text-sm font-medium leading-none"
                             >
-                              <div className="flex items-center gap-2">
-                                <span>{employee.fullName}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {employee.role}
-                                </Badge>
-                              </div>
+                              {employee.fullName}
                             </label>
                           </div>
                         ))}
@@ -801,10 +796,10 @@ export default function Reminders() {
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {employeesLoading && <p className="text-sm text-gray-500">Cargando empleados...</p>}
               {employeesError && <p className="text-sm text-red-500">Error cargando empleados: {String(employeesError)}</p>}
-              {!employeesLoading && !employeesError && employees.length === 0 && (
+              {!employeesLoading && !employeesError && employees.filter(emp => emp.id !== user?.id).length === 0 && (
                 <p className="text-sm text-gray-500">No hay empleados disponibles para asignar</p>
               )}
-              {employees.map((employee) => (
+              {employees.filter(emp => emp.id !== user?.id).map((employee) => (
                 <div key={employee.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`employee-${employee.id}`}
@@ -815,15 +810,7 @@ export default function Reminders() {
                     htmlFor={`employee-${employee.id}`}
                     className="flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="flex flex-col">
-                        <span>{employee.fullName}</span>
-                        <span className="text-xs text-gray-500">{employee.email}</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {employee.role}
-                      </Badge>
-                    </div>
+                    {employee.fullName}
                   </label>
                 </div>
               ))}

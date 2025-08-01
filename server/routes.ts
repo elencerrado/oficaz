@@ -3673,7 +3673,7 @@ startxref
   // Reminders endpoints
   app.post('/api/reminders', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const { title, content, reminderDate, priority, color } = req.body;
+      const { title, content, reminderDate, priority, color, showBanner, assignedUserIds } = req.body;
       const userId = req.user!.id;
       const companyId = req.user!.companyId;
       
@@ -3684,7 +3684,12 @@ startxref
         content,
         reminderDate: reminderDate ? new Date(reminderDate) : null,
         priority: priority || 'medium',
-        color: color || '#ffffff'
+        color: color || '#ffffff',
+        showBanner: showBanner || false,
+        // Always include creator + any additional assigned users, avoiding duplicates
+        assignedUserIds: assignedUserIds ? [...new Set([userId, ...assignedUserIds])] : [userId],
+        assignedBy: userId,
+        assignedAt: new Date()
       });
       
       res.json(reminder);
@@ -3734,6 +3739,13 @@ startxref
       }
       if (updateData.reminderDate === null || updateData.reminderDate === '') {
         updateData.reminderDate = null;
+      }
+      
+      // Handle assignments - always include creator + any additional assigned users
+      if (updateData.assignedUserIds && Array.isArray(updateData.assignedUserIds)) {
+        updateData.assignedUserIds = [...new Set([userId, ...updateData.assignedUserIds])];
+        updateData.assignedBy = userId;
+        updateData.assignedAt = new Date();
       }
       
       const updatedReminder = await storage.updateReminder(reminderId, updateData);
