@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Bell, 
   Plus, 
@@ -48,6 +49,9 @@ interface Reminder {
   updatedAt: string;
   userId?: number;
   userFullName?: string;
+  assignedUserIds?: number[];
+  assignedBy?: number;
+  assignedAt?: string;
 }
 
 interface Employee {
@@ -69,6 +73,41 @@ const REMINDER_COLORS = [
   '#ffffff', '#f8f9fa', '#fff3cd', '#d4edda', '#d1ecf1', '#f8d7da', '#e2e3e5',
   '#fef7e0', '#e8f5e8', '#e1f5fe', '#fce4ec', '#f3e5f5', '#e0f2f1'
 ];
+
+// Component to display assigned user avatars with a limit
+const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3 }: {
+  assignedUserIds?: number[];
+  employees: Employee[];
+  maxDisplay?: number;
+}) => {
+  if (!assignedUserIds?.length) return null;
+
+  const assignedEmployees = employees.filter(emp => assignedUserIds.includes(emp.id));
+  const displayEmployees = assignedEmployees.slice(0, maxDisplay);
+  const remainingCount = assignedEmployees.length - maxDisplay;
+
+  return (
+    <div className="flex items-center gap-1 mt-2">
+      {displayEmployees.map((employee) => (
+        <Avatar key={employee.id} className="w-6 h-6 border border-white shadow-sm">
+          <AvatarImage 
+            src={employee.profilePicture ? `/uploads/${employee.profilePicture}` : undefined} 
+            alt={employee.fullName} 
+          />
+          <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+            {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </AvatarFallback>
+        </Avatar>
+      ))}
+      
+      {remainingCount > 0 && (
+        <div className="w-6 h-6 rounded-full bg-gray-200 border border-white shadow-sm flex items-center justify-center">
+          <span className="text-xs text-gray-600 font-medium">+{remainingCount}</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Reminders() {
   const { user } = useAuth();
@@ -104,7 +143,8 @@ export default function Reminders() {
     reminderDate: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
     color: '#ffffff',
-    showBanner: false
+    showBanner: false,
+    assignedUserIds: [] as number[]
   });
 
   // Fetch reminders
@@ -218,15 +258,17 @@ export default function Reminders() {
       reminderDate: '',
       priority: 'medium',
       color: '#ffffff',
-      showBanner: false
+      showBanner: false,
+      assignedUserIds: []
     });
     setSelectedColor('#ffffff');
     setEditingReminder(null);
   };
 
   const handleAssignReminder = (reminder: Reminder) => {
+    console.log('handleAssignReminder called', reminder);
     setSelectedReminderForAssignment(reminder);
-    setSelectedEmployees([]);
+    setSelectedEmployees(reminder.assignedUserIds || []);
     setIsAssignDialogOpen(true);
   };
 
@@ -238,20 +280,27 @@ export default function Reminders() {
     );
   };
 
-  const handleAssignSubmit = () => {
-    if (!selectedReminderForAssignment || selectedEmployees.length === 0) {
+  const handleAssignSubmit = async () => {
+    if (!selectedReminderForAssignment) return;
+
+    try {
+      await assignReminderMutation.mutateAsync({
+        reminderId: selectedReminderForAssignment.id,
+        userIds: selectedEmployees
+      });
+      setIsAssignDialogOpen(false);
+      toast({
+        title: "Recordatorio asignado",
+        description: `Se ha asignado a ${selectedEmployees.length} empleado${selectedEmployees.length !== 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      console.error('Error assigning reminder:', error);
       toast({
         title: "Error",
-        description: "Debes seleccionar al menos un empleado",
-        variant: "destructive",
+        description: "No se pudo asignar el recordatorio",
+        variant: "destructive"
       });
-      return;
     }
-
-    assignReminderMutation.mutate({
-      reminderId: selectedReminderForAssignment.id,
-      userIds: selectedEmployees
-    });
   };
 
   const handleSubmit = () => {
@@ -658,6 +707,13 @@ export default function Reminders() {
                       </span>
                     </div>
                   )}
+                  
+                  {/* Assigned users avatars */}
+                  <AssignedUsersAvatars 
+                    assignedUserIds={reminder.assignedUserIds} 
+                    employees={employees} 
+                    maxDisplay={3}
+                  />
                   
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
