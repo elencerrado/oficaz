@@ -377,7 +377,7 @@ export default function Reminders() {
       priority: reminder.priority,
       color: reminder.color,
       showBanner: reminder.showBanner || false,
-      assignedUserIds: reminder.assignedUserIds || []
+      assignedUserIds: Array.isArray(reminder.assignedUserIds) ? reminder.assignedUserIds : []
     });
     setSelectedColor(reminder.color);
     setIsDialogOpen(true);
