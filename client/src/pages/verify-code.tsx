@@ -206,14 +206,9 @@ export default function VerifyCode() {
             <p className="text-gray-600 mb-2">
               Introduce el código que hemos enviado a tu email.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-700 font-medium mb-1">
-                📧 ¿No ves el email?
-              </p>
-              <p className="text-xs text-blue-600">
-                Revisa tu carpeta de <strong>spam o correo no deseado</strong>. A veces los emails de verificación terminan ahí.
-              </p>
-            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Revisa tu carpeta de spam o correo no deseado. A veces los emails de verificación terminan ahí.
+            </p>
             <p className="text-sm text-gray-500">
               Tip: Copia el código antes de volver al navegador
             </p>

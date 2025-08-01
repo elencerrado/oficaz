@@ -871,7 +871,7 @@ Responde directamente a este email para contactar con la persona.
   
   // Helper function to send verification emails
   const sendVerificationEmail = async (email: string, code: string, req: any) => {
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: 'smtp.hostinger.com',
       port: 465,
       secure: true, // SSL
