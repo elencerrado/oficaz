@@ -75,14 +75,19 @@ const REMINDER_COLORS = [
 ];
 
 // Component to display assigned user avatars with a limit
-const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3 }: {
+const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, currentUserId }: {
   assignedUserIds?: number[];
   employees: Employee[];
   maxDisplay?: number;
+  currentUserId?: number;
 }) => {
   if (!assignedUserIds?.length) return null;
 
-  const assignedEmployees = employees.filter(emp => assignedUserIds.includes(emp.id));
+  // Filter out the current user from assigned users - they don't need to see themselves as "assigned"
+  const filteredAssignedIds = assignedUserIds.filter(id => id !== currentUserId);
+  if (!filteredAssignedIds.length) return null;
+
+  const assignedEmployees = employees.filter(emp => filteredAssignedIds.includes(emp.id));
   const displayEmployees = assignedEmployees.slice(0, maxDisplay);
   const remainingCount = assignedEmployees.length - maxDisplay;
 
@@ -780,6 +785,7 @@ export default function Reminders() {
                     assignedUserIds={reminder.assignedUserIds} 
                     employees={employees} 
                     maxDisplay={3}
+                    currentUserId={user?.id}
                   />
                   
                   <div className="flex items-center justify-between">
