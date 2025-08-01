@@ -496,6 +496,12 @@ export default function Reminders() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90 whitespace-nowrap hidden">
+              <Plus className="w-4 h-4 mr-2" />
+              Crear
+            </Button>
+          </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -711,12 +717,16 @@ export default function Reminders() {
               <SelectItem value="archived">Archivados</SelectItem>
             </SelectContent>
           </Select>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm} className="bg-oficaz-primary hover:bg-oficaz-primary/90 whitespace-nowrap">
-              <Plus className="w-4 h-4 mr-2" />
-              Crear
-            </Button>
-          </DialogTrigger>
+          <Button 
+            onClick={() => {
+              resetForm();
+              setIsDialogOpen(true);
+            }} 
+            className="bg-oficaz-primary hover:bg-oficaz-primary/90 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Crear
+          </Button>
         </div>
 
         {/* Reminders Grid */}
