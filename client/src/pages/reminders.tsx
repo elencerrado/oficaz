@@ -164,6 +164,7 @@ export default function Reminders() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedReminderForAssignment, setSelectedReminderForAssignment] = useState<Reminder | null>(null);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   
   const [reminderData, setReminderData] = useState({
     title: '',
@@ -293,6 +294,7 @@ export default function Reminders() {
     });
     setSelectedColor('#ffffff');
     setEditingReminder(null);
+    setEmployeeSearchTerm('');
   };
 
   const handleAssignReminder = (reminder: Reminder) => {
@@ -593,8 +595,28 @@ export default function Reminders() {
                   {(user?.role === 'admin' || user?.role === 'manager') && (
                     <div>
                       <Label>Asignar a empleados</Label>
+                      
+                      {/* Employee search */}
+                      <div className="relative mt-2">
+                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                        <Input
+                          placeholder="Buscar empleados..."
+                          value={employeeSearchTerm}
+                          onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                          className="pl-10 text-sm"
+                        />
+                      </div>
+                      
                       <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                        {employees.filter(emp => emp.id !== user?.id).map((employee) => (
+                        {employees
+                          .filter(emp => emp.id !== user?.id)
+                          .filter(emp => 
+                            employeeSearchTerm === '' || 
+                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                            emp.email.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                            (emp.position && emp.position.toLowerCase().includes(employeeSearchTerm.toLowerCase()))
+                          )
+                          .map((employee) => (
                           <div key={employee.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={`form-employee-${employee.id}`}
@@ -617,11 +639,31 @@ export default function Reminders() {
                               htmlFor={`form-employee-${employee.id}`}
                               className="flex-1 cursor-pointer text-sm font-medium leading-none"
                             >
-                              {employee.fullName}
+                              <div>
+                                <div className="font-medium">{employee.fullName}</div>
+                                <div className="text-xs text-gray-500">{employee.email}</div>
+                                {employee.position && (
+                                  <div className="text-xs text-gray-400">{employee.position}</div>
+                                )}
+                              </div>
                             </label>
                           </div>
                         ))}
+                        
+                        {employees
+                          .filter(emp => emp.id !== user?.id)
+                          .filter(emp => 
+                            employeeSearchTerm === '' || 
+                            emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                            emp.email.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+                            (emp.position && emp.position.toLowerCase().includes(employeeSearchTerm.toLowerCase()))
+                          ).length === 0 && employeeSearchTerm !== '' && (
+                          <div className="text-center py-2 text-gray-500 text-sm">
+                            No se encontraron empleados
+                          </div>
+                        )}
                       </div>
+                      
                       {reminderData.assignedUserIds.length > 0 && (
                         <div className="text-xs text-gray-500 mt-1">
                           {reminderData.assignedUserIds.length} empleado{reminderData.assignedUserIds.length !== 1 ? 's' : ''} seleccionado{reminderData.assignedUserIds.length !== 1 ? 's' : ''}
