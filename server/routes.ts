@@ -1883,6 +1883,16 @@ Responde directamente a este email para contactar con la persona.
         companyId: user.companyId,
       });
 
+      // Generate demo data automatically for new companies
+      console.log('🎭 Auto-generating demo data for new company:', company.id);
+      try {
+        await generateDemoData(company.id);
+        console.log('✅ Demo data generated successfully for new company');
+      } catch (demoError) {
+        console.error('⚠️ Warning: Could not generate demo data for new company:', demoError);
+        // Continue with registration even if demo data fails
+      }
+
       // Get subscription data for immediate access to features
       const subscription = await storage.getSubscriptionByCompanyId(company.id);
 
@@ -5871,17 +5881,7 @@ startxref
     }
   });
 
-  // Temporary endpoint for testing - generates demo data for company 15
-  app.post('/api/demo-data/test-generate', async (req, res) => {
-    try {
-      console.log('🧪 TEST: Generating improved demo data for company 15');
-      await generateDemoData(15);
-      res.json({ success: true, message: 'Demo data generated for company 15 with improvements' });
-    } catch (error) {
-      console.error('Error in test generate:', error);
-      res.status(500).json({ message: 'Error: ' + (error as any).message });
-    }
-  });
+
 
   app.delete('/api/demo-data/clear', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {

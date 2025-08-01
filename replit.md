@@ -30,6 +30,13 @@ Preferred communication style: Simple, everyday language.
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
+### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
+- **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data
+- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, and reminders with multiple assignments
+- **Realistic data patterns**: Complete monthly work sessions, current day activity, varied reminder assignments
+- **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
+- **Implementation**: Integrated into company registration endpoint with error handling
+
 
 ## System Architecture
 
