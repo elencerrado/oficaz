@@ -18,6 +18,7 @@ import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft,
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 import { useAuth } from '@/hooks/use-auth';
+import { DemoLoadingOverlay } from '@/components/demo-loading-overlay';
 
 // Validation function for company uniqueness
 const validateCompanyField = async (field: string, value: string) => {
@@ -121,6 +122,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [showDemoLoading, setShowDemoLoading] = useState(false);
 
   // Check for verification token (only if not by invitation)
   const params = new URLSearchParams(search);
@@ -277,6 +279,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const handleStep4Submit = async (data: Step4Data) => {
     try {
       setIsLoading(true);
+      setShowDemoLoading(true);
       
       // Prepare final registration data
       const finalData = { 
@@ -293,13 +296,16 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       try {
         await register(finalData);
         console.log('Registration successful, redirecting to dashboard');
+        // Keep loading overlay visible until redirect
         setLocation('/dashboard');
       } catch (error: any) {
         console.error('Registration failed:', error);
+        setShowDemoLoading(false);
         alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
       }
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
+      setShowDemoLoading(false);
       // Show user-friendly error message
       alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
     } finally {
@@ -1033,6 +1039,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
           </div>
         </CardContent>
       </Card>
+      
+      {/* Demo Loading Overlay */}
+      <DemoLoadingOverlay 
+        isVisible={showDemoLoading}
+        onComplete={() => {
+          setShowDemoLoading(false);
+          // Redirect will happen naturally from handleStep4Submit
+        }}
+      />
     </div>
   );
 }
