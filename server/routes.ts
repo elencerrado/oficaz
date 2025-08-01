@@ -5979,18 +5979,18 @@ startxref
           .where(inArray(messages.senderId, demoEmployeeIds));
         console.log('✅ Deleted messages');
         
-        // Step 5: Delete reminders (often gets regenerated, delete multiple times if needed)
+        // Step 5: Delete ALL reminders for the entire company (demo data includes admin reminders)
         let reminderDeleteAttempts = 0;
         let remainingReminders = 0;
         do {
           reminderDeleteAttempts++;
           const result = await db.delete(reminders)
-            .where(inArray(reminders.userId, demoEmployeeIds));
+            .where(eq(reminders.companyId, company.id));
           
-          // Check if any reminders remain
+          // Check if any reminders remain for this company
           const reminderCheck = await db.select({ count: count() })
             .from(reminders)
-            .where(inArray(reminders.userId, demoEmployeeIds));
+            .where(eq(reminders.companyId, company.id));
           remainingReminders = reminderCheck[0]?.count || 0;
           
           console.log(`🔄 Reminder deletion attempt ${reminderDeleteAttempts}, remaining: ${remainingReminders}`);
@@ -6001,7 +6001,7 @@ startxref
           }
         } while (remainingReminders > 0 && reminderDeleteAttempts < 3);
         
-        console.log('✅ Deleted reminders');
+        console.log('✅ Deleted all company reminders');
         
         // Step 6: Delete documents
         await db.delete(documents)
