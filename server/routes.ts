@@ -908,13 +908,13 @@ Responde directamente a este email para contactar con la persona.
       baseUrl = 'https://oficaz-employee-management.replit.app';
     }
     
-    const logoUrl = `${baseUrl}/images/oficaz-logo.png`;
+    const logoUrl = `${baseUrl}/email-logo.png`;
     const websiteUrl = 'https://oficaz.es';
     
     const logoHtml = `
       <a href="${websiteUrl}" style="text-decoration: none;" target="_blank">
         <img src="${logoUrl}" alt="Oficaz - Sistema de Gestión Empresarial" 
-             style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
+             style="height: 45px; width: auto; max-width: 200px; display: block; margin: 0 auto; border: none; outline: none;" />
       </a>
     `;
 
@@ -937,16 +937,16 @@ Responde directamente a este email para contactar con la persona.
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Código de verificación - Oficaz</title>
         </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <body style="margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
             
-            <!-- Compact header with logo -->
-            <div style="background-color: #ffffff; padding: 8px 15px; text-align: center;">
+            <!-- Header with logo -->
+            <div style="background-color: #ffffff; padding: 25px 20px 15px 20px; text-align: center;">
               ${logoHtml}
             </div>
 
-            <!-- Compact main content -->
-            <div style="padding: 15px 20px;">
+            <!-- Main content with more padding -->
+            <div style="padding: 20px 25px 30px 25px;">
               <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">Verificación de email</h2>
               
               <p style="color: #4a5568; font-size: 14px; line-height: 1.4; margin-bottom: 15px; text-align: center;">
@@ -971,8 +971,8 @@ Responde directamente a este email para contactar con la persona.
               </div>
             </div>
 
-            <!-- Compact footer -->
-            <div style="background-color: #f8fafc; padding: 10px 15px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <!-- Footer with more padding for mobile -->
+            <div style="background-color: #f8fafc; padding: 20px 15px 25px 15px; text-align: center; border-top: 1px solid #e2e8f0;">
               <p style="color: #718096; font-size: 11px; margin: 0;">
                 © ${new Date().getFullYear()} Oficaz • Sistema de Gestión Empresarial
               </p>
