@@ -565,82 +565,77 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
   
   const admin = adminUsers[0];
   
-  const demoMessages = [
-    // 1. Admin to all employees
+  // Create individual bidirectional conversations (not group messages)
+  const conversationMessages = [
+    // Conversation 1: Admin <-> María García
     {
       sender: admin,
-      content: '¡Bienvenidos al nuevo sistema Oficaz! Aquí podrán gestionar sus fichajes, vacaciones y comunicarse con el equipo. Cualquier duda, estoy disponible.',
-      isToAllEmployees: true,
+      recipient: employees[0], // María García
+      content: '¡Bienvenida al nuevo sistema Oficaz, María! Aquí podrás gestionar tus fichajes, vacaciones y comunicarte conmigo. ¿Todo correcto?',
       sentAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     },
-    
-    // 2. Employee to admin (María García)
     {
       sender: employees[0], // María García
       recipient: admin,
       content: 'Hola! He estado probando el sistema de fichajes y me parece muy intuitivo. ¿Hay alguna función especial para reportar horas extra?',
-      isToAllEmployees: false,
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
     },
-    
-    // 3. Admin response to María
     {
       sender: admin,
       recipient: employees[0],
       content: 'Me alegra que te guste el sistema, María. Las horas extra se calculan automáticamente cuando superas las 8 horas diarias. También puedes ver el detalle en la sección de reportes.',
-      isToAllEmployees: false,
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 4 days ago + 2 hours
     },
     
-    // 4. Manager to all employees (Carlos)
+    // Conversation 2: Admin <-> Carlos (Manager)
     {
-      sender: employees[1], // Carlos Rodríguez (manager)
-      content: 'Equipo, recordad que las solicitudes de vacaciones deben enviarse con al menos 15 días de antelación. Ana, que disfrutes tu descanso esta semana.',
-      isToAllEmployees: true,
+      sender: admin,
+      recipient: employees[1], // Carlos Rodríguez (manager)
+      content: 'Carlos, como nuevo responsable del equipo, te he dado permisos de manager. Puedes gestionar las vacaciones del equipo y acceder a reportes.',
+      sentAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+    },
+    {
+      sender: employees[1], // Carlos
+      recipient: admin,
+      content: 'Perfecto, gracias. He revisado las solicitudes pendientes y todo está en orden. El equipo está funcionando muy bien.',
       sentAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
     },
     
-    // 5. Employee request to admin (David López)
+    // Conversation 3: Admin <-> David López
     {
       sender: employees[3], // David López
       recipient: admin,
       content: 'Buenos días. He enviado una solicitud de vacaciones para el mes que viene. ¿Podrías revisarla cuando tengas un momento? Gracias.',
-      isToAllEmployees: false,
       sentAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
     },
-    
-    // 6. Admin response to David
     {
       sender: admin,
       recipient: employees[3],
       content: 'Perfecto David, he visto tu solicitud. Está todo correcto, la aprobaré en cuanto revise la planificación del equipo. Te confirmo hoy mismo.',
-      isToAllEmployees: false,
       sentAt: new Date(now.getTime() - 22 * 60 * 60 * 1000), // 22 hours ago
     },
     
-    // 7. Employee on vacation to team (Ana)
+    // Conversation 4: Admin <-> Ana Fernández (on vacation)
     {
       sender: employees[2], // Ana Fernández
-      content: 'Hola equipo! Aunque estoy de vacaciones, he visto que han llegado los datos del último proyecto. Si necesitáis algo urgente, podéis escribirme.',
-      isToAllEmployees: true,
+      recipient: admin,
+      content: 'Hola! Aunque estoy de vacaciones, he visto que han llegado los datos del último proyecto. Si necesitas algo urgente, puedes escribirme.',
       sentAt: new Date(now.getTime() - 5 * 60 * 60 * 1000), // 5 hours ago
     },
-    
-    // 8. Recent admin message
     {
       sender: admin,
-      content: 'Recordatorio: mañana viernes es el último día para fichar las horas de la semana. Que tengáis un buen día.',
-      isToAllEmployees: true,
+      recipient: employees[2],
+      content: 'Gracias Ana, disfruta de tus vacaciones. Todo está bajo control. Nos vemos cuando regreses.',
       sentAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
     }
   ];
   
-  for (const message of demoMessages) {
+  for (const message of conversationMessages) {
     const createdMessage = await storage.createMessage({
       senderId: message.sender.id,
-      recipientId: message.recipient?.id || null,
+      receiverId: message.recipient.id, // Always a specific recipient
       content: message.content,
-      isToAllEmployees: message.isToAllEmployees,
+      isToAllEmployees: false, // All messages are individual, not group
     });
     
     // Update message timestamp to be realistic
@@ -653,7 +648,7 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
     }
   }
   
-  console.log('💬 Generated', demoMessages.length, 'bidirectional demo messages (employee-admin communication)');
+  console.log('💬 Generated', conversationMessages.length, 'bidirectional demo messages (employee-admin communication)');
 }
 
 // Generate demo reminders with varied assignments
