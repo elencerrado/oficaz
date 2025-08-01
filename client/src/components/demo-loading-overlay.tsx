@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 interface DemoLoadingOverlayProps {
   isVisible: boolean;
@@ -81,9 +82,18 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-        {/* Professional loading spinner */}
+        {/* Oficaz Logo */}
         <div className="mb-6 flex justify-center">
-          <LoadingSpinner size="lg" />
+          <img 
+            src={oficazLogo} 
+            alt="Oficaz" 
+            className="h-12 w-auto"
+          />
+        </div>
+
+        {/* Small loading spinner */}
+        <div className="mb-4 flex justify-center">
+          <LoadingSpinner size="md" />
         </div>
 
         {/* Loading text */}
