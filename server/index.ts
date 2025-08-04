@@ -11,10 +11,19 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
-// Robots.txt como ruta HTML que devuelve texto plano
+// Robots.txt como archivo HTML explícito para SEO
 app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.send(`User-agent: *
+  res.type('text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robots.txt - Oficaz SEO</title>
+    <meta name="description" content="Directivas robots.txt para motores de búsqueda de Oficaz">
+</head>
+<body>
+    <pre style="font-family: monospace; white-space: pre-wrap; margin: 0; padding: 20px;">User-agent: *
 Allow: /
 Allow: /privacy
 Allow: /terms
@@ -30,7 +39,46 @@ Disallow: /register
 Disallow: /request-code
 Disallow: /verify-code
 
-Sitemap: https://oficaz.es/sitemap.xml`);
+Sitemap: https://oficaz.es/sitemap.xml</pre>
+</body>
+</html>`);
+});
+
+// También crear ruta /robots.html para máxima compatibilidad SEO
+app.get('/robots.html', (req, res) => {
+  res.type('text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robots.txt - Oficaz SEO</title>
+    <meta name="description" content="Directivas robots.txt para motores de búsqueda de Oficaz">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <h1>Robots.txt para Oficaz</h1>
+    <pre style="font-family: monospace; white-space: pre-wrap; margin: 0; padding: 20px; background: #f5f5f5; border-radius: 8px;">User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+Disallow: /api/
+Disallow: /*?*
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /super-admin/
+Disallow: /login
+Disallow: /register
+Disallow: /request-code
+Disallow: /verify-code
+
+Sitemap: https://oficaz.es/sitemap.xml</pre>
+    
+    <p>Este archivo contiene las directivas para motores de búsqueda de Oficaz.</p>
+</body>
+</html>`);
 });
 
 // Servir archivos estáticos sin restricciones
