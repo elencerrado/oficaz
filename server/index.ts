@@ -10,8 +10,16 @@ const app = express();
 
 // ULTRA CRITICAL: SEO routes MUST be FIRST - Before ANY other middleware
 app.get("/robots.txt", (req, res) => {
+  const fullPath = path.join(process.cwd(), "client", "public", "robots.txt");
+  console.log("Serving robots.txt from:", fullPath);
+
   res.type("text/plain");
-  res.sendFile(path.join(process.cwd(), "client", "public", "robots.txt"));
+  res.sendFile(fullPath, (err) => {
+    if (err) {
+      console.error("Error serving robots.txt:", err.message);
+      res.status(500).send("robots.txt not found");
+    }
+  });
 });
 
 app.get("/sitemap.xml", (req, res) => {
