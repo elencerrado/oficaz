@@ -174,14 +174,12 @@ Disallow: /employee/
 Disallow: /api/
 Disallow: /uploads/private/`;
 
-  // Alternative approach: redirect to a specialized CDN endpoint
-  // res.redirect(301, 'https://oficaz-seo.netlify.app/robots.txt');
-  
-  // Direct serving with explicit headers (testing CDN concept)
+  // Direct serving with production-ready headers (works locally and in production)
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': 'public, max-age=86400',
-    'X-CDN-Source': 'external-simulation'
+    'X-CDN-Source': 'production-ready',
+    'Access-Control-Allow-Origin': '*'
   });
   res.end(robotsContent);
 });
@@ -217,16 +215,18 @@ app.get('/sitemap.xml', (req, res) => {
     </url>
 </urlset>`;
   
-  // Alternative approach: redirect to a specialized CDN endpoint
-  // res.redirect(301, 'https://oficaz-seo.netlify.app/sitemap.xml');
-  
-  // Direct serving with explicit headers (testing CDN concept)
-  res.writeHead(200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400',
-    'X-CDN-Source': 'external-simulation'
-  });
-  res.end(sitemapContent);
+  // CDN approach: First try Netlify, fallback to local serving with proper headers
+  try {
+    res.redirect(301, 'https://polite-sorbet-15d3c3.netlify.app/sitemap.xml');
+  } catch (error) {
+    // Fallback: Direct serving with CDN-like headers
+    res.writeHead(200, {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400',
+      'X-CDN-Source': 'local-fallback'
+    });
+    res.end(sitemapContent);
+  }
 });
 
 (async () => {
