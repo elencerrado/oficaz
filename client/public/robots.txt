@@ -1,0 +1,68 @@
+User-agent: *
+Allow: /
+
+# Páginas públicas permitidas
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Bloquear páginas privadas y de administración
+Disallow: /admin/
+Disallow: /super-admin/
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /dashboard/
+Disallow: /employee/
+Disallow: /messages/
+Disallow: /documents/
+Disallow: /settings/
+Disallow: /time-tracking/
+Disallow: /vacation-requests/
+Disallow: /reminders/
+Disallow: /employees/
+Disallow: /profile/
+Disallow: /quick-access/
+Disallow: /test-email/
+Disallow: /login
+Disallow: /register
+Disallow: /request-code
+Disallow: /verify-code
+Disallow: /employee-activation/
+Disallow: /invitation-register/
+Disallow: /access-denied
+
+# Crawl-delay for all bots (1 second)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://oficaz.es/sitemap.xml
+
+# Google specific (no crawl delay needed)
+User-agent: Googlebot
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+Disallow: /admin/
+Disallow: /super-admin/
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /dashboard/
+Disallow: /employee/
+Disallow: /messages/
+Disallow: /documents/
+Disallow: /settings/
+Disallow: /time-tracking/
+Disallow: /vacation-requests/
+Disallow: /reminders/
+Disallow: /employees/
+Disallow: /profile/
+Disallow: /quick-access/
+Disallow: /test-email/
+Disallow: /login
+Disallow: /register
+Disallow: /request-code
+Disallow: /verify-code
+Disallow: /employee-activation/
+Disallow: /invitation-register/
+Disallow: /access-denied
