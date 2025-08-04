@@ -764,60 +764,6 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // SEO Routes - High priority, must be registered first to avoid catch-all interference
-  app.get('/robots.txt', (req, res) => {
-    res.type('text/plain');
-    res.sendFile(path.join(process.cwd(), 'client', 'public', 'robots.txt'));
-  });
-
-  app.get('/sitemap.xml', (req, res) => {
-    try {
-      const baseUrl = req.protocol + '://' + req.get('host');
-      const currentDate = new Date().toISOString().split('T')[0];
-      
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    
-    <!-- Página principal -->
-    <url>
-        <loc>${baseUrl}/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    
-    <!-- Páginas legales públicas -->
-    <url>
-        <loc>${baseUrl}/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-    <url>
-        <loc>${baseUrl}/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-    <url>
-        <loc>${baseUrl}/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-</urlset>`;
-
-      res.type('application/xml');
-      res.send(sitemap);
-    } catch (error) {
-      console.error('Error generating sitemap:', error);
-      res.status(500).send('Error generating sitemap');
-    }
-  });
-
   // Company validation endpoints
   app.post('/api/validate-company', async (req, res) => {
     try {
