@@ -9,88 +9,90 @@ import fs from "fs";
 
 const app = express();
 
-// ⚠️ CRITICAL SEO INTERCEPTOR: Must override ALL other routes
-// Using express.raw() to capture requests before any other middleware processes them
-app.get("/robots.txt", (req, res) => {
-  console.log("🤖 CRITICAL INTERCEPT: robots.txt");
+// ⚠️ ULTRA AGGRESSIVE RAW HTTP INTERCEPTOR - BYPASSES ALL EXPRESS PROCESSING
+app.use((req, res, next) => {
+  const url = req.url;
+  
+  if (url === "/robots.txt") {
+    console.log("🚫 RAW HTTP BYPASS: robots.txt");
+    
+    // Raw HTTP response - no Express processing at all
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('X-RAW-BYPASS', 'true');
+    
+    const robotsContent = `User-agent: *
+Allow: /
 
-  // Force immediate response to prevent any middleware interference
-  res.writeHead(200, {
-    "Content-Type": "text/plain; charset=utf-8",
-    "Cache-Control": "public, max-age=86400",
-    "X-SEO-Override": "true",
-  });
+# Sitemap
+Sitemap: ${req.protocol}://${req.get('host')}/sitemap.xml
 
-  const robotsPath =
-    process.env.NODE_ENV === "production"
-      ? path.join(process.cwd(), "dist", "public", "robots.txt")
-      : path.join(process.cwd(), "client", "public", "robots.txt");
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
 
-  fs.readFile(robotsPath, "utf8", (err, data) => {
-    if (err) {
-      console.error("Error reading robots.txt:", err.message);
-      res.end("User-agent: *\nDisallow: /");
-      return;
-    }
-    res.end(data);
-  });
-});
+# Bing-specific rules  
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
 
-app.get("/sitemap.xml", (req, res) => {
-  console.log("🗺️ CRITICAL INTERCEPT: sitemap.xml");
+# Block private areas
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /api/
+Disallow: /uploads/private/`;
 
-  // Force immediate response to prevent any middleware interference
-  try {
-    res.writeHead(200, {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=86400",
-      "X-SEO-Override": "true",
-    });
-
-    const baseUrl = req.protocol + "://" + req.get("host");
-    const currentDate = new Date().toISOString().split("T")[0];
-
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+    res.end(robotsContent);
+    return; // Stop all processing
+  }
+  
+  if (url === "/sitemap.xml") {
+    console.log("🚫 RAW HTTP BYPASS: sitemap.xml");
+    
+    // Raw HTTP response - no Express processing at all
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('X-RAW-BYPASS', 'true');
+    
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-    <!-- Página principal -->
     <url>
         <loc>${baseUrl}/</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
-
-    <!-- Páginas legales públicas -->
     <url>
         <loc>${baseUrl}/privacy</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-
     <url>
         <loc>${baseUrl}/terms</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-
     <url>
         <loc>${baseUrl}/cookies</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-
 </urlset>`;
 
-    res.end(sitemap);
-  } catch (error) {
-    console.error("Error generating sitemap:", error);
-    res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end("Error generating sitemap");
+    res.end(sitemapContent);
+    return; // Stop all processing
   }
+  
+  next(); // Continue to other middleware only if not SEO route
 });
 
 // Trust proxy for rate limiting (required for Replit)
