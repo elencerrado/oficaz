@@ -11,6 +11,28 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
+// Robots.txt como ruta HTML que devuelve texto plano
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+Disallow: /api/
+Disallow: /*?*
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /super-admin/
+Disallow: /login
+Disallow: /register
+Disallow: /request-code
+Disallow: /verify-code
+
+Sitemap: https://oficaz.es/sitemap.xml`);
+});
+
 // Servir archivos estáticos sin restricciones
 app.use(express.static(path.join(process.cwd(), 'client', 'public')));
 
