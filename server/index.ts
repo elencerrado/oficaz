@@ -9,42 +9,48 @@ import fs from "fs";
 
 const app = express();
 
-// INTERCEPTOR: Catch SEO requests before ANY middleware
-app.use((req, res, next) => {
-  if (req.path === "/robots.txt") {
-    console.log("INTERCEPTING robots.txt request");
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400'
-    });
-    
-    const robotsPath = process.env.NODE_ENV === "production" 
+// ⚠️ CRITICAL SEO INTERCEPTOR: Must override ALL other routes
+// Using express.raw() to capture requests before any other middleware processes them
+app.get("/robots.txt", (req, res) => {
+  console.log("🤖 CRITICAL INTERCEPT: robots.txt");
+
+  // Force immediate response to prevent any middleware interference
+  res.writeHead(200, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "public, max-age=86400",
+    "X-SEO-Override": "true",
+  });
+
+  const robotsPath =
+    process.env.NODE_ENV === "production"
       ? path.join(process.cwd(), "dist", "public", "robots.txt")
       : path.join(process.cwd(), "client", "public", "robots.txt");
-    
-    fs.readFile(robotsPath, 'utf8', (err, data) => {
-      if (err) {
-        console.error("Error reading robots.txt:", err.message);
-        res.end("User-agent: *\nDisallow: /");
-        return;
-      }
-      res.end(data);
-    });
-    return; // Don't call next()
-  }
-  
-  if (req.path === "/sitemap.xml") {
-    console.log("INTERCEPTING sitemap.xml request");
-    try {
-      res.writeHead(200, {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=86400'
-      });
-      
-      const baseUrl = req.protocol + "://" + req.get("host");
-      const currentDate = new Date().toISOString().split("T")[0];
 
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+  fs.readFile(robotsPath, "utf8", (err, data) => {
+    if (err) {
+      console.error("Error reading robots.txt:", err.message);
+      res.end("User-agent: *\nDisallow: /");
+      return;
+    }
+    res.end(data);
+  });
+});
+
+app.get("/sitemap.xml", (req, res) => {
+  console.log("🗺️ CRITICAL INTERCEPT: sitemap.xml");
+
+  // Force immediate response to prevent any middleware interference
+  try {
+    res.writeHead(200, {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=86400",
+      "X-SEO-Override": "true",
+    });
+
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const currentDate = new Date().toISOString().split("T")[0];
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <!-- Página principal -->
@@ -79,16 +85,12 @@ app.use((req, res, next) => {
 
 </urlset>`;
 
-      res.end(sitemap);
-    } catch (error) {
-      console.error("Error generating sitemap:", error);
-      res.writeHead(500, {'Content-Type': 'text/plain'});
-      res.end("Error generating sitemap");
-    }
-    return; // Don't call next()
+    res.end(sitemap);
+  } catch (error) {
+    console.error("Error generating sitemap:", error);
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end("Error generating sitemap");
   }
-  
-  next(); // Continue to other middleware
 });
 
 // Trust proxy for rate limiting (required for Replit)
@@ -142,6 +144,12 @@ app.use(
 // Force HTTPS in production and set security headers
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
+    // ⚠️ EXCLUDE SEO routes from HTTPS redirect - they must be handled by interceptor
+    if (req.path === "/robots.txt" || req.path === "/sitemap.xml") {
+      console.log(`🚨 HTTPS REDIRECT BYPASS for SEO route: ${req.path}`);
+      return next(); // Skip HTTPS redirect for SEO files
+    }
+    
     const host = req.header("host");
     const proto =
       req.header("x-forwarded-proto") ||

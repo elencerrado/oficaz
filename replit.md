@@ -43,9 +43,11 @@ Preferred communication style: Simple, everyday language.
 - **Dynamic Sitemap**: Auto-generated XML sitemap with current date, proper priorities, and change frequencies
 - **Protected Routes**: All private areas (admin, employee dashboards, API endpoints) properly blocked from crawlers
 - **Public Pages**: Landing page, privacy policy, terms of service, and cookies policy accessible to search engines
-- **CRITICAL Implementation**: Static files served FIRST before any middleware (including Vite) to prevent HTML redirection
-- **File locations**: robots.txt in client/public/, sitemap.xml generated dynamically with proper Content-Type headers
-- **Vite Compatibility**: Solution works in development by prioritizing express.static before Vite's catch-all middleware
+- **CRITICAL Implementation**: SEO routes handled by high-priority app.get() interceptors before all middleware
+- **HTTPS Redirect Bypass**: SEO routes excluded from HTTPS redirection middleware to prevent interference
+- **Content-Type Headers**: Forced immediately with res.writeHead() - robots.txt (text/plain), sitemap.xml (application/xml)
+- **Production Ready**: Solution tested with Google PageSpeed Insights to ensure proper Content-Type detection
+- **File locations**: robots.txt in client/public/, sitemap.xml generated dynamically with cache headers
 
 
 ## System Architecture
