@@ -4,13 +4,12 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { createSEOServer } from "./seo-server";
 import path from "path";
 import fs from "fs";
 
 const app = express();
 
-// ⚠️ SEO routes now handled by native HTTP server - no middleware needed here
+// ⚠️ SEO files served as static files from client/public/
 
 // Trust proxy for rate limiting (required for Replit)
 app.set("trust proxy", 1);
@@ -147,6 +146,86 @@ app.use((req, res, next) => {
   next();
 });
 
+// ⚠️ CRITICAL SEO ENDPOINTS - DO NOT MODIFY
+// Must be before registerRoutes() to prevent Vite catch-all interception
+app.get('/robots.txt', (req, res) => {
+  console.log('📋 Serving robots.txt with proper Content-Type');
+  
+  const robotsContent = `User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://oficaz.es/sitemap.xml
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+# Bing-specific rules  
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Block private areas
+Disallow: /admin/
+Disallow: /employee/
+Disallow: /api/
+Disallow: /uploads/private/`;
+
+  // Force immediate response without middleware interference
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Cache-Control': 'public, max-age=86400'
+  });
+  res.end(robotsContent);
+  return; // Prevent further processing
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  console.log('🗺️ Serving sitemap.xml with proper Content-Type');
+  
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://oficaz.es/</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://oficaz.es/privacy</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://oficaz.es/terms</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://oficaz.es/cookies</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+</urlset>`;
+
+  // Force immediate response without middleware interference
+  res.writeHead(200, {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Cache-Control': 'public, max-age=86400'
+  });
+  res.end(sitemapContent);
+  return; // Prevent further processing
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -167,21 +246,16 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ULTIMATE SOLUTION: Native HTTP server handles SEO routes before Express
+  // Simple solution: serve on port 5000
   const port = 5000;
-  
-  // Create SEO server that intercepts robots.txt and sitemap.xml BEFORE Express
-  const seoServer = createSEOServer(port, app);
-  
-  seoServer.listen(
+  server.listen(
     {
       port,
       host: "0.0.0.0",
       reusePort: true,
     },
     () => {
-      log(`🚀 SEO-first server running on port ${port}`);
-      log(`📄 robots.txt and sitemap.xml handled by native HTTP`);
+      log(`serving on port ${port}`);
     },
   );
 })();
