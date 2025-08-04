@@ -4,96 +4,13 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createSEOServer } from "./seo-server";
 import path from "path";
 import fs from "fs";
 
 const app = express();
 
-// ⚠️ ULTRA AGGRESSIVE RAW HTTP INTERCEPTOR - BYPASSES ALL EXPRESS PROCESSING
-app.use((req, res, next) => {
-  const url = req.url;
-  
-  if (url === "/robots.txt") {
-    console.log("🚫 RAW HTTP BYPASS: robots.txt");
-    
-    // Raw HTTP response - no Express processing at all
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    res.setHeader('X-RAW-BYPASS', 'true');
-    
-    const robotsContent = `User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: ${req.protocol}://${req.get('host')}/sitemap.xml
-
-# Google-specific rules
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Bing-specific rules  
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Block private areas
-Disallow: /admin/
-Disallow: /employee/
-Disallow: /api/
-Disallow: /uploads/private/`;
-
-    res.end(robotsContent);
-    return; // Stop all processing
-  }
-  
-  if (url === "/sitemap.xml") {
-    console.log("🚫 RAW HTTP BYPASS: sitemap.xml");
-    
-    // Raw HTTP response - no Express processing at all
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    res.setHeader('X-RAW-BYPASS', 'true');
-    
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const currentDate = new Date().toISOString().split('T')[0];
-    
-    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>${baseUrl}/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>${baseUrl}/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>${baseUrl}/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>${baseUrl}/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-</urlset>`;
-
-    res.end(sitemapContent);
-    return; // Stop all processing
-  }
-  
-  next(); // Continue to other middleware only if not SEO route
-});
+// ⚠️ SEO routes now handled by native HTTP server - no middleware needed here
 
 // Trust proxy for rate limiting (required for Replit)
 app.set("trust proxy", 1);
@@ -250,18 +167,21 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // ULTIMATE SOLUTION: Native HTTP server handles SEO routes before Express
   const port = 5000;
-  server.listen(
+  
+  // Create SEO server that intercepts robots.txt and sitemap.xml BEFORE Express
+  const seoServer = createSEOServer(port, app);
+  
+  seoServer.listen(
     {
       port,
       host: "0.0.0.0",
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      log(`🚀 SEO-first server running on port ${port}`);
+      log(`📄 robots.txt and sitemap.xml handled by native HTTP`);
     },
   );
 })();
