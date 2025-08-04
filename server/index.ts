@@ -147,47 +147,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ CRITICAL SEO FILE READING - DO NOT MODIFY
-// Read SEO files from filesystem and serve with explicit headers
-app.get('/robots.txt', (req, res) => {
-  try {
-    const robotsPath = path.join(process.cwd(), 'public/robots.txt');
-    const content = fs.readFileSync(robotsPath, 'utf8');
-    
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Content-Length': Buffer.byteLength(content, 'utf8'),
-      'Cache-Control': 'public, max-age=86400',
-      'X-SEO-Source': 'filesystem'
-    });
-    res.end(content);
-    console.log('📋 Served robots.txt from filesystem with text/plain');
-  } catch (error) {
-    console.error('❌ Error reading robots.txt:', error);
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('robots.txt not found');
-  }
-});
 
-app.get('/sitemap.xml', (req, res) => {
-  try {
-    const sitemapPath = path.join(process.cwd(), 'public/sitemap.xml');
-    const content = fs.readFileSync(sitemapPath, 'utf8');
-    
-    res.writeHead(200, {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Content-Length': Buffer.byteLength(content, 'utf8'),
-      'Cache-Control': 'public, max-age=86400',
-      'X-SEO-Source': 'filesystem'
-    });
-    res.end(content);
-    console.log('🗺️ Served sitemap.xml from filesystem with application/xml');
-  } catch (error) {
-    console.error('❌ Error reading sitemap.xml:', error);
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('sitemap.xml not found');
-  }
-});
 
 (async () => {
   const server = await registerRoutes(app);
