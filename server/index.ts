@@ -8,6 +8,64 @@ import path from "path";
 
 const app = express();
 
+// CRITICAL: SEO Routes MUST be first - before ANY other middleware
+app.use((req, res, next) => {
+  if (req.path === '/robots.txt') {
+    res.type('text/plain');
+    return res.sendFile(path.join(process.cwd(), 'client', 'public', 'robots.txt'));
+  }
+  
+  if (req.path === '/sitemap.xml') {
+    try {
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const currentDate = new Date().toISOString().split('T')[0];
+      
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    
+    <!-- Página principal -->
+    <url>
+        <loc>${baseUrl}/</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- Páginas legales públicas -->
+    <url>
+        <loc>${baseUrl}/privacy</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+    <url>
+        <loc>${baseUrl}/terms</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+    <url>
+        <loc>${baseUrl}/cookies</loc>
+        <lastmod>${currentDate}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    
+</urlset>`;
+
+      res.type('application/xml');
+      return res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      return res.status(500).send('Error generating sitemap');
+    }
+  }
+  
+  next();
+});
+
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
@@ -78,63 +136,7 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// HIGH PRIORITY SEO Middleware - Must be before ALL other middleware
-app.use((req, res, next) => {
-  if (req.path === '/robots.txt') {
-    res.type('text/plain');
-    return res.sendFile(path.join(process.cwd(), 'client', 'public', 'robots.txt'));
-  }
-  
-  if (req.path === '/sitemap.xml') {
-    try {
-      const baseUrl = req.protocol + '://' + req.get('host');
-      const currentDate = new Date().toISOString().split('T')[0];
-      
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    
-    <!-- Página principal -->
-    <url>
-        <loc>${baseUrl}/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    
-    <!-- Páginas legales públicas -->
-    <url>
-        <loc>${baseUrl}/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-    <url>
-        <loc>${baseUrl}/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-    <url>
-        <loc>${baseUrl}/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    
-</urlset>`;
 
-      res.type('application/xml');
-      return res.send(sitemap);
-    } catch (error) {
-      console.error('Error generating sitemap:', error);
-      return res.status(500).send('Error generating sitemap');
-    }
-  }
-  
-  next();
-});
 
 // Body parsing with size limits
 app.use(express.json({ limit: '10mb' }));
