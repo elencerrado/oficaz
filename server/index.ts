@@ -8,19 +8,16 @@ import path from "path";
 
 const app = express();
 
-// CRITICAL: SEO Routes MUST be first - before ANY other middleware
-app.use((req, res, next) => {
-  if (req.path === '/robots.txt') {
-    res.type('text/plain');
-    return res.sendFile(path.join(process.cwd(), 'client', 'public', 'robots.txt'));
-  }
-  
-  if (req.path === '/sitemap.xml') {
-    try {
-      const baseUrl = req.protocol + '://' + req.get('host');
-      const currentDate = new Date().toISOString().split('T')[0];
-      
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+// CRITICAL: Static files FIRST - robots.txt and sitemap.xml must be served before Vite
+app.use(express.static(path.join(process.cwd(), 'client', 'public')));
+
+// Dynamic sitemap.xml route (robots.txt served via static files)
+app.get('/sitemap.xml', (req, res) => {
+  try {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     
     <!-- Página principal -->
@@ -55,15 +52,12 @@ app.use((req, res, next) => {
     
 </urlset>`;
 
-      res.type('application/xml');
-      return res.send(sitemap);
-    } catch (error) {
-      console.error('Error generating sitemap:', error);
-      return res.status(500).send('Error generating sitemap');
-    }
+    res.type('application/xml');
+    res.send(sitemap);
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
+    res.status(500).send('Error generating sitemap');
   }
-  
-  next();
 });
 
 // Trust proxy for rate limiting (required for Replit)
@@ -145,8 +139,7 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Serve public assets (like email logo) statically
-app.use(express.static(path.join(process.cwd(), 'client', 'public')));
+
 
 app.use((req, res, next) => {
   const start = Date.now();

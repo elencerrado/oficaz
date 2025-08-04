@@ -38,12 +38,14 @@ Preferred communication style: Simple, everyday language.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 - **Implementation**: Integrated into company registration endpoint with error handling and duplicate detection
 
-### SEO Optimization System
+### SEO Optimization System (⚠️ CRITICAL - DO NOT MODIFY)
 - **robots.txt**: Comprehensive robots.txt with proper Allow/Disallow directives, crawler delays, and Google-specific rules
 - **Dynamic Sitemap**: Auto-generated XML sitemap with current date, proper priorities, and change frequencies
 - **Protected Routes**: All private areas (admin, employee dashboards, API endpoints) properly blocked from crawlers
 - **Public Pages**: Landing page, privacy policy, terms of service, and cookies policy accessible to search engines
-- **Technical Implementation**: Express routes for /robots.txt and /sitemap.xml with proper MIME types and caching headers
+- **CRITICAL Implementation**: Static files served FIRST before any middleware (including Vite) to prevent HTML redirection
+- **File locations**: robots.txt in client/public/, sitemap.xml generated dynamically with proper Content-Type headers
+- **Vite Compatibility**: Solution works in development by prioritizing express.static before Vite's catch-all middleware
 
 
 ## System Architecture
