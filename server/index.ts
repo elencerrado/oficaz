@@ -8,16 +8,12 @@ import path from "path";
 
 const app = express();
 
-// CRITICAL: Static files FIRST - robots.txt and sitemap.xml must be served before Vite
-app.use(express.static(path.join(process.cwd(), "client", "public")));
-
-// Servir robots.txt explícitamente antes de Vite o middleware SPA
+// ULTRA CRITICAL: SEO routes MUST be FIRST - Before ANY other middleware
 app.get("/robots.txt", (req, res) => {
   res.type("text/plain");
   res.sendFile(path.join(process.cwd(), "client", "public", "robots.txt"));
 });
 
-// Dynamic sitemap.xml route (robots.txt served via static files)
 app.get("/sitemap.xml", (req, res) => {
   try {
     const baseUrl = req.protocol + "://" + req.get("host");
@@ -65,6 +61,9 @@ app.get("/sitemap.xml", (req, res) => {
     res.status(500).send("Error generating sitemap");
   }
 });
+
+// Static files backup (after specific routes)
+app.use(express.static(path.join(process.cwd(), "client", "public")));
 
 // Trust proxy for rate limiting (required for Replit)
 app.set("trust proxy", 1);
