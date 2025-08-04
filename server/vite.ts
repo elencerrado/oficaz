@@ -1,10 +1,11 @@
 import fs from "fs";
 import path from "path";
-import { createViteServer, type ViteDevServer } from "vite";
+import { createServer, type ViteDevServer } from "vite";
 import type { Express } from "express";
 import type { Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+
 const viteLogger = {
   info: (msg: string, options?: any) => logWithTimestamp(msg, "vite", "info"),
   warn: (msg: string, options?: any) => logWithTimestamp(msg, "vite", "warn"),
@@ -14,6 +15,7 @@ const viteLogger = {
   hasErrorLogged: () => false,
   clearScreen: () => {},
 };
+
 function logWithTimestamp(
   message: string,
   source: string,
@@ -33,7 +35,7 @@ export async function setupVite(app: Express, server: Server) {
     hmr: { server },
     allowedHosts: true,
   };
-  const vite = await createViteServer({
+  const vite = await createServer({
     ...viteConfig,
     configFile: false,
     customLogger: {
@@ -47,14 +49,13 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
   app.use(vite.middlewares);
-  // MUCHO MÁS PERMISIVO - Solo servir React para rutas que realmente lo necesitan
+
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
-    // Solo omitir archivos con extensión y rutas API
+
     if (url.includes(".") || url.startsWith("/api/")) {
       return next();
     }
-
     try {
       const clientTemplate = path.resolve(
         import.meta.dirname,
@@ -62,7 +63,6 @@ export async function setupVite(app: Express, server: Server) {
         "client",
         "index.html",
       );
-      // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
@@ -84,14 +84,14 @@ export function serveStatic(app: Express) {
     );
   }
   app.use(express.static(distPath));
-  // MUCHO MÁS PERMISIVO - Solo servir React para rutas que realmente lo necesitan
+
   app.use("*", (req, res, next) => {
     const url = req.originalUrl;
-    // Solo omitir archivos con extensión y rutas API
+
     if (url.includes(".") || url.startsWith("/api/")) {
       return next();
     }
-    // Fall through to index.html for SPA routing
+
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

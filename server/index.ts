@@ -3,7 +3,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
 import path from "path";
 
 const app = express();
@@ -151,7 +151,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
@@ -187,6 +187,6 @@ app.use((req, res, next) => {
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    console.log(`serving on port ${port}`);
   });
 })();
