@@ -9,40 +9,42 @@ import fs from "fs";
 
 const app = express();
 
-// ULTRA HIGH PRIORITY: SEO routes - MUST override everything
-app.use("/robots.txt", (req, res) => {
-  // Force headers immediately
-  res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400'
-  });
-  
-  const robotsPath = process.env.NODE_ENV === "production" 
-    ? path.join(process.cwd(), "dist", "public", "robots.txt")
-    : path.join(process.cwd(), "client", "public", "robots.txt");
-  
-  fs.readFile(robotsPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error("Error reading robots.txt:", err.message);
-      res.end("User-agent: *\nDisallow: /");
-      return;
-    }
-    res.end(data);
-  });
-});
-
-app.use("/sitemap.xml", (req, res) => {
-  try {
-    // Force headers immediately
+// INTERCEPTOR: Catch SEO requests before ANY middleware
+app.use((req, res, next) => {
+  if (req.path === "/robots.txt") {
+    console.log("INTERCEPTING robots.txt request");
     res.writeHead(200, {
-      'Content-Type': 'application/xml; charset=utf-8',
+      'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=86400'
     });
     
-    const baseUrl = req.protocol + "://" + req.get("host");
-    const currentDate = new Date().toISOString().split("T")[0];
+    const robotsPath = process.env.NODE_ENV === "production" 
+      ? path.join(process.cwd(), "dist", "public", "robots.txt")
+      : path.join(process.cwd(), "client", "public", "robots.txt");
+    
+    fs.readFile(robotsPath, 'utf8', (err, data) => {
+      if (err) {
+        console.error("Error reading robots.txt:", err.message);
+        res.end("User-agent: *\nDisallow: /");
+        return;
+      }
+      res.end(data);
+    });
+    return; // Don't call next()
+  }
+  
+  if (req.path === "/sitemap.xml") {
+    console.log("INTERCEPTING sitemap.xml request");
+    try {
+      res.writeHead(200, {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400'
+      });
+      
+      const baseUrl = req.protocol + "://" + req.get("host");
+      const currentDate = new Date().toISOString().split("T")[0];
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     <!-- Página principal -->
@@ -77,12 +79,16 @@ app.use("/sitemap.xml", (req, res) => {
 
 </urlset>`;
 
-    res.end(sitemap);
-  } catch (error) {
-    console.error("Error generating sitemap:", error);
-    res.writeHead(500, {'Content-Type': 'text/plain'});
-    res.end("Error generating sitemap");
+      res.end(sitemap);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.writeHead(500, {'Content-Type': 'text/plain'});
+      res.end("Error generating sitemap");
+    }
+    return; // Don't call next()
   }
+  
+  next(); // Continue to other middleware
 });
 
 // Trust proxy for rate limiting (required for Replit)
