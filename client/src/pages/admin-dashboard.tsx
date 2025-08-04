@@ -317,7 +317,7 @@ export default function AdminDashboard() {
     if (temporaryMessage) {
       return (
         <span className="text-green-400">
-          ✓ Fichaje exitoso - {temporaryMessage}
+          ✓ Fichaje registrado - {temporaryMessage}
         </span>
       );
     }
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
     <div className="px-6 py-4 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Dashboard Administrativo</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
         <p className="text-gray-500 mt-1">
           Gestión rápida y vista general de la empresa
         </p>
@@ -598,7 +598,7 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Últimos Mensajes
+                  Mensajes Recientes
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -697,7 +697,7 @@ export default function AdminDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Últimos Fichajes
+                Fichajes Recientes
               </CardTitle>
             </CardHeader>
             <CardContent>
