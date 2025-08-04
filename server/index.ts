@@ -5,26 +5,40 @@ import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
+import fs from "fs";
 
 const app = express();
 
-// CRITICAL: SEO routes FIRST - before any middleware
-app.get("/robots.txt", (req, res) => {
-  res.type("text/plain");
+// ULTRA HIGH PRIORITY: SEO routes - MUST override everything
+app.use("/robots.txt", (req, res) => {
+  // Force headers immediately
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'public, max-age=86400'
+  });
+  
   const robotsPath = process.env.NODE_ENV === "production" 
     ? path.join(process.cwd(), "dist", "public", "robots.txt")
     : path.join(process.cwd(), "client", "public", "robots.txt");
   
-  res.sendFile(robotsPath, (err) => {
+  fs.readFile(robotsPath, 'utf8', (err, data) => {
     if (err) {
-      console.error("Error serving robots.txt:", err.message);
-      res.status(404).send("robots.txt not found");
+      console.error("Error reading robots.txt:", err.message);
+      res.end("User-agent: *\nDisallow: /");
+      return;
     }
+    res.end(data);
   });
 });
 
-app.get("/sitemap.xml", (req, res) => {
+app.use("/sitemap.xml", (req, res) => {
   try {
+    // Force headers immediately
+    res.writeHead(200, {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=86400'
+    });
+    
     const baseUrl = req.protocol + "://" + req.get("host");
     const currentDate = new Date().toISOString().split("T")[0];
 
@@ -63,11 +77,11 @@ app.get("/sitemap.xml", (req, res) => {
 
 </urlset>`;
 
-    res.type("application/xml");
-    res.send(sitemap);
+    res.end(sitemap);
   } catch (error) {
     console.error("Error generating sitemap:", error);
-    res.status(500).send("Error generating sitemap");
+    res.writeHead(500, {'Content-Type': 'text/plain'});
+    res.end("Error generating sitemap");
   }
 });
 
