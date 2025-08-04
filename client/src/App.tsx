@@ -71,8 +71,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <PageLoading />;
   }
 
+  // Menos restrictivo - mostrar componente y dejar que maneje su propia autenticación
   if (!user) {
-    return <Redirect to="/login" />;
+    return <>{children}</>;
   }
 
   return <>{children}</>;
@@ -115,16 +116,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user, company, isLoading } = useAuth();
-
-  if (isLoading) {
-    return <PageLoading />;
-  }
-
-  if (user && company) {
-    return <Redirect to={`/${company.companyAlias}/inicio`} />;
-  }
-
+  // Mucho menos restrictivo - solo mostrar contenido sin redirecciones automáticas
   return <>{children}</>;
 }
 

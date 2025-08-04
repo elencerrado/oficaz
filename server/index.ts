@@ -11,60 +11,44 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
-// CRITICAL: Serve static files BEFORE any middleware to avoid React routing interference
-app.use(express.static(path.join(process.cwd(), 'client', 'public'), {
-  index: false, // Don't serve index.html from here
-  extensions: ['txt', 'xml'], // Only serve specific extensions
-  dotfiles: 'ignore'
-}));
+// Servir archivos estáticos sin restricciones
+app.use(express.static(path.join(process.cwd(), 'client', 'public')));
 
-// Dynamic sitemap.xml route - MUST be before any other middleware
+// Sitemap dinámico
 app.get('/sitemap.xml', (req, res) => {
-  try {
-    const baseUrl = req.protocol + '://' + req.get('host');
-    const currentDate = new Date().toISOString().split('T')[0];
-    
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+  const baseUrl = req.protocol + '://' + req.get('host');
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    
-    <!-- Página principal -->
     <url>
         <loc>${baseUrl}/</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
-    
-    <!-- Páginas legales públicas -->
     <url>
         <loc>${baseUrl}/privacy</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-    
     <url>
         <loc>${baseUrl}/terms</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-    
     <url>
         <loc>${baseUrl}/cookies</loc>
         <lastmod>${currentDate}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-    
 </urlset>`;
 
-    res.type('application/xml');
-    res.send(sitemap);
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
-    res.status(500).send('Error generating sitemap');
-  }
+  res.type('application/xml');
+  res.send(sitemap);
 });
 
 // Security middleware - Simplified for deployment stability
