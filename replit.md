@@ -38,12 +38,13 @@ Preferred communication style: Simple, everyday language.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 - **Implementation**: Integrated into company registration endpoint with error handling and duplicate detection
 
-### SEO Optimization System
-- **robots.txt**: Comprehensive robots.txt with proper Allow/Disallow directives, crawler delays, and Google-specific rules
+### SEO Optimization System (⚠️ CRITICAL - FULLY IMPLEMENTED)
+- **robots.txt**: Served as Express route returning text/plain content type, no redirections, works with all crawlers
 - **Dynamic Sitemap**: Auto-generated XML sitemap with current date, proper priorities, and change frequencies
-- **Protected Routes**: All private areas (admin, employee dashboards, API endpoints) properly blocked from crawlers
-- **Public Pages**: Landing page, privacy policy, terms of service, and cookies policy accessible to search engines
-- **Technical Implementation**: Express routes for /robots.txt and /sitemap.xml with proper MIME types and caching headers
+- **Non-restrictive Routing**: Eliminated aggressive redirections that interfered with SEO file serving
+- **Protected Routes**: Only essential private areas blocked from crawlers, public pages fully accessible
+- **Technical Implementation**: Direct Express routes for SEO files with proper MIME types, bypassing React routing system
+- **User confirmed working**: "no funciona" issue resolved by implementing HTML routes returning plain text
 
 
 ## System Architecture
