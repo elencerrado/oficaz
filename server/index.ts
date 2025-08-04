@@ -174,11 +174,11 @@ Disallow: /employee/
 Disallow: /api/
 Disallow: /uploads/private/`;
 
-  // Direct serving with production-ready headers (works locally and in production)
+  // Production-ready approach: Direct serving with optimized headers
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': 'public, max-age=86400',
-    'X-CDN-Source': 'production-ready',
+    'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': '*'
   });
   res.end(robotsContent);
@@ -215,18 +215,14 @@ app.get('/sitemap.xml', (req, res) => {
     </url>
 </urlset>`;
   
-  // CDN approach: First try Netlify, fallback to local serving with proper headers
-  try {
-    res.redirect(301, 'https://polite-sorbet-15d3c3.netlify.app/sitemap.xml');
-  } catch (error) {
-    // Fallback: Direct serving with CDN-like headers
-    res.writeHead(200, {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400',
-      'X-CDN-Source': 'local-fallback'
-    });
-    res.end(sitemapContent);
-  }
+  // Production-ready approach: Direct serving with optimized headers
+  res.writeHead(200, {
+    'Content-Type': 'application/xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=86400',
+    'X-Content-Type-Options': 'nosniff',
+    'Access-Control-Allow-Origin': '*'
+  });
+  res.end(sitemapContent);
 });
 
 (async () => {
