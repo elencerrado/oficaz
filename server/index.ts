@@ -8,16 +8,17 @@ import path from "path";
 
 const app = express();
 
-// ULTRA CRITICAL: SEO routes MUST be FIRST - Before ANY other middleware
+// CRITICAL: SEO routes FIRST - before any middleware
 app.get("/robots.txt", (req, res) => {
-  const fullPath = path.join(process.cwd(), "client", "public", "robots.txt");
-  console.log("Serving robots.txt from:", fullPath);
-
   res.type("text/plain");
-  res.sendFile(fullPath, (err) => {
+  const robotsPath = process.env.NODE_ENV === "production" 
+    ? path.join(process.cwd(), "dist", "public", "robots.txt")
+    : path.join(process.cwd(), "client", "public", "robots.txt");
+  
+  res.sendFile(robotsPath, (err) => {
     if (err) {
       console.error("Error serving robots.txt:", err.message);
-      res.status(500).send("robots.txt not found");
+      res.status(404).send("robots.txt not found");
     }
   });
 });
@@ -69,9 +70,6 @@ app.get("/sitemap.xml", (req, res) => {
     res.status(500).send("Error generating sitemap");
   }
 });
-
-// Static files backup (after specific routes)
-app.use(express.static(path.join(process.cwd(), "client", "public")));
 
 // Trust proxy for rate limiting (required for Replit)
 app.set("trust proxy", 1);
