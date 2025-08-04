@@ -40,19 +40,20 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
-  // ⚠️ EXCLUIR robots.txt y sitemap.xml de Vite
+  // ⚠️ Excluir robots.txt y sitemap.xml de Vite
   app.use((req, res, next) => {
     const excludedPaths = ["/robots.txt", "/sitemap.xml"];
     if (excludedPaths.includes(req.path)) {
-      return next(); // no Vite para estas rutas
+      return next(); // deja que lo maneje otro middleware
     }
     vite.middlewares(req, res, next);
   });
 
+  // Fallback para SPA solo si no es una ruta excluida
   app.use("*", async (req, res, next) => {
     const excludedPaths = ["/robots.txt", "/sitemap.xml"];
     if (excludedPaths.includes(req.path)) {
-      return next(); // no responder con index.html para estas rutas
+      return next();
     }
 
     const url = req.originalUrl;
@@ -88,15 +89,22 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // ⚠️ SERVIR robots.txt directamente
-  app.use("/robots.txt", (req, res) => {
+  // ✅ Servir explícitamente robots.txt y sitemap.xml
+  app.get("/robots.txt", (req, res) => {
     res.type("text/plain");
-    res.sendFile(path.join(process.cwd(), "client", "public", "robots.txt"));
+    res.sendFile(path.join(distPath, "robots.txt"));
   });
 
+  app.get("/sitemap.xml", (req, res) => {
+    res.type("application/xml");
+    res.sendFile(path.join(distPath, "sitemap.xml"));
+  });
+
+  // 🧱 Archivos estáticos
   app.use(express.static(distPath));
 
-  app.use("*", (_req, res) => {
+  // 🚨 Catch-all solo si no es robots.txt o sitemap.xml
+  app.use("*", (req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
