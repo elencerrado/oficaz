@@ -5,96 +5,64 @@ import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
-import fs from "fs";
-
 
 const app = express();
 
-// ⚠️ SEO files served as static files from client/public/
-
 // Trust proxy for rate limiting (required for Replit)
-app.set("trust proxy", 1);
+app.set('trust proxy', 1);
 
 // Security middleware - Simplified for deployment stability
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // Disable CSP temporarily to avoid mixed content issues
-    crossOriginEmbedderPolicy: false,
-    hsts:
-      process.env.NODE_ENV === "production"
-        ? {
-            maxAge: 31536000,
-            includeSubDomains: true,
-            preload: true,
-          }
-        : false,
-  }),
-);
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP temporarily to avoid mixed content issues
+  crossOriginEmbedderPolicy: false,
+  hsts: process.env.NODE_ENV === 'production' ? {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  } : false
+}));
 
 // CORS configuration
-const allowedOrigins =
-  process.env.NODE_ENV === "development"
-    ? [
-        "http://localhost:3000",
-        "http://localhost:5000",
-        "http://127.0.0.1:5000",
-      ]
-    : [
-        // Replit domains
-        ...(process.env.REPLIT_DOMAINS
-          ? process.env.REPLIT_DOMAINS.split(",").map(
-              (domain) => `https://${domain}`,
-            )
-          : []),
-        // Custom domain
-        "https://oficaz.es",
-        "https://www.oficaz.es",
-      ];
+const allowedOrigins = process.env.NODE_ENV === 'development' 
+  ? ['http://localhost:3000', 'http://localhost:5000', 'http://127.0.0.1:5000']
+  : [
+      // Replit domains
+      ...(process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',').map(domain => `https://${domain}`) : []),
+      // Custom domain
+      'https://oficaz.es',
+      'https://www.oficaz.es'
+    ];
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 
 // Force HTTPS in production and set security headers
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
-    // ⚠️ EXCLUDE SEO routes from HTTPS redirect - they must be handled by interceptor
-    if (req.path === "/robots.txt" || req.path === "/sitemap.xml") {
-      console.log(`🚨 HTTPS REDIRECT BYPASS for SEO route: ${req.path}`);
-      return next(); // Skip HTTPS redirect for SEO files
-    }
+    const host = req.header('host');
+    const proto = req.header('x-forwarded-proto') || req.header('x-forwarded-protocol') || req.protocol;
     
-    const host = req.header("host");
-    const proto =
-      req.header("x-forwarded-proto") ||
-      req.header("x-forwarded-protocol") ||
-      req.protocol;
-
     // Redirect HTTP to HTTPS for all domains including custom domains
-    if (proto !== "https" && host !== "localhost") {
+    if (proto !== 'https' && host !== 'localhost') {
       return res.redirect(301, `https://${host}${req.url}`);
     }
-
+    
     // Set additional security headers for HTTPS
-    res.setHeader(
-      "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains; preload",
-    );
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "SAMEORIGIN"); // Changed from DENY to SAMEORIGIN
-    res.setHeader("X-XSS-Protection", "1; mode=block");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN'); // Changed from DENY to SAMEORIGIN
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
     // Additional header for custom domains
-    if (host === "oficaz.es" || host === "www.oficaz.es") {
-      res.setHeader("Access-Control-Allow-Origin", `https://${host}`);
+    if (host === 'oficaz.es' || host === 'www.oficaz.es') {
+      res.setHeader('Access-Control-Allow-Origin', `https://${host}`);
     }
-
+    
     next();
   });
 }
@@ -103,7 +71,7 @@ if (process.env.NODE_ENV === "production") {
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per windowMs
-  message: { error: "Too many requests, please try again later." },
+  message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -111,11 +79,14 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // Body parsing with size limits
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Serve uploaded files statically
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+// Serve public assets (like email logo) statically
+app.use(express.static(path.join(process.cwd(), 'client', 'public')));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -147,84 +118,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ CRITICAL SEO CDN REDIRECTS - DO NOT MODIFY
-// Redirect SEO files to external CDN with proper content-types
-app.get('/robots.txt', (req, res) => {
-  console.log('🔄 CDN robots.txt approach');
-  // Using direct text response with specific headers to bypass framework interference
-  const robotsContent = `User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://oficaz.es/sitemap.xml
-
-# Google-specific rules
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Bing-specific rules  
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Block private areas
-Disallow: /admin/
-Disallow: /employee/
-Disallow: /api/
-Disallow: /uploads/private/`;
-
-  // Production-ready approach: Direct serving with optimized headers
-  res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400',
-    'X-Content-Type-Options': 'nosniff',
-    'Access-Control-Allow-Origin': '*'
-  });
-  res.end(robotsContent);
-});
-
-app.get('/sitemap.xml', (req, res) => {
-  console.log('🔄 CDN sitemap.xml approach');
-  const currentDate = new Date().toISOString().split('T')[0];
-  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://oficaz.es/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-</urlset>`;
-  
-  // Production-ready approach: Direct serving with optimized headers
-  res.writeHead(200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-    'Cache-Control': 'public, max-age=86400',
-    'X-Content-Type-Options': 'nosniff',
-    'Access-Control-Allow-Origin': '*'
-  });
-  res.end(sitemapContent);
-});
-
 (async () => {
   const server = await registerRoutes(app);
 
@@ -245,16 +138,15 @@ app.get('/sitemap.xml', (req, res) => {
     serveStatic(app);
   }
 
-  // Simple solution: serve on port 5000
+  // ALWAYS serve the app on port 5000
+  // this serves both the API and the client.
+  // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  server.listen({
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  }, () => {
+    log(`serving on port ${port}`);
+  });
 })();
