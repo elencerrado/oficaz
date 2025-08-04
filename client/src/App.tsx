@@ -20,6 +20,7 @@ import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Cookies from "@/pages/cookies";
+
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -71,9 +72,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <PageLoading />;
   }
 
-  // Menos restrictivo - mostrar componente y dejar que maneje su propia autenticación
   if (!user) {
-    return <>{children}</>;
+    return <Redirect to="/login" />;
   }
 
   return <>{children}</>;
@@ -116,7 +116,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  // Mucho menos restrictivo - solo mostrar contenido sin redirecciones automáticas
+  const { user, company, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <PageLoading />;
+  }
+
+  if (user && company) {
+    return <Redirect to={`/${company.companyAlias}/inicio`} />;
+  }
+
   return <>{children}</>;
 }
 
