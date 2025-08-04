@@ -11,12 +11,14 @@ const app = express();
 // Trust proxy for rate limiting (required for Replit)
 app.set('trust proxy', 1);
 
-// SEO Routes - HIGHEST PRIORITY - Must be before ALL middleware
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.sendFile(path.join(process.cwd(), 'client', 'public', 'robots.txt'));
-});
+// CRITICAL: Serve static files BEFORE any middleware to avoid React routing interference
+app.use(express.static(path.join(process.cwd(), 'client', 'public'), {
+  index: false, // Don't serve index.html from here
+  extensions: ['txt', 'xml'], // Only serve specific extensions
+  dotfiles: 'ignore'
+}));
 
+// Dynamic sitemap.xml route - MUST be before any other middleware
 app.get('/sitemap.xml', (req, res) => {
   try {
     const baseUrl = req.protocol + '://' + req.get('host');
@@ -63,11 +65,6 @@ app.get('/sitemap.xml', (req, res) => {
     console.error('Error generating sitemap:', error);
     res.status(500).send('Error generating sitemap');
   }
-});
-
-// Favicon route to prevent 404s
-app.get('/favicon.ico', (req, res) => {
-  res.status(204).end();
 });
 
 // Security middleware - Simplified for deployment stability
