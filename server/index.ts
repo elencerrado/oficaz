@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
 
+
 const app = express();
 
 // ⚠️ SEO files served as static files from client/public/
@@ -146,84 +147,46 @@ app.use((req, res, next) => {
   next();
 });
 
-// ⚠️ CRITICAL SEO ENDPOINTS - DO NOT MODIFY
-// Must be before registerRoutes() to prevent Vite catch-all interception
+// ⚠️ CRITICAL SEO FILE READING - DO NOT MODIFY
+// Read SEO files from filesystem and serve with explicit headers
 app.get('/robots.txt', (req, res) => {
-  console.log('📋 Serving robots.txt with proper Content-Type');
-  
-  const robotsContent = `User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://oficaz.es/sitemap.xml
-
-# Google-specific rules
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Bing-specific rules  
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Block private areas
-Disallow: /admin/
-Disallow: /employee/
-Disallow: /api/
-Disallow: /uploads/private/`;
-
-  // Force immediate response without middleware interference
-  res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'X-Robots-Tag': 'noindex, nofollow',
-    'Cache-Control': 'public, max-age=86400'
-  });
-  res.end(robotsContent);
-  return; // Prevent further processing
+  try {
+    const robotsPath = path.join(process.cwd(), 'public/robots.txt');
+    const content = fs.readFileSync(robotsPath, 'utf8');
+    
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Content-Length': Buffer.byteLength(content, 'utf8'),
+      'Cache-Control': 'public, max-age=86400',
+      'X-SEO-Source': 'filesystem'
+    });
+    res.end(content);
+    console.log('📋 Served robots.txt from filesystem with text/plain');
+  } catch (error) {
+    console.error('❌ Error reading robots.txt:', error);
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('robots.txt not found');
+  }
 });
 
 app.get('/sitemap.xml', (req, res) => {
-  console.log('🗺️ Serving sitemap.xml with proper Content-Type');
-  
-  const currentDate = new Date().toISOString().split('T')[0];
-  
-  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://oficaz.es/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-</urlset>`;
-
-  // Force immediate response without middleware interference
-  res.writeHead(200, {
-    'Content-Type': 'application/xml; charset=utf-8',
-    'X-Robots-Tag': 'noindex, nofollow',
-    'Cache-Control': 'public, max-age=86400'
-  });
-  res.end(sitemapContent);
-  return; // Prevent further processing
+  try {
+    const sitemapPath = path.join(process.cwd(), 'public/sitemap.xml');
+    const content = fs.readFileSync(sitemapPath, 'utf8');
+    
+    res.writeHead(200, {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Content-Length': Buffer.byteLength(content, 'utf8'),
+      'Cache-Control': 'public, max-age=86400',
+      'X-SEO-Source': 'filesystem'
+    });
+    res.end(content);
+    console.log('🗺️ Served sitemap.xml from filesystem with application/xml');
+  } catch (error) {
+    console.error('❌ Error reading sitemap.xml:', error);
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('sitemap.xml not found');
+  }
 });
 
 (async () => {

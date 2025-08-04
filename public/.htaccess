@@ -1,0 +1,27 @@
+# ⚠️ CRITICAL SEO .htaccess - DO NOT MODIFY
+# Force correct MIME types for SEO files
+
+<Files "robots.txt">
+    Header set Content-Type "text/plain; charset=utf-8"
+    Header set Cache-Control "public, max-age=86400"
+</Files>
+
+<Files "sitemap.xml">
+    Header set Content-Type "application/xml; charset=utf-8"
+    Header set Cache-Control "public, max-age=86400"
+</Files>
+
+# Disable PHP execution for these files
+<Files ~ "\.(txt|xml)$">
+    SetHandler none
+    ForceType text/plain
+</Files>
+
+# Specific overrides
+<Files "robots.txt">
+    ForceType text/plain
+</Files>
+
+<Files "sitemap.xml">
+    ForceType application/xml
+</Files>
