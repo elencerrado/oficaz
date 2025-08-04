@@ -1,14 +1,26 @@
-import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { createServer as createViteServer, createLogger } from "vite";
-import { type Server } from "http";
+import { createViteServer, type ViteDevServer } from "vite";
+import type { Express } from "express";
+import type { Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
-const viteLogger = createLogger();
-export function log(message: string, source = "express") {
+const viteLogger = {
+  info: (msg: string, options?: any) => logWithTimestamp(msg, "vite", "info"),
+  warn: (msg: string, options?: any) => logWithTimestamp(msg, "vite", "warn"),
+  error: (msg: string, options?: any) => logWithTimestamp(msg, "vite", "error"),
+  warnOnce: (msg: string, options?: any) =>
+    logWithTimestamp(msg, "vite", "warn"),
+  hasErrorLogged: () => false,
+  clearScreen: () => {},
+};
+function logWithTimestamp(
+  message: string,
+  source: string,
+  level: string = "info",
+) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
@@ -35,27 +47,14 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
   app.use(vite.middlewares);
-
-  // More permissive routing - exclude SEO and static files from catch-all
+  // MUCHO MÁS PERMISIVO - Solo servir React para rutas que realmente lo necesitan
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
-
-    // Skip catch-all for specific files that should be handled by other routes
-    const excludedPaths = [
-      "/robots.txt",
-      "/sitemap.xml",
-      "/favicon.ico",
-      "/email-logo.png",
-    ];
-
-    if (excludedPaths.some((path) => url === path)) {
+    // Solo omitir archivos con extensión y rutas API
+    if (url.includes(".") || url.startsWith("/api/")) {
       return next();
     }
 
-    // Skip catch-all for API routes (they should be handled by registerRoutes)
-    if (url.startsWith("/api/")) {
-      return next();
-    }
     try {
       const clientTemplate = path.resolve(
         import.meta.dirname,
@@ -85,27 +84,13 @@ export function serveStatic(app: Express) {
     );
   }
   app.use(express.static(distPath));
-  // More permissive fall through - exclude specific files
+  // MUCHO MÁS PERMISIVO - Solo servir React para rutas que realmente lo necesitan
   app.use("*", (req, res, next) => {
     const url = req.originalUrl;
-
-    // Skip catch-all for SEO files and static assets
-    const excludedPaths = [
-      "/robots.txt",
-      "/sitemap.xml",
-      "/favicon.ico",
-      "/email-logo.png",
-    ];
-
-    if (excludedPaths.some((path) => url === path)) {
+    // Solo omitir archivos con extensión y rutas API
+    if (url.includes(".") || url.startsWith("/api/")) {
       return next();
     }
-
-    // Skip catch-all for API routes
-    if (url.startsWith("/api/")) {
-      return next();
-    }
-
     // Fall through to index.html for SPA routing
     res.sendFile(path.resolve(distPath, "index.html"));
   });
