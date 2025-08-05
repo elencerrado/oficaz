@@ -15,43 +15,53 @@ import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
 
-// Pages
+import { lazy, Suspense } from "react";
+
+// Critical pages - loaded immediately
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import Cookies from "@/pages/cookies";
-
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
-import RequestCode from "@/pages/request-code";
-import VerifyCode from "@/pages/verify-code";
-import AdminDashboard from "@/pages/admin-dashboard";
-import EmployeeDashboard from "@/pages/employee-dashboard";
-import TimeTracking from "@/pages/time-tracking";
-import EmployeeTimeTracking from "@/pages/employee-time-tracking";
-import VacationRequests from "@/pages/vacation-requests";
-import VacationManagement from "@/pages/vacation-management";
-import Documents from "@/pages/documents";
-import AdminDocuments from "@/pages/admin-documents";
-import Messages from "@/pages/messages";
-import Reminders from "@/pages/reminders";
-import EmployeeReminders from "@/pages/employee-reminders";
-import EmployeesSimple from "@/pages/employees-simple";
-import Settings from "@/pages/settings";
-import EmployeeProfile from "@/pages/employee-profile";
 import AccessDenied from "@/pages/access-denied";
-import SuperAdminLogin from "@/pages/super-admin-login";
-import SuperAdminDashboard from "@/pages/super-admin-dashboard";
-import SuperAdminPlans from "@/pages/super-admin-plans";
 
-import SuperAdminCompanyDetail from "@/pages/super-admin-company-detail";
-import SuperAdminCompanies from "@/pages/super-admin-companies";
-import SuperAdminInvitations from "@/pages/super-admin-invitations";
-import InvitationRegister from "@/pages/invitation-register";
-import QuickAccess from "@/pages/quick-access";
-import EmployeeActivation from "@/pages/employee-activation";
-import TestEmail from "@/pages/test-email";
+// Auth-related pages - lazy loaded
+const RequestCode = lazy(() => import("@/pages/request-code"));
+const VerifyCode = lazy(() => import("@/pages/verify-code"));
+
+// Dashboard pages - lazy loaded (heavy with charts)
+const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+const EmployeeDashboard = lazy(() => import("@/pages/employee-dashboard"));
+
+// Feature pages - lazy loaded
+const TimeTracking = lazy(() => import("@/pages/time-tracking"));
+const EmployeeTimeTracking = lazy(() => import("@/pages/employee-time-tracking"));
+const VacationRequests = lazy(() => import("@/pages/vacation-requests"));
+const VacationManagement = lazy(() => import("@/pages/vacation-management"));
+const Documents = lazy(() => import("@/pages/documents"));
+const AdminDocuments = lazy(() => import("@/pages/admin-documents"));
+const Messages = lazy(() => import("@/pages/messages"));
+const Reminders = lazy(() => import("@/pages/reminders"));
+const EmployeeReminders = lazy(() => import("@/pages/employee-reminders"));
+const EmployeesSimple = lazy(() => import("@/pages/employees-simple"));
+const Settings = lazy(() => import("@/pages/settings"));
+const EmployeeProfile = lazy(() => import("@/pages/employee-profile"));
+
+// Super admin pages - lazy loaded (rarely accessed)
+const SuperAdminLogin = lazy(() => import("@/pages/super-admin-login"));
+const SuperAdminDashboard = lazy(() => import("@/pages/super-admin-dashboard"));
+const SuperAdminPlans = lazy(() => import("@/pages/super-admin-plans"));
+const SuperAdminCompanyDetail = lazy(() => import("@/pages/super-admin-company-detail"));
+const SuperAdminCompanies = lazy(() => import("@/pages/super-admin-companies"));
+const SuperAdminInvitations = lazy(() => import("@/pages/super-admin-invitations"));
+
+// Utility pages - lazy loaded
+const InvitationRegister = lazy(() => import("@/pages/invitation-register"));
+const QuickAccess = lazy(() => import("@/pages/quick-access"));
+const EmployeeActivation = lazy(() => import("@/pages/employee-activation"));
+const TestEmail = lazy(() => import("@/pages/test-email"));
 
 
 
@@ -137,16 +147,43 @@ function Router() {
   if (location.startsWith('/super-admin')) {
     return (
       <Switch>
-        <Route path="/super-admin/login" component={SuperAdminLogin} />
-        <Route path="/super-admin/dashboard" component={SuperAdminDashboard} />
-        <Route path="/super-admin/plans" component={SuperAdminPlans} />
-
-        <Route path="/super-admin/companies" component={SuperAdminCompanies} />
-        <Route path="/super-admin/companies/:id">
-          {(params) => <SuperAdminCompanyDetail companyId={params.id} />}
+        <Route path="/super-admin/login">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminLogin />
+          </Suspense>
         </Route>
-        <Route path="/super-admin/invitations" component={SuperAdminInvitations} />
-        <Route path="/super-admin" component={SuperAdminDashboard} />
+        <Route path="/super-admin/dashboard">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminDashboard />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/plans">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminPlans />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/companies">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminCompanies />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/companies/:id">
+          {(params) => (
+            <Suspense fallback={<PageLoading />}>
+              <SuperAdminCompanyDetail companyId={params.id} />
+            </Suspense>
+          )}
+        </Route>
+        <Route path="/super-admin/invitations">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminInvitations />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminDashboard />
+          </Suspense>
+        </Route>
         <Route component={NotFound} />
       </Switch>
     );
@@ -154,7 +191,11 @@ function Router() {
 
   // Quick access page for testing
   if (location === '/fast') {
-    return <QuickAccess />;
+    return (
+      <Suspense fallback={<PageLoading />}>
+        <QuickAccess />
+      </Suspense>
+    );
   }
   
   return (
@@ -179,13 +220,17 @@ function Router() {
 
       <Route path="/request-code">
         <PublicRoute>
-          <RequestCode />
+          <Suspense fallback={<PageLoading />}>
+            <RequestCode />
+          </Suspense>
         </PublicRoute>
       </Route>
 
       <Route path="/verify-code">
         <PublicRoute>
-          <VerifyCode />
+          <Suspense fallback={<PageLoading />}>
+            <VerifyCode />
+          </Suspense>
         </PublicRoute>
       </Route>
 
@@ -197,18 +242,24 @@ function Router() {
 
       <Route path="/registro/invitacion/:token">
         <PublicRoute>
-          <InvitationRegister />
+          <Suspense fallback={<PageLoading />}>
+            <InvitationRegister />
+          </Suspense>
         </PublicRoute>
       </Route>
 
       <Route path="/employee-activation">
         <PublicRoute>
-          <EmployeeActivation />
+          <Suspense fallback={<PageLoading />}>
+            <EmployeeActivation />
+          </Suspense>
         </PublicRoute>
       </Route>
 
       <Route path="/test-email">
-        <TestEmail />
+        <Suspense fallback={<PageLoading />}>
+          <TestEmail />
+        </Suspense>
       </Route>
 
       {/* Company-specific routes */}
@@ -223,7 +274,9 @@ function Router() {
         {(params) => (
           <ProtectedRoute>
             {user && user.role === 'employee' ? (
-              <EmployeeDashboard />
+              <Suspense fallback={<PageLoading />}>
+                <EmployeeDashboard />
+              </Suspense>
             ) : (
               <Redirect to={`/${params.companyAlias}/inicio`} />
             )}
@@ -235,7 +288,9 @@ function Router() {
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
           <AppLayout>
-            <DashboardRouter />
+            <Suspense fallback={<PageLoading />}>
+              <DashboardRouter />
+            </Suspense>
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -243,7 +298,9 @@ function Router() {
       <Route path="/:companyAlias/misfichajes">
         <ProtectedRoute>
           <AppLayout>
-            <EmployeeTimeTracking />
+            <Suspense fallback={<PageLoading />}>
+              <EmployeeTimeTracking />
+            </Suspense>
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -252,7 +309,9 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <TimeTracking />
+              <Suspense fallback={<PageLoading />}>
+                <TimeTracking />
+              </Suspense>
             ) : (
               <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
             )}
@@ -263,14 +322,18 @@ function Router() {
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
-            <Settings />
+            <Suspense fallback={<PageLoading />}>
+              <Settings />
+            </Suspense>
           </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/usuario">
         <ProtectedRoute>
-          <EmployeeProfile />
+          <Suspense fallback={<PageLoading />}>
+            <EmployeeProfile />
+          </Suspense>
         </ProtectedRoute>
       </Route>
 
@@ -278,9 +341,13 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <VacationManagement />
+              <Suspense fallback={<PageLoading />}>
+                <VacationManagement />
+              </Suspense>
             ) : (
-              <VacationRequests />
+              <Suspense fallback={<PageLoading />}>
+                <VacationRequests />
+              </Suspense>
             )}
           </AppLayout>
         </ProtectedRoute>
@@ -289,7 +356,15 @@ function Router() {
       <Route path="/:companyAlias/documentos">
         <ProtectedRoute>
           <AppLayout>
-            {user?.role === 'employee' ? <Documents /> : <AdminDocuments />}
+            {user?.role === 'employee' ? (
+              <Suspense fallback={<PageLoading />}>
+                <Documents />
+              </Suspense>
+            ) : (
+              <Suspense fallback={<PageLoading />}>
+                <AdminDocuments />
+              </Suspense>
+            )}
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -297,7 +372,9 @@ function Router() {
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
           <AppLayout>
-            <Messages />
+            <Suspense fallback={<PageLoading />}>
+              <Messages />
+            </Suspense>
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -305,7 +382,15 @@ function Router() {
       <Route path="/:companyAlias/recordatorios">
         <ProtectedRoute>
           <AppLayout>
-            {user?.role === 'employee' ? <EmployeeReminders /> : <Reminders />}
+            {user?.role === 'employee' ? (
+              <Suspense fallback={<PageLoading />}>
+                <EmployeeReminders />
+              </Suspense>
+            ) : (
+              <Suspense fallback={<PageLoading />}>
+                <Reminders />
+              </Suspense>
+            )}
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -313,7 +398,9 @@ function Router() {
       <Route path="/:companyAlias/empleados">
         <ProtectedRoute>
           <AppLayout>
-            <EmployeesSimple />
+            <Suspense fallback={<PageLoading />}>
+              <EmployeesSimple />
+            </Suspense>
           </AppLayout>
         </ProtectedRoute>
       </Route>

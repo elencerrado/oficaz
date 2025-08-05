@@ -1,10 +1,31 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import { lazy, Suspense } from "react";
 import "./index.css";
 
 // Performance optimization - mark body as loaded to prevent FOUC
-document.addEventListener('DOMContentLoaded', () => {
+const markAsLoaded = () => {
   document.body.classList.add('loaded');
-});
+  // Remove loading spinner if present
+  const spinner = document.querySelector('.loading-spinner');
+  if (spinner) spinner.remove();
+};
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Check if DOM is already ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', markAsLoaded);
+} else {
+  markAsLoaded();
+}
+
+// Lazy load the main App component to reduce initial bundle
+const App = lazy(() => import("./App"));
+
+// Add loading spinner to DOM immediately for better UX
+const root = document.getElementById("root")!;
+root.innerHTML = '<div class="loading-spinner"></div>';
+
+createRoot(root).render(
+  <Suspense fallback={<div className="loading-spinner"></div>}>
+    <App />
+  </Suspense>
+);
