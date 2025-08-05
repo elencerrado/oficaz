@@ -11,6 +11,7 @@ import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import { TestBanner } from "@/components/test-banner";
 import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
+import { DashboardLoading, SettingsLoading, TableLoading } from "@/components/ui/optimized-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
@@ -31,11 +32,11 @@ import AccessDenied from "@/pages/access-denied";
 const RequestCode = lazy(() => import("@/pages/request-code"));
 const VerifyCode = lazy(() => import("@/pages/verify-code"));
 
-// Dashboard pages - lazy loaded (heavy with charts)
+// Dashboard pages - lazy loaded (heavy with charts ~1MB recharts)
 const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
 const EmployeeDashboard = lazy(() => import("@/pages/employee-dashboard"));
 
-// Feature pages - lazy loaded
+// Feature pages - aggressively lazy loaded to reduce main bundle
 const TimeTracking = lazy(() => import("@/pages/time-tracking"));
 const EmployeeTimeTracking = lazy(() => import("@/pages/employee-time-tracking"));
 const VacationRequests = lazy(() => import("@/pages/vacation-requests"));
@@ -46,6 +47,7 @@ const Messages = lazy(() => import("@/pages/messages"));
 const Reminders = lazy(() => import("@/pages/reminders"));
 const EmployeeReminders = lazy(() => import("@/pages/employee-reminders"));
 const EmployeesSimple = lazy(() => import("@/pages/employees-simple"));
+// Settings page contains Stripe components (~141KB) - lazy load
 const Settings = lazy(() => import("@/pages/settings"));
 const EmployeeProfile = lazy(() => import("@/pages/employee-profile"));
 
@@ -274,7 +276,7 @@ function Router() {
         {(params) => (
           <ProtectedRoute>
             {user && user.role === 'employee' ? (
-              <Suspense fallback={<PageLoading />}>
+              <Suspense fallback={<DashboardLoading />}>
                 <EmployeeDashboard />
               </Suspense>
             ) : (
@@ -288,7 +290,7 @@ function Router() {
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<DashboardLoading />}>
               <DashboardRouter />
             </Suspense>
           </AppLayout>
@@ -322,7 +324,7 @@ function Router() {
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<SettingsLoading />}>
               <Settings />
             </Suspense>
           </AppLayout>
@@ -398,7 +400,7 @@ function Router() {
       <Route path="/:companyAlias/empleados">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<TableLoading />}>
               <EmployeesSimple />
             </Suspense>
           </AppLayout>
