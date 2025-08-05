@@ -1,0 +1,50 @@
+/* Minimal critical CSS for immediate render */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #000000;
+}
+
+/* Essential layout utilities */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.fixed { position: fixed; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.z-50 { z-index: 50; }
+
+/* Loading state */
+#root { opacity: 0; transition: opacity 0.3s; }
+body.loaded #root { opacity: 1; }
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Essential responsive */
+@media (max-width: 768px) {
+  html { font-size: 14px; }
+}
