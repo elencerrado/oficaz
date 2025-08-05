@@ -1,32 +1,43 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { isMobileDevice, isLowEndDevice } from "./utils/performance";
 
-// Immediate render with zero CSS blocking
+// Start React rendering immediately with zero dependencies
 createRoot(document.getElementById("root")!).render(<App />);
 document.body.classList.add('loaded');
 
-// Ultra-aggressive progressive loading
-const loadEssentialStyles = () => {
-  // Load only essential layout utilities immediately
-  import('./styles/immediate.css');
+// RADICAL APPROACH: Zero CSS blocking on mobile
+const initializeStyles = () => {
+  const mobile = isMobileDevice();
+  const lowEnd = isLowEndDevice();
   
-  // Load rest progressively
-  requestAnimationFrame(() => {
-    import('./styles/critical.css');
+  if (mobile) {
+    // Mobile: Load absolute minimum first
+    import('./styles/mobile-critical.css');
     
-    requestAnimationFrame(() => {
-      import('./styles/components.css');
-      
-      requestAnimationFrame(() => {
-        import('./index.css');
-      });
-    });
-  });
+    // Delay Tailwind significantly on mobile
+    const baseDelay = lowEnd ? 2000 : 1000;
+    setTimeout(() => {
+      import('./styles/tailwind-full.css');
+      setTimeout(() => import('./styles/components.css'), 200);
+    }, baseDelay);
+  } else {
+    // Desktop: Still progressive but faster
+    import('./styles/immediate.css');
+    setTimeout(() => {
+      import('./styles/tailwind-full.css');
+      setTimeout(() => import('./styles/components.css'), 100);
+    }, 300);
+  }
 };
 
-// Use the fastest method available
-if ('requestIdleCallback' in window) {
-  requestIdleCallback(loadEssentialStyles, { timeout: 1 });
+// Use intersection observer to delay until page is interactive
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(() => {
+    initializeStyles();
+    observer.disconnect();
+  });
+  observer.observe(document.body);
 } else {
-  loadEssentialStyles();
+  setTimeout(initializeStyles, 100);
 }

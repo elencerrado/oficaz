@@ -2,9 +2,12 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#007AFF">
     
     <!-- SEO Meta Tags -->
     <title>Oficaz - Gestión Inteligente de Empleados | Plataforma de Productividad</title>
@@ -25,48 +28,56 @@
     <meta property="twitter:description" content="Plataforma integral para optimizar la productividad y colaboración en el lugar de trabajo.">
     <meta property="twitter:image" content="https://oficaz.es/og-image.jpg">
     
-    <!-- Performance optimizations -->
+    <!-- Aggressive mobile performance optimizations -->
     <link rel="dns-prefetch" href="//js.stripe.com" />
-    <link rel="preconnect" href="/api" />
+    <link rel="preconnect" href="/api" crossorigin />
     <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" as="style" href="data:text/css,*{box-sizing:border-box}html{font-family:system-ui}body{margin:0;background:#fff;color:#000}.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}" onload="this.onload=null;this.rel='stylesheet'" />
     
-    <!-- Ultra-minimal critical CSS for fastest render -->
+    <!-- Mobile-optimized ultra-minimal CSS -->
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html { font-family: system-ui, sans-serif; }
-      body { background: #fff; color: #000; }
-      .flex { display: flex; }
-      .items-center { align-items: center; }
-      .justify-center { justify-content: center; }
-      .fixed { position: fixed; }
-      .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-      #root { opacity: 0; transition: opacity .3s; }
-      body.loaded #root { opacity: 1; }
-      .loading-spinner { 
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 32px; height: 32px; border: 2px solid #f3f3f3; border-top: 2px solid #3b82f6;
-        border-radius: 50%; animation: s 1s linear infinite;
-      }
-      @keyframes s { to { transform: translate(-50%, -50%) rotate(360deg); } }
-      body.loaded .loading-spinner { display: none; }
+      *{box-sizing:border-box;margin:0;padding:0}
+      html{font-family:system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+      body{background:#fff;color:#000;overflow-x:hidden}
+      .flex{display:flex}
+      .items-center{align-items:center}
+      .justify-center{justify-content:center}
+      .fixed{position:fixed}
+      .inset-0{top:0;right:0;bottom:0;left:0}
+      #root{opacity:0;transition:opacity .2s ease-out}
+      body.loaded #root{opacity:1}
+      .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;border:2px solid #f3f3f3;border-top:2px solid #3b82f6;border-radius:50%;animation:s .8s linear infinite;will-change:transform}
+      @keyframes s{to{transform:translate(-50%,-50%) rotate(360deg)}}
+      body.loaded .loading-spinner{display:none}
+      @media(max-width:768px){html{font-size:14px}.loading-spinner{width:20px;height:20px}}
     </style>
   </head>
   <body>
     <div class="loading-spinner"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Load Replit banner only when needed and non-blocking -->
+    <!-- Completely disable Replit banner for production performance -->
     <script>
-      // Only load in dev mode and delay to not block initial render
-      if (window.location.hostname.includes('replit') || window.location.hostname.includes('repl.co')) {
+      // Only load in development and after everything else is ready
+      if (window.location.hostname.includes('replit') && document.readyState === 'complete') {
         setTimeout(() => {
           const script = document.createElement('script');
           script.src = 'https://replit.com/public/js/replit-dev-banner.js';
           script.async = true;
           script.defer = true;
-          script.setAttribute('importance', 'low');
+          script.loading = 'lazy';
           document.head.appendChild(script);
-        }, 2000); // Delay 2 seconds to not block critical rendering
+        }, 5000); // Wait 5 seconds after page load
+      } else if (window.location.hostname.includes('replit')) {
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            const script = document.createElement('script');
+            script.src = 'https://replit.com/public/js/replit-dev-banner.js';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+          }, 3000);
+        });
       }
     </script>
   </body>
