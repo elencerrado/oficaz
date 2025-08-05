@@ -3,51 +3,13 @@ import type { Config } from "tailwindcss";
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
-  future: {
-    hoverOnlyWhenSupported: true,
-  },
-  experimental: {
-    optimizeUniversalDefaults: true,
-  },
-  corePlugins: {
-    // Aggressive bundle size reduction - disable many unused features
-    accessibility: false,
-    touchAction: false,
-    ringOffsetWidth: false,
-    ringOffsetColor: false,
-    scrollSnapType: false,
-    scrollSnapAlign: false,
-    scrollSnapStop: false,
-    scrollMargin: false,
-    scrollPadding: false,
-    backdropBlur: false,
-    backdropBrightness: false,
-    backdropContrast: false,
-    backdropGrayscale: false,
-    backdropHueRotate: false,
-    backdropInvert: false,
-    backdropOpacity: false,
-    backdropSaturate: false,
-    backdropSepia: false,
-    breakAfter: false,
-    breakBefore: false,
-    breakInside: false,
-    caretColor: false,
-    accentColor: false,
-    aspectRatio: false,
-    columns: false,
-    isolation: false,
-    mixBlendMode: false,
-    backgroundBlendMode: false,
-    overscrollBehavior: false,
-    scrollBehavior: false,
-    willChange: false,
-    contain: false,
-  },
   safelist: [
-    // Solo los colores esenciales para reducir el tamaño del bundle
+    // Colores de avatares para asegurar que se incluyan en el build
     'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500',
-    'bg-oficaz-primary', 'opacity-0', 'opacity-100'
+    'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-red-500',
+    'bg-cyan-500', 'bg-amber-500', 'bg-lime-500', 'bg-rose-500',
+    'bg-violet-500', 'bg-sky-500', 'bg-green-500', 'bg-yellow-500',
+    'bg-fuchsia-500', 'bg-slate-500', 'bg-oficaz-primary'
   ],
   theme: {
     extend: {

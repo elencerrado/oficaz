@@ -1,84 +1,27 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="theme-color" content="#007AFF">
-    
-    <!-- SEO Meta Tags -->
-    <title>Oficaz - Gestión Inteligente de Empleados | Plataforma de Productividad</title>
-    <meta name="description" content="Oficaz es la plataforma líder para gestión de empleados con herramientas inteligentes de productividad, seguimiento de rendimiento y colaboración en equipo. Optimiza tu lugar de trabajo hoy.">
-    <meta name="keywords" content="gestión empleados, productividad laboral, seguimiento rendimiento, colaboración equipo, oficina inteligente">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://oficaz.es/">
-    <meta property="og:title" content="Oficaz - Gestión Inteligente de Empleados">
-    <meta property="og:description" content="Plataforma integral para optimizar la productividad y colaboración en el lugar de trabajo.">
-    <meta property="og:image" content="https://oficaz.es/og-image.jpg">
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://oficaz.es/">
-    <meta property="twitter:title" content="Oficaz - Gestión Inteligente de Empleados">
-    <meta property="twitter:description" content="Plataforma integral para optimizar la productividad y colaboración en el lugar de trabajo.">
-    <meta property="twitter:image" content="https://oficaz.es/og-image.jpg">
-    
-    <!-- Aggressive mobile performance optimizations -->
+    <!-- DNS prefetch for external resources -->
     <link rel="dns-prefetch" href="//js.stripe.com" />
-    <link rel="preconnect" href="/api" crossorigin />
-    <link rel="preload" href="/src/main.tsx" as="script" />
-    <link rel="preload" as="style" href="data:text/css,*{box-sizing:border-box}html{font-family:system-ui}body{margin:0;background:#fff;color:#000}.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}" onload="this.onload=null;this.rel='stylesheet'" />
-    
-    <!-- Mobile-optimized ultra-minimal CSS -->
+    <!-- Resource hints for performance -->
+    <link rel="preconnect" href="/api" />
+    <!-- Optimize font loading -->
     <style>
-      *{box-sizing:border-box;margin:0;padding:0}
-      html{font-family:system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
-      body{background:#fff;color:#000;overflow-x:hidden}
-      .flex{display:flex}
-      .items-center{align-items:center}
-      .justify-center{justify-content:center}
-      .fixed{position:fixed}
-      .inset-0{top:0;right:0;bottom:0;left:0}
-      #root{opacity:0;transition:opacity .2s ease-out}
-      body.loaded #root{opacity:1}
-      .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:24px;height:24px;border:2px solid #f3f3f3;border-top:2px solid #3b82f6;border-radius:50%;animation:s .8s linear infinite;will-change:transform}
-      @keyframes s{to{transform:translate(-50%,-50%) rotate(360deg)}}
-      body.loaded .loading-spinner{display:none}
-      @media(max-width:768px){html{font-size:14px}.loading-spinner{width:20px;height:20px}}
+      /* Critical CSS - system fonts to prevent FOUT */
+      * { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      /* Hide content until loaded to prevent FOUC */
+      body { opacity: 0; }
+      body.loaded { opacity: 1; transition: opacity 0.2s ease-in; }
     </style>
   </head>
   <body>
-    <div class="loading-spinner"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Completely disable Replit banner for production performance -->
-    <script>
-      // Only load in development and after everything else is ready
-      if (window.location.hostname.includes('replit') && document.readyState === 'complete') {
-        setTimeout(() => {
-          const script = document.createElement('script');
-          script.src = 'https://replit.com/public/js/replit-dev-banner.js';
-          script.async = true;
-          script.defer = true;
-          script.loading = 'lazy';
-          document.head.appendChild(script);
-        }, 5000); // Wait 5 seconds after page load
-      } else if (window.location.hostname.includes('replit')) {
-        window.addEventListener('load', () => {
-          setTimeout(() => {
-            const script = document.createElement('script');
-            script.src = 'https://replit.com/public/js/replit-dev-banner.js';
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-          }, 3000);
-        });
-      }
-    </script>
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>
