@@ -8,8 +8,10 @@ import { CreditCard, Plus, Trash2, CheckCircle, AlertCircle } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { StripePaymentForm } from './StripePaymentForm';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+// Remove direct Stripe imports to reduce main bundle
+// Stripe will be loaded lazily when payment components are needed
+// import { Elements } from '@stripe/react-stripe-js';
+// import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '@/hooks/use-auth';
 
 interface PaymentMethod {

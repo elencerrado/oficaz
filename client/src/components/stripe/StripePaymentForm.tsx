@@ -1,5 +1,6 @@
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+// Remove direct Stripe imports to keep them out of main bundle
+// import { loadStripe } from '@stripe/stripe-js';
+// import { Elements } from '@stripe/react-stripe-js';
 import { useState, useEffect } from 'react';
 
 // Initialize Stripe lazily

@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
-import { StripePaymentForm } from './StripePaymentForm';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { MockPaymentForm } from './MockPaymentForm';
 import { CreditCard, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+// Lazy load ALL Stripe components to remove 141KB from main bundle
+const Elements = lazy(() => import('@stripe/react-stripe-js').then(m => ({ default: m.Elements })));
+const loadStripe = lazy(() => import('@stripe/stripe-js').then(m => ({ default: m.loadStripe })));
+const LazyStripePaymentForm = lazy(() => import('./StripePaymentForm').then(m => ({ default: m.StripePaymentForm })));
 
 interface LazyStripeFormProps {
   clientSecret: string;
@@ -21,34 +23,31 @@ export function LazyStripeForm({
   onSuccess, 
   onCancel 
 }: LazyStripeFormProps) {
-  const [stripe, setStripe] = useState<Stripe | null>(null);
+  const [stripe, setStripe] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeStripe = async () => {
       try {
-        // FORZAR CLAVES DE TEST EN DESARROLLO - SIN FALLBACK A DEMO
         const publicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST;
         
-        console.log('FORCED TEST MODE');
-        console.log('Test key available:', !!publicKey);
-        console.log('Test key value:', publicKey?.substring(0, 15) + '...');
-
         if (!publicKey) {
           setError('FALTAN CLAVES DE TEST DE STRIPE');
           setLoading(false);
           return;
         }
 
-        const stripeInstance = await loadStripe(publicKey);
+        // Lazy load Stripe
+        const { default: loadStripeFunc } = await loadStripe;
+        const stripeInstance = await loadStripeFunc(publicKey);
+        
         if (!stripeInstance) {
           setError('STRIPE NO SE PUDO CARGAR CON CLAVES DE TEST');
           setLoading(false);
           return;
         }
 
-        console.log('STRIPE CARGADO EXITOSAMENTE CON CLAVES TEST');
         setStripe(stripeInstance);
         setLoading(false);
       } catch (err) {
@@ -83,21 +82,28 @@ export function LazyStripeForm({
   }
 
   return (
-    <Elements 
-      stripe={stripe} 
-      options={{
-        clientSecret,
-        appearance: {
-          theme: 'stripe',
-        },
-      }}
-    >
-      <StripePaymentForm
-        planName={planName}
-        planPrice={planPrice}
-        onSuccess={onSuccess}
-        onCancel={onCancel}
-      />
-    </Elements>
+    <Suspense fallback={
+      <div className="p-6 text-center">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-sm text-gray-600">Cargando sistema de pagos...</p>
+      </div>
+    }>
+      <Elements 
+        stripe={stripe} 
+        options={{
+          clientSecret,
+          appearance: {
+            theme: 'stripe',
+          },
+        }}
+      >
+        <LazyStripePaymentForm
+          planName={planName}
+          planPrice={planPrice}
+          onSuccess={onSuccess}
+          onCancel={onCancel}
+        />
+      </Elements>
+    </Suspense>
   );
 }

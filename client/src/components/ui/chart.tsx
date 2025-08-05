@@ -1,9 +1,8 @@
 "use client"
 
 import * as React from "react"
-import * as RechartsPrimitive from "recharts"
-
 import { cn } from "@/lib/utils"
+import { LazyChartWrapper } from "@/components/bundle-optimization/LazyHeavyLibraries";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -38,9 +37,7 @@ const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<
-      typeof RechartsPrimitive.ResponsiveContainer
-    >["children"]
+    children: React.ReactNode
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
@@ -58,9 +55,9 @@ const ChartContainer = React.forwardRef<
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <LazyChartWrapper>
           {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        </LazyChartWrapper>
       </div>
     </ChartContext.Provider>
   )
