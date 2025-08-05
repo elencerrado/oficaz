@@ -6,6 +6,11 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 const app = express();
@@ -150,30 +155,9 @@ app.use((req, res, next) => {
 // ⚠️ CRITICAL SEO CDN REDIRECTS - DO NOT MODIFY
 // Redirect SEO files to external CDN with proper content-types
 app.get('/robots.txt', (req, res) => {
-  console.log('🔄 CDN robots.txt approach');
-  // Using direct text response with specific headers to bypass framework interference
-  const robotsContent = `User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://oficaz.es/sitemap.xml
-
-# Google-specific rules
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Bing-specific rules  
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Block private areas
-Disallow: /admin/
-Disallow: /employee/
-Disallow: /api/
-Disallow: /uploads/private/`;
-
+  console.log('🔄 Serving robots.txt from client/public');
+  const robotsPath = path.join(__dirname, '..', 'client', 'public', 'robots.txt');
+  
   // Production-ready approach: Direct serving with optimized headers
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=utf-8',
@@ -181,39 +165,14 @@ Disallow: /uploads/private/`;
     'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': '*'
   });
-  res.end(robotsContent);
+  
+  // Serve the file from client/public
+  fs.createReadStream(robotsPath).pipe(res);
 });
 
 app.get('/sitemap.xml', (req, res) => {
-  console.log('🔄 CDN sitemap.xml approach');
-  const currentDate = new Date().toISOString().split('T')[0];
-  const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-        <loc>https://oficaz.es/</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/privacy</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/terms</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-    <url>
-        <loc>https://oficaz.es/cookies</loc>
-        <lastmod>${currentDate}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.3</priority>
-    </url>
-</urlset>`;
+  console.log('🔄 Serving sitemap.xml from client/public');
+  const sitemapPath = path.join(__dirname, '..', 'client', 'public', 'sitemap.xml');
   
   // Production-ready approach: Direct serving with optimized headers
   res.writeHead(200, {
@@ -222,7 +181,9 @@ app.get('/sitemap.xml', (req, res) => {
     'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': '*'
   });
-  res.end(sitemapContent);
+  
+  // Serve the file from client/public
+  fs.createReadStream(sitemapPath).pipe(res);
 });
 
 (async () => {
