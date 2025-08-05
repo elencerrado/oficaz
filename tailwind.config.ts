@@ -3,13 +3,27 @@ import type { Config } from "tailwindcss";
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
+  experimental: {
+    optimizeUniversalDefaults: true,
+  },
+  corePlugins: {
+    // Disable unused features to reduce bundle size
+    touchAction: false,
+    ringOffsetWidth: false,
+    ringOffsetColor: false,
+    scrollSnapType: false,
+    scrollSnapAlign: false,
+    scrollSnapStop: false,
+    scrollMargin: false,
+    scrollPadding: false,
+  },
   safelist: [
-    // Colores de avatares para asegurar que se incluyan en el build
+    // Solo los colores esenciales para reducir el tamaño del bundle
     'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500',
-    'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-red-500',
-    'bg-cyan-500', 'bg-amber-500', 'bg-lime-500', 'bg-rose-500',
-    'bg-violet-500', 'bg-sky-500', 'bg-green-500', 'bg-yellow-500',
-    'bg-fuchsia-500', 'bg-slate-500', 'bg-oficaz-primary'
+    'bg-oficaz-primary', 'opacity-0', 'opacity-100'
   ],
   theme: {
     extend: {

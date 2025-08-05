@@ -1,27 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- DNS prefetch for external resources -->
+    
+    <!-- SEO Meta Tags -->
+    <title>Oficaz - Gestión Inteligente de Empleados | Plataforma de Productividad</title>
+    <meta name="description" content="Oficaz es la plataforma líder para gestión de empleados con herramientas inteligentes de productividad, seguimiento de rendimiento y colaboración en equipo. Optimiza tu lugar de trabajo hoy.">
+    <meta name="keywords" content="gestión empleados, productividad laboral, seguimiento rendimiento, colaboración equipo, oficina inteligente">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://oficaz.es/">
+    <meta property="og:title" content="Oficaz - Gestión Inteligente de Empleados">
+    <meta property="og:description" content="Plataforma integral para optimizar la productividad y colaboración en el lugar de trabajo.">
+    <meta property="og:image" content="https://oficaz.es/og-image.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://oficaz.es/">
+    <meta property="twitter:title" content="Oficaz - Gestión Inteligente de Empleados">
+    <meta property="twitter:description" content="Plataforma integral para optimizar la productividad y colaboración en el lugar de trabajo.">
+    <meta property="twitter:image" content="https://oficaz.es/og-image.jpg">
+    
+    <!-- Performance optimizations -->
     <link rel="dns-prefetch" href="//js.stripe.com" />
-    <!-- Resource hints for performance -->
     <link rel="preconnect" href="/api" />
-    <!-- Optimize font loading -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    
+    <!-- Critical CSS inlined to prevent render blocking -->
     <style>
-      /* Critical CSS - system fonts to prevent FOUT */
-      * { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-      /* Hide content until loaded to prevent FOUC */
-      body { opacity: 0; }
-      body.loaded { opacity: 1; transition: opacity 0.2s ease-in; }
+      /* Reset and base styles */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; }
+      body { min-height: 100vh; background: #ffffff; color: #000000; }
+      
+      /* Loading state */
+      .loading-spinner { 
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6;
+        border-radius: 50%; animation: spin 1s linear infinite;
+      }
+      @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+      
+      /* Hide until loaded */
+      #root { opacity: 0; transition: opacity 0.3s ease-in-out; }
+      body.loaded #root { opacity: 1; }
+      body.loaded .loading-spinner { display: none; }
+      
+      /* Basic responsive layout */
+      .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+      @media (max-width: 768px) { .container { padding: 0 0.5rem; } }
     </style>
   </head>
   <body>
+    <div class="loading-spinner"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    <!-- Load Replit banner asynchronously to prevent render blocking -->
+    <script>
+      if (typeof window !== 'undefined' && window.location.hostname.includes('replit')) {
+        const script = document.createElement('script');
+        script.src = 'https://replit.com/public/js/replit-dev-banner.js';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+    </script>
   </body>
 </html>
