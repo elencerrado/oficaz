@@ -71,10 +71,18 @@ function DashboardRouter() {
   const { user } = useAuth();
   
   if (user?.role === 'employee') {
-    return <EmployeeDashboard />;
+    return (
+      <Suspense fallback={<DashboardLoading />}>
+        <EmployeeDashboard />
+      </Suspense>
+    );
   }
   
-  return <AdminDashboard />;
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <AdminDashboard />
+    </Suspense>
+  );
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

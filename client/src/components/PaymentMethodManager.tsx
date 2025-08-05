@@ -34,8 +34,9 @@ interface PaymentMethodManagerProps {
 
 // Lazy load Stripe only when needed to avoid blocking render
 let stripePromise: Promise<any> | null = null;
-const getStripe = () => {
+const getStripe = async () => {
   if (!stripePromise) {
+    const { loadStripe } = await import('@stripe/stripe-js');
     stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
   }
   return stripePromise;
