@@ -2,8 +2,15 @@ import { createRoot } from "react-dom/client";
 import { lazy, Suspense } from "react";
 import "./index.css";
 
-// Initialize Sentry for error tracking and performance monitoring
-import "./sentry.client.config";
+// Initialize Sentry
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "https://7691ecf280aae3fc175ec1e6bbbc3677@o4509796586422272.ingest.de.sentry.io/4509796599529552",
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true
+});
 
 // Performance optimization - mark body as loaded to prevent FOUC
 const markAsLoaded = () => {

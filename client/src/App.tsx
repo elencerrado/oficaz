@@ -15,7 +15,6 @@ import { DashboardLoading, SettingsLoading, TableLoading } from "@/components/ui
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
-import * as Sentry from "@sentry/react";
 
 import { lazy, Suspense } from "react";
 
@@ -465,42 +464,4 @@ function App() {
   );
 }
 
-// Wrap the App component with Sentry error boundary
-export default Sentry.withErrorBoundary(App, {
-  fallback: ({ error, resetError }) => (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md mx-auto text-center p-6">
-        <div className="mb-4">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Algo salió mal
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Lo sentimos, ocurrió un error inesperado. Nuestro equipo técnico ha sido notificado automáticamente.
-          </p>
-        </div>
-        <div className="space-y-3">
-          <button
-            onClick={resetError}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Intentar de nuevo
-          </button>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            Ir al inicio
-          </button>
-        </div>
-        <div className="mt-6 text-xs text-gray-500">
-          Error ID: {error?.message ? error.message.slice(0, 8) : 'unknown'}
-        </div>
-      </div>
-    </div>
-  ),
-  beforeCapture: (scope, error, errorInfo) => {
-    scope.setTag('component', 'App');
-    scope.setLevel('error');
-  }
-});
+export default App;
