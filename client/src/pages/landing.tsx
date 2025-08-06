@@ -453,21 +453,13 @@ export default function Landing() {
 
             {/* Responsive CTA Button */}
             {registrationSettings?.publicRegistrationEnabled && (
-              <div className="flex flex-col items-center gap-4 pt-2 lg:pt-4">
+              <div className="flex justify-center pt-2 lg:pt-4">
                 <Link href="/request-code">
                   <Button size="lg" className="bg-gradient-to-r from-[#007AFF] to-blue-600 hover:from-[#0056CC] hover:to-blue-700 text-white px-6 lg:px-8 py-3 lg:py-4 text-base lg:text-lg font-semibold shadow-xl shadow-[#007AFF]/25 border-0 rounded-xl">
                     Empezar Gratis
                     <ArrowRight className="w-4 h-4 lg:w-5 lg:h-5 ml-2" />
                   </Button>
                 </Link>
-                
-                {/* Sentry Error Test Button - Prominent position */}
-                <button 
-                  onClick={() => {throw new Error("This is your first error!");}}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg"
-                >
-                  🚨 Test Sentry Error
-                </button>
               </div>
             )}
 
@@ -864,16 +856,6 @@ export default function Landing() {
                   <ArrowRight className="w-6 h-6 ml-3" />
                 </Button>
               </Link>
-              
-              {/* Sentry Error Test Button - Visible test */}
-              <div className="mt-8">
-                <button 
-                  onClick={() => {throw new Error("This is your first error!");}}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg"
-                >
-                  🚨 Test Sentry Error
-                </button>
-              </div>
             </div>
           )}
         </div>
@@ -1121,16 +1103,6 @@ export default function Landing() {
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
             <p>Oficaz - Gestión empresarial inteligente para empresas que lo quieren fácil</p>
-            
-            {/* Sentry Error Test Button */}
-            <div className="mt-4">
-              <button 
-                onClick={() => {throw new Error("This is your first error!");}}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                🚨 Test Sentry Error
-              </button>
-            </div>
           </div>
         </div>
       </footer>
