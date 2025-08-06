@@ -2,6 +2,9 @@ import { createRoot } from "react-dom/client";
 import { lazy, Suspense } from "react";
 import "./index.css";
 
+// Initialize Sentry for error tracking and performance monitoring
+import "./sentry.client.config";
+
 // Performance optimization - mark body as loaded to prevent FOUC
 const markAsLoaded = () => {
   document.body.classList.add('loaded');
