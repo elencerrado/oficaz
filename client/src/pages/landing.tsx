@@ -1103,6 +1103,18 @@ export default function Landing() {
           
           <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
             <p>Oficaz - Gestión empresarial inteligente para empresas que lo quieren fácil</p>
+            
+            {/* Sentry Error Test Button - Development Only */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4">
+                <button 
+                  onClick={() => {throw new Error("This is your first error!");}}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  🚨 Test Sentry Error
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </footer>
