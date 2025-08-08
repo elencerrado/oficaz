@@ -34,8 +34,8 @@ export function GlobalDemoBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200 px-4 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200 px-4 h-[60px]">
+      <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
             <span className="text-white text-sm font-bold">✓</span>
