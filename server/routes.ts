@@ -5283,6 +5283,8 @@ startxref
       const companyId = parseInt(id);
       const updates = req.body;
       
+      console.log('🎯 NEW ENDPOINT - Updating subscription for company:', companyId, 'Updates:', updates);
+      
       const company = await storage.getCompany(companyId);
       if (!company) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
