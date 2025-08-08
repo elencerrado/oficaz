@@ -5240,6 +5240,16 @@ startxref
       
       const activeUsers = users.filter(user => user.isActive).length;
       
+      // Calculate trial days remaining
+      const trialDuration = company.trialDurationDays || 14;
+      const trialStartDate = new Date(company.createdAt);
+      const trialEndDate = new Date(trialStartDate);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
+      
+      const now = new Date();
+      const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isTrialActive = daysRemaining > 0;
+      
       res.json({
         ...company,
         subscription: subscription || {
@@ -5251,7 +5261,14 @@ startxref
           customPricePerUser: null
         },
         userCount: users.length,
-        activeUsers
+        activeUsers,
+        trialInfo: {
+          daysRemaining: Math.max(0, daysRemaining),
+          isTrialActive,
+          trialDuration,
+          trialStartDate: trialStartDate.toISOString(),
+          trialEndDate: trialEndDate.toISOString()
+        }
       });
     } catch (error: any) {
       console.error('Error fetching company details:', error);
@@ -5302,9 +5319,11 @@ startxref
 
       // Handle trial duration updates (stored in companies table)
       if (updates.trialDurationDays !== undefined) {
-        await storage.updateCompany(companyId, { 
+        console.log('🔄 Updating trial duration for company:', companyId, 'to:', updates.trialDurationDays);
+        const updateResult = await storage.updateCompany(companyId, { 
           trialDurationDays: updates.trialDurationDays 
         });
+        console.log('✅ Trial duration update result:', updateResult?.trialDurationDays);
       }
       
       // Get updated company information to include in response

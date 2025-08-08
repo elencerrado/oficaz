@@ -527,6 +527,35 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                   )}
                 </div>
               </div>
+
+              {/* Trial Status - Real Time Information */}
+              {company.trialInfo && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">Estado del Período de Prueba</label>
+                  <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {company.trialInfo.isTrialActive ? (
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        ) : (
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                        <span className="text-white font-medium">
+                          {company.trialInfo.isTrialActive ? 'Prueba Activa' : 'Prueba Expirada'}
+                        </span>
+                      </div>
+                      <div className="text-white/60 text-sm">
+                        {company.trialInfo.daysRemaining} días restantes
+                      </div>
+                    </div>
+                    <div className="text-xs text-white/50 space-y-1">
+                      <div>Inicio: {new Date(company.trialInfo.trialStartDate).toLocaleDateString('es-ES')}</div>
+                      <div>Fin: {new Date(company.trialInfo.trialEndDate).toLocaleDateString('es-ES')}</div>
+                      <div>Duración total: {company.trialInfo.trialDuration} días</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
