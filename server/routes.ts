@@ -1784,9 +1784,13 @@ Responde directamente a este email para contactar con la persona.
         // Find company by alias first
         company = await storage.getCompanyByAlias(data.companyAlias);
         if (!company) {
-          return res.status(404).json({ message: 'User not found' });
+          return res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
         }
-        user = await storage.getUserByEmailAndCompany(data.email.toLowerCase(), company.id);
+        user = await storage.getUserByEmail(data.email.toLowerCase());
+        // Verify user belongs to the company
+        if (user && user.companyId !== company.id) {
+          user = undefined;
+        }
       } else {
         // Find user by email across all companies
         user = await storage.getUserByEmail(data.email.toLowerCase());
@@ -1809,14 +1813,19 @@ Responde directamente a este email para contactar con la persona.
       const resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
-      // Save reset token
-      await db.insert(passwordResetTokens).values({
-        email: user.companyEmail.toLowerCase(),
-        companyId: company.id,
-        token: resetToken,
-        expiresAt,
-        used: false
-      });
+      // Save reset token to database
+      try {
+        await db.insert(passwordResetTokens).values({
+          email: user.companyEmail.toLowerCase(),
+          companyId: company.id,
+          token: resetToken,
+          expiresAt,
+          used: false
+        });
+      } catch (dbError: any) {
+        console.error('Database error saving reset token:', dbError);
+        return res.status(500).json({ message: 'Error interno del servidor' });
+      }
 
       // Send password reset email
       const resetLink = `${process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://oficaz.es'}/reset-password?token=${resetToken}`;
@@ -1896,9 +1905,9 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Token expired' });
       }
 
-      // Find user by email and company
-      const user = await storage.getUserByEmailAndCompany(resetToken[0].email, resetToken[0].companyId);
-      if (!user) {
+      // Find user by email and verify company
+      const user = await storage.getUserByEmail(resetToken[0].email);
+      if (!user || user.companyId !== resetToken[0].companyId) {
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
