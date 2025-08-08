@@ -26,6 +26,8 @@ import Cookies from "@/pages/cookies";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import AccessDenied from "@/pages/access-denied";
 
 // Auth-related pages - lazy loaded
@@ -228,6 +230,18 @@ function Router() {
         </PublicRoute>
       </Route>
 
+      <Route path="/forgot-password">
+        <PublicRoute>
+          <ForgotPassword />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/reset-password">
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      </Route>
+
       <Route path="/request-code">
         <PublicRoute>
           <Suspense fallback={<PageLoading />}>
@@ -276,6 +290,12 @@ function Router() {
       <Route path="/:companyAlias/login">
         <PublicRoute>
           <Login />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/:companyAlias/forgot-password">
+        <PublicRoute>
+          <ForgotPassword />
         </PublicRoute>
       </Route>
 
@@ -427,6 +447,18 @@ function Router() {
       <Route path="/login">
         <PublicRoute>
           <Login />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/forgot-password">
+        <PublicRoute>
+          <ForgotPassword />
+        </PublicRoute>
+      </Route>
+
+      <Route path="/reset-password">
+        <PublicRoute>
+          <ResetPassword />
         </PublicRoute>
       </Route>
 

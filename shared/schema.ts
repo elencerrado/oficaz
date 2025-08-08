@@ -356,6 +356,17 @@ export const employeeActivationTokens = pgTable("employee_activation_tokens", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Password reset tokens for account recovery
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
@@ -415,6 +426,11 @@ export const insertReminderSchema = createInsertSchema(reminders).omit({
 // Reminder assignment schema removed - now using assignedUserIds array in reminders
 
 export const insertEmployeeActivationTokenSchema = createInsertSchema(employeeActivationTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
   id: true,
   createdAt: true,
 });
@@ -541,6 +557,26 @@ export const companyRegistrationSchema = z.object({
   path: ["contactName"],
 });
 
+// Validation schemas for password reset
+export const passwordResetRequestSchema = z.object({
+  email: z.string().email("Email válido requerido"),
+  companyAlias: z.string().optional(),
+});
+
+export const passwordResetSchema = z.object({
+  token: z.string().min(1, "Token requerido"),
+  password: z.string()
+    .min(8, "Contraseña debe tener al menos 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una minúscula")
+    .regex(/[0-9]/, "Debe contener al menos un número")
+    .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
+  confirmPassword: z.string().min(1, "Confirmación de contraseña requerida"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -575,6 +611,8 @@ export type ReminderAssignment = typeof reminderAssignments.$inferSelect;
 export type InsertReminderAssignment = z.infer<typeof insertReminderAssignmentSchema>;
 export type EmployeeActivationToken = typeof employeeActivationTokens.$inferSelect;
 export type InsertEmployeeActivationToken = z.infer<typeof insertEmployeeActivationTokenSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
 export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;

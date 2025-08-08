@@ -12,11 +12,11 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
-import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema } from '@shared/schema';
+import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
-import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens } from '@shared/schema';
-import { sendEmployeeWelcomeEmail } from './email';
+import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
+import { sendEmployeeWelcomeEmail, sendPasswordResetEmail } from './email';
 
 // Initialize Stripe with environment-specific keys
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -1759,6 +1759,167 @@ Responde directamente a este email para contactar con la persona.
     } catch (error: any) {
       console.error(`[SECURITY] Login error: ${error.message}`);
       res.status(400).json({ message: 'Error en el inicio de sesión' });
+    }
+  });
+
+  // Password reset routes
+  const resetLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 3, // Limit each IP to 3 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+  });
+
+  app.post('/api/auth/forgot-password', resetLimiter, async (req, res) => {
+    try {
+      const data = passwordResetRequestSchema.parse(req.body);
+      console.log('Password reset request for:', data.email);
+
+      // Find user by email
+      let user;
+      let company;
+
+      if (data.companyAlias) {
+        // Find company by alias first
+        company = await storage.getCompanyByAlias(data.companyAlias);
+        if (!company) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        user = await storage.getUserByEmailAndCompany(data.email.toLowerCase(), company.id);
+      } else {
+        // Find user by email across all companies
+        user = await storage.getUserByEmail(data.email.toLowerCase());
+        if (user) {
+          company = await storage.getCompany(user.companyId);
+        }
+      }
+
+      if (!user || !company) {
+        // Return success even if user not found (security best practice)
+        return res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+      }
+
+      // Check if user account is active
+      if (!user.isActive) {
+        return res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+      }
+
+      // Generate reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Save reset token
+      await db.insert(passwordResetTokens).values({
+        email: user.companyEmail.toLowerCase(),
+        companyId: company.id,
+        token: resetToken,
+        expiresAt,
+        used: false
+      });
+
+      // Send password reset email
+      const resetLink = `${process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://oficaz.es'}/reset-password?token=${resetToken}`;
+      
+      const emailSent = await sendPasswordResetEmail(
+        user.companyEmail,
+        user.fullName,
+        company.name,
+        resetToken,
+        resetLink
+      );
+
+      if (!emailSent) {
+        console.error('Failed to send password reset email');
+      }
+
+      res.status(200).json({ message: 'Si el email existe, recibirás un enlace de recuperación' });
+    } catch (error: any) {
+      console.error('Password reset request error:', error);
+      res.status(400).json({ message: 'Error al procesar la solicitud' });
+    }
+  });
+
+  app.post('/api/auth/validate-reset-token', async (req, res) => {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token requerido' });
+      }
+
+      // Find reset token
+      const resetToken = await db.select()
+        .from(passwordResetTokens)
+        .where(and(
+          eq(passwordResetTokens.token, token),
+          eq(passwordResetTokens.used, false)
+        ))
+        .limit(1);
+
+      if (!resetToken[0]) {
+        return res.status(400).json({ message: 'Token inválido' });
+      }
+
+      // Check if token has expired
+      if (new Date() > resetToken[0].expiresAt) {
+        return res.status(400).json({ message: 'Token expired' });
+      }
+
+      res.status(200).json({ message: 'Token válido' });
+    } catch (error: any) {
+      console.error('Token validation error:', error);
+      res.status(400).json({ message: 'Error al validar el token' });
+    }
+  });
+
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const data = passwordResetSchema.parse(req.body);
+      console.log('Password reset attempt with token:', data.token);
+
+      // Find and validate reset token
+      const resetToken = await db.select()
+        .from(passwordResetTokens)
+        .where(and(
+          eq(passwordResetTokens.token, data.token),
+          eq(passwordResetTokens.used, false)
+        ))
+        .limit(1);
+
+      if (!resetToken[0]) {
+        return res.status(400).json({ message: 'Token inválido' });
+      }
+
+      // Check if token has expired
+      if (new Date() > resetToken[0].expiresAt) {
+        return res.status(400).json({ message: 'Token expired' });
+      }
+
+      // Find user by email and company
+      const user = await storage.getUserByEmailAndCompany(resetToken[0].email, resetToken[0].companyId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      // Update user password
+      await db.update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, user.id));
+
+      // Mark token as used
+      await db.update(passwordResetTokens)
+        .set({ used: true })
+        .where(eq(passwordResetTokens.id, resetToken[0].id));
+
+      console.log('Password reset successful for user:', user.id);
+      res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      res.status(400).json({ message: 'Error al cambiar la contraseña' });
     }
   });
 
