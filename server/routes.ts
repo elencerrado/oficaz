@@ -5307,7 +5307,13 @@ startxref
         });
       }
       
-      res.json(subscription);
+      // Get updated company information to include in response
+      const updatedCompany = await storage.getCompany(companyId);
+      
+      res.json({
+        subscription,
+        trialDurationDays: updatedCompany?.trialDurationDays
+      });
     } catch (error: any) {
       console.error('Error updating company subscription:', error);
       res.status(500).json({ message: 'Error interno del servidor' });

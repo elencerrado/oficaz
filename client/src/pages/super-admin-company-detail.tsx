@@ -118,7 +118,12 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
         setCustomFeatures(data.subscription.features || {});
       }
       
+      // Invalidar tanto la query específica como las generales
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies', companyId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/companies'] });
+      // Forzar recarga inmediata de los datos de la empresa
+      queryClient.refetchQueries({ queryKey: ['/api/super-admin/companies', companyId] });
+      
       toast({
         title: "Éxito",
         description: "Empresa actualizada correctamente",
