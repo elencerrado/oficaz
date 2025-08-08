@@ -802,7 +802,9 @@ export class DrizzleStorage implements IStorage {
     // Calculate trial dates from companies.created_at (single source of truth)
     const registrationDate = new Date(company.createdAt);
     const trialEndDate = new Date(registrationDate);
-    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
+    // Use custom trial duration from company settings (default 14 days)
+    const trialDuration = company.trialDurationDays || 14;
+    trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
 
     // Determine effective plan for features
     // If there's a planned downgrade, use currentEffectivePlan until the change date

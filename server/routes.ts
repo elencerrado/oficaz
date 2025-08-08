@@ -3977,42 +3977,6 @@ startxref
     }
   });
 
-  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      const { plan, maxUsers, useCustomSettings, customPricePerUser } = req.body;
-      
-      console.log('Updating subscription for company:', companyId, 'Updates:', req.body);
-      
-      // Validate plan if provided
-      if (plan) {
-        const validPlans = ['free', 'basic', 'pro', 'master'];
-        if (!validPlans.includes(plan)) {
-          return res.status(400).json({ message: 'Invalid plan type' });
-        }
-      }
-      
-      // Build update object
-      const updates: any = {};
-      if (plan) updates.plan = plan;
-      if (maxUsers !== undefined) updates.maxUsers = maxUsers;
-      // Features are now managed dynamically from features table
-      if (useCustomSettings !== undefined) updates.useCustomSettings = useCustomSettings;
-      if (customPricePerUser !== undefined) updates.customPricePerUser = customPricePerUser;
-      
-      // Update subscription
-      const updatedSubscription = await storage.updateCompanySubscription(companyId, updates);
-      
-      if (!updatedSubscription) {
-        return res.status(404).json({ message: 'Company not found' });
-      }
-      
-      res.json({ message: 'Subscription updated successfully', subscription: updatedSubscription });
-    } catch (error) {
-      console.error("Error updating subscription:", error);
-      res.status(500).json({ message: "Failed to update subscription" });
-    }
-  });
 
   // Reminders endpoints
   app.post('/api/reminders', authenticateToken, async (req: AuthRequest, res) => {
@@ -4782,7 +4746,8 @@ startxref
           s.plan,
           s.stripe_subscription_id,
           s.next_payment_date,
-          c.created_at as company_created_at
+          c.created_at as company_created_at,
+          c.trial_duration_days
         FROM subscriptions s
         JOIN companies c ON s.company_id = c.id
         WHERE s.company_id = ${companyId}
@@ -4797,7 +4762,9 @@ startxref
       const now = new Date();
       const registrationDate = new Date(data.company_created_at);
       const trialEndDate = new Date(registrationDate);
-      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 days trial
+      // Use custom trial duration from company settings (default 14 days)
+      const trialDuration = data.trial_duration_days || 14;
+      trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
       
       const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       const isTrialExpired = daysRemaining <= 0;
@@ -5331,6 +5298,13 @@ startxref
         if (updates.customPricePerUser !== undefined) updateData.customPricePerUser = updates.customPricePerUser;
         
         subscription = await storage.updateCompanySubscription(companyId, updateData);
+      }
+
+      // Handle trial duration updates (stored in companies table)
+      if (updates.trialDurationDays !== undefined) {
+        await storage.updateCompany(companyId, { 
+          trialDurationDays: updates.trialDurationDays 
+        });
       }
       
       res.json(subscription);

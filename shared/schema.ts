@@ -39,6 +39,7 @@ export const companies = pgTable("companies", {
   
   // Datos de prueba
   hasDemoData: boolean("has_demo_data").default(false).notNull(),
+  trialDurationDays: integer("trial_duration_days").default(14).notNull(), // Días de período de prueba (por defecto 14)
   
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

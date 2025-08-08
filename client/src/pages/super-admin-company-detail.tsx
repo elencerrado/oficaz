@@ -50,10 +50,12 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const [editingPlan, setEditingPlan] = useState(false);
   const [editingMaxUsers, setEditingMaxUsers] = useState(false);
   const [editingPrice, setEditingPrice] = useState(false);
+  const [editingTrialDuration, setEditingTrialDuration] = useState(false);
   
   const [newPlan, setNewPlan] = useState('');
   const [newMaxUsers, setNewMaxUsers] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newTrialDuration, setNewTrialDuration] = useState('');
   const [useCustomSettings, setUseCustomSettings] = useState(false);
   const [customFeatures, setCustomFeatures] = useState<any>({});
   
@@ -124,6 +126,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       setEditingPlan(false);
       setEditingMaxUsers(false);
       setEditingPrice(false);
+      setEditingTrialDuration(false);
     },
     onError: (error: any) => {
       // Revertir cambios locales en caso de error
@@ -246,6 +249,12 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     });
   };
 
+  const handleTrialDurationSave = () => {
+    updateCompanyMutation.mutate({ 
+      trialDurationDays: newTrialDuration ? parseInt(newTrialDuration) : null 
+    });
+  };
+
   const toggleCustomSettings = async () => {
     const newCustomState = !useCustomSettings;
     setUseCustomSettings(newCustomState);
@@ -285,6 +294,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       setNewPlan(company.subscription.plan);
       setNewMaxUsers(company.subscription.maxUsers?.toString() || '');
       setNewPrice(company.subscription.customPricePerUser?.toString() || company.subscription.pricePerUser?.toString() || '');
+      setNewTrialDuration(company.trialDurationDays?.toString() || '14');
       setCustomFeatures(company.subscription.features || {});
       
       // Usar el estado explícito de useCustomSettings de la base de datos
@@ -470,6 +480,42 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                         <span className="text-white/60">€ fijo/mes</span>
                       </div>
                       <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="text-white/60">
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Trial Duration */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Duración del Período de Prueba (días)</label>
+                <div className="flex items-center gap-2">
+                  {editingTrialDuration ? (
+                    <>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="365"
+                        placeholder="14"
+                        value={newTrialDuration}
+                        onChange={(e) => setNewTrialDuration(e.target.value)}
+                        className="flex-1 bg-white/10 border-white/20 text-white"
+                      />
+                      <Button size="sm" onClick={handleTrialDurationSave} disabled={updateCompanyMutation.isPending}>
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(false)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white flex items-center gap-2">
+                        🕐 {company.trialDurationDays || 14} días
+                        <span className="text-white/60">de prueba</span>
+                      </div>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingTrialDuration(true)} className="text-white/60">
                         <Edit2 className="w-4 h-4" />
                       </Button>
                     </>
