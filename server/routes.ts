@@ -189,6 +189,9 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   // Generate reminders for employees
   await generateDemoReminders(companyId, employees);
   
+  // Generate incomplete sessions for demonstration
+  await generateIncompleteSessions(employees, companyId);
+  
   console.log('✅ Generated comprehensive demo data for', employees.length, 'employees');
 }
 
@@ -470,6 +473,113 @@ async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
   }
   
   console.log(`💼 Generated current day activity for ${employeesToWork.length} working employees`);
+}
+
+// Generate incomplete sessions - sessions that started but haven't been closed beyond working hours
+async function generateIncompleteSessions(employees: any[], companyId: number) {
+  // Get company settings for working hours (default to 8 if not set)
+  const companySettings = await db.select()
+    .from(companies)
+    .where(eq(companies.id, companyId))
+    .limit(1);
+  
+  const workingHoursPerDay = companySettings[0]?.workingHoursPerDay || 8;
+  
+  // Select 1-2 employees to have incomplete sessions
+  const workingEmployees = employees.filter(emp => emp.status === 'working');
+  const employeesForIncomplete = workingEmployees.slice(0, Math.min(2, workingEmployees.length));
+  
+  const now = new Date();
+  
+  for (const employee of employeesForIncomplete) {
+    // Create sessions from previous days that are incomplete (forgot to clock out)
+    const daysAgo = Math.floor(Math.random() * 3) + 1; // 1-3 days ago
+    const sessionDate = new Date(now);
+    sessionDate.setDate(sessionDate.getDate() - daysAgo);
+    
+    // Skip weekends
+    if (sessionDate.getDay() === 0 || sessionDate.getDay() === 6) continue;
+    
+    // Check if session already exists for this date
+    const dayStart = new Date(sessionDate);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(sessionDate);
+    dayEnd.setHours(23, 59, 59, 999);
+    
+    const existingSession = await db.select()
+      .from(workSessions)
+      .where(and(
+        eq(workSessions.userId, employee.id),
+        gte(workSessions.clockIn, dayStart),
+        lt(workSessions.clockIn, dayEnd)
+      ))
+      .limit(1);
+    
+    if (existingSession.length > 0) continue; // Skip if session exists
+    
+    // Create incomplete session that started more than working hours ago
+    const startHour = 8 + Math.floor(Math.random() * 2); // 8:00-9:59
+    const startMinute = Math.floor(Math.random() * 4) * 15;
+    
+    const clockInTime = new Date(sessionDate);
+    clockInTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Make sure the session has exceeded working hours
+    const hoursElapsed = (now.getTime() - clockInTime.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursElapsed > workingHoursPerDay) {
+      await storage.createWorkSession({
+        userId: employee.id,
+        clockIn: clockInTime,
+        clockOut: null, // Never clocked out - this makes it incomplete
+        totalHours: null,
+        status: 'incomplete', // Mark as incomplete
+      });
+      
+      console.log(`🔴 Created incomplete session for ${employee.fullName} on ${sessionDate.toDateString()}, ${hoursElapsed.toFixed(1)} hours elapsed`);
+    }
+  }
+  
+  // Also create 1 incomplete session for today (someone forgot to clock out from yesterday but it's today now)
+  if (employeesForIncomplete.length > 0) {
+    const employee = employeesForIncomplete[0];
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Skip if yesterday was weekend
+    if (yesterday.getDay() !== 0 && yesterday.getDay() !== 6) {
+      const dayStart = new Date(yesterday);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(yesterday);  
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      const existingYesterdaySession = await db.select()
+        .from(workSessions)
+        .where(and(
+          eq(workSessions.userId, employee.id),
+          gte(workSessions.clockIn, dayStart),
+          lt(workSessions.clockIn, dayEnd)
+        ))
+        .limit(1);
+      
+      if (existingYesterdaySession.length === 0) {
+        const clockInTime = new Date(yesterday);
+        clockInTime.setHours(9, 0, 0, 0); // Started at 9:00 AM yesterday
+        
+        await storage.createWorkSession({
+          userId: employee.id,
+          clockIn: clockInTime,
+          clockOut: null, // Never clocked out
+          totalHours: null,
+          status: 'incomplete',
+        });
+        
+        console.log(`🔴 Created incomplete session for ${employee.fullName} from yesterday (${yesterday.toDateString()})`);
+      }
+    }
+  }
+  
+  console.log(`⚠️ Generated incomplete sessions for ${employeesForIncomplete.length} employees`);
 }
 
 // Generate demo vacation requests

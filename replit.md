@@ -32,11 +32,13 @@ Preferred communication style: Simple, everyday language.
 
 ### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
 - **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data
-- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, and reminders with multiple assignments
-- **Realistic data patterns**: Complete monthly work sessions, current day activity, varied reminder assignments
+- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions
+- **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions (employees who forgot to clock out) from previous days that exceed company working hours
+- **Realistic data patterns**: Complete monthly work sessions, current day activity, varied reminder assignments, forgotten clock-outs
 - **Duplicate prevention**: Fixed duplicate work sessions for same-day registrations with proper date verification
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 - **Implementation**: Integrated into company registration endpoint with error handling and duplicate detection
+- **Updated**: August 10, 2025 - Added generateIncompleteSessions function for realistic incomplete session demonstration
 
 ### Dynamic Work Hours Configuration (✅ FIXED - AUGUST 10, 2025)
 - **Problem Solved**: Replaced hardcoded 8-hour limits with dynamic company-specific work hour settings
