@@ -2005,6 +2005,31 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get company settings (work hours configuration) - MUST BE BEFORE /:alias route
+  app.get('/api/settings/work-hours', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      console.log('Getting company settings for user:', req.user);
+      const company = await storage.getCompany(req.user!.companyId);
+      console.log('Company retrieved:', company ? 'Found' : 'Not found', company);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      const response = {
+        workingHoursPerDay: company.workingHoursPerDay || 8,
+        name: company.name,
+        alias: company.companyAlias || company.alias,
+      };
+      console.log('Sending response:', response);
+
+      res.json(response);
+    } catch (error: any) {
+      console.error('Error getting company settings:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Get company by alias route
   app.get('/api/company/:alias', async (req, res) => {
     try {

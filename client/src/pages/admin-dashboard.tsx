@@ -100,6 +100,12 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  // Fetch company settings for work hours configuration
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    staleTime: 60000, // Cache for 1 minute
+  });
+
   // ⚠️ PROTECTED - DO NOT MODIFY - Queries identical to employee system
   const { data: activeSession } = useQuery({
     queryKey: ['/api/work-sessions/active'],
@@ -487,10 +493,29 @@ export default function AdminDashboard() {
                           <span className="text-orange-600 font-medium">En descanso</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-green-600 font-medium">Trabajando</span>
-                        </div>
+                        (() => {
+                          // Calculate hours worked so far today
+                          const clockIn = new Date(activeSession.clockIn);
+                          const currentTime = new Date();
+                          const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                          const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                          
+                          if (hoursWorked > maxDailyHours) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                <span className="text-red-600 font-medium">Incompleto</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span className="text-green-600 font-medium">Trabajando</span>
+                              </div>
+                            );
+                          }
+                        })()
                       )
                     ) : (
                       <div className="flex items-center gap-2">

@@ -24,6 +24,7 @@ export interface IStorage {
   getCompanyByCif?(cif: string): Promise<Company | undefined>;
   getCompanyByEmail?(email: string): Promise<Company | undefined>;
   getCompanyByAlias?(alias: string): Promise<Company | undefined>;
+  getCompanyByUserId(userId: number): Promise<any | undefined>;
   getAllCompanies(): Promise<Company[]>;
   updateCompany(id: number, updates: Partial<InsertCompany>): Promise<Company | undefined>;
 
