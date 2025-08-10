@@ -27,7 +27,8 @@ import {
   Check,
   X,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -107,6 +108,18 @@ export default function TimeTracking() {
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
+
+  // Helper function to check if a specific session is incomplete
+  const isSessionIncomplete = useCallback((session: any) => {
+    if (session.clockOut) return false; // Session is completed
+    
+    const maxHours = companySettings?.workingHoursPerDay || 8;
+    const sessionStart = new Date(session.clockIn);
+    const now = new Date();
+    const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+    
+    return elapsedHours > maxHours;
+  }, [companySettings]);
 
   // Function to check if a day has incomplete sessions (no clockOut after max hours)
   const calculateSessionStatus = useCallback((dayData: any) => {
@@ -190,6 +203,42 @@ export default function TimeTracking() {
       toast({
         title: 'Error',
         description: error.message || 'No se pudieron auto-completar las sesiones.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Force complete session mutation for handling individual incomplete sessions
+  const forceCompleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: number) => {
+      // Get company work hours configuration
+      const maxHours = companySettings?.workingHoursPerDay || 8;
+      
+      // Find the session to complete
+      const sessionToComplete = sessions.find((s: any) => s.id === sessionId);
+      if (!sessionToComplete) {
+        throw new Error('Sesión no encontrada');
+      }
+      
+      // Calculate clockOut time: clockIn + maxHours
+      const clockInDate = new Date(sessionToComplete.clockIn);
+      const clockOutDate = new Date(clockInDate.getTime() + (maxHours * 60 * 60 * 1000));
+      
+      return apiRequest('PATCH', `/api/work-sessions/${sessionId}`, {
+        clockOut: clockOutDate.toISOString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      toast({
+        title: 'Sesión Completada',
+        description: 'La sesión incompleta se ha cerrado automáticamente con las horas configuradas.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudo completar la sesión.',
         variant: 'destructive',
       });
     },
@@ -2163,14 +2212,38 @@ export default function TimeTracking() {
                               </Button>
                             </div>
                           ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditSession(dayData.sessions[0])}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            // Check if session is incomplete to show force complete button or regular edit button
+                            (() => {
+                              const session = dayData.sessions[0];
+                              const sessionIsIncomplete = isSessionIncomplete(session);
+                              
+                              if (sessionIsIncomplete) {
+                                // Show red exit button for force completing incomplete sessions
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => forceCompleteSessionMutation.mutate(session.id)}
+                                    className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                                    disabled={forceCompleteSessionMutation.isPending}
+                                  >
+                                    <LogOut className="w-4 h-4" />
+                                  </Button>
+                                );
+                              } else {
+                                // Show regular edit button for completed sessions
+                                return (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEditSession(session)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                );
+                              }
+                            })()
                           )}
                         </td>
                       </tr>
