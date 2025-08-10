@@ -16,6 +16,11 @@ export function ClockWidget() {
     refetchInterval: 10000, // Refetch every 10 seconds
   });
 
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   const clockInMutation = useMutation({
     mutationFn: () => apiRequest('POST', '/api/work-sessions/clock-in'),
     onSuccess: () => {
@@ -103,12 +108,47 @@ export function ClockWidget() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Current Status</p>
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  activeSession ? 'bg-oficaz-success animate-pulse-green' : 'bg-gray-400'
-                }`}></div>
-                <span className="text-lg font-semibold text-gray-900">
-                  {activeSession ? 'Clocked In' : 'Not Clocked In'}
-                </span>
+                {(() => {
+                  // Check if session has exceeded max hours + overtime
+                  if (activeSession) {
+                    const clockIn = new Date(activeSession.clockIn);
+                    const currentTime = new Date();
+                    const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                    const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                    const maxHoursWithOvertime = maxDailyHours + 4;
+                    
+                    // If session has exceeded max hours + overtime, show as "Out of Work"
+                    if (hoursWorked > maxHoursWithOvertime) {
+                      return (
+                        <>
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                          <span className="text-lg font-semibold text-red-600">
+                            Out of Work
+                          </span>
+                        </>
+                      );
+                    }
+                    
+                    // Normal active session
+                    return (
+                      <>
+                        <div className="w-3 h-3 rounded-full bg-oficaz-success animate-pulse-green"></div>
+                        <span className="text-lg font-semibold text-gray-900">
+                          Clocked In
+                        </span>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <>
+                        <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                        <span className="text-lg font-semibold text-gray-900">
+                          Not Clocked In
+                        </span>
+                      </>
+                    );
+                  }
+                })()}
               </div>
               {activeSession && (
                 <p className="text-sm text-gray-500 mt-1">
@@ -129,39 +169,61 @@ export function ClockWidget() {
 
         {/* Clock In/Out Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Button
-            onClick={() => clockInMutation.mutate()}
-            disabled={!!activeSession || clockInMutation.isPending}
-            className={`
-              flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
-              ${activeSession 
-                ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
-                : 'border-oficaz-success text-oficaz-success bg-white hover:bg-green-50'
+          {(() => {
+            // Check if we should allow new clock-in even with active session
+            let shouldShowActiveButtons = !!activeSession;
+            
+            if (activeSession) {
+              const clockIn = new Date(activeSession.clockIn);
+              const currentTime = new Date();
+              const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+              const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+              const maxHoursWithOvertime = maxDailyHours + 4; // +4 hours for overtime allowance
+              
+              // If session has exceeded max hours + overtime, treat as if no active session
+              if (hoursWorked > maxHoursWithOvertime) {
+                shouldShowActiveButtons = false; // Allow new clock-in
               }
-            `}
-            variant="outline"
-          >
-            <Play className="text-2xl mb-2" />
-            <span className="font-semibold">Clock In</span>
-            <span className="text-sm opacity-75">Start your workday</span>
-          </Button>
-          
-          <Button
-            onClick={() => clockOutMutation.mutate()}
-            disabled={!activeSession || clockOutMutation.isPending}
-            className={`
-              flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
-              ${!activeSession 
-                ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
-                : 'border-oficaz-error text-oficaz-error bg-white hover:bg-red-50'
-              }
-            `}
-            variant="outline"
-          >
-            <Square className="text-2xl mb-2" />
-            <span className="font-semibold">Clock Out</span>
-            <span className="text-sm opacity-75">End your workday</span>
-          </Button>
+            }
+            
+            return (
+              <>
+                <Button
+                  onClick={() => clockInMutation.mutate()}
+                  disabled={shouldShowActiveButtons || clockInMutation.isPending}
+                  className={`
+                    flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
+                    ${shouldShowActiveButtons 
+                      ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
+                      : 'border-oficaz-success text-oficaz-success bg-white hover:bg-green-50'
+                    }
+                  `}
+                  variant="outline"
+                >
+                  <Play className="text-2xl mb-2" />
+                  <span className="font-semibold">Clock In</span>
+                  <span className="text-sm opacity-75">Start your workday</span>
+                </Button>
+                
+                <Button
+                  onClick={() => clockOutMutation.mutate()}
+                  disabled={!shouldShowActiveButtons || clockOutMutation.isPending}
+                  className={`
+                    flex flex-col items-center justify-center p-6 h-auto border-2 rounded-2xl
+                    ${!shouldShowActiveButtons 
+                      ? 'border-gray-300 text-gray-400 bg-gray-50 cursor-not-allowed'
+                      : 'border-oficaz-error text-oficaz-error bg-white hover:bg-red-50'
+                    }
+                  `}
+                  variant="outline"
+                >
+                  <Square className="text-2xl mb-2" />
+                  <span className="font-semibold">Clock Out</span>
+                  <span className="text-sm opacity-75">End your workday</span>
+                </Button>
+              </>
+            );
+          })()}
         </div>
       </CardContent>
     </Card>
