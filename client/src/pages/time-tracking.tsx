@@ -1294,6 +1294,9 @@ export default function TimeTracking() {
       if (elapsedHours > maxHours) {
         return (
           <div className="space-y-1">
+            {/* Contenedor vacío para mantener consistencia de altura con otras filas */}
+            <div className="relative h-4"></div>
+            
             {/* Simple timeline showing incomplete session */}
             <div className="relative h-5">
               <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
