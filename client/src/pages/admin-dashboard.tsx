@@ -123,21 +123,33 @@ export default function AdminDashboard() {
 
   // Fetch recent work sessions
   const { data: recentSessions } = useQuery({
-    queryKey: ['/api/work-sessions/company'],
+    queryKey: ['/api/work-sessions/company', companySettings?.workingHoursPerDay],
+    enabled: !!companySettings, // Wait for company settings to be loaded
     select: (data: any[]) => {
       if (!data?.length) return [];
       
-      // Create separate events for clock-in and clock-out
+      // Create separate events for clock-in and clock-out, including session status for completed sessions
       const events: any[] = [];
+      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
       
       data.forEach((session: any) => {
+        // Calculate session status for completed sessions
+        let sessionStatus = null;
+        if (session.clockOut) {
+          const clockIn = new Date(session.clockIn);
+          const clockOut = new Date(session.clockOut);
+          const hoursWorked = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+          sessionStatus = hoursWorked > maxDailyHours ? 'incompleto' : 'completo';
+        }
+        
         // Add clock-in event
         events.push({
           id: `${session.id}-in`,
           userName: session.userName,
           type: 'entry',
           timestamp: session.clockIn,
-          sessionId: session.id
+          sessionId: session.id,
+          sessionStatus: null // Entry events don't have status
         });
         
         // Add clock-out event if exists
@@ -147,7 +159,8 @@ export default function AdminDashboard() {
             userName: session.userName,
             type: 'exit',
             timestamp: session.clockOut,
-            sessionId: session.id
+            sessionId: session.id,
+            sessionStatus // Show status on exit events
           });
         }
       });
@@ -740,7 +753,14 @@ export default function AdminDashboard() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{event.userName}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{event.userName}</p>
+                          {event.sessionStatus && (
+                            <Badge variant={event.sessionStatus === 'incompleto' ? 'destructive' : 'secondary'}>
+                              {event.sessionStatus === 'incompleto' ? 'Incompleto' : 'Completo'}
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500">
                           {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
                         </p>
