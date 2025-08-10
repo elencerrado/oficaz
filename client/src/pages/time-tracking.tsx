@@ -82,6 +82,7 @@ export default function TimeTracking() {
   const [showBreakTooltip, setShowBreakTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipContent, setTooltipContent] = useState('');
+  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>(null);
 
   // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
@@ -303,38 +304,74 @@ export default function TimeTracking() {
   }, []);
 
   const handleTodayFilter = useCallback(() => {
-    const today = new Date();
-    setDateFilter('custom');
-    setSelectedEmployee('all');
-    setStartDate(format(startOfDay(today), 'yyyy-MM-dd'));
-    setEndDate(format(endOfDay(today), 'yyyy-MM-dd'));
-    setSelectedStartDate(startOfDay(today));
-    setSelectedEndDate(endOfDay(today));
-  }, []);
+    if (activeStatsFilter === 'today') {
+      // Desactivar filtro - volver a mostrar todo
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+      setStartDate('');
+      setEndDate('');
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+    } else {
+      // Activar filtro de hoy
+      const today = new Date();
+      setActiveStatsFilter('today');
+      setDateFilter('custom');
+      setSelectedEmployee('all');
+      setStartDate(format(startOfDay(today), 'yyyy-MM-dd'));
+      setEndDate(format(endOfDay(today), 'yyyy-MM-dd'));
+      setSelectedStartDate(startOfDay(today));
+      setSelectedEndDate(endOfDay(today));
+    }
+  }, [activeStatsFilter]);
 
   const handleThisWeekFilter = useCallback(() => {
-    const today = new Date();
-    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
-    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-    setDateFilter('custom');
-    setSelectedEmployee('all');
-    setStartDate(format(startOfDay(weekStart), 'yyyy-MM-dd'));
-    setEndDate(format(endOfDay(weekEnd), 'yyyy-MM-dd'));
-    setSelectedStartDate(startOfDay(weekStart));
-    setSelectedEndDate(endOfDay(weekEnd));
-  }, []);
+    if (activeStatsFilter === 'week') {
+      // Desactivar filtro - volver a mostrar todo
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+      setStartDate('');
+      setEndDate('');
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+    } else {
+      // Activar filtro de esta semana
+      const today = new Date();
+      const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
+      const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+      setActiveStatsFilter('week');
+      setDateFilter('custom');
+      setSelectedEmployee('all');
+      setStartDate(format(startOfDay(weekStart), 'yyyy-MM-dd'));
+      setEndDate(format(endOfDay(weekEnd), 'yyyy-MM-dd'));
+      setSelectedStartDate(startOfDay(weekStart));
+      setSelectedEndDate(endOfDay(weekEnd));
+    }
+  }, [activeStatsFilter]);
 
   const handleThisMonthFilter = useCallback(() => {
-    const today = new Date();
-    const monthStart = startOfMonth(today);
-    const monthEnd = endOfMonth(today);
-    setDateFilter('custom');
-    setSelectedEmployee('all');
-    setStartDate(format(startOfDay(monthStart), 'yyyy-MM-dd'));
-    setEndDate(format(endOfDay(monthEnd), 'yyyy-MM-dd'));
-    setSelectedStartDate(startOfDay(monthStart));
-    setSelectedEndDate(endOfDay(monthEnd));
-  }, []);
+    if (activeStatsFilter === 'month') {
+      // Desactivar filtro - volver a mostrar todo
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+      setStartDate('');
+      setEndDate('');
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+    } else {
+      // Activar filtro de este mes
+      const today = new Date();
+      const monthStart = startOfMonth(today);
+      const monthEnd = endOfMonth(today);
+      setActiveStatsFilter('month');
+      setDateFilter('custom');
+      setSelectedEmployee('all');
+      setStartDate(format(startOfDay(monthStart), 'yyyy-MM-dd'));
+      setEndDate(format(endOfDay(monthEnd), 'yyyy-MM-dd'));
+      setSelectedStartDate(startOfDay(monthStart));
+      setSelectedEndDate(endOfDay(monthEnd));
+    }
+  }, [activeStatsFilter]);
 
   // ⚠️ PROTECTED: Time calculation function - CRITICAL FOR ACCURACY
   const calculateHours = useCallback((clockIn: string, clockOut: string | null) => {
@@ -1633,6 +1670,7 @@ export default function TimeTracking() {
           color="orange"
           icon={TrendingUp}
           onClick={handleTodayFilter}
+          isActive={activeStatsFilter === 'today'}
         />
         
         <StatsCard
@@ -1642,6 +1680,7 @@ export default function TimeTracking() {
           color="blue"
           icon={CalendarDays}
           onClick={handleThisWeekFilter}
+          isActive={activeStatsFilter === 'week'}
         />
         
         <StatsCard
@@ -1651,6 +1690,7 @@ export default function TimeTracking() {
           color="purple"
           icon={BarChart3}
           onClick={handleThisMonthFilter}
+          isActive={activeStatsFilter === 'month'}
         />
       </div>
 

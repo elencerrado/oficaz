@@ -9,32 +9,45 @@ interface StatsCardProps {
   icon?: LucideIcon;
   onClick?: () => void;
   className?: string;
+  isActive?: boolean;
 }
 
 const colorConfig = {
   yellow: {
     bg: 'bg-yellow-500',
-    hover: 'hover:border-yellow-200'
+    hover: 'hover:border-yellow-200',
+    activeBorder: 'border-yellow-400',
+    activeBg: 'bg-yellow-50'
   },
   green: {
     bg: 'bg-green-500',
-    hover: 'hover:border-green-200'
+    hover: 'hover:border-green-200',
+    activeBorder: 'border-green-400',
+    activeBg: 'bg-green-50'
   },
   blue: {
     bg: 'bg-blue-500',
-    hover: 'hover:border-blue-200'
+    hover: 'hover:border-blue-200',
+    activeBorder: 'border-blue-400',
+    activeBg: 'bg-blue-50'
   },
   purple: {
     bg: 'bg-purple-500',
-    hover: 'hover:border-purple-200'
+    hover: 'hover:border-purple-200',
+    activeBorder: 'border-purple-400',
+    activeBg: 'bg-purple-50'
   },
   orange: {
     bg: 'bg-orange-500',
-    hover: 'hover:border-orange-200'
+    hover: 'hover:border-orange-200',
+    activeBorder: 'border-orange-400',
+    activeBg: 'bg-orange-50'
   },
   red: {
     bg: 'bg-red-500',
-    hover: 'hover:border-red-200'
+    hover: 'hover:border-red-200',
+    activeBorder: 'border-red-400',
+    activeBg: 'bg-red-50'
   }
 };
 
@@ -45,13 +58,18 @@ export default function StatsCard({
   color, 
   icon: Icon, 
   onClick,
-  className = ''
+  className = '',
+  isActive = false
 }: StatsCardProps) {
   const config = colorConfig[color];
   
   return (
     <Card 
-      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${config.hover} mb-4 ${className}`}
+      className={`cursor-pointer hover:shadow-lg transition-all duration-200 border-2 ${
+        isActive 
+          ? `${config.activeBorder} ${config.activeBg} shadow-md` 
+          : `${config.hover}`
+      } mb-4 ${className}`}
       onClick={onClick}
     >
       <CardContent className="p-3 h-20 flex flex-col justify-between items-center text-center overflow-hidden">
