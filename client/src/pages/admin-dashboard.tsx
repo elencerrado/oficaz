@@ -499,14 +499,34 @@ export default function AdminDashboard() {
                 <div className="flex flex-col justify-center items-center md:items-start">
                   {/* Estado actual */}
                   <div className="mb-2">
-                    {activeSession ? (
-                      activeBreak ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                          <span className="text-orange-600 font-medium">En descanso</span>
-                        </div>
-                      ) : (
-                        (() => {
+                    {(() => {
+                      // Check if session has exceeded max hours + overtime (should show as "Fuera del trabajo")
+                      if (activeSession) {
+                        const clockIn = new Date(activeSession.clockIn);
+                        const currentTime = new Date();
+                        const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                        const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                        const maxHoursWithOvertime = maxDailyHours + 4;
+                        
+                        // If session has exceeded max hours + overtime, show as "Fuera del trabajo"
+                        if (hoursWorked > maxHoursWithOvertime) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              <span className="text-red-600 font-medium">Fuera del trabajo</span>
+                            </div>
+                          );
+                        }
+                        
+                        // Normal flow for active sessions
+                        if (activeBreak) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                              <span className="text-orange-600 font-medium">En descanso</span>
+                            </div>
+                          );
+                        } else {
                           // Calculate hours worked so far today
                           const clockIn = new Date(activeSession.clockIn);
                           const currentTime = new Date();
@@ -528,14 +548,16 @@ export default function AdminDashboard() {
                               </div>
                             );
                           }
-                        })()
-                      )
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-red-600 font-medium">Fuera del trabajo</span>
-                      </div>
-                    )}
+                        }
+                      } else {
+                        return (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span className="text-red-600 font-medium">Fuera del trabajo</span>
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                   <p className="text-sm text-gray-500 text-center md:text-left">
                     Tu último fichaje: {getLastClockInTime()}
