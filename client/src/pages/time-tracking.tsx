@@ -108,59 +108,48 @@ export default function TimeTracking() {
     staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
 
-  // Function to calculate session status based on company work hour limits
+  // Function to check if a day has incomplete sessions (no clockOut after max hours)
   const calculateSessionStatus = useCallback((dayData: any) => {
     if (!dayData.sessions?.length) {
       return 'complete';
     }
 
-    // Calculate total worked hours for the day
-    let totalHours = 0;
-    let hasCompletedSessions = false;
-    
-    dayData.sessions.forEach((session: any) => {
-      if (session.clockOut) {
-        hasCompletedSessions = true;
-        const duration = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn));
-        
-        // Subtract break periods
-        const totalBreakMinutes = (session.breakPeriods || []).reduce((total: number, bp: any) => {
-          if (bp.breakStart && bp.breakEnd) {
-            return total + differenceInMinutes(new Date(bp.breakEnd), new Date(bp.breakStart));
-          }
-          return total;
-        }, 0);
-        
-        totalHours += (duration - totalBreakMinutes) / 60;
-      }
-    });
-
-    // Only check status for completed sessions
-    if (!hasCompletedSessions) {
-      return 'complete';
-    }
-
     // Use configured max hours or fallback to 8 hours (as configured in Test Company)
     const maxHours = companySettings?.maxDailyHours || 8;
-    const status = totalHours > maxHours ? 'incomplete' : 'complete';
+    const maxMilliseconds = maxHours * 60 * 60 * 1000;
+    const now = new Date();
+    
+    // Check for incomplete sessions (no clockOut and exceeded max hours)
+    const hasIncompleteSession = dayData.sessions.some((session: any) => {
+      if (session.clockOut) {
+        // Session is completed, ignore it
+        return false;
+      }
+      
+      // Check if session started more than maxHours ago
+      const sessionStart = new Date(session.clockIn);
+      const timeSinceStart = now.getTime() - sessionStart.getTime();
+      
+      return timeSinceStart > maxMilliseconds;
+    });
     
     // Debug logging for day 7 specifically
     const dayDate = dayData.date || (dayData.sessions[0]?.clockIn ? format(new Date(dayData.sessions[0].clockIn), 'yyyy-MM-dd') : '');
     if (dayDate.includes('01-07')) {
       console.log('🐛 Day 7 Status Check:', {
         date: dayDate,
-        totalHours: totalHours.toFixed(2),
         maxHours,
-        status,
+        hasIncompleteSession,
         sessions: dayData.sessions.map((s: any) => ({
           clockIn: s.clockIn,
           clockOut: s.clockOut,
-          hasClockOut: !!s.clockOut
+          hasClockOut: !!s.clockOut,
+          timeSinceStart: s.clockOut ? 'completed' : `${((now.getTime() - new Date(s.clockIn).getTime()) / (1000 * 60 * 60)).toFixed(1)}h`
         }))
       });
     }
     
-    return status;
+    return hasIncompleteSession ? 'incomplete' : 'complete';
   }, [companySettings]);
 
   // All useMutation hooks
