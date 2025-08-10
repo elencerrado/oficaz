@@ -115,7 +115,7 @@ export default function TimeTracking() {
     }
 
     // Use configured max hours or fallback to 8 hours (as configured in Test Company)
-    const maxHours = companySettings?.maxDailyHours || 8;
+    const maxHours = companySettings?.workingHoursPerDay || 8;
     const maxMilliseconds = maxHours * 60 * 60 * 1000;
     const now = new Date();
     
@@ -1238,8 +1238,11 @@ export default function TimeTracking() {
       const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
       const formatTime = (date: Date) => format(date, 'HH:mm');
 
-      // Only show "Incompleto" if more than 8 hours have passed
-      if (elapsedHours > 8) {
+      // Use configured max hours from company settings (same as calculateSessionStatus function)
+      const maxHours = companySettings?.workingHoursPerDay || 8;
+      
+      // Only show "Incompleto" if more than maxHours have passed
+      if (elapsedHours > maxHours) {
         return (
           <div className="space-y-1">
             {/* Simple timeline showing incomplete session */}

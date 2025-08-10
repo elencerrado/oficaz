@@ -38,6 +38,14 @@ Preferred communication style: Simple, everyday language.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 - **Implementation**: Integrated into company registration endpoint with error handling and duplicate detection
 
+### Dynamic Work Hours Configuration (✅ FIXED - AUGUST 10, 2025)
+- **Problem Solved**: Replaced hardcoded 8-hour limits with dynamic company-specific work hour settings
+- **Configuration Source**: Uses `workingHoursPerDay` field from company settings (configurable via Settings page)
+- **Endpoint Integration**: Fetches data from `/api/settings/work-hours` endpoint with proper caching
+- **Consistent Logic**: Both session status calculation and "Incompleto" display use the same dynamic value
+- **User Control**: Admins can modify work hours via Settings > Company > "Horas de trabajo por día" input field
+- **Default Fallback**: Falls back to 8 hours if configuration is not available
+
 ### SEO Optimization System (✅ PRODUCTION READY - VERIFIED WORKING)
 - **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference
 - **Implementation**: robots.txt and sitemap.xml served from client/public directory
