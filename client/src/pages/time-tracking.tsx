@@ -8,6 +8,7 @@ import StatsCard from '@/components/StatsCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -99,6 +100,42 @@ export default function TimeTracking() {
     staleTime: 5 * 60 * 1000, // 5 minutes for employees list
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  // Company settings query for work hours limits
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    staleTime: 10 * 60 * 1000, // 10 minutes cache
+  });
+
+  // Function to calculate session status based on company work hour limits
+  const calculateSessionStatus = useCallback((dayData: any) => {
+    if (!companySettings?.maxDailyHours || !dayData.sessions?.length) {
+      return 'complete';
+    }
+
+    // Calculate total worked hours for the day
+    let totalHours = 0;
+    dayData.sessions.forEach((session: any) => {
+      if (session.clockOut) {
+        const duration = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn));
+        
+        // Subtract break periods
+        const totalBreakMinutes = (session.breakPeriods || []).reduce((total: number, bp: any) => {
+          if (bp.breakStart && bp.breakEnd) {
+            return total + differenceInMinutes(new Date(bp.breakEnd), new Date(bp.breakStart));
+          }
+          return total;
+        }, 0);
+        
+        totalHours += (duration - totalBreakMinutes) / 60;
+      }
+    });
+
+    // Check if exceeds maximum daily work hours
+    const maxHours = companySettings.maxDailyHours;
+    return totalHours > maxHours ? 'incomplete' : 'complete';
+  }, [companySettings]);
 
   // All useMutation hooks
   const updateSessionMutation = useMutation({
@@ -2026,8 +2063,19 @@ export default function TimeTracking() {
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-medium text-gray-900">
-                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                          <div className="space-y-1">
+                            <div className="font-medium text-gray-900">
+                              {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                            </div>
+                            {/* Show status badge for completed sessions when they exceed work hours */}
+                            {totalDayHours > 0 && (() => {
+                              const status = calculateSessionStatus(dayData);
+                              return status === 'incomplete' ? (
+                                <Badge variant="destructive" className="text-xs">
+                                  Incompleto
+                                </Badge>
+                              ) : null;
+                            })()}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-center">
