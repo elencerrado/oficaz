@@ -1230,6 +1230,47 @@ export default function TimeTracking() {
       );
     }
 
+    // Handle incomplete sessions from past days - show "Incompleto" status
+    if (hasActiveSessions && !isToday) {
+      const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
+      const sessionStart = new Date(activeSession.clockIn);
+      const now = new Date();
+      const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+      const formatTime = (date: Date) => format(date, 'HH:mm');
+
+      // Only show "Incompleto" if more than 8 hours have passed
+      if (elapsedHours > 8) {
+        return (
+          <div className="space-y-1">
+            {/* Simple timeline showing incomplete session */}
+            <div className="relative h-5">
+              <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
+                {/* Red bar indicating incomplete session */}
+                <div className="absolute top-0 h-5 bg-red-400 rounded-sm w-full opacity-60" />
+              </div>
+            </div>
+
+            {/* Time labels showing start time and "Incompleto" status */}
+            <div className="relative h-4 mt-1">
+              {/* Start time */}
+              <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
+              </div>
+              
+              {/* "Incompleto" status */}
+              <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(100%)' }}>
+                <span className="text-xs font-medium mr-1 text-red-600">
+                  Incompleto
+                </span>
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
     // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
     const allTimes = dayData.sessions.flatMap((session: any) => [
       new Date(session.clockIn),
