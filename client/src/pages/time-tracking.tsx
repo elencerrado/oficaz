@@ -28,6 +28,7 @@ import {
   X,
   Clock,
   AlertTriangle,
+  AlertCircle,
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -82,7 +83,7 @@ export default function TimeTracking() {
   const [showBreakTooltip, setShowBreakTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipContent, setTooltipContent] = useState('');
-  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | null>(null);
+  const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
   // All useQuery hooks - Real-time updates for admin time tracking
   const { data: sessions = [], isLoading } = useQuery({
@@ -373,6 +374,22 @@ export default function TimeTracking() {
     }
   }, [activeStatsFilter]);
 
+  const handleIncompleteFilter = useCallback(() => {
+    if (activeStatsFilter === 'incomplete') {
+      // Desactivar filtro - volver a mostrar todo
+      setActiveStatsFilter(null);
+      setDateFilter('all');
+      setStartDate('');
+      setEndDate('');
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+    } else {
+      // Activar filtro de sesiones incompletas - no cambiar fechas, solo filtrar por estado
+      setActiveStatsFilter('incomplete');
+      setSelectedEmployee('all');
+    }
+  }, [activeStatsFilter]);
+
   // ⚠️ PROTECTED: Time calculation function - CRITICAL FOR ACCURACY
   const calculateHours = useCallback((clockIn: string, clockOut: string | null) => {
     if (!clockOut) return 0;
@@ -436,10 +453,27 @@ export default function TimeTracking() {
       } else if (dateFilter === 'all') {
         matchesDate = true; // No aplicar filtro de fecha
       }
+
+      // Filtro específico para sesiones incompletas
+      if (activeStatsFilter === 'incomplete') {
+        if (!session.clockOut) {
+          // Solo mostrar sesiones sin clockOut que excedan las horas máximas configuradas
+          const clockInTime = new Date(session.clockIn).getTime();
+          const now = Date.now();
+          const hoursElapsed = (now - clockInTime) / (1000 * 60 * 60);
+          const maxHours = companySettings?.workingHoursPerDay || 8;
+          
+          // Solo mostrar como incompleta si han pasado más horas que las configuradas
+          return matchesEmployee && matchesSearch && matchesDate && hoursElapsed > maxHours;
+        } else {
+          // Si tiene clockOut, no es incompleta
+          return false;
+        }
+      }
       
       return matchesEmployee && matchesSearch && matchesDate;
     });
-  }, [sessionsList, selectedEmployee, searchTerm, dateFilter, currentDate, currentMonth, startDate, endDate]);
+  }, [sessionsList, selectedEmployee, searchTerm, dateFilter, currentDate, currentMonth, startDate, endDate, activeStatsFilter, companySettings]);
 
   // Generate dynamic title based on filter
   const getFilterTitle = () => {
@@ -462,7 +496,7 @@ export default function TimeTracking() {
   };
 
   // ⚠️ PROTECTED: Statistics calculation functions - CRITICAL FOR REPORTING
-  const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth } = useMemo(() => {
+  const { employeesWithSessions, totalEmployees, averageHoursPerEmployee, averageHoursPerWeek, averageHoursPerMonth, incompleteSessions } = useMemo(() => {
     const uniqueEmployees = new Set(filteredSessions.map((s: any) => s.userId)).size;
     const totalHours = filteredSessions.reduce((total: number, session: any) => {
       let sessionHours = calculateHours(session.clockIn, session.clockOut);
@@ -507,15 +541,28 @@ export default function TimeTracking() {
       averageHoursWeekly = totalHours / employeeWeeks.size;
       averageHoursMonthly = totalHours / employeeMonths.size;
     }
+
+    // Calculate incomplete sessions - sessions without clockOut that exceed working hours
+    const incompleteSessionsCount = sessionsList.filter((session: any) => {
+      if (session.clockOut) return false; // Has clockOut, not incomplete
+      
+      const clockInTime = new Date(session.clockIn).getTime();
+      const now = Date.now();
+      const hoursElapsed = (now - clockInTime) / (1000 * 60 * 60);
+      const maxHours = companySettings?.workingHoursPerDay || 8;
+      
+      return hoursElapsed > maxHours;
+    }).length;
     
     return {
       employeesWithSessions: uniqueEmployees,
       totalEmployees: employeesList.length,
       averageHoursPerEmployee: averageHoursPerDay,
       averageHoursPerWeek: averageHoursWeekly,
-      averageHoursPerMonth: averageHoursMonthly
+      averageHoursPerMonth: averageHoursMonthly,
+      incompleteSessions: incompleteSessionsCount
     };
-  }, [filteredSessions, employeesList.length, calculateHours]);
+  }, [filteredSessions, employeesList.length, calculateHours, sessionsList, companySettings]);
   // ⚠️ END PROTECTED SECTION
 
   // ⚠️ PROTECTED: PDF generation function - CRITICAL FOR REPORTING
@@ -1655,12 +1702,13 @@ export default function TimeTracking() {
       {/* Stats Cards */}
       <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
         <StatsCard
-          title="Han Fichado"
-          subtitle="Empleados"
-          value={`${employeesWithSessions}/${totalEmployees}`}
-          color="green"
-          icon={Users}
-          onClick={handleResetFilters}
+          title="Incompletos"
+          subtitle="Sesiones"
+          value={`${incompleteSessions}`}
+          color="red"
+          icon={AlertCircle}
+          onClick={handleIncompleteFilter}
+          isActive={activeStatsFilter === 'incomplete'}
         />
         
         <StatsCard
