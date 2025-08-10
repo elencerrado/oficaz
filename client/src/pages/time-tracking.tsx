@@ -186,28 +186,6 @@ export default function TimeTracking() {
     },
   });
 
-  // Auto-complete mutation for handling pending sessions
-  const autoCompleteMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest('POST', '/api/work-sessions/auto-complete');
-    },
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      toast({
-        title: 'Auto-completado Exitoso',
-        description: `Se cerraron ${response.completed || 0} sesiones pendientes.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'No se pudieron auto-completar las sesiones.',
-        variant: 'destructive',
-      });
-    },
-  });
-
   // Force complete session mutation for handling individual incomplete sessions
   const forceCompleteSessionMutation = useMutation({
     mutationFn: async (sessionId: number) => {
@@ -289,11 +267,6 @@ export default function TimeTracking() {
     setEditingSession(null);
     setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
   }, []);
-
-  // Handler for auto-complete button
-  const handleAutoComplete = useCallback(() => {
-    autoCompleteMutation.mutate();
-  }, [autoCompleteMutation]);
 
   // Break period management functions
   const handleAddBreakPeriod = useCallback(() => {
@@ -1638,25 +1611,7 @@ export default function TimeTracking() {
               Administra todos los fichajes de empleados y genera reportes.
             </p>
           </div>
-          {(user?.role === 'admin' || user?.role === 'manager') && (
-            <Button
-              onClick={handleAutoComplete}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-              disabled={autoCompleteMutation.isPending}
-            >
-              {autoCompleteMutation.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Procesando...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  Auto-completar Pendientes
-                </div>
-              )}
-            </Button>
-          )}
+
         </div>
       </div>
 
