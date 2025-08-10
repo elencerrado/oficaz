@@ -110,14 +110,17 @@ export default function TimeTracking() {
 
   // Function to calculate session status based on company work hour limits
   const calculateSessionStatus = useCallback((dayData: any) => {
-    if (!companySettings?.maxDailyHours || !dayData.sessions?.length) {
+    if (!dayData.sessions?.length) {
       return 'complete';
     }
 
     // Calculate total worked hours for the day
     let totalHours = 0;
+    let hasCompletedSessions = false;
+    
     dayData.sessions.forEach((session: any) => {
       if (session.clockOut) {
+        hasCompletedSessions = true;
         const duration = differenceInMinutes(new Date(session.clockOut), new Date(session.clockIn));
         
         // Subtract break periods
@@ -132,9 +135,32 @@ export default function TimeTracking() {
       }
     });
 
-    // Check if exceeds maximum daily work hours
-    const maxHours = companySettings.maxDailyHours;
-    return totalHours > maxHours ? 'incomplete' : 'complete';
+    // Only check status for completed sessions
+    if (!hasCompletedSessions) {
+      return 'complete';
+    }
+
+    // Use configured max hours or fallback to 8 hours (as configured in Test Company)
+    const maxHours = companySettings?.maxDailyHours || 8;
+    const status = totalHours > maxHours ? 'incomplete' : 'complete';
+    
+    // Debug logging for day 7 specifically
+    const dayDate = dayData.date || (dayData.sessions[0]?.clockIn ? format(new Date(dayData.sessions[0].clockIn), 'yyyy-MM-dd') : '');
+    if (dayDate.includes('01-07')) {
+      console.log('🐛 Day 7 Status Check:', {
+        date: dayDate,
+        totalHours: totalHours.toFixed(2),
+        maxHours,
+        status,
+        sessions: dayData.sessions.map((s: any) => ({
+          clockIn: s.clockIn,
+          clockOut: s.clockOut,
+          hasClockOut: !!s.clockOut
+        }))
+      });
+    }
+    
+    return status;
   }, [companySettings]);
 
   // All useMutation hooks
