@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Check,
   X,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
@@ -120,6 +121,28 @@ export default function TimeTracking() {
     },
   });
 
+  // Auto-complete mutation for handling pending sessions
+  const autoCompleteMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', '/api/work-sessions/auto-complete');
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      toast({
+        title: 'Auto-completado Exitoso',
+        description: `Se cerraron ${response.completed || 0} sesiones pendientes.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'No se pudieron auto-completar las sesiones.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // ⚠️ PROTECTED: Session editing and time calculation functions - DO NOT MODIFY
   // These functions are CRITICAL for time tracking accuracy and must remain stable
   const handleEditSession = useCallback((session: any) => {
@@ -165,6 +188,11 @@ export default function TimeTracking() {
     setEditingSession(null);
     setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
   }, []);
+
+  // Handler for auto-complete button
+  const handleAutoComplete = useCallback(() => {
+    autoCompleteMutation.mutate();
+  }, [autoCompleteMutation]);
 
   // Break period management functions
   const handleAddBreakPeriod = useCallback(() => {
@@ -1449,10 +1477,33 @@ export default function TimeTracking() {
     <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
-        <p className="text-gray-500 mt-1">
-          Administra todos los fichajes de empleados y genera reportes.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
+            <p className="text-gray-500 mt-1">
+              Administra todos los fichajes de empleados y genera reportes.
+            </p>
+          </div>
+          {(user?.role === 'admin' || user?.role === 'manager') && (
+            <Button
+              onClick={handleAutoComplete}
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={autoCompleteMutation.isPending}
+            >
+              {autoCompleteMutation.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Procesando...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Auto-completar Pendientes
+                </div>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -1762,10 +1813,15 @@ export default function TimeTracking() {
                         userId: session.userId,
                         userName: session.userName,
                         profilePicture: session.profilePicture, // ← CRITICAL FIX: Include profilePicture in grouping
-                        sessions: []
+                        sessions: [],
+                        hasAutoCompleted: false // Track if any session in this day was auto-completed
                       };
                     }
                     acc[dayKey].sessions.push(session);
+                    // Check if this session was auto-completed
+                    if (session.autoCompleted) {
+                      acc[dayKey].hasAutoCompleted = true;
+                    }
                     return acc;
                   }, {});
 
@@ -1858,8 +1914,15 @@ export default function TimeTracking() {
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
-                            <div className="font-medium text-gray-900">
-                              {dayData.userName || 'Usuario Desconocido'}
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium text-gray-900">
+                                {dayData.userName || 'Usuario Desconocido'}
+                              </div>
+                              {dayData.hasAutoCompleted && (
+                                <div className="flex items-center" title="Esta sesión fue cerrada automáticamente por el sistema">
+                                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>

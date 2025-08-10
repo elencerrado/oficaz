@@ -312,6 +312,7 @@ export class DrizzleStorage implements IStorage {
       totalHours: schema.workSessions.totalHours,
       totalBreakTime: schema.workSessions.totalBreakTime,
       status: schema.workSessions.status,
+      autoCompleted: schema.workSessions.autoCompleted,
       createdAt: schema.workSessions.createdAt,
       userName: schema.users.fullName,
       profilePicture: schema.users.profilePicture,

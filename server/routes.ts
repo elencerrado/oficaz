@@ -2432,6 +2432,76 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Auto-complete pending work sessions
+  app.post('/api/work-sessions/auto-complete', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      
+      // Get company's daily work hours configuration
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+      
+      const dailyWorkHours = company.dailyWorkHours || 8; // Default 8 hours
+      
+      // Find all active (unclosed) work sessions from yesterday and earlier
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(23, 59, 59, 999);
+      
+      const pendingSessions = await db.select()
+        .from(workSessions)
+        .innerJoin(users, eq(workSessions.userId, users.id))
+        .where(and(
+          eq(users.companyId, companyId),
+          eq(workSessions.status, 'active'),
+          lt(workSessions.clockIn, yesterday)
+        ));
+      
+      const autoCompletedSessions = [];
+      
+      for (const sessionRecord of pendingSessions) {
+        const session = sessionRecord.work_sessions;
+        
+        // Calculate clock-out time based on daily work hours
+        const clockOut = new Date(session.clockIn);
+        clockOut.setHours(clockOut.getHours() + dailyWorkHours);
+        
+        // Update the session
+        const updated = await db.update(workSessions)
+          .set({
+            clockOut: clockOut,
+            totalHours: dailyWorkHours.toString(),
+            status: 'completed',
+            autoCompleted: true
+          })
+          .where(eq(workSessions.id, session.id))
+          .returning();
+        
+        if (updated[0]) {
+          autoCompletedSessions.push({
+            sessionId: session.id,
+            userId: session.userId,
+            userName: sessionRecord.users.fullName,
+            originalClockIn: session.clockIn,
+            autoClockOut: clockOut,
+            hoursAdded: dailyWorkHours
+          });
+        }
+      }
+      
+      res.json({
+        message: `Auto-completed ${autoCompletedSessions.length} pending sessions`,
+        sessions: autoCompletedSessions,
+        dailyWorkHours
+      });
+    } catch (error: any) {
+      console.error('Auto-complete error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Break periods routes
   app.post('/api/break-periods/start', authenticateToken, async (req: AuthRequest, res) => {
     try {

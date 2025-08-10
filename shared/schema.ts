@@ -245,6 +245,7 @@ export const workSessions = pgTable("work_sessions", {
   totalHours: decimal("total_hours", { precision: 4, scale: 2 }),
   totalBreakTime: decimal("total_break_time", { precision: 4, scale: 2 }).default("0.00"), // Total break time in hours
   status: text("status").notNull().default("active"), // active, completed
+  autoCompleted: boolean("auto_completed").notNull().default(false), // true if automatically closed due to missed clock out
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
