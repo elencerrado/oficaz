@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Company } from '@shared/schema';
 import { getAuthData, setAuthData, clearAuthData, clearExpiredTokens } from '@/lib/auth';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface AuthContextType {
   user: User | null;
@@ -56,6 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               return;
             }
             
+            // CRITICAL SECURITY FIX: Detect company changes and clear cache to prevent data leakage
+            const previousCompanyId = company?.id;
+            const newCompanyId = data.company?.id;
+            
+            if (previousCompanyId && newCompanyId && previousCompanyId !== newCompanyId) {
+              console.log('🔄 COMPANY CHANGE DETECTED - CLEARING CACHE TO PREVENT DATA LEAKAGE', { 
+                from: previousCompanyId, 
+                to: newCompanyId 
+              });
+              // Clear ALL cached data when switching companies
+              queryClient.clear();
+            }
+            
             setUser(data.user);
             setCompany(data.company);
             setToken(authData.token);
@@ -91,6 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('🔐 Login attempt starting...');
     const data = await apiRequest('POST', '/api/auth/login', loginData);
     console.log('🔐 Login response received:', { hasToken: !!data.token, hasUser: !!data.user });
+    
+    // CRITICAL SECURITY FIX: Clear cache when logging into different company
+    const previousCompanyId = company?.id;
+    const newCompanyId = data.company?.id;
+    
+    if (previousCompanyId && newCompanyId && previousCompanyId !== newCompanyId) {
+      console.log('🔄 LOGIN COMPANY CHANGE - CLEARING CACHE TO PREVENT DATA LEAKAGE', { 
+        from: previousCompanyId, 
+        to: newCompanyId 
+      });
+      queryClient.clear();
+    }
     
     // Save auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
@@ -157,6 +182,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Clear all cached data on logout to prevent data leakage
+    console.log('🚪 LOGOUT - CLEARING ALL CACHE AND AUTH DATA');
+    queryClient.clear();
+    
     setUser(null);
     setCompany(null);
     setToken(null);
