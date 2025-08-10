@@ -73,6 +73,7 @@ export default function TimeTracking() {
     clockIn: '',
     clockOut: '',
     date: '',
+    breakPeriods: [] as Array<{breakStart: string, breakEnd: string | null}>,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showBreakTooltip, setShowBreakTooltip] = useState(false);
@@ -108,7 +109,7 @@ export default function TimeTracking() {
         description: 'Los cambios se han guardado exitosamente.',
       });
       setEditingSession(null);
-      setEditData({ clockIn: '', clockOut: '', date: '' });
+      setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
     },
     onError: (error: any) => {
       toast({
@@ -123,10 +124,18 @@ export default function TimeTracking() {
   // These functions are CRITICAL for time tracking accuracy and must remain stable
   const handleEditSession = useCallback((session: any) => {
     setEditingSession(session.id);
+    
+    // Format break periods for editing
+    const formattedBreaks = (session.breakPeriods || []).map((bp: any) => ({
+      breakStart: bp.breakStart ? format(new Date(bp.breakStart), 'HH:mm') : '',
+      breakEnd: bp.breakEnd ? format(new Date(bp.breakEnd), 'HH:mm') : '',
+    }));
+    
     setEditData({
       clockIn: session.clockIn ? format(new Date(session.clockIn), 'HH:mm') : '',
       clockOut: session.clockOut ? format(new Date(session.clockOut), 'HH:mm') : '',
       date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
+      breakPeriods: formattedBreaks,
     });
   }, []);
 
@@ -134,18 +143,51 @@ export default function TimeTracking() {
     const clockInDateTime = new Date(`${editData.date}T${editData.clockIn}:00`);
     const clockOutDateTime = editData.clockOut ? new Date(`${editData.date}T${editData.clockOut}:00`) : null;
     
+    // Format break periods back to ISO format
+    const formattedBreakPeriods = editData.breakPeriods
+      .filter(bp => bp.breakStart) // Only include breaks with start time
+      .map(bp => ({
+        breakStart: new Date(`${editData.date}T${bp.breakStart}:00`).toISOString(),
+        breakEnd: bp.breakEnd ? new Date(`${editData.date}T${bp.breakEnd}:00`).toISOString() : null,
+      }));
+    
     updateSessionMutation.mutate({
       id: sessionId,
       data: {
         clockIn: clockInDateTime.toISOString(),
         clockOut: clockOutDateTime?.toISOString() || null,
+        breakPeriods: formattedBreakPeriods,
       }
     });
   }, [editData, updateSessionMutation]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingSession(null);
-    setEditData({ clockIn: '', clockOut: '', date: '' });
+    setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
+  }, []);
+
+  // Break period management functions
+  const handleAddBreakPeriod = useCallback(() => {
+    setEditData(prev => ({
+      ...prev,
+      breakPeriods: [...prev.breakPeriods, { breakStart: '', breakEnd: '' }]
+    }));
+  }, []);
+
+  const handleUpdateBreakPeriod = useCallback((index: number, field: 'breakStart' | 'breakEnd', value: string) => {
+    setEditData(prev => ({
+      ...prev,
+      breakPeriods: prev.breakPeriods.map((bp, i) => 
+        i === index ? { ...bp, [field]: value } : bp
+      )
+    }));
+  }, []);
+
+  const handleRemoveBreakPeriod = useCallback((index: number) => {
+    setEditData(prev => ({
+      ...prev,
+      breakPeriods: prev.breakPeriods.filter((_, i) => i !== index)
+    }));
   }, []);
 
   // Quick filter functions for stats cards
@@ -1601,8 +1643,8 @@ export default function TimeTracking() {
                   </Popover>
 
                   <DatePickerPeriod
-                    startDate={selectedStartDate}
-                    endDate={selectedEndDate}
+                    startDate={selectedStartDate || undefined}
+                    endDate={selectedEndDate || undefined}
                     onStartDateChange={(date) => {
                       setSelectedStartDate(date || null);
                       setStartDate(date ? format(date, 'yyyy-MM-dd') : '');
@@ -1823,12 +1865,19 @@ export default function TimeTracking() {
                         </td>
                         <td className="py-3 px-4">
                           {isEditing ? (
-                            <Input
-                              type="date"
-                              value={editData.date}
-                              onChange={(e) => setEditData(prev => ({ ...prev, date: e.target.value }))}
-                              className="w-36 h-8"
-                            />
+                            <div className="w-36">
+                              <DatePickerDay
+                                date={editData.date ? new Date(editData.date) : undefined}
+                                onDateChange={(date) => {
+                                  setEditData(prev => ({ 
+                                    ...prev, 
+                                    date: date ? format(date, 'yyyy-MM-dd') : '' 
+                                  }));
+                                }}
+                                className="h-8 text-sm"
+                                placeholder="Seleccionar fecha"
+                              />
+                            </div>
                           ) : (
                             <div className="text-gray-700">
                               {format(new Date(dayData.date), 'dd/MM/yyyy')}
@@ -1837,7 +1886,8 @@ export default function TimeTracking() {
                         </td>
                         <td className="py-3 px-4 min-w-[300px]">
                           {isEditing ? (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
+                              {/* Entrada y Salida */}
                               <div className="flex space-x-2">
                                 <Input
                                   type="time"
@@ -1853,6 +1903,59 @@ export default function TimeTracking() {
                                   className="w-24 h-8"
                                   placeholder="Salida"
                                 />
+                              </div>
+                              
+                              {/* Periodos de Descanso */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-medium text-gray-700">
+                                    Descansos
+                                  </label>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={handleAddBreakPeriod}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    + Añadir
+                                  </Button>
+                                </div>
+                                
+                                {editData.breakPeriods.map((breakPeriod, index) => (
+                                  <div key={index} className="flex items-center space-x-1">
+                                    <Input
+                                      type="time"
+                                      value={breakPeriod.breakStart}
+                                      onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
+                                      className="w-20 h-7 text-xs"
+                                      placeholder="Inicio"
+                                    />
+                                    <span className="text-xs text-gray-400">-</span>
+                                    <Input
+                                      type="time"
+                                      value={breakPeriod.breakEnd || ''}
+                                      onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
+                                      className="w-20 h-7 text-xs"
+                                      placeholder="Fin"
+                                    />
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleRemoveBreakPeriod(index)}
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                
+                                {editData.breakPeriods.length === 0 && (
+                                  <p className="text-xs text-gray-500 italic">
+                                    Sin descansos programados
+                                  </p>
+                                )}
                               </div>
                             </div>
                           ) : (
