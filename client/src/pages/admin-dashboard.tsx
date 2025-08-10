@@ -542,89 +542,111 @@ export default function AdminDashboard() {
                   </p>
                 </div>
                 <div className="flex flex-row md:flex-col justify-center gap-2">
-                  {!activeSession ? (
-                    <Button
-                      size="lg"
-                      onClick={() => clockInMutation.mutate()}
-                      disabled={clockInMutation.isPending}
-                      className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
-                    >
-                      {clockInMutation.isPending ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                          Fichando...
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="h-5 w-5 mr-2" />
-                          Entrar
-                        </>
-                      )}
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        size="lg"
-                        onClick={() => clockOutMutation.mutate()}
-                        disabled={clockOutMutation.isPending}
-                        className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md"
-                      >
-                        {clockOutMutation.isPending ? (
-                          <>
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                            Fichando...
-                          </>
-                        ) : (
-                          <>
-                            <LogOut className="h-5 w-5 mr-2" />
-                            Salir
-                          </>
-                        )}
-                      </Button>
+                  {(() => {
+                    // Check if we should allow new clock-in even with active session
+                    let shouldShowActiveButtons = !!activeSession;
+                    
+                    if (activeSession) {
+                      const clockIn = new Date(activeSession.clockIn);
+                      const currentTime = new Date();
+                      const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                      const maxHoursWithOvertime = maxDailyHours + 4; // +4 hours for overtime allowance
                       
-                      {!activeBreak ? (
+                      // If session has exceeded max hours + overtime, treat as if no active session
+                      if (hoursWorked > maxHoursWithOvertime) {
+                        shouldShowActiveButtons = false; // Allow new clock-in
+                      }
+                    }
+                    
+                    if (shouldShowActiveButtons) {
+                      return (
+                        <>
+                          <Button
+                            size="lg"
+                            onClick={() => clockOutMutation.mutate()}
+                            disabled={clockOutMutation.isPending}
+                            className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-red-500 hover:bg-red-600 text-white border-red-500 hover:shadow-red-200 hover:shadow-md"
+                          >
+                            {clockOutMutation.isPending ? (
+                              <>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                Fichando...
+                              </>
+                            ) : (
+                              <>
+                                <LogOut className="h-5 w-5 mr-2" />
+                                Salir
+                              </>
+                            )}
+                          </Button>
+                          
+                          {!activeBreak ? (
+                            <Button
+                              size="lg"
+                              variant="outline"
+                              onClick={() => startBreakMutation.mutate()}
+                              disabled={startBreakMutation.isPending}
+                              className="w-[120px] h-[48px] border-orange-300 text-orange-600 hover:bg-orange-50"
+                            >
+                              {startBreakMutation.isPending ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                                  Iniciando...
+                                </>
+                              ) : (
+                                <>
+                                  <Coffee className="h-4 w-4 mr-2" />
+                                  Descanso
+                                </>
+                              )}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="lg"
+                              variant="outline"
+                              onClick={() => endBreakMutation.mutate()}
+                              disabled={endBreakMutation.isPending}
+                              className="w-[120px] h-[48px] border-green-300 text-green-600 hover:bg-green-50"
+                            >
+                              {endBreakMutation.isPending ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+                                  Finalizando...
+                                </>
+                              ) : (
+                                <>
+                                  <Coffee className="h-4 w-4 mr-2" />
+                                  Finalizar
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </>
+                      );
+                    } else {
+                      return (
                         <Button
                           size="lg"
-                          variant="outline"
-                          onClick={() => startBreakMutation.mutate()}
-                          disabled={startBreakMutation.isPending}
-                          className="w-[120px] h-[48px] border-orange-300 text-orange-600 hover:bg-orange-50"
+                          onClick={() => clockInMutation.mutate()}
+                          disabled={clockInMutation.isPending}
+                          className="w-[120px] h-[48px] font-medium rounded-lg transition-all duration-200 shadow-sm bg-green-500 hover:bg-green-600 text-white border-green-500 hover:shadow-green-200 hover:shadow-md"
                         >
-                          {startBreakMutation.isPending ? (
+                          {clockInMutation.isPending ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
-                              Iniciando...
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                              Fichando...
                             </>
                           ) : (
                             <>
-                              <Coffee className="h-4 w-4 mr-2" />
-                              Descanso
+                              <LogIn className="h-5 w-5 mr-2" />
+                              Entrar
                             </>
                           )}
                         </Button>
-                      ) : (
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          onClick={() => endBreakMutation.mutate()}
-                          disabled={endBreakMutation.isPending}
-                          className="w-[120px] h-[48px] border-green-300 text-green-600 hover:bg-green-50"
-                        >
-                          {endBreakMutation.isPending ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
-                              Finalizando...
-                            </>
-                          ) : (
-                            <>
-                              <Coffee className="h-4 w-4 mr-2" />
-                              Finalizar
-                            </>
-                          )}
-                        </Button>
-                      )}
-                    </>
-                  )}
+                      );
+                    }
+                  })()}
                 </div>
               </div>
             </CardContent>
