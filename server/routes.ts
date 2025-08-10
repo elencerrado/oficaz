@@ -2383,7 +2383,7 @@ Responde directamente a este email para contactar con la persona.
   app.patch('/api/work-sessions/:id', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { clockIn, clockOut } = req.body;
+      const { clockIn, clockOut, breakPeriods: requestBreakPeriods } = req.body;
 
       // Verify session belongs to user (or user is admin/manager)
       const session = await storage.getWorkSession(id);
@@ -2398,6 +2398,28 @@ Responde directamente a este email para contactar con la persona.
       const updateData: any = {};
       if (clockIn) updateData.clockIn = new Date(clockIn);
       if (clockOut) updateData.clockOut = new Date(clockOut);
+
+      // Update break periods if provided
+      if (requestBreakPeriods !== undefined) {
+        // First, delete existing break periods for this session
+        await db.delete(breakPeriods).where(eq(breakPeriods.workSessionId, id));
+        
+        // Then create new break periods if any are provided
+        if (Array.isArray(requestBreakPeriods) && requestBreakPeriods.length > 0) {
+          const newBreakPeriods = requestBreakPeriods.map((bp: any) => ({
+            workSessionId: id,
+            userId: session.userId,
+            breakStart: new Date(bp.breakStart),
+            breakEnd: bp.breakEnd ? new Date(bp.breakEnd) : null,
+            status: bp.breakEnd ? 'completed' : 'active',
+            duration: bp.breakEnd ? 
+              ((new Date(bp.breakEnd).getTime() - new Date(bp.breakStart).getTime()) / (1000 * 60 * 60)).toFixed(2) : 
+              null
+          }));
+          
+          await db.insert(breakPeriods).values(newBreakPeriods);
+        }
+      }
 
       const updatedSession = await storage.updateWorkSession(id, updateData);
       if (!updatedSession) {
