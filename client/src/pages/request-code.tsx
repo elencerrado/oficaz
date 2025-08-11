@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
@@ -128,9 +128,9 @@ export default function RequestCode() {
   // Show loading while checking registration settings
   if (isLoadingSettings) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-xl border border-gray-200/50">
-          <CardContent className="flex flex-col space-y-1.5 p-6 text-center pt-8 pb-6">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+          <CardHeader className="text-center pt-8 pb-6">
             <div className="flex justify-center mb-6">
               <Link href="/">
                 <img
@@ -146,7 +146,7 @@ export default function RequestCode() {
             <p className="text-gray-600 text-sm">
               Comprobando si el registro está disponible
             </p>
-          </CardContent>
+          </CardHeader>
         </Card>
       </div>
     );
@@ -155,9 +155,9 @@ export default function RequestCode() {
   // Show error page if registration is disabled
   if (registrationSettings && !registrationSettings.publicRegistrationEnabled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-xl border border-gray-200/50">
-          <CardContent className="flex flex-col space-y-1.5 p-6 text-center pt-8 pb-6">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+          <CardHeader className="text-center pt-8 pb-2">
             <div className="flex justify-center mb-6">
               <Link href="/">
                 <img
@@ -176,7 +176,9 @@ export default function RequestCode() {
             <p className="text-gray-600 text-sm mb-6">
               El registro público está temporalmente deshabilitado. Solo se puede acceder mediante invitación.
             </p>
-            <div className="space-y-3 px-2">
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <div className="space-y-3">
               <Link href="/">
                 <Button variant="outline" className="w-full rounded-xl py-3 border-gray-300">
                   Volver al Inicio
@@ -195,10 +197,9 @@ export default function RequestCode() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl bg-white/95 backdrop-blur-xl border border-gray-200/50">
-        {/* Header */}
-        <div className="flex flex-col space-y-1.5 p-6 text-center pt-8 pb-6">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+        <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
             <Link href="/">
               <img 
@@ -214,18 +215,17 @@ export default function RequestCode() {
           <p className="text-gray-600 text-sm">
             Introduce tu email para comenzar el registro
           </p>
-        </div>
+        </CardHeader>
 
         <CardContent className="px-8 pb-8">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email del administrador</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
-                  className={`pl-10 pr-16 rounded-xl border-gray-300 py-3 px-4 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
+                  className={`rounded-xl border-gray-300 py-3 px-4 pr-20 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
                     emailStatus === 'available' ? 'border-green-500 focus:border-green-500' :
                     emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' :
                     ''
@@ -233,17 +233,20 @@ export default function RequestCode() {
                   {...form.register('email')}
                   placeholder="admin@miempresa.com"
                 />
-                {/* Estado visual del email */}
+                {/* Iconos a la derecha */}
                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                  {emailStatus === 'checking' && (
-                    <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
-                  )}
-                  {emailStatus === 'available' && (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  )}
-                  {emailStatus === 'unavailable' && (
-                    <XCircle className="h-4 w-4 text-red-500" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {emailStatus === 'checking' && (
+                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                    )}
+                    {emailStatus === 'available' && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                    {emailStatus === 'unavailable' && (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                    <Mail className="h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
               
@@ -288,13 +291,10 @@ export default function RequestCode() {
             </Button>
           </form>
 
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
-              ¿Ya tienes una cuenta?{' '}
-              <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
-                Iniciar sesión
-              </Link>
-            </p>
+          <div className="text-center mt-6">
+            <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+              ¿Ya tienes una cuenta? Iniciar sesión
+            </Link>
           </div>
         </CardContent>
       </Card>
