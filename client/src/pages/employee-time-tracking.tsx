@@ -308,10 +308,13 @@ export default function EmployeeTimeTracking() {
   };
 
   const calculateSessionHours = (session: WorkSession) => {
-    const start = new Date(session.clockIn);
+    // Only calculate hours for completed sessions (with clockOut)
+    if (!session.clockOut) {
+      return 0; // Incomplete/active sessions don't count toward worked hours
+    }
     
-    // For incomplete/active sessions, calculate hours until now
-    const end = session.clockOut ? new Date(session.clockOut) : new Date();
+    const start = new Date(session.clockIn);
+    const end = new Date(session.clockOut);
     
     // Calculate base work hours
     const totalHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
@@ -514,14 +517,23 @@ export default function EmployeeTimeTracking() {
         {/* Header with date and total hours - alineado con barra azul */}
         <div className="flex justify-between items-center mb-3 mx-2">
           <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
-          <span className="text-white/90 font-mono text-sm">{formatTotalHours(calculateSessionHours(session))}</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-white/90 font-mono text-sm">
+              {session.clockOut ? formatTotalHours(calculateSessionHours(session)) : '0h 0m'}
+            </span>
+            {!session.clockOut && (
+              <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full">
+                Incompleto
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Admin-style timeline bar - ancho completo */}
         <div className="relative h-6 mb-4 mx-2">
             {/* Main session bar - h-5 like admin, ancho completo del contenedor */}
             <div
-              className="absolute top-0 h-5 bg-blue-500 rounded-sm w-full"
+              className={`absolute top-0 h-5 rounded-sm w-full ${!session.clockOut ? 'bg-red-500' : 'bg-blue-500'}`}
               style={{
                 left: '0%',
                 width: '100%'
@@ -870,9 +882,16 @@ export default function EmployeeTimeTracking() {
                                 <span className="text-white font-medium text-sm">
                                   {formatDayDate(new Date(dayKey))}
                                 </span>
-                                <span className="text-white/90 font-mono text-sm">
-                                  {formatTotalHours(dayTotal)}
-                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-white/90 font-mono text-sm">
+                                    {dayTotal > 0 ? formatTotalHours(dayTotal) : '0h 0m'}
+                                  </span>
+                                  {sortedDaySessions.some(s => !s.clockOut) && (
+                                    <span className="text-red-400 text-xs bg-red-500/20 px-2 py-1 rounded-full">
+                                      Incompleto
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Multiple session bars - en la misma línea horizontal */}
