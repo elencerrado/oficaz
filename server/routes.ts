@@ -4300,7 +4300,7 @@ startxref
           email: 'soy@oficaz.es',
           accessGrantedAt: Date.now()
         },
-        process.env.JWT_SECRET || 'your-secret-key',
+        process.env.JWT_SECRET || 'secret',
         { expiresIn: '24h' }
       );
 
