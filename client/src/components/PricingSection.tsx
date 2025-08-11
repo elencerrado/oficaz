@@ -63,7 +63,21 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
                 </h3>
                 <div className="mt-4 flex items-center justify-center">
                   <span className="text-4xl font-bold text-gray-900">
-                    €{parseFloat(plan.monthlyPrice) || '...'}
+                    €{(() => {
+                      console.log('Processing monthlyPrice:', plan.monthlyPrice, typeof plan.monthlyPrice);
+                      if (plan.monthlyPrice === null || plan.monthlyPrice === undefined) return '...';
+                      if (typeof plan.monthlyPrice === 'string') {
+                        const parsed = parseFloat(plan.monthlyPrice);
+                        console.log('Parsed string to number:', parsed);
+                        return isNaN(parsed) ? '...' : parsed;
+                      }
+                      if (typeof plan.monthlyPrice === 'number') {
+                        console.log('Already a number:', plan.monthlyPrice);
+                        return isNaN(plan.monthlyPrice) ? '...' : plan.monthlyPrice;
+                      }
+                      console.log('Unknown type, returning fallback');
+                      return '...';
+                    })()}
                   </span>
                   <span className="text-gray-600 ml-2">/mes</span>
                 </div>
