@@ -862,11 +862,14 @@ export default function EmployeeTimeTracking() {
                           new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime()
                         );
                         
-                        if (sortedDaySessions.length === 1) {
-                          // Single session - use current rendering
-                          return renderMobileTimeline(sortedDaySessions[0]);
+                        // Check if any session in the day is incomplete/active
+                        const hasIncompleteSession = sortedDaySessions.some(s => !s.clockOut);
+                        
+                        if (sortedDaySessions.length === 1 || hasIncompleteSession) {
+                          // Single session OR any incomplete session - render individually
+                          return sortedDaySessions.map(session => renderMobileTimeline(session));
                         } else {
-                          // Multiple sessions in same day - group them
+                          // Multiple completed sessions - group them
                           const dayTotal = sortedDaySessions.reduce((total: number, session: WorkSession) => 
                             total + calculateSessionHours(session), 0
                           );
