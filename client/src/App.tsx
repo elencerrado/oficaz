@@ -11,7 +11,6 @@ import { GlobalDemoBanner } from "@/components/global-demo-banner";
 import { TestBanner } from "@/components/test-banner";
 import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
-import { DashboardLoading, SettingsLoading, TableLoading } from "@/components/ui/optimized-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
@@ -34,24 +33,23 @@ import AccessDenied from "@/pages/access-denied";
 const RequestCode = lazy(() => import("@/pages/request-code"));
 const VerifyCode = lazy(() => import("@/pages/verify-code"));
 
-// Dashboard pages - lazy loaded (heavy with charts ~1MB recharts)
-const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
-const EmployeeDashboard = lazy(() => import("@/pages/employee-dashboard"));
+// Dashboard pages - loaded immediately for smooth navigation
+import AdminDashboard from "@/pages/admin-dashboard";
+import EmployeeDashboard from "@/pages/employee-dashboard";
 
-// Feature pages - aggressively lazy loaded to reduce main bundle
-const TimeTracking = lazy(() => import("@/pages/time-tracking"));
-const EmployeeTimeTracking = lazy(() => import("@/pages/employee-time-tracking"));
-const VacationRequests = lazy(() => import("@/pages/vacation-requests"));
-const VacationManagement = lazy(() => import("@/pages/vacation-management"));
-const Documents = lazy(() => import("@/pages/documents"));
-const AdminDocuments = lazy(() => import("@/pages/admin-documents"));
-const Messages = lazy(() => import("@/pages/messages"));
-const Reminders = lazy(() => import("@/pages/reminders"));
-const EmployeeReminders = lazy(() => import("@/pages/employee-reminders"));
-const EmployeesSimple = lazy(() => import("@/pages/employees-simple"));
-// Settings page contains Stripe components (~141KB) - lazy load
-const Settings = lazy(() => import("@/pages/settings"));
-const EmployeeProfile = lazy(() => import("@/pages/employee-profile"));
+// Core admin pages - loaded immediately to prevent layout shifts
+import TimeTracking from "@/pages/time-tracking";
+import EmployeeTimeTracking from "@/pages/employee-time-tracking";
+import VacationRequests from "@/pages/vacation-requests";
+import VacationManagement from "@/pages/vacation-management";
+import Documents from "@/pages/documents";
+import AdminDocuments from "@/pages/admin-documents";
+import Messages from "@/pages/messages";
+import Reminders from "@/pages/reminders";
+import EmployeeReminders from "@/pages/employee-reminders";
+import EmployeesSimple from "@/pages/employees-simple";
+import Settings from "@/pages/settings";
+import EmployeeProfile from "@/pages/employee-profile";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminLogin = lazy(() => import("@/pages/super-admin-login"));
@@ -73,18 +71,10 @@ function DashboardRouter() {
   const { user } = useAuth();
   
   if (user?.role === 'employee') {
-    return (
-      <Suspense fallback={<DashboardLoading />}>
-        <EmployeeDashboard />
-      </Suspense>
-    );
+    return <EmployeeDashboard />;
   }
   
-  return (
-    <Suspense fallback={<DashboardLoading />}>
-      <AdminDashboard />
-    </Suspense>
-  );
+  return <AdminDashboard />;
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -318,9 +308,7 @@ function Router() {
       <Route path="/:companyAlias/inicio">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<DashboardLoading />}>
-              <DashboardRouter />
-            </Suspense>
+            <DashboardRouter />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -328,9 +316,7 @@ function Router() {
       <Route path="/:companyAlias/control-tiempo">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<DashboardLoading />}>
-              <EmployeeTimeTracking />
-            </Suspense>
+            <EmployeeTimeTracking />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -338,9 +324,7 @@ function Router() {
       <Route path="/:companyAlias/misfichajes">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<DashboardLoading />}>
-              <EmployeeTimeTracking />
-            </Suspense>
+            <EmployeeTimeTracking />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -349,9 +333,7 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <Suspense fallback={<PageLoading />}>
-                <TimeTracking />
-              </Suspense>
+              <TimeTracking />
             ) : (
               <Redirect to={`/${company?.companyAlias || 'test'}/misfichajes`} />
             )}
@@ -362,18 +344,14 @@ function Router() {
       <Route path="/:companyAlias/configuracion">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<SettingsLoading />}>
-              <Settings />
-            </Suspense>
+            <Settings />
           </AppLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/:companyAlias/usuario">
         <ProtectedRoute>
-          <Suspense fallback={<PageLoading />}>
-            <EmployeeProfile />
-          </Suspense>
+          <EmployeeProfile />
         </ProtectedRoute>
       </Route>
 
@@ -381,13 +359,9 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user && (user.role === 'admin' || user.role === 'manager') ? (
-              <Suspense fallback={<PageLoading />}>
-                <VacationManagement />
-              </Suspense>
+              <VacationManagement />
             ) : (
-              <Suspense fallback={<PageLoading />}>
-                <VacationRequests />
-              </Suspense>
+              <VacationRequests />
             )}
           </AppLayout>
         </ProtectedRoute>
@@ -397,13 +371,9 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user?.role === 'employee' ? (
-              <Suspense fallback={<PageLoading />}>
-                <Documents />
-              </Suspense>
+              <Documents />
             ) : (
-              <Suspense fallback={<PageLoading />}>
-                <AdminDocuments />
-              </Suspense>
+              <AdminDocuments />
             )}
           </AppLayout>
         </ProtectedRoute>
@@ -412,9 +382,7 @@ function Router() {
       <Route path="/:companyAlias/mensajes">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<PageLoading />}>
-              <Messages />
-            </Suspense>
+            <Messages />
           </AppLayout>
         </ProtectedRoute>
       </Route>
@@ -423,13 +391,9 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             {user?.role === 'employee' ? (
-              <Suspense fallback={<PageLoading />}>
-                <EmployeeReminders />
-              </Suspense>
+              <EmployeeReminders />
             ) : (
-              <Suspense fallback={<PageLoading />}>
-                <Reminders />
-              </Suspense>
+              <Reminders />
             )}
           </AppLayout>
         </ProtectedRoute>
@@ -438,9 +402,7 @@ function Router() {
       <Route path="/:companyAlias/empleados">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<TableLoading />}>
-              <EmployeesSimple />
-            </Suspense>
+            <EmployeesSimple />
           </AppLayout>
         </ProtectedRoute>
       </Route>
