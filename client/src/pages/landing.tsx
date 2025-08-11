@@ -276,7 +276,7 @@ export default function Landing() {
         description: staticPlansDescriptions[planKey] || dbPlan.name,
         features: dynamicFeatures,
         popular: popularPlans[planKey] || false,
-        price: parseFloat(dbPlan.pricePerUser).toString()
+        price: Number(dbPlan.monthlyPrice).toFixed(2)
       };
     });
   };
