@@ -109,32 +109,58 @@ export function ClockWidget() {
               <p className="text-sm text-gray-600 mb-1">Current Status</p>
               <div className="flex items-center space-x-2">
                 {(() => {
-                  // Check if session has exceeded max hours + overtime
                   if (activeSession) {
                     const clockIn = new Date(activeSession.clockIn);
                     const currentTime = new Date();
-                    const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
-                    const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-                    const maxHoursWithOvertime = maxDailyHours + 4;
+                    const isToday = clockIn.toDateString() === currentTime.toDateString();
                     
-                    // If session has exceeded max hours + overtime, show as "Out of Work"
-                    if (hoursWorked > maxHoursWithOvertime) {
+                    // If session is from a previous day and marked as incomplete, show special status
+                    if (!isToday && activeSession.status === 'incomplete') {
                       return (
                         <>
-                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                          <span className="text-lg font-semibold text-red-600">
-                            Out of Work
+                          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                          <span className="text-lg font-semibold text-orange-600">
+                            Sesión Incompleta
                           </span>
                         </>
                       );
                     }
                     
-                    // Normal active session
+                    // If session is from today, check if it's active or exceeded hours
+                    if (isToday) {
+                      const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                      const maxHoursWithOvertime = maxDailyHours + 4;
+                      
+                      // If session has exceeded max hours + overtime, show as "Out of Work"
+                      if (hoursWorked > maxHoursWithOvertime) {
+                        return (
+                          <>
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span className="text-lg font-semibold text-red-600">
+                              Out of Work
+                            </span>
+                          </>
+                        );
+                      }
+                      
+                      // Normal active session from today
+                      return (
+                        <>
+                          <div className="w-3 h-3 rounded-full bg-oficaz-success animate-pulse-green"></div>
+                          <span className="text-lg font-semibold text-gray-900">
+                            Clocked In
+                          </span>
+                        </>
+                      );
+                    }
+                    
+                    // For other cases (should not happen), treat as incomplete
                     return (
                       <>
-                        <div className="w-3 h-3 rounded-full bg-oficaz-success animate-pulse-green"></div>
-                        <span className="text-lg font-semibold text-gray-900">
-                          Clocked In
+                        <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                        <span className="text-lg font-semibold text-orange-600">
+                          Sesión Incompleta
                         </span>
                       </>
                     );
@@ -170,19 +196,38 @@ export function ClockWidget() {
         {/* Clock In/Out Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {(() => {
-            // Check if we should allow new clock-in even with active session
-            let shouldShowActiveButtons = !!activeSession;
+            // Determine button states based on session type and date
+            let shouldShowActiveButtons = false;
+            let buttonText = {
+              clockOut: 'Clock Out',
+              clockOutDesc: 'End your workday'
+            };
             
             if (activeSession) {
               const clockIn = new Date(activeSession.clockIn);
               const currentTime = new Date();
-              const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
-              const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-              const maxHoursWithOvertime = maxDailyHours + 4; // +4 hours for overtime allowance
+              const isToday = clockIn.toDateString() === currentTime.toDateString();
               
-              // If session has exceeded max hours + overtime, treat as if no active session
-              if (hoursWorked > maxHoursWithOvertime) {
-                shouldShowActiveButtons = false; // Allow new clock-in
+              // If session is from a previous day and incomplete, allow clock-out only
+              if (!isToday && activeSession.status === 'incomplete') {
+                shouldShowActiveButtons = true;
+                buttonText = {
+                  clockOut: 'Cerrar Sesión',
+                  clockOutDesc: 'Completar sesión incompleta'
+                };
+              }
+              // If session is from today, use normal logic
+              else if (isToday) {
+                const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+                const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+                const maxHoursWithOvertime = maxDailyHours + 4;
+                
+                // If session has exceeded max hours + overtime, treat as if no active session
+                if (hoursWorked > maxHoursWithOvertime) {
+                  shouldShowActiveButtons = false; // Allow new clock-in
+                } else {
+                  shouldShowActiveButtons = true; // Normal active session
+                }
               }
             }
             
@@ -218,8 +263,8 @@ export function ClockWidget() {
                   variant="outline"
                 >
                   <Square className="text-2xl mb-2" />
-                  <span className="font-semibold">Clock Out</span>
-                  <span className="text-sm opacity-75">End your workday</span>
+                  <span className="font-semibold">{buttonText.clockOut}</span>
+                  <span className="text-sm opacity-75">{buttonText.clockOutDesc}</span>
                 </Button>
               </>
             );

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, or, desc, sql, lte, isNotNull, isNull, inArray } from 'drizzle-orm';
+import { eq, and, or, desc, sql, lte, isNotNull, isNull, inArray, asc } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
@@ -280,9 +280,24 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveWorkSession(userId: number): Promise<WorkSession | undefined> {
-    const [session] = await db.select().from(schema.workSessions)
+    // First check for active sessions from today
+    const [activeSession] = await db.select().from(schema.workSessions)
       .where(and(eq(schema.workSessions.userId, userId), eq(schema.workSessions.status, 'active')));
-    return session;
+    
+    if (activeSession) {
+      return activeSession;
+    }
+    
+    // If no active session, check for incomplete sessions (sessions that need to be closed)
+    const [incompleteSession] = await db.select().from(schema.workSessions)
+      .where(and(
+        eq(schema.workSessions.userId, userId), 
+        eq(schema.workSessions.status, 'incomplete'),
+        isNull(schema.workSessions.clockOut)
+      ))
+      .orderBy(asc(schema.workSessions.clockIn));
+    
+    return incompleteSession;
   }
 
   async getWorkSession(id: number): Promise<WorkSession | undefined> {

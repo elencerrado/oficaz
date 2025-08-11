@@ -2463,11 +2463,28 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Invalid time: clock-out cannot be before clock-in' });
       }
       
+      // For incomplete sessions from previous days, allow closure with maximum company working hours
       if (diffInMs > 24 * 60 * 60 * 1000) {
-        const hoursDiff = diffInMs / (1000 * 60 * 60);
-        return res.status(400).json({ 
-          message: `Session too long: ${hoursDiff.toFixed(1)} hours. Maximum 24 hours allowed. Please contact admin to fix this session.` 
-        });
+        // Check if this is an incomplete session that needs to be closed
+        if (activeSession.status === 'incomplete') {
+          // Get company work hours settings
+          const companyData = await storage.getCompanyByUserId(req.user!.id);
+          const maxWorkHours = companyData?.workingHoursPerDay || 8;
+          
+          // Close incomplete session with maximum working hours
+          const updatedSession = await storage.updateWorkSession(activeSession.id, {
+            clockOut,
+            totalHours: maxWorkHours.toString(),
+            status: 'completed',
+          });
+          
+          return res.json(updatedSession);
+        } else {
+          const hoursDiff = diffInMs / (1000 * 60 * 60);
+          return res.status(400).json({ 
+            message: `Session too long: ${hoursDiff.toFixed(1)} hours. Maximum 24 hours allowed. Please contact admin to fix this session.` 
+          });
+        }
       }
       
       const totalHours = diffInMs / (1000 * 60 * 60);

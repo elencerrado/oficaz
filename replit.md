@@ -48,6 +48,15 @@ Preferred communication style: Simple, everyday language.
 - **User Control**: Admins can modify work hours via Settings > Company > "Horas de trabajo por día" input field
 - **Default Fallback**: Falls back to 8 hours if configuration is not available
 
+### Incomplete Sessions Management (✅ FIXED - AUGUST 11, 2025)
+- **Critical Bug Fixed**: Modified `getActiveWorkSession` to detect both active and incomplete sessions from any day
+- **Problem Solved**: Employees with incomplete sessions from previous days can now properly close them
+- **Backend Logic**: Updated function prioritizes active sessions, then incomplete sessions by oldest date
+- **Clock-Out Enhancement**: Modified endpoint to handle incomplete sessions exceeding 24 hours with company work hour limits
+- **Frontend Updates**: ClockWidget now shows "Sesión Incompleta" status and appropriate "Cerrar Sesión" button
+- **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days)
+- **User Requirement**: "juan jose ramirez tiene un fichaje de ayer incompleto pero haciendo login con su cuenta en el dash de empleado veo que no ha cambiado el estado de los botones de fichar"
+
 ### SEO Optimization System (✅ PRODUCTION READY - VERIFIED WORKING)
 - **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference
 - **Implementation**: robots.txt and sitemap.xml served from client/public directory
