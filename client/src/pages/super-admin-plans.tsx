@@ -222,7 +222,7 @@ export default function SuperAdminPlans() {
     if (newPrice && !isNaN(parseFloat(newPrice))) {
       updatePlanMutation.mutate({
         id: planId,
-        data: { pricePerUser: parseFloat(newPrice) }
+        data: { monthlyPrice: parseFloat(newPrice) }
       });
     }
     setEditingPrice(null);

@@ -5406,12 +5406,12 @@ startxref
 
   app.post('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
     try {
-      const { name, displayName, pricePerUser, maxUsers, features } = req.body;
+      const { name, displayName, monthlyPrice, maxUsers, features } = req.body;
       
       const plan = await storage.createSubscriptionPlan({
         name,
         displayName,
-        pricePerUser: parseFloat(pricePerUser),
+        monthlyPrice: parseFloat(monthlyPrice),
         maxUsers: maxUsers || null,
         features: features || {},
         isActive: true
@@ -5429,8 +5429,8 @@ startxref
       const planId = parseInt(req.params.id);
       const updates = req.body;
       
-      if (updates.pricePerUser) {
-        updates.pricePerUser = parseFloat(updates.pricePerUser);
+      if (updates.monthlyPrice) {
+        updates.monthlyPrice = parseFloat(updates.monthlyPrice);
       }
       
       const plan = await storage.updateSubscriptionPlan(planId, updates);
