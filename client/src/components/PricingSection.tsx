@@ -41,9 +41,7 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
         </div>
         
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {subscriptionPlans?.map((plan, index) => {
-            console.log('DEBUG - Plan data:', plan, 'monthlyPrice:', plan.monthlyPrice, 'type:', typeof plan.monthlyPrice);
-            return (
+          {subscriptionPlans?.map((plan, index) => (
             <div key={plan.id} className={`rounded-2xl p-8 relative ${
               index === 1 
                 ? 'bg-gradient-to-b from-blue-50 to-white border-2 border-blue-200 scale-105' 
@@ -63,21 +61,7 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
                 </h3>
                 <div className="mt-4 flex items-center justify-center">
                   <span className="text-4xl font-bold text-gray-900">
-                    €{(() => {
-                      console.log('Processing monthlyPrice:', plan.monthlyPrice, typeof plan.monthlyPrice);
-                      if (plan.monthlyPrice === null || plan.monthlyPrice === undefined) return '...';
-                      if (typeof plan.monthlyPrice === 'string') {
-                        const parsed = parseFloat(plan.monthlyPrice);
-                        console.log('Parsed string to number:', parsed);
-                        return isNaN(parsed) ? '...' : parsed;
-                      }
-                      if (typeof plan.monthlyPrice === 'number') {
-                        console.log('Already a number:', plan.monthlyPrice);
-                        return isNaN(plan.monthlyPrice) ? '...' : plan.monthlyPrice;
-                      }
-                      console.log('Unknown type, returning fallback');
-                      return '...';
-                    })()}
+                    €{Number(plan.monthlyPrice).toFixed(2) || '0.00'}
                   </span>
                   <span className="text-gray-600 ml-2">/mes</span>
                 </div>
@@ -116,8 +100,7 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
                 </Link>
               </div>
             </div>
-          );
-          })}
+          ))}
         </div>
       </div>
     </section>
