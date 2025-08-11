@@ -80,6 +80,10 @@ const AccountManagement = () => {
     queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
     queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
     queryClient.refetchQueries({ queryKey: ['/api/account/trial-status'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+    queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+    queryClient.refetchQueries({ queryKey: ['/api/subscription-plans'] });
   }, [queryClient]);
   
   const { data: accountInfo } = useQuery({
@@ -154,13 +158,16 @@ const AccountManagement = () => {
   };
 
   const getPlanPrice = () => {
-    if (!subscription?.plan || !subscriptionPlans) return '€29.99';
+    if (!subscription?.plan || !subscriptionPlans) {
+      // Default to correct Pro price while loading
+      return subscription?.plan === 'pro' ? '€39.95' : subscription?.plan === 'basic' ? '€19.95' : '€99.95';
+    }
     
     const plan = (subscriptionPlans as any[])?.find((p: any) => 
       p.name === subscription.plan
     );
     
-    return plan?.pricePerUser ? `€${plan.pricePerUser}` : '€29.99';
+    return plan?.pricePerUser ? `€${plan.pricePerUser}` : subscription?.plan === 'pro' ? '€39.95' : '€19.95';
   };
 
   if (!accountInfo && !subscription) {
