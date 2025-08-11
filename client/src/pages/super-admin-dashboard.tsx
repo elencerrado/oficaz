@@ -47,7 +47,10 @@ interface SuperAdminStats {
   totalCompanies: number;
   totalUsers: number;
   activeSubscriptions: number;
+  activePaidSubscriptions: number;
   revenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
   planDistribution: {
     free: number;
     basic: number;
@@ -276,18 +279,18 @@ export default function SuperAdminDashboard() {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
-                Total Empresas
+                Empresas Registradas
               </CardTitle>
               <Building2 className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{stats?.totalCompanies || 0}</div>
               <p className="text-xs text-white/60">
-                {stats?.totalCompanies === 1 ? 'Empresa registrada' : 'Empresas registradas'}
+                Total en la plataforma
               </p>
             </CardContent>
           </Card>
@@ -295,14 +298,29 @@ export default function SuperAdminDashboard() {
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
-                Total Usuarios
+                Empresas Pagando
+              </CardTitle>
+              <Crown className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
+              <p className="text-xs text-white/60">
+                Con suscripción activa
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Usuarios Activos
               </CardTitle>
               <Users className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
               <p className="text-xs text-white/60">
-                {stats?.totalUsers === 1 ? 'Usuario registrado' : 'Usuarios registrados'}
+                Total registrados
               </p>
             </CardContent>
           </Card>
@@ -310,29 +328,29 @@ export default function SuperAdminDashboard() {
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
-                Suscripciones Activas
-              </CardTitle>
-              <Crown className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
-              <p className="text-xs text-white/60">
-                {stats?.activeSubscriptions === 1 ? 'Empresa con suscripción' : 'Empresas con suscripciones'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white/80">
-                Ingresos MRR
+                Ingresos Mensuales
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">€{stats?.revenue || 0}</div>
+              <div className="text-2xl font-bold text-white">€{stats?.monthlyRevenue || 0}</div>
               <p className="text-xs text-white/60">
-                {stats?.revenue === 0 ? 'Sin ingresos' : 'Ingresos mensuales recurrentes'}
+                MRR (recurrente)
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Ingresos Anuales
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">€{stats?.yearlyRevenue || 0}</div>
+              <p className="text-xs text-white/60">
+                ARR (proyectado)
               </p>
             </CardContent>
           </Card>

@@ -746,46 +746,57 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getSuperAdminStats(): Promise<any> {
+    // Total companies registered
     const companiesCount = await db.select({ count: sql<number>`count(*)` }).from(schema.companies);
+    
+    // Total active users across all companies
     const usersCount = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
     
-    // Get subscription stats
+    // Get subscription stats with active status filter
     const subscriptionStats = await db
       .select({
         plan: schema.subscriptions.plan,
+        status: schema.subscriptions.status,
         count: sql<number>`count(*)`,
       })
       .from(schema.subscriptions)
-      .groupBy(schema.subscriptions.plan);
+      .where(eq(schema.subscriptions.status, 'active'))
+      .groupBy(schema.subscriptions.plan, schema.subscriptions.status);
 
     const planCounts = subscriptionStats.reduce((acc, row) => {
       acc[row.plan as keyof typeof acc] = row.count;
       return acc;
     }, { free: 0, basic: 0, pro: 0, master: 0 });
 
-    // Calculate active paid subscriptions
-    const activeSubscriptions = subscriptionStats.reduce((acc, row) => {
-      if (row.plan !== 'free') {
+    // Calculate active paid subscriptions (excluding free)
+    const activePaidSubscriptions = subscriptionStats.reduce((acc, row) => {
+      if (row.plan !== 'free' && row.status === 'active') {
         acc += row.count;
       }
       return acc;
     }, 0);
 
-    // Calculate revenue
+    // Calculate monthly and yearly revenue
     const pricing = { basic: 29, pro: 59, master: 149 };
-    const revenue = subscriptionStats.reduce((acc, row) => {
-      if (row.plan !== 'free') {
+    const monthlyRevenue = subscriptionStats.reduce((acc, row) => {
+      if (row.plan !== 'free' && row.status === 'active') {
         acc += (pricing[row.plan as keyof typeof pricing] || 0) * row.count;
       }
       return acc;
     }, 0);
 
+    const yearlyRevenue = monthlyRevenue * 12;
+
     return {
       totalCompanies: companiesCount[0]?.count || 0,
       totalUsers: usersCount[0]?.count || 0,
-      activeSubscriptions,
-      revenue,
+      activePaidSubscriptions,
+      monthlyRevenue,
+      yearlyRevenue,
       planDistribution: planCounts,
+      // Legacy field for backward compatibility
+      activeSubscriptions: activePaidSubscriptions,
+      revenue: monthlyRevenue,
     };
   }
 
@@ -823,8 +834,8 @@ export class DrizzleStorage implements IStorage {
     // Calculate trial dates from companies.created_at (single source of truth)
     const registrationDate = new Date(company.createdAt);
     const trialEndDate = new Date(registrationDate);
-    // Use custom trial duration from company settings (default 14 days)
-    const trialDuration = company.trialDurationDays || 14;
+    // Use default trial duration of 14 days
+    const trialDuration = 14;
     trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
 
     // Determine effective plan for features
