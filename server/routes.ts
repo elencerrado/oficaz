@@ -4212,12 +4212,10 @@ startxref
         expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
       });
 
-      // Send email with verification code using Nodemailer directly
+      // Send email with verification code using the existing email infrastructure
       try {
-        const nodemailer = await import('nodemailer');
-        
-        // Configure Nodemailer with Hostinger SMTP
-        const transporter = nodemailer.default.createTransport({
+        // Use the same configuration as the rest of the app
+        const transporter = nodemailer.createTransport({
           host: 'smtp.hostinger.com',
           port: 465,
           secure: true, // SSL
@@ -4230,7 +4228,7 @@ startxref
           }
         });
 
-        await transporter.sendMail({
+        const mailOptions = {
           from: 'soy@oficaz.es',
           to: 'soy@oficaz.es',
           subject: 'Código de verificación SuperAdmin - Oficaz',
@@ -4253,12 +4251,17 @@ startxref
               </div>
             </div>
           `
-        });
+        };
 
-        console.log('✅ SuperAdmin verification code sent via Nodemailer to soy@oficaz.es:', verificationCode);
+        console.log('📧 Attempting to send SuperAdmin verification code to soy@oficaz.es...');
+        const result = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully:', result.messageId);
+        console.log('🔑 Verification code:', verificationCode);
+        
         res.json({ token: tempToken, message: "Código enviado correctamente" });
       } catch (emailError) {
-        console.error('Error sending verification email via Nodemailer:', emailError);
+        console.error('❌ Error sending verification email:', emailError);
+        console.log('🔑 Verification code (for debugging):', verificationCode);
         res.status(500).json({ message: "Error al enviar el código de verificación" });
       }
     } catch (error) {
