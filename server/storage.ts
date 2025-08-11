@@ -776,14 +776,37 @@ export class DrizzleStorage implements IStorage {
       return acc;
     }, 0);
 
-    // Calculate monthly and yearly revenue
-    const pricing = { basic: 29, pro: 59, master: 149 };
-    const monthlyRevenue = subscriptionStats.reduce((acc, row) => {
-      if (row.plan !== 'free' && row.status === 'active') {
-        acc += (pricing[row.plan as keyof typeof pricing] || 0) * row.count;
-      }
+    // Get real pricing from subscription_plans table
+    const planPricing = await db.select({
+      name: schema.subscriptionPlans.name,
+      pricePerUser: schema.subscriptionPlans.pricePerUser
+    }).from(schema.subscriptionPlans);
+
+    const pricingPerUser = planPricing.reduce((acc, plan) => {
+      acc[plan.name] = plan.pricePerUser;
       return acc;
-    }, 0);
+    }, {} as Record<string, number>);
+
+    // Calculate monthly revenue - we need to get the actual user count per subscription
+    // For now, use a simplified calculation with base pricing
+    const monthlyRevenue = await db
+      .select({
+        plan: schema.subscriptions.plan,
+        userCount: sql<number>`count(${schema.users.id})`,
+      })
+      .from(schema.subscriptions)
+      .leftJoin(schema.users, eq(schema.subscriptions.companyId, schema.users.companyId))
+      .where(eq(schema.subscriptions.status, 'active'))
+      .groupBy(schema.subscriptions.plan)
+      .then(results => 
+        results.reduce((acc, row) => {
+          if (row.plan !== 'free') {
+            const pricePerUser = pricingPerUser[row.plan] || 0;
+            acc += pricePerUser * (row.userCount || 1); // Minimum 1 user per subscription
+          }
+          return acc;
+        }, 0)
+      );
 
     const yearlyRevenue = monthlyRevenue * 12;
 
