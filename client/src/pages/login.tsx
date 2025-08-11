@@ -186,9 +186,13 @@ export default function Login() {
               </Link>
             )}
           </div>
-          {companyInfo && (
+          {companyInfo ? (
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
               {companyInfo.name}
+            </h1>
+          ) : (
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Iniciar sesión
             </h1>
           )}
           <p className="text-gray-600 text-sm">
