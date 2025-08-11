@@ -159,7 +159,7 @@ const AccountManagement = () => {
 
   const getPlanPrice = () => {
     if (!subscription?.plan || !subscriptionPlans) {
-      // Default to correct Pro price while loading
+      // Default to correct plan prices while loading
       return subscription?.plan === 'pro' ? '€39.95' : subscription?.plan === 'basic' ? '€19.95' : '€99.95';
     }
     
@@ -167,6 +167,7 @@ const AccountManagement = () => {
       p.name === subscription.plan
     );
     
+    // pricePerUser is actually the full plan price, not per user
     return plan?.pricePerUser ? `€${plan.pricePerUser}` : subscription?.plan === 'pro' ? '€39.95' : '€19.95';
   };
 
