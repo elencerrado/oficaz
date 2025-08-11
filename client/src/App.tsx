@@ -325,10 +325,20 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/:companyAlias/control-tiempo">
+        <ProtectedRoute>
+          <AppLayout>
+            <Suspense fallback={<DashboardLoading />}>
+              <EmployeeTimeTracking />
+            </Suspense>
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/:companyAlias/misfichajes">
         <ProtectedRoute>
           <AppLayout>
-            <Suspense fallback={<PageLoading />}>
+            <Suspense fallback={<DashboardLoading />}>
               <EmployeeTimeTracking />
             </Suspense>
           </AppLayout>

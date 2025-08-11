@@ -27,15 +27,9 @@ if (document.readyState === 'loading') {
   markAsLoaded();
 }
 
-// Lazy load the main App component to reduce initial bundle
-const App = lazy(() => import("./App"));
+// Import App directly to avoid double loading effect
+import App from "./App";
 
-// Add loading spinner to DOM immediately for better UX
 const root = document.getElementById("root")!;
-root.innerHTML = '<div class="loading-spinner"></div>';
 
-createRoot(root).render(
-  <Suspense fallback={<div className="loading-spinner"></div>}>
-    <App />
-  </Suspense>
-);
+createRoot(root).render(<App />);
