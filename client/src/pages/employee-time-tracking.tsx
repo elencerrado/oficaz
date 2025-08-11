@@ -134,7 +134,7 @@ export default function EmployeeTimeTracking() {
   const currentYear = new Date().getFullYear();
   
   // Queries with optimized intervals for better performance
-  const { data: sessions = [], isLoading } = useQuery({
+  const { data: sessions = [], isLoading } = useQuery<WorkSession[]>({
     queryKey: ['/api/work-sessions'],
     staleTime: 60000,
     gcTime: 120000,
@@ -142,7 +142,7 @@ export default function EmployeeTimeTracking() {
     refetchIntervalInBackground: false,
   });
 
-  const { data: breakPeriods = [] } = useQuery({
+  const { data: breakPeriods = [] } = useQuery<BreakPeriod[]>({
     queryKey: ['/api/break-periods'],
     staleTime: 60000,
     gcTime: 120000,
@@ -159,7 +159,7 @@ export default function EmployeeTimeTracking() {
   });
 
   // Query for company work hours settings
-  const { data: companySettings } = useQuery({
+  const { data: companySettings } = useQuery<{ workingHoursPerDay: number; name: string; alias: string }>({
     queryKey: ['/api/settings/work-hours'],
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -252,10 +252,22 @@ export default function EmployeeTimeTracking() {
   const handleClockOutIncomplete = (sessionId: number) => {
     setIncompleteSessionId(sessionId);
     
-    // Set current time as default
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5); // Format: "HH:MM"
-    setClockOutTime(currentTime);
+    // Find the session to get clock in time
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      const clockInTime = new Date(session.clockIn);
+      const maxHours = companySettings?.workingHoursPerDay || 8;
+      
+      // Add max working hours to clock in time
+      const suggestedClockOut = new Date(clockInTime.getTime() + (maxHours * 60 * 60 * 1000));
+      const suggestedTime = suggestedClockOut.toTimeString().slice(0, 5); // Format: "HH:MM"
+      setClockOutTime(suggestedTime);
+    } else {
+      // Fallback to current time
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      setClockOutTime(currentTime);
+    }
     
     setIncompleteDialogOpen(true);
   };
@@ -344,7 +356,7 @@ export default function EmployeeTimeTracking() {
   });
 
   // Calculate total hours for the month
-  const totalMonthHours = monthSessions.reduce((total, session) => {
+  const totalMonthHours = monthSessions.reduce((total: number, session: WorkSession) => {
     return total + calculateSessionHours(session);
   }, 0);
 
@@ -414,7 +426,7 @@ export default function EmployeeTimeTracking() {
     
     if (!session.clockOut) {
       const isIncomplete = isSessionIncomplete(session);
-      const statusColor = isIncomplete ? "yellow" : "green";
+      const statusColor = isIncomplete ? "red" : "green";
       const statusText = isIncomplete ? "Incompleto" : "En curso";
       
       return (
@@ -423,8 +435,8 @@ export default function EmployeeTimeTracking() {
             <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className={`${
-                statusColor === "yellow" 
-                  ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30" 
+                statusColor === "red" 
+                  ? "bg-red-500/20 text-red-300 border-red-500/30" 
                   : "bg-green-500/20 text-green-300 border-green-500/30"
               }`}>
                 {statusText}
@@ -433,7 +445,7 @@ export default function EmployeeTimeTracking() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-6 px-2 py-0 text-xs border-white/20 text-white hover:bg-white/10"
+                  className="h-6 px-2 py-0 text-xs bg-red-500/20 border-red-500/50 text-red-300 hover:bg-red-500/30 hover:border-red-400"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleClockOutIncomplete(session.id);
@@ -447,8 +459,8 @@ export default function EmployeeTimeTracking() {
           
           <div className="flex items-center space-x-2 mb-3">
             <div className={`w-3 h-3 ${
-              statusColor === "yellow" 
-                ? "bg-yellow-400 ring-2 ring-yellow-400/30" 
+              statusColor === "red" 
+                ? "bg-red-400 ring-2 ring-red-400/30" 
                 : "bg-green-400"
             } rounded-full ${statusColor === "green" ? "animate-pulse" : ""}`}></div>
             <span className="text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
@@ -630,7 +642,7 @@ export default function EmployeeTimeTracking() {
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
           {shouldShowLogo ? (
             <img 
-              src={company.logoUrl} 
+              src={company.logoUrl || ''} 
               alt={company.name} 
               className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
@@ -760,7 +772,7 @@ export default function EmployeeTimeTracking() {
         {monthSessions.length > 0 ? (
           (() => {
             const sortedSessions = monthSessions
-              .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+              .sort((a: WorkSession, b: WorkSession) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
             
             // Group sessions by week
             const weekGroups = new Map<string, WorkSession[]>();
@@ -784,7 +796,7 @@ export default function EmployeeTimeTracking() {
             
             sortedWeeks.forEach(([weekKey, weekSessions], weekIndex) => {
               const weekStart = new Date(weekKey);
-              const weekTotal = weekSessions.reduce((total, session) => total + calculateSessionHours(session), 0);
+              const weekTotal = weekSessions.reduce((total: number, session: WorkSession) => total + calculateSessionHours(session), 0);
               
               // Contenedor de semana
               result.push(
@@ -830,7 +842,7 @@ export default function EmployeeTimeTracking() {
                           return renderMobileTimeline(sortedDaySessions[0]);
                         } else {
                           // Multiple sessions in same day - group them
-                          const dayTotal = sortedDaySessions.reduce((total, session) => 
+                          const dayTotal = sortedDaySessions.reduce((total: number, session: WorkSession) => 
                             total + calculateSessionHours(session), 0
                           );
                           
@@ -1040,27 +1052,29 @@ export default function EmployeeTimeTracking() {
       
       {/* Dialog for incomplete session clock out */}
       <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-xs max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center">Cerrar Sesión Incompleta</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="text-center text-sm text-gray-600">
               Introduce la hora de salida para cerrar esta sesión incompleta:
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700 text-center">
                 Hora de salida
               </label>
-              <Input
-                type="time"
-                value={clockOutTime}
-                onChange={(e) => setClockOutTime(e.target.value)}
-                className="text-center"
-                placeholder="HH:MM"
-              />
+              <div className="flex justify-center">
+                <Input
+                  type="time"
+                  value={clockOutTime}
+                  onChange={(e) => setClockOutTime(e.target.value)}
+                  className="text-center w-32 text-lg font-mono"
+                  placeholder="HH:MM"
+                />
+              </div>
             </div>
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
                 onClick={() => setIncompleteDialogOpen(false)}
