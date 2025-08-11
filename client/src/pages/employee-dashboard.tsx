@@ -99,6 +99,18 @@ export default function EmployeeDashboard() {
     staleTime: 25000, // Cache for 25 seconds
   });
 
+  // Check for incomplete work sessions notifications
+  const { data: timeTrackingNotifications = [] } = useQuery({
+    queryKey: ['/api/notifications', { category: 'time-tracking' }],
+    enabled: !!user,
+    refetchInterval: 30000, // Check every 30 seconds
+    refetchIntervalInBackground: false,
+    staleTime: 25000,
+  });
+
+  // Calculate if there are unread incomplete session notifications
+  const hasIncompleteSessionNotifications = timeTrackingNotifications.filter((n: any) => !n.isRead && !n.isCompleted).length > 0;
+
   // Get document notifications with reduced frequency
   const { data: documents } = useQuery({
     queryKey: ['/api/documents'],
@@ -516,7 +528,8 @@ export default function EmployeeDashboard() {
       icon: Clock, 
       title: 'Fichajes', 
       route: `/${companyAlias}/misfichajes`,
-      notification: false,
+      notification: hasIncompleteSessionNotifications,
+      notificationType: 'red',
       feature: 'timeTracking'
     },
     { 
