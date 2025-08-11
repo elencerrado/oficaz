@@ -57,6 +57,15 @@ Preferred communication style: Simple, everyday language.
 - **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days)
 - **User Requirement**: "juan jose ramirez tiene un fichaje de ayer incompleto pero haciendo login con su cuenta en el dash de empleado veo que no ha cambiado el estado de los botones de fichar"
 
+### Loading System Optimization (✅ FIXED - AUGUST 11, 2025)
+- **Problem Solved**: Eliminated double loader effect during page navigation transitions
+- **Main Changes**: Removed immediate DOM spinner insertion in main.tsx that caused visual displacement
+- **App Loading**: Converted App component from lazy-loaded to direct import for smoother initial load
+- **PageLoading Design**: Restored proper Oficaz branding with gradient background and centered logo
+- **Fallback Optimization**: Unified Suspense fallbacks using appropriate components (PageLoading vs DashboardLoading)
+- **Performance Impact**: Reduced loading layers and improved perceived navigation speed
+- **User Feedback**: "la pagina de carga en el empleado ahora es toda blanca, deberia ser el mismo fondo de la version empleado y el loader de oficaz en el centro"
+
 ### SEO Optimization System (✅ PRODUCTION READY - VERIFIED WORKING)
 - **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference
 - **Implementation**: robots.txt and sitemap.xml served from client/public directory
