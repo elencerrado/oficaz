@@ -61,7 +61,7 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
                 </h3>
                 <div className="mt-4 flex items-center justify-center">
                   <span className="text-4xl font-bold text-gray-900">
-                    €{plan.monthlyPrice || '...'}
+                    €{parseFloat(plan.monthlyPrice) || '...'}
                   </span>
                   <span className="text-gray-600 ml-2">/mes</span>
                 </div>
