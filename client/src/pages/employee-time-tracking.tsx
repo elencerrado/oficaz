@@ -308,9 +308,10 @@ export default function EmployeeTimeTracking() {
   };
 
   const calculateSessionHours = (session: WorkSession) => {
-    if (!session.clockOut) return 0;
     const start = new Date(session.clockIn);
-    const end = new Date(session.clockOut);
+    
+    // For incomplete/active sessions, calculate hours until now
+    const end = session.clockOut ? new Date(session.clockOut) : new Date();
     
     // Calculate base work hours
     const totalHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
@@ -878,7 +879,8 @@ export default function EmployeeTimeTracking() {
                               <div className="relative h-6 mb-4 mx-2">
                                 {/* Session bars */}
                                 {sortedDaySessions.map((session, sessionIndex) => {
-                                  if (!session.clockOut) return null; // Skip active sessions in multi-view
+                                  // Show all sessions, use different styling for active/incomplete ones
+                  const isIncompleteOrActive = !session.clockOut;
                                   
                                   // Calcular ancho con gap más visible entre sesiones
                                   const gapPercentage = 1.5; // 1.5% de gap entre sesiones
@@ -889,7 +891,7 @@ export default function EmployeeTimeTracking() {
                                   return (
                                     <div
                                       key={`session-bar-${session.id}`}
-                                      className="absolute top-0 h-5 bg-blue-500 rounded-sm"
+                                      className={`absolute top-0 h-5 rounded-sm ${isIncompleteOrActive ? 'bg-red-500' : 'bg-blue-500'}`}
                                       style={{
                                         left: `${sessionLeft}%`,
                                         width: `${sessionWidth}%`
