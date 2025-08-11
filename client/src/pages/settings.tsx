@@ -1489,14 +1489,16 @@ const AccountManagement = () => {
                       Datos fiscales y de contacto de tu empresa
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditingCompany(!isEditingCompany)}
-                  >
-                    {isEditingCompany ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-                    {isEditingCompany ? 'Cancelar' : 'Editar'}
-                  </Button>
+                  {user?.role === 'admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditingCompany(!isEditingCompany)}
+                    >
+                      {isEditingCompany ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                      {isEditingCompany ? 'Cancelar' : 'Editar'}
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1898,6 +1900,17 @@ const AccountManagement = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {user?.role === 'manager' && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                      <div className="flex items-center gap-2">
+                        <Info className="h-4 w-4 text-amber-600" />
+                        <p className="text-sm text-amber-700">
+                          <strong>Acceso de solo lectura:</strong> Como manager, puedes ver estas configuraciones pero solo los administradores pueden modificarlas.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   {hasAccess('employee_time_edit_permission') && (
                     <div>
                       <div className="mt-1 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -1921,6 +1934,7 @@ const AccountManagement = () => {
                       value={companyData.workingHoursPerDay}
                       onChange={(e) => setCompanyData(prev => ({ ...prev, workingHoursPerDay: parseInt(e.target.value) }))}
                       className="mt-1"
+                      disabled={user?.role !== 'admin'}
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Usado para calcular las horas esperadas y generar alertas
@@ -1961,6 +1975,7 @@ const AccountManagement = () => {
                       value={companyData.defaultVacationDays}
                       onChange={(e) => setCompanyData(prev => ({ ...prev, defaultVacationDays: parseInt(e.target.value) }))}
                       className="mt-1"
+                      disabled={user?.role !== 'admin'}
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Mínimo legal: 22 días laborables (30 días naturales)
@@ -1978,6 +1993,7 @@ const AccountManagement = () => {
                       value={companyData.vacationDaysPerMonth}
                       onChange={(e) => setCompanyData(prev => ({ ...prev, vacationDaysPerMonth: parseFloat(e.target.value) }))}
                       className="mt-1"
+                      disabled={user?.role !== 'admin'}
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       Valor estándar: 2.5 días (30 días ÷ 12 meses)
@@ -1986,15 +2002,17 @@ const AccountManagement = () => {
                 </CardContent>
               </Card>
 
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => updateCompanyMutation.mutate(companyData)}
-                  disabled={updateCompanyMutation.isPending}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
-                </Button>
-              </div>
+              {user?.role === 'admin' && (
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => updateCompanyMutation.mutate(companyData)}
+                    disabled={updateCompanyMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

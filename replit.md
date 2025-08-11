@@ -57,6 +57,16 @@ Preferred communication style: Simple, everyday language.
 - **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days)
 - **User Requirement**: "juan jose ramirez tiene un fichaje de ayer incompleto pero haciendo login con su cuenta en el dash de empleado veo que no ha cambiado el estado de los botones de fichar"
 
+### Manager Role Permissions System (✅ COMPLETE - AUGUST 11, 2025)
+- **Role Assignment Fixed**: Backend API now allows updating user roles from employee to manager (added 'role' field to permitted updates)
+- **Manager Navigation Access**: Managers see all admin features including Fichajes, Empleados, and Configuración
+- **Restricted Account Access**: Managers cannot access "Mi Cuenta" tab in settings (billing, subscriptions, payments)
+- **Company Settings Protection**: Only administrators can edit company information and policies
+- **Read-Only Configuration**: Managers can view but not modify company work hours and vacation policies
+- **Clear User Feedback**: Informative messages explain access restrictions to manager users
+- **Business Logic**: Manager role provides full operational access while restricting financial/account management
+- **User Confirmation**: "un manager no puede editar la info de la empresa" - successfully implemented
+
 ### Loading System Optimization (✅ FIXED - AUGUST 11, 2025)
 - **Problem Solved**: Eliminated double loader effect during page navigation transitions
 - **Main Changes**: Removed immediate DOM spinner insertion in main.tsx that caused visual displacement
