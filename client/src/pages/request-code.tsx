@@ -225,7 +225,7 @@ export default function RequestCode() {
                 <Input
                   id="email"
                   type="email"
-                  className={`pl-10 pr-12 rounded-xl border-gray-300 py-3 px-4 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
+                  className={`pl-10 pr-16 rounded-xl border-gray-300 py-3 px-4 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
                     emailStatus === 'available' ? 'border-green-500 focus:border-green-500' :
                     emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' :
                     ''
