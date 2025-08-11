@@ -287,7 +287,7 @@ export default function SuperAdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-white">{stats?.totalCompanies || 0}</div>
               <p className="text-xs text-white/60">
-                Empresas registradas
+                {stats?.totalCompanies === 1 ? 'Empresa registrada' : 'Empresas registradas'}
               </p>
             </CardContent>
           </Card>
@@ -302,7 +302,7 @@ export default function SuperAdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
               <p className="text-xs text-white/60">
-                Usuarios activos
+                {stats?.totalUsers === 1 ? 'Usuario registrado' : 'Usuarios registrados'}
               </p>
             </CardContent>
           </Card>
@@ -317,7 +317,7 @@ export default function SuperAdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-white">{stats?.activeSubscriptions || 0}</div>
               <p className="text-xs text-white/60">
-                Con plan de pago
+                {stats?.activeSubscriptions === 1 ? 'Empresa con suscripción' : 'Empresas con suscripciones'}
               </p>
             </CardContent>
           </Card>
@@ -332,7 +332,7 @@ export default function SuperAdminDashboard() {
             <CardContent>
               <div className="text-2xl font-bold text-white">€{stats?.revenue || 0}</div>
               <p className="text-xs text-white/60">
-                Ingresos mensuales
+                {stats?.revenue === 0 ? 'Sin ingresos' : 'Ingresos mensuales recurrentes'}
               </p>
             </CardContent>
           </Card>
