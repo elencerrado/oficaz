@@ -181,50 +181,51 @@ export function ReminderBanner() {
     <div 
       style={{ 
         position: 'fixed',
-        bottom: '20px',
-        right: isMobile ? '4px' : '20px',
-        left: isMobile ? '4px' : 'auto',
-        backgroundColor: '#ffffff',
-        color: '#1a1a1a',
+        bottom: isMobile ? '16px' : '20px',
+        right: isMobile ? '16px' : '20px',
+        left: isMobile ? '16px' : 'auto',
+        backgroundColor: firstReminder.color || '#007AFF',
+        color: textColor,
         padding: '0px',
         borderRadius: '16px',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)',
+        boxShadow: isMobile 
+          ? '0 6px 25px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06)' 
+          : '0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)',
         zIndex: 9999,
-        minWidth: isMobile ? 'auto' : '480px',
-        maxWidth: isMobile ? 'calc(100vw - 16px)' : 'min(70vw, calc(100vw - 40px))',
-        width: isMobile ? 'calc(100vw - 16px)' : 'fit-content',
+        maxWidth: isMobile ? 'none' : '480px',
+        width: isMobile ? 'calc(100vw - 32px)' : 'fit-content',
         fontSize: isMobile ? '13px' : '14px',
         fontWeight: '500',
-        border: '1px solid #e2e8f0',
+        border: `1px solid ${borderColor}`,
         overflow: 'hidden',
-        animation: 'slideInRight 0.4s ease-out'
+        animation: 'slideInRight 0.4s ease-out',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}
     >
-      {/* Contenido responsive */}
+      {/* Contenido compacto y armonioso */}
       <div style={{ 
-        padding: isMobile ? '12px' : '20px 24px', 
+        padding: isMobile ? '14px 16px' : '20px 24px', 
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'stretch' : 'flex-start',
-        gap: isMobile ? '8px' : '20px',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: isMobile ? '10px' : '16px',
         width: '100%',
         boxSizing: 'border-box',
-        maxWidth: isMobile ? '100%' : 'none',
-        overflow: 'hidden'
+        minHeight: isMobile ? '56px' : 'auto'
       }}>
-        {/* Header: Título y fecha/hora */}
+        {/* Icono de prioridad */}
         <div style={{ 
           display: 'flex', 
-          alignItems: 'center', 
+          alignItems: 'center',
           gap: isMobile ? '8px' : '12px',
-          flexBasis: isMobile ? 'auto' : '200px',
           flexShrink: 0
         }}>
           <div 
             style={{ 
-              backgroundColor: firstReminder.color || '#6366f1',
+              backgroundColor: 'rgba(255, 255, 255, 0.25)',
               borderRadius: '50%',
-              padding: isMobile ? '4px' : '8px',
+              padding: isMobile ? '4px' : '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -232,105 +233,109 @@ export function ReminderBanner() {
             }}
           >
             <PriorityIcon style={{ 
-              width: isMobile ? '12px' : '16px', 
-              height: isMobile ? '12px' : '16px', 
-              color: '#ffffff' 
+              width: isMobile ? '10px' : '14px', 
+              height: isMobile ? '10px' : '14px', 
+              color: textColor 
             }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ 
-              fontSize: isMobile ? '13px' : '15px', 
-              fontWeight: '700', 
-              color: '#1f2937',
-              marginBottom: '1px',
-              lineHeight: '1.1'
-            }}>
-              {firstReminder.title}
-            </div>
-            {firstReminder.reminderDate && (
-              <div style={{ 
-                fontSize: isMobile ? '11px' : '12px', 
-                color: '#6b7280', 
-                fontWeight: '500'
-              }}>
-                {formatReminderTime(firstReminder.reminderDate)}
-              </div>
-            )}
           </div>
         </div>
         
-        {/* Contenido del recordatorio */}
+        {/* Contenido principal */}
         <div style={{ 
-          minWidth: '0', 
-          wordWrap: 'break-word',
-          flex: '1',
-          marginRight: isMobile ? '0' : '16px',
-          order: isMobile ? 2 : 1
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isMobile ? '1px' : '3px'
         }}>
-          {firstReminder.content && (
+          <div style={{ 
+            fontSize: isMobile ? '13px' : '15px', 
+            fontWeight: '600', 
+            color: textColor,
+            lineHeight: isMobile ? '1.2' : '1.3',
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'vertical'
+          }}>
+            {firstReminder.title}
+          </div>
+          
+          {/* Solo mostrar contenido en desktop o si es muy importante */}
+          {!isMobile && firstReminder.content && (
             <div style={{ 
-              fontSize: isMobile ? '12px' : '14px', 
-              color: '#374151', 
-              lineHeight: isMobile ? '1.3' : '1.6',
-              fontWeight: '400',
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
-              hyphens: 'auto',
-              maxHeight: isMobile ? '32px' : 'none',
-              overflow: isMobile ? 'hidden' : 'visible'
+              fontSize: '12px', 
+              color: textColor, 
+              opacity: 0.85,
+              lineHeight: '1.3',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 1,
+              WebkitBoxOrient: 'vertical'
             }}>
               {firstReminder.content}
             </div>
           )}
+          
+          {firstReminder.reminderDate && (
+            <div style={{ 
+              fontSize: isMobile ? '10px' : '11px', 
+              color: textColor, 
+              opacity: 0.7,
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px'
+            }}>
+              <Clock style={{ width: '8px', height: '8px' }} />
+              {formatReminderTime(firstReminder.reminderDate)}
+            </div>
+          )}
         </div>
         
-        {/* Botones de acción */}
+        {/* Botones de acción compactos */}
         <div style={{ 
-          display: 'flex', 
-          gap: isMobile ? '4px' : '8px', 
+          display: 'flex',
+          gap: isMobile ? '4px' : '6px',
           flexShrink: 0,
-          alignSelf: isMobile ? 'stretch' : 'flex-start',
-          justifyContent: isMobile ? 'flex-end' : 'flex-start',
-          minWidth: isMobile ? 'auto' : '140px',
-          order: isMobile ? 3 : 2
+          alignItems: 'center'
         }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => completeReminder(firstReminder.id)}
             style={{ 
-              backgroundColor: '#059669',
-              color: '#ffffff',
-              padding: isMobile ? '6px 12px' : '8px 14px',
-              fontSize: isMobile ? '12px' : '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.25)',
+              color: textColor,
+              padding: isMobile ? '6px 10px' : '8px 14px',
+              fontSize: isMobile ? '11px' : '12px',
               fontWeight: '600',
-              border: 'none',
-              borderRadius: '6px',
+              border: `1px solid rgba(255, 255, 255, 0.3)`,
+              borderRadius: isMobile ? '8px' : '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: isMobile ? '4px' : '5px',
-              boxShadow: '0 1px 3px rgba(5, 150, 105, 0.3)',
+              gap: isMobile ? '3px' : '5px',
               transition: 'all 0.2s ease',
               whiteSpace: 'nowrap',
-              height: isMobile ? '32px' : 'auto',
-              minWidth: isMobile ? '70px' : 'auto'
+              height: isMobile ? '28px' : 'auto',
+              minWidth: isMobile ? '60px' : 'auto',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)'
             }}
             onMouseEnter={(e) => {
               const target = e.target as HTMLElement;
-              target.style.backgroundColor = '#047857';
-              target.style.transform = 'translateY(-1px)';
-              target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.4)';
+              target.style.backgroundColor = 'rgba(255, 255, 255, 0.35)';
+              target.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
               const target = e.target as HTMLElement;
-              target.style.backgroundColor = '#059669';
-              target.style.transform = 'translateY(0px)';
-              target.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
+              target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+              target.style.transform = 'scale(1)';
             }}
           >
-            <CheckCircle style={{ width: isMobile ? '8px' : '14px', height: isMobile ? '8px' : '14px' }} />
-            {isMobile ? 'OK' : 'Hecho'}
+            <CheckCircle style={{ width: isMobile ? '10px' : '12px', height: isMobile ? '10px' : '12px' }} />
+            {!isMobile && 'Hecho'}
           </Button>
           
           <Button
@@ -338,34 +343,36 @@ export function ReminderBanner() {
             size="sm"
             onClick={() => dismissReminder(firstReminder.id)}
             style={{ 
-              backgroundColor: '#f3f4f6',
-              color: '#6b7280',
+              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              color: textColor,
               padding: isMobile ? '6px' : '8px 10px',
-              fontSize: isMobile ? '12px' : '12px',
+              fontSize: isMobile ? '11px' : '12px',
               fontWeight: '600',
-              border: 'none',
-              borderRadius: '6px',
+              border: `1px solid rgba(255, 255, 255, 0.2)`,
+              borderRadius: isMobile ? '8px' : '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               transition: 'all 0.2s ease',
-              height: isMobile ? '32px' : 'auto',
-              width: isMobile ? '32px' : 'auto'
+              height: isMobile ? '28px' : 'auto',
+              width: isMobile ? '28px' : 'auto',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)'
             }}
             onMouseEnter={(e) => {
               const target = e.target as HTMLElement;
-              target.style.backgroundColor = '#e5e7eb';
-              target.style.color = '#374151';
+              target.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+              target.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
               const target = e.target as HTMLElement;
-              target.style.backgroundColor = '#f3f4f6';
-              target.style.color = '#6b7280';
+              target.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+              target.style.transform = 'scale(1)';
             }}
           >
             <X style={{ 
-              width: isMobile ? '14px' : '14px', 
-              height: isMobile ? '14px' : '14px' 
+              width: isMobile ? '11px' : '12px', 
+              height: isMobile ? '11px' : '12px' 
             }} />
           </Button>
         </div>
