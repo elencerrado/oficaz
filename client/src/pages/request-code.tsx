@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Mail, ArrowRight, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
-import oficazLogo from '@assets/oficaz logo_1750516757063.png';
+import oficazLogo from '@/assets/oficaz-logo.png';
 
 const emailSchema = z.object({
   email: z.string().email('Email no válido'),
