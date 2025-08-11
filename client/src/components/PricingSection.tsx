@@ -41,7 +41,9 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
         </div>
         
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {subscriptionPlans?.map((plan, index) => (
+          {subscriptionPlans?.map((plan, index) => {
+            console.log('DEBUG - Plan data:', plan, 'monthlyPrice:', plan.monthlyPrice, 'type:', typeof plan.monthlyPrice);
+            return (
             <div key={plan.id} className={`rounded-2xl p-8 relative ${
               index === 1 
                 ? 'bg-gradient-to-b from-blue-50 to-white border-2 border-blue-200 scale-105' 
@@ -100,7 +102,8 @@ export default function PricingSection({ subscriptionPlans }: PricingSectionProp
                 </Link>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
