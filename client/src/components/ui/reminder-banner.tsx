@@ -114,7 +114,7 @@ export function ReminderBanner() {
   }
 
   // Filter out dismissed reminders - safely handle null/undefined activeReminders
-  const visibleReminders = (activeReminders || []).filter(
+  const visibleReminders = (Array.isArray(activeReminders) ? activeReminders : []).filter(
     (reminder: ActiveReminder) => !dismissedReminders.includes(reminder.id)
   );
   
@@ -163,7 +163,7 @@ export function ReminderBanner() {
     return null;
   }
   
-  const PriorityIcon = PRIORITY_ICONS[firstReminder.priority] || PRIORITY_ICONS.medium;
+  const PriorityIcon = PRIORITY_ICONS[firstReminder.priority as keyof typeof PRIORITY_ICONS] || PRIORITY_ICONS.medium;
   
   // Determinar color de texto basado en color de fondo
   const isLightColor = (color: string) => {
@@ -317,14 +317,16 @@ export function ReminderBanner() {
               minWidth: isMobile ? '70px' : 'auto'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#047857';
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.4)';
+              const target = e.target as HTMLElement;
+              target.style.backgroundColor = '#047857';
+              target.style.transform = 'translateY(-1px)';
+              target.style.boxShadow = '0 2px 6px rgba(5, 150, 105, 0.4)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#059669';
-              e.target.style.transform = 'translateY(0px)';
-              e.target.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
+              const target = e.target as HTMLElement;
+              target.style.backgroundColor = '#059669';
+              target.style.transform = 'translateY(0px)';
+              target.style.boxShadow = '0 1px 3px rgba(5, 150, 105, 0.3)';
             }}
           >
             <CheckCircle style={{ width: isMobile ? '8px' : '14px', height: isMobile ? '8px' : '14px' }} />
@@ -351,12 +353,14 @@ export function ReminderBanner() {
               width: isMobile ? '32px' : 'auto'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#e5e7eb';
-              e.target.style.color = '#374151';
+              const target = e.target as HTMLElement;
+              target.style.backgroundColor = '#e5e7eb';
+              target.style.color = '#374151';
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#f3f4f6';
-              e.target.style.color = '#6b7280';
+              const target = e.target as HTMLElement;
+              target.style.backgroundColor = '#f3f4f6';
+              target.style.color = '#6b7280';
             }}
           >
             <X style={{ 

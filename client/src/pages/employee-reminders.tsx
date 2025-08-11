@@ -488,15 +488,19 @@ export default function EmployeeReminders() {
                     </div>
                     
                     <div className="flex flex-col gap-1 ml-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => togglePinMutation.mutate({ id: reminder.id, isPinned: !reminder.isPinned })}
-                        className="h-8 w-8 p-0 text-white/60 hover:text-yellow-400 hover:bg-white/10"
-                      >
-                        <Star className={`h-4 w-4 ${reminder.isPinned ? 'fill-current text-yellow-400' : ''}`} />
-                      </Button>
+                      {/* Solo los empleados pueden hacer pin en sus recordatorios propios */}
+                      {!reminder.isAssigned && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => togglePinMutation.mutate({ id: reminder.id, isPinned: !reminder.isPinned })}
+                          className="h-8 w-8 p-0 text-white/60 hover:text-yellow-400 hover:bg-white/10"
+                        >
+                          <Star className={`h-4 w-4 ${reminder.isPinned ? 'fill-current text-yellow-400' : ''}`} />
+                        </Button>
+                      )}
                       
+                      {/* Solo editar recordatorios propios, no asignados */}
                       {!reminder.isAssigned && (
                         <Button
                           size="sm"
@@ -508,6 +512,7 @@ export default function EmployeeReminders() {
                         </Button>
                       )}
                       
+                      {/* Completar recordatorios (tanto propios como asignados) */}
                       {!reminder.isCompleted && !reminder.isArchived && (
                         <Button
                           size="sm"
@@ -519,6 +524,7 @@ export default function EmployeeReminders() {
                         </Button>
                       )}
                       
+                      {/* Archivar recordatorios (tanto propios como asignados) */}
                       <Button
                         size="sm"
                         variant="ghost"
@@ -528,6 +534,7 @@ export default function EmployeeReminders() {
                         <Archive className="h-4 w-4" />
                       </Button>
                       
+                      {/* Solo borrar recordatorios propios, no asignados */}
                       {!reminder.isAssigned && (
                         <Button
                           size="sm"
