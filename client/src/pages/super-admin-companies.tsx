@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { getAuthHeaders } from '@/lib/auth';
 import { 
   Building2, 
   Search,
@@ -58,11 +59,8 @@ export default function SuperAdminCompanies() {
   const { data: companies, isLoading } = useQuery({
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/companies', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch companies');
       return response.json();
@@ -72,12 +70,11 @@ export default function SuperAdminCompanies() {
 
   const updateSubscriptionMutation = useMutation({
     mutationFn: async ({ companyId, plan }: { companyId: number; plan: string }) => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
         method: 'PATCH',
         headers: {
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ plan }),
       });
@@ -143,7 +140,7 @@ export default function SuperAdminCompanies() {
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
-            onClick={() => setLocation('/super-admin')}
+            onClick={() => setLocation('/super-admin/dashboard')}
             className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
