@@ -16,7 +16,7 @@ import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, in
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
-import { sendEmployeeWelcomeEmail, sendPasswordResetEmail } from './email';
+import { sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
 
 // Initialize Stripe with environment-specific keys
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -6464,6 +6464,132 @@ startxref
     } catch (error) {
       console.error('❌ Error clearing demo data:', error);
       res.status(500).json({ message: 'Error al eliminar los datos de prueba: ' + (error as any).message });
+    }
+  });
+
+  // ⚠️ SUPER ADMIN SECURITY ROUTES - MAXIMUM SECURITY LEVEL
+  // Storage for temporary security codes (in production, use Redis or secure cache)
+  const securityCodes = new Map<string, { code: string; timestamp: number; attempts: number }>();
+  
+  // Generate secure 6-digit code
+  function generateSecurityCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+  
+  // Clean expired codes (older than 10 minutes)
+  function cleanExpiredCodes() {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+    
+    securityCodes.forEach((value, key) => {
+      if (now - value.timestamp > 600000) { // 10 minutes
+        expiredKeys.push(key);
+      }
+    });
+    
+    expiredKeys.forEach(key => securityCodes.delete(key));
+  }
+
+  // Send security verification code
+  app.post('/api/super-admin/request-code', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Validate email is exactly soy@oficaz.es
+      if (email !== 'soy@oficaz.es') {
+        console.log(`🚨 SECURITY: Unauthorized super admin access attempt from email: ${email}`);
+        return res.status(403).json({ message: 'Acceso no autorizado' });
+      }
+      
+      cleanExpiredCodes();
+      
+      // Check if code was recently sent (rate limiting)
+      const existingCode = securityCodes.get(email);
+      if (existingCode && (Date.now() - existingCode.timestamp) < 60000) { // 1 minute
+        return res.status(429).json({ message: 'Código enviado recientemente. Espera un minuto.' });
+      }
+      
+      // Generate and store new code
+      const code = generateSecurityCode();
+      securityCodes.set(email, {
+        code,
+        timestamp: Date.now(),
+        attempts: 0
+      });
+      
+      // Send security code email using existing email infrastructure
+      const emailSent = await sendSuperAdminSecurityCode(email, code);
+      
+      if (emailSent) {
+        console.log(`🔐 Super admin security code sent to ${email}`);
+        res.json({ message: 'Código de seguridad enviado' });
+      } else {
+        console.error(`❌ Failed to send security code to ${email}`);
+        res.status(500).json({ message: 'Error al enviar código de seguridad' });
+      }
+      
+    } catch (error) {
+      console.error('Error sending super admin security code:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Verify security code and grant access
+  app.post('/api/super-admin/verify-code', async (req, res) => {
+    try {
+      const { email, code } = req.body;
+      
+      // Validate email
+      if (email !== 'soy@oficaz.es') {
+        return res.status(403).json({ message: 'Acceso no autorizado' });
+      }
+      
+      cleanExpiredCodes();
+      
+      const storedCodeData = securityCodes.get(email);
+      if (!storedCodeData) {
+        return res.status(400).json({ message: 'Código expirado o no válido' });
+      }
+      
+      // Check attempts limit
+      if (storedCodeData.attempts >= 3) {
+        securityCodes.delete(email);
+        console.log(`🚨 SECURITY: Too many failed attempts for super admin access from ${email}`);
+        return res.status(429).json({ message: 'Demasiados intentos fallidos' });
+      }
+      
+      // Verify code
+      if (storedCodeData.code !== code) {
+        storedCodeData.attempts++;
+        console.log(`🚨 SECURITY: Invalid code attempt ${storedCodeData.attempts}/3 for ${email}`);
+        return res.status(400).json({ message: 'Código incorrecto' });
+      }
+      
+      // Code verified successfully - clean up
+      securityCodes.delete(email);
+      
+      // Generate super admin JWT token
+      const superAdminToken = jwt.sign(
+        { 
+          email,
+          role: 'super_admin',
+          type: 'super_admin_access'
+        },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '2h' } // 2 hour session
+      );
+      
+      console.log(`✅ Super admin access granted to ${email}`);
+      
+      res.json({
+        message: 'Acceso autorizado',
+        token: superAdminToken,
+        role: 'super_admin'
+      });
+      
+    } catch (error) {
+      console.error('Error verifying super admin security code:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
 

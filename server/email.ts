@@ -234,6 +234,144 @@ Este email fue enviado desde Oficaz - La plataforma de gestión empresarial para
   }
 }
 
+export async function sendSuperAdminSecurityCode(
+  email: string,
+  securityCode: string
+): Promise<boolean> {
+  try {
+    console.log(`🔐 Starting sendSuperAdminSecurityCode for: ${email}`);
+    
+    // Configure Nodemailer with Hostinger SMTP
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: 'soy@oficaz.es',
+        pass: 'Sanisidro@2025',
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // ⚠️ PROTECTED - DO NOT MODIFY
+    // Use static logo URL - this is the ONLY solution that works
+    const logoUrl = 'https://oficaz.es/email-logo.png';
+    
+    const subject = `🔐 Código de seguridad SuperAdmin - Oficaz`;
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Código de Seguridad SuperAdmin</title>
+      </head>
+      <body style="margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden;">
+          
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 30px; text-align: center;">
+            <img src="${logoUrl}" alt="Oficaz" style="height: 50px; margin-bottom: 15px;">
+            <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">
+              🔐 Acceso SuperAdmin
+            </h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px;">
+              Código de seguridad máximo nivel
+            </p>
+          </div>
+          
+          <!-- Content -->
+          <div style="padding: 40px 30px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h2 style="color: #111827; margin: 0 0 15px 0; font-size: 20px;">
+                Tu código de seguridad
+              </h2>
+              <div style="background-color: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; display: inline-block;">
+                <span style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                  ${securityCode}
+                </span>
+              </div>
+              <p style="color: #6b7280; font-size: 14px; margin: 15px 0 0 0;">
+                Este código expira en <strong>10 minutos</strong>
+              </p>
+            </div>
+            
+            <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 25px 0; border-radius: 0 8px 8px 0;">
+              <p style="color: #991b1b; font-weight: 600; margin: 0 0 10px 0;">
+                ⚠️ Seguridad Máxima
+              </p>
+              <p style="color: #7f1d1d; font-size: 14px; margin: 0; line-height: 1.5;">
+                Este acceso está limitado exclusivamente a <strong>soy@oficaz.es</strong>. 
+                Cualquier intento de acceso no autorizado será registrado y bloqueado automáticamente.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <p style="color: #374151; font-size: 16px; margin: 0 0 15px 0;">
+                Utiliza este código en la interfaz de SuperAdmin para acceder al panel de control avanzado.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                Si no has solicitado este código, ignora este email.
+              </p>
+            </div>
+          </div>
+          
+          <!-- Footer -->
+          <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="color: #6b7280; font-size: 12px; margin: 0 0 5px 0;">
+              Sistema de seguridad <strong>Oficaz SuperAdmin</strong>
+            </p>
+            <p style="color: #6b7280; font-size: 12px; margin: 0;">
+              Control de acceso de máxima seguridad
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const textContent = `
+🔐 Código de seguridad SuperAdmin - Oficaz
+
+Tu código de seguridad: ${securityCode}
+
+Este código expira en 10 minutos.
+
+⚠️ Seguridad Máxima
+Este acceso está limitado exclusivamente a soy@oficaz.es. 
+Cualquier intento de acceso no autorizado será registrado y bloqueado automáticamente.
+
+Utiliza este código en la interfaz de SuperAdmin para acceder al panel de control avanzado.
+
+Si no has solicitado este código, ignora este email.
+
+Sistema de seguridad Oficaz SuperAdmin - Control de acceso de máxima seguridad
+    `;
+
+    const mailOptions = {
+      from: '"Oficaz SuperAdmin" <soy@oficaz.es>',
+      to: email,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    console.log(`🔐 Attempting to send security code email to: ${email}`);
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ Super admin security code sent successfully to ${email}`);
+    console.log(`📧 SMTP Response:`, result);
+    return true;
+
+  } catch (error) {
+    console.error('❌ Error sending super admin security code:', error);
+    return false;
+  }
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   userFullName: string,

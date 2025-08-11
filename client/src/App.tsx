@@ -52,6 +52,7 @@ import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
 
 // Super admin pages - lazy loaded (rarely accessed)
+const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
 const SuperAdminLogin = lazy(() => import("@/pages/super-admin-login"));
 const SuperAdminDashboard = lazy(() => import("@/pages/super-admin-dashboard"));
 const SuperAdminPlans = lazy(() => import("@/pages/super-admin-plans"));
@@ -61,7 +62,7 @@ const SuperAdminInvitations = lazy(() => import("@/pages/super-admin-invitations
 
 // Utility pages - lazy loaded
 const InvitationRegister = lazy(() => import("@/pages/invitation-register"));
-const QuickAccess = lazy(() => import("@/pages/quick-access"));
+
 const EmployeeActivation = lazy(() => import("@/pages/employee-activation"));
 const TestEmail = lazy(() => import("@/pages/test-email"));
 
@@ -149,6 +150,11 @@ function Router() {
   if (location.startsWith('/super-admin')) {
     return (
       <Switch>
+        <Route path="/super-admin/security">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminSecurity />
+          </Suspense>
+        </Route>
         <Route path="/super-admin/login">
           <Suspense fallback={<PageLoading />}>
             <SuperAdminLogin />
@@ -183,7 +189,7 @@ function Router() {
         </Route>
         <Route path="/super-admin">
           <Suspense fallback={<PageLoading />}>
-            <SuperAdminDashboard />
+            <SuperAdminSecurity />
           </Suspense>
         </Route>
         <Route component={NotFound} />
@@ -191,14 +197,7 @@ function Router() {
     );
   }
 
-  // Quick access page for testing
-  if (location === '/fast') {
-    return (
-      <Suspense fallback={<PageLoading />}>
-        <QuickAccess />
-      </Suspense>
-    );
-  }
+
   
   return (
     <Switch>
@@ -294,9 +293,7 @@ function Router() {
         {(params) => (
           <ProtectedRoute>
             {user && user.role === 'employee' ? (
-              <Suspense fallback={<DashboardLoading />}>
-                <EmployeeDashboard />
-              </Suspense>
+              <EmployeeDashboard />
             ) : (
               <Redirect to={`/${params.companyAlias}/inicio`} />
             )}
