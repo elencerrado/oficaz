@@ -1022,6 +1022,7 @@ export class DrizzleStorage implements IStorage {
 
       return {
         ...plan,
+        monthlyPrice: parseFloat(plan.monthlyPrice) || 0, // Convert string to number
         features
       };
     }));
