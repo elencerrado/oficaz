@@ -177,11 +177,13 @@ export default function Login() {
                 className="h-10 w-auto max-w-32 object-contain"
               />
             ) : (
-              <img 
-                src={oficazLogo} 
-                alt="Oficaz" 
-                className="h-10 w-auto"
-              />
+              <Link href="/">
+                <img 
+                  src={oficazLogo} 
+                  alt="Oficaz" 
+                  className="h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </Link>
             )}
           </div>
           {companyInfo && (
