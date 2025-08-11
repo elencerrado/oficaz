@@ -4159,20 +4159,29 @@ startxref
 
   // Super Admin endpoints
   const authenticateSuperAdmin = (req: any, res: any, next: any) => {
+    console.log('🔐 SuperAdmin auth middleware - Headers:', req.headers.authorization ? 'present' : 'missing');
+    
     const token = req.headers.authorization?.split(' ')[1];
     
     if (!token) {
+      console.log('🚨 SuperAdmin auth failed: No token provided');
       return res.status(401).json({ message: "No token provided" });
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
-      if (decoded.type !== 'super-admin') {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+      console.log('🔐 SuperAdmin token decoded:', { type: decoded.type, role: decoded.role, email: decoded.email });
+      
+      if (decoded.type !== 'super_admin_access' && decoded.role !== 'super_admin') {
+        console.log('🚨 SuperAdmin auth failed: Invalid token type', { type: decoded.type, role: decoded.role });
         return res.status(401).json({ message: "Invalid token type" });
       }
+      
+      console.log('✅ SuperAdmin auth successful for:', decoded.email);
       req.superAdmin = decoded;
       next();
     } catch (error) {
+      console.log('🚨 SuperAdmin auth failed: Token verification error:', error);
       return res.status(401).json({ message: "Invalid token" });
     }
   };

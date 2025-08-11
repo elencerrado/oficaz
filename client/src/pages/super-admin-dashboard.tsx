@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { getAuthHeaders } from "@/lib/auth";
 import { 
   Building2, 
   Users, 
@@ -82,11 +83,8 @@ export default function SuperAdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery<SuperAdminStats>({
     queryKey: ['/api/super-admin/stats'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
@@ -96,11 +94,8 @@ export default function SuperAdminDashboard() {
   const { data: companies, isLoading: companiesLoading } = useQuery<CompanyWithStats[]>({
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/companies', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch companies');
       return response.json();
@@ -114,11 +109,10 @@ export default function SuperAdminDashboard() {
 
   const updateSubscriptionMutation = useMutation({
     mutationFn: async ({ companyId, plan }: { companyId: number; plan: string }) => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ plan }),
