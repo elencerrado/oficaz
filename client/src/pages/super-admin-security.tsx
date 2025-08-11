@@ -9,62 +9,57 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
 interface SecurityStep {
-  step: "email" | "code" | "verified";
+  step: "access-code" | "verification-code" | "verified";
   token?: string;
 }
 
 export default function SuperAdminSecurity() {
-  const [currentStep, setCurrentStep] = useState<SecurityStep>({ step: "email" });
-  const [email, setEmail] = useState("");
-  const [securityCode, setSecurityCode] = useState("");
+  const [currentStep, setCurrentStep] = useState<SecurityStep>({ step: "access-code" });
+  const [accessCode, setAccessCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handleAccessCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate email is exactly soy@oficaz.es
-    if (email !== "soy@oficaz.es") {
-      setError("Acceso denegado. Email no autorizado.");
-      return;
-    }
-
     setIsLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/super-admin/request-code", {
+      const response = await fetch("/api/super-admin/verify-access-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ accessCode }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al enviar código de seguridad");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Código de acceso incorrecto");
       }
 
       const data = await response.json();
       
-      setCurrentStep({ step: "code", token: data.token });
+      setCurrentStep({ step: "verification-code", token: data.token });
       toast({
         title: "Código enviado",
-        description: "Se ha enviado un código de seguridad a soy@oficaz.es",
+        description: "Se ha enviado un código de verificación a soy@oficaz.es",
       });
-    } catch (error) {
-      setError("Error al enviar el código de seguridad. Inténtalo de nuevo.");
+    } catch (error: any) {
+      setError(error.message || "Código de acceso incorrecto. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCodeVerification = async (e: React.FormEvent) => {
+  const handleVerificationCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!securityCode || securityCode.length !== 6) {
+    if (!verificationCode || verificationCode.length !== 6) {
       setError("El código debe tener 6 dígitos");
       return;
     }
@@ -73,14 +68,14 @@ export default function SuperAdminSecurity() {
     setError("");
 
     try {
-      const response = await fetch("/api/super-admin/verify-code", {
+      const response = await fetch("/api/super-admin/verify-verification-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          email: email,
-          code: securityCode
+          token: currentStep.token,
+          code: verificationCode
         }),
       });
 
@@ -106,7 +101,7 @@ export default function SuperAdminSecurity() {
       }, 1500);
 
     } catch (error) {
-      setError("Código de seguridad inválido. Inténtalo de nuevo.");
+      setError("Código de verificación inválido. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
@@ -144,22 +139,25 @@ export default function SuperAdminSecurity() {
         </CardHeader>
 
         <CardContent>
-          {currentStep.step === "email" ? (
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
+          {currentStep.step === "access-code" ? (
+            <form onSubmit={handleAccessCodeSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email autorizado
+                <Label htmlFor="accessCode" className="flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Código de acceso seguro
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="soy@oficaz.es"
+                  id="accessCode"
+                  type="password"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  placeholder="Introduce el código de acceso"
                   required
-                  className="text-center"
+                  className="text-center font-mono"
                 />
+                <p className="text-xs text-gray-500 text-center">
+                  Código seguro con letras, números y caracteres especiales
+                </p>
               </div>
 
               {error && (
@@ -174,21 +172,21 @@ export default function SuperAdminSecurity() {
                 className="w-full bg-red-600 hover:bg-red-700"
                 disabled={isLoading}
               >
-                {isLoading ? "Enviando..." : "Solicitar código de seguridad"}
+                {isLoading ? "Verificando..." : "Solicitar código de verificación"}
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleCodeVerification} className="space-y-4">
+            <form onSubmit={handleVerificationCodeSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="code" className="flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  Código de seguridad
+                  <Mail className="h-4 w-4" />
+                  Código de verificación
                 </Label>
                 <Input
                   id="code"
                   type="text"
-                  value={securityCode}
-                  onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="000000"
                   required
                   className="text-center text-2xl tracking-widest"
@@ -210,7 +208,7 @@ export default function SuperAdminSecurity() {
                 <Button 
                   type="submit" 
                   className="w-full bg-red-600 hover:bg-red-700"
-                  disabled={isLoading || securityCode.length !== 6}
+                  disabled={isLoading || verificationCode.length !== 6}
                 >
                   {isLoading ? "Verificando..." : "Verificar código"}
                 </Button>
@@ -219,7 +217,7 @@ export default function SuperAdminSecurity() {
                   type="button" 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => setCurrentStep({ step: "email" })}
+                  onClick={() => setCurrentStep({ step: "access-code" })}
                   disabled={isLoading}
                 >
                   Volver

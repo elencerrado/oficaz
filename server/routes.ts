@@ -16,7 +16,7 @@ import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, in
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
-import { sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
+import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
 
 // Initialize Stripe with environment-specific keys
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -4187,6 +4187,109 @@ startxref
   };
 
 
+
+  // Super Admin Access Code Verification
+  const SUPER_ADMIN_ACCESS_CODE = 'SA!9x7$Kz2&mQ5'; // ⚠️ PROTECTED - DO NOT MODIFY
+  const tempTokens = new Map(); // In-memory storage for temporary tokens
+
+  app.post('/api/super-admin/verify-access-code', async (req, res) => {
+    try {
+      const { accessCode } = req.body;
+      
+      if (accessCode !== SUPER_ADMIN_ACCESS_CODE) {
+        console.log('🚨 SuperAdmin access denied: Invalid access code');
+        return res.status(401).json({ message: "Código de acceso incorrecto" });
+      }
+
+      // Generate temporary token for email verification step
+      const tempToken = require('crypto').randomBytes(32).toString('hex');
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Store temp data (expires in 10 minutes)
+      tempTokens.set(tempToken, {
+        code: verificationCode,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
+      });
+
+      // Send email with verification code
+      try {
+        await sendEmail({
+          to: 'soy@oficaz.es',
+          from: process.env.EMAIL_FROM || 'noreply@oficaz.es',
+          subject: 'Código de verificación SuperAdmin',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+                <h1 style="color: white; margin: 0;">Oficaz SuperAdmin</h1>
+              </div>
+              <div style="background: #f8f9fa; padding: 30px; text-align: center;">
+                <h2 style="color: #333; margin-bottom: 20px;">Código de verificación</h2>
+                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                  <div style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 8px;">
+                    ${verificationCode}
+                  </div>
+                </div>
+                <p style="color: #666; margin: 20px 0;">Este código expira en 10 minutos</p>
+                <p style="color: #999; font-size: 14px;">Si no has solicitado este código, ignora este email.</p>
+              </div>
+            </div>
+          `
+        });
+
+        console.log('✅ SuperAdmin verification code sent to soy@oficaz.es');
+        res.json({ token: tempToken, message: "Código enviado correctamente" });
+      } catch (emailError) {
+        console.error('Error sending verification email:', emailError);
+        res.status(500).json({ message: "Error al enviar el código de verificación" });
+      }
+    } catch (error) {
+      console.error("Error in access code verification:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post('/api/super-admin/verify-verification-code', async (req, res) => {
+    try {
+      const { token, code } = req.body;
+      
+      if (!tempTokens.has(token)) {
+        return res.status(401).json({ message: "Token inválido o expirado" });
+      }
+
+      const tokenData = tempTokens.get(token);
+      
+      if (Date.now() > tokenData.expiresAt) {
+        tempTokens.delete(token);
+        return res.status(401).json({ message: "Código expirado" });
+      }
+
+      if (code !== tokenData.code) {
+        return res.status(401).json({ message: "Código de verificación incorrecto" });
+      }
+
+      // Clean up temp token
+      tempTokens.delete(token);
+
+      // Generate final super admin JWT token
+      const superAdminToken = jwt.sign(
+        { 
+          type: 'super_admin_access',
+          role: 'super_admin',
+          email: 'soy@oficaz.es',
+          accessGrantedAt: Date.now()
+        },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      console.log('✅ SuperAdmin access granted successfully');
+      res.json({ token: superAdminToken, message: "Acceso autorizado" });
+    } catch (error) {
+      console.error("Error in verification code check:", error);
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
 
   app.get('/api/super-admin/stats', authenticateSuperAdmin, async (req, res) => {
     try {
