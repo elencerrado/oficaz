@@ -4618,7 +4618,7 @@ startxref
       // Create a price for that product
       const price = await stripe.prices.create({
         currency: 'eur',
-        unit_amount: Math.round(pricePerUser * 100), // Convert to cents
+        unit_amount: Math.round(monthlyPrice * 100), // Convert to cents
         recurring: {
           interval: 'month',
         },
@@ -5069,14 +5069,13 @@ startxref
       const companyId = req.user!.companyId;
       const { plan } = req.body;
       
-      // Get plan pricing
-      const planPricing = {
-        'basic': 3.00,
-        'pro': 5.00,
-        'master': 8.00
-      };
+      // Get plan pricing from database
+      const planResult = await db.execute(sql`
+        SELECT monthly_price FROM subscription_plans 
+        WHERE name = ${plan}
+      `);
       
-      const pricePerUser = planPricing[plan] || 3.00;
+      const monthlyPrice = planResult.rows[0] ? parseFloat((planResult.rows[0] as any).monthly_price) : 19.95;
       
       // Get employee count using proper ORM
       const employeeResult = await db.select({ count: count() })
@@ -5084,7 +5083,7 @@ startxref
         .where(and(eq(users.companyId, companyId), eq(users.isActive, true)));
       
       const employeeCount = parseInt(String(employeeResult[0]?.count || 1));
-      const totalAmount = Math.max(pricePerUser * employeeCount, pricePerUser); // Minimum 1 user
+      const totalAmount = monthlyPrice; // Plans have fixed monthly price
       
       // Here you would integrate with Stripe to create payment intent
       // For now, return mock payment intent
@@ -5094,7 +5093,7 @@ startxref
         currency: 'eur',
         plan: plan,
         employeeCount: employeeCount,
-        pricePerUser: pricePerUser
+        monthlyPrice: monthlyPrice
       });
     } catch (error) {
       console.error('Error creating payment intent:', error);
@@ -5526,8 +5525,8 @@ startxref
           status: 'active',
           features: {},
           maxUsers: null,
-          pricePerUser: 0,
-          customPricePerUser: null
+          monthlyPrice: 0,
+          customMonthlyPrice: null
         },
         userCount: users.length,
         activeUsers,
@@ -5569,8 +5568,8 @@ startxref
           status: 'active',
           features: updates.features || {},
           maxUsers: updates.maxUsers || null,
-          pricePerUser: updates.pricePerUser || 0,
-          customPricePerUser: updates.customPricePerUser || null,
+          monthlyPrice: updates.monthlyPrice || 0,
+          customMonthlyPrice: updates.customMonthlyPrice || null,
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -5583,7 +5582,7 @@ startxref
         if (updates.plan) updateData.plan = updates.plan;
         // features are now managed dynamically from features table - no longer stored in subscriptions
         if (updates.maxUsers !== undefined) updateData.maxUsers = updates.maxUsers;
-        if (updates.customPricePerUser !== undefined) updateData.customPricePerUser = updates.customPricePerUser;
+        if (updates.customMonthlyPrice !== undefined) updateData.customMonthlyPrice = updates.customMonthlyPrice;
         
         subscription = await storage.updateCompanySubscription(companyId, updateData);
       }
