@@ -496,10 +496,7 @@ export const insertInvitationLinkSchema = createInsertSchema(invitationLinks).om
   createdAt: true,
 });
 
-export const superAdminLoginSchema = z.object({
-  email: z.string().email("Email debe ser válido"),
-  password: z.string().min(1, "Password es requerido"),
-});
+
 
 // Auth schemas
 export const loginSchema = z.object({
@@ -616,7 +613,7 @@ export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
 export type LoginData = z.infer<typeof loginSchema>;
-export type SuperAdminLoginData = z.infer<typeof superAdminLoginSchema>;
+
 export type CompanyRegistrationData = z.infer<typeof companyRegistrationSchema>;
 
 // Tipos AccountInfo e InsertAccountInfo eliminados - datos consolidados en companies

@@ -107,7 +107,7 @@ export default function SuperAdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('superAdminToken');
-    setLocation("/super-admin/login");
+    setLocation("/super-admin");
   };
 
   const updateSubscriptionMutation = useMutation({

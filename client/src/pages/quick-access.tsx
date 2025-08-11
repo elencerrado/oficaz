@@ -87,25 +87,8 @@ export default function QuickAccess() {
 
     try {
       if (user.id === "super-admin") {
-        // Super admin login
-        const response = await fetch('/api/super-admin/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: user.email,
-            password: user.password
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          localStorage.setItem('superAdminToken', result.token);
-          setLocation("/super-admin/dashboard");
-        } else {
-          throw new Error('Super admin login failed');
-        }
+        // Redirect to super admin security page
+        setLocation("/super-admin");
       } else {
         // Regular user login - simulate the normal login flow
         const response = await fetch('/api/auth/login', {

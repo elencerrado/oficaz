@@ -4186,45 +4186,7 @@ startxref
     }
   };
 
-  app.post('/api/super-admin/login', async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      console.log('Super admin login attempt:', { email, password: password ? 'provided' : 'missing' });
-      
-      const admin = await storage.getSuperAdminByEmail(email);
-      console.log('Found admin:', admin ? { id: admin.id, email: admin.email } : 'none');
-      
-      if (!admin) {
-        console.log('No admin found with email:', email);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-      console.log('Password comparison result:', passwordMatch);
-      
-      if (!passwordMatch) {
-        console.log('Password mismatch for admin:', email);
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
 
-      const token = jwt.sign(
-        { 
-          id: admin.id, 
-          email: admin.email, 
-          name: admin.name,
-          type: 'super-admin'
-        },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '24h' }
-      );
-
-      console.log('Super admin login successful for:', email);
-      res.json({ token, admin: { id: admin.id, email: admin.email, name: admin.name } });
-    } catch (error) {
-      console.error("Error logging in super admin:", error);
-      res.status(500).json({ message: "Login failed" });
-    }
-  });
 
   app.get('/api/super-admin/stats', authenticateSuperAdmin, async (req, res) => {
     try {
