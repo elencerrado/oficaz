@@ -157,6 +157,12 @@ export default function ForgotPassword() {
               )}
             </div>
 
+            {/* Spacer to match login form height */}
+            <div className="space-y-4">
+              <div className="h-12"></div> {/* Equivalent to password field */}
+              <div className="h-6"></div>  {/* Equivalent to checkbox */}
+            </div>
+
             {/* Submit Button */}
             <Button 
               type="submit" 
@@ -176,8 +182,8 @@ export default function ForgotPassword() {
               )}
             </Button>
 
-            {/* Back to Login Link */}
-            <div className="text-center mt-6">
+            {/* Back to Login Link - with spacing to match login layout */}
+            <div className="text-center mt-4">
               <Link 
                 href={companyAlias ? `/${companyAlias}/login` : '/login'}
                 className="text-sm text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center"
@@ -185,6 +191,11 @@ export default function ForgotPassword() {
                 <ArrowLeft className="h-3 w-3 mr-1" />
                 Volver al login
               </Link>
+            </div>
+            
+            {/* Extra spacer to match login's second link */}
+            <div className="text-center mt-6">
+              <div className="h-4"></div>
             </div>
           </form>
         </CardContent>
