@@ -3,6 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -12,7 +19,8 @@ import {
   Save, 
   X,
   RefreshCw,
-  ArrowLeft
+  ArrowLeft,
+  LogOut
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths, startOfWeek, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -74,6 +82,9 @@ export default function EmployeeTimeTracking() {
     y: 0
   });
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [incompleteDialogOpen, setIncompleteDialogOpen] = useState(false);
+  const [incompleteSessionId, setIncompleteSessionId] = useState<number | null>(null);
+  const [clockOutTime, setClockOutTime] = useState('');
   
   // Touch handling for mobile swipe
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -147,6 +158,15 @@ export default function EmployeeTimeTracking() {
     refetchIntervalInBackground: false,
   });
 
+  // Query for company work hours settings
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
+  });
+
   // Mutations
   const updateSessionMutation = useMutation({
     mutationFn: async ({ id, clockIn, clockOut }: { id: number; clockIn: string; clockOut: string }) => {
@@ -169,6 +189,34 @@ export default function EmployeeTimeTracking() {
     },
   });
 
+  // Clock out mutation for incomplete sessions
+  const clockOutMutation = useMutation({
+    mutationFn: async ({ sessionId, clockOutTime }: { sessionId: number; clockOutTime: string }) => {
+      return apiRequest('POST', '/api/work-sessions/clock-out', { 
+        sessionId, 
+        clockOutTime 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
+      setIncompleteDialogOpen(false);
+      setIncompleteSessionId(null);
+      setClockOutTime('');
+      toast({
+        title: "Sesión cerrada",
+        description: "La sesión incompleta se ha cerrado correctamente.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `No se pudo cerrar la sesión: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Helper functions
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -177,6 +225,48 @@ export default function EmployeeTimeTracking() {
 
   const formatDayDate = (date: Date) => {
     return format(date, 'EEEE dd', { locale: es });
+  };
+
+  // Function to determine if session is incomplete (from previous day)
+  const isSessionIncomplete = (session: WorkSession) => {
+    if (session.clockOut) return false; // Has clock out, not incomplete
+    
+    const clockIn = new Date(session.clockIn);
+    const currentTime = new Date();
+    const isToday = clockIn.toDateString() === currentTime.toDateString();
+    
+    // If session is from previous day and no clock out, it's incomplete
+    if (!isToday) {
+      return true;
+    }
+    
+    // If session is from today, check if it exceeded working hours
+    const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+    const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+    
+    // If exceeded max hours, it's still active for today but would be incomplete if from previous day
+    return false; // Today's sessions are always "active" even if long
+  };
+
+  // Function to handle clock out for incomplete sessions
+  const handleClockOutIncomplete = (sessionId: number) => {
+    setIncompleteSessionId(sessionId);
+    
+    // Set current time as default
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // Format: "HH:MM"
+    setClockOutTime(currentTime);
+    
+    setIncompleteDialogOpen(true);
+  };
+
+  const submitClockOut = () => {
+    if (!incompleteSessionId || !clockOutTime) return;
+    
+    clockOutMutation.mutate({
+      sessionId: incompleteSessionId,
+      clockOutTime: clockOutTime
+    });
   };
 
   // ⚠️ PROTECTED: Time formatting and calculation functions - DO NOT MODIFY
@@ -323,22 +413,49 @@ export default function EmployeeTimeTracking() {
     const sessionBreaks = breakPeriods.filter((bp: BreakPeriod) => bp.workSessionId === session.id);
     
     if (!session.clockOut) {
+      const isIncomplete = isSessionIncomplete(session);
+      const statusColor = isIncomplete ? "yellow" : "green";
+      const statusText = isIncomplete ? "Incompleto" : "En curso";
+      
       return (
         <div key={session.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-3 mb-2 border border-white/20">
           <div className="flex justify-between items-center mb-2">
             <span className="text-white font-medium text-sm">{formatDayDate(new Date(session.clockIn))}</span>
-            <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
-              En curso
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className={`${
+                statusColor === "yellow" 
+                  ? "bg-yellow-500/20 text-yellow-300 border-yellow-500/30" 
+                  : "bg-green-500/20 text-green-300 border-green-500/30"
+              }`}>
+                {statusText}
+              </Badge>
+              {isIncomplete && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 py-0 text-xs border-white/20 text-white hover:bg-white/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClockOutIncomplete(session.id);
+                  }}
+                >
+                  <LogOut className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2 mb-3">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            <div className={`w-3 h-3 ${
+              statusColor === "yellow" 
+                ? "bg-yellow-400 ring-2 ring-yellow-400/30" 
+                : "bg-green-400"
+            } rounded-full ${statusColor === "green" ? "animate-pulse" : ""}`}></div>
             <span className="text-white/90 text-sm">Entrada: {formatTime(session.clockIn)}</span>
           </div>
           
           <div className="text-center text-white/60 text-xs py-2">
-            Sesión activa - ficha para terminar
+            {isIncomplete ? "Sesión incompleta - marcar salida" : "Sesión activa - ficha para terminar"}
           </div>
         </div>
       );
@@ -920,6 +1037,52 @@ export default function EmployeeTimeTracking() {
           <span>© {currentYear}</span>
         </div>
       </div>
+      
+      {/* Dialog for incomplete session clock out */}
+      <Dialog open={incompleteDialogOpen} onOpenChange={setIncompleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Cerrar Sesión Incompleta</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center text-sm text-gray-600">
+              Introduce la hora de salida para cerrar esta sesión incompleta:
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                Hora de salida
+              </label>
+              <Input
+                type="time"
+                value={clockOutTime}
+                onChange={(e) => setClockOutTime(e.target.value)}
+                className="text-center"
+                placeholder="HH:MM"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIncompleteDialogOpen(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={submitClockOut}
+                disabled={clockOutMutation.isPending || !clockOutTime}
+                className="flex-1"
+              >
+                {clockOutMutation.isPending ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Cerrar Sesión'
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
