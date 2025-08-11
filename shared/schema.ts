@@ -84,7 +84,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 50 }).notNull(), // Basic, Pro, Master
   displayName: varchar("display_name", { length: 100 }).notNull(),
-  pricePerUser: decimal("price_per_user", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(), // Precio fijo mensual (ej: 29.99 euros/mes)
   maxUsers: integer("max_users"), // null = unlimited
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -609,8 +609,7 @@ export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = z.infer<typeof insertReminderSchema>;
-export type ReminderAssignment = typeof reminderAssignments.$inferSelect;
-export type InsertReminderAssignment = z.infer<typeof insertReminderAssignmentSchema>;
+// ReminderAssignment types temporarily removed
 export type EmployeeActivationToken = typeof employeeActivationTokens.$inferSelect;
 export type InsertEmployeeActivationToken = z.infer<typeof insertEmployeeActivationTokenSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

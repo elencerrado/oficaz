@@ -4560,7 +4560,7 @@ startxref
 
       // Get subscription plan details
       const planResult = await db.execute(sql`
-        SELECT price_per_user FROM subscription_plans 
+        SELECT monthly_price FROM subscription_plans 
         WHERE name = ${company.subscription.plan}
       `);
 
@@ -4568,7 +4568,7 @@ startxref
         return res.status(404).json({ message: 'Plan no encontrado' });
       }
 
-      const pricePerUser = (planResult.rows[0] as any).price_per_user;
+      const monthlyPrice = (planResult.rows[0] as any).monthly_price;
 
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
@@ -5197,13 +5197,13 @@ startxref
 
       // Get plan details
       const newPlanResult = await db.execute(sql`
-        SELECT name, display_name, price_per_user, max_users 
+        SELECT name, display_name, monthly_price, max_users 
         FROM subscription_plans 
         WHERE name = ${plan}
       `);
 
       const currentPlanResult = await db.execute(sql`
-        SELECT name, display_name, price_per_user 
+        SELECT name, display_name, monthly_price 
         FROM subscription_plans 
         WHERE name = ${company.subscription.plan}
       `);
@@ -5216,20 +5216,20 @@ startxref
       const currentPlan = currentPlanResult.rows[0] as any;
 
       // Calculate exact charge - currently disabled for simplified billing
-      const currentPrice = parseFloat(currentPlan.price_per_user);
-      const newPrice = parseFloat(newPlan.price_per_user);
+      const currentPrice = parseFloat(currentPlan.monthly_price);
+      const newPrice = parseFloat(newPlan.monthly_price);
       const priceDifference = newPrice - currentPrice;
 
       let previewData = {
         currentPlan: {
           name: currentPlan.name,
           displayName: currentPlan.display_name,
-          pricePerUser: currentPrice
+          monthlyPrice: currentPrice
         },
         newPlan: {
           name: newPlan.name,
           displayName: newPlan.display_name,
-          pricePerUser: newPrice,
+          monthlyPrice: newPrice,
           maxUsers: newPlan.max_users
         },
         changeType: priceDifference > 0 ? 'upgrade' : (priceDifference < 0 ? 'downgrade' : 'lateral'),

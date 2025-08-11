@@ -779,34 +779,22 @@ export class DrizzleStorage implements IStorage {
     // Get real pricing from subscription_plans table
     const planPricing = await db.select({
       name: schema.subscriptionPlans.name,
-      pricePerUser: schema.subscriptionPlans.pricePerUser
+      monthlyPrice: schema.subscriptionPlans.monthlyPrice
     }).from(schema.subscriptionPlans);
 
-    const pricingPerUser = planPricing.reduce((acc, plan) => {
-      acc[plan.name] = plan.pricePerUser;
+    const pricing = planPricing.reduce((acc, plan) => {
+      acc[plan.name] = Number(plan.monthlyPrice);
       return acc;
     }, {} as Record<string, number>);
 
-    // Calculate monthly revenue - we need to get the actual user count per subscription
-    // For now, use a simplified calculation with base pricing
-    const monthlyRevenue = await db
-      .select({
-        plan: schema.subscriptions.plan,
-        userCount: sql<number>`count(${schema.users.id})`,
-      })
-      .from(schema.subscriptions)
-      .leftJoin(schema.users, eq(schema.subscriptions.companyId, schema.users.companyId))
-      .where(eq(schema.subscriptions.status, 'active'))
-      .groupBy(schema.subscriptions.plan)
-      .then(results => 
-        results.reduce((acc, row) => {
-          if (row.plan !== 'free') {
-            const pricePerUser = pricingPerUser[row.plan] || 0;
-            acc += pricePerUser * (row.userCount || 1); // Minimum 1 user per subscription
-          }
-          return acc;
-        }, 0)
-      );
+    // Calculate monthly revenue using plan prices (not per user)
+    const monthlyRevenue = subscriptionStats.reduce((acc, row) => {
+      if (row.plan !== 'free' && row.status === 'active') {
+        const planPrice = pricing[row.plan] || 0;
+        acc += planPrice * row.count; // Each subscription pays the full plan price
+      }
+      return acc;
+    }, 0);
 
     const yearlyRevenue = monthlyRevenue * 12;
 
@@ -1010,7 +998,7 @@ export class DrizzleStorage implements IStorage {
 
   // Subscription Plans operations
   async getAllSubscriptionPlans(): Promise<any[]> {
-    const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.pricePerUser);
+    const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.monthlyPrice);
     
     // Add features to each plan from direct columns in features table
     const plansWithFeatures = await Promise.all(plans.map(async (plan) => {

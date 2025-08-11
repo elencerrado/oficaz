@@ -331,7 +331,7 @@ export default function SuperAdminPlans() {
                                 <Input
                                   type="number"
                                   step="0.01"
-                                  defaultValue={plan.pricePerUser}
+                                  defaultValue={plan.monthlyPrice}
                                   className="h-7 w-20 bg-white/10 border-white/20 text-white text-center text-xs"
                                   onBlur={(e) => handlePriceChange(plan.id, e.target.value)}
                                   onKeyDown={(e) => e.key === 'Enter' && handlePriceChange(plan.id, e.currentTarget.value)}
@@ -342,7 +342,7 @@ export default function SuperAdminPlans() {
                                   className="cursor-pointer hover:bg-white/10 px-1 rounded text-white text-sm"
                                   onClick={() => setEditingPrice(plan.id)}
                                 >
-                                  {plan.pricePerUser}
+                                  {plan.monthlyPrice}
                                 </span>
                               )}
                               <span className="text-white/60 text-xs">€ fijo/mes</span>
