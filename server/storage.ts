@@ -113,6 +113,10 @@ export interface IStorage {
 
   // Employee Activation Tokens
   createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
+  
+  // Incomplete Work Sessions Notifications
+  createIncompleteSessionNotification(userId: number, workSessionId: number, createdBy: number): Promise<SystemNotification>;
+  checkAndCreateIncompleteSessionNotifications(companyId: number): Promise<void>;
   getActivationToken(token: string): Promise<EmployeeActivationToken | undefined>;
   getActivationTokenByUserId(userId: number): Promise<EmployeeActivationToken | undefined>;
   markTokenAsUsed(id: number): Promise<EmployeeActivationToken | undefined>;
@@ -1629,6 +1633,87 @@ export class DrizzleStorage implements IStorage {
     .from(schema.users)
     .where(eq(schema.users.companyId, companyId))
     .orderBy(schema.users.fullName);
+  }
+
+  // ⚠️ PROTECTED - DO NOT MODIFY - Incomplete Work Sessions Notifications
+  async createIncompleteSessionNotification(userId: number, workSessionId: number, createdBy: number): Promise<SystemNotification> {
+    const notification = {
+      userId,
+      type: 'incomplete_session',
+      category: 'time-tracking',
+      title: 'Fichaje Incompleto',
+      message: 'Tienes una sesión de trabajo abierta que necesita ser cerrada.',
+      actionUrl: '/employee/time-tracking',
+      priority: 'high' as const,
+      isRead: false,
+      isCompleted: false,
+      metadata: JSON.stringify({ workSessionId }),
+      createdBy
+    };
+    
+    return await this.createNotification(notification);
+  }
+
+  // ⚠️ PROTECTED - DO NOT MODIFY - Check and create notifications for incomplete sessions
+  async checkAndCreateIncompleteSessionNotifications(companyId: number): Promise<void> {
+    try {
+      // Get company settings for working hours
+      const [company] = await db.select({
+        workingHoursPerDay: schema.companies.workingHoursPerDay
+      })
+      .from(schema.companies)
+      .where(eq(schema.companies.id, companyId));
+
+      if (!company) return;
+
+      const maxHours = company.workingHoursPerDay || 8;
+      const maxMilliseconds = maxHours * 60 * 60 * 1000;
+      const now = new Date();
+
+      // Find all incomplete sessions that exceed max working hours
+      const incompleteSessions = await db.select({
+        id: schema.workSessions.id,
+        userId: schema.workSessions.userId,
+        clockIn: schema.workSessions.clockIn,
+        userFullName: schema.users.fullName
+      })
+      .from(schema.workSessions)
+      .leftJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
+      .where(and(
+        eq(schema.users.companyId, companyId),
+        isNull(schema.workSessions.clockOut)
+      ));
+
+      for (const session of incompleteSessions) {
+        const clockInTime = new Date(session.clockIn!);
+        const elapsed = now.getTime() - clockInTime.getTime();
+
+        if (elapsed > maxMilliseconds) {
+          // Check if notification already exists for this session
+          const existingNotification = await db.select()
+            .from(schema.systemNotifications)
+            .where(and(
+              eq(schema.systemNotifications.userId, session.userId!),
+              eq(schema.systemNotifications.type, 'incomplete_session'),
+              eq(schema.systemNotifications.category, 'time-tracking'),
+              eq(schema.systemNotifications.isCompleted, false),
+              sql`${schema.systemNotifications.metadata}::json->>'workSessionId' = ${session.id.toString()}`
+            ))
+            .limit(1);
+
+          if (existingNotification.length === 0) {
+            // Create notification for this incomplete session
+            await this.createIncompleteSessionNotification(
+              session.userId!,
+              session.id,
+              1 // System-generated notification
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking incomplete session notifications:', error);
+    }
   }
 }
 

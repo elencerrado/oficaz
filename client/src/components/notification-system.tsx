@@ -38,7 +38,17 @@ const categoryIcons = {
   messages: MessageSquare,
   vacations: Calendar,
   system: AlertCircle,
-  reminders: Clock
+  reminders: Clock,
+  'time-tracking': Clock
+};
+
+const categoryNames = {
+  documents: 'Documentos',
+  messages: 'Mensajes',
+  vacations: 'Vacaciones',
+  system: 'Sistema',
+  reminders: 'Recordatorios',
+  'time-tracking': 'Fichajes'
 };
 
 export function NotificationSystem() {
@@ -187,7 +197,7 @@ export function NotificationSystem() {
               return (
                 <TabsTrigger key={category} value={category} className="flex items-center gap-2">
                   <IconComponent className="h-4 w-4" />
-                  <span className="capitalize">{category}</span>
+                  <span>{categoryNames[category as keyof typeof categoryNames] || category}</span>
                   {unreadCount > 0 && (
                     <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                       {unreadCount}

@@ -4021,6 +4021,9 @@ startxref
       const { category } = req.query;
       let notifications;
       
+      // Check for incomplete sessions and create notifications if needed
+      await storage.checkAndCreateIncompleteSessionNotifications(req.user!.companyId);
+      
       if (category && typeof category === 'string') {
         notifications = await storage.getNotificationsByCategory(req.user!.id, category);
       } else {
@@ -4051,13 +4054,30 @@ startxref
   app.patch('/api/notifications/:id/complete', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const notification = await storage.markNotificationCompleted(id);
       
-      if (!notification) {
+      // If this is a time-tracking notification, automatically close the incomplete session
+      const notification = await storage.getNotificationsByUser(req.user!.id);
+      const targetNotification = notification.find(n => n.id === id);
+      
+      if (targetNotification && targetNotification.type === 'incomplete_session' && targetNotification.metadata) {
+        const metadata = JSON.parse(targetNotification.metadata);
+        const workSessionId = metadata.workSessionId;
+        
+        if (workSessionId) {
+          // Close the incomplete work session
+          await storage.updateWorkSession(workSessionId, {
+            clockOut: new Date()
+          });
+        }
+      }
+      
+      const completedNotification = await storage.markNotificationCompleted(id);
+      
+      if (!completedNotification) {
         return res.status(404).json({ message: 'Notification not found' });
       }
       
-      res.json(notification);
+      res.json(completedNotification);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -4067,6 +4087,9 @@ startxref
     try {
       const { category } = req.query;
       let count;
+      
+      // Check for incomplete sessions and create notifications if needed
+      await storage.checkAndCreateIncompleteSessionNotifications(req.user!.companyId);
       
       if (category && typeof category === 'string') {
         count = await storage.getUnreadNotificationCountByCategory(req.user!.id, category);
