@@ -63,9 +63,11 @@ Preferred communication style: Simple, everyday language.
 - **Restricted Account Access**: Managers cannot access "Mi Cuenta" tab in settings (billing, subscriptions, payments)
 - **Company Settings Protection**: Only administrators can edit company information and policies
 - **Read-Only Configuration**: Managers can view but not modify company work hours and vacation policies
-- **Clear User Feedback**: Informative messages explain access restrictions to manager users
-- **Business Logic**: Manager role provides full operational access while restricting financial/account management
-- **User Confirmation**: "un manager no puede editar la info de la empresa" - successfully implemented
+- **Role Creation Restrictions**: Managers can only create employees with "employee" role, cannot assign manager/admin roles
+- **Role Editing Limitations**: Managers can promote employees to manager but cannot create administrators
+- **Clear User Feedback**: Informative messages explain access restrictions to manager users throughout the system
+- **Business Logic**: Manager role provides full operational access while restricting financial/account management and administrative role assignments
+- **User Confirmation**: "un manager no puede editar la info de la empresa" and role restrictions successfully implemented
 
 ### Loading System Optimization (✅ FIXED - AUGUST 11, 2025)
 - **Problem Solved**: Eliminated double loader effect during page navigation transitions

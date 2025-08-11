@@ -755,19 +755,33 @@ export default function EmployeesSimple() {
                     <Label htmlFor="newRole" className="text-sm font-medium text-gray-700">
                       Tipo de Usuario <span className="text-red-500">*</span>
                     </Label>
-                    <Select 
-                      value={newEmployee.role}
-                      onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
-                    >
-                      <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Seleccionar tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="employee">Empleado</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {user?.role === 'admin' ? (
+                      <Select 
+                        value={newEmployee.role}
+                        onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
+                      >
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="employee">Empleado</SelectItem>
+                          <SelectItem value="manager">Manager</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="mt-1">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
+                          <span className="text-sm font-medium text-gray-700">Empleado</span>
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                            Por defecto
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Como manager, solo puedes crear usuarios con rol de empleado
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -945,19 +959,39 @@ export default function EmployeesSimple() {
 
                       <div>
                         <Label htmlFor="role" className="text-sm font-medium text-gray-700">Tipo de Usuario</Label>
-                        <Select 
-                          value={editEmployee.role}
-                          onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
-                        >
-                          <SelectTrigger className="w-full mt-1">
-                            <SelectValue placeholder="Seleccionar tipo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="employee">Empleado</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {user?.role === 'admin' ? (
+                          <Select 
+                            value={editEmployee.role}
+                            onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
+                          >
+                            <SelectTrigger className="w-full mt-1">
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="employee">Empleado</SelectItem>
+                              <SelectItem value="manager">Manager</SelectItem>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Select 
+                            value={editEmployee.role}
+                            onValueChange={(value) => setEditEmployee({ ...editEmployee, role: value })}
+                          >
+                            <SelectTrigger className="w-full mt-1">
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="employee">Empleado</SelectItem>
+                              <SelectItem value="manager">Manager</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                        {user?.role === 'manager' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Como manager, no puedes asignar rol de administrador
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
