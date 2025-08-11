@@ -4212,35 +4212,53 @@ startxref
         expiresAt: Date.now() + 10 * 60 * 1000 // 10 minutes
       });
 
-      // Send email with verification code
+      // Send email with verification code using Nodemailer directly
       try {
-        await sendEmail({
+        const nodemailer = await import('nodemailer');
+        
+        // Configure Nodemailer with Hostinger SMTP
+        const transporter = nodemailer.default.createTransport({
+          host: 'smtp.hostinger.com',
+          port: 465,
+          secure: true, // SSL
+          auth: {
+            user: 'soy@oficaz.es',
+            pass: 'Sanisidro@2025',
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        await transporter.sendMail({
+          from: 'soy@oficaz.es',
           to: 'soy@oficaz.es',
-          from: process.env.EMAIL_FROM || 'noreply@oficaz.es',
-          subject: 'Código de verificación SuperAdmin',
+          subject: 'Código de verificación SuperAdmin - Oficaz',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Oficaz SuperAdmin</h1>
+              <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; text-align: center;">
+                <h1 style="color: white; margin: 0;">🔒 Oficaz SuperAdmin</h1>
               </div>
               <div style="background: #f8f9fa; padding: 30px; text-align: center;">
                 <h2 style="color: #333; margin-bottom: 20px;">Código de verificación</h2>
-                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                  <div style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 8px;">
+                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #dc2626;">
+                  <div style="font-size: 42px; font-weight: bold; color: #dc2626; letter-spacing: 12px; font-family: monospace;">
                     ${verificationCode}
                   </div>
                 </div>
-                <p style="color: #666; margin: 20px 0;">Este código expira en 10 minutos</p>
-                <p style="color: #999; font-size: 14px;">Si no has solicitado este código, ignora este email.</p>
+                <p style="color: #666; margin: 20px 0; font-size: 16px;">⏰ Este código expira en <strong>10 minutos</strong></p>
+                <p style="color: #999; font-size: 14px;">🔐 Acceso de máxima seguridad al panel SuperAdmin</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                <p style="color: #999; font-size: 12px;">Si no has solicitado este código, ignora este email.</p>
               </div>
             </div>
           `
         });
 
-        console.log('✅ SuperAdmin verification code sent to soy@oficaz.es');
+        console.log('✅ SuperAdmin verification code sent to soy@oficaz.es via Nodemailer');
         res.json({ token: tempToken, message: "Código enviado correctamente" });
       } catch (emailError) {
-        console.error('Error sending verification email:', emailError);
+        console.error('Error sending verification email via Nodemailer:', emailError);
         res.status(500).json({ message: "Error al enviar el código de verificación" });
       }
     } catch (error) {
