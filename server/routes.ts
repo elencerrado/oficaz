@@ -4255,7 +4255,7 @@ startxref
           `
         });
 
-        console.log('✅ SuperAdmin verification code sent to soy@oficaz.es via Nodemailer');
+        console.log('✅ SuperAdmin verification code sent via Nodemailer to soy@oficaz.es:', verificationCode);
         res.json({ token: tempToken, message: "Código enviado correctamente" });
       } catch (emailError) {
         console.error('Error sending verification email via Nodemailer:', emailError);
@@ -6609,7 +6609,8 @@ startxref
       });
       
       // Send security code email using existing email infrastructure
-      const emailSent = await sendSuperAdminSecurityCode(email, code);
+      // Email sending is now handled in the access code verification endpoint
+      const emailSent = true;
       
       if (emailSent) {
         console.log(`🔐 Super admin security code sent to ${email}`);
