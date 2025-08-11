@@ -81,6 +81,15 @@ export default function EmployeeDashboard() {
     staleTime: 10 * 1000,
   });
 
+  // Query for company work hours settings
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
+  });
+
   // Get unread messages count with real-time updates
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
@@ -344,9 +353,65 @@ export default function EmployeeDashboard() {
     },
   });
 
+  // Determine session state and status 
+  const getSessionStatus = () => {
+    if (!activeSession) return { isActive: false, isIncomplete: false, isToday: false };
+    
+    const clockIn = new Date(activeSession.clockIn);
+    const currentTime = new Date();
+    const isToday = clockIn.toDateString() === currentTime.toDateString();
+    
+    // If session is from previous day and no clock out, it's incomplete
+    if (!isToday && activeSession.status === 'incomplete') {
+      return { isActive: false, isIncomplete: true, isToday: false };
+    }
+    
+    // If session is from today, check if it's still within working hours
+    if (isToday) {
+      const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+      const maxHoursWithOvertime = maxDailyHours + 4;
+      
+      // If exceeded max hours + overtime, treat as finished
+      if (hoursWorked > maxHoursWithOvertime) {
+        return { isActive: false, isIncomplete: false, isToday: true };
+      } else {
+        return { isActive: true, isIncomplete: false, isToday: true };
+      }
+    }
+    
+    return { isActive: false, isIncomplete: false, isToday: false };
+  };
+
+  const sessionStatus = getSessionStatus();
+
   const formatLastClockDate = () => {
-    // If there's an active session, show when they clocked in today
-    if (activeSession) {
+    // If there's an incomplete session from previous day, show it
+    if (sessionStatus.isIncomplete && activeSession) {
+      const clockInDate = new Date(activeSession.clockIn);
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const isYesterday = clockInDate.toDateString() === yesterday.toDateString();
+      const time = clockInDate.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      
+      if (isYesterday) {
+        return `Sesión incompleta de ayer a las ${time}`;
+      } else {
+        const dayName = clockInDate.toLocaleDateString('es-ES', { weekday: 'long' });
+        const dayNumber = clockInDate.getDate();
+        const month = clockInDate.toLocaleDateString('es-ES', { month: 'long' });
+        return `Sesión incompleta del ${dayName} ${dayNumber} de ${month} a las ${time}`;
+      }
+    }
+    
+    // If there's an active session from today, show when they clocked in
+    if (sessionStatus.isActive && activeSession) {
       const clockInDate = new Date(activeSession.clockIn);
       const time = clockInDate.toLocaleTimeString('es-ES', { 
         hour: '2-digit', 
@@ -420,7 +485,7 @@ export default function EmployeeDashboard() {
   };
 
   const handleClockAction = () => {
-    if (activeSession) {
+    if (sessionStatus.isActive || sessionStatus.isIncomplete) {
       // Si hay un descanso activo, terminarlo primero antes de salir
       if (activeBreak) {
         endBreakMutation.mutate(undefined, {
@@ -716,17 +781,21 @@ export default function EmployeeDashboard() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-2 w-[304px]">
             {/* Status Line */}
             <div className={`text-xs mb-2 font-medium ${
-              activeSession 
+              sessionStatus.isActive 
                 ? activeBreak 
                   ? 'text-orange-400' 
-                  : 'text-green-400' 
-                : 'text-red-400'
+                  : 'text-green-400'
+                : sessionStatus.isIncomplete
+                  ? 'text-yellow-400'
+                  : 'text-red-400'
             }`}>
-              {activeSession 
+              {sessionStatus.isActive 
                 ? activeBreak 
                   ? '🟡 En descanso' 
-                  : '🟢 Trabajando...' 
-                : '🔴 Fuera del trabajo'}
+                  : '🟢 Trabajando...'
+                : sessionStatus.isIncomplete
+                  ? '🟡 Sesión incompleta'
+                  : '🔴 Fuera del trabajo'}
             </div>
             
             {temporaryMessage ? (
@@ -762,11 +831,11 @@ export default function EmployeeDashboard() {
             <div className="relative w-full flex justify-center">
               {/* Contenedor centrado que se adapta al número de botones */}
               <div className={`flex items-center gap-6 transition-all duration-500 ${
-                activeSession ? 'justify-center' : 'justify-center'
+                (sessionStatus.isActive || sessionStatus.isIncomplete) ? 'justify-center' : 'justify-center'
               }`}>
                 
-                {/* Break Button - Solo visible cuando hay sesión activa */}
-                {activeSession && (
+                {/* Break Button - Solo visible cuando hay sesión activa del día */}
+                {sessionStatus.isActive && (
                   <div className="transition-all duration-700 transform translate-x-0 opacity-100 scale-100 animate-slideInFromRight">
                     <Button
                       onClick={() => {
@@ -809,12 +878,14 @@ export default function EmployeeDashboard() {
                       <LoadingSpinner size="lg" className="text-white w-12 h-12" />
                     ) : (
                       <span className="relative z-10">
-                        {activeSession ? 'SALIR' : 'FICHAR'}
+                        {(sessionStatus.isActive || sessionStatus.isIncomplete) ? 'SALIR' : 'FICHAR'}
                       </span>
                     )}
                     {/* Anillo exterior pulsante cuando está activo */}
-                    {activeSession && (
-                      <div className="absolute -inset-1 rounded-full border border-green-400 animate-ping opacity-75"></div>
+                    {(sessionStatus.isActive || sessionStatus.isIncomplete) && (
+                      <div className={`absolute -inset-1 rounded-full border animate-ping opacity-75 ${
+                        sessionStatus.isIncomplete ? 'border-yellow-400' : 'border-green-400'
+                      }`}></div>
                     )}
                   </Button>
                 </div>
