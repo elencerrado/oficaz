@@ -26,100 +26,42 @@ Preferred communication style: Simple, everyday language.
 ### Email System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
 - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
 - **Never use dynamic domain detection for email logos** - it breaks the email display
-- **Email template padding**: Use increased padding for mobile compatibility
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
 ### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
-- **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data
-- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions
-- **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions (employees who forgot to clock out) from previous days that exceed company working hours
-- **Realistic data patterns**: Complete monthly work sessions, current day activity, varied reminder assignments, forgotten clock-outs
-- **Duplicate prevention**: Fixed duplicate work sessions for same-day registrations with proper date verification
+- **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data.
+- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions.
+- **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
-- **Implementation**: Integrated into company registration endpoint with error handling and duplicate detection
-- **Updated**: August 10, 2025 - Added generateIncompleteSessions function for realistic incomplete session demonstration
 
-### Dynamic Work Hours Configuration (✅ FIXED - AUGUST 10, 2025)
-- **Problem Solved**: Replaced hardcoded 8-hour limits with dynamic company-specific work hour settings
-- **Configuration Source**: Uses `workingHoursPerDay` field from company settings (configurable via Settings page)
-- **Endpoint Integration**: Fetches data from `/api/settings/work-hours` endpoint with proper caching
-- **Consistent Logic**: Both session status calculation and "Incompleto" display use the same dynamic value
-- **User Control**: Admins can modify work hours via Settings > Company > "Horas de trabajo por día" input field
-- **Default Fallback**: Falls back to 8 hours if configuration is not available
+### Dynamic Work Hours Configuration
+- **Problem Solved**: Replaced hardcoded 8-hour limits with dynamic company-specific work hour settings.
+- **User Control**: Admins can modify work hours via Settings > Company > "Horas de trabajo por día" input field.
 
-### Incomplete Sessions Management (✅ FIXED - AUGUST 11, 2025)
-- **Critical Bug Fixed**: Modified `getActiveWorkSession` to detect both active and incomplete sessions from any day
-- **Problem Solved**: Employees with incomplete sessions from previous days can now properly close them
-- **Backend Logic**: Updated function prioritizes active sessions, then incomplete sessions by oldest date
-- **Clock-Out Enhancement**: Modified endpoint to handle incomplete sessions exceeding 24 hours with company work hour limits
-- **Frontend Updates**: ClockWidget now shows "Sesión Incompleta" status and appropriate "Cerrar Sesión" button
-- **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days)
+### Incomplete Sessions Management
+- **Critical Bug Fixed**: Modified `getActiveWorkSession` to detect both active and incomplete sessions from any day.
+- **Problem Solved**: Employees with incomplete sessions from previous days can now properly close them.
+- **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days).
 - **User Requirement**: "juan jose ramirez tiene un fichaje de ayer incompleto pero haciendo login con su cuenta en el dash de empleado veo que no ha cambiado el estado de los botones de fichar"
 
-### Manager Role Permissions System (✅ COMPLETE - AUGUST 11, 2025)
-- **Role Assignment Fixed**: Backend API now allows updating user roles from employee to manager (added 'role' field to permitted updates)
-- **Manager Navigation Access**: Managers see all admin features including Fichajes, Empleados, and Configuración
-- **Restricted Account Access**: Managers cannot access "Mi Cuenta" tab in settings (billing, subscriptions, payments)
-- **Company Settings Protection**: Only administrators can edit company information and policies
-- **Read-Only Configuration**: Managers can view but not modify company work hours and vacation policies
-- **Role Creation Restrictions**: Managers can only create employees with "employee" role, cannot assign manager/admin roles
-- **Role Editing Limitations**: Managers can promote employees to manager but cannot create administrators
-- **Clear User Feedback**: Informative messages explain access restrictions to manager users throughout the system
-- **Business Logic**: Manager role provides full operational access while restricting financial/account management and administrative role assignments
-- **User Confirmation**: "un manager no puede editar la info de la empresa" and role restrictions successfully implemented
+### Manager Role Permissions System
+- **Role Assignment Fixed**: Backend API now allows updating user roles from employee to manager.
+- **Manager Navigation Access**: Managers see all admin features including Fichajes, Empleados, and Configuración.
+- **Company Settings Protection**: Only administrators can edit company information and policies.
+- **Read-Only Configuration**: Managers can view but not modify company work hours and vacation policies.
+- **Role Creation Restrictions**: Managers can only create employees with "employee" role, cannot assign manager/admin roles.
+- **User Confirmation**: "un manager no puede editar la info de la empresa" and role restrictions successfully implemented.
 
-### Navigation Performance Optimization (✅ COMPLETE - AUGUST 11, 2025)
-- **Problem Solved**: Eliminated page reloads during admin navigation between sections
-- **Main Changes**: Converted admin/manager pages from lazy loading to direct imports
-- **Layout Preservation**: Header and sidebar now remain stable during navigation
-- **Performance Impact**: Faster page transitions, no more loading delays on first visit
-- **Optimized Pages**: Dashboard, Time Tracking, Settings, Employees, Messages, Documents, Vacations, Reminders
+### Navigation Performance Optimization
+- **Problem Solved**: Eliminated page reloads during admin navigation between sections.
 - **User Feedback**: "en la vista admin cuando voy cambiando las paginas con la barra menu lateral las primeras veces que entro en cada pagina se recarga la pagina entera"
-- **Result**: Smooth navigation experience with maintained layout and instant page switching
+- **Result**: Smooth navigation experience with maintained layout and instant page switching.
 
-### SEO Optimization System (✅ PRODUCTION READY - VERIFIED WORKING)
-- **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference
-- **Implementation**: robots.txt and sitemap.xml served from client/public directory
-- **File Location**: robots.txt and sitemap.xml now stored in client/public for easier maintenance
-- **Server Integration**: Express endpoints serve files directly with optimized production headers
-- **Content-Type Verification**: Confirmed working - robots.txt (text/plain), sitemap.xml (application/xml)
-- **Production Headers**: Includes Cache-Control, X-Content-Type-Options, CORS headers
-- **Google PageSpeed Ready**: Content-types properly detected by crawlers and analysis tools
-- **Updated**: August 5, 2025 - Moved SEO files to client/public and removed external SEO directories
-
-### Performance Optimization System (🚀 PERFORMANCE ENHANCED)
-- **Problem Addressed**: Render-blocking requests causing 1200ms delays and long main thread tasks
-- **Lazy Loading Implementation**: All non-critical pages wrapped with React.lazy() and Suspense
-- **Code Splitting Strategy**: Critical pages (Landing, Login, Legal) load immediately, features load on-demand
-- **Async Resource Loading**: Stripe and Replit banner scripts load asynchronously to prevent blocking
-- **Critical CSS Optimization**: Inline critical styles to prevent FOUC and layout shifts
-- **Resource Hints**: Added preconnect, dns-prefetch, and modulepreload for faster resource loading
-- **Bundle Optimization**: Main App component lazy-loaded to reduce initial JavaScript execution time
-- **Loading States**: Consistent loading spinners across all lazy-loaded components
-- **Performance Targets**: Reduced LCP, eliminated render-blocking requests, improved TBT scores
-- **Implementation Date**: August 5, 2025 - Comprehensive performance optimization deployed
-
-### Error Monitoring System (✅ SENTRY INTEGRATED - PRODUCTION READY)
-- **Integration Completed**: Sentry error monitoring successfully integrated and tested
-- **Manual Configuration**: Custom setup for Vite + React environment with proper DSN configuration
-- **Error Capture Verified**: User confirmed error tracking is working correctly via test button
-- **Performance Monitoring**: Includes both error tracking and performance metrics collection
-- **Production Status**: Fully operational in production environment
-- **Test Results**: Error capture functionality verified and test components removed
-- **Implementation Date**: August 6, 2025 - Sentry integration completed and verified working
-
-### SuperAdmin Security System (✅ COMPLETE - AUGUST 11, 2025)
-- **Maximum Security Implementation**: Eliminated /fast page and replaced with email verification system
-- **Restricted Access**: Exclusive access limited to soy@oficaz.es email address only
-- **Two-Factor Authentication**: 6-digit security codes sent via email with 10-minute expiration
-- **Rate Limiting**: Maximum 3 verification attempts, 1-minute cooldown between code requests
-- **Email Integration**: Uses existing Nodemailer infrastructure with professional email templates
-- **Token Management**: JWT tokens with 2-hour expiration and proper middleware validation
-- **Audit Logging**: All security events logged including unauthorized access attempts
-- **Navigation Fixed**: Corrected back button navigation in company management to prevent logout
-- **User Requirement**: "máxima seguridad superadmin acceso con verificación por email" - Successfully implemented
-
+### SuperAdmin Security System
+- **Maximum Security Implementation**: Eliminated /fast page and replaced with email verification system.
+- **Restricted Access**: Exclusive access limited to soy@oficaz.es email address only.
+- **User Requirement**: "máxima seguridad superadmin acceso con verificación por email" - Successfully implemented.
 
 ## System Architecture
 
@@ -135,7 +77,7 @@ Preferred communication style: Simple, everyday language.
     - Modern aesthetic with glassmorphism, subtle shadows, and rounded borders.
     - Responsive design for optimal viewing on mobile and desktop.
     - Professional color scheme using Oficaz primary color (#007AFF) and structured grayscale.
-    - Animated elements for enhanced user engagement (e.g., loading spinners, chart animations, button effects).
+    - Animated elements for enhanced user engagement.
     - Unified avatar system with unique background colors or user-uploaded photos.
 
 ### Backend Architecture
@@ -145,27 +87,47 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: JWT-based authentication with role-based access control, supporting DNI/NIE or email login. Secure password hashing with bcrypt.
 - **File Uploads**: Multer for handling document uploads with image compression (Sharp).
 - **Session Management**: Express sessions with PostgreSQL store.
-- **Security**: Helmet for CSP, CORS, rate limiting (global and per-endpoint), HSTS, X-XSS-Protection, Referrer-Policy. SQL injection protection via parameterized queries.
+- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy. SQL injection protection via parameterized queries.
 - **Core Modules**:
-    - **Authentication System**: JWT-based, role-based access (admin, manager, employee), secure password hashing, token refresh, protected routes.
-    - **Time Tracking Module**: Real-time clock in/out, automatic time calculation, work session history, admin/manager views.
-    - **Vacation Management**: Request submission, approval workflow, balance tracking, calendar integration.
-    - **Document Management**: Upload, categorization, secure storage, download/deletion, intelligent file naming, document notifications.
-    - **Messaging System**: Internal company messaging, real-time updates, role-based routing, message history.
-    - **Administrative Features**: Employee management, company settings, user role management, system statistics, customizable features per company.
-    - **Subscription Management**: Dynamic plan changes (upgrade/downgrade), prorated billing, integration with Stripe for invoicing and payments.
-    - **Reminders System**: Google Keep-style reminders with notifications, prioritization, customizable colors, and advanced assignment system. Admins/managers can assign reminders to multiple employees with proper permission controls.
+    - **Authentication System**: JWT-based, role-based access, secure password hashing.
+    - **Time Tracking Module**: Real-time clock in/out, automatic time calculation.
+    - **Vacation Management**: Request submission, approval workflow, balance tracking.
+    - **Document Management**: Upload, categorization, secure storage, intelligent file naming.
+    - **Messaging System**: Internal company messaging, real-time updates.
+    - **Administrative Features**: Employee management, company settings, user role management.
+    - **Subscription Management**: Dynamic plan changes, prorated billing, integration with Stripe.
+    - **Reminders System**: Google Keep-style reminders with notifications and advanced assignment system.
 
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect
 - **Schema**: Type-safe schema definitions shared between frontend and backend.
 - **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features.
-- **Relationships**: Foreign key constraints with referential integrity. User data includes detailed identification, labor, address, vacation, and emergency contact fields.
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
 - **Production Build**: Vite for frontend, esbuild for backend.
-- **Replit Configuration**: `nodejs-20`, `web`, `postgresql-16` modules. Auto-scaling configured.
+- **Replit Configuration**: `nodejs-20`, `web`, `postgresql-16` modules.
+
+### Performance Optimization System
+- **Problem Addressed**: Render-blocking requests causing 1200ms delays and long main thread tasks.
+- **Lazy Loading Implementation**: All non-critical pages wrapped with React.lazy() and Suspense.
+- **Code Splitting Strategy**: Critical pages load immediately, features load on-demand.
+- **Async Resource Loading**: Stripe and Replit banner scripts load asynchronously.
+- **Critical CSS Optimization**: Inline critical styles.
+- **Resource Hints**: Added preconnect, dns-prefetch, and modulepreload.
+- **Bundle Optimization**: Main App component lazy-loaded to reduce initial JavaScript execution time.
+- **Performance Targets**: Reduced LCP, eliminated render-blocking requests, improved TBT scores.
+
+### Error Monitoring System
+- **Integration Completed**: Sentry error monitoring successfully integrated and tested.
+- **Performance Monitoring**: Includes both error tracking and performance metrics collection.
+- **Production Status**: Fully operational in production environment.
+
+### SEO Optimization System
+- **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference.
+- **Implementation**: robots.txt and sitemap.xml served from client/public directory.
+- **Server Integration**: Express endpoints serve files directly with optimized production headers.
+- **Content-Type Verification**: Confirmed working - robots.txt (text/plain), sitemap.xml (application/xml).
 
 ## External Dependencies
 
@@ -175,7 +137,6 @@ Preferred communication style: Simple, everyday language.
 - **Date Handling**: date-fns
 - **Form Validation**: Zod
 - **Styling**: Tailwind CSS
-- **Testing**: Vitest (for component and utility testing)
 
 ### Backend Dependencies
 - **Database**: Neon PostgreSQL serverless database
