@@ -4202,7 +4202,7 @@ startxref
       }
 
       // Generate temporary token for email verification step
-      const tempToken = require('crypto').randomBytes(32).toString('hex');
+      const tempToken = crypto.randomBytes(32).toString('hex');
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       
       // Store temp data (expires in 10 minutes)
