@@ -2447,6 +2447,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Regular clock out (current session)
   app.post('/api/work-sessions/clock-out', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
@@ -2500,6 +2501,67 @@ Responde directamente a este email para contactar con la persona.
 
       res.json(updatedSession);
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Clock out incomplete session with custom time
+  app.post('/api/work-sessions/clock-out-incomplete', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { sessionId, clockOutTime } = req.body;
+      
+      if (!sessionId || !clockOutTime) {
+        return res.status(400).json({ message: 'Session ID and clock out time are required' });
+      }
+
+      // Get the specific session
+      const sessions = await storage.getWorkSessionsByUser(req.user!.id);
+      const session = sessions.find(s => s.id === parseInt(sessionId));
+      
+      if (!session) {
+        return res.status(404).json({ message: 'Session not found' });
+      }
+
+      // Parse the provided clockOutTime (should be ISO string from frontend)
+      const clockOut = new Date(clockOutTime);
+      const clockInTime = new Date(session.clockIn);
+      
+      // Validate times
+      if (isNaN(clockOut.getTime()) || isNaN(clockInTime.getTime())) {
+        return res.status(400).json({ message: 'Invalid date format' });
+      }
+      
+      if (clockOut.getTime() <= clockInTime.getTime()) {
+        return res.status(400).json({ message: 'Clock-out time must be after clock-in time' });
+      }
+      
+      // Calculate total hours
+      const diffInMs = clockOut.getTime() - clockInTime.getTime();
+      const totalHours = diffInMs / (1000 * 60 * 60);
+      
+      // Get company work hours settings for validation
+      const companyData = await storage.getCompanyByUserId(req.user!.id);
+      const maxWorkHours = companyData?.workingHoursPerDay || 8;
+      
+      // Allow up to double the maximum work hours for flexibility
+      if (totalHours > maxWorkHours * 2) {
+        return res.status(400).json({ 
+          message: `Clock-out time too late. Maximum ${maxWorkHours * 2} hours allowed.` 
+        });
+      }
+      
+      // Ensure totalHours is reasonable 
+      const safeTotalHours = Math.min(Math.max(totalHours, 0), maxWorkHours * 2);
+
+      const updatedSession = await storage.updateWorkSession(session.id, {
+        clockOut,
+        totalHours: safeTotalHours.toFixed(2),
+        status: 'completed',
+      });
+
+      res.json(updatedSession);
+    } catch (error: any) {
+      console.error('Error closing incomplete session:', error);
       res.status(500).json({ message: error.message });
     }
   });

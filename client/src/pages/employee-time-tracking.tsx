@@ -192,7 +192,7 @@ export default function EmployeeTimeTracking() {
   // Clock out mutation for incomplete sessions
   const clockOutMutation = useMutation({
     mutationFn: async ({ sessionId, clockOutTime }: { sessionId: number; clockOutTime: string }) => {
-      return apiRequest('POST', '/api/work-sessions/clock-out', { 
+      return apiRequest('POST', '/api/work-sessions/clock-out-incomplete', { 
         sessionId, 
         clockOutTime 
       });
@@ -275,9 +275,21 @@ export default function EmployeeTimeTracking() {
   const submitClockOut = () => {
     if (!incompleteSessionId || !clockOutTime) return;
     
+    // Find the session to get the original date
+    const session = sessions.find(s => s.id === incompleteSessionId);
+    if (!session) return;
+    
+    // Create clock out datetime using the session's original date + user's time input
+    const sessionDate = new Date(session.clockIn);
+    const [hours, minutes] = clockOutTime.split(':').map(Number);
+    
+    // Set the time on the same date as the session
+    const clockOutDateTime = new Date(sessionDate);
+    clockOutDateTime.setHours(hours, minutes, 0, 0);
+    
     clockOutMutation.mutate({
       sessionId: incompleteSessionId,
-      clockOutTime: clockOutTime
+      clockOutTime: clockOutDateTime.toISOString()
     });
   };
 
