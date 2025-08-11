@@ -1468,7 +1468,7 @@ const AccountManagement = () => {
             { id: 'company', label: 'Empresa', icon: Building2 },
             { id: 'policies', label: 'Políticas', icon: SettingsIcon },
             { id: 'profile', label: 'Mi Perfil', icon: Users },
-            { id: 'account', label: 'Mi Cuenta', icon: CreditCard }
+            ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : [])
           ]}
           activeTab={activeTab}
           onTabChange={setActiveTab}

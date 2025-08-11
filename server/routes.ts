@@ -3907,6 +3907,7 @@ startxref
       if (updates.position !== undefined) allowedUpdates.position = updates.position;
       if (updates.startDate !== undefined) allowedUpdates.startDate = new Date(updates.startDate);
       if (updates.status !== undefined) allowedUpdates.status = updates.status;
+      if (updates.role !== undefined) allowedUpdates.role = updates.role;
       if (updates.vacationDaysAdjustment !== undefined) allowedUpdates.vacationDaysAdjustment = updates.vacationDaysAdjustment.toString();
 
       const updatedUser = await storage.updateUser(userId, allowedUpdates);
