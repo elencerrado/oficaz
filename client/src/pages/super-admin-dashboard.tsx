@@ -333,7 +333,7 @@ export default function SuperAdminDashboard() {
               <TrendingUp className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">€{stats?.monthlyRevenue || 0}</div>
+              <div className="text-2xl font-bold text-white">€{Number(stats?.monthlyRevenue || 0).toFixed(2)}</div>
               <p className="text-xs text-white/60">
                 MRR (recurrente)
               </p>
@@ -348,7 +348,7 @@ export default function SuperAdminDashboard() {
               <TrendingUp className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">€{stats?.yearlyRevenue || 0}</div>
+              <div className="text-2xl font-bold text-white">€{Number(stats?.yearlyRevenue || 0).toFixed(2)}</div>
               <p className="text-xs text-white/60">
                 ARR (proyectado)
               </p>
