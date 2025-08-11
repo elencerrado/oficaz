@@ -60,14 +60,16 @@ export default function ForgotPassword() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
-        <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
+        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
           <CardHeader className="text-center pt-8 pb-6">
             <div className="flex justify-center mb-6">
-              <img 
-                src={oficazLogo} 
-                alt="Oficaz" 
-                className="h-10 w-auto"
-              />
+              <Link href="/">
+                <img 
+                  src={oficazLogo} 
+                  alt="Oficaz" 
+                  className="h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </Link>
             </div>
             <div className="flex justify-center mb-4">
               <CheckCircle className="h-16 w-16 text-green-500" />
@@ -109,11 +111,13 @@ export default function ForgotPassword() {
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
         <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="h-10 w-auto"
-            />
+            <Link href="/">
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </Link>
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Recuperar contraseña
