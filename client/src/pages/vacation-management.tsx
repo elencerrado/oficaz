@@ -300,7 +300,7 @@ export default function VacationManagement() {
           {isTooltipActive && (
             <div 
               data-vacation-tooltip
-              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-80"
+              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 mx-4 max-w-sm md:min-w-80"
               style={{ 
                 zIndex: 10000,
                 left: '50%',
@@ -353,8 +353,8 @@ export default function VacationManagement() {
                 </div>
               )}
               
-              {/* Botones de acción - grandes y fáciles de pulsar */}
-              <div className="flex gap-3">
+              {/* Botones de acción - Responsive: iconos en móvil, texto en desktop */}
+              <div className="flex gap-2 md:gap-3">
                 {period.status === 'pending' ? (
                   <>
                     <button
@@ -363,10 +363,11 @@ export default function VacationManagement() {
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'approve');
                       }}
-                      className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      className="flex items-center gap-2 px-3 py-3 md:px-4 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      title="Aprobar"
                     >
                       <Check className="w-5 h-5" />
-                      Aprobar
+                      <span className="hidden md:inline">Aprobar</span>
                     </button>
                     
                     <button
@@ -375,10 +376,11 @@ export default function VacationManagement() {
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'edit');
                       }}
-                      className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      className="flex items-center gap-2 px-3 py-3 md:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      title="Editar"
                     >
                       <Edit className="w-5 h-5" />
-                      Editar
+                      <span className="hidden md:inline">Editar</span>
                     </button>
                     
                     <button
@@ -387,10 +389,11 @@ export default function VacationManagement() {
                         setActiveTooltip(null);
                         if (fullRequest) openRequestModal(fullRequest, 'deny');
                       }}
-                      className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      className="flex items-center gap-2 px-3 py-3 md:px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
+                      title="Rechazar"
                     >
                       <X className="w-5 h-5" />
-                      Rechazar
+                      <span className="hidden md:inline">Rechazar</span>
                     </button>
                   </>
                 ) : (
@@ -400,10 +403,13 @@ export default function VacationManagement() {
                       setActiveTooltip(null);
                       if (fullRequest) openRequestModal(fullRequest, 'revert');
                     }}
-                    className="flex items-center gap-2 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                    className="flex items-center gap-2 px-3 py-3 md:px-4 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors w-full justify-center"
+                    title={period.status === 'approved' ? 'Revertir Aprobación' : 'Revertir Denegación'}
                   >
                     <RotateCcw className="w-5 h-5" />
-                    {period.status === 'approved' ? 'Revertir Aprobación' : 'Revertir Denegación'}
+                    <span className="hidden md:inline">
+                      {period.status === 'approved' ? 'Revertir Aprobación' : 'Revertir Denegación'}
+                    </span>
                   </button>
                 )}
               </div>
