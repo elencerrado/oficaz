@@ -1747,7 +1747,9 @@ export default function TimeTracking() {
         <CardHeader>
           <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
             <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredSessions.length})</span>
-            <div className="flex items-center gap-2">
+            
+            {/* Desktop: buttons grouped together */}
+            <div className="hidden sm:flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -1764,6 +1766,29 @@ export default function TimeTracking() {
                 title="Exporta en PDF la vista actual de fichajes"
               >
                 <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+
+            {/* Mobile: buttons full width */}
+            <div className="sm:hidden grid grid-cols-2 gap-2 w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center justify-center gap-2 w-full"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPDF}
+                title="Exporta en PDF la vista actual de fichajes"
+                className="flex items-center justify-center gap-2 w-full"
+              >
+                <Download className="w-4 h-4" />
                 Exportar
               </Button>
             </div>
