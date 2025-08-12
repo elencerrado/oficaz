@@ -48,10 +48,10 @@ export function TrialManagerSimple() {
     staleTime: 30 * 1000,
   });
 
-  const getPlanPrice = (planName: string): number => {
-    if (!subscriptionPlans) return 0;
+  const getPlanPrice = (planName: string): string => {
+    if (!subscriptionPlans) return '0.00';
     const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
-    return plan ? plan.pricePerUser : 0;
+    return plan ? Number(plan.monthlyPrice).toFixed(2) : '0.00';
   };
 
   if (loadingTrial) {
