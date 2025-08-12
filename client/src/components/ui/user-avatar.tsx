@@ -136,14 +136,30 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
     }
   };
 
-  // Extraer iniciales del nombre completo
+  // Extraer iniciales del nombre completo - Lógica mejorada para nombres españoles
   const getInitials = (name: string) => {
     const words = name.trim().split(/\s+/);
+    
     if (words.length === 1) {
       return words[0].substring(0, 2).toUpperCase();
     }
-    // Tomar primera letra del primer nombre y primera del último apellido
-    return (words[0][0] + (words[words.length - 1][0] || '')).toUpperCase();
+    
+    // Para nombres españoles: Primer nombre + Primer apellido
+    // Ejemplos: "María García López" -> MG, "José Luis Rodríguez" -> JR
+    if (words.length >= 2) {
+      // Si el segundo nombre es común (Luis, José, María, etc.) o muy corto, usar el tercero como apellido
+      const commonNames = ['josé', 'luis', 'maría', 'ana', 'juan', 'carlos', 'antonio', 'manuel', 'francisco', 'jesús', 'javier', 'miguel', 'pedro', 'alejandro', 'pablo', 'daniel', 'adrián', 'david', 'diego', 'mario', 'sergio', 'raúl', 'gonzalo', 'marcos', 'roberto', 'álvaro'];
+      
+      if (words.length >= 3 && (commonNames.includes(words[1].toLowerCase()) || words[1].length <= 2)) {
+        // Usar primer nombre + tercer nombre (primer apellido)
+        return (words[0][0] + words[2][0]).toUpperCase();
+      } else {
+        // Usar primer nombre + segundo nombre (que es el primer apellido)
+        return (words[0][0] + words[1][0]).toUpperCase();
+      }
+    }
+    
+    return words[0].substring(0, 2).toUpperCase();
   };
 
   // Colores únicos para cada empleado usando estilos inline agresivos
