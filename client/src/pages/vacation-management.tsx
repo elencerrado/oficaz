@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -581,8 +581,7 @@ export default function VacationManagement() {
         />
 
         {/* Content based on active tab */}
-        <Card>
-          <CardContent className="p-6">
+        <div>
             {activeTab === 'requests' && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
@@ -1294,8 +1293,7 @@ export default function VacationManagement() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
 
       {/* Request Management Modal */}
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
