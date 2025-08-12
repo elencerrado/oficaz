@@ -610,8 +610,13 @@ export default function EmployeesSimple() {
                       e.currentTarget.setAttribute('data-is-swiping', 'false');
                     }}
                   >
-                    <div className="flex items-center space-x-3">
-                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
+                    <div className="flex items-start space-x-3">
+                      <div className="flex flex-col items-center">
+                        <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
+                        <Badge className={`${getStatusColor(employee.status)} capitalize border-0 text-xs mt-2`}>
+                          {translateStatus(employee.status)}
+                        </Badge>
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900">{employee.fullName}</p>
                         <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>
@@ -636,9 +641,6 @@ export default function EmployeesSimple() {
                           </a>
                         )}
                       </div>
-                      <Badge className={`${getStatusColor(employee.status)} capitalize border-0`}>
-                        {translateStatus(employee.status)}
-                      </Badge>
                     </div>
                   </div>
                 </div>
