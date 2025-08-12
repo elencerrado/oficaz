@@ -802,7 +802,8 @@ export default function VacationManagement() {
                   </div>
                 ) : (
                   <div className="bg-white rounded-lg border overflow-hidden">
-                    <div className="p-4 border-b bg-gray-50">
+                    {/* Desktop: Header con controles */}
+                    <div className="hidden md:block p-4 border-b bg-gray-50">
                       {/* Header unificado con controles y leyenda */}
                       <div className="flex items-center justify-between">
                         {/* Leyenda de colores y controles de navegación compactos */}
@@ -871,8 +872,76 @@ export default function VacationManagement() {
                       </div>
                     </div>
 
-                    {/* Lista de Empleados con Timeline */}
-                    <div className="divide-y">
+                    {/* Mobile: Header compacto */}
+                    <div className="md:hidden p-3 border-b bg-gray-50 space-y-3">
+                      {/* Leyenda móvil */}
+                      <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+                          <span>Aprobado</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></div>
+                          <span>Pendiente</span>
+                        </div>
+                      </div>
+                      
+                      {/* Controles móviles */}
+                      <div className="flex items-center justify-between">
+                        {/* Navegación del periodo */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigateTimeline('prev')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          
+                          <div className="text-center min-w-[100px]">
+                            <span className="text-xs font-medium text-gray-900">
+                              {timelineViewMode === 'month' 
+                                ? format(timelineViewDate, "MMM yyyy", { locale: es })
+                                : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
+                              }
+                            </span>
+                          </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigateTimeline('next')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Opciones de vista móvil */}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setTimelineViewMode('month')}
+                            className="h-7 px-2 text-xs"
+                          >
+                            Mes
+                          </Button>
+                          <Button
+                            variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={() => setTimelineViewMode('quarter')}
+                            className="h-7 px-2 text-xs"
+                          >
+                            Trim
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop: Lista de Empleados con Timeline */}
+                    <div className="hidden md:block divide-y">
                       {employees.map((employee: Employee) => {
                         // Calcular días usados y disponibles
                         const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
@@ -991,6 +1060,106 @@ export default function VacationManagement() {
                                 </div>
                               </div>
                             </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Mobile: Cards View */}
+                    <div className="md:hidden space-y-4 px-4">
+                      {employees.map((employee: Employee) => {
+                        // Calcular días usados y disponibles
+                        const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                          req.userId === employee.id && req.status === 'approved'
+                        );
+                        const usedDays = employeeRequests.reduce((sum, req) => 
+                          sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                        );
+                        const totalDays = parseInt(employee.totalVacationDays) || 22;
+                        const availableDays = Math.max(0, totalDays - usedDays);
+                        const usagePercent = (usedDays / totalDays) * 100;
+                        
+                        return (
+                          <div key={employee.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                            {/* Employee Header */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <UserAvatar 
+                                  fullName={employee.fullName} 
+                                  size="sm" 
+                                  userId={employee.id} 
+                                  profilePicture={employee.profilePicture} 
+                                />
+                                <div>
+                                  <h4 className="font-medium text-gray-900 text-sm">
+                                    {employee.fullName}
+                                  </h4>
+                                  <div className="text-xs text-gray-500">
+                                    <span className="font-medium">{usedDays}</span>/{totalDays} días usados
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs font-medium text-green-600">
+                                  {availableDays} rest.
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="mb-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-blue-500 h-2 rounded-full"
+                                    style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 text-center">
+                                {usagePercent.toFixed(0)}% utilizado
+                              </div>
+                            </div>
+
+                            {/* Vacation Periods */}
+                            {employeeRequests.length > 0 && (
+                              <div className="space-y-2">
+                                <h5 className="text-xs font-medium text-gray-700">
+                                  Períodos de vacaciones:
+                                </h5>
+                                <div className="space-y-2">
+                                  {employeeRequests.map((request, index) => (
+                                    <div key={index} className="bg-blue-50 rounded-lg p-2 border border-blue-200">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-medium text-blue-800">
+                                          {request.startDate && request.endDate ? 
+                                            `${format(new Date(request.startDate), "dd/MM", { locale: es })} - ${format(new Date(request.endDate), "dd/MM/yy", { locale: es })}`
+                                            : "Fecha no disponible"
+                                          }
+                                        </span>
+                                        <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full font-medium">
+                                          {request.startDate && request.endDate ? 
+                                            `${calculateDays(request.startDate, request.endDate)} días`
+                                            : "N/A"
+                                          }
+                                        </span>
+                                      </div>
+                                      {request.reason && (
+                                        <div className="text-xs text-blue-700 mt-1 opacity-80">
+                                          {request.reason}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {employeeRequests.length === 0 && (
+                              <div className="text-xs text-gray-400 text-center py-2 italic">
+                                No hay vacaciones programadas
+                              </div>
+                            )}
                           </div>
                         );
                       })}
