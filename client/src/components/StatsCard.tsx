@@ -72,13 +72,20 @@ export default function StatsCard({
       } mb-4 ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-3 h-20 flex flex-col items-center text-center overflow-hidden">
-        {/* Layout móvil: ícono arriba, número abajo */}
-        <div className="flex flex-col items-center justify-center space-y-1 sm:hidden mt-1">
-          <div className={`w-5 h-5 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-            {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
+      <CardContent className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
+        {/* Layout móvil: ícono arriba, número en medio, texto abajo */}
+        <div className="sm:hidden flex flex-col justify-between h-full py-1">
+          <div className="flex justify-center">
+            <div className={`w-5 h-5 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+              {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
+            </div>
           </div>
-          <span className="text-lg font-bold text-gray-900">{value}</span>
+          <div className="flex justify-center">
+            <span className="text-lg font-bold text-gray-900">{value}</span>
+          </div>
+          <div className="flex flex-col items-center justify-center">
+            <p className="text-[8px] font-medium text-gray-600 leading-none">{title}</p>
+          </div>
         </div>
 
         {/* Layout desktop: ícono + número horizontal */}
@@ -89,9 +96,9 @@ export default function StatsCard({
           <span className="text-xl font-bold text-gray-900">{value}</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center mb-1 mt-auto sm:mt-0">
-          <p className="text-[8px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
-          <p className="text-[9px] md:text-[10px] text-gray-500 leading-none hidden sm:block">{subtitle}</p>
+        <div className="hidden sm:flex flex-col items-center justify-center">
+          <p className="text-xs font-medium text-gray-600 leading-none">{title}</p>
+          <p className="text-[10px] text-gray-500 leading-none">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
