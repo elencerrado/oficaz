@@ -78,7 +78,7 @@ export default function StatsCard({
           <div className={`w-5 h-5 md:w-6 md:h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />}
           </div>
-          <span className="text-base md:text-lg font-bold text-gray-900">{value}</span>
+          <span className="text-lg md:text-xl font-bold text-gray-900">{value}</span>
         </div>
         <div className="flex flex-col items-center justify-center">
           <p className="text-[10px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
