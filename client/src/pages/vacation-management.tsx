@@ -1066,8 +1066,8 @@ export default function VacationManagement() {
                       })}
                     </div>
 
-                    {/* Mobile: Cards View */}
-                    <div className="md:hidden space-y-4 px-4">
+                    {/* Mobile: Vertical Timeline View */}
+                    <div className="md:hidden divide-y">
                       {employees.map((employee: Employee) => {
                         // Calcular días usados y disponibles
                         const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
@@ -1080,8 +1080,10 @@ export default function VacationManagement() {
                         const availableDays = Math.max(0, totalDays - usedDays);
                         const usagePercent = (usedDays / totalDays) * 100;
                         
+                        const timelineRange = getTimelineRange();
+                        
                         return (
-                          <div key={employee.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <div key={employee.id} className="p-4 bg-white">
                             {/* Employee Header */}
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
@@ -1108,7 +1110,7 @@ export default function VacationManagement() {
                             </div>
 
                             {/* Progress Bar */}
-                            <div className="mb-3">
+                            <div className="mb-4">
                               <div className="flex items-center gap-2 mb-1">
                                 <div className="flex-1 bg-gray-200 rounded-full h-2">
                                   <div 
@@ -1122,45 +1124,78 @@ export default function VacationManagement() {
                               </div>
                             </div>
 
-                            {/* Vacation Periods */}
-                            {employeeRequests.length > 0 && (
-                              <div className="space-y-2">
-                                <h5 className="text-xs font-medium text-gray-700">
-                                  Períodos de vacaciones:
-                                </h5>
-                                <div className="space-y-2">
-                                  {employeeRequests.map((request, index) => (
-                                    <div key={index} className="bg-blue-50 rounded-lg p-2 border border-blue-200">
-                                      <div className="flex items-center justify-between text-xs">
-                                        <span className="font-medium text-blue-800">
-                                          {request.startDate && request.endDate ? 
-                                            `${format(new Date(request.startDate), "dd/MM", { locale: es })} - ${format(new Date(request.endDate), "dd/MM/yy", { locale: es })}`
-                                            : "Fecha no disponible"
-                                          }
-                                        </span>
-                                        <span className="text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full font-medium">
-                                          {request.startDate && request.endDate ? 
-                                            `${calculateDays(request.startDate, request.endDate)} días`
-                                            : "N/A"
-                                          }
-                                        </span>
+                            {/* Mobile Timeline */}
+                            <div className="relative">
+                              {/* Fondo del timeline con marcas de días */}
+                              <div className="relative h-10 bg-gray-100 rounded border overflow-hidden">
+                                {/* Grid de días (solo mostrar algunos para no saturar en móvil) */}
+                                {timelineRange.days
+                                  .filter((_, index) => index % (timelineViewMode === 'month' ? 5 : 10) === 0)
+                                  .map((day, index) => (
+                                    <div
+                                      key={index}
+                                      className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                      style={{
+                                        left: `${(eachDayOfInterval({
+                                          start: timelineRange.start,
+                                          end: day
+                                        }).length - 1) / timelineRange.days.length * 100}%`
+                                      }}
+                                    />
+                                  ))
+                                }
+                                
+                                {/* Marcadores de inicio de mes */}
+                                {timelineRange.days
+                                  .filter(day => day.getDate() === 1) // Solo primer día del mes
+                                  .map((monthStart, index) => {
+                                    const position = (eachDayOfInterval({
+                                      start: timelineRange.start,
+                                      end: monthStart
+                                    }).length - 1) / timelineRange.days.length * 100;
+                                    
+                                    return (
+                                      <div key={`month-${index}`}>
+                                        {/* Línea vertical prominente */}
+                                        <div
+                                          className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+                                          style={{ left: `${position}%` }}
+                                        />
                                       </div>
-                                      {request.reason && (
-                                        <div className="text-xs text-blue-700 mt-1 opacity-80">
-                                          {request.reason}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
+                                    );
+                                  })
+                                }
+                                
+                                {/* Contenedor específico para barras de vacaciones */}
+                                <div className="absolute inset-0 overflow-hidden">
+                                  {renderVacationBar(employee, timelineRange)}
                                 </div>
                               </div>
-                            )}
-
-                            {employeeRequests.length === 0 && (
-                              <div className="text-xs text-gray-400 text-center py-2 italic">
-                                No hay vacaciones programadas
+                              
+                              {/* Labels de meses debajo del timeline - Móvil simplificado */}
+                              <div className="relative text-xs text-blue-600 font-medium mt-1 h-4">
+                                {/* Mostrar etiquetas de mes según los marcadores verticales */}
+                                {timelineRange.days
+                                  .filter(day => day.getDate() === 1) // Solo primer día del mes
+                                  .map((monthStart, index) => {
+                                    const position = (eachDayOfInterval({
+                                      start: timelineRange.start,
+                                      end: monthStart
+                                    }).length - 1) / timelineRange.days.length * 100;
+                                    
+                                    return (
+                                      <div
+                                        key={`month-label-${index}`}
+                                        className="absolute transform -translate-x-1/2"
+                                        style={{ left: `${position}%` }}
+                                      >
+                                        {format(monthStart, "MMM", { locale: es })}
+                                      </div>
+                                    );
+                                  })
+                                }
                               </div>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
