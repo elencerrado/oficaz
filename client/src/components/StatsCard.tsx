@@ -72,9 +72,9 @@ export default function StatsCard({
       } mb-4 ${className}`}
       onClick={onClick}
     >
-      <CardContent className="p-3 h-20 flex flex-col justify-between items-center text-center overflow-hidden">
+      <CardContent className="p-3 h-20 flex flex-col items-center text-center overflow-hidden">
         {/* Layout móvil: ícono arriba, número abajo */}
-        <div className="flex flex-col items-center justify-center space-y-1 sm:hidden">
+        <div className="flex flex-col items-center justify-center space-y-1 sm:hidden mt-1">
           <div className={`w-5 h-5 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-2.5 h-2.5 text-white" />}
           </div>
@@ -82,14 +82,14 @@ export default function StatsCard({
         </div>
 
         {/* Layout desktop: ícono + número horizontal */}
-        <div className="hidden sm:flex items-center justify-center space-x-1.5">
+        <div className="hidden sm:flex items-center justify-center space-x-1.5 flex-grow">
           <div className={`w-6 h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-3 h-3 text-white" />}
           </div>
           <span className="text-xl font-bold text-gray-900">{value}</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center mb-1">
+        <div className="flex flex-col items-center justify-center mb-1 mt-auto sm:mt-0">
           <p className="text-[8px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
           <p className="text-[9px] md:text-[10px] text-gray-500 leading-none hidden sm:block">{subtitle}</p>
         </div>
