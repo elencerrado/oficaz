@@ -139,8 +139,7 @@ export default function AdminDashboard() {
           userName: session.userName,
           type: 'entry',
           timestamp: session.clockIn,
-          sessionId: session.id,
-          sessionStatus: null // Entry events don't have status
+          sessionId: session.id
         });
         
         // Add clock-out event if exists
@@ -150,26 +149,8 @@ export default function AdminDashboard() {
             userName: session.userName,
             type: 'exit',
             timestamp: session.clockOut,
-            sessionId: session.id,
-            sessionStatus: 'completo' // Sessions with clockOut are complete
+            sessionId: session.id
           });
-        } else {
-          // Add incomplete session indicator for sessions without clockOut
-          // Only if the clockIn was from a previous day (today's sessions without clockOut are active, not incomplete)
-          const clockInDate = new Date(session.clockIn);
-          const today = new Date();
-          const isFromPreviousDay = clockInDate.toDateString() !== today.toDateString();
-          
-          if (isFromPreviousDay) {
-            events.push({
-              id: `${session.id}-incomplete`,
-              userName: session.userName,
-              type: 'entry', // Show as entry with incomplete status
-              timestamp: session.clockIn,
-              sessionId: session.id,
-              sessionStatus: 'incompleto' // Mark as incomplete only if from previous day
-            });
-          }
         }
       });
       
@@ -805,14 +786,7 @@ export default function AdminDashboard() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900">{event.userName}</p>
-                          {event.sessionStatus && (
-                            <Badge variant={event.sessionStatus === 'incompleto' ? 'destructive' : 'secondary'}>
-                              {event.sessionStatus === 'incompleto' ? 'Incompleto' : 'Completo'}
-                            </Badge>
-                          )}
-                        </div>
+                        <p className="font-medium text-gray-900">{event.userName}</p>
                         <p className="text-sm text-gray-500">
                           {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
                         </p>
