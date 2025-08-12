@@ -578,199 +578,114 @@ export default function VacationManagement() {
           Gestiona solicitudes de vacaciones y empleados
         </p>
       </div>
+      {/* Stats Cards with Navigation - Unified Component */}
+      <div className="mb-6">
+        <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+          <StatsCard
+            title="Solicitudes"
+            subtitle="Pendientes"
+            value={stats.pending}
+            color="yellow"
+            icon={Clock}
+            onClick={() => {
+              setActiveTab('requests');
+              setSelectedStatus('pending');
+              setSearchTerm('');
+            }}
+          />
 
-        {/* Stats Cards with Navigation - Unified Component */}
-        <div className="mb-6">
-          <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
-            <StatsCard
-              title="Solicitudes"
-              subtitle="Pendientes"
-              value={stats.pending}
-              color="yellow"
-              icon={Clock}
-              onClick={() => {
-                setActiveTab('requests');
-                setSelectedStatus('pending');
-                setSearchTerm('');
-              }}
-            />
+          <StatsCard
+            title="Solicitudes"
+            subtitle="Aprobadas"
+            value={stats.approved}
+            color="green"
+            icon={Check}
+            onClick={() => {
+              setActiveTab('requests');
+              setSelectedStatus('approved');
+              setSearchTerm('');
+            }}
+          />
 
-            <StatsCard
-              title="Solicitudes"
-              subtitle="Aprobadas"
-              value={stats.approved}
-              color="green"
-              icon={Check}
-              onClick={() => {
-                setActiveTab('requests');
-                setSelectedStatus('approved');
-                setSearchTerm('');
-              }}
-            />
+          <StatsCard
+            title="Empleados"
+            subtitle="De Vacaciones"
+            value={stats.onVacation}
+            color="blue"
+            icon={Plane}
+            onClick={() => setActiveTab('employees')}
+          />
 
-            <StatsCard
-              title="Empleados"
-              subtitle="De Vacaciones"
-              value={stats.onVacation}
-              color="blue"
-              icon={Plane}
-              onClick={() => setActiveTab('employees')}
-            />
-
-            <StatsCard
-              title="Días Festivos"
-              subtitle="2025"
-              value={spanishHolidays2025.length}
-              color="purple"
-              icon={CalendarDays}
-              onClick={() => setActiveTab('holidays')}
-            />
-          </div>
+          <StatsCard
+            title="Días Festivos"
+            subtitle="2025"
+            value={spanishHolidays2025.length}
+            color="purple"
+            icon={CalendarDays}
+            onClick={() => setActiveTab('holidays')}
+          />
         </div>
-
-        {/* Tabs Navigation */}
-        <TabNavigation
-          tabs={[
-            { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
-            { id: 'requests', label: 'Solicitudes', icon: Clock },
-            { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
-          ]}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-
-        {/* Content based on active tab */}
-        <div>
-            {activeTab === 'requests' && (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
-                  <Input
-                    placeholder="Buscar empleado..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-48"
-                  />
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="pending">Pendientes</SelectItem>
-                      <SelectItem value="approved">Aprobadas</SelectItem>
-                      <SelectItem value="denied">Denegadas</SelectItem>
-                    </SelectContent>
-                  </Select>
+      </div>
+      {/* Tabs Navigation */}
+      <TabNavigation
+        tabs={[
+          { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
+          { id: 'requests', label: 'Solicitudes', icon: Clock },
+          { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
+        ]}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      {/* Content based on active tab */}
+      <div>
+          {activeTab === 'requests' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
+                <Input
+                  placeholder="Buscar empleado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-48"
+                />
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="approved">Aprobadas</SelectItem>
+                    <SelectItem value="denied">Denegadas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            {loadingRequests ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : filteredRequests.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                {vacationRequests.length === 0 
+                  ? "No hay solicitudes de vacaciones" 
+                  : "No se encontraron solicitudes con los filtros aplicados"}
+                <div className="text-xs text-gray-400 mt-2">
+                  Total de solicitudes: {vacationRequests.length}
                 </div>
-              {loadingRequests ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner />
-                </div>
-              ) : filteredRequests.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  {vacationRequests.length === 0 
-                    ? "No hay solicitudes de vacaciones" 
-                    : "No se encontraron solicitudes con los filtros aplicados"}
-                  <div className="text-xs text-gray-400 mt-2">
-                    Total de solicitudes: {vacationRequests.length}
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredRequests.map((request: VacationRequest) => (
-                    <div
-                      key={request.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50"
-                    >
-                      {/* Desktop: layout horizontal */}
-                      <div className="hidden md:flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
-                            {getStatusBadge(request.status)}
-                          </div>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p>
-                              <span className="font-medium">Fechas:</span>{" "}
-                              {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
-                              {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
-                            </p>
-                            <p>
-                              <span className="font-medium">Días:</span> {
-                                request.startDate && request.endDate 
-                                  ? calculateDays(request.startDate, request.endDate)
-                                  : request.days || "N/A"
-                              }
-                            </p>
-                            {request.reason && (
-                              <p>
-                                <span className="font-medium">Motivo:</span> {request.reason}
-                              </p>
-                            )}
-                            <p>
-                              <span className="font-medium">Solicitado:</span>{" "}
-                              {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
-                               request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2 ml-4">
-                          {request.status === 'pending' ? (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => openRequestModal(request, 'approve')}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Aprobar
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => openRequestModal(request, 'edit')}
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                              >
-                                <Edit className="w-4 h-4 mr-1" />
-                                Modificar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => openRequestModal(request, 'deny')}
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Denegar
-                              </Button>
-                            </>
-                          ) : (
-                            <div className="flex gap-2">
-                              {(request.status === 'approved' || request.status === 'denied') && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => openRequestModal(request, 'revert')}
-                                  className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                                >
-                                  <RotateCcw className="w-4 h-4 mr-1" />
-                                  Revertir
-                                </Button>
-                              )}
-                              <Badge variant="outline" className="text-xs">
-                                {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Mobile: layout vertical */}
-                      <div className="md:hidden space-y-3">
-                        <div className="flex items-center justify-between">
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRequests.map((request: VacationRequest) => (
+                  <div
+                    key={request.id}
+                    className="p-4 border rounded-lg hover:bg-gray-50 bg-[#ffffff]"
+                  >
+                    {/* Desktop: layout horizontal */}
+                    <div className="hidden md:flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
                           {getStatusBadge(request.status)}
                         </div>
-                        
                         <div className="text-sm text-gray-600 space-y-1">
                           <p>
                             <span className="font-medium">Fechas:</span>{" "}
@@ -795,159 +710,172 @@ export default function VacationManagement() {
                              request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
                           </p>
                         </div>
-
-                        {/* Mobile action buttons */}
+                      </div>
+                      
+                      <div className="flex gap-2 ml-4">
                         {request.status === 'pending' ? (
-                          <div className="grid grid-cols-3 gap-2 w-full">
+                          <>
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white h-9 w-full flex items-center justify-center"
-                              title="Aprobar solicitud"
+                              className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-4 h-4 mr-1" />
+                              Aprobar
                             </Button>
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white h-9 w-full flex items-center justify-center"
-                              title="Editar solicitud"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-4 h-4 mr-1" />
+                              Modificar
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => openRequestModal(request, 'deny')}
-                              className="h-9 w-full flex items-center justify-center"
-                              title="Denegar solicitud"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-4 h-4 mr-1" />
+                              Denegar
                             </Button>
-                          </div>
+                          </>
                         ) : (
-                          <div className="flex w-full">
+                          <div className="flex gap-2">
                             {(request.status === 'approved' || request.status === 'denied') && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openRequestModal(request, 'revert')}
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50 h-9 w-full flex items-center justify-center"
-                                title="Revertir a pendiente"
+                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
                               >
-                                <RotateCcw className="w-4 h-4" />
+                                <RotateCcw className="w-4 h-4 mr-1" />
+                                Revertir
                               </Button>
                             )}
+                            <Badge variant="outline" className="text-xs">
+                              {request.status === 'approved' ? 'Aprobada' : 'Denegada'}
+                            </Badge>
                           </div>
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+
+                    {/* Mobile: layout vertical */}
+                    <div className="md:hidden space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
+                        {getStatusBadge(request.status)}
+                      </div>
+                      
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>
+                          <span className="font-medium">Fechas:</span>{" "}
+                          {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
+                          {request.endDate ? format(new Date(request.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Días:</span> {
+                            request.startDate && request.endDate 
+                              ? calculateDays(request.startDate, request.endDate)
+                              : request.days || "N/A"
+                          }
+                        </p>
+                        {request.reason && (
+                          <p>
+                            <span className="font-medium">Motivo:</span> {request.reason}
+                          </p>
+                        )}
+                        <p>
+                          <span className="font-medium">Solicitado:</span>{" "}
+                          {request.requestDate ? format(new Date(request.requestDate), "dd/MM/yyyy", { locale: es }) : 
+                           request.createdAt ? format(new Date(request.createdAt), "dd/MM/yyyy", { locale: es }) : "N/A"}
+                        </p>
+                      </div>
+
+                      {/* Mobile action buttons */}
+                      {request.status === 'pending' ? (
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                          <Button
+                            size="sm"
+                            onClick={() => openRequestModal(request, 'approve')}
+                            className="bg-green-600 hover:bg-green-700 text-white h-9 w-full flex items-center justify-center"
+                            title="Aprobar solicitud"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openRequestModal(request, 'edit')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white h-9 w-full flex items-center justify-center"
+                            title="Editar solicitud"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => openRequestModal(request, 'deny')}
+                            className="h-9 w-full flex items-center justify-center"
+                            title="Denegar solicitud"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex w-full">
+                          {(request.status === 'approved' || request.status === 'denied') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openRequestModal(request, 'revert')}
+                              className="text-orange-600 border-orange-300 hover:bg-orange-50 h-9 w-full flex items-center justify-center"
+                              title="Revertir a pendiente"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
+            </div>
+          )}
 
-            {activeTab === 'employees' && (
-              <div className="space-y-6">
-                {/* Timeline de Vacaciones tipo Gantt */}
-                {loadingEmployees ? (
-                  <div className="flex justify-center py-8">
-                    <LoadingSpinner />
-                  </div>
-                ) : employees.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No hay empleados registrados
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-lg border overflow-hidden">
-                    {/* Desktop: Header con controles */}
-                    <div className="hidden md:block p-4 border-b bg-gray-50">
-                      {/* Header unificado con controles y leyenda */}
-                      <div className="flex items-center justify-between">
-                        {/* Leyenda de colores y controles de navegación compactos */}
-                        <div className="flex items-center gap-6">
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
-                              <span>Aprobado</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
-                              <span>Pendiente</span>
-                            </div>
+          {activeTab === 'employees' && (
+            <div className="space-y-6">
+              {/* Timeline de Vacaciones tipo Gantt */}
+              {loadingEmployees ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner />
+                </div>
+              ) : employees.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No hay empleados registrados
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg border overflow-hidden">
+                  {/* Desktop: Header con controles */}
+                  <div className="hidden md:block p-4 border-b bg-gray-50">
+                    {/* Header unificado con controles y leyenda */}
+                    <div className="flex items-center justify-between">
+                      {/* Leyenda de colores y controles de navegación compactos */}
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                            <span>Aprobado</span>
                           </div>
-                          
-                          {/* Navegación compacta del timeline */}
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigateTimeline('prev')}
-                              className="h-8 w-8 p-0"
-                            >
-                              <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            
-                            <div className="text-center min-w-[140px]">
-                              <span className="text-sm font-medium text-gray-900">
-                                {timelineViewMode === 'month' 
-                                  ? format(timelineViewDate, "MMM yyyy", { locale: es })
-                                  : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
-                                }
-                              </span>
-                            </div>
-                            
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigateTimeline('next')}
-                              className="h-8 w-8 p-0"
-                            >
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-yellow-400 rounded-sm"></div>
+                            <span>Pendiente</span>
                           </div>
                         </div>
                         
-                        {/* Opciones de vista compactas */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setTimelineViewMode('month')}
-                            className="h-8 px-3 text-xs"
-                          >
-                            Mes
-                          </Button>
-                          <Button
-                            variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setTimelineViewMode('quarter')}
-                            className="h-8 px-3 text-xs"
-                          >
-                            Trimestre
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Mobile: Header compacto */}
-                    <div className="md:hidden p-3 border-b bg-gray-50 space-y-3">
-                      {/* Leyenda móvil */}
-                      <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
-                          <span>Aprobado</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></div>
-                          <span>Pendiente</span>
-                        </div>
-                      </div>
-                      
-                      {/* Controles móviles */}
-                      <div className="flex items-center justify-between">
-                        {/* Navegación del periodo */}
+                        {/* Navegación compacta del timeline */}
                         <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
@@ -958,8 +886,8 @@ export default function VacationManagement() {
                             <ChevronLeft className="w-4 h-4" />
                           </Button>
                           
-                          <div className="text-center min-w-[100px]">
-                            <span className="text-xs font-medium text-gray-900">
+                          <div className="text-center min-w-[140px]">
+                            <span className="text-sm font-medium text-gray-900">
                               {timelineViewMode === 'month' 
                                 ? format(timelineViewDate, "MMM yyyy", { locale: es })
                                 : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
@@ -976,222 +904,152 @@ export default function VacationManagement() {
                             <ChevronRight className="w-4 h-4" />
                           </Button>
                         </div>
-                        
-                        {/* Opciones de vista móvil */}
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setTimelineViewMode('month')}
-                            className="h-7 px-2 text-xs"
-                          >
-                            Mes
-                          </Button>
-                          <Button
-                            variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => setTimelineViewMode('quarter')}
-                            className="h-7 px-2 text-xs"
-                          >
-                            Trim
-                          </Button>
-                        </div>
+                      </div>
+                      
+                      {/* Opciones de vista compactas */}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTimelineViewMode('month')}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Mes
+                        </Button>
+                        <Button
+                          variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTimelineViewMode('quarter')}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Trimestre
+                        </Button>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Desktop: Lista de Empleados con Timeline */}
-                    <div className="hidden md:block divide-y">
-                      {employees.map((employee: Employee) => {
-                        // Calcular días usados y disponibles
-                        const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
-                          req.userId === employee.id && req.status === 'approved'
-                        );
-                        const usedDays = employeeRequests.reduce((sum, req) => 
-                          sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
-                        );
-                        const totalDays = parseInt(employee.totalVacationDays) || 22;
-                        const availableDays = Math.max(0, totalDays - usedDays);
-                        const usagePercent = (usedDays / totalDays) * 100;
+                  {/* Mobile: Header compacto */}
+                  <div className="md:hidden p-3 border-b bg-gray-50 space-y-3">
+                    {/* Leyenda móvil */}
+                    <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+                        <span>Aprobado</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm"></div>
+                        <span>Pendiente</span>
+                      </div>
+                    </div>
+                    
+                    {/* Controles móviles */}
+                    <div className="flex items-center justify-between">
+                      {/* Navegación del periodo */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateTimeline('prev')}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
                         
-                        const timelineRange = getTimelineRange();
+                        <div className="text-center min-w-[100px]">
+                          <span className="text-xs font-medium text-gray-900">
+                            {timelineViewMode === 'month' 
+                              ? format(timelineViewDate, "MMM yyyy", { locale: es })
+                              : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
+                            }
+                          </span>
+                        </div>
                         
-                        return (
-                          <div key={employee.id} className="p-4 hover:bg-gray-50">
-                            <div className="flex items-center">
-                              {/* Información del Empleado */}
-                              <div className="w-72 flex-shrink-0 pr-6">
-                                <div className="flex items-center gap-3">
-                                  <UserAvatar fullName={employee.fullName} size="sm" userId={employee.id} profilePicture={employee.profilePicture} />
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900 truncate">
-                                      {employee.fullName}
-                                    </h4>
-                                    <div className="text-xs text-gray-500 space-y-1">
-                                      <div>
-                                        <span className="font-medium">{usedDays}</span>/{totalDays} días usados
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigateTimeline('next')}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Opciones de vista móvil */}
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant={timelineViewMode === 'month' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTimelineViewMode('month')}
+                          className="h-7 px-2 text-xs"
+                        >
+                          Mes
+                        </Button>
+                        <Button
+                          variant={timelineViewMode === 'quarter' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTimelineViewMode('quarter')}
+                          className="h-7 px-2 text-xs"
+                        >
+                          Trim
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop: Lista de Empleados con Timeline */}
+                  <div className="hidden md:block divide-y">
+                    {employees.map((employee: Employee) => {
+                      // Calcular días usados y disponibles
+                      const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                        req.userId === employee.id && req.status === 'approved'
+                      );
+                      const usedDays = employeeRequests.reduce((sum, req) => 
+                        sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                      );
+                      const totalDays = parseInt(employee.totalVacationDays) || 22;
+                      const availableDays = Math.max(0, totalDays - usedDays);
+                      const usagePercent = (usedDays / totalDays) * 100;
+                      
+                      const timelineRange = getTimelineRange();
+                      
+                      return (
+                        <div key={employee.id} className="p-4 hover:bg-gray-50">
+                          <div className="flex items-center">
+                            {/* Información del Empleado */}
+                            <div className="w-72 flex-shrink-0 pr-6">
+                              <div className="flex items-center gap-3">
+                                <UserAvatar fullName={employee.fullName} size="sm" userId={employee.id} profilePicture={employee.profilePicture} />
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-gray-900 truncate">
+                                    {employee.fullName}
+                                  </h4>
+                                  <div className="text-xs text-gray-500 space-y-1">
+                                    <div>
+                                      <span className="font-medium">{usedDays}</span>/{totalDays} días usados
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                        <div 
+                                          className="bg-blue-500 h-2 rounded-full"
+                                          style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                        />
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                          <div 
-                                            className="bg-blue-500 h-2 rounded-full"
-                                            style={{ width: `${Math.min(100, usagePercent)}%` }}
-                                          />
-                                        </div>
-                                        <span className="text-xs font-medium text-green-600">
-                                          {availableDays} rest.
-                                        </span>
-                                      </div>
+                                      <span className="text-xs font-medium text-green-600">
+                                        {availableDays} rest.
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                              
-                              {/* Timeline Horizontal */}
-                              <div className="flex-1 relative">
-                                {/* Fondo del timeline con marcas de días */}
-                                <div className="relative h-12 bg-gray-100 rounded border">
-                                  {/* Grid de días (solo mostrar algunos para no saturar) */}
-                                  {timelineRange.days
-                                    .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
-                                    .map((day, index) => (
-                                      <div
-                                        key={index}
-                                        className="absolute top-0 bottom-0 w-px bg-gray-200"
-                                        style={{
-                                          left: `${(eachDayOfInterval({
-                                            start: timelineRange.start,
-                                            end: day
-                                          }).length - 1) / timelineRange.days.length * 100}%`
-                                        }}
-                                      />
-                                    ))
-                                  }
-                                  
-                                  {/* Marcadores de inicio de mes */}
-                                  {timelineRange.days
-                                    .filter(day => day.getDate() === 1) // Solo primer día del mes
-                                    .map((monthStart, index) => {
-                                      const position = (eachDayOfInterval({
-                                        start: timelineRange.start,
-                                        end: monthStart
-                                      }).length - 1) / timelineRange.days.length * 100;
-                                      
-                                      return (
-                                        <div key={`month-${index}`}>
-                                          {/* Línea vertical prominente */}
-                                          <div
-                                            className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
-                                            style={{ left: `${position}%` }}
-                                          />
-                                        </div>
-                                      );
-                                    })
-                                  }
-                                  
-                                  {/* Contenedor específico para barras de vacaciones */}
-                                  <div className="absolute inset-0 overflow-hidden">
-                                    {renderVacationBar(employee, timelineRange)}
-                                  </div>
-                                </div>
-                                
-                                {/* Labels de meses debajo del timeline */}
-                                <div className="relative text-xs text-blue-600 font-medium mt-2 h-4">
-                                  {/* Mostrar etiquetas de mes según los marcadores verticales */}
-                                  {timelineRange.days
-                                    .filter(day => day.getDate() === 1) // Solo primer día del mes
-                                    .map((monthStart, index) => {
-                                      const position = (eachDayOfInterval({
-                                        start: timelineRange.start,
-                                        end: monthStart
-                                      }).length - 1) / timelineRange.days.length * 100;
-                                      
-                                      return (
-                                        <div
-                                          key={`month-label-${index}`}
-                                          className="absolute transform -translate-x-1/2"
-                                          style={{ left: `${position}%` }}
-                                        >
-                                          {format(monthStart, "MMM", { locale: es })}
-                                        </div>
-                                      );
-                                    })
-                                  }
-                                </div>
-                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Mobile: Vertical Timeline View */}
-                    <div className="md:hidden divide-y">
-                      {employees.map((employee: Employee) => {
-                        // Calcular días usados y disponibles
-                        const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
-                          req.userId === employee.id && req.status === 'approved'
-                        );
-                        const usedDays = employeeRequests.reduce((sum, req) => 
-                          sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
-                        );
-                        const totalDays = parseInt(employee.totalVacationDays) || 22;
-                        const availableDays = Math.max(0, totalDays - usedDays);
-                        const usagePercent = (usedDays / totalDays) * 100;
-                        
-                        const timelineRange = getTimelineRange();
-                        
-                        return (
-                          <div key={employee.id} className="p-4 bg-white">
-                            {/* Employee Header */}
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <UserAvatar 
-                                  fullName={employee.fullName} 
-                                  size="sm" 
-                                  userId={employee.id} 
-                                  profilePicture={employee.profilePicture} 
-                                />
-                                <div>
-                                  <h4 className="font-medium text-gray-900 text-sm">
-                                    {employee.fullName}
-                                  </h4>
-                                  <div className="text-xs text-gray-500">
-                                    <span className="font-medium">{usedDays}</span>/{totalDays} días usados
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-xs font-medium text-green-600">
-                                  {availableDays} rest.
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div className="mb-4">
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-blue-500 h-2 rounded-full"
-                                    style={{ width: `${Math.min(100, usagePercent)}%` }}
-                                  />
-                                </div>
-                              </div>
-
-                            </div>
-
-                            {/* Mobile Timeline */}
-                            <div className="relative">
+                            
+                            {/* Timeline Horizontal */}
+                            <div className="flex-1 relative">
                               {/* Fondo del timeline con marcas de días */}
-                              <div 
-                                className="relative h-10 bg-gray-100 rounded border overflow-hidden touch-pan-y select-none"
-                                onTouchStart={handleTouchStart}
-                                onTouchMove={handleTouchMove}
-                                onTouchEnd={handleTouchEnd}
-                              >
-                                {/* Grid de días (solo mostrar algunos para no saturar en móvil) */}
+                              <div className="relative h-12 bg-gray-100 rounded border">
+                                {/* Grid de días (solo mostrar algunos para no saturar) */}
                                 {timelineRange.days
-                                  .filter((_, index) => index % (timelineViewMode === 'month' ? 5 : 10) === 0)
+                                  .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
                                   .map((day, index) => (
                                     <div
                                       key={index}
@@ -1233,8 +1091,8 @@ export default function VacationManagement() {
                                 </div>
                               </div>
                               
-                              {/* Labels de meses debajo del timeline - Móvil simplificado */}
-                              <div className="relative text-xs text-blue-600 font-medium mt-1 h-4">
+                              {/* Labels de meses debajo del timeline */}
+                              <div className="relative text-xs text-blue-600 font-medium mt-2 h-4">
                                 {/* Mostrar etiquetas de mes según los marcadores verticales */}
                                 {timelineRange.days
                                   .filter(day => day.getDate() === 1) // Solo primer día del mes
@@ -1258,105 +1116,243 @@ export default function VacationManagement() {
                               </div>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            )}
 
-            {activeTab === 'holidays' && (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
-                  <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Seleccionar región" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {regions.map((region) => (
-                        <SelectItem key={region} value={region}>{region}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Dialog open={showAddHoliday} onOpenChange={setShowAddHoliday}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
-                        <Plus className="w-4 h-4 mr-1" />
-                        Añadir Festivo
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Añadir Día Festivo</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <Input
-                          placeholder="Nombre del festivo"
-                          value={newHoliday.name}
-                          onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                        <Input
-                          type="date"
-                          value={newHoliday.date}
-                          onChange={(e) => setNewHoliday(prev => ({ ...prev, date: e.target.value }))}
-                        />
-                        <Select 
-                          value={newHoliday.type} 
-                          onValueChange={(value: 'national' | 'regional' | 'local') => 
-                            setNewHoliday(prev => ({ ...prev, type: value }))
-                          }
+                  {/* Mobile: Vertical Timeline View */}
+                  <div className="md:hidden divide-y">
+                    {employees.map((employee: Employee) => {
+                      // Calcular días usados y disponibles
+                      const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
+                        req.userId === employee.id && req.status === 'approved'
+                      );
+                      const usedDays = employeeRequests.reduce((sum, req) => 
+                        sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
+                      );
+                      const totalDays = parseInt(employee.totalVacationDays) || 22;
+                      const availableDays = Math.max(0, totalDays - usedDays);
+                      const usagePercent = (usedDays / totalDays) * 100;
+                      
+                      const timelineRange = getTimelineRange();
+                      
+                      return (
+                        <div key={employee.id} className="p-4 bg-white">
+                          {/* Employee Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <UserAvatar 
+                                fullName={employee.fullName} 
+                                size="sm" 
+                                userId={employee.id} 
+                                profilePicture={employee.profilePicture} 
+                              />
+                              <div>
+                                <h4 className="font-medium text-gray-900 text-sm">
+                                  {employee.fullName}
+                                </h4>
+                                <div className="text-xs text-gray-500">
+                                  <span className="font-medium">{usedDays}</span>/{totalDays} días usados
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs font-medium text-green-600">
+                                {availableDays} rest.
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full"
+                                  style={{ width: `${Math.min(100, usagePercent)}%` }}
+                                />
+                              </div>
+                            </div>
+
+                          </div>
+
+                          {/* Mobile Timeline */}
+                          <div className="relative">
+                            {/* Fondo del timeline con marcas de días */}
+                            <div 
+                              className="relative h-10 bg-gray-100 rounded border overflow-hidden touch-pan-y select-none"
+                              onTouchStart={handleTouchStart}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                            >
+                              {/* Grid de días (solo mostrar algunos para no saturar en móvil) */}
+                              {timelineRange.days
+                                .filter((_, index) => index % (timelineViewMode === 'month' ? 5 : 10) === 0)
+                                .map((day, index) => (
+                                  <div
+                                    key={index}
+                                    className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                    style={{
+                                      left: `${(eachDayOfInterval({
+                                        start: timelineRange.start,
+                                        end: day
+                                      }).length - 1) / timelineRange.days.length * 100}%`
+                                    }}
+                                  />
+                                ))
+                              }
+                              
+                              {/* Marcadores de inicio de mes */}
+                              {timelineRange.days
+                                .filter(day => day.getDate() === 1) // Solo primer día del mes
+                                .map((monthStart, index) => {
+                                  const position = (eachDayOfInterval({
+                                    start: timelineRange.start,
+                                    end: monthStart
+                                  }).length - 1) / timelineRange.days.length * 100;
+                                  
+                                  return (
+                                    <div key={`month-${index}`}>
+                                      {/* Línea vertical prominente */}
+                                      <div
+                                        className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+                                        style={{ left: `${position}%` }}
+                                      />
+                                    </div>
+                                  );
+                                })
+                              }
+                              
+                              {/* Contenedor específico para barras de vacaciones */}
+                              <div className="absolute inset-0 overflow-hidden">
+                                {renderVacationBar(employee, timelineRange)}
+                              </div>
+                            </div>
+                            
+                            {/* Labels de meses debajo del timeline - Móvil simplificado */}
+                            <div className="relative text-xs text-blue-600 font-medium mt-1 h-4">
+                              {/* Mostrar etiquetas de mes según los marcadores verticales */}
+                              {timelineRange.days
+                                .filter(day => day.getDate() === 1) // Solo primer día del mes
+                                .map((monthStart, index) => {
+                                  const position = (eachDayOfInterval({
+                                    start: timelineRange.start,
+                                    end: monthStart
+                                  }).length - 1) / timelineRange.days.length * 100;
+                                  
+                                  return (
+                                    <div
+                                      key={`month-label-${index}`}
+                                      className="absolute transform -translate-x-1/2"
+                                      style={{ left: `${position}%` }}
+                                    >
+                                      {format(monthStart, "MMM", { locale: es })}
+                                    </div>
+                                  );
+                                })
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'holidays' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
+                <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Seleccionar región" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {regions.map((region) => (
+                      <SelectItem key={region} value={region}>{region}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Dialog open={showAddHoliday} onOpenChange={setShowAddHoliday}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-[#007AFF] hover:bg-[#0056CC]">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Añadir Festivo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Añadir Día Festivo</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Nombre del festivo"
+                        value={newHoliday.name}
+                        onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                      <Input
+                        type="date"
+                        value={newHoliday.date}
+                        onChange={(e) => setNewHoliday(prev => ({ ...prev, date: e.target.value }))}
+                      />
+                      <Select 
+                        value={newHoliday.type} 
+                        onValueChange={(value: 'national' | 'regional' | 'local') => 
+                          setNewHoliday(prev => ({ ...prev, type: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="national">Nacional</SelectItem>
+                          <SelectItem value="regional">Regional</SelectItem>
+                          <SelectItem value="local">Local</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setShowAddHoliday(false)}>
+                          Cancelar
+                        </Button>
+                        <Button className="bg-[#007AFF] hover:bg-[#0056CC]">
+                          Añadir
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+              {spanishHolidays2025.map((holiday, index) => (
+                <Card key={index} className="border-green-200 bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-gray-900 mb-1">{holiday.name}</h3>
+                        <p className="text-sm text-gray-600">
+                          {format(new Date(holiday.date), "dd/MM/yyyy", { locale: es })}
+                        </p>
+                        <Badge 
+                          variant="secondary" 
+                          className="mt-2 text-xs bg-green-100 text-green-800"
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="national">Nacional</SelectItem>
-                            <SelectItem value="regional">Regional</SelectItem>
-                            <SelectItem value="local">Local</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setShowAddHoliday(false)}>
-                            Cancelar
-                          </Button>
-                          <Button className="bg-[#007AFF] hover:bg-[#0056CC]">
-                            Añadir
-                          </Button>
-                        </div>
+                          {holiday.type === 'national' ? 'Nacional' : 
+                           holiday.type === 'regional' ? 'Regional' : 'Local'}
+                        </Badge>
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                {spanishHolidays2025.map((holiday, index) => (
-                  <Card key={index} className="border-green-200 bg-green-50">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium text-gray-900 mb-1">{holiday.name}</h3>
-                          <p className="text-sm text-gray-600">
-                            {format(new Date(holiday.date), "dd/MM/yyyy", { locale: es })}
-                          </p>
-                          <Badge 
-                            variant="secondary" 
-                            className="mt-2 text-xs bg-green-100 text-green-800"
-                          >
-                            {holiday.type === 'national' ? 'Nacional' : 
-                             holiday.type === 'regional' ? 'Regional' : 'Local'}
-                          </Badge>
-                        </div>
-                        <MapPin className="w-4 h-4 text-green-600" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                </div>
+                      <MapPin className="w-4 h-4 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
               </div>
-            )}
-        </div>
-
+            </div>
+          )}
+      </div>
       {/* Request Management Modal */}
       <Dialog open={showRequestModal} onOpenChange={setShowRequestModal}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
