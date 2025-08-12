@@ -740,11 +740,11 @@ export default function VacationManagement() {
 
                         {/* Mobile action buttons */}
                         {request.status === 'pending' ? (
-                          <div className="flex justify-center gap-2">
+                          <div className="grid grid-cols-3 gap-2 w-full">
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white h-8 w-8 p-0"
+                              className="bg-green-600 hover:bg-green-700 text-white h-9 w-full flex items-center justify-center"
                               title="Aprobar solicitud"
                             >
                               <Check className="w-4 h-4" />
@@ -752,7 +752,7 @@ export default function VacationManagement() {
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white h-8 w-8 p-0"
+                              className="bg-blue-600 hover:bg-blue-700 text-white h-9 w-full flex items-center justify-center"
                               title="Editar solicitud"
                             >
                               <Edit className="w-4 h-4" />
@@ -761,20 +761,20 @@ export default function VacationManagement() {
                               size="sm"
                               variant="destructive"
                               onClick={() => openRequestModal(request, 'deny')}
-                              className="h-8 w-8 p-0"
+                              className="h-9 w-full flex items-center justify-center"
                               title="Denegar solicitud"
                             >
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex justify-center gap-2">
+                          <div className="flex w-full">
                             {(request.status === 'approved' || request.status === 'denied') && (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openRequestModal(request, 'revert')}
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50 h-8 w-8 p-0"
+                                className="text-orange-600 border-orange-300 hover:bg-orange-50 h-9 w-full flex items-center justify-center"
                                 title="Revertir a pendiente"
                               >
                                 <RotateCcw className="w-4 h-4" />
