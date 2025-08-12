@@ -133,15 +133,6 @@ export default function AdminDashboard() {
       const maxDailyHours = companySettings?.workingHoursPerDay || 8;
       
       data.forEach((session: any) => {
-        // Calculate session status for completed sessions
-        let sessionStatus = null;
-        if (session.clockOut) {
-          const clockIn = new Date(session.clockIn);
-          const clockOut = new Date(session.clockOut);
-          const hoursWorked = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
-          sessionStatus = hoursWorked > maxDailyHours ? 'incompleto' : 'completo';
-        }
-        
         // Add clock-in event
         events.push({
           id: `${session.id}-in`,
@@ -160,8 +151,25 @@ export default function AdminDashboard() {
             type: 'exit',
             timestamp: session.clockOut,
             sessionId: session.id,
-            sessionStatus // Show status on exit events
+            sessionStatus: 'completo' // Sessions with clockOut are complete
           });
+        } else {
+          // Add incomplete session indicator for sessions without clockOut
+          // Only if the clockIn was from a previous day (today's sessions without clockOut are active, not incomplete)
+          const clockInDate = new Date(session.clockIn);
+          const today = new Date();
+          const isFromPreviousDay = clockInDate.toDateString() !== today.toDateString();
+          
+          if (isFromPreviousDay) {
+            events.push({
+              id: `${session.id}-incomplete`,
+              userName: session.userName,
+              type: 'entry', // Show as entry with incomplete status
+              timestamp: session.clockIn,
+              sessionId: session.id,
+              sessionStatus: 'incompleto' // Mark as incomplete only if from previous day
+            });
+          }
         }
       });
       
