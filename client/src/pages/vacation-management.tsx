@@ -214,7 +214,7 @@ export default function VacationManagement() {
         <div
           key={tooltipId}
           data-vacation-bar
-          className={`absolute h-10 rounded-md cursor-pointer transition-all ${
+          className={`absolute rounded-md cursor-pointer transition-all ${
             period.status === 'approved' 
               ? 'bg-blue-500 border-blue-600 hover:bg-blue-600' 
               : 'bg-yellow-400 border-yellow-500 hover:bg-yellow-500'
@@ -222,8 +222,8 @@ export default function VacationManagement() {
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
-            top: '4px',
-            bottom: '4px',
+            top: '2px',
+            bottom: '2px',
             zIndex: isTooltipActive ? 15 : 10
           }}
           onClick={(e) => {
@@ -232,7 +232,7 @@ export default function VacationManagement() {
           }}
         >
           {/* Número de días visible siempre */}
-          <div className="text-white text-sm font-bold select-none">
+          <div className="text-white text-xs md:text-sm font-bold select-none">
             {fullRequest?.startDate && fullRequest?.endDate 
               ? calculateDays(fullRequest.startDate, fullRequest.endDate)
               : fullRequest?.days || duration
