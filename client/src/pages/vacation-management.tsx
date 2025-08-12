@@ -127,6 +127,8 @@ export default function VacationManagement() {
         'valencia': 'Valencia',
         'bilbao': 'País Vasco',
         'zaragoza': 'Aragón',
+        'badajoz': 'Extremadura',
+        'caceres': 'Extremadura',
         // Add more mappings as needed
       };
       const region = provinceToRegion[company.province.toLowerCase()] || 'Madrid';
