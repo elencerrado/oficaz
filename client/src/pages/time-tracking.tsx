@@ -1745,8 +1745,8 @@ export default function TimeTracking() {
       {/* Sessions Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{getFilterTitle()} ({filteredSessions.length})</span>
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <span className="text-sm sm:text-lg font-medium">{getFilterTitle()} ({filteredSessions.length})</span>
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
