@@ -497,7 +497,7 @@ export default function Messages() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">
             Comunícate con empleados y gestiona mensajes
           </p>
         </div>

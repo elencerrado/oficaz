@@ -428,7 +428,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">
           Gestión rápida y vista general de la empresa
         </p>
       </div>

@@ -1691,7 +1691,7 @@ export default function TimeTracking() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 mt-1 text-sm sm:text-base">
               Administra todos los fichajes de empleados y genera reportes.
             </p>
           </div>

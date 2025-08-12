@@ -354,7 +354,7 @@ export default function EmployeesSimple() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Gestión de Empleados</h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">
           Administra usuarios y gestiona información de empleados
         </p>
       </div>
