@@ -5121,8 +5121,24 @@ startxref
       const trialDuration = data.trial_duration_days || 14;
       trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
       
-      const daysRemaining = Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      // Fix timezone issues by comparing dates at end of day
+      const nowEndOfDay = new Date(now);
+      nowEndOfDay.setHours(23, 59, 59, 999);
+      const trialEndOfDay = new Date(trialEndDate);
+      trialEndOfDay.setHours(23, 59, 59, 999);
+      
+      const daysRemaining = Math.ceil((trialEndOfDay.getTime() - nowEndOfDay.getTime()) / (1000 * 60 * 60 * 24));
       const isTrialExpired = daysRemaining <= 0;
+      
+      console.log(`🔍 Trial Status Debug for company ${companyId}:`);
+      console.log(`  Registration: ${registrationDate.toISOString()}`);
+      console.log(`  Trial Duration: ${trialDuration} days`);
+      console.log(`  Trial End: ${trialEndDate.toISOString()}`);
+      console.log(`  Current Time: ${now.toISOString()}`);
+      console.log(`  Days Remaining: ${daysRemaining}`);
+      console.log(`  Is Expired: ${isTrialExpired}`);
+      console.log(`  DB isTrialActive: ${data.is_trial_active}`);
+      console.log(`  DB Status: ${data.status}`);
 
       // Auto-block if trial expired
       if (isTrialExpired && data.is_trial_active && data.status === 'trial') {
