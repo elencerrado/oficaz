@@ -314,7 +314,8 @@ export default function VacationManagement() {
                   position: 'fixed',
                   left: '1.5rem',
                   right: '1.5rem',
-                  top: '20%',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   width: '20rem',
                   maxWidth: 'calc(100vw - 3rem)'
                 }}
