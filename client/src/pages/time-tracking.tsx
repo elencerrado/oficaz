@@ -1938,7 +1938,8 @@ export default function TimeTracking() {
         )}
 
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
@@ -2350,6 +2351,378 @@ export default function TimeTracking() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            {(() => {
+              const sortedSessions = filteredSessions
+                .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+              
+              const showSummaries = selectedEmployee !== 'all';
+              let currentWeekStart: Date | null = null;
+              let previousWeekStart: Date | null = null;
+              let currentMonth: string | null = null;
+              let previousMonth: string | null = null;
+              
+              const calculateWeekTotal = (weekStart: Date) => 
+                (sortedSessions || [])
+                  .filter(session => {
+                    const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
+                    return sessionWeekStart.getTime() === weekStart.getTime();
+                  })
+                  .reduce((total, session) => {
+                    let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                    if (totalSessionHours > 24) totalSessionHours = 24;
+                    const breakHours = session.breakPeriods 
+                      ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                          return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                        }, 0) 
+                      : 0;
+                    return total + Math.max(0, totalSessionHours - breakHours);
+                  }, 0);
+              
+              const calculateMonthTotal = (monthKey: string) => 
+                (sortedSessions || [])
+                  .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
+                  .reduce((total, session) => {
+                    let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
+                    if (totalSessionHours > 24) totalSessionHours = 24;
+                    const breakHours = session.breakPeriods 
+                      ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                          return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                        }, 0) 
+                      : 0;
+                    return total + Math.max(0, totalSessionHours - breakHours);
+                  }, 0);
+              
+              // Group sessions by day
+              const sessionsByDay = sortedSessions.reduce((acc: any, session: any) => {
+                const dayKey = `${session.userId}-${format(new Date(session.clockIn), 'yyyy-MM-dd')}`;
+                if (!acc[dayKey]) {
+                  acc[dayKey] = {
+                    date: format(new Date(session.clockIn), 'yyyy-MM-dd'),
+                    userId: session.userId,
+                    userName: session.userName,
+                    profilePicture: session.profilePicture,
+                    sessions: [],
+                    hasAutoCompleted: false
+                  };
+                }
+                acc[dayKey].sessions.push(session);
+                if (session.autoCompleted) {
+                  acc[dayKey].hasAutoCompleted = true;
+                }
+                return acc;
+              }, {});
+
+              Object.values(sessionsByDay).forEach((dayData: any) => {
+                dayData.sessions.sort((a: any, b: any) => new Date(a.clockIn).getTime() - new Date(b.clockIn).getTime());
+              });
+
+              const dailyEntries = Object.values(sessionsByDay).sort((a: any, b: any) => 
+                new Date(b.date).getTime() - new Date(a.date).getTime()
+              );
+
+              const result: JSX.Element[] = [];
+              
+              dailyEntries.forEach((dayData: any, index: number) => {
+                const dayDate = new Date(dayData.date);
+                const weekStart = startOfWeek(dayDate, { weekStartsOn: 1 });
+                const monthKey = format(dayDate, 'yyyy-MM');
+                const isNewWeek = currentWeekStart === null || weekStart.getTime() !== currentWeekStart.getTime();
+                const isNewMonth = currentMonth === null || monthKey !== currentMonth;
+                
+                if (isNewWeek) {
+                  previousWeekStart = currentWeekStart;
+                  currentWeekStart = weekStart;
+                }
+                
+                if (isNewMonth) {
+                  previousMonth = currentMonth;
+                  currentMonth = monthKey;
+                }
+                
+                // Add summaries only when filtering by specific employee
+                if (showSummaries && isNewMonth && index > 0 && previousMonth) {
+                  const monthTotal = calculateMonthTotal(previousMonth);
+                  const [year, month] = previousMonth.split('-');
+                  const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
+                  
+                  result.push(
+                    <div key={`month-${previousMonth}`} className="bg-blue-50 border border-blue-200 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-semibold text-blue-800 capitalize text-sm text-center">
+                        Total {monthName}: {monthTotal.toFixed(1)}h
+                      </div>
+                    </div>
+                  );
+                }
+                
+                if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
+                  const weekTotal = calculateWeekTotal(previousWeekStart);
+                  result.push(
+                    <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border border-gray-300 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-medium text-gray-700 text-sm text-center">
+                        Total semana: {weekTotal.toFixed(1)}h
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Calculate total day hours
+                const totalDayHours = dayData.sessions.reduce((total: number, session: any) => {
+                  let sessionHours = calculateHours(session.clockIn, session.clockOut);
+                  if (sessionHours > 24) sessionHours = 24;
+                  const breakHours = session.breakPeriods 
+                    ? session.breakPeriods.reduce((breakTotal: number, breakPeriod: any) => {
+                        return breakTotal + calculateHours(breakPeriod.breakStart, breakPeriod.breakEnd);
+                      }, 0) 
+                    : 0;
+                  return total + Math.max(0, sessionHours - breakHours);
+                }, 0);
+                
+                const isEditing = editingSession === dayData.sessions[0]?.id;
+                const session = dayData.sessions[0];
+                const sessionIsIncomplete = isSessionIncomplete(session);
+                
+                result.push(
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-white border border-gray-200 rounded-lg mx-4 mb-3 p-4 shadow-sm">
+                    {/* Header with employee and date */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar 
+                          fullName={dayData.userName || 'Usuario Desconocido'} 
+                          size="sm"
+                          userId={dayData.userId}
+                          profilePicture={dayData.profilePicture}
+                        />
+                        <div>
+                          <div className="font-medium text-gray-900 text-sm">
+                            {dayData.userName || 'Usuario Desconocido'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {format(new Date(dayData.date), 'dd/MM/yyyy')}
+                          </div>
+                        </div>
+                        {dayData.hasAutoCompleted && (
+                          <div className="flex items-center" title="Esta sesión fue cerrada automáticamente por el sistema">
+                            <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Action button */}
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className="font-medium text-gray-900 text-sm">
+                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
+                          </div>
+                          {totalDayHours > 0 && (() => {
+                            const status = calculateSessionStatus(dayData);
+                            return status === 'incomplete' ? (
+                              <Badge variant="destructive" className="text-xs">
+                                Incompleto
+                              </Badge>
+                            ) : null;
+                          })()}
+                        </div>
+                        
+                        {isEditing ? (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveSession(dayData.sessions[0]?.id)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleCancelEdit}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          sessionIsIncomplete ? (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => forceCompleteSessionMutation.mutate(session.id)}
+                              className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                              disabled={forceCompleteSessionMutation.isPending}
+                            >
+                              <LogOut className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditSession(session)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Timeline or edit mode */}
+                    <div className="space-y-2">
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          {/* Date picker for editing */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 block mb-1">Fecha</label>
+                            <DatePickerDay
+                              date={editData.date ? new Date(editData.date) : undefined}
+                              onDateChange={(date) => {
+                                setEditData(prev => ({ 
+                                  ...prev, 
+                                  date: date ? format(date, 'yyyy-MM-dd') : '' 
+                                }));
+                              }}
+                              className="h-8 text-sm w-full"
+                              placeholder="Seleccionar fecha"
+                            />
+                          </div>
+                          
+                          {/* Entry and exit times */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 block mb-1">Horarios</label>
+                            <div className="flex space-x-2">
+                              <div className="flex-1">
+                                <Input
+                                  type="time"
+                                  value={editData.clockIn}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
+                                  className="h-8 text-sm"
+                                  placeholder="Entrada"
+                                />
+                                <span className="text-xs text-gray-500 mt-1 block">Entrada</span>
+                              </div>
+                              <div className="flex-1">
+                                <Input
+                                  type="time"
+                                  value={editData.clockOut}
+                                  onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
+                                  className="h-8 text-sm"
+                                  placeholder="Salida"
+                                />
+                                <span className="text-xs text-gray-500 mt-1 block">Salida</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Break periods */}
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-medium text-gray-700">Descansos</label>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={handleAddBreakPeriod}
+                                className="h-6 px-2 text-xs"
+                              >
+                                + Añadir
+                              </Button>
+                            </div>
+                            
+                            {editData.breakPeriods.map((breakPeriod, index) => (
+                              <div key={index} className="flex items-center space-x-2 mb-2">
+                                <Input
+                                  type="time"
+                                  value={breakPeriod.breakStart}
+                                  onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
+                                  className="flex-1 h-7 text-xs"
+                                  placeholder="Inicio"
+                                />
+                                <span className="text-xs text-gray-400">-</span>
+                                <Input
+                                  type="time"
+                                  value={breakPeriod.breakEnd || ''}
+                                  onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
+                                  className="flex-1 h-7 text-xs"
+                                  placeholder="Fin"
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleRemoveBreakPeriod(index)}
+                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ))}
+                            
+                            {editData.breakPeriods.length === 0 && (
+                              <p className="text-xs text-gray-500 italic">
+                                Sin descansos programados
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <DailyTimelineBar dayData={dayData} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+              
+              // Add final summaries for mobile
+              if (showSummaries && sortedSessions.length > 0) {
+                if (previousWeekStart) {
+                  const weekTotal = calculateWeekTotal(previousWeekStart);
+                  result.push(
+                    <div key={`week-final`} className="bg-gray-100 border border-gray-300 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-medium text-gray-700 text-sm text-center">
+                        Total semana: {weekTotal.toFixed(1)}h
+                      </div>
+                    </div>
+                  );
+                }
+                
+                if (currentMonth) {
+                  const monthTotal = calculateMonthTotal(currentMonth);
+                  const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
+                  
+                  result.push(
+                    <div key={`month-final`} className="bg-blue-50 border border-blue-200 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-semibold text-blue-800 capitalize text-sm text-center">
+                        Total {monthName}: {monthTotal.toFixed(1)}h
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              
+              return result;
+            })()}
+            
+            {filteredSessions.length === 0 && (
+              <div className="py-12 text-center mx-4">
+                <div className="flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="text-gray-500 font-medium">
+                    No hay fichajes en este período
+                  </div>
+                  <div className="text-gray-400 text-sm">
+                    Prueba seleccionando un rango de fechas diferente
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
