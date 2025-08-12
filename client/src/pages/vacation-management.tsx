@@ -740,29 +740,30 @@ export default function VacationManagement() {
 
                         {/* Mobile action buttons */}
                         {request.status === 'pending' ? (
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-3 gap-1">
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'approve')}
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 px-1 text-xs"
                             >
-                              <Check className="w-4 h-4 mr-1" />
+                              <Check className="w-3 h-3 mr-1" />
                               Aprobar
                             </Button>
                             <Button
                               size="sm"
                               onClick={() => openRequestModal(request, 'edit')}
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                              className="bg-blue-600 hover:bg-blue-700 text-white h-8 px-1 text-xs"
                             >
-                              <Edit className="w-4 h-4 mr-1" />
+                              <Edit className="w-3 h-3 mr-1" />
                               Editar
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => openRequestModal(request, 'deny')}
+                              className="h-8 px-1 text-xs"
                             >
-                              <X className="w-4 h-4 mr-1" />
+                              <X className="w-3 h-3 mr-1" />
                               Denegar
                             </Button>
                           </div>
@@ -773,9 +774,9 @@ export default function VacationManagement() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openRequestModal(request, 'revert')}
-                                className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                                className="text-orange-600 border-orange-300 hover:bg-orange-50 h-8 px-2 text-xs"
                               >
-                                <RotateCcw className="w-4 h-4 mr-1" />
+                                <RotateCcw className="w-3 h-3 mr-1" />
                                 Revertir
                               </Button>
                             )}
