@@ -228,12 +228,12 @@ export function TrialManager() {
         <Dialog>
           <DialogTrigger asChild>
             <Button 
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className={`text-xs flex-shrink-0 p-2 ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
+              className={`text-xs flex-shrink-0 p-2 border ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100 border-amber-300" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100 border-blue-300"}`}
             >
-              <Plus className="w-3 h-3 sm:mr-1" />
-              <span className="hidden sm:inline">Añadir tarjeta</span>
+              <Plus className="w-3 h-3 mr-1" />
+              <span className="inline sm:inline">Añadir tarjeta</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl">
