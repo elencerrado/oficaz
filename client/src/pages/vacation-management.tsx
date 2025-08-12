@@ -1123,44 +1123,7 @@ export default function VacationManagement() {
                     </div>
 
                     {/* Mobile: Vertical Timeline View */}
-                    <div className="md:hidden space-y-4">
-                      {/* Mobile Timeline Navigation Header */}
-                      <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
-                        <button
-                          onClick={() => setTimelineViewDate(prev => {
-                            const newDate = new Date(prev);
-                            newDate.setMonth(newDate.getMonth() - 1);
-                            return newDate;
-                          })}
-                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                          aria-label="Mes anterior"
-                        >
-                          <ChevronLeft className="w-5 h-5 text-gray-600" />
-                        </button>
-                        
-                        <div className="text-center">
-                          <h3 className="font-semibold text-gray-900">
-                            {format(timelineViewDate, "MMMM yyyy", { locale: es })}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            Desliza horizontalmente para cambiar mes
-                          </p>
-                        </div>
-                        
-                        <button
-                          onClick={() => setTimelineViewDate(prev => {
-                            const newDate = new Date(prev);
-                            newDate.setMonth(newDate.getMonth() + 1);
-                            return newDate;
-                          })}
-                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                          aria-label="Mes siguiente"
-                        >
-                          <ChevronRight className="w-5 h-5 text-gray-600" />
-                        </button>
-                      </div>
-
-                      <div className="divide-y">
+                    <div className="md:hidden divide-y">
                       {employees.map((employee: Employee) => {
                         // Calcular días usados y disponibles
                         const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
@@ -1295,7 +1258,6 @@ export default function VacationManagement() {
                           </div>
                         );
                       })}
-                      </div>
                     </div>
                   </div>
                 )}
