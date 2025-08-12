@@ -89,7 +89,7 @@ export default function StatsCard({
           <span className="text-xl font-bold text-gray-900">{value}</span>
         </div>
 
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center mb-1">
           <p className="text-[8px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
           <p className="text-[9px] md:text-[10px] text-gray-500 leading-none hidden sm:block">{subtitle}</p>
         </div>
