@@ -1120,9 +1120,7 @@ export default function VacationManagement() {
                                   />
                                 </div>
                               </div>
-                              <div className="text-xs text-gray-500 text-center">
-                                {usagePercent.toFixed(0)}% utilizado
-                              </div>
+
                             </div>
 
                             {/* Mobile Timeline */}
