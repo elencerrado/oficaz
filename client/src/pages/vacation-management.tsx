@@ -90,6 +90,11 @@ export default function VacationManagement() {
   const [timelineViewMode, setTimelineViewMode] = useState<'month' | 'quarter'>('month');
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
+  // Estados para swipe en móvil
+  const [touchStartX, setTouchStartX] = useState<number>(0);
+  const [touchStartY, setTouchStartY] = useState<number>(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -141,6 +146,56 @@ export default function VacationManagement() {
     const start = parseISO(startDate);
     const end = parseISO(endDate);
     return differenceInDays(end, start) + 1;
+  };
+
+  // Swipe functions for mobile timeline navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setTouchStartX(e.touches[0].clientX);
+      setTouchStartY(e.touches[0].clientY);
+      setIsSwiping(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping || e.touches.length !== 1) return;
+    
+    // Prevent default to avoid page scrolling during horizontal swipes
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY);
+    
+    if (deltaX > deltaY && deltaX > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Solo procesar swipes horizontales (más de 50px y más horizontal que vertical)
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 0) {
+        // Swipe derecha - mes anterior
+        setTimelineViewDate(prev => {
+          const newDate = new Date(prev);
+          newDate.setMonth(newDate.getMonth() - 1);
+          return newDate;
+        });
+      } else {
+        // Swipe izquierda - mes siguiente
+        setTimelineViewDate(prev => {
+          const newDate = new Date(prev);
+          newDate.setMonth(newDate.getMonth() + 1);
+          return newDate;
+        });
+      }
+    }
   };
 
   // ⚠️ PROTECTED TIMELINE FUNCTIONS - DO NOT MODIFY ⚠️
@@ -1068,7 +1123,44 @@ export default function VacationManagement() {
                     </div>
 
                     {/* Mobile: Vertical Timeline View */}
-                    <div className="md:hidden divide-y">
+                    <div className="md:hidden space-y-4">
+                      {/* Mobile Timeline Navigation Header */}
+                      <div className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                        <button
+                          onClick={() => setTimelineViewDate(prev => {
+                            const newDate = new Date(prev);
+                            newDate.setMonth(newDate.getMonth() - 1);
+                            return newDate;
+                          })}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          aria-label="Mes anterior"
+                        >
+                          <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        
+                        <div className="text-center">
+                          <h3 className="font-semibold text-gray-900">
+                            {format(timelineViewDate, "MMMM yyyy", { locale: es })}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Desliza horizontalmente para cambiar mes
+                          </p>
+                        </div>
+                        
+                        <button
+                          onClick={() => setTimelineViewDate(prev => {
+                            const newDate = new Date(prev);
+                            newDate.setMonth(newDate.getMonth() + 1);
+                            return newDate;
+                          })}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          aria-label="Mes siguiente"
+                        >
+                          <ChevronRight className="w-5 h-5 text-gray-600" />
+                        </button>
+                      </div>
+
+                      <div className="divide-y">
                       {employees.map((employee: Employee) => {
                         // Calcular días usados y disponibles
                         const employeeRequests = vacationRequests.filter((req: VacationRequest) => 
@@ -1126,7 +1218,12 @@ export default function VacationManagement() {
                             {/* Mobile Timeline */}
                             <div className="relative">
                               {/* Fondo del timeline con marcas de días */}
-                              <div className="relative h-10 bg-gray-100 rounded border overflow-hidden">
+                              <div 
+                                className="relative h-10 bg-gray-100 rounded border overflow-hidden touch-pan-y select-none"
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                              >
                                 {/* Grid de días (solo mostrar algunos para no saturar en móvil) */}
                                 {timelineRange.days
                                   .filter((_, index) => index % (timelineViewMode === 'month' ? 5 : 10) === 0)
@@ -1198,6 +1295,7 @@ export default function VacationManagement() {
                           </div>
                         );
                       })}
+                      </div>
                     </div>
                   </div>
                 )}
