@@ -144,17 +144,33 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return words[0].substring(0, 2).toUpperCase();
     }
     
-    // Para nombres españoles: Primer nombre + Primer apellido
-    // Ejemplos: "María García López" -> MG, "José Luis Rodríguez" -> JR
-    if (words.length >= 2) {
-      // Si el segundo nombre es común (Luis, José, María, etc.) o muy corto, usar el tercero como apellido
-      const commonNames = ['josé', 'luis', 'maría', 'ana', 'juan', 'carlos', 'antonio', 'manuel', 'francisco', 'jesús', 'javier', 'miguel', 'pedro', 'alejandro', 'pablo', 'daniel', 'adrián', 'david', 'diego', 'mario', 'sergio', 'raúl', 'gonzalo', 'marcos', 'roberto', 'álvaro'];
-      
-      if (words.length >= 3 && (commonNames.includes(words[1].toLowerCase()) || words[1].length <= 2)) {
-        // Usar primer nombre + tercer nombre (primer apellido)
+    if (words.length === 2) {
+      // Solo 2 palabras: Nombre + Apellido
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    
+    // Para 3 o más palabras, necesitamos detectar donde termina el nombre y empiezan los apellidos
+    // En España es común: [Nombre] [Segundo_Nombre?] [Primer_Apellido] [Segundo_Apellido?]
+    
+    // Lista de segundos nombres muy comunes en España
+    const commonSecondNames = [
+      'luis', 'josé', 'maría', 'ana', 'juan', 'carlos', 'antonio', 'manuel', 'francisco', 
+      'jesús', 'javier', 'miguel', 'pedro', 'angel', 'rafael', 'david', 'daniel', 'sergio',
+      'pablo', 'alberto', 'fernando', 'eduardo', 'ricardo', 'alejandro', 'jorge', 'ramón',
+      'andrés', 'ignacio', 'francisco', 'enrique', 'diego', 'cristina', 'carmen', 'pilar',
+      'teresa', 'mercedes', 'dolores', 'concepción', 'rosario', 'angeles', 'montserrat',
+      'isabel', 'patricia', 'esperanza', 'inmaculada', 'amparo', 'gloria', 'soledad'
+    ];
+    
+    if (words.length >= 3) {
+      // Verificar si la segunda palabra es un segundo nombre común
+      if (commonSecondNames.includes(words[1].toLowerCase())) {
+        // Formato: [Nombre] [Segundo_Nombre] [Apellido] [Apellido?]
+        // Usar primer nombre + primer apellido (posición 2)
         return (words[0][0] + words[2][0]).toUpperCase();
       } else {
-        // Usar primer nombre + segundo nombre (que es el primer apellido)
+        // Formato: [Nombre] [Apellido] [Apellido]
+        // Usar primer nombre + primer apellido (posición 1)
         return (words[0][0] + words[1][0]).toUpperCase();
       }
     }
