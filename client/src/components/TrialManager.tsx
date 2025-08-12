@@ -192,26 +192,34 @@ export function TrialManager() {
 
   // If trial is active, show discrete notification about adding payment method
   return (
-    <div className={`rounded-lg border p-4 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-full ${trialStatus.daysRemaining <= 3 ? "bg-amber-100" : "bg-blue-100"}`}>
-            <Clock className={`w-4 h-4 ${trialStatus.daysRemaining <= 3 ? "text-amber-600" : "text-blue-600"}`} />
+    <div className={`rounded-lg border p-3 sm:p-4 mb-4 sm:mb-6 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+          <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${trialStatus.daysRemaining <= 3 ? "bg-amber-100" : "bg-blue-100"}`}>
+            <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${trialStatus.daysRemaining <= 3 ? "text-amber-600" : "text-blue-600"}`} />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-900">
-                Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap">
+              <span className="text-xs sm:text-sm font-medium text-gray-900">
+                <span className="hidden sm:inline">Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
+                <span className="sm:hidden">Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
               </span>
               <Badge variant="outline" className="text-xs">
-                {trialStatus.daysRemaining} días restantes
+                <span className="hidden sm:inline">{trialStatus.daysRemaining} días restantes</span>
+                <span className="sm:hidden">{trialStatus.daysRemaining}d</span>
               </Badge>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">
               {trialStatus.daysRemaining <= 3 ? (
-                "Período de prueba termina pronto. Añade un método de pago para continuar"
+                <>
+                  <span className="hidden sm:inline">Período de prueba termina pronto. Añade un método de pago para continuar</span>
+                  <span className="sm:hidden">Añade método de pago pronto</span>
+                </>
               ) : (
-                `Período de prueba hasta el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes después`
+                <>
+                  <span className="hidden sm:inline">Hasta el {new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €{getPlanPrice(trialStatus.plan)}/mes después</span>
+                  <span className="sm:hidden">€{getPlanPrice(trialStatus.plan)}/mes después</span>
+                </>
               )}
             </p>
           </div>
@@ -222,10 +230,10 @@ export function TrialManager() {
             <Button 
               variant="ghost"
               size="sm"
-              className={`text-xs ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
+              className={`text-xs flex-shrink-0 p-2 ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
             >
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir pago
+              <Plus className="w-3 h-3 sm:mr-1" />
+              <span className="hidden sm:inline">Añadir pago</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl">
