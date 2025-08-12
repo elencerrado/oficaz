@@ -5130,15 +5130,7 @@ startxref
       const daysRemaining = Math.ceil((trialEndOfDay.getTime() - nowEndOfDay.getTime()) / (1000 * 60 * 60 * 24));
       const isTrialExpired = daysRemaining <= 0;
       
-      console.log(`🔍 Trial Status Debug for company ${companyId}:`);
-      console.log(`  Registration: ${registrationDate.toISOString()}`);
-      console.log(`  Trial Duration: ${trialDuration} days`);
-      console.log(`  Trial End: ${trialEndDate.toISOString()}`);
-      console.log(`  Current Time: ${now.toISOString()}`);
-      console.log(`  Days Remaining: ${daysRemaining}`);
-      console.log(`  Is Expired: ${isTrialExpired}`);
-      console.log(`  DB isTrialActive: ${data.is_trial_active}`);
-      console.log(`  DB Status: ${data.status}`);
+
 
       // Auto-block if trial expired
       if (isTrialExpired && data.is_trial_active && data.status === 'trial') {
