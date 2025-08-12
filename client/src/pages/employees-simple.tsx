@@ -438,7 +438,7 @@ export default function EmployeesSimple() {
       {/* Employee List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="tracking-tight flex items-center space-x-2 text-[14px] font-medium">
             <Users className="h-5 w-5" />
             Lista de Empleados ({filteredEmployees.length} de {totalUsers})
           </CardTitle>
