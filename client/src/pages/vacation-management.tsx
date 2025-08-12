@@ -300,12 +300,14 @@ export default function VacationManagement() {
           {isTooltipActive && (
             <div 
               data-vacation-tooltip
-              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-6 w-80 md:min-w-80"
+              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-auto"
               style={{ 
                 zIndex: 10000,
-                left: '50%',
+                left: '1.5rem',
+                right: '1.5rem',
                 top: '20%',
-                transform: 'translateX(-50%)'
+                width: '20rem',
+                maxWidth: 'calc(100vw - 3rem)'
               }}
               onClick={(e) => e.stopPropagation()}
             >
