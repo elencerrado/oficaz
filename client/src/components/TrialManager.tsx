@@ -42,7 +42,7 @@ export function TrialManager() {
 
   // Obtener planes de suscripción disponibles
   const { data: subscriptionPlans = [] } = useQuery({
-    queryKey: ['/api/subscription-plans'],
+    queryKey: ['/api/public/subscription-plans'],
     staleTime: 300000, // 5 minutos
   });
 
@@ -55,7 +55,16 @@ export function TrialManager() {
   // Función para obtener el precio de un plan
   const getPlanPrice = (planName: string) => {
     const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
-    return plan ? plan.pricePerUser : 0;
+    if (plan && plan.monthlyPrice) {
+      return Number(plan.monthlyPrice).toFixed(2);
+    }
+    // Fallback prices for known plans
+    const fallbackPrices: { [key: string]: string } = {
+      'basic': '19.99',
+      'pro': '39.99',
+      'master': '79.99'
+    };
+    return fallbackPrices[planName.toLowerCase()] || '0.00';
   };
 
   // Estado para procesar pago
