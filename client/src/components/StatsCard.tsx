@@ -82,7 +82,7 @@ export default function StatsCard({
         </div>
         <div className="flex flex-col items-center justify-center">
           <p className="text-[10px] md:text-xs font-medium text-gray-600 leading-none">{title}</p>
-          <p className="text-[9px] md:text-[10px] text-gray-500 leading-none">{subtitle}</p>
+          <p className="text-[9px] md:text-[10px] text-gray-500 leading-none hidden sm:block">{subtitle}</p>
         </div>
       </CardContent>
     </Card>
