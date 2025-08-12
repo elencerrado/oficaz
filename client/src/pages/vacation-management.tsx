@@ -298,19 +298,28 @@ export default function VacationManagement() {
 
           {/* Panel de información que aparece al hacer clic */}
           {isTooltipActive && (
-            <div 
-              data-vacation-tooltip
-              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-auto"
-              style={{ 
-                zIndex: 10000,
-                left: '1.5rem',
-                right: '1.5rem',
-                top: '20%',
-                width: '20rem',
-                maxWidth: 'calc(100vw - 3rem)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
+            <>
+              {/* Overlay semi-transparente para evitar interferencias */}
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-25"
+                style={{ zIndex: 99998 }}
+                onClick={() => setActiveTooltip(null)}
+              />
+              
+              <div 
+                data-vacation-tooltip
+                className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-auto"
+                style={{ 
+                  zIndex: 99999,
+                  position: 'fixed',
+                  left: '1.5rem',
+                  right: '1.5rem',
+                  top: '20%',
+                  width: '20rem',
+                  maxWidth: 'calc(100vw - 3rem)'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
               {/* Contenido con padding como las tarjetas de solicitudes */}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
@@ -398,7 +407,8 @@ export default function VacationManagement() {
                   </div>
                 )}
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
       );
