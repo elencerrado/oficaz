@@ -233,7 +233,7 @@ export function TrialManager() {
               className={`text-xs flex-shrink-0 p-2 ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
             >
               <Plus className="w-3 h-3 sm:mr-1" />
-              <span className="hidden sm:inline">Añadir pago</span>
+              <span className="hidden sm:inline">Añadir tarjeta</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl">
