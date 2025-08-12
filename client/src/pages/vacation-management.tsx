@@ -300,7 +300,7 @@ export default function VacationManagement() {
           {isTooltipActive && (
             <div 
               data-vacation-tooltip
-              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-4 max-w-sm md:min-w-80"
+              className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-6 w-80 md:min-w-80"
               style={{ 
                 zIndex: 10000,
                 left: '50%',
