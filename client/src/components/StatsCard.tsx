@@ -15,39 +15,39 @@ interface StatsCardProps {
 const colorConfig = {
   yellow: {
     bg: 'bg-yellow-500',
-    hover: 'hover:border-yellow-200',
-    activeBorder: 'border-yellow-400',
-    activeBg: 'bg-yellow-50'
+    hover: 'hover:border-yellow-200 dark:hover:border-yellow-400',
+    activeBorder: 'border-yellow-400 dark:border-yellow-300',
+    activeBg: 'bg-yellow-50 dark:bg-yellow-900/20'
   },
   green: {
     bg: 'bg-green-500',
-    hover: 'hover:border-green-200',
-    activeBorder: 'border-green-400',
-    activeBg: 'bg-green-50'
+    hover: 'hover:border-green-200 dark:hover:border-green-400',
+    activeBorder: 'border-green-400 dark:border-green-300',
+    activeBg: 'bg-green-50 dark:bg-green-900/20'
   },
   blue: {
     bg: 'bg-blue-500',
-    hover: 'hover:border-blue-200',
-    activeBorder: 'border-blue-400',
-    activeBg: 'bg-blue-50'
+    hover: 'hover:border-blue-200 dark:hover:border-blue-400',
+    activeBorder: 'border-blue-400 dark:border-blue-300',
+    activeBg: 'bg-blue-50 dark:bg-blue-900/20'
   },
   purple: {
     bg: 'bg-purple-500',
-    hover: 'hover:border-purple-200',
-    activeBorder: 'border-purple-400',
-    activeBg: 'bg-purple-50'
+    hover: 'hover:border-purple-200 dark:hover:border-purple-400',
+    activeBorder: 'border-purple-400 dark:border-purple-300',
+    activeBg: 'bg-purple-50 dark:bg-purple-900/20'
   },
   orange: {
     bg: 'bg-orange-500',
-    hover: 'hover:border-orange-200',
-    activeBorder: 'border-orange-400',
-    activeBg: 'bg-orange-50'
+    hover: 'hover:border-orange-200 dark:hover:border-orange-400',
+    activeBorder: 'border-orange-400 dark:border-orange-300',
+    activeBg: 'bg-orange-50 dark:bg-orange-900/20'
   },
   red: {
     bg: 'bg-red-500',
-    hover: 'hover:border-red-200',
-    activeBorder: 'border-red-400',
-    activeBg: 'bg-red-50'
+    hover: 'hover:border-red-200 dark:hover:border-red-400',
+    activeBorder: 'border-red-400 dark:border-red-300',
+    activeBg: 'bg-red-50 dark:bg-red-900/20'
   }
 };
 
@@ -81,10 +81,10 @@ export default function StatsCard({
             </div>
           </div>
           <div className="flex justify-center">
-            <span className="text-lg font-bold text-gray-900">{value}</span>
+            <span className="text-lg font-bold text-foreground">{value}</span>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <p className="text-[8px] font-medium text-gray-600 leading-none">{title}</p>
+            <p className="text-[8px] font-medium text-muted-foreground leading-none">{title}</p>
           </div>
         </div>
 
@@ -93,12 +93,12 @@ export default function StatsCard({
           <div className={`w-6 h-6 ${config.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
             {Icon && <Icon className="w-3 h-3 text-white" />}
           </div>
-          <span className="text-xl font-bold text-gray-900">{value}</span>
+          <span className="text-xl font-bold text-foreground">{value}</span>
         </div>
 
         <div className="hidden sm:flex flex-col items-center justify-center">
-          <p className="text-xs font-medium text-gray-600 leading-none">{title}</p>
-          <p className="text-[10px] text-gray-500 leading-none">{subtitle}</p>
+          <p className="text-xs font-medium text-muted-foreground leading-none">{title}</p>
+          <p className="text-[10px] text-muted-foreground opacity-75 leading-none">{subtitle}</p>
         </div>
       </CardContent>
     </Card>

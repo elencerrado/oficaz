@@ -62,11 +62,11 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-white shadow-sm border-b border-gray-200 px-4 py-3 grid grid-cols-3 items-center`}>
+    <header className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}>
       {/* Left Section */}
       <div className="flex items-center justify-start">
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
-          <Menu className="text-gray-600" size={20} />
+          <Menu className="text-foreground" size={20} />
         </Button>
         {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
         {shouldShowLogo && company.logoUrl ? (
@@ -76,7 +76,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
             className="h-6 lg:h-8 w-auto ml-2 lg:ml-0 object-contain"
           />
         ) : (
-          <h1 className="text-sm font-medium text-gray-900 ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
+          <h1 className="text-sm font-medium text-foreground ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
             {company?.name || 'Oficaz'}
           </h1>
         )}
@@ -94,7 +94,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
       {/* Right Section */}
       <div className="flex items-center justify-end space-x-2 lg:space-x-4">
         {/* Date and Time - Only desktop */}
-        <div className="text-sm text-gray-600 font-medium hidden md:block">
+        <div className="text-sm text-muted-foreground font-medium hidden md:block">
           {formatDate(currentTime)}
         </div>
         
@@ -107,9 +107,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <div className="flex flex-col space-y-1 p-2">
-              <p className="text-sm font-medium">{user?.fullName}</p>
-              <p className="text-xs text-gray-500">{user?.companyEmail}</p>
-              <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+              <p className="text-sm font-medium text-foreground">{user?.fullName}</p>
+              <p className="text-xs text-muted-foreground">{user?.companyEmail}</p>
+              <p className="text-xs text-muted-foreground opacity-75 capitalize">{user?.role}</p>
             </div>
             <DropdownMenuItem onClick={logout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />

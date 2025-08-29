@@ -120,7 +120,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Admin/Manager gets full layout with sidebar
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <ReminderBanner />
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -128,7 +128,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
       
-      <main className={`lg:ml-64 min-h-screen ${paddingTop} bg-gray-50`}>
+      <main className={`lg:ml-64 min-h-screen ${paddingTop} bg-background`}>
         {children}
       </main>
     </div>

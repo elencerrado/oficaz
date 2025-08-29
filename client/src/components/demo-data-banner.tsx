@@ -55,17 +55,17 @@ export function DemoDataBanner() {
   console.log('🎯 DemoDataBanner RENDERING BANNER');
 
   return (
-    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+    <div className="bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-400 dark:border-blue-500 p-4 mb-6">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <Info className="h-5 w-5 text-blue-400" />
+            <Info className="h-5 w-5 text-blue-400 dark:text-blue-300" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-blue-800">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
               Datos de demostración activos
             </h3>
-            <div className="mt-2 text-sm text-blue-700">
+            <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
               <p>
                 Esta empresa está utilizando datos de demostración que incluyen:
               </p>
@@ -75,7 +75,7 @@ export function DemoDataBanner() {
                 <li>Mensajes bidireccionales entre empleados y administradores</li>
                 <li>Recordatorios y documentos de muestra</li>
               </ul>
-              <p className="mt-2 text-xs text-blue-600">
+              <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
                 Los datos demo se generan basándose en la fecha de registro de la empresa para mayor realismo.
               </p>
             </div>
@@ -83,7 +83,7 @@ export function DemoDataBanner() {
         </div>
         <div className="flex items-center space-x-2 ml-4">
           <button
-            className="text-blue-400 hover:text-blue-600 p-1"
+            className="text-blue-400 hover:text-blue-600 dark:text-blue-300 dark:hover:text-blue-200 p-1"
             title="Cerrar"
             onClick={() => setIsVisible(false)}
           >
