@@ -38,6 +38,7 @@ const isAdminRoute = () => {
     // Direct admin routes for company alias paths
     '/recordatorios',
     '/empleados',
+    '/configuracion',
     // Replit custom domain URLs
     '/oficaz/admin-dashboard',
     '/oficaz/employee-dashboard', 

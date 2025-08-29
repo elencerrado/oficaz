@@ -260,15 +260,15 @@ const AccountManagement = () => {
           {/* Usage Statistics */}
           {usageData?.current && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
                   {usageData.current.employee_count}/{subscription?.maxUsers || '∞'}
                 </p>
-                <p className="text-sm text-gray-600">Usuarios</p>
+                <p className="text-sm text-muted-foreground">Usuarios</p>
               </div>
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{usageData.current.storage_used_mb} MB</p>
-                <p className="text-sm text-gray-600">Almacenamiento</p>
+                <p className="text-sm text-muted-foreground">Almacenamiento</p>
               </div>
             </div>
           )}
@@ -323,7 +323,7 @@ const AccountManagement = () => {
           {/* Billing Address */}
           <div>
             <Label className="text-sm font-semibold">Dirección fiscal</Label>
-            <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-2 p-4 bg-muted rounded-lg">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="font-medium">Nombre:</span> {user?.fullName}
@@ -348,7 +348,7 @@ const AccountManagement = () => {
           <div>
             <Label className="text-sm font-semibold">Método de pago</Label>
             {paymentMethods && paymentMethods.length > 0 ? (
-              <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-2 p-4 bg-muted rounded-lg">
                 {paymentMethods.map((method: any) => (
                   <div key={method.id} className="flex items-center space-x-3">
                     <CreditCard className="h-5 w-5 text-blue-600" />
@@ -734,7 +734,7 @@ const AccountManagement = () => {
           
           {planPreview && (
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-muted rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
                   <div>
                     <span className="text-sm text-gray-500">Plan actual:</span>
@@ -1336,7 +1336,7 @@ const AccountManagement = () => {
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <div className="min-h-screen bg-background p-6">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Mi Perfil</h1>
@@ -1364,25 +1364,25 @@ const AccountManagement = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">DNI</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                       {user?.dni}
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email corporativo</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                       {user?.companyEmail}
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono corporativo</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                       {user?.companyPhone || 'No asignado'}
                     </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de incorporación</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                       {user?.startDate ? new Date(user.startDate).toLocaleDateString('es-ES') : 'No disponible'}
                     </div>
                   </div>
@@ -1414,7 +1414,7 @@ const AccountManagement = () => {
                         placeholder="tu@email.com"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {profileData.personalEmail || 'No especificado'}
                       </div>
                     )}
@@ -1430,7 +1430,7 @@ const AccountManagement = () => {
                         placeholder="+34 600 000 000"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {profileData.personalPhone || 'No especificado'}
                       </div>
                     )}
@@ -1447,7 +1447,7 @@ const AccountManagement = () => {
                         rows={3}
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 min-h-[80px]">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground min-h-[80px]">
                         {profileData.postalAddress || 'No especificada'}
                       </div>
                     )}
@@ -1463,7 +1463,7 @@ const AccountManagement = () => {
                         placeholder="Nombre completo"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {profileData.emergencyContactName || 'No especificado'}
                       </div>
                     )}
@@ -1479,7 +1479,7 @@ const AccountManagement = () => {
                         placeholder="+34 600 000 000"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {profileData.emergencyContactPhone || 'No especificado'}
                       </div>
                     )}
@@ -1525,10 +1525,10 @@ const AccountManagement = () => {
 
   // Admin/Manager configuration view
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Configuración</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">Gestiona la configuración de tu empresa y perfil</p>
+        <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Gestiona la configuración de tu empresa y perfil</p>
       </div>
 
       {/* Trial Manager - shown for companies in trial or active accounts */}
@@ -1767,7 +1767,7 @@ const AccountManagement = () => {
                         placeholder="Mi Empresa S.L."
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 font-medium">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground font-medium">
                         {companyData.name || 'No especificado'}
                       </div>
                     )}
@@ -1775,7 +1775,7 @@ const AccountManagement = () => {
                   
                   <div>
                     <Label htmlFor="companyAlias">Alias de la empresa</Label>
-                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                       {companyData.companyAlias || 'No especificado'}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1793,7 +1793,7 @@ const AccountManagement = () => {
                         placeholder="B12345678"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {companyData.cif || 'No especificado'}
                       </div>
                     )}
@@ -1809,7 +1809,7 @@ const AccountManagement = () => {
                         placeholder="Juan Pérez"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                         {companyData.contactName || 'No especificado'}
                       </div>
                     )}
@@ -1826,7 +1826,7 @@ const AccountManagement = () => {
                         placeholder="info@miempresa.com"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
                         {companyData.email || 'No especificado'}
                       </div>
                     )}
@@ -1845,7 +1845,7 @@ const AccountManagement = () => {
                         placeholder="+34 900 000 000"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
                         {companyData.phone || 'No especificado'}
                       </div>
                     )}
@@ -1862,7 +1862,7 @@ const AccountManagement = () => {
                         rows={3}
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
+                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground min-h-[80px]">
                         {companyData.address || 'No especificada'}
                       </div>
                     )}
@@ -1934,7 +1934,7 @@ const AccountManagement = () => {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
                         {companyData.province ? companyData.province.charAt(0).toUpperCase() + companyData.province.slice(1).replace('_', ' ') : 'No especificada'}
                       </div>
                     )}
@@ -2106,7 +2106,7 @@ const AccountManagement = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* User info header */}
-                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-4 p-4 bg-muted rounded-lg">
                   <UserAvatar
                     userId={user?.id}
                     fullName={user?.fullName}
@@ -2141,7 +2141,7 @@ const AccountManagement = () => {
                             placeholder="admin@empresa.com"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
                             {profileData.companyEmail || 'No especificado'}
                           </div>
                         )}
@@ -2157,7 +2157,7 @@ const AccountManagement = () => {
                             placeholder="+34 900 000 000"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
                             {profileData.companyPhone || 'No especificado'}
                           </div>
                         )}
@@ -2173,7 +2173,7 @@ const AccountManagement = () => {
                             placeholder="Director General, Administrador, etc."
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.position || 'No especificado'}
                           </div>
                         )}
@@ -2195,7 +2195,7 @@ const AccountManagement = () => {
                             placeholder="tu@email.com"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.personalEmail || 'No especificado'}
                           </div>
                         )}
@@ -2211,7 +2211,7 @@ const AccountManagement = () => {
                             placeholder="+34 600 000 000"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.personalPhone || 'No especificado'}
                           </div>
                         )}
@@ -2228,7 +2228,7 @@ const AccountManagement = () => {
                             rows={3}
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 min-h-[80px]">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground min-h-[80px]">
                             {profileData.postalAddress || 'No especificada'}
                           </div>
                         )}
@@ -2250,7 +2250,7 @@ const AccountManagement = () => {
                             placeholder="Nombre completo"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.emergencyContactName || 'No especificado'}
                           </div>
                         )}
@@ -2266,7 +2266,7 @@ const AccountManagement = () => {
                             placeholder="+34 600 000 000"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.emergencyContactPhone || 'No especificado'}
                           </div>
                         )}
