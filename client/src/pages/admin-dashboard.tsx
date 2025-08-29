@@ -413,11 +413,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50">
+    <div className="px-6 py-4 min-h-screen bg-background">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">
+        <h1 className="text-2xl font-semibold text-foreground">Panel Principal</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Gestión rápida y vista general de la empresa
         </p>
       </div>
@@ -681,7 +681,7 @@ export default function AdminDashboard() {
                       receivedMessages.map((message: any) => (
                         <div 
                           key={message.id} 
-                          className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                          className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-md"
                           onClick={() => setLocation(`/test/mensajes?chat=${message.senderId}`)}
                         >
                           <UserAvatar 
@@ -724,7 +724,7 @@ export default function AdminDashboard() {
                     activeReminders.map((reminder: any) => (
                       <div 
                         key={reminder.id} 
-                        className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors rounded-md"
+                        className="flex items-start gap-3 py-2 border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors rounded-md"
                         onClick={() => setLocation('/test/recordatorios')}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
@@ -812,7 +812,7 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               {/* Calendar - Simple and Compact */}
-              <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="bg-card rounded-lg border border-border shadow-sm">
                 <div className="p-4">
                   <Calendar
                     mode="single"
@@ -855,8 +855,8 @@ export default function AdminDashboard() {
 
                 {/* Event Details for Selected Date */}
                 {selectedDate && (
-                  <div className="border-t border-gray-200 p-4 bg-gray-50">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="border-t border-border p-4 bg-muted/50">
+                    <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                       <CalendarDays className="h-4 w-4" />
                       {format(selectedDate, 'dd MMMM yyyy', { locale: es })}
                     </h4>
@@ -865,20 +865,20 @@ export default function AdminDashboard() {
                       const vacations = getVacationDetailsForDate(selectedDate);
                       
                       if (events.length === 0 && vacations.length === 0) {
-                        return <p className="text-sm text-gray-500">No hay eventos programados</p>;
+                        return <p className="text-sm text-muted-foreground">No hay eventos programados</p>;
                       }
                       
                       return (
                         <div className="space-y-3">
                           {/* Festivos */}
                           {events.filter(event => event.type === 'holiday').map((event, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
                               <div className={`w-3 h-3 rounded-full ${
                                 event.holidayType === 'custom' ? 'bg-orange-500' : 'bg-red-500'
                               }`}></div>
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{event.name}</p>
-                                <p className="text-xs text-gray-600">
+                                <p className="text-sm font-medium text-foreground">{event.name}</p>
+                                <p className="text-xs text-muted-foreground">
                                   {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
                                 </p>
                               </div>
@@ -887,13 +887,13 @@ export default function AdminDashboard() {
                           
                           {/* Vacaciones aprobadas */}
                           {vacations.filter(v => v.status === 'approved').map((vacation: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                            <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
                               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                               <div>
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-foreground">
                                   {vacation.userName} - Vacaciones
                                 </p>
-                                <p className="text-xs text-gray-600">
+                                <p className="text-xs text-muted-foreground">
                                   Del {format(parseISO(vacation.startDate), 'dd/MM')} al {format(parseISO(vacation.endDate), 'dd/MM')}
                                 </p>
                               </div>
@@ -926,7 +926,7 @@ export default function AdminDashboard() {
                     {pendingVacations.slice(0, 3).map((request: any) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
                         onClick={() => setLocation('/test/vacaciones')}
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
@@ -965,7 +965,7 @@ export default function AdminDashboard() {
                       const isCustom = holiday.type === 'custom';
                       
                       return (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
                           <div className={`w-3 h-3 rounded-full ${
                             isCustom ? 'bg-orange-500' : 'bg-red-500'
                           }`}></div>
