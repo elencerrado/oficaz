@@ -2586,8 +2586,8 @@ Responde directamente a este email para contactar con la persona.
 
   app.get('/api/work-sessions/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      // Optimize pagination for faster loads
-      const limit = parseInt(req.query.limit as string) || 30; // Default 30 sessions for speed
+      // Balanced pagination for performance and functionality
+      const limit = parseInt(req.query.limit as string) || 40; // Default 40 sessions
       const offset = parseInt(req.query.offset as string) || 0;
       
       const sessions = await storage.getWorkSessionsByCompany(req.user!.companyId, limit, offset);

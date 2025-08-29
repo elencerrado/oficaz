@@ -85,14 +85,14 @@ export default function TimeTracking() {
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
-  // Ultra-optimized query - load minimal data initially
+  // Optimized query with restored functionality
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['/api/work-sessions/company?limit=30'], // Load only 30 most recent sessions
+    queryKey: ['/api/work-sessions/company?limit=40'], // Load 40 sessions with full data
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 5 * 60 * 1000, // 5 minutes aggressive cache
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    retry: 1, // Reduce retries for speed
-    retryDelay: 500,
+    staleTime: 3 * 60 * 1000, // 3 minutes cache (balanced)
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    retryDelay: 750,
     refetchInterval: false,
     refetchIntervalInBackground: false,
   });

@@ -349,11 +349,27 @@ export class DrizzleStorage implements IStorage {
       return [];
     }
 
-    // Skip break periods query for better performance - only load on demand
-    // Most admin views don't need break period details immediately
+    // Get all session IDs for batch break periods query
+    const sessionIds = sessions.map(s => s.id);
+    
+    // Single optimized query for all break periods (restored functionality)
+    const allBreakPeriods = await db.select().from(schema.breakPeriods)
+      .where(inArray(schema.breakPeriods.workSessionId, sessionIds))
+      .orderBy(schema.breakPeriods.workSessionId, schema.breakPeriods.breakStart);
+
+    // Group break periods by session ID for O(1) lookup
+    const breakPeriodsMap = new Map<number, any[]>();
+    allBreakPeriods.forEach(bp => {
+      if (!breakPeriodsMap.has(bp.workSessionId)) {
+        breakPeriodsMap.set(bp.workSessionId, []);
+      }
+      breakPeriodsMap.get(bp.workSessionId)!.push(bp);
+    });
+
+    // Combine sessions with their break periods efficiently
     return sessions.map(session => ({
       ...session,
-      breakPeriods: [] // Load break periods only when editing sessions
+      breakPeriods: breakPeriodsMap.get(session.id) || []
     }));
   }
 
