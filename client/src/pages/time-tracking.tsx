@@ -85,37 +85,39 @@ export default function TimeTracking() {
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
-  // All useQuery hooks - Real-time updates for admin time tracking
+  // Optimize queries for first load - sessions with higher staleTime for initial load
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/work-sessions/company'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 30 * 1000, // 30 seconds for real-time updates
-    gcTime: 2 * 60 * 1000, // 2 minutes
-    retry: 1,
-    retryDelay: 500,
-    refetchInterval: 20000, // Reduced from 5s to 20s for better performance
-    refetchIntervalInBackground: false, // Disabled background polling
+    staleTime: 2 * 60 * 1000, // 2 minutes for initial cache
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    retryDelay: 1000,
+    refetchInterval: false, // Disable auto-refresh on initial load for speed
+    refetchIntervalInBackground: false,
   });
 
+  // Employees query with aggressive caching since it changes rarely  
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 5 * 60 * 1000, // 5 minutes for employees list
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes cache
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
-  // Company settings query for work hours limits
-  const { data: companySettings } = useQuery({
+  // Company settings with very aggressive caching since it rarely changes
+  const { data: companySettings = {} } = useQuery({
     queryKey: ['/api/settings/work-hours'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 10 * 60 * 1000, // 10 minutes cache
+    staleTime: 30 * 60 * 1000, // 30 minutes cache
+    gcTime: 60 * 60 * 1000, // 1 hour
   });
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
     if (session.clockOut) return false; // Session is completed
     
-    const maxHours = companySettings?.workingHoursPerDay || 8;
+    const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
     const sessionStart = new Date(session.clockIn);
     const now = new Date();
     const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
@@ -130,7 +132,7 @@ export default function TimeTracking() {
     }
 
     // Use configured max hours or fallback to 8 hours (as configured in Test Company)
-    const maxHours = companySettings?.workingHoursPerDay || 8;
+    const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
     const maxMilliseconds = maxHours * 60 * 60 * 1000;
     const now = new Date();
     
@@ -148,21 +150,7 @@ export default function TimeTracking() {
       return timeSinceStart > maxMilliseconds;
     });
     
-    // Debug logging for day 7 specifically
-    const dayDate = dayData.date || (dayData.sessions[0]?.clockIn ? format(new Date(dayData.sessions[0].clockIn), 'yyyy-MM-dd') : '');
-    if (dayDate.includes('01-07')) {
-      console.log('🐛 Day 7 Status Check:', {
-        date: dayDate,
-        maxHours,
-        hasIncompleteSession,
-        sessions: dayData.sessions.map((s: any) => ({
-          clockIn: s.clockIn,
-          clockOut: s.clockOut,
-          hasClockOut: !!s.clockOut,
-          timeSinceStart: s.clockOut ? 'completed' : `${((now.getTime() - new Date(s.clockIn).getTime()) / (1000 * 60 * 60)).toFixed(1)}h`
-        }))
-      });
-    }
+
     
     return hasIncompleteSession ? 'incomplete' : 'complete';
   }, [companySettings]);
@@ -192,10 +180,10 @@ export default function TimeTracking() {
   const forceCompleteSessionMutation = useMutation({
     mutationFn: async (sessionId: number) => {
       // Get company work hours configuration
-      const maxHours = companySettings?.workingHoursPerDay || 8;
+      const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
       
       // Find the session to complete
-      const sessionToComplete = sessions.find((s: any) => s.id === sessionId);
+      const sessionToComplete = (sessions as any[]).find((s: any) => s.id === sessionId);
       if (!sessionToComplete) {
         throw new Error('Sesión no encontrada');
       }
