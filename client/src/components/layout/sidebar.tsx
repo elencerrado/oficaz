@@ -4,7 +4,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+
 
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -140,7 +140,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {shouldShowLogo ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
-            <ThemeToggle />
           </div>
         </div>
         

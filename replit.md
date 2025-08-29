@@ -178,6 +178,19 @@ Preferred communication style: Simple, everyday language.
 - **Business Rules**: 30-day grace period allows data recovery, maintains business continuity.
 - **Security**: All deletion actions require confirmation and are logged for audit.
 
+### Dark Mode System (⚠️ NEW FEATURE - August 2025)
+- **Complete Implementation**: Full dark mode support for admin interface with three options.
+- **Theme Provider**: React Context-based theme management with localStorage persistence.
+- **Theme Options**:
+  - Light: Standard light interface
+  - Dark: Dark interface with optimized colors
+  - System: Automatically adapts to user's OS/browser preference
+- **CSS Architecture**: Uses Tailwind's `darkMode: ["class"]` with CSS custom properties for seamless transitions.
+- **User Interface**: Theme selector located in Settings > Mi Perfil > Apariencia section.
+- **Responsive Design**: All components (sidebar, cards, modals) adapt to selected theme.
+- **Automatic Detection**: System theme responds to OS dark/light mode changes in real-time.
+- **User Confirmation**: "podriamos añadir un modo oscuro a la vista admin" - Successfully implemented with user-requested placement in profile settings.
+
 ## External Dependencies
 
 ### Frontend Dependencies

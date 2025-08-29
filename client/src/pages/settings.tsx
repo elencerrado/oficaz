@@ -27,7 +27,7 @@ import {
   Trash2,
   ArrowLeft
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -37,6 +37,8 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { TrialManagerSimple } from '@/components/TrialManagerSimple';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useTheme } from '@/lib/theme-provider';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import flameIcon from '@assets/icon flam_1751450814463.png';
 
@@ -2269,6 +2271,25 @@ const AccountManagement = () => {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tema de la interfaz */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <h3 className="text-lg font-medium text-foreground mb-3 flex items-center">
+                      <Palette className="h-5 w-5 mr-2" />
+                      Apariencia
+                    </h3>
+                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                      <div>
+                        <Label className="text-sm font-medium text-foreground">Tema de la interfaz</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Elige entre modo claro, oscuro o automático según tu sistema
+                        </p>
+                      </div>
+                      <ThemeToggle />
                     </div>
                   </div>
                 </div>
