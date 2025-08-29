@@ -1,7 +1,7 @@
 # Oficaz - Employee Management System
 
 ## Overview
-Oficaz is a comprehensive employee management system providing time tracking, vacation management, document handling, messaging, and administrative features. Its vision is to streamline employee management for companies through a modern, full-stack application, automating tedious tasks to boost productivity and focus on core business.
+Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It provides features such as time tracking, vacation management, document handling, messaging, and various administrative tools. The project aims to automate tedious tasks, boost productivity, and allow businesses to focus on their core operations through a modern, full-stack application.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -35,105 +35,30 @@ Preferred communication style: Simple, everyday language.
 - **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 
-### Dynamic Work Hours Configuration
-- **Problem Solved**: Replaced hardcoded 8-hour limits with dynamic company-specific work hour settings.
-- **User Control**: Admins can modify work hours via Settings > Company > "Horas de trabajo por día" input field.
-
-### Incomplete Sessions Management
-- **Critical Bug Fixed**: Modified `getActiveWorkSession` to detect both active and incomplete sessions from any day.
-- **Problem Solved**: Employees with incomplete sessions from previous days can now properly close them.
-- **Business Rules**: Differentiated between active sessions (today) and incomplete sessions (previous days).
-- **User Requirement**: "juan jose ramirez tiene un fichaje de ayer incompleto pero haciendo login con su cuenta en el dash de empleado veo que no ha cambiado el estado de los botones de fichar"
-
-### Manager Role Permissions System
-- **Role Assignment Fixed**: Backend API now allows updating user roles from employee to manager.
-- **Manager Navigation Access**: Managers see all admin features including Fichajes, Empleados, and Configuración.
-- **Company Settings Protection**: Only administrators can edit company information and policies.
-- **Read-Only Configuration**: Managers can view but not modify company work hours and vacation policies.
-- **Role Creation Restrictions**: Managers can only create employees with "employee" role, cannot assign manager/admin roles.
-- **User Confirmation**: "un manager no puede editar la info de la empresa" and role restrictions successfully implemented.
-
-### Navigation Performance Optimization
-- **Problem Solved**: Eliminated page reloads during admin navigation between sections.
-- **User Feedback**: "en la vista admin cuando voy cambiando las paginas con la barra menu lateral las primeras veces que entro en cada pagina se recarga la pagina entera"
-- **Result**: Smooth navigation experience with maintained layout and instant page switching.
-
-### Scroll Position Reset System
-- **Problem Solved**: Automatic scroll reset when navigating between pages via sidebar menu.
-- **User Feedback**: "si yo hago scroll en una pagina, fichajes vista admin por ejemplo, y en el menu lateral elijo otra pagina, me carga pero manteniendo el scroll de la pagina que estaba antes"
-- **Implementation**: Created useScrollReset hook that monitors route changes and smoothly scrolls to top.
-- **Coverage**: Applied to both admin/manager layouts and employee simplified layouts.
-- **User Experience**: Clean navigation without inherited scroll positions from previous pages.
-
-### Performance Optimization - Time Tracking Page
-- **Problem Addressed**: First-load performance of fichajes page taking ~1 second, scalability concerns for 500+ companies.
-- **Database Optimization**: 
-  - Eliminated N+1 query problem by batching break periods queries
-  - Added strategic database indexes for work sessions and users tables
-  - Reduced initial data load from all sessions to 30 most recent
-- **Frontend Optimization**:
-  - Increased cache times: employees (30min), company settings (1hr)
-  - Reduced retry attempts and delays for faster failure recovery
-  - Optimized query configuration for minimal network overhead
-- **Performance Impact**: Load time reduced from ~1000ms to ~200ms
-- **Scalability**: Ready for 500+ companies with maintained performance
-- **User Confirmation**: "si, va algo mejor" - Performance improvement validated
-
-### Mobile-Responsive Time Tracking Interface
-- **Problem Solved**: Eliminated horizontal scrolling in mobile time tracking view that made data difficult to access.
-- **Solution Implemented**: Dual-layout system with desktop table and mobile card views.
-- **Mobile Design Features**:
-  - Card-based layout for each employee's daily session
-  - Compact header with avatar, name, date, and total hours
-  - Integrated timeline view with background styling
-  - Full editing capabilities preserved in mobile-optimized forms
-  - Summary cards for weekly/monthly totals
-  - Maintains all functionality without horizontal scrolling
-- **User Requirement**: "tenemos que hacer un diseño adaptado al movil, sin tener que hacer scrol horizontal, optimiza el espacio y hazlo intuitivo y atractivo"
-
-### SuperAdmin Security System
-- **Maximum Security Implementation**: Eliminated /fast page and replaced with email verification system.
-- **Restricted Access**: Exclusive access limited to soy@oficaz.es email address only.
-- **User Requirement**: "máxima seguridad superadmin acceso con verificación por email" - Successfully implemented.
-
 ## System Architecture
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter for client-side routing
-- **Styling**: Tailwind CSS with shadcn/ui component library
-- **State Management**: TanStack Query (React Query) for server state
+- **Routing**: Wouter
+- **Styling**: Tailwind CSS with shadcn/ui
+- **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
-- **Build Tool**: Vite for fast development and optimized builds
-- **UI/UX Decisions**:
-    - Consistent header layouts (px-6 py-4, no custom containers).
-    - Modern aesthetic with glassmorphism, subtle shadows, and rounded borders.
-    - Responsive design for optimal viewing on mobile and desktop.
-    - Professional color scheme using Oficaz primary color (#007AFF) and structured grayscale.
-    - Animated elements for enhanced user engagement.
-    - Unified avatar system with unique background colors or user-uploaded photos.
+- **Build Tool**: Vite
+- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: JWT-based authentication with role-based access control, supporting DNI/NIE or email login. Secure password hashing with bcrypt.
-- **File Uploads**: Multer for handling document uploads with image compression (Sharp).
+- **Authentication**: JWT-based with role-based access control (DNI/NIE or email login), bcrypt hashing.
+- **File Uploads**: Multer with Sharp (image compression).
 - **Session Management**: Express sessions with PostgreSQL store.
-- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy. SQL injection protection via parameterized queries.
-- **Core Modules**:
-    - **Authentication System**: JWT-based, role-based access, secure password hashing.
-    - **Time Tracking Module**: Real-time clock in/out, automatic time calculation.
-    - **Vacation Management**: Request submission, approval workflow, balance tracking.
-    - **Document Management**: Upload, categorization, secure storage, intelligent file naming.
-    - **Messaging System**: Internal company messaging, real-time updates.
-    - **Administrative Features**: Employee management, company settings, user role management.
-    - **Subscription Management**: Dynamic plan changes, prorated billing, integration with Stripe.
-    - **Reminders System**: Google Keep-style reminders with notifications and advanced assignment system.
+- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries.
+- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders.
 
 ### Database Design
-- **ORM**: Drizzle with PostgreSQL dialect
-- **Schema**: Type-safe schema definitions shared between frontend and backend.
+- **ORM**: Drizzle with PostgreSQL dialect.
+- **Schema**: Type-safe schema definitions.
 - **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features.
 
 ### Deployment Strategy
@@ -141,55 +66,20 @@ Preferred communication style: Simple, everyday language.
 - **Production Build**: Vite for frontend, esbuild for backend.
 - **Replit Configuration**: `nodejs-20`, `web`, `postgresql-16` modules.
 
-### Performance Optimization System
-- **Problem Addressed**: Render-blocking requests causing 1200ms delays and long main thread tasks.
-- **Lazy Loading Implementation**: All non-critical pages wrapped with React.lazy() and Suspense.
-- **Code Splitting Strategy**: Critical pages load immediately, features load on-demand.
-- **Async Resource Loading**: Stripe and Replit banner scripts load asynchronously.
-- **Critical CSS Optimization**: Inline critical styles.
-- **Resource Hints**: Added preconnect, dns-prefetch, and modulepreload.
-- **Bundle Optimization**: Main App component lazy-loaded to reduce initial JavaScript execution time.
-- **Performance Targets**: Reduced LCP, eliminated render-blocking requests, improved TBT scores.
-
-### Error Monitoring System
-- **Integration Completed**: Sentry error monitoring successfully integrated and tested.
-- **Performance Monitoring**: Includes both error tracking and performance metrics collection.
-- **Production Status**: Fully operational in production environment.
-
-### SEO Optimization System
-- **Problem Solved**: Direct file serving with explicit headers bypasses all framework interference.
-- **Implementation**: robots.txt and sitemap.xml served from client/public directory.
-- **Server Integration**: Express endpoints serve files directly with optimized production headers.
-- **Content-Type Verification**: Confirmed working - robots.txt (text/plain), sitemap.xml (application/xml).
-
-### Account Deletion with 30-Day Grace Period System (⚠️ CRITICAL FEATURE)
-- **Implementation Complete**: Comprehensive account deletion system with 30-day grace period.
-- **Database Schema**: Added deletion tracking fields (scheduledForDeletion, deletionScheduledAt, deletionWillOccurAt, deletionReason).
-- **Backend Features**:
-  - POST /api/account/schedule-deletion - Programs account for deletion in 30 days
-  - POST /api/account/cancel-deletion - Cancels scheduled deletion
-  - GET /api/superadmin/companies/pending-deletion - SuperAdmin view of pending deletions
-- **Frontend Features**:
-  - Dynamic button states showing either "Cancel Account" or "Cancel Scheduled Deletion"
-  - Visual warning showing countdown to deletion date
-  - Confirmation text requirement ("ELIMINAR PERMANENTEMENTE")
-  - Real-time status updates after actions
-- **SuperAdmin Dashboard**: Shows companies pending deletion with days remaining and deletion dates.
-- **Business Rules**: 30-day grace period allows data recovery, maintains business continuity.
-- **Security**: All deletion actions require confirmation and are logged for audit.
-
-### Dark Mode System (⚠️ NEW FEATURE - August 2025)
-- **Complete Implementation**: Full dark mode support for admin interface with three options.
-- **Theme Provider**: React Context-based theme management with localStorage persistence.
-- **Theme Options**:
-  - Light: Standard light interface
-  - Dark: Dark interface with optimized colors
-  - System: Automatically adapts to user's OS/browser preference
-- **CSS Architecture**: Uses Tailwind's `darkMode: ["class"]` with CSS custom properties for seamless transitions.
-- **User Interface**: Theme selector located in Settings > Mi Perfil > Apariencia section.
-- **Responsive Design**: All components (sidebar, cards, modals) adapt to selected theme.
-- **Automatic Detection**: System theme responds to OS dark/light mode changes in real-time.
-- **User Confirmation**: "podriamos añadir un modo oscuro a la vista admin" - Successfully implemented with user-requested placement in profile settings.
+### Key Features & Implementations
+- **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings via admin interface.
+- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions from previous days.
+- **Manager Role Permissions System**: Backend API supports manager role assignment. Managers have restricted access to admin features (view-only settings, cannot assign admin/manager roles).
+- **Navigation Performance Optimization**: Eliminated full page reloads during admin navigation for a smoother experience.
+- **Scroll Position Reset System**: `useScrollReset` hook automatically resets scroll position on route changes for improved UX.
+- **Performance Optimization - Time Tracking Page**: Database optimizations (batching queries, indexing), frontend caching (employees, company settings), reduced network overhead.
+- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views) with compact, intuitive design and full functionality.
+- **SuperAdmin Security System**: Exclusive access via email verification (`soy@oficaz.es`) replacing `/fast` page.
+- **Performance Optimization System**: Implemented lazy loading (`React.lazy()`, `Suspense`), code splitting, async resource loading, critical CSS optimization, and resource hints to reduce LCP and improve TBT.
+- **Error Monitoring System**: Integrated Sentry for error tracking and performance monitoring in production.
+- **SEO Optimization System**: Direct file serving of `robots.txt` and `sitemap.xml` from client/public with explicit headers.
+- **Account Deletion with 30-Day Grace Period System**: Comprehensive system for scheduling and canceling account deletion, with visual countdowns and SuperAdmin dashboard for monitoring.
+- **Dark Mode System**: Full dark mode support for admin interface (Light, Dark, System options) with `localStorage` persistence, managed by React Context and Tailwind's `darkMode: ["class"]`.
 
 ## External Dependencies
 
@@ -204,8 +94,8 @@ Preferred communication style: Simple, everyday language.
 - **Database**: Neon PostgreSQL serverless database
 - **ORM**: Drizzle ORM
 - **Authentication**: JWT, bcrypt
-- **File Handling**: Multer, Sharp (for image processing)
+- **File Handling**: Multer, Sharp
 - **Session Storage**: connect-pg-simple
-- **Email Services**: Nodemailer (for verification emails)
-- **Payment Processing**: Stripe API (for subscriptions, invoicing, and payment methods)
-- **Avatar Generation**: UI Avatars API (external service for initial avatars)
+- **Email Services**: Nodemailer
+- **Payment Processing**: Stripe API
+- **Avatar Generation**: UI Avatars API
