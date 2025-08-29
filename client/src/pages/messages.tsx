@@ -496,20 +496,20 @@ export default function Messages() {
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mensajes</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">
             Comunícate con empleados y gestiona mensajes
           </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}
-          <div className="w-1/3 bg-white rounded-lg border border-gray-200 flex flex-col">
-              <div className="p-4 border-b border-gray-200">
+          <div className="w-1/3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1 min-w-0">
                     <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
                     </p>
                   </div>
@@ -544,7 +544,7 @@ export default function Messages() {
                     className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
                       selectedChat === employee.id
                         ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600'
                     }`}
                     onClick={() => setSelectedChat(employee.id)}
                   >
@@ -558,12 +558,12 @@ export default function Messages() {
                       
                       <div className="flex-1 min-w-0">
                         <p className={`truncate font-medium text-sm ${
-                          selectedChat === employee.id ? 'text-white' : 'text-gray-900'
+                          selectedChat === employee.id ? 'text-white' : 'text-gray-900 dark:text-gray-100'
                         }`}>
                           {employee.fullName}
                         </p>
                         <div className={`truncate text-xs ${
-                          selectedChat === employee.id ? 'text-white/90' : 'text-gray-500'
+                          selectedChat === employee.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {getRoleDisplay(employee)}
                         </div>
@@ -575,11 +575,11 @@ export default function Messages() {
             </div>
 
             {/* Right Column: Chat Area (2/3 width) */}
-            <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col overflow-hidden">
+            <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <div className="flex items-center space-x-3">
                       <UserAvatar 
                         fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
@@ -601,7 +601,7 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50"
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800"
                   >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
@@ -609,7 +609,7 @@ export default function Messages() {
                           <div key={group.date} className="space-y-4">
                             {/* Date separator */}
                             <div className="flex items-center justify-center">
-                              <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full font-medium">
+                              <div className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-3 py-1 rounded-full font-medium">
                                 {group.dateFormatted}
                               </div>
                             </div>
@@ -625,13 +625,13 @@ export default function Messages() {
                                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                       message.senderId === user?.id
                                         ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                        : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
+                                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 shadow-oficaz'
                                     }`}
                                   >
                                     <p className="text-sm">{message.content}</p>
                                     <div className="flex items-center justify-between mt-1">
                                       <p className={`text-xs ${
-                                        message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                                        message.senderId === user?.id ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'
                                       }`}>
                                         {format(new Date(message.createdAt), 'HH:mm')}
                                       </p>
@@ -659,7 +659,7 @@ export default function Messages() {
                           </div>
                         ))
                       ) : (
-                        <div className="text-center text-gray-500 py-8">
+                        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
                           <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p>No hay mensajes aún</p>
                           <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
@@ -670,7 +670,7 @@ export default function Messages() {
                   </div>
 
                   {/* Message Input - Fixed at bottom */}
-                  <div className="border-t border-gray-200 px-4 py-3 flex-shrink-0">
+                  <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
                     <div className="flex space-x-2">
                       <Input
                         ref={messageInputRef}
@@ -692,7 +692,7 @@ export default function Messages() {
                 </>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-center text-gray-500">
+                  <div className="text-center text-gray-500 dark:text-gray-400">
                     <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                     <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
                     <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
@@ -708,7 +708,7 @@ export default function Messages() {
             (<div className="flex-1 flex flex-col min-h-0">
               <div className="flex-shrink-0 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">Conversaciones</h2>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Conversaciones</h2>
                   <Button
                     variant="outline"
                     size="sm"

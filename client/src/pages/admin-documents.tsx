@@ -76,12 +76,12 @@ const documentTypes = importedDocumentTypes.map(type => ({
 // Function to get type badge color
 const getTypeBadgeColor = (type: string) => {
   switch (type) {
-    case 'dni': return 'bg-blue-100 text-blue-800';
-    case 'nomina': return 'bg-green-100 text-green-800';
-    case 'contrato': return 'bg-purple-100 text-purple-800';
-    case 'justificante': return 'bg-orange-100 text-orange-800';
-    case 'otros': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'dni': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200';
+    case 'nomina': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+    case 'contrato': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200';
+    case 'justificante': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200';
+    case 'otros': return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
+    default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
   }
 };
 
@@ -839,7 +839,7 @@ export default function AdminDocuments() {
               </div>
 
               {/* Results count */}
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 Mostrando {(filteredDocuments || []).length} documento{(filteredDocuments || []).length !== 1 ? 's' : ''}
               </div>
 
@@ -853,23 +853,23 @@ export default function AdminDocuments() {
                       return (
                         <div
                           key={document.id}
-                          className="flex items-center p-4 border rounded-lg hover:bg-gray-50"
+                          className="flex items-center p-4 border border-border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 bg-card"
                         >
-                          <div className="p-2 rounded-lg bg-gray-100 mr-4">
-                            <FileIcon className="h-6 w-6 text-gray-600" />
+                          <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 mr-4">
+                            <FileIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 truncate">
+                            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
                               {document.originalName || document.fileName || 'Documento sin nombre'}
                             </h3>
                             <div className="flex items-center gap-4 mt-1">
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
                                 {document.user?.fullName || 'Empleado desconocido'}
                               </span>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-gray-500 dark:text-gray-500">
                                 {formatFileSize(document.fileSize)}
                               </span>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-gray-500 dark:text-gray-500">
                                 {(() => {
                                   // La fecha del servidor está en UTC, convertir a hora local española
                                   const utcDate = new Date(document.createdAt);
@@ -954,10 +954,10 @@ export default function AdminDocuments() {
                         const isEmployeeExpanded = expandedFolders.has(employeeFolderId);
 
                         return (
-                          <div key={employeeId} className="border rounded-lg bg-white">
+                          <div key={employeeId} className="border border-border rounded-lg bg-card">
                             {/* Employee Header */}
                             <div 
-                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
                               onClick={() => {
                                 const newExpanded = new Set(expandedFolders);
                                 if (isEmployeeExpanded) {
@@ -970,12 +970,12 @@ export default function AdminDocuments() {
                             >
                               <div className="flex items-center gap-3">
                                 {isEmployeeExpanded ? (
-                                  <FolderOpen className="h-5 w-5 text-blue-600" />
+                                  <FolderOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 ) : (
-                                  <Folder className="h-5 w-5 text-gray-600" />
+                                  <Folder className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                                 )}
-                                <h3 className="font-medium text-gray-900">{employeeData.name}</h3>
-                                <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                <h3 className="font-medium text-gray-900 dark:text-gray-100">{employeeData.name}</h3>
+                                <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                                   {employeeData.documents.length} documentos
                                 </span>
                               </div>
@@ -997,10 +997,10 @@ export default function AdminDocuments() {
                                   };
 
                                   return (
-                                    <div key={type} className="border rounded-lg bg-gray-50">
+                                    <div key={type} className="border border-border rounded-lg bg-gray-50 dark:bg-gray-800">
                                       {/* Type Header */}
                                       <div 
-                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100"
+                                        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                                         onClick={() => {
                                           const newExpanded = new Set(expandedFolders);
                                           if (isTypeExpanded) {
@@ -1013,11 +1013,11 @@ export default function AdminDocuments() {
                                       >
                                         <div className="flex items-center gap-2">
                                           {isTypeExpanded ? (
-                                            <FolderOpen className="h-4 w-4 text-blue-600" />
+                                            <FolderOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                           ) : (
-                                            <Folder className="h-4 w-4 text-gray-600" />
+                                            <Folder className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                                           )}
-                                          <span className="font-medium text-gray-800">{typeNames[type]}</span>
+                                          <span className="font-medium text-gray-800 dark:text-gray-200">{typeNames[type]}</span>
                                           <span className={`text-xs px-2 py-1 rounded ${getTypeBadgeColor(type)}`}>
                                             {docs.length}
                                           </span>
@@ -1032,11 +1032,11 @@ export default function AdminDocuments() {
                                             return (
                                               <div
                                                 key={document.id}
-                                                className="bg-white border rounded-lg p-3 hover:shadow-md transition-shadow"
+                                                className="bg-white dark:bg-gray-900 border border-border rounded-lg p-3 hover:shadow-md transition-shadow"
                                               >
                                                 <div className="flex items-start justify-between mb-2">
-                                                  <div className="p-2 rounded-lg bg-gray-100">
-                                                    <FileIcon className="h-4 w-4 text-gray-600" />
+                                                  <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                                    <FileIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                                                   </div>
                                                   <div className="flex gap-1">
                                                     <Button
@@ -1065,10 +1065,10 @@ export default function AdminDocuments() {
                                                     </Button>
                                                   </div>
                                                 </div>
-                                                <h4 className="text-sm font-medium text-gray-900 truncate mb-1">
+                                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mb-1">
                                                   {document.originalName || document.fileName || 'Documento sin nombre'}
                                                 </h4>
-                                                <div className="text-xs text-gray-500 space-y-1">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                                                   <div>{formatFileSize(document.fileSize)}</div>
                                                   <div>
                                                     {(() => {
