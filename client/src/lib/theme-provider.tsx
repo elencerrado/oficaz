@@ -18,6 +18,8 @@ interface ThemeProviderProps {
 // Check if current route is an admin/dashboard route that should support dark mode
 const isAdminRoute = () => {
   const path = window.location.pathname;
+  console.log('🎨 Theme check - Current path:', path);
+  
   const adminRoutes = [
     '/admin-dashboard',
     '/employee-dashboard', 
@@ -33,10 +35,30 @@ const isAdminRoute = () => {
     '/employees-simple',
     '/settings',
     '/employee-profile',
-    '/super-admin'
+    '/super-admin',
+    // Replit custom domain URLs
+    '/oficaz/admin-dashboard',
+    '/oficaz/employee-dashboard', 
+    '/oficaz/time-tracking',
+    '/oficaz/employee-time-tracking',
+    '/oficaz/vacation-requests',
+    '/oficaz/vacation-management',
+    '/oficaz/documents',
+    '/oficaz/admin-documents',
+    '/oficaz/messages',
+    '/oficaz/reminders',
+    '/oficaz/employee-reminders',
+    '/oficaz/employees-simple',
+    '/oficaz/configuracion', // Spanish version of settings
+    '/oficaz/settings',
+    '/oficaz/employee-profile',
+    '/oficaz/super-admin'
   ];
   
-  return adminRoutes.some(route => path.startsWith(route));
+  const isAdmin = adminRoutes.some(route => path.startsWith(route));
+  console.log('🎨 Theme check - Is admin route:', isAdmin, 'Path:', path);
+  
+  return isAdmin;
 };
 
 export function ThemeProvider({ 
@@ -58,6 +80,7 @@ export function ThemeProvider({
 
       // Only apply dark mode for admin routes, force light mode for public pages
       if (!isAdminRoute()) {
+        console.log('🎨 Theme - Applying light mode (public page)');
         root.classList.add('light');
         // Force light mode styling on root
         root.style.colorScheme = 'light';
@@ -72,12 +95,16 @@ export function ThemeProvider({
         appliedTheme = systemTheme;
       }
       
+      console.log('🎨 Theme - Applying theme on admin route:', appliedTheme);
       root.classList.add(appliedTheme);
       // Set color scheme for better browser integration
       root.style.colorScheme = appliedTheme;
       
       // Force a reflow to ensure changes are applied immediately
       void root.offsetHeight;
+      
+      // Log final classes for debugging
+      console.log('🎨 Theme - Root classes after apply:', root.classList.toString());
     };
 
     applyTheme();
@@ -187,9 +214,10 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      console.log('🎨 Theme - Setting new theme:', newTheme);
+      localStorage.setItem(storageKey, newTheme);
+      setTheme(newTheme);
     },
   };
 
