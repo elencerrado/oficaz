@@ -1787,11 +1787,11 @@ export default function TimeTracking() {
 
         {/* Filters Section - Integrated between header and table */}
         {showFilters && (
-          <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="px-6 py-4 border-b bg-gray-50 dark:bg-gray-800">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
               {/* Left side - Employee Filter */}
               <div className="flex flex-col space-y-2">
-                <label className="text-sm font-medium text-gray-700">Empleado</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</label>
                 <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Seleccionar empleado" />
@@ -1824,7 +1824,7 @@ export default function TimeTracking() {
 
               {/* Right side - Date Filters */}
               <div className="flex flex-col space-y-2 lg:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Período de tiempo</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Período de tiempo</label>
                 
                 {/* Desktop Layout: All buttons in one row */}
                 <div className="hidden lg:flex items-center gap-2 w-full">
@@ -2078,13 +2078,13 @@ export default function TimeTracking() {
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
                 <tr>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Empleado</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Fecha</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 min-w-[300px]">Jornada de Trabajo</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900">Total</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-900">Acciones</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Empleado</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Fecha</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 min-w-[300px]">Jornada de Trabajo</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Total</th>
+                  <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -2196,9 +2196,9 @@ export default function TimeTracking() {
                       const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-${previousMonth}`} className="bg-blue-50 border-y-2 border-blue-200 h-10">
+                        <tr key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700 h-10">
                           <td colSpan={5} className="py-1 px-4 text-center">
-                            <div className="font-semibold text-blue-800 capitalize text-sm">
+                            <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -2209,9 +2209,9 @@ export default function TimeTracking() {
                     if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border-y border-gray-300 h-10">
+                        <tr key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border-y border-gray-300 dark:border-gray-600 h-10">
                           <td colSpan={5} className="py-1 px-4 text-center">
-                            <div className="font-medium text-gray-700 text-sm">
+                            <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -2240,7 +2240,7 @@ export default function TimeTracking() {
                     const isEditing = editingSession === dayData.sessions[0]?.id;
                     
                     result.push(
-                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 border-b border-gray-100 h-12">
+                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-12">
                         <td className="py-2 px-4">
                           <div className="flex items-center gap-3">
                             <UserAvatar 
@@ -2250,7 +2250,7 @@ export default function TimeTracking() {
                               profilePicture={dayData.profilePicture}
                             />
                             <div className="flex items-center gap-2">
-                              <div className="font-medium text-gray-900">
+                              <div className="font-medium text-gray-900 dark:text-gray-100">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </div>
                               {dayData.hasAutoCompleted && (
@@ -2277,7 +2277,7 @@ export default function TimeTracking() {
                               />
                             </div>
                           ) : (
-                            <div className="text-gray-700">
+                            <div className="text-gray-700 dark:text-gray-300">
                               {format(new Date(dayData.date), 'dd/MM/yyyy')}
                             </div>
                           )}
@@ -2306,7 +2306,7 @@ export default function TimeTracking() {
                               {/* Periodos de Descanso */}
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <label className="text-xs font-medium text-gray-700">
+                                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                                     Descansos
                                   </label>
                                   <Button
@@ -2329,7 +2329,7 @@ export default function TimeTracking() {
                                       className="w-20 h-7 text-xs"
                                       placeholder="Inicio"
                                     />
-                                    <span className="text-xs text-gray-400">-</span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
                                     <Input
                                       type="time"
                                       value={breakPeriod.breakEnd || ''}
@@ -2342,7 +2342,7 @@ export default function TimeTracking() {
                                       size="sm"
                                       variant="ghost"
                                       onClick={() => handleRemoveBreakPeriod(index)}
-                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
                                     >
                                       <X className="w-3 h-3" />
                                     </Button>
@@ -2350,7 +2350,7 @@ export default function TimeTracking() {
                                 ))}
                                 
                                 {editData.breakPeriods.length === 0 && (
-                                  <p className="text-xs text-gray-500 italic">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                                     Sin descansos programados
                                   </p>
                                 )}
@@ -2362,7 +2362,7 @@ export default function TimeTracking() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="space-y-1">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
                               {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                             </div>
                             {/* Show status badge for completed sessions when they exceed work hours */}
@@ -2439,9 +2439,9 @@ export default function TimeTracking() {
                     if (previousWeekStart) {
                       const weekTotal = calculateWeekTotal(previousWeekStart);
                       result.push(
-                        <tr key={`week-final`} className="bg-gray-100 border-y border-gray-300">
+                        <tr key={`week-final`} className="bg-gray-100 dark:bg-gray-700/50 border-y border-gray-300 dark:border-gray-600">
                           <td colSpan={5} className="py-2 px-4 text-center">
-                            <div className="font-medium text-gray-700">
+                            <div className="font-medium text-gray-700 dark:text-gray-300">
                               Total semana: {weekTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -2455,9 +2455,9 @@ export default function TimeTracking() {
                       const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
                       
                       result.push(
-                        <tr key={`month-final`} className="bg-blue-50 border-y-2 border-blue-200">
+                        <tr key={`month-final`} className="bg-blue-50 dark:bg-blue-900/30 border-y-2 border-blue-200 dark:border-blue-700">
                           <td colSpan={5} className="py-3 px-4 text-center">
-                            <div className="font-semibold text-blue-800 capitalize">
+                            <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize">
                               Total {monthName}: {monthTotal.toFixed(1)}h
                             </div>
                           </td>
@@ -2473,13 +2473,13 @@ export default function TimeTracking() {
                   <tr className="h-32">
                     <td colSpan={5} className="py-8 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Users className="w-5 h-5 text-gray-400" />
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                          <Users className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                         </div>
-                        <div className="text-gray-500 font-medium text-sm">
+                        <div className="text-gray-500 dark:text-gray-400 font-medium text-sm">
                           No hay fichajes en este período
                         </div>
-                        <div className="text-gray-400 text-xs">
+                        <div className="text-gray-400 dark:text-gray-500 text-xs">
                           Prueba seleccionando un rango de fechas diferente
                         </div>
                       </div>
@@ -2587,8 +2587,8 @@ export default function TimeTracking() {
                   const monthName = format(new Date(parseInt(year), parseInt(month) - 1), 'MMMM yyyy', { locale: es });
                   
                   result.push(
-                    <div key={`month-${previousMonth}`} className="bg-blue-50 border border-blue-200 rounded-lg p-3 mx-4 mb-3">
-                      <div className="font-semibold text-blue-800 capitalize text-sm text-center">
+                    <div key={`month-${previousMonth}`} className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm text-center">
                         Total {monthName}: {monthTotal.toFixed(1)}h
                       </div>
                     </div>
@@ -2598,8 +2598,8 @@ export default function TimeTracking() {
                 if (showSummaries && isNewWeek && index > 0 && previousWeekStart) {
                   const weekTotal = calculateWeekTotal(previousWeekStart);
                   result.push(
-                    <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 border border-gray-300 rounded-lg p-3 mx-4 mb-3">
-                      <div className="font-medium text-gray-700 text-sm text-center">
+                    <div key={`week-${previousWeekStart.getTime()}`} className="bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-medium text-gray-700 dark:text-gray-300 text-sm text-center">
                         Total semana: {weekTotal.toFixed(1)}h
                       </div>
                     </div>
