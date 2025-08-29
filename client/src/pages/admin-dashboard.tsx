@@ -691,9 +691,9 @@ export default function AdminDashboard() {
                             profilePicture={message.senderProfilePicture}
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{message.senderName || 'Empleado'}</p>
-                            <p className="text-sm text-gray-500 truncate">{message.content}</p>
-                            <p className="text-xs text-gray-400">{formatTime(parseISO(message.createdAt))}</p>
+                            <p className="font-medium text-foreground truncate">{message.senderName || 'Empleado'}</p>
+                            <p className="text-sm text-muted-foreground truncate">{message.content}</p>
+                            <p className="text-xs text-muted-foreground opacity-75">{formatTime(parseISO(message.createdAt))}</p>
                           </div>
                           {!message.isRead && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -701,7 +701,7 @@ export default function AdminDashboard() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-500 text-center py-4">No hay mensajes recientes</p>
+                      <p className="text-muted-foreground text-center py-4">No hay mensajes recientes</p>
                     );
                   })()}
                 </div>
@@ -738,11 +738,11 @@ export default function AdminDashboard() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{reminder.title}</p>
+                          <p className="font-medium text-foreground truncate">{reminder.title}</p>
                           {reminder.content && (
-                            <p className="text-sm text-gray-500 truncate">{reminder.content}</p>
+                            <p className="text-sm text-muted-foreground truncate">{reminder.content}</p>
                           )}
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-muted-foreground opacity-75">
                             {reminder.reminderDate 
                               ? format(parseISO(reminder.reminderDate), 'dd MMM, HH:mm', { locale: es })
                               : 'Sin fecha'
@@ -756,7 +756,7 @@ export default function AdminDashboard() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-4">No hay recordatorios activos</p>
+                    <p className="text-muted-foreground text-center py-4">No hay recordatorios activos</p>
                   )}
                 </div>
               </CardContent>
@@ -775,7 +775,7 @@ export default function AdminDashboard() {
               <div className="space-y-3">
                 {recentSessions?.length > 0 ? (
                   recentSessions.map((event: any) => (
-                    <div key={event.id} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+                    <div key={event.id} className="flex items-center gap-3 py-2 border-b border-border last:border-0">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         event.type === 'entry' ? 'bg-green-100' : 'bg-red-100'
                       }`}>
@@ -786,15 +786,15 @@ export default function AdminDashboard() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">{event.userName}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-foreground">{event.userName}</p>
+                        <p className="text-sm text-muted-foreground">
                           {event.type === 'entry' ? 'Entrada' : 'Salida'} - {formatDateTime(event.timestamp)}
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No hay fichajes recientes</p>
+                  <p className="text-muted-foreground text-center py-4">No hay fichajes recientes</p>
                 )}
               </div>
             </CardContent>
@@ -908,9 +908,9 @@ export default function AdminDashboard() {
 
               {/* Pending Requests Section */}
               {pendingVacations.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="mt-6 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                       Pendientes de Aprobación
                     </h4>
                     <Button
@@ -931,10 +931,10 @@ export default function AdminDashboard() {
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-foreground">
                             Vacaciones de {request.userName || 'Empleado'}
                           </p>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-muted-foreground">
                             Del {format(parseISO(request.startDate), 'dd/MM')} al {format(parseISO(request.endDate), 'dd/MM')}
                           </p>
                         </div>
@@ -945,9 +945,9 @@ export default function AdminDashboard() {
               )}
 
               {/* Upcoming Events Section */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="mt-6 pt-4 border-t border-border">
                 <div className="mb-3">
-                  <h4 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     Próximos Eventos
                   </h4>
                 </div>
@@ -970,10 +970,10 @@ export default function AdminDashboard() {
                             isCustom ? 'bg-orange-500' : 'bg-red-500'
                           }`}></div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-foreground">
                               {holiday.name}
                             </p>
-                            <p className="text-xs text-gray-600">
+                            <p className="text-xs text-muted-foreground">
                               {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
                               {isCustom && (
                                 <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
