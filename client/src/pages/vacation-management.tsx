@@ -570,11 +570,11 @@ export default function VacationManagement() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Vacaciones</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">
+        <h1 className="text-2xl font-semibold text-foreground">Gestión de Vacaciones</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Gestiona solicitudes de vacaciones y empleados
         </p>
       </div>
@@ -664,11 +664,11 @@ export default function VacationManagement() {
                 <LoadingSpinner />
               </div>
             ) : filteredRequests.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 {vacationRequests.length === 0 
                   ? "No hay solicitudes de vacaciones" 
                   : "No se encontraron solicitudes con los filtros aplicados"}
-                <div className="text-xs text-gray-400 mt-2">
+                <div className="text-xs text-muted-foreground/60 mt-2">
                   Total de solicitudes: {vacationRequests.length}
                 </div>
               </div>
@@ -677,16 +677,16 @@ export default function VacationManagement() {
                 {filteredRequests.map((request: VacationRequest) => (
                   <div
                     key={request.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 bg-[#ffffff]"
+                    className="p-4 border border-border rounded-lg hover:bg-muted/10 bg-card"
                   >
                     {/* Desktop: layout horizontal */}
                     <div className="hidden md:flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
+                          <h3 className="font-medium text-foreground">{request.user?.fullName}</h3>
                           {getStatusBadge(request.status)}
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
+                        <div className="text-sm text-muted-foreground space-y-1">
                           <p>
                             <span className="font-medium">Fechas:</span>{" "}
                             {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
@@ -853,20 +853,20 @@ export default function VacationManagement() {
                   <LoadingSpinner />
                 </div>
               ) : employees.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No hay empleados registrados
                 </div>
               ) : (
-                <div className="bg-white rounded-lg border overflow-hidden">
+                <div className="bg-card rounded-lg border border-border overflow-hidden">
                   {/* Desktop: Header con controles */}
-                  <div className="hidden md:block p-4 border-b bg-gray-50">
+                  <div className="hidden md:block p-4 border-b bg-muted/20">
                     {/* Header unificado con controles y leyenda */}
                     <div className="flex items-center justify-between">
                       {/* Leyenda de colores y controles de navegación compactos */}
                       <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-blue-500 rounded-sm"></div>
+                            <div className="w-3 h-3 bg-primary rounded-sm"></div>
                             <span>Aprobado</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -887,7 +887,7 @@ export default function VacationManagement() {
                           </Button>
                           
                           <div className="text-center min-w-[140px]">
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-foreground">
                               {timelineViewMode === 'month' 
                                 ? format(timelineViewDate, "MMM yyyy", { locale: es })
                                 : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
@@ -1013,28 +1013,28 @@ export default function VacationManagement() {
                       const timelineRange = getTimelineRange();
                       
                       return (
-                        <div key={employee.id} className="p-4 hover:bg-gray-50">
+                        <div key={employee.id} className="p-4 hover:bg-muted/10">
                           <div className="flex items-center">
                             {/* Información del Empleado */}
                             <div className="w-72 flex-shrink-0 pr-6">
                               <div className="flex items-center gap-3">
                                 <UserAvatar fullName={employee.fullName} size="sm" userId={employee.id} profilePicture={employee.profilePicture} />
                                 <div className="flex-1">
-                                  <h4 className="font-medium text-gray-900 truncate">
+                                  <h4 className="font-medium text-foreground truncate">
                                     {employee.fullName}
                                   </h4>
-                                  <div className="text-xs text-gray-500 space-y-1">
+                                  <div className="text-xs text-muted-foreground space-y-1">
                                     <div>
                                       <span className="font-medium">{usedDays}</span>/{totalDays} días usados
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                                      <div className="flex-1 bg-muted rounded-full h-2">
                                         <div 
-                                          className="bg-blue-500 h-2 rounded-full"
+                                          className="bg-primary h-2 rounded-full"
                                           style={{ width: `${Math.min(100, usagePercent)}%` }}
                                         />
                                       </div>
-                                      <span className="text-xs font-medium text-green-600">
+                                      <span className="text-xs font-medium text-green-600 dark:text-green-400">
                                         {availableDays} rest.
                                       </span>
                                     </div>
@@ -1046,14 +1046,14 @@ export default function VacationManagement() {
                             {/* Timeline Horizontal */}
                             <div className="flex-1 relative">
                               {/* Fondo del timeline con marcas de días */}
-                              <div className="relative h-12 bg-gray-100 rounded border">
+                              <div className="relative h-12 bg-muted/50 rounded border border-border">
                                 {/* Grid de días (solo mostrar algunos para no saturar) */}
                                 {timelineRange.days
                                   .filter((_, index) => index % (timelineViewMode === 'month' ? 3 : 7) === 0)
                                   .map((day, index) => (
                                     <div
                                       key={index}
-                                      className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                      className="absolute top-0 bottom-0 w-px bg-border"
                                       style={{
                                         left: `${(eachDayOfInterval({
                                           start: timelineRange.start,
@@ -1077,7 +1077,7 @@ export default function VacationManagement() {
                                       <div key={`month-${index}`}>
                                         {/* Línea vertical prominente */}
                                         <div
-                                          className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+                                          className="absolute top-0 bottom-0 w-0.5 bg-primary z-10"
                                           style={{ left: `${position}%` }}
                                         />
                                       </div>
@@ -1092,7 +1092,7 @@ export default function VacationManagement() {
                               </div>
                               
                               {/* Labels de meses debajo del timeline */}
-                              <div className="relative text-xs text-blue-600 font-medium mt-2 h-4">
+                              <div className="relative text-xs text-primary font-medium mt-2 h-4">
                                 {/* Mostrar etiquetas de mes según los marcadores verticales */}
                                 {timelineRange.days
                                   .filter(day => day.getDate() === 1) // Solo primer día del mes
@@ -1138,7 +1138,7 @@ export default function VacationManagement() {
                       const timelineRange = getTimelineRange();
                       
                       return (
-                        <div key={employee.id} className="p-4 bg-white">
+                        <div key={employee.id} className="p-4 bg-card">
                           {/* Employee Header */}
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
@@ -1149,16 +1149,16 @@ export default function VacationManagement() {
                                 profilePicture={employee.profilePicture} 
                               />
                               <div>
-                                <h4 className="font-medium text-gray-900 text-sm">
+                                <h4 className="font-medium text-foreground text-sm">
                                   {employee.fullName}
                                 </h4>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                   <span className="font-medium">{usedDays}</span>/{totalDays} días usados
                                 </div>
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-xs font-medium text-green-600">
+                              <div className="text-xs font-medium text-green-600 dark:text-green-400">
                                 {availableDays} rest.
                               </div>
                             </div>
@@ -1167,9 +1167,9 @@ export default function VacationManagement() {
                           {/* Progress Bar */}
                           <div className="mb-4">
                             <div className="flex items-center gap-2 mb-1">
-                              <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div className="flex-1 bg-muted rounded-full h-2">
                                 <div 
-                                  className="bg-blue-500 h-2 rounded-full"
+                                  className="bg-primary h-2 rounded-full"
                                   style={{ width: `${Math.min(100, usagePercent)}%` }}
                                 />
                               </div>
@@ -1181,7 +1181,7 @@ export default function VacationManagement() {
                           <div className="relative">
                             {/* Fondo del timeline con marcas de días */}
                             <div 
-                              className="relative h-10 bg-gray-100 rounded border overflow-hidden touch-pan-y select-none"
+                              className="relative h-10 bg-muted/50 rounded border border-border overflow-hidden touch-pan-y select-none"
                               onTouchStart={handleTouchStart}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
@@ -1192,7 +1192,7 @@ export default function VacationManagement() {
                                 .map((day, index) => (
                                   <div
                                     key={index}
-                                    className="absolute top-0 bottom-0 w-px bg-gray-200"
+                                    className="absolute top-0 bottom-0 w-px bg-border"
                                     style={{
                                       left: `${(eachDayOfInterval({
                                         start: timelineRange.start,
@@ -1216,7 +1216,7 @@ export default function VacationManagement() {
                                     <div key={`month-${index}`}>
                                       {/* Línea vertical prominente */}
                                       <div
-                                        className="absolute top-0 bottom-0 w-0.5 bg-blue-500 z-10"
+                                        className="absolute top-0 bottom-0 w-0.5 bg-primary z-10"
                                         style={{ left: `${position}%` }}
                                       />
                                     </div>
@@ -1231,7 +1231,7 @@ export default function VacationManagement() {
                             </div>
                             
                             {/* Labels de meses debajo del timeline - Móvil simplificado */}
-                            <div className="relative text-xs text-blue-600 font-medium mt-1 h-4">
+                            <div className="relative text-xs text-primary font-medium mt-1 h-4">
                               {/* Mostrar etiquetas de mes según los marcadores verticales */}
                               {timelineRange.days
                                 .filter(day => day.getDate() === 1) // Solo primer día del mes
@@ -1332,8 +1332,8 @@ export default function VacationManagement() {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium text-gray-900 mb-1">{holiday.name}</h3>
-                        <p className="text-sm text-gray-600">
+                        <h3 className="font-medium text-foreground mb-1">{holiday.name}</h3>
+                        <p className="text-sm text-muted-foreground">
                           {format(new Date(holiday.date), "dd/MM/yyyy", { locale: es })}
                         </p>
                         <Badge 
@@ -1370,13 +1370,13 @@ export default function VacationManagement() {
 
           {selectedRequest && (
             <div className="space-y-4">
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-1">{selectedRequest.user?.fullName}</h3>
-                <p className="text-sm text-gray-600">
+              <div className="p-3 bg-muted/20 rounded-lg">
+                <h3 className="font-medium text-foreground mb-1">{selectedRequest.user?.fullName}</h3>
+                <p className="text-sm text-muted-foreground">
                   {selectedRequest.startDate ? format(new Date(selectedRequest.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}
                   {selectedRequest.endDate ? format(new Date(selectedRequest.endDate), "dd/MM/yyyy", { locale: es }) : "N/A"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   <span className="font-medium">Días:</span> {
                     selectedRequest.startDate && selectedRequest.endDate 
                       ? calculateDays(selectedRequest.startDate, selectedRequest.endDate)
@@ -1384,7 +1384,7 @@ export default function VacationManagement() {
                   }
                 </p>
                 {selectedRequest.reason && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     <span className="font-medium">Motivo:</span> {selectedRequest.reason}
                   </p>
                 )}
@@ -1393,7 +1393,7 @@ export default function VacationManagement() {
               {modalAction === 'edit' && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label className="text-sm font-medium text-foreground mb-1 block">
                       Nuevo período de vacaciones
                     </label>
                     <DatePickerPeriod
@@ -1407,7 +1407,7 @@ export default function VacationManagement() {
               )}
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block flex items-center gap-2">
+                <label className="text-sm font-medium text-foreground mb-1 block flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
                   {modalAction === 'deny' ? 'Motivo del rechazo' : 'Comentario (opcional)'}
                 </label>
