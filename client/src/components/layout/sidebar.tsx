@@ -4,6 +4,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 import { useQuery } from '@tanstack/react-query';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -109,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <nav 
         className={`
-          fixed left-0 w-64 bg-white shadow-lg z-30 transform transition-transform duration-300 flex flex-col
+          fixed left-0 w-64 bg-sidebar shadow-lg z-30 transform transition-transform duration-300 flex flex-col border-r border-border
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
         style={{
@@ -118,12 +119,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }}
       >
         {/* Fixed Company header */}
-        <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+        <div className="p-4 border-b border-border bg-sidebar flex-shrink-0">
           <div className="flex items-center space-x-3">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
               <img 
-                src={company.logoUrl} 
+                src={company.logoUrl || ''} 
                 alt={company.name} 
                 className="h-6 w-auto object-contain flex-shrink-0"
               />
@@ -135,10 +136,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               />
             )}
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-medium text-gray-900 truncate">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                 {shouldShowLogo ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
+            <ThemeToggle />
           </div>
         </div>
         
@@ -161,10 +163,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         className={`
                           w-full flex items-center space-x-3 rounded-lg transition-colors text-left
                           ${isActive 
-                            ? 'bg-blue-50 text-oficaz-primary' 
+                            ? 'bg-primary/10 text-primary' 
                             : isFeatureRestricted
-                              ? 'text-gray-400 hover:bg-gray-50 opacity-60'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'text-muted-foreground hover:bg-muted/50 opacity-60'
+                              : 'text-sidebar-foreground hover:bg-muted'
                           }
                         `}
                         style={{
@@ -176,7 +178,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Icon size={20} className={isFeatureRestricted ? 'opacity-50' : ''} />
                         <span className={isFeatureRestricted ? 'opacity-75' : ''}>{item.name}</span>
                         {typeof item.badge === 'number' && item.badge > 0 && (
-                          <span className="bg-oficaz-error text-white text-xs px-2 py-1 rounded-full ml-auto">
+                          <span className="bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded-full ml-auto">
                             {item.badge}
                           </span>
                         )}

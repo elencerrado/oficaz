@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
@@ -454,16 +455,18 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GlobalDemoBanner />
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-          <CookieBanner />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <GlobalDemoBanner />
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+            <CookieBanner />
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1675,13 +1675,13 @@ export default function TimeTracking() {
   }
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Gestión de Fichajes</h1>
-            <p className="text-gray-500 mt-1 text-sm sm:text-base">
+            <h1 className="text-2xl font-semibold text-foreground">Gestión de Fichajes</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               Administra todos los fichajes de empleados y genera reportes.
             </p>
           </div>
