@@ -14,6 +14,7 @@ import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
+import { useScrollReset } from "@/hooks/use-scroll-reset";
 
 import { lazy, Suspense } from "react";
 
@@ -95,6 +96,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { showBanner } = useDemoBanner();
+  
+  // Reset scroll position on route changes
+  useScrollReset();
 
   // Calculate padding-top dynamically
   // Header is positioned at top-[60px] when banner is shown, plus header height (60px) = 120px total
@@ -102,6 +106,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {
+    // Reset scroll for employees too
+    useScrollReset();
+    
     return (
       <>
         <ReminderBanner />

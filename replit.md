@@ -58,6 +58,13 @@ Preferred communication style: Simple, everyday language.
 - **User Feedback**: "en la vista admin cuando voy cambiando las paginas con la barra menu lateral las primeras veces que entro en cada pagina se recarga la pagina entera"
 - **Result**: Smooth navigation experience with maintained layout and instant page switching.
 
+### Scroll Position Reset System
+- **Problem Solved**: Automatic scroll reset when navigating between pages via sidebar menu.
+- **User Feedback**: "si yo hago scroll en una pagina, fichajes vista admin por ejemplo, y en el menu lateral elijo otra pagina, me carga pero manteniendo el scroll de la pagina que estaba antes"
+- **Implementation**: Created useScrollReset hook that monitors route changes and smoothly scrolls to top.
+- **Coverage**: Applied to both admin/manager layouts and employee simplified layouts.
+- **User Experience**: Clean navigation without inherited scroll positions from previous pages.
+
 ### Mobile-Responsive Time Tracking Interface
 - **Problem Solved**: Eliminated horizontal scrolling in mobile time tracking view that made data difficult to access.
 - **Solution Implemented**: Dual-layout system with desktop table and mobile card views.
