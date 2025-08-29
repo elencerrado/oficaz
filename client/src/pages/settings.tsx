@@ -1336,11 +1336,11 @@ const AccountManagement = () => {
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Mi Perfil</h1>
-            <p className="text-gray-600">Gestiona tu información personal</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Mi Perfil</h1>
+            <p className="text-gray-600 dark:text-gray-400">Gestiona tu información personal</p>
           </div>
 
           <Card>
@@ -1360,29 +1360,29 @@ const AccountManagement = () => {
             <CardContent className="space-y-6">
               {/* Company Information (Read-only) */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Información de la empresa</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Información de la empresa</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">DNI</Label>
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">DNI</Label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                       {user?.dni}
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Email corporativo</Label>
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email corporativo</Label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                       {user?.companyEmail}
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Teléfono corporativo</Label>
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono corporativo</Label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                       {user?.companyPhone || 'No asignado'}
                     </div>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Fecha de incorporación</Label>
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                    <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de incorporación</Label>
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                       {user?.startDate ? new Date(user.startDate).toLocaleDateString('es-ES') : 'No disponible'}
                     </div>
                   </div>
@@ -1392,7 +1392,7 @@ const AccountManagement = () => {
               {/* Personal Information (Editable) */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Información personal</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Información personal</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -1414,7 +1414,7 @@ const AccountManagement = () => {
                         placeholder="tu@email.com"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {profileData.personalEmail || 'No especificado'}
                       </div>
                     )}
@@ -1430,7 +1430,7 @@ const AccountManagement = () => {
                         placeholder="+34 600 000 000"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {profileData.personalPhone || 'No especificado'}
                       </div>
                     )}
@@ -1447,7 +1447,7 @@ const AccountManagement = () => {
                         rows={3}
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 min-h-[80px]">
                         {profileData.postalAddress || 'No especificada'}
                       </div>
                     )}
@@ -1463,7 +1463,7 @@ const AccountManagement = () => {
                         placeholder="Nombre completo"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {profileData.emergencyContactName || 'No especificado'}
                       </div>
                     )}
@@ -1479,7 +1479,7 @@ const AccountManagement = () => {
                         placeholder="+34 600 000 000"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {profileData.emergencyContactPhone || 'No especificado'}
                       </div>
                     )}
@@ -1675,38 +1675,38 @@ const AccountManagement = () => {
                           </p>
                           
                           {/* Logo recommendations */}
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                             <div className="flex items-start space-x-2 mb-2">
-                              <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                               <div className="text-sm">
-                                <p className="font-medium text-blue-900 mb-2">Para que tu logo se vea perfecto en la app, recomendamos usar:</p>
+                                <p className="font-medium text-blue-900 dark:text-blue-200 mb-2">Para que tu logo se vea perfecto en la app, recomendamos usar:</p>
                                 <div className="space-y-2">
                                   <div>
-                                    <span className="font-medium text-blue-800">• Logotipo:</span>
-                                    <span className="text-blue-700"> Solo letras, sin imágenes.</span>
+                                    <span className="font-medium text-blue-800 dark:text-blue-300">• Logotipo:</span>
+                                    <span className="text-blue-700 dark:text-blue-400"> Solo letras, sin imágenes.</span>
                                   </div>
                                   <div>
-                                    <span className="font-medium text-blue-800">• Imagotipo:</span>
-                                    <span className="text-blue-700"> Letras junto con un icono, todo en una misma línea.</span>
+                                    <span className="font-medium text-blue-800 dark:text-blue-300">• Imagotipo:</span>
+                                    <span className="text-blue-700 dark:text-blue-400"> Letras junto con un icono, todo en una misma línea.</span>
                                   </div>
                                 </div>
-                                <div className="mt-3 p-2 bg-white rounded border flex items-center space-x-2">
+                                <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-border flex items-center space-x-2">
                                   <img 
                                     src={oficazLogo} 
                                     alt="Ejemplo de imagotipo" 
                                     className="h-5 w-auto object-contain"
                                   />
-                                  <span className="text-xs text-gray-600">Ejemplo: imagotipo de Oficaz</span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">Ejemplo: imagotipo de Oficaz</span>
                                 </div>
-                                <div className="mt-3 p-2 bg-blue-100 rounded border">
-                                  <p className="text-xs font-medium text-blue-800 mb-1">📏 Tamaño recomendado:</p>
-                                  <p className="text-xs text-blue-700">
+                                <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-800/30 rounded border border-border">
+                                  <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">📏 Tamaño recomendado:</p>
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
                                     • <strong>Ancho:</strong> 200-400 píxeles<br/>
                                     • <strong>Alto:</strong> 60-120 píxeles<br/>
                                     • <strong>Formato:</strong> PNG o SVG para mejor calidad
                                   </p>
                                 </div>
-                                <p className="text-xs text-blue-600 mt-2">
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                                   Esto asegura que tu logo se vea nítido, se cargue rápido y se ajuste perfectamente en toda la aplicación.
                                 </p>
                               </div>
@@ -1734,9 +1734,9 @@ const AccountManagement = () => {
                     {/* Restriction message for Basic plan users without logo */}
                     {!hasAccess('logoUpload') && isEditingCompany && !companyData.logoUrl && (
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <AlertCircle className="h-4 w-4 text-amber-600" />
-                          <p className="text-sm text-amber-700">
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                          <p className="text-sm text-amber-700 dark:text-amber-300">
                             La subida de logos requiere el plan Pro o superior.
                           </p>
                         </div>
@@ -1745,9 +1745,9 @@ const AccountManagement = () => {
                     {/* Info for Basic plan users with existing logo */}
                     {!hasAccess('logoUpload') && isEditingCompany && companyData.logoUrl && (
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <Info className="h-4 w-4 text-blue-600" />
-                          <p className="text-sm text-blue-700">
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+                          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
                             Tu logo actual se mantiene. Para cambiar o subir un nuevo logo, actualiza al plan Pro.
                           </p>
                         </div>
@@ -1767,7 +1767,7 @@ const AccountManagement = () => {
                         placeholder="Mi Empresa S.L."
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 font-medium">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 font-medium">
                         {companyData.name || 'No especificado'}
                       </div>
                     )}
@@ -1775,10 +1775,10 @@ const AccountManagement = () => {
                   
                   <div>
                     <Label htmlFor="companyAlias">Alias de la empresa</Label>
-                    <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                    <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                       {companyData.companyAlias || 'No especificado'}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       Usado en las URLs de la aplicación (no se puede modificar)
                     </p>
                   </div>
@@ -1793,7 +1793,7 @@ const AccountManagement = () => {
                         placeholder="B12345678"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {companyData.cif || 'No especificado'}
                       </div>
                     )}
@@ -1809,7 +1809,7 @@ const AccountManagement = () => {
                         placeholder="Juan Pérez"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                      <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                         {companyData.contactName || 'No especificado'}
                       </div>
                     )}
@@ -2173,7 +2173,7 @@ const AccountManagement = () => {
                             placeholder="Director General, Administrador, etc."
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                             {profileData.position || 'No especificado'}
                           </div>
                         )}
@@ -2183,7 +2183,7 @@ const AccountManagement = () => {
 
                   {/* Información personal */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3">Información personal</h4>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">Información personal</h4>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="adminPersonalEmail">Email personal</Label>
@@ -2195,7 +2195,7 @@ const AccountManagement = () => {
                             placeholder="tu@email.com"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                             {profileData.personalEmail || 'No especificado'}
                           </div>
                         )}
@@ -2211,7 +2211,7 @@ const AccountManagement = () => {
                             placeholder="+34 600 000 000"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                             {profileData.personalPhone || 'No especificado'}
                           </div>
                         )}
@@ -2228,7 +2228,7 @@ const AccountManagement = () => {
                             rows={3}
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900 min-h-[80px]">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100 min-h-[80px]">
                             {profileData.postalAddress || 'No especificada'}
                           </div>
                         )}
@@ -2238,7 +2238,7 @@ const AccountManagement = () => {
 
                   {/* Contacto de emergencia */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3">Contacto de emergencia</h4>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">Contacto de emergencia</h4>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="adminEmergencyContactName">Nombre del contacto</Label>
@@ -2250,7 +2250,7 @@ const AccountManagement = () => {
                             placeholder="Nombre completo"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                             {profileData.emergencyContactName || 'No especificado'}
                           </div>
                         )}
@@ -2266,7 +2266,7 @@ const AccountManagement = () => {
                             placeholder="+34 600 000 000"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-gray-50 border rounded-lg text-gray-900">
+                          <div className="mt-1 p-3 bg-gray-50 dark:bg-gray-800 border border-border rounded-lg text-gray-900 dark:text-gray-100">
                             {profileData.emergencyContactPhone || 'No especificado'}
                           </div>
                         )}
