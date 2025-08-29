@@ -1120,7 +1120,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Time labels */}
-        <div className="flex justify-between items-center text-xs text-gray-600">
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
           <div className="flex items-center space-x-1">
             <span className="font-medium">Entrada:</span>
             <span>{formatTime(clockIn)}</span>
@@ -1787,7 +1787,7 @@ export default function TimeTracking() {
 
         {/* Filters Section - Integrated between header and table */}
         {showFilters && (
-          <div className="px-6 py-4 border-b bg-gray-50 dark:bg-gray-800">
+          <div className="px-6 py-4 border-b bg-muted">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
               {/* Left side - Employee Filter */}
               <div className="flex flex-col space-y-2">
@@ -2078,13 +2078,13 @@ export default function TimeTracking() {
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Empleado</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Fecha</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100 min-w-[300px]">Jornada de Trabajo</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Total</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-900 dark:text-gray-100">Acciones</th>
+                  <th className="text-left py-3 px-4 font-medium text-foreground">Empleado</th>
+                  <th className="text-left py-3 px-4 font-medium text-foreground">Fecha</th>
+                  <th className="text-left py-3 px-4 font-medium text-foreground min-w-[300px]">Jornada de Trabajo</th>
+                  <th className="text-left py-3 px-4 font-medium text-foreground">Total</th>
+                  <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
                 </tr>
               </thead>
               <tbody>

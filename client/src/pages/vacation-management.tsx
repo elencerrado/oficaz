@@ -308,7 +308,7 @@ export default function VacationManagement() {
               
               <div 
                 data-vacation-tooltip
-                className="fixed bg-white border border-gray-200 rounded-lg shadow-xl mx-auto"
+                className="fixed bg-card border border-border rounded-lg shadow-xl mx-auto"
                 style={{ 
                   zIndex: 99999,
                   position: 'fixed',
@@ -324,11 +324,11 @@ export default function VacationManagement() {
               {/* Contenido con padding como las tarjetas de solicitudes */}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-gray-900">{fullRequest?.user?.fullName}</h3>
+                  <h3 className="font-medium text-foreground">{fullRequest?.user?.fullName}</h3>
                   {getStatusBadge(period.status)}
                 </div>
                 
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p>
                     <span className="font-medium">Fechas:</span>{" "}
                     {format(period.startDate, "dd/MM/yyyy", { locale: es })} -{" "}
@@ -764,11 +764,11 @@ export default function VacationManagement() {
                     {/* Mobile: layout vertical */}
                     <div className="md:hidden space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900">{request.user?.fullName}</h3>
+                        <h3 className="font-medium text-foreground">{request.user?.fullName}</h3>
                         {getStatusBadge(request.status)}
                       </div>
                       
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="text-sm text-muted-foreground space-y-1">
                         <p>
                           <span className="font-medium">Fechas:</span>{" "}
                           {request.startDate ? format(new Date(request.startDate), "dd/MM/yyyy", { locale: es }) : "N/A"} -{" "}

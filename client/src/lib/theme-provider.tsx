@@ -18,7 +18,6 @@ interface ThemeProviderProps {
 // Check if current route is an admin/dashboard route that should support dark mode
 const isAdminRoute = () => {
   const path = window.location.pathname;
-  console.log('🎨 Theme check - Current path:', path);
   
   const adminRoutes = [
     '/admin-dashboard',
@@ -52,13 +51,17 @@ const isAdminRoute = () => {
     '/oficaz/configuracion', // Spanish version of settings
     '/oficaz/settings',
     '/oficaz/employee-profile',
-    '/oficaz/super-admin'
+    '/oficaz/super-admin',
+    // Employee routes patterns
+    '/oficaz/inicio',
+    '/oficaz/fichajes',
+    '/oficaz/horas',
+    '/oficaz/vacaciones',
+    '/oficaz/documentos',
+    '/oficaz/mensajes'
   ];
   
-  const isAdmin = adminRoutes.some(route => path.startsWith(route));
-  console.log('🎨 Theme check - Is admin route:', isAdmin, 'Path:', path);
-  
-  return isAdmin;
+  return adminRoutes.some(route => path.startsWith(route));
 };
 
 export function ThemeProvider({ 
@@ -80,7 +83,6 @@ export function ThemeProvider({
 
       // Only apply dark mode for admin routes, force light mode for public pages
       if (!isAdminRoute()) {
-        console.log('🎨 Theme - Applying light mode (public page)');
         root.classList.add('light');
         // Force light mode styling on root
         root.style.colorScheme = 'light';
@@ -95,16 +97,12 @@ export function ThemeProvider({
         appliedTheme = systemTheme;
       }
       
-      console.log('🎨 Theme - Applying theme on admin route:', appliedTheme);
       root.classList.add(appliedTheme);
       // Set color scheme for better browser integration
       root.style.colorScheme = appliedTheme;
       
       // Force a reflow to ensure changes are applied immediately
       void root.offsetHeight;
-      
-      // Log final classes for debugging
-      console.log('🎨 Theme - Root classes after apply:', root.classList.toString());
     };
 
     applyTheme();
@@ -215,7 +213,6 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (newTheme: Theme) => {
-      console.log('🎨 Theme - Setting new theme:', newTheme);
       localStorage.setItem(storageKey, newTheme);
       setTheme(newTheme);
     },

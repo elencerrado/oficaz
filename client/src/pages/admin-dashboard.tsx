@@ -443,7 +443,7 @@ export default function AdminDashboard() {
                   <Clock className="w-3.5 h-3.5 text-amber-600" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     ⚠️ Tu suscripción terminará el {cancellationStatus?.nextPaymentDate ? 
                       new Date(cancellationStatus.nextPaymentDate).toLocaleDateString('es-ES', { 
                         year: 'numeric', 
@@ -452,7 +452,7 @@ export default function AdminDashboard() {
                       }) : 'fecha por determinar'
                     }
                   </span>
-                  <p className="text-xs text-gray-600 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Añade una tarjeta antes de esa fecha para mantener tu suscripción
                   </p>
                 </div>
@@ -548,7 +548,7 @@ export default function AdminDashboard() {
                       }
                     })()}
                   </div>
-                  <p className="text-sm text-gray-500 text-center md:text-left">
+                  <p className="text-sm text-muted-foreground text-center md:text-left">
                     Tu último fichaje: {getLastClockInTime()}
                   </p>
                 </div>

@@ -137,7 +137,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               />
             )}
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+              <h2 className="text-sm font-medium text-foreground truncate">
                 {shouldShowLogo ? company.name : (company?.name || 'Oficaz')}
               </h2>
             </div>
