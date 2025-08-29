@@ -35,6 +35,9 @@ const isAdminRoute = () => {
     '/settings',
     '/employee-profile',
     '/super-admin',
+    // Direct admin routes for company alias paths
+    '/recordatorios',
+    '/empleados',
     // Replit custom domain URLs
     '/oficaz/admin-dashboard',
     '/oficaz/employee-dashboard', 
@@ -52,6 +55,8 @@ const isAdminRoute = () => {
     '/oficaz/settings',
     '/oficaz/employee-profile',
     '/oficaz/super-admin',
+    '/oficaz/recordatorios',
+    '/oficaz/empleados',
     // Employee routes patterns
     '/oficaz/inicio',
     '/oficaz/fichajes',
@@ -61,7 +66,10 @@ const isAdminRoute = () => {
     '/oficaz/mensajes'
   ];
   
-  return adminRoutes.some(route => path.startsWith(route));
+  // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
+  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|horas|vacaciones|documentos|mensajes|configuracion)/.test(path);
+  
+  return adminRoutes.some(route => path.startsWith(route)) || hasCompanyAliasAdminRoute;
 };
 
 export function ThemeProvider({ 
