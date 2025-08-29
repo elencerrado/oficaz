@@ -232,9 +232,9 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getUsersByCompany(companyId: number): Promise<User[]> {
-    console.log(`🔍 DEBUG getUsersByCompany: Looking for users with companyId=${companyId}`);
+    // Looking for users by company
     const result = await db.select().from(schema.users).where(eq(schema.users.companyId, companyId));
-    console.log(`🔍 DEBUG getUsersByCompany: Found ${result.length} users:`, result.map(u => ({ id: u.id, name: u.fullName, role: u.role })));
+    // Found users by company
     return result;
   }
 
@@ -1410,29 +1410,29 @@ export class DrizzleStorage implements IStorage {
   async getCompanyByUserId(userId: number): Promise<any | undefined> {
     // First get the user to find their company
     const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
-    console.log('DEBUG - getCompanyByUserId user:', user);
+    // Retrieved user data
     if (!user) {
-      console.log('DEBUG - No user found for userId:', userId);
+      // User not found
       return undefined;
     }
 
     // Get the company
     const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, user.companyId));
-    console.log('DEBUG - getCompanyByUserId company:', company);
+    // Retrieved company data
     if (!company) {
-      console.log('DEBUG - No company found for companyId:', user.companyId);
+      // Company not found
       return undefined;
     }
 
     // Get the subscription
     const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, company.id));
-    console.log('DEBUG - getCompanyByUserId subscription:', subscription);
+    // Retrieved subscription data
     
     const result = {
       ...company,
       subscription: subscription || null
     };
-    console.log('DEBUG - getCompanyByUserId result:', result);
+    // Company data assembled
     
     return result;
   }

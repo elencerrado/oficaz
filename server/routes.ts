@@ -15,6 +15,7 @@ import { authenticateToken, requireRole, generateToken, AuthRequest } from './mi
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
+import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
 
@@ -32,7 +33,7 @@ console.log('Stripe Environment:', isDevelopment ? 'Development (Test)' : 'Produ
 console.log('Stripe key type:', stripeSecretKey.substring(0, 7));
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-05-28.basil',
 });
 
 // Configure multer for file uploads
@@ -1662,7 +1663,7 @@ Responde directamente a este email para contactar con la persona.
         dni: data.adminDni || 'TEMP-' + Date.now(),
         role: 'admin',
         companyId: company.id,
-        companyPhone: data.adminPhoneNumber,
+        companyPhone: data.contactPhone || '',
         startDate: new Date(),
         isActive: true,
         totalVacationDays: "30.0", // Default vacation days for admin
@@ -1995,7 +1996,7 @@ Responde directamente a este email para contactar con la persona.
   app.post('/api/auth/reset-password', async (req, res) => {
     try {
       const data = passwordResetSchema.parse(req.body);
-      console.log('Password reset attempt with token:', data.token);
+      // Password reset attempt
 
       // Find and validate reset token
       const resetToken = await db.select()
@@ -2034,7 +2035,7 @@ Responde directamente a este email para contactar con la persona.
         .set({ used: true })
         .where(eq(passwordResetTokens.id, resetToken[0].id));
 
-      console.log('Password reset successful for user:', user.id);
+      // Password reset successful
       res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
     } catch (error: any) {
       console.error('Password reset error:', error);
@@ -2118,9 +2119,9 @@ Responde directamente a este email para contactar con la persona.
   // Get company settings (work hours configuration) - MUST BE BEFORE /:alias route
   app.get('/api/settings/work-hours', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      console.log('Getting company settings for user:', req.user);
+      // Getting company settings
       const company = await storage.getCompany(req.user!.companyId);
-      console.log('Company retrieved:', company ? 'Found' : 'Not found', company);
+      // Company retrieved
       
       if (!company) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
@@ -2129,9 +2130,9 @@ Responde directamente a este email para contactar con la persona.
       const response = {
         workingHoursPerDay: company.workingHoursPerDay || 8,
         name: company.name,
-        alias: company.companyAlias || company.alias,
+        alias: company.companyAlias,
       };
-      console.log('Sending response:', response);
+      // Sending response
 
       res.json(response);
     } catch (error: any) {
@@ -3032,20 +3033,20 @@ Responde directamente a este email para contactar con la persona.
     // If no token in headers, try query parameter
     if (!token && req.query.token) {
       token = req.query.token;
-      console.log('Using token from query parameter:', token.substring(0, 20) + '...');
+      // Using token from query parameter
     } else if (token) {
-      console.log('Using token from headers:', token.substring(0, 20) + '...');
+      // Using token from headers
     }
     
     if (!token) {
-      console.log('No token found in headers or query params');
+      // No token found
       return res.status(401).json({ message: "No token provided" });
     }
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
       req.user = decoded;
-      console.log('Token successfully verified for user:', decoded.id);
+      // Token verified
       next();
     } catch (error: any) {
       console.error('Token verification failed:', error.message);
@@ -4809,7 +4810,7 @@ startxref
     res.set('Expires', '0');
     try {
       const companyId = req.user!.companyId;
-      console.log('DEBUG - Account info request for company:', companyId, 'user:', req.user!.id);
+      // Account info request
 
       // Get real company and admin data from database
       const company = await storage.getCompany(companyId);
@@ -5261,7 +5262,7 @@ startxref
     try {
       const userId = req.user!.id;
       const { plan } = req.body;
-      console.log('DEBUG - Preview plan change request:', { userId, plan });
+      // Preview plan change request
 
       if (!plan) {
         return res.status(400).json({ message: 'Plan requerido.' });
@@ -5356,10 +5357,10 @@ startxref
   // Change subscription plan
   app.patch('/api/subscription/change-plan', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      console.log('DEBUG - Change plan endpoint reached, user:', req.user);
+      // Change plan endpoint reached
       const userId = req.user!.id;
       const { plan } = req.body;
-      console.log('DEBUG - Change plan request:', { userId, plan });
+      // Change plan request
 
       if (!plan) {
         return res.status(400).json({ message: 'Plan requerido.' });
@@ -5429,6 +5430,7 @@ startxref
       // DOWNGRADE LOGIC: Retain current plan features until next billing cycle
       const currentPlan = company.subscription.plan;
       const isDowngrade = checkIsDowngrade(currentPlan, plan);
+      let responseMessage = '';
       
       if (isDowngrade) {
         // For downgrades, retain current features until next billing cycle
@@ -5491,7 +5493,7 @@ startxref
   });
 
   // Super Admin - Subscription Plans Management
-  app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.get('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const plans = await storage.getAllSubscriptionPlans();
       res.json(plans);
@@ -5501,7 +5503,7 @@ startxref
     }
   });
 
-  app.post('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.post('/api/super-admin/subscription-plans', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { name, displayName, monthlyPrice, maxUsers, features } = req.body;
       
@@ -5521,7 +5523,7 @@ startxref
     }
   });
 
-  app.patch('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.patch('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const planId = parseInt(req.params.id);
       const updates = req.body;
@@ -5543,7 +5545,7 @@ startxref
     }
   });
 
-  app.delete('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.delete('/api/super-admin/subscription-plans/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const planId = parseInt(req.params.id);
       const success = await storage.deleteSubscriptionPlan(planId);
@@ -5560,7 +5562,7 @@ startxref
   });
 
   // Features endpoints
-  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.get('/api/super-admin/features', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const features = await storage.getAllFeatures();
       res.json(features);
@@ -5570,7 +5572,7 @@ startxref
     }
   });
 
-  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.patch('/api/super-admin/features/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const featureId = parseInt(req.params.id);
       const updates = req.body;
@@ -5591,7 +5593,7 @@ startxref
 
 
   // Super admin route to get individual company details
-  app.get('/api/super-admin/companies/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.get('/api/super-admin/companies/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const companyId = parseInt(id);
@@ -5643,7 +5645,7 @@ startxref
   });
 
   // Super admin route to update company subscription
-  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.patch('/api/super-admin/companies/:id/subscription', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const companyId = parseInt(id);
@@ -5708,7 +5710,7 @@ startxref
   });
 
   // Super Admin - Registration Settings Management
-  app.get('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.get('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const settings = await storage.getRegistrationSettings();
       res.json(settings);
@@ -5718,7 +5720,7 @@ startxref
     }
   });
 
-  app.patch('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.patch('/api/super-admin/registration-settings', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { publicRegistrationEnabled } = req.body;
       const settings = await storage.updateRegistrationSettings({
@@ -5733,7 +5735,7 @@ startxref
   });
 
   // Super Admin - Invitation Links Management  
-  app.post('/api/super-admin/invitations', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.post('/api/super-admin/invitations', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const { email, inviterName, companyName } = req.body;
       
@@ -5901,7 +5903,7 @@ startxref
     }
   });
 
-  app.get('/api/super-admin/invitations', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.get('/api/super-admin/invitations', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const invitations = await storage.getAllInvitationLinks();
       res.json(invitations);
@@ -5911,7 +5913,7 @@ startxref
     }
   });
 
-  app.delete('/api/super-admin/invitations/:id', authenticateSuperAdmin, async (req: SuperAdminRequest, res) => {
+  app.delete('/api/super-admin/invitations/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
       const invitationId = parseInt(req.params.id);
       const success = await storage.deleteInvitationLink(invitationId);
@@ -6744,6 +6746,24 @@ startxref
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });
+
+  // Verify super admin token middleware
+  const verifySuperAdminToken = (req: any, res: any, next: any) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ message: 'Token requerido' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+      if (decoded.role !== 'super_admin' || decoded.type !== 'super_admin_access') {
+        return res.status(403).json({ message: 'Acceso no autorizado' });
+      }
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Token inválido' });
+    }
+  };
 
   // Get companies pending deletion for SuperAdmin dashboard
   app.get('/api/superadmin/companies/pending-deletion', verifySuperAdminToken, async (req, res) => {
