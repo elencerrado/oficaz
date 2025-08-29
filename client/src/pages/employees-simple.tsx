@@ -350,7 +350,7 @@ export default function EmployeesSimple() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-background space-y-6">
+    <div className="px-6 py-4 min-h-screen bg-background space-y-6" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Gestión de Empleados</h1>
