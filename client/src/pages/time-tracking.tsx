@@ -85,32 +85,34 @@ export default function TimeTracking() {
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
-  // Optimize queries for first load - use default query with pagination
+  // Ultra-optimized query - load minimal data initially
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['/api/work-sessions/company?limit=50'], // Load only 50 most recent sessions initially
+    queryKey: ['/api/work-sessions/company?limit=30'], // Load only 30 most recent sessions
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 2 * 60 * 1000, // 2 minutes for initial cache
-    gcTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
-    retryDelay: 1000,
-    refetchInterval: false, // Disable auto-refresh on initial load for speed
+    staleTime: 5 * 60 * 1000, // 5 minutes aggressive cache
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    retry: 1, // Reduce retries for speed
+    retryDelay: 500,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 
-  // Employees query with aggressive caching since it changes rarely  
+  // Employees with ultra-aggressive caching 
   const { data: employees = [] } = useQuery({
     queryKey: ['/api/employees'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 15 * 60 * 1000, // 15 minutes cache
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000, // 30 minutes cache
+    gcTime: 2 * 60 * 60 * 1000, // 2 hours
+    retry: 1,
   });
 
-  // Company settings with very aggressive caching since it rarely changes
+  // Company settings with maximum caching
   const { data: companySettings = {} } = useQuery({
     queryKey: ['/api/settings/work-hours'],
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 30 * 60 * 1000, // 30 minutes cache
-    gcTime: 60 * 60 * 1000, // 1 hour
+    staleTime: 60 * 60 * 1000, // 1 hour cache
+    gcTime: 4 * 60 * 60 * 1000, // 4 hours
+    retry: 1,
   });
 
   // Helper function to check if a specific session is incomplete

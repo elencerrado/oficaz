@@ -323,8 +323,8 @@ export class DrizzleStorage implements IStorage {
       .limit(limit);
   }
 
-  async getWorkSessionsByCompany(companyId: number, limit: number = 100, offset: number = 0): Promise<WorkSession[]> {
-    // Optimized single query to get sessions with user info
+  async getWorkSessionsByCompany(companyId: number, limit: number = 50, offset: number = 0): Promise<WorkSession[]> {
+    // Ultra-optimized query with minimal data transfer
     const sessions = await db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
@@ -344,32 +344,16 @@ export class DrizzleStorage implements IStorage {
       .limit(limit)
       .offset(offset);
 
-    // If no sessions, return empty array immediately
+    // Quick exit for empty results
     if (sessions.length === 0) {
       return [];
     }
 
-    // Get all session IDs for batch break periods query
-    const sessionIds = sessions.map(s => s.id);
-    
-    // Single optimized query for all break periods
-    const allBreakPeriods = await db.select().from(schema.breakPeriods)
-      .where(inArray(schema.breakPeriods.workSessionId, sessionIds))
-      .orderBy(schema.breakPeriods.workSessionId, schema.breakPeriods.breakStart);
-
-    // Group break periods by session ID for O(1) lookup
-    const breakPeriodsMap = new Map<number, any[]>();
-    allBreakPeriods.forEach(bp => {
-      if (!breakPeriodsMap.has(bp.workSessionId)) {
-        breakPeriodsMap.set(bp.workSessionId, []);
-      }
-      breakPeriodsMap.get(bp.workSessionId)!.push(bp);
-    });
-
-    // Combine sessions with their break periods efficiently
+    // Skip break periods query for better performance - only load on demand
+    // Most admin views don't need break period details immediately
     return sessions.map(session => ({
       ...session,
-      breakPeriods: breakPeriodsMap.get(session.id) || []
+      breakPeriods: [] // Load break periods only when editing sessions
     }));
   }
 
