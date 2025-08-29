@@ -192,24 +192,40 @@ export function TrialManager() {
 
   // If trial is active, show discrete notification about adding payment method
   return (
-    <div className={`rounded-lg border p-3 sm:p-4 mb-4 sm:mb-6 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
+    <div className={`rounded-lg border p-3 sm:p-4 mb-4 sm:mb-6 transition-colors ${
+      trialStatus.daysRemaining <= 3 
+        ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800/50" 
+        : "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800/50"
+    }`}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-          <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${trialStatus.daysRemaining <= 3 ? "bg-amber-100" : "bg-blue-100"}`}>
-            <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${trialStatus.daysRemaining <= 3 ? "text-amber-600" : "text-blue-600"}`} />
+          <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 transition-colors ${
+            trialStatus.daysRemaining <= 3 
+              ? "bg-amber-100 dark:bg-amber-900/50" 
+              : "bg-blue-100 dark:bg-blue-900/50"
+          }`}>
+            <Clock className={`w-3 h-3 sm:w-4 sm:h-4 ${
+              trialStatus.daysRemaining <= 3 
+                ? "text-amber-600 dark:text-amber-400" 
+                : "text-blue-600 dark:text-blue-400"
+            }`} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-1 sm:space-x-2 flex-wrap">
-              <span className="text-xs sm:text-sm font-medium text-gray-900">
+              <span className="text-xs sm:text-sm font-medium text-foreground">
                 <span className="hidden sm:inline">Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
                 <span className="sm:hidden">Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}</span>
               </span>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className={`text-xs border-current ${
+                trialStatus.daysRemaining <= 3
+                  ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30"
+                  : "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30"
+              }`}>
                 <span className="hidden sm:inline">{trialStatus.daysRemaining} días restantes</span>
                 <span className="sm:hidden">{trialStatus.daysRemaining}d</span>
               </Badge>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">
+            <p className="text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">
               {trialStatus.daysRemaining <= 3 ? (
                 <>
                   <span className="hidden sm:inline">Período de prueba termina pronto. Añade un método de pago para continuar</span>
@@ -230,7 +246,11 @@ export function TrialManager() {
             <Button 
               variant="outline"
               size="sm"
-              className={`text-xs flex-shrink-0 p-2 border ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100 border-amber-300" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100 border-blue-300"}`}
+              className={`text-xs flex-shrink-0 p-2 transition-colors ${
+                trialStatus.daysRemaining <= 3 
+                  ? "text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30 border-amber-300 dark:border-amber-700" 
+                  : "text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-300 dark:border-blue-700"
+              }`}
             >
               <Plus className="w-3 h-3 mr-1" />
               <span className="inline sm:inline">Añadir tarjeta</span>

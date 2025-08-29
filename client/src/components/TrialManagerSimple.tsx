@@ -87,22 +87,38 @@ export function TrialManagerSimple() {
 
   // For active trial, show trial notification
   return (
-    <div className={`rounded-lg border p-4 ${trialStatus.daysRemaining <= 3 ? "bg-amber-50/50 border-amber-200/50" : "bg-blue-50/30 border-blue-200/50"}`}>
+    <div className={`rounded-lg border p-4 transition-colors ${
+      trialStatus.daysRemaining <= 3 
+        ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800/50" 
+        : "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800/50"
+    }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className={`p-2 rounded-full ${trialStatus.daysRemaining <= 3 ? "bg-amber-100" : "bg-blue-100"}`}>
-            <Clock className={`w-4 h-4 ${trialStatus.daysRemaining <= 3 ? "text-amber-600" : "text-blue-600"}`} />
+          <div className={`p-2 rounded-full transition-colors ${
+            trialStatus.daysRemaining <= 3 
+              ? "bg-amber-100 dark:bg-amber-900/50" 
+              : "bg-blue-100 dark:bg-blue-900/50"
+          }`}>
+            <Clock className={`w-4 h-4 ${
+              trialStatus.daysRemaining <= 3 
+                ? "text-amber-600 dark:text-amber-400" 
+                : "text-blue-600 dark:text-blue-400"
+            }`} />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-foreground">
                 Período de Prueba {trialStatus.plan.charAt(0).toUpperCase() + trialStatus.plan.slice(1)}
               </span>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className={`text-xs border-current ${
+                trialStatus.daysRemaining <= 3
+                  ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30"
+                  : "text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30"
+              }`}>
                 {trialStatus.daysRemaining} días restantes
               </Badge>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {trialStatus.hasPaymentMethod ? (
                 `Período de prueba activo. Se cobrará el ${new Date(trialStatus.trialEndDate).toLocaleDateString('es-ES')} • €${getPlanPrice(trialStatus.plan)}/mes`
               ) : trialStatus.daysRemaining <= 3 ? (
@@ -119,7 +135,11 @@ export function TrialManagerSimple() {
             <Button 
               variant="ghost"
               size="sm"
-              className={`text-xs ${trialStatus.daysRemaining <= 3 ? "text-amber-700 hover:text-amber-800 hover:bg-amber-100" : "text-blue-700 hover:text-blue-800 hover:bg-blue-100"}`}
+              className={`text-xs transition-colors ${
+                trialStatus.daysRemaining <= 3 
+                  ? "text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30" 
+                  : "text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+              }`}
             >
               <Plus className="w-3 h-3 mr-1" />
               Añadir pago

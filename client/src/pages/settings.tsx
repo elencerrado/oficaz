@@ -195,7 +195,7 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border space-y-3">
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 space-y-3 transition-colors">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <img 
@@ -205,12 +205,16 @@ const AccountManagement = () => {
                   style={{ filter: `hue-rotate(${subscription?.plan === 'basic' ? '120deg' : subscription?.plan === 'pro' ? '40deg' : subscription?.plan === 'master' ? '340deg' : '0deg'})` }}
                 />
                 <div>
-                  <p className="font-semibold text-gray-900">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
+                  <p className="font-semibold text-foreground">Plan {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <Badge variant="secondary" className={`transition-colors ${
+                  trialStatus?.isTrialActive 
+                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200" 
+                    : "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200"
+                }`}>
                   {trialStatus?.isTrialActive ? 'PRUEBA' : 'ACTIVO'}
                 </Badge>
               </div>
@@ -223,15 +227,15 @@ const AccountManagement = () => {
                   // Show payment info when payment methods exist
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Próximo cobro:</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Próximo cobro:</span>
+                      <span className="text-sm font-medium text-foreground">
                         {formatDate(subscription.nextPaymentDate)}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <CreditCard className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm font-semibold text-blue-600">
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                         {getPlanPrice()}/mes
                       </span>
                     </div>
