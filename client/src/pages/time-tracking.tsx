@@ -85,9 +85,10 @@ export default function TimeTracking() {
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
-  // Optimize queries for first load - sessions with higher staleTime for initial load
+  // Optimize queries for first load - limit initial data for performance
   const { data: sessions = [], isLoading } = useQuery({
-    queryKey: ['/api/work-sessions/company'],
+    queryKey: ['/api/work-sessions/company', { limit: 50 }], // Load only 50 most recent sessions initially
+    queryFn: () => fetch('/api/work-sessions/company?limit=50').then(res => res.json()),
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 2 * 60 * 1000, // 2 minutes for initial cache
     gcTime: 5 * 60 * 1000, // 5 minutes

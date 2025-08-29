@@ -323,7 +323,8 @@ export class DrizzleStorage implements IStorage {
       .limit(limit);
   }
 
-  async getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]> {
+  async getWorkSessionsByCompany(companyId: number, limit: number = 100, offset: number = 0): Promise<WorkSession[]> {
+    // Optimized single query to get sessions with user info
     const sessions = await db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
@@ -339,21 +340,37 @@ export class DrizzleStorage implements IStorage {
     }).from(schema.workSessions)
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
-      .orderBy(desc(schema.workSessions.createdAt));
+      .orderBy(desc(schema.workSessions.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    // Fetch break periods for each session
-    const sessionsWithBreaks = await Promise.all(sessions.map(async (session) => {
-      const breakPeriods = await db.select().from(schema.breakPeriods)
-        .where(eq(schema.breakPeriods.workSessionId, session.id))
-        .orderBy(schema.breakPeriods.breakStart);
-      
-      return {
-        ...session,
-        breakPeriods
-      };
+    // If no sessions, return empty array immediately
+    if (sessions.length === 0) {
+      return [];
+    }
+
+    // Get all session IDs for batch break periods query
+    const sessionIds = sessions.map(s => s.id);
+    
+    // Single optimized query for all break periods
+    const allBreakPeriods = await db.select().from(schema.breakPeriods)
+      .where(inArray(schema.breakPeriods.workSessionId, sessionIds))
+      .orderBy(schema.breakPeriods.workSessionId, schema.breakPeriods.breakStart);
+
+    // Group break periods by session ID for O(1) lookup
+    const breakPeriodsMap = new Map<number, any[]>();
+    allBreakPeriods.forEach(bp => {
+      if (!breakPeriodsMap.has(bp.workSessionId)) {
+        breakPeriodsMap.set(bp.workSessionId, []);
+      }
+      breakPeriodsMap.get(bp.workSessionId)!.push(bp);
+    });
+
+    // Combine sessions with their break periods efficiently
+    return sessions.map(session => ({
+      ...session,
+      breakPeriods: breakPeriodsMap.get(session.id) || []
     }));
-
-    return sessionsWithBreaks;
   }
 
   // Break Periods
