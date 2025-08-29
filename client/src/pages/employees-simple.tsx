@@ -350,11 +350,11 @@ export default function EmployeesSimple() {
   };
 
   return (
-    <div className="px-6 py-4 space-y-6">
+    <div className="px-6 py-4 min-h-screen bg-background space-y-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Empleados</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">
+        <h1 className="text-2xl font-semibold text-foreground">Gestión de Empleados</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Administra usuarios y gestiona información de empleados
         </p>
       </div>
@@ -362,7 +362,7 @@ export default function EmployeesSimple() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">{/* Moved button section below header */}
         {/* Desktop: Button and count side by side */}
         <div className="hidden sm:flex items-center gap-3">
-          <span className="text-sm text-gray-500">{totalUsers} usuarios</span>
+          <span className="text-sm text-muted-foreground">{totalUsers} usuarios</span>
           <Button onClick={async () => {
             // CRITICAL: Force fresh subscription data
             queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
@@ -398,7 +398,7 @@ export default function EmployeesSimple() {
         
         {/* Mobile: Button and count in same line, compact */}
         <div className="flex sm:hidden items-center justify-between">
-          <span className="text-xs text-gray-500">{totalUsers} usuarios</span>
+          <span className="text-xs text-muted-foreground">{totalUsers} usuarios</span>
           <Button onClick={async () => {
             // CRITICAL: Force fresh subscription data
             queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
@@ -496,7 +496,7 @@ export default function EmployeesSimple() {
 
                   {/* Swipeable Content */}
                   <div 
-                    className="employee-card bg-white border rounded-lg relative z-10 p-4"
+                    className="employee-card bg-card border rounded-lg relative z-10 p-4"
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
                       e.currentTarget.setAttribute('data-start-x', touch.clientX.toString());
@@ -618,8 +618,8 @@ export default function EmployeesSimple() {
                         </Badge>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{employee.fullName}</p>
-                        <p className="text-sm text-gray-500">{employee.position || 'Sin cargo especificado'}</p>
+                        <p className="font-medium text-foreground">{employee.fullName}</p>
+                        <p className="text-sm text-muted-foreground">{employee.position || 'Sin cargo especificado'}</p>
                         {(employee.companyEmail || employee.personalEmail) && (
                           <a 
                             href={`mailto:${employee.companyEmail || employee.personalEmail}`}
@@ -647,15 +647,15 @@ export default function EmployeesSimple() {
 
                 {/* Desktop View */}
                 <div 
-                  className="hidden sm:block bg-white border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                  className="hidden sm:block bg-card border rounded-lg p-4 hover:bg-muted cursor-pointer"
                   onDoubleClick={() => handleEditEmployee(employee)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
                       <div>
-                        <p className="font-medium text-gray-900">{employee.fullName}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <p className="font-medium text-foreground">{employee.fullName}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{employee.position || 'Sin cargo especificado'}</span>
                           {(employee.companyEmail || employee.personalEmail) && (
                             <a 
@@ -775,7 +775,7 @@ export default function EmployeesSimple() {
                       </Select>
                     ) : (
                       <div className="mt-1">
-                        <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-md">
+                        <div className="flex items-center justify-between p-3 bg-muted border border-border rounded-md">
                           <span className="text-sm font-medium text-gray-700">Empleado</span>
                           <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                             Por defecto
@@ -1118,7 +1118,7 @@ export default function EmployeesSimple() {
                         <Label className="text-sm font-medium text-gray-700 mb-2 block">
                           Ajuste Manual
                         </Label>
-                        <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="bg-muted p-3 rounded-lg">
                           <div className="flex items-center justify-center gap-2">
                             <Button
                               type="button"
@@ -1286,7 +1286,7 @@ export default function EmployeesSimple() {
           </DialogHeader>
           
           <div className="py-4">
-            <div className="rounded-lg bg-gray-50 p-4">
+            <div className="rounded-lg bg-muted p-4">
               <p className="text-sm text-gray-700 whitespace-pre-line">
                 {limitMessage}
               </p>

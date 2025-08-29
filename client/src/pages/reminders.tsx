@@ -561,7 +561,7 @@ export default function Reminders() {
                     <Label htmlFor="showBanner" className="text-sm font-medium">
                       Mostrar aviso
                     </Label>
-                    <div className="text-xs text-gray-500 ml-2">
+                    <div className="text-xs text-muted-foreground ml-2">
                       (Solo si tiene fecha configurada)
                     </div>
                   </div>
@@ -654,14 +654,14 @@ export default function Reminders() {
                             employeeSearchTerm === '' || 
                             emp.fullName.toLowerCase().includes(employeeSearchTerm.toLowerCase())
                           ).length === 0 && employeeSearchTerm !== '' && (
-                          <div className="text-center py-2 text-gray-500 text-sm">
+                          <div className="text-center py-2 text-muted-foreground text-sm">
                             No se encontraron empleados
                           </div>
                         )}
                       </div>
                       
                       {reminderData.assignedUserIds.length > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {(() => {
                             const countWithoutCurrentUser = reminderData.assignedUserIds.filter(id => id !== user?.id).length;
                             return countWithoutCurrentUser > 0 ? 
@@ -737,8 +737,8 @@ export default function Reminders() {
         ) : sortedReminders.length === 0 ? (
           <div className="text-center py-12 bg-card rounded-lg shadow-sm">
             <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay recordatorios</h3>
-            <p className="text-gray-500 mb-4">
+            <h3 className="text-lg font-medium text-foreground mb-2">No hay recordatorios</h3>
+            <p className="text-muted-foreground mb-4">
               {searchTerm ? 'No se encontraron recordatorios que coincidan con tu búsqueda' : 'Crea tu primer recordatorio para empezar a organizarte'}
             </p>
             <Button onClick={() => setIsDialogOpen(true)} variant="outline">
@@ -821,8 +821,8 @@ export default function Reminders() {
                   
                   {reminder.reminderDate && (
                     <div className="flex items-center gap-1 mb-3">
-                      <Calendar className="w-3 h-3 text-gray-500" />
-                      <span className={`text-xs text-gray-500 ${
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <span className={`text-xs text-muted-foreground ${
                         isPast(new Date(reminder.reminderDate)) && !reminder.isCompleted 
                           ? 'text-red-500 font-medium' 
                           : ''
@@ -886,10 +886,10 @@ export default function Reminders() {
             </div>
             
             <div className="space-y-3 max-h-60 overflow-y-auto">
-              {employeesLoading && <p className="text-sm text-gray-500">Cargando empleados...</p>}
+              {employeesLoading && <p className="text-sm text-muted-foreground">Cargando empleados...</p>}
               {employeesError && <p className="text-sm text-red-500">Error cargando empleados: {String(employeesError)}</p>}
               {!employeesLoading && !employeesError && employees.filter(emp => emp.id !== user?.id).length === 0 && (
-                <p className="text-sm text-gray-500">No hay empleados disponibles para asignar</p>
+                <p className="text-sm text-muted-foreground">No hay empleados disponibles para asignar</p>
               )}
               {employees
                 .filter(emp => emp.id !== user?.id)
@@ -919,7 +919,7 @@ export default function Reminders() {
                   assignDialogSearchTerm === '' || 
                   emp.fullName.toLowerCase().includes(assignDialogSearchTerm.toLowerCase())
                 ).length === 0 && assignDialogSearchTerm !== '' && (
-                <div className="text-center py-2 text-gray-500 text-sm">
+                <div className="text-center py-2 text-muted-foreground text-sm">
                   No se encontraron empleados
                 </div>
               )}
