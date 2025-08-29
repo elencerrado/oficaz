@@ -32,7 +32,7 @@ export function DatePickerDay({
         <Button
           variant="outline"
           className={cn(
-            "justify-center text-center font-normal bg-white border-gray-200 hover:bg-gray-50 w-full",
+            "justify-center text-center font-normal bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 w-full",
             className
           )}
         >
@@ -141,7 +141,7 @@ export function DatePickerDayEmployee({
         <Button
           variant="outline"
           className={cn(
-            "justify-center text-center font-normal bg-white border-gray-200 hover:bg-gray-50 w-full",
+            "justify-center text-center font-normal bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 w-full",
             className
           )}
         >
@@ -160,7 +160,7 @@ export function DatePickerDayEmployee({
         <div className="flex flex-col space-y-4 p-4">
           {/* Selector de Año */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
               Año
             </label>
             <Select value={tempYear.toString()} onValueChange={(value) => setTempYear(parseInt(value))}>
@@ -179,7 +179,7 @@ export function DatePickerDayEmployee({
 
           {/* Selector de Mes */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
               Mes
             </label>
             <Select value={tempMonth.toString()} onValueChange={(value) => setTempMonth(parseInt(value))}>
@@ -198,7 +198,7 @@ export function DatePickerDayEmployee({
 
           {/* Selector de Día */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
               Día
             </label>
             <Select 
@@ -293,7 +293,7 @@ export function DatePickerPeriod({
         <Button
           variant="outline"
           className={cn(
-            "justify-center text-center font-normal bg-white border-gray-200 hover:bg-gray-50 w-full",
+            "justify-center text-center font-normal bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 w-full",
             className
           )}
         >
