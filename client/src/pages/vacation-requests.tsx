@@ -298,9 +298,8 @@ export default function VacationRequests() {
 
   return (
     <div 
-      className="min-h-screen text-white"
+      className="min-h-screen text-foreground bg-background"
       style={{
-        background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
         overscrollBehavior: 'none'
       }}
     >
@@ -310,7 +309,7 @@ export default function VacationRequests() {
           <Button
             variant="ghost"
             size="lg"
-            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="text-foreground hover:bg-muted/20 px-6 py-3 rounded-xl bg-muted/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -326,11 +325,11 @@ export default function VacationRequests() {
               className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
           ) : (
-            <div className="text-white text-sm font-medium mb-1">
+            <div className="text-foreground text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-white/70 text-xs">
+          <div className="text-muted-foreground text-xs">
             {user?.fullName}
           </div>
         </div>
@@ -338,15 +337,15 @@ export default function VacationRequests() {
 
       {/* Page Title */}
       <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Vacaciones</h1>
-        <p className="text-white/70 text-sm">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Vacaciones</h1>
+        <p className="text-muted-foreground text-sm">
           Solicita y consulta el estado de tus vacaciones
         </p>
       </div>
 
       {/* Compact Vacation Summary */}
       <div className="px-6 mb-6">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+        <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6 border border-border">
           {/* Stats grid */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
@@ -354,34 +353,33 @@ export default function VacationRequests() {
                 {totalDays}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <button className="p-1 rounded-full hover:bg-white/10 transition-colors">
-                      <HelpCircle className="w-4 h-4 text-white/40 hover:text-white/70 transition-colors" />
+                    <button className="p-1 rounded-full hover:bg-muted/20 transition-colors">
+                      <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
                     </button>
                   </DialogTrigger>
                   <DialogContent 
                     className="max-w-md border-0 p-0 bg-transparent"
-                    style={{ backgroundColor: 'rgba(50, 58, 70, 0.95)' }}
                   >
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <div className="bg-card/95 backdrop-blur-sm rounded-xl p-6 border border-border">
                       <DialogHeader className="mb-4">
-                        <DialogTitle className="text-blue-400 text-lg font-medium">
+                        <DialogTitle className="text-primary text-lg font-medium">
                           ¿Por qué tengo {totalDays} días?
                         </DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4 text-sm leading-relaxed text-white/90">
+                      <div className="space-y-4 text-sm leading-relaxed text-foreground">
                         <p>
-                          En España te corresponden <span className="font-semibold text-blue-400">{daysPerMonth} días</span> de 
+                          En España te corresponden <span className="font-semibold text-primary">{daysPerMonth} días</span> de 
                           vacaciones por cada mes trabajado desde tu fecha de incorporación.
                         </p>
                         <p>
-                          Empezaste el <span className="font-semibold text-green-400">
+                          Empezaste el <span className="font-semibold text-green-500">
                           {format(startDate, 'd MMMM yyyy', { locale: es })}</span> y has trabajado{' '}
-                          <span className="font-semibold text-green-400">{monthsWorked} meses</span>, lo que te da{' '}
-                          <span className="font-semibold text-blue-400">{calculatedBaseDays} días</span>.
+                          <span className="font-semibold text-green-500">{monthsWorked} meses</span>, lo que te da{' '}
+                          <span className="font-semibold text-primary">{calculatedBaseDays} días</span>.
                         </p>
                         {adjustment !== 0 && (
                           <p>
-                            Además te hemos ajustado <span className="font-semibold text-orange-400">
+                            Además te hemos ajustado <span className="font-semibold text-orange-500">
                             {adjustment > 0 ? '+' : ''}{adjustment} días</span> de forma manual.
                           </p>
                         )}
@@ -390,7 +388,7 @@ export default function VacationRequests() {
                   </DialogContent>
                 </Dialog>
               </div>
-              <div className="text-xs text-white/60 uppercase tracking-wider">Total</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-light text-orange-400 mb-1">{usedDays}</div>
@@ -430,14 +428,14 @@ export default function VacationRequests() {
             </div>
             
             {/* Legend */}
-            <div className="flex justify-between items-center text-xs text-white/50">
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <span>Aprobados</span>
                 </div>
               </div>
-              <span className="text-green-400/70">{availableDays} días disponibles</span>
+              <span className="text-green-500">{availableDays} días disponibles</span>
             </div>
           </div>
         </div>
@@ -456,17 +454,17 @@ export default function VacationRequests() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-semibold">
               <CalendarPlus className="mr-2 h-5 w-5" />
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-gray-800 border border-gray-600 text-white rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md mx-auto bg-card border border-border text-foreground rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader className="pb-4 pt-2">
-              <DialogTitle className="text-xl font-semibold text-center text-white">
+              <DialogTitle className="text-xl font-semibold text-center text-foreground">
                 Solicitar Vacaciones
               </DialogTitle>
-              <p className="text-sm text-gray-300 text-center">
+              <p className="text-sm text-muted-foreground text-center">
                 Tienes {availableDays} días disponibles
               </p>
               {errorMessage && (
@@ -480,19 +478,19 @@ export default function VacationRequests() {
             
             <div className="space-y-4">
               {/* Calendar */}
-              <div className="bg-gray-700 rounded-xl p-3">
+              <div className="bg-muted rounded-xl p-3">
                 <div className="flex items-center justify-between mb-3">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={goToPreviousMonth}
                     disabled={calendarDate.getMonth() <= new Date().getMonth() && calendarDate.getFullYear() <= new Date().getFullYear()}
-                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   
-                  <div className="text-sm font-medium text-white capitalize">
+                  <div className="text-sm font-medium text-foreground capitalize">
                     {format(calendarDate, 'MMMM yyyy', { locale: es })}
                   </div>
                   
@@ -500,7 +498,7 @@ export default function VacationRequests() {
                     variant="ghost"
                     size="sm"
                     onClick={goToNextMonth}
-                    className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-600"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/20"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -509,7 +507,7 @@ export default function VacationRequests() {
                 {/* Days of week header */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
                   {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day) => (
-                    <div key={day} className="text-xs text-gray-300 text-center py-2 font-medium">
+                    <div key={day} className="text-xs text-muted-foreground text-center py-2 font-medium">
                       {day}
                     </div>
                   ))}
@@ -539,7 +537,7 @@ export default function VacationRequests() {
                             ? (isStart || isEnd)
                               ? 'bg-blue-500 text-white font-semibold'
                               : 'bg-blue-500/30 text-blue-200'
-                            : 'text-gray-100 hover:bg-gray-600'
+                            : 'text-foreground hover:bg-muted-foreground/20'
                           }
                           ${isToday && !isInRange ? 'ring-1 ring-blue-400' : ''}
                         `}
@@ -577,14 +575,14 @@ export default function VacationRequests() {
               
               {/* Reason textarea */}
               <div>
-                <Label className="text-sm font-medium text-gray-300 mb-2 block">
+                <Label className="text-sm font-medium text-muted-foreground mb-2 block">
                   Motivo (opcional)
                 </Label>
                 <Textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Describe el motivo de tu solicitud..."
-                  className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 rounded-lg resize-none"
+                  className="bg-background border-border text-foreground placeholder-muted-foreground rounded-lg resize-none"
                   rows={3}
                 />
               </div>
@@ -593,14 +591,14 @@ export default function VacationRequests() {
               <div className="flex space-x-4 pt-2">
                 <Button
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl h-12"
+                  className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium py-3 rounded-xl h-12"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl h-12 disabled:opacity-50"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 rounded-xl h-12 disabled:opacity-50"
                 >
                   {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
                 </Button>
@@ -612,31 +610,29 @@ export default function VacationRequests() {
 
       {/* Requests table */}
       <div className="px-6 mb-6 flex-1">
-        <div className="bg-white/5 rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(50, 58, 70, 0.8)' }}>
+        <div className="bg-card rounded-lg overflow-hidden border border-border">
           {/* Table Header */}
-          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-white/10 py-3 px-4">
-            <div className="text-sm font-semibold text-center">Período</div>
-            <div className="text-sm font-semibold text-center">Días</div>
-            <div className="text-sm font-semibold text-center">Estado</div>
-            <div className="text-sm font-semibold text-center">Fecha</div>
+          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-muted/20 py-3 px-4">
+            <div className="text-sm font-semibold text-center text-foreground">Período</div>
+            <div className="text-sm font-semibold text-center text-foreground">Días</div>
+            <div className="text-sm font-semibold text-center text-foreground">Estado</div>
+            <div className="text-sm font-semibold text-center text-foreground">Fecha</div>
           </div>
 
           {/* Table Body - No scroll, fixed height */}
-          <div style={{ 
-            backgroundColor: 'rgba(50, 58, 70, 0.6)',
-          }}>
+          <div className="bg-card/50">
             {(requests as any[]).length > 0 ? (
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((request: any) => (
                     <div 
                       key={request.id} 
-                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] hover:bg-white/5"
+                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-border items-center min-h-[48px] hover:bg-muted/10"
                     >
-                    <div className="text-sm text-center text-white/90 flex items-center justify-center">
+                    <div className="text-sm text-center text-foreground flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
-                    <div className="text-sm text-center font-mono text-white/90 flex items-center justify-center">
+                    <div className="text-sm text-center font-mono text-foreground flex items-center justify-center">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
                     <div className="flex justify-center items-center px-2">
@@ -648,7 +644,7 @@ export default function VacationRequests() {
                                 {getStatusIcon(request.status)}
                                 <span className="hidden sm:inline text-xs">{getStatusText(request.status)}</span>
                               </Badge>
-                              <MessageCircle className="w-3 h-3 text-white/40 flex-shrink-0" />
+                              <MessageCircle className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 max-w-[80vw] p-3" side="top" sideOffset={5} align="start" avoidCollisions={true}>
@@ -670,14 +666,14 @@ export default function VacationRequests() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-sm text-center text-white/70 flex items-center justify-center">
+                    <div className="text-sm text-center text-muted-foreground flex items-center justify-center">
                       {formatDate(request.createdAt)}
                     </div>
                     </div>
                 ))
             ) : (
               <div className="flex items-center justify-center py-12">
-                <div className="text-center text-white/60">
+                <div className="text-center text-muted-foreground">
                   <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>No tienes solicitudes de vacaciones</p>
                   <p className="text-sm mt-1">Solicita tus primeras vacaciones</p>
@@ -690,8 +686,8 @@ export default function VacationRequests() {
 
       {/* Copyright at bottom */}
       <div className="text-center pb-4 mt-auto">
-        <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
-          <span className="font-semibold text-blue-400">Oficaz</span>
+        <div className="flex items-center justify-center space-x-1 text-muted-foreground text-xs">
+          <span className="font-semibold text-primary">Oficaz</span>
           <span>© {new Date().getFullYear()}</span>
         </div>
       </div>
