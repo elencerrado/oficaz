@@ -115,7 +115,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         `}
         style={{
           top: showBanner ? `${bannerHeight}px` : '0',
-          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh'
+          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
+          backgroundColor: 'hsl(var(--sidebar-background))'
         }}
       >
         {/* Fixed Company header */}
@@ -144,8 +145,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 flex flex-col">
-          <div className="flex-1 p-4">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 flex flex-col bg-sidebar">
+          <div className="flex-1 p-4 bg-sidebar">
             <div className="h-full flex flex-col justify-start space-y-1"
                  style={{ 
                    gap: 'clamp(0.3rem, 1.2vh, 0.8rem)'
