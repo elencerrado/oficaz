@@ -19,10 +19,10 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
   
   return (
     <div className={`mb-6 ${className}`}>
-      <div className="bg-gray-100 rounded-lg p-1 relative">
+      <div className="bg-muted rounded-lg p-1 relative">
         {/* Sliding indicator */}
         <div 
-          className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-all duration-300 ease-in-out"
+          className="absolute top-1 bottom-1 bg-background rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-border"
           style={{
             left: `${(activeIndex * 100) / tabs.length}%`,
             width: `${100 / tabs.length}%`,
@@ -41,8 +41,8 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
               onClick={() => onTabChange(tab.id)}
               className={`flex-1 py-3 px-2 sm:px-4 font-medium text-xs sm:text-sm transition-colors duration-200 relative z-10 flex items-center justify-center ${
                 activeTab === tab.id
-                  ? 'text-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <tab.icon className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
