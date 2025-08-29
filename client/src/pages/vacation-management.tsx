@@ -1328,7 +1328,7 @@ export default function VacationManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
               {spanishHolidays2025.map((holiday, index) => (
-                <Card key={index} className="border-green-200 bg-green-50">
+                <Card key={index} className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -1338,13 +1338,13 @@ export default function VacationManagement() {
                         </p>
                         <Badge 
                           variant="secondary" 
-                          className="mt-2 text-xs bg-green-100 text-green-800"
+                          className="mt-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                         >
                           {holiday.type === 'national' ? 'Nacional' : 
                            holiday.type === 'regional' ? 'Regional' : 'Local'}
                         </Badge>
                       </div>
-                      <MapPin className="w-4 h-4 text-green-600" />
+                      <MapPin className="w-4 h-4 text-green-600 dark:text-green-400" />
                     </div>
                   </CardContent>
                 </Card>
