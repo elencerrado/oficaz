@@ -35,6 +35,9 @@
     /* Sidebar variables */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
+    
+    /* Ensure proper color scheme support */
+    color-scheme: light;
   }
  
   .dark {
@@ -66,6 +69,9 @@
     /* Sidebar variables for dark mode */
     --sidebar-background: 224 71.4% 4.1%;
     --sidebar-foreground: 210 20% 98%;
+    
+    /* Ensure proper color scheme support */
+    color-scheme: dark;
   }
 }
 

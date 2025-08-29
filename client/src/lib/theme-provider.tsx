@@ -50,25 +50,42 @@ export function ThemeProvider({
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const applyTheme = () => {
+      const root = window.document.documentElement;
 
-    // Always remove existing theme classes first
-    root.classList.remove('light', 'dark');
+      // Always remove existing theme classes first
+      root.classList.remove('light', 'dark');
 
-    // Only apply dark mode for admin routes, force light mode for public pages
-    if (!isAdminRoute()) {
-      root.classList.add('light');
-      return;
-    }
+      // Only apply dark mode for admin routes, force light mode for public pages
+      if (!isAdminRoute()) {
+        root.classList.add('light');
+        // Force light mode styling on root
+        root.style.colorScheme = 'light';
+        return;
+      }
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-        ? 'dark' 
-        : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
+      let appliedTheme = theme;
+      if (theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+          ? 'dark' 
+          : 'light';
+        appliedTheme = systemTheme;
+      }
+      
+      root.classList.add(appliedTheme);
+      // Set color scheme for better browser integration
+      root.style.colorScheme = appliedTheme;
+      
+      // Force a reflow to ensure changes are applied immediately
+      void root.offsetHeight;
+    };
+
+    applyTheme();
+    
+    // Add a small delay to ensure theme is applied on slower devices
+    const timeoutId = setTimeout(applyTheme, 50);
+    
+    return () => clearTimeout(timeoutId);
   }, [theme]);
 
   useEffect(() => {
@@ -91,25 +108,44 @@ export function ThemeProvider({
   // Listen to route changes to re-evaluate theme application
   useEffect(() => {
     const handleLocationChange = () => {
-      const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
+      // Small delay to ensure DOM has updated with new route
+      setTimeout(() => {
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
 
-      if (!isAdminRoute()) {
-        root.classList.add('light');
-      } else {
-        if (theme === 'system') {
-          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-            ? 'dark' 
-            : 'light';
-          root.classList.add(systemTheme);
+        if (!isAdminRoute()) {
+          root.classList.add('light');
         } else {
-          root.classList.add(theme);
+          if (theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+              ? 'dark' 
+              : 'light';
+            root.classList.add(systemTheme);
+          } else {
+            root.classList.add(theme);
+          }
         }
-      }
+      }, 10); // Small delay for route to update
     };
 
+    // Enhanced route change detection for mobile compatibility
+    
     // Listen to popstate for back/forward navigation
     window.addEventListener('popstate', handleLocationChange);
+    
+    // Listen to hashchange for hash navigation
+    window.addEventListener('hashchange', handleLocationChange);
+    
+    // Custom event for route changes (in case wouter fires custom events)
+    window.addEventListener('routechange', handleLocationChange);
+    
+    // Mutation observer to detect URL changes that might not trigger events
+    const observer = new MutationObserver(() => {
+      handleLocationChange();
+    });
+    
+    // Watch for changes in the document title or other indicators of route change
+    observer.observe(document.head, { childList: true, subtree: true });
     
     // Listen to pushstate/replacestate for programmatic navigation
     const originalPushState = window.history.pushState;
@@ -117,20 +153,37 @@ export function ThemeProvider({
     
     window.history.pushState = function(...args) {
       originalPushState.apply(this, args);
-      setTimeout(handleLocationChange, 0);
+      handleLocationChange();
     };
     
     window.history.replaceState = function(...args) {
       originalReplaceState.apply(this, args);
-      setTimeout(handleLocationChange, 0);
+      handleLocationChange();
     };
+
+    // Periodic check for route changes (fallback for mobile browsers)
+    const intervalId = setInterval(() => {
+      if (window.location.pathname !== (window as any).lastPathname) {
+        (window as any).lastPathname = window.location.pathname;
+        handleLocationChange();
+      }
+    }, 500);
 
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('routechange', handleLocationChange);
+      observer.disconnect();
+      clearInterval(intervalId);
       window.history.pushState = originalPushState;
       window.history.replaceState = originalReplaceState;
     };
   }, [theme]);
+
+  // Initialize pathname tracking
+  useEffect(() => {
+    (window as any).lastPathname = window.location.pathname;
+  }, []);
 
   const value = {
     theme,
