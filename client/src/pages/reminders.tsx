@@ -486,11 +486,11 @@ export default function Reminders() {
   });
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Gestión de Recordatorios</h1>
-        <p className="text-gray-500 mt-1 text-sm sm:text-base">
+        <h1 className="text-2xl font-semibold text-foreground">Gestión de Recordatorios</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Organiza tus tareas y recordatorios para mantenerte al día.
         </p>
       </div>
@@ -735,7 +735,7 @@ export default function Reminders() {
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
           </div>
         ) : sortedReminders.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+          <div className="text-center py-12 bg-card rounded-lg shadow-sm">
             <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay recordatorios</h3>
             <p className="text-gray-500 mb-4">

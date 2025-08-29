@@ -493,23 +493,23 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-gray-50 overflow-hidden" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mensajes</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">
+          <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Comunícate con empleados y gestiona mensajes
           </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}
-          <div className="w-1/3 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col">
+          <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1 min-w-0">
                     <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
                     </p>
                   </div>
@@ -526,12 +526,12 @@ export default function Messages() {
                 
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10 pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10 pointer-events-none" />
                   <Input
                     placeholder="Buscar conversación..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50"
+                    className="input-oficaz bg-muted"
                     style={{ paddingLeft: '3rem', paddingRight: '1rem' }}
                   />
                 </div>
@@ -544,7 +544,7 @@ export default function Messages() {
                     className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
                       selectedChat === employee.id
                         ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                        : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-600'
+                        : 'bg-muted hover:bg-muted/80 border-border'
                     }`}
                     onClick={() => setSelectedChat(employee.id)}
                   >
@@ -558,12 +558,12 @@ export default function Messages() {
                       
                       <div className="flex-1 min-w-0">
                         <p className={`truncate font-medium text-sm ${
-                          selectedChat === employee.id ? 'text-white' : 'text-gray-900 dark:text-gray-100'
+                          selectedChat === employee.id ? 'text-white' : 'text-foreground'
                         }`}>
                           {employee.fullName}
                         </p>
                         <div className={`truncate text-xs ${
-                          selectedChat === employee.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
+                          selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
                         }`}>
                           {getRoleDisplay(employee)}
                         </div>
@@ -575,7 +575,7 @@ export default function Messages() {
             </div>
 
             {/* Right Column: Chat Area (2/3 width) */}
-            <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+            <div className="flex-1 bg-card rounded-lg border border-border flex flex-col overflow-hidden">
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
@@ -601,7 +601,7 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800"
+                    className="flex-1 overflow-y-auto p-4 bg-muted"
                   >
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
@@ -609,7 +609,7 @@ export default function Messages() {
                           <div key={group.date} className="space-y-4">
                             {/* Date separator */}
                             <div className="flex items-center justify-center">
-                              <div className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-3 py-1 rounded-full font-medium">
+                              <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
                                 {group.dateFormatted}
                               </div>
                             </div>
@@ -625,13 +625,13 @@ export default function Messages() {
                                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                       message.senderId === user?.id
                                         ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600 shadow-oficaz'
+                                        : 'bg-card text-foreground border border-border shadow-oficaz'
                                     }`}
                                   >
                                     <p className="text-sm">{message.content}</p>
                                     <div className="flex items-center justify-between mt-1">
                                       <p className={`text-xs ${
-                                        message.senderId === user?.id ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'
+                                        message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
                                       }`}>
                                         {format(new Date(message.createdAt), 'HH:mm')}
                                       </p>
@@ -659,7 +659,7 @@ export default function Messages() {
                           </div>
                         ))
                       ) : (
-                        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                        <div className="text-center text-muted-foreground py-8">
                           <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p>No hay mensajes aún</p>
                           <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
@@ -692,7 +692,7 @@ export default function Messages() {
                 </>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-center text-gray-500 dark:text-gray-400">
+                  <div className="text-center text-muted-foreground">
                     <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                     <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
                     <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
@@ -708,7 +708,7 @@ export default function Messages() {
             (<div className="flex-1 flex flex-col min-h-0">
               <div className="flex-shrink-0 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Conversaciones</h2>
+                  <h2 className="text-xl font-semibold text-foreground">Conversaciones</h2>
                   <Button
                     variant="outline"
                     size="sm"
@@ -721,12 +721,12 @@ export default function Messages() {
                 </div>
                 
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
                   <Input
                     placeholder="Buscar conversación..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-gray-50 pr-4"
+                    className="input-oficaz bg-muted pr-4"
                     style={{ paddingLeft: '2.75rem' }}
                   />
                 </div>
@@ -736,7 +736,7 @@ export default function Messages() {
                   {filteredEmployees.map((employee) => (
                     <div
                       key={employee.id}
-                      className="p-4 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
+                      className="p-4 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted"
                       onClick={() => setSelectedChat(employee.id)}
                     >
                       <div className="flex items-center space-x-3">
@@ -747,10 +747,10 @@ export default function Messages() {
                           profilePicture={employee.profilePicture}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className="font-medium text-foreground truncate">
                             {employee.fullName}
                           </p>
-                          <div className="text-sm text-gray-500 truncate">
+                          <div className="text-sm text-muted-foreground truncate">
                             {getRoleDisplay(employee)}
                           </div>
                         </div>
@@ -763,7 +763,7 @@ export default function Messages() {
           ) : (
             /* Chat View - Full screen overlay */
             (<div 
-              className="fixed inset-0 bg-white z-[60] flex flex-col lg:hidden"
+              className="fixed inset-0 bg-background z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -771,7 +771,7 @@ export default function Messages() {
               }}
             >
               {/* Chat Header with Back Button - Fixed at top */}
-              <div className="flex items-center space-x-3 p-4 border-b border-gray-200 bg-white flex-shrink-0">
+              <div className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -787,10 +787,10 @@ export default function Messages() {
                   profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div>
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-foreground">
                     {selectedChatUser?.fullName}
                   </h3>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
@@ -798,7 +798,7 @@ export default function Messages() {
               {/* Messages - Scrollable area with bounce prevention */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 flex flex-col" 
+                className="flex-1 overflow-y-auto px-4 bg-muted flex flex-col" 
                 style={{ 
                   paddingBottom: '20px',
                   paddingTop: '8px',
@@ -815,7 +815,7 @@ export default function Messages() {
                       <div key={group.date} className="space-y-4">
                         {/* Date separator */}
                         <div className="flex items-center justify-center">
-                          <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full font-medium">
+                          <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
                             {group.dateFormatted}
                           </div>
                         </div>
@@ -831,13 +831,13 @@ export default function Messages() {
                                 className={`max-w-xs px-4 py-2 rounded-lg ${
                                   message.senderId === user?.id
                                     ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                    : 'bg-white text-gray-900 border border-gray-200 shadow-oficaz'
+                                    : 'bg-card text-foreground border border-border shadow-oficaz'
                                 }`}
                               >
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
                                   <p className={`text-xs ${
-                                    message.senderId === user?.id ? 'text-white/70' : 'text-gray-500'
+                                    message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
                                   }`}>
                                     {format(new Date(message.createdAt), 'HH:mm')}
                                   </p>
@@ -865,7 +865,7 @@ export default function Messages() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-gray-500 py-8">
+                    <div className="text-center text-muted-foreground py-8">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No hay mensajes aún</p>
                       <p className="text-sm">Envía el primer mensaje para comenzar</p>
@@ -876,7 +876,7 @@ export default function Messages() {
               </div>
               {/* Message Input - Fixed at bottom */}
               <div 
-                className="flex space-x-2 p-4 border-t border-gray-200 bg-white flex-shrink-0"
+                className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
                   paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
                 }}
@@ -954,12 +954,12 @@ export default function Messages() {
               />
               
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
                 <Input
                   placeholder="Buscar empleado..."
                   value={modalSearchTerm}
                   onChange={(e) => setModalSearchTerm(e.target.value)}
-                  className="input-oficaz bg-gray-50 pr-4"
+                  className="input-oficaz bg-muted pr-4"
                   style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
@@ -975,7 +975,7 @@ export default function Messages() {
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${
                         modalGroupMode && modalSelectedEmployees.includes(employee.id)
                           ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                          : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                          : 'bg-muted hover:bg-muted/80 border-border'
                       }`}
                       onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
                     >
@@ -983,7 +983,7 @@ export default function Messages() {
                         {modalGroupMode && (
                           <div className={`w-4 h-4 border-2 rounded ${
                             modalSelectedEmployees.includes(employee.id)
-                              ? 'bg-white border-white'
+                              ? 'bg-card border-background'
                               : 'border-gray-300'
                           } flex items-center justify-center`}>
                             {modalSelectedEmployees.includes(employee.id) && (
@@ -1001,7 +1001,7 @@ export default function Messages() {
                         
                         <div className="flex-1 min-w-0">
                           <p className={`font-medium text-sm truncate ${
-                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-gray-900'
+                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-foreground'
                           }`}>
                             {employee.fullName}
                           </p>
@@ -1018,7 +1018,7 @@ export default function Messages() {
 
               {modalGroupMode && (
                 <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
                   </span>
                   <Button

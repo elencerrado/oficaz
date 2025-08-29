@@ -659,11 +659,11 @@ export default function AdminDocuments() {
 
   return (
     <PageWrapper>
-      <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Gestión de Documentos</h1>
-          <p className="text-gray-500 mt-1 text-sm sm:text-base">
+          <h1 className="text-2xl font-semibold text-foreground">Gestión de Documentos</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Gestiona documentos de empleados y envía solicitudes
           </p>
         </div>
@@ -853,7 +853,7 @@ export default function AdminDocuments() {
                       return (
                         <div
                           key={document.id}
-                          className="flex items-center p-4 border border-border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 bg-card"
+                          className="flex items-center p-4 border border-border rounded-lg hover:bg-muted bg-card"
                         >
                           <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 mr-4">
                             <FileIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
@@ -957,7 +957,7 @@ export default function AdminDocuments() {
                           <div key={employeeId} className="border border-border rounded-lg bg-card">
                             {/* Employee Header */}
                             <div 
-                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted"
                               onClick={() => {
                                 const newExpanded = new Set(expandedFolders);
                                 if (isEmployeeExpanded) {
@@ -997,7 +997,7 @@ export default function AdminDocuments() {
                                   };
 
                                   return (
-                                    <div key={type} className="border border-border rounded-lg bg-gray-50 dark:bg-gray-800">
+                                    <div key={type} className="border border-border rounded-lg bg-muted">
                                       {/* Type Header */}
                                       <div 
                                         className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1032,7 +1032,7 @@ export default function AdminDocuments() {
                                             return (
                                               <div
                                                 key={document.id}
-                                                className="bg-white dark:bg-gray-900 border border-border rounded-lg p-3 hover:shadow-md transition-shadow"
+                                                className="bg-card border border-border rounded-lg p-3 hover:shadow-md transition-shadow"
                                               >
                                                 <div className="flex items-start justify-between mb-2">
                                                   <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
@@ -1115,7 +1115,7 @@ export default function AdminDocuments() {
           <Card>
             <CardContent className="p-6 space-y-6">
               {/* Send New Request */}
-              <div className="border rounded-lg p-4 bg-gray-50">
+              <div className="border rounded-lg p-4 bg-muted">
                 <h3 className="font-medium text-gray-900 mb-4">Enviar Nueva Solicitud</h3>
                 <div className="space-y-4">
                   {/* Document Type Selection */}
@@ -1157,7 +1157,7 @@ export default function AdminDocuments() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Empleados ({selectedEmployees.length} seleccionados)
                     </label>
-                    <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-white">
+                    <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
                       {employees.map((employee: Employee) => (
                         <div
                           key={employee.id}
@@ -1165,7 +1165,7 @@ export default function AdminDocuments() {
                           className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
                             selectedEmployees.includes(employee.id)
                               ? 'bg-blue-50 border-blue-200'
-                              : 'hover:bg-gray-50'
+                              : 'hover:bg-muted'
                           }`}
                         >
                           <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
@@ -1202,7 +1202,7 @@ export default function AdminDocuments() {
                 {(sentRequests || []).length > 0 ? (
                   <div className="space-y-3">
                     {sentRequests.map((request: any) => (
-                      <div key={request.id} className="border rounded-lg p-4 bg-white">
+                      <div key={request.id} className="border rounded-lg p-4 bg-card">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -1495,8 +1495,8 @@ export default function AdminDocuments() {
                 ¿Estás seguro de que quieres eliminar este documento?
               </p>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-medium text-gray-900">{deleteConfirm.docName}</p>
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="font-medium text-foreground">{deleteConfirm.docName}</p>
                 <p className="text-sm text-red-600 mt-1">
                   ⚠️ Esta acción no se puede deshacer. El archivo se eliminará permanentemente del sistema.
                 </p>
@@ -1538,8 +1538,8 @@ export default function AdminDocuments() {
                 ¿Estás seguro de que quieres eliminar permanentemente esta solicitud?
               </p>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-medium text-gray-900">Solicitud de: {deleteRequestConfirm.documentType}</p>
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="font-medium text-foreground">Solicitud de: {deleteRequestConfirm.documentType}</p>
                 <p className="text-sm text-red-600 mt-1">
                   ⚠️ Esta acción no se puede deshacer. La solicitud se eliminará permanentemente del historial.
                 </p>
