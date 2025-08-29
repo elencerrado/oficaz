@@ -510,15 +510,54 @@ const AccountManagement = () => {
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Pausar cuenta temporalmente
               </Button>
-              <Button 
-                variant="outline" 
-                className="justify-start border-red-200 text-red-700 hover:bg-red-50"
-                onClick={() => setIsDeleteModalOpen(true)}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar cuenta permanentemente
-              </Button>
+              
+              {/* Show different buttons based on deletion status */}
+              {cancellationStatus?.scheduledForDeletion ? (
+                <Button 
+                  variant="outline" 
+                  className="justify-start border-green-200 text-green-700 hover:bg-green-50"
+                  onClick={handleCancelDeletion}
+                  disabled={cancelDeletionMutation.isPending}
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {cancelDeletionMutation.isPending ? 'Cancelando...' : 'Cancelar eliminación programada'}
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  className="justify-start border-red-200 text-red-700 hover:bg-red-50"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar cuenta permanentemente
+                </Button>
+              )}
             </div>
+
+            {/* Show deletion warning if scheduled */}
+            {cancellationStatus?.scheduledForDeletion && cancellationStatus?.deletionWillOccurAt && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  <div className="text-sm text-red-700">
+                    <p className="font-semibold mb-1">⚠️ Cuenta programada para eliminación</p>
+                    <p className="mb-2">
+                      Tu cuenta será eliminada permanentemente el{' '}
+                      <strong>
+                        {new Date(cancellationStatus.deletionWillOccurAt).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </strong>
+                    </p>
+                    <p className="text-xs">
+                      Todos los datos serán eliminados permanentemente. Puedes cancelar esta acción usando el botón de arriba.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1183,11 +1222,11 @@ const AccountManagement = () => {
     },
   });
 
-  // Permanent account deletion
+  // Schedule account deletion - 30 day grace period
   const deleteAccountMutation = useMutation({
     mutationFn: async (confirmationText: string) => {
-      const response = await fetch('/api/account/delete-permanently', {
-        method: 'DELETE',
+      const response = await fetch('/api/account/schedule-deletion', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
@@ -1197,29 +1236,60 @@ const AccountManagement = () => {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al eliminar la cuenta');
+        throw new Error(errorData.error || 'Error al programar la eliminación de la cuenta');
       }
       
       return response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "Cuenta eliminada",
-        description: data.message,
+        title: "Cuenta programada para eliminación",
+        description: "Tu cuenta será eliminada en 30 días. Puedes cancelar esta acción desde configuración.",
+        variant: "destructive",
       });
       
-      // Clear all auth data and redirect to landing
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // Force page reload to landing
+      // Refresh page to show new status
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.reload();
       }, 2000);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error al eliminar cuenta",
+        title: "Error al programar eliminación",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Cancel scheduled deletion
+  const cancelDeletionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/account/cancel-deletion', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al cancelar la eliminación');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Eliminación cancelada",
+        description: "La eliminación de tu cuenta ha sido cancelada exitosamente.",
+      });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cancelar eliminación",
         description: error.message,
         variant: "destructive",
       });
@@ -1238,6 +1308,10 @@ const AccountManagement = () => {
     
     setIsDeleting(true);
     deleteAccountMutation.mutate(confirmationText);
+  };
+
+  const handleCancelDeletion = () => {
+    cancelDeletionMutation.mutate();
   };
 
   const handleChangePlan = () => {

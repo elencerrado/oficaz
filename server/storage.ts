@@ -1755,6 +1755,91 @@ export class DrizzleStorage implements IStorage {
       console.error('Error checking incomplete session notifications:', error);
     }
   }
+
+  // ⚠️ PROTECTED - DO NOT MODIFY - 30-day deletion system
+  async scheduleCompanyDeletion(companyId: number): Promise<boolean> {
+    try {
+      const deletionDate = new Date();
+      const deletionWillOccur = new Date();
+      deletionWillOccur.setDate(deletionWillOccur.getDate() + 30); // 30 days from now
+
+      await db.update(schema.companies)
+        .set({
+          scheduledForDeletion: true,
+          deletionScheduledAt: deletionDate,
+          deletionWillOccurAt: deletionWillOccur,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companies.id, companyId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error scheduling company deletion:', error);
+      return false;
+    }
+  }
+
+  async cancelCompanyDeletion(companyId: number): Promise<boolean> {
+    try {
+      await db.update(schema.companies)
+        .set({
+          scheduledForDeletion: false,
+          deletionScheduledAt: null,
+          deletionWillOccurAt: null,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.companies.id, companyId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error canceling company deletion:', error);
+      return false;
+    }
+  }
+
+  async getCompaniesPendingDeletion(): Promise<any[]> {
+    try {
+      const companies = await db.select({
+        id: schema.companies.id,
+        name: schema.companies.name,
+        email: schema.companies.email,
+        scheduledForDeletion: schema.companies.scheduledForDeletion,
+        deletionScheduledAt: schema.companies.deletionScheduledAt,
+        deletionWillOccurAt: schema.companies.deletionWillOccurAt,
+        createdAt: schema.companies.createdAt
+      })
+      .from(schema.companies)
+      .where(
+        and(
+          eq(schema.companies.scheduledForDeletion, true),
+          eq(schema.companies.isDeleted, false)
+        )
+      );
+      
+      return companies;
+    } catch (error) {
+      console.error('Error getting companies pending deletion:', error);
+      return [];
+    }
+  }
+
+  async getCompanyDeletionStatus(companyId: number): Promise<any> {
+    try {
+      const [company] = await db.select({
+        scheduledForDeletion: schema.companies.scheduledForDeletion,
+        deletionScheduledAt: schema.companies.deletionScheduledAt,
+        deletionWillOccurAt: schema.companies.deletionWillOccurAt,
+        isDeleted: schema.companies.isDeleted
+      })
+      .from(schema.companies)
+      .where(eq(schema.companies.id, companyId));
+      
+      return company || null;
+    } catch (error) {
+      console.error('Error getting company deletion status:', error);
+      return null;
+    }
+  }
 }
 
 export const storage = new DrizzleStorage();

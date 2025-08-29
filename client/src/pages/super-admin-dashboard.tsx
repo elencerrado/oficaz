@@ -14,7 +14,8 @@ import {
   Edit,
   Check,
   X,
-  Mail
+  Mail,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,17 @@ export default function SuperAdminDashboard() {
         headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch companies');
+      return response.json();
+    },
+  });
+
+  const { data: pendingDeletions } = useQuery({
+    queryKey: ['/api/superadmin/companies/pending-deletion'],
+    queryFn: async () => {
+      const response = await fetch('/api/superadmin/companies/pending-deletion', {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch pending deletions');
       return response.json();
     },
   });
@@ -374,6 +386,44 @@ export default function SuperAdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Pending Deletions Alert */}
+        {pendingDeletions && pendingDeletions.length > 0 && (
+          <Card className="bg-red-500/20 backdrop-blur-xl border-red-500/30 mb-6">
+            <CardHeader>
+              <CardTitle className="text-red-300 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                Empresas Programadas para Eliminación ({pendingDeletions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingDeletions.map((company: any) => (
+                  <div key={company.id} className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-red-200 font-medium">{company.name}</p>
+                        <p className="text-red-300/70 text-sm">{company.email} • {company.cif}</p>
+                        <p className="text-red-300/60 text-xs mt-1">
+                          Eliminación programada: {new Date(company.deletionWillOccurAt).toLocaleDateString('es-ES')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={company.daysRemaining <= 7 ? "destructive" : "secondary"} 
+                               className={company.daysRemaining <= 7 ? "bg-red-600 text-white" : "bg-orange-600 text-white"}>
+                          {company.daysRemaining} días restantes
+                        </Badge>
+                        <p className="text-red-300/60 text-xs mt-1">
+                          Programada: {new Date(company.deletionScheduledAt).toLocaleDateString('es-ES')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 mb-6">

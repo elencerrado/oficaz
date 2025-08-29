@@ -6376,16 +6376,61 @@ startxref
         }
       }
       
+      // Get company deletion status
+      const deletionStatus = await storage.getCompanyDeletionStatus(companyId);
+      
       res.json({
         scheduledForCancellation: !hasPaymentMethods,
         hasPaymentMethods,
         nextPaymentDate: subscription.next_payment_date,
-        status: subscription.status
+        status: subscription.status,
+        // Add deletion status fields
+        scheduledForDeletion: deletionStatus?.scheduledForDeletion || false,
+        deletionScheduledAt: deletionStatus?.deletionScheduledAt || null,
+        deletionWillOccurAt: deletionStatus?.deletionWillOccurAt || null
       });
       
     } catch (error) {
       console.error('Error checking cancellation status:', error);
       res.status(500).json({ message: 'Error checking cancellation status' });
+    }
+  });
+
+  // Schedule company deletion - 30 day grace period
+  app.post('/api/account/schedule-deletion', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const success = await storage.scheduleCompanyDeletion(req.user!.companyId);
+      
+      if (!success) {
+        return res.status(500).json({ error: 'Error al programar la eliminación de la cuenta' });
+      }
+      
+      res.json({ 
+        message: 'Cuenta programada para eliminación en 30 días',
+        scheduledForDeletion: true
+      });
+    } catch (error) {
+      console.error('Error scheduling company deletion:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+    }
+  });
+
+  // Cancel scheduled company deletion
+  app.post('/api/account/cancel-deletion', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const success = await storage.cancelCompanyDeletion(req.user!.companyId);
+      
+      if (!success) {
+        return res.status(500).json({ error: 'Error al cancelar la eliminación de la cuenta' });
+      }
+      
+      res.json({ 
+        message: 'Eliminación de cuenta cancelada exitosamente',
+        scheduledForDeletion: false
+      });
+    } catch (error) {
+      console.error('Error canceling company deletion:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
     }
   });
 
@@ -6696,6 +6741,31 @@ startxref
       
     } catch (error) {
       console.error('Error verifying super admin security code:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Get companies pending deletion for SuperAdmin dashboard
+  app.get('/api/superadmin/companies/pending-deletion', verifySuperAdminToken, async (req, res) => {
+    try {
+      const companiesPendingDeletion = await storage.getCompaniesPendingDeletion();
+      
+      // Calculate days remaining for each company
+      const companiesWithDaysRemaining = companiesPendingDeletion.map(company => {
+        const now = new Date();
+        const deletionDate = new Date(company.deletionWillOccurAt);
+        const msRemaining = deletionDate.getTime() - now.getTime();
+        const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+        
+        return {
+          ...company,
+          daysRemaining: daysRemaining > 0 ? daysRemaining : 0
+        };
+      });
+      
+      res.json(companiesWithDaysRemaining);
+    } catch (error) {
+      console.error('Error getting companies pending deletion:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
     }
   });

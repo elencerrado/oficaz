@@ -162,6 +162,22 @@ Preferred communication style: Simple, everyday language.
 - **Server Integration**: Express endpoints serve files directly with optimized production headers.
 - **Content-Type Verification**: Confirmed working - robots.txt (text/plain), sitemap.xml (application/xml).
 
+### Account Deletion with 30-Day Grace Period System (⚠️ CRITICAL FEATURE)
+- **Implementation Complete**: Comprehensive account deletion system with 30-day grace period.
+- **Database Schema**: Added deletion tracking fields (scheduledForDeletion, deletionScheduledAt, deletionWillOccurAt, deletionReason).
+- **Backend Features**:
+  - POST /api/account/schedule-deletion - Programs account for deletion in 30 days
+  - POST /api/account/cancel-deletion - Cancels scheduled deletion
+  - GET /api/superadmin/companies/pending-deletion - SuperAdmin view of pending deletions
+- **Frontend Features**:
+  - Dynamic button states showing either "Cancel Account" or "Cancel Scheduled Deletion"
+  - Visual warning showing countdown to deletion date
+  - Confirmation text requirement ("ELIMINAR PERMANENTEMENTE")
+  - Real-time status updates after actions
+- **SuperAdmin Dashboard**: Shows companies pending deletion with days remaining and deletion dates.
+- **Business Rules**: 30-day grace period allows data recovery, maintains business continuity.
+- **Security**: All deletion actions require confirmation and are logged for audit.
+
 ## External Dependencies
 
 ### Frontend Dependencies

@@ -41,6 +41,13 @@ export const companies = pgTable("companies", {
   hasDemoData: boolean("has_demo_data").default(false).notNull(),
   trialDurationDays: integer("trial_duration_days").default(14).notNull(), // Días de período de prueba (por defecto 14)
   
+  // Account deletion fields - 30 day grace period
+  scheduledForDeletion: boolean("scheduled_for_deletion").default(false).notNull(),
+  deletionScheduledAt: timestamp("deletion_scheduled_at"),
+  deletionWillOccurAt: timestamp("deletion_will_occur_at"),
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  deletedAt: timestamp("deleted_at"),
+  
   updatedAt: timestamp("updated_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
