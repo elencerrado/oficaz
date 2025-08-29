@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,18 +34,30 @@ interface PaymentMethodManagerProps {
 
 // Lazy load Stripe only when needed to avoid blocking render
 let stripePromise: Promise<any> | null = null;
+let ElementsComponent: any = null;
+
 const getStripe = async () => {
   if (!stripePromise) {
     const { loadStripe } = await import('@stripe/stripe-js');
-    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_TEST!);
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST!);
   }
   return stripePromise;
+};
+
+const getElements = async () => {
+  if (!ElementsComponent) {
+    const { Elements } = await import('@stripe/react-stripe-js');
+    ElementsComponent = Elements;
+  }
+  return ElementsComponent;
 };
 
 export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan = "basic", selectedPlanPrice = 29.99 }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [stripeElements, setStripeElements] = useState<any>(null);
+  const [stripe, setStripe] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
@@ -126,9 +138,35 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     }
   };
 
+  // Load Stripe components when the modal is opened
+  useEffect(() => {
+    if (isAddingCard) {
+      const loadStripeComponents = async () => {
+        try {
+          const [stripeInstance, ElementsClass] = await Promise.all([
+            getStripe(),
+            getElements()
+          ]);
+          setStripe(stripeInstance);
+          setStripeElements(ElementsClass);
+        } catch (error) {
+          console.error('Error loading Stripe components:', error);
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar los componentes de pago.",
+            variant: "destructive",
+          });
+        }
+      };
+      loadStripeComponents();
+      if (!clientSecret) {
+        createSetupIntentMutation.mutate();
+      }
+    }
+  }, [isAddingCard]);
+
   const handleAddCard = () => {
     setClientSecret(null);
-    createSetupIntentMutation.mutate();
     setIsAddingCard(true);
   };
 
@@ -322,15 +360,16 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
               Añade una nueva tarjeta de crédito o débito de forma segura.
             </DialogDescription>
           </DialogHeader>
-          {clientSecret ? (
-            <Elements stripe={getStripe()} options={{ clientSecret }}>
+          {clientSecret && stripeElements && stripe ? (
+            React.createElement(stripeElements, 
+              { stripe, options: { clientSecret } },
               <StripePaymentForm
                 planName={selectedPlan}
                 planPrice={selectedPlanPrice}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
               />
-            </Elements>
+            )
           ) : (
             <div className="p-6 text-center">
               {createSetupIntentMutation.isPending ? (
