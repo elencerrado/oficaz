@@ -1180,7 +1180,7 @@ export default function TimeTracking() {
       const sessionElapsedMs = now.getTime() - sessionStart.getTime();
       
       return (
-        <div className="space-y-0.5">
+        <div className="space-y-0">
           {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
           <div className="relative h-4">
             {/* Descansos completados */}
@@ -1307,7 +1307,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Contenedor para horas ABAJO de las barras */}
-          <div className="relative h-4 mt-0.5">
+          <div className="relative h-4">
             {/* Entrada: punto alineado con inicio de barra + hora a la derecha */}
             <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
               <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
@@ -1340,7 +1340,7 @@ export default function TimeTracking() {
       // Only show "Incompleto" if more than maxHours have passed
       if (elapsedHours > maxHours) {
         return (
-          <div className="space-y-0.5">
+          <div className="space-y-0">
             {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
             <div className="relative h-4"></div>
             
@@ -1353,7 +1353,7 @@ export default function TimeTracking() {
             </div>
 
             {/* Time labels showing start time and "Incompleto" status */}
-            <div className="relative h-4 mt-0.5">
+            <div className="relative h-4">
               {/* Start time */}
               <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
@@ -1385,7 +1385,7 @@ export default function TimeTracking() {
     const formatTime = (date: Date) => format(date, 'HH:mm');
 
     return (
-      <div className="space-y-0.5">
+      <div className="space-y-0">
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
           {dayData.sessions.map((session: any, sessionIndex: number) => {
@@ -1483,7 +1483,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-4 mt-0.5" style={{ zIndex: 10 }}>
+        <div className="relative h-4" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
             const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
@@ -2625,7 +2625,7 @@ export default function TimeTracking() {
                 result.push(
                   <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-3 px-3 py-3 shadow-sm">
                     {/* Header with employee and date */}
-                    <div className="flex items-center justify-between mb-2 min-w-0">
+                    <div className="flex items-center justify-between mb-1 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <UserAvatar 
                           fullName={dayData.userName || 'Usuario Desconocido'} 
