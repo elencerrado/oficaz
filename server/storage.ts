@@ -284,24 +284,16 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveWorkSession(userId: number): Promise<WorkSession | undefined> {
-    // First check for active sessions from today
+    // Check for sessions that are truly active (no clock_out time)
     const [activeSession] = await db.select().from(schema.workSessions)
-      .where(and(eq(schema.workSessions.userId, userId), eq(schema.workSessions.status, 'active')));
-    
-    if (activeSession) {
-      return activeSession;
-    }
-    
-    // If no active session, check for incomplete sessions (sessions that need to be closed)
-    const [incompleteSession] = await db.select().from(schema.workSessions)
       .where(and(
         eq(schema.workSessions.userId, userId), 
-        eq(schema.workSessions.status, 'incomplete'),
         isNull(schema.workSessions.clockOut)
       ))
-      .orderBy(asc(schema.workSessions.clockIn));
+      .orderBy(desc(schema.workSessions.clockIn))
+      .limit(1);
     
-    return incompleteSession;
+    return activeSession;
   }
 
   async getWorkSession(id: number): Promise<WorkSession | undefined> {
