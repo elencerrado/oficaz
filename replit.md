@@ -30,7 +30,7 @@ Preferred communication style: Simple, everyday language.
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
 ### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
-- **Color Palette**: Standardized vivid and distinct colors for all reminders (#FFB3BA coral red, #FFDFBA peach orange, #FFFFBA bright yellow, #BAFFC9 bright green, #BAE1FF bright blue, #E6B3FF bright purple, #FFB3E6 bright pink, #F0F0F0 light gray, #FFD1A9 warm orange, #A9F5BC fresh mint, #A9D0F5 cool blue, #F5A9D0 rose pink)
+- **Color Palette**: 7 optimized harmonious colors for all reminders (#FFB3BA coral red, #FFE4B5 warm peach, #FFFFCC light yellow, #C8E6C9 soft green, #BBDEFB sky blue, #E1BEE7 lavender purple, #F8BBD9 rose pink)
 - **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
 - **Action Buttons**: Standardized "Marcar como hecho" button with icons and improved visibility
 - **Demo Data**: Uses exact same color palette as user-selectable colors for perfect consistency

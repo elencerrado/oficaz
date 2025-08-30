@@ -799,7 +799,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: tomorrow,
       assignedEmployees: [employees[0]], // Solo María García
       createdBy: admin,
-      color: '#FFFFBA', // Bright yellow
+      color: '#FFFFCC', // Light yellow
       priority: 'high' as const,
     },
     // 2. Multiple employees - assigned to 2 people
@@ -809,7 +809,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: nextWeek,
       assignedEmployees: [employees[0], employees[1]], // María y Carlos
       createdBy: admin,
-      color: '#BAFFC9', // Bright green
+      color: '#C8E6C9', // Soft green
       priority: 'medium' as const,
     },
     // 3. Individual reminder - different employee
@@ -819,7 +819,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[2]], // Solo Ana Fernández
       createdBy: admin,
-      color: '#BAE1FF', // Bright blue
+      color: '#BBDEFB', // Sky blue
       priority: 'high' as const,
     },
     // 4. Group task - assigned to 3 employees
@@ -829,7 +829,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[0], employees[1], employees[3]], // María, Carlos y David
       createdBy: admin,
-      color: '#A9F5BC', // Fresh mint
+      color: '#FFE4B5', // Warm peach
       priority: 'medium' as const,
     },
     // 5. Individual personal reminder
@@ -839,7 +839,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[3]], // Solo David López
       createdBy: admin,
-      color: '#FFDFBA', // Peach orange
+      color: '#F8BBD9', // Rose pink
       priority: 'low' as const,
     },
     // 6. Unassigned company reminder (admin only)
@@ -849,7 +849,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       assignedEmployees: [], // Sin asignar - solo admin
       createdBy: admin,
-      color: '#E6B3FF', // Bright purple
+      color: '#E1BEE7', // Lavender purple
       priority: 'medium' as const,
     }
   ];

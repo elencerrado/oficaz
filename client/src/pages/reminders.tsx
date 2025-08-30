@@ -70,18 +70,13 @@ const PRIORITY_COLORS = {
 };
 
 const REMINDER_COLORS = [
-  '#FFB3BA', // Coral red - more vivid
-  '#FFDFBA', // Peach orange - more vivid
-  '#FFFFBA', // Bright yellow - more vivid
-  '#BAFFC9', // Bright green - more vivid
-  '#BAE1FF', // Bright blue - more vivid
-  '#E6B3FF', // Bright purple - more vivid
-  '#FFB3E6', // Bright pink - more vivid
-  '#F0F0F0', // Light gray - neutral
-  '#FFD1A9', // Warm orange - distinct
-  '#A9F5BC', // Fresh mint - distinct
-  '#A9D0F5', // Cool blue - distinct
-  '#F5A9D0'  // Rose pink - distinct
+  '#FFB3BA', // Coral red
+  '#FFE4B5', // Warm peach  
+  '#FFFFCC', // Light yellow
+  '#C8E6C9', // Soft green
+  '#BBDEFB', // Sky blue
+  '#E1BEE7', // Lavender purple
+  '#F8BBD9'  // Rose pink
 ];
 
 // Component to display assigned user avatars with a limit
