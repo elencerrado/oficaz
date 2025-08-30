@@ -316,7 +316,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getWorkSessionsByCompany(companyId: number, limit: number = 50, offset: number = 0): Promise<WorkSession[]> {
-    // Ultra-optimized query with minimal data transfer
+    // First, get all work sessions for the company with user info
     const sessions = await db.select({
       id: schema.workSessions.id,
       userId: schema.workSessions.userId,
@@ -332,7 +332,7 @@ export class DrizzleStorage implements IStorage {
     }).from(schema.workSessions)
       .innerJoin(schema.users, eq(schema.workSessions.userId, schema.users.id))
       .where(eq(schema.users.companyId, companyId))
-      .orderBy(desc(schema.workSessions.createdAt))
+      .orderBy(desc(schema.workSessions.clockIn))
       .limit(limit)
       .offset(offset);
 
