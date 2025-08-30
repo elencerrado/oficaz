@@ -2396,12 +2396,16 @@ export default function TimeTracking() {
                               </Button>
                             </div>
                           ) : (
-                            // Check if session is incomplete to show force complete button or regular edit button
+                            // Check session status to show appropriate button
                             (() => {
                               const session = dayData.sessions[0];
                               const sessionIsIncomplete = isSessionIncomplete(session);
+                              const sessionIsActive = !session.clockOut; // Session is active if no clockOut time
                               
-                              if (sessionIsIncomplete) {
+                              if (sessionIsActive) {
+                                // Don't show any edit button for active sessions
+                                return null;
+                              } else if (sessionIsIncomplete) {
                                 // Show red exit button for force completing incomplete sessions
                                 return (
                                   <Button
@@ -2415,7 +2419,7 @@ export default function TimeTracking() {
                                   </Button>
                                 );
                               } else {
-                                // Show regular edit button for completed sessions
+                                // Show regular edit button for completed sessions only
                                 return (
                                   <Button
                                     size="sm"
@@ -2675,26 +2679,39 @@ export default function TimeTracking() {
                             </Button>
                           </div>
                         ) : (
-                          sessionIsIncomplete ? (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => forceCompleteSessionMutation.mutate(session.id)}
-                              className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
-                              disabled={forceCompleteSessionMutation.isPending}
-                            >
-                              <LogOut className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditSession(session)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )
+                          (() => {
+                            const sessionIsActive = !session.clockOut; // Session is active if no clockOut time
+                            
+                            if (sessionIsActive) {
+                              // Don't show any edit button for active sessions
+                              return null;
+                            } else if (sessionIsIncomplete) {
+                              // Show red exit button for force completing incomplete sessions
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => forceCompleteSessionMutation.mutate(session.id)}
+                                  className="h-8 w-8 p-0 bg-red-600 hover:bg-red-700"
+                                  disabled={forceCompleteSessionMutation.isPending}
+                                >
+                                  <LogOut className="w-4 h-4" />
+                                </Button>
+                              );
+                            } else {
+                              // Show regular edit button for completed sessions only
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditSession(session)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              );
+                            }
+                          })()
                         )}
                       </div>
                     </div>
