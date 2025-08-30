@@ -32,7 +32,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, startOfWeek, addDays, subDays, differenceInMinutes, startOfDay, endOfDay, endOfWeek, startOfMonth, endOfMonth, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -2400,13 +2400,10 @@ export default function TimeTracking() {
                             (() => {
                               const session = dayData.sessions[0];
                               const sessionIsIncomplete = isSessionIncomplete(session);
-                              const sessionIsActive = !session.clockOut; // Session is active if no clockOut time
+                              const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
                               
-                              if (sessionIsActive) {
-                                // Don't show any edit button for active sessions
-                                return null;
-                              } else if (sessionIsIncomplete) {
-                                // Show red exit button for force completing incomplete sessions
+                              if (sessionIsIncomplete) {
+                                // Show red exit button for force completing incomplete sessions (from previous days)
                                 return (
                                   <Button
                                     size="sm"
@@ -2418,6 +2415,9 @@ export default function TimeTracking() {
                                     <LogOut className="w-4 h-4" />
                                   </Button>
                                 );
+                              } else if (sessionIsActiveToday) {
+                                // Don't show edit button for today's active sessions
+                                return null;
                               } else {
                                 // Show regular edit button for completed sessions only
                                 return (
@@ -2680,13 +2680,10 @@ export default function TimeTracking() {
                           </div>
                         ) : (
                           (() => {
-                            const sessionIsActive = !session.clockOut; // Session is active if no clockOut time
+                            const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
                             
-                            if (sessionIsActive) {
-                              // Don't show any edit button for active sessions
-                              return null;
-                            } else if (sessionIsIncomplete) {
-                              // Show red exit button for force completing incomplete sessions
+                            if (sessionIsIncomplete) {
+                              // Show red exit button for force completing incomplete sessions (from previous days)
                               return (
                                 <Button
                                   size="sm"
@@ -2698,6 +2695,9 @@ export default function TimeTracking() {
                                   <LogOut className="w-4 h-4" />
                                 </Button>
                               );
+                            } else if (sessionIsActiveToday) {
+                              // Don't show edit button for today's active sessions
+                              return null;
                             } else {
                               // Show regular edit button for completed sessions only
                               return (
