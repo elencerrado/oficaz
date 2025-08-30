@@ -2623,7 +2623,7 @@ export default function TimeTracking() {
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-white border border-gray-200 rounded-lg mx-4 mb-3 p-4 shadow-sm">
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-3 p-4 shadow-sm">
                     {/* Header with employee and date */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -2634,10 +2634,10 @@ export default function TimeTracking() {
                           profilePicture={dayData.profilePicture}
                         />
                         <div>
-                          <div className="font-medium text-gray-900 text-sm">
+                          <div className="font-medium text-foreground text-sm">
                             {dayData.userName || 'Usuario Desconocido'}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {format(new Date(dayData.date), 'dd/MM/yyyy')}
                           </div>
                         </div>
@@ -2651,7 +2651,7 @@ export default function TimeTracking() {
                       {/* Action button */}
                       <div className="flex items-center gap-2">
                         <div className="text-right">
-                          <div className="font-medium text-gray-900 text-sm">
+                          <div className="font-medium text-foreground text-sm">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                           {totalDayHours > 0 && (() => {
@@ -2713,7 +2713,7 @@ export default function TimeTracking() {
                         <div className="space-y-3">
                           {/* Date picker for editing */}
                           <div>
-                            <label className="text-xs font-medium text-gray-700 block mb-1">Fecha</label>
+                            <label className="text-xs font-medium text-foreground block mb-1">Fecha</label>
                             <DatePickerDay
                               date={editData.date ? new Date(editData.date) : undefined}
                               onDateChange={(date) => {
@@ -2729,7 +2729,7 @@ export default function TimeTracking() {
                           
                           {/* Entry and exit times */}
                           <div>
-                            <label className="text-xs font-medium text-gray-700 block mb-1">Horarios</label>
+                            <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
                             <div className="flex space-x-2">
                               <div className="flex-1">
                                 <Input
@@ -2739,7 +2739,7 @@ export default function TimeTracking() {
                                   className="h-8 text-sm"
                                   placeholder="Entrada"
                                 />
-                                <span className="text-xs text-gray-500 mt-1 block">Entrada</span>
+                                <span className="text-xs text-muted-foreground mt-1 block">Entrada</span>
                               </div>
                               <div className="flex-1">
                                 <Input
@@ -2749,7 +2749,7 @@ export default function TimeTracking() {
                                   className="h-8 text-sm"
                                   placeholder="Salida"
                                 />
-                                <span className="text-xs text-gray-500 mt-1 block">Salida</span>
+                                <span className="text-xs text-muted-foreground mt-1 block">Salida</span>
                               </div>
                             </div>
                           </div>
@@ -2757,7 +2757,7 @@ export default function TimeTracking() {
                           {/* Break periods */}
                           <div>
                             <div className="flex items-center justify-between mb-2">
-                              <label className="text-xs font-medium text-gray-700">Descansos</label>
+                              <label className="text-xs font-medium text-foreground">Descansos</label>
                               <Button
                                 type="button"
                                 size="sm"
@@ -2778,7 +2778,7 @@ export default function TimeTracking() {
                                   className="flex-1 h-7 text-xs"
                                   placeholder="Inicio"
                                 />
-                                <span className="text-xs text-gray-400">-</span>
+                                <span className="text-xs text-muted-foreground">-</span>
                                 <Input
                                   type="time"
                                   value={breakPeriod.breakEnd || ''}
@@ -2799,14 +2799,14 @@ export default function TimeTracking() {
                             ))}
                             
                             {editData.breakPeriods.length === 0 && (
-                              <p className="text-xs text-gray-500 italic">
+                              <p className="text-xs text-muted-foreground italic">
                                 Sin descansos programados
                               </p>
                             )}
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="bg-muted rounded-lg p-3">
                           <DailyTimelineBar dayData={dayData} />
                         </div>
                       )}
@@ -2820,8 +2820,8 @@ export default function TimeTracking() {
                 if (previousWeekStart) {
                   const weekTotal = calculateWeekTotal(previousWeekStart);
                   result.push(
-                    <div key={`week-final`} className="bg-gray-100 border border-gray-300 rounded-lg p-3 mx-4 mb-3">
-                      <div className="font-medium text-gray-700 text-sm text-center">
+                    <div key={`week-final`} className="bg-muted border border-border rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-medium text-foreground text-sm text-center">
                         Total semana: {weekTotal.toFixed(1)}h
                       </div>
                     </div>
@@ -2833,8 +2833,8 @@ export default function TimeTracking() {
                   const monthName = format(new Date(currentMonth + '-01'), 'MMMM yyyy', { locale: es });
                   
                   result.push(
-                    <div key={`month-final`} className="bg-blue-50 border border-blue-200 rounded-lg p-3 mx-4 mb-3">
-                      <div className="font-semibold text-blue-800 capitalize text-sm text-center">
+                    <div key={`month-final`} className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mx-4 mb-3">
+                      <div className="font-semibold text-blue-800 dark:text-blue-200 capitalize text-sm text-center">
                         Total {monthName}: {monthTotal.toFixed(1)}h
                       </div>
                     </div>
@@ -2848,13 +2848,13 @@ export default function TimeTracking() {
             {filteredSessions.length === 0 && (
               <div className="py-12 text-center mx-4">
                 <div className="flex flex-col items-center justify-center space-y-3">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-gray-400" />
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <div className="text-gray-500 font-medium">
+                  <div className="text-foreground font-medium">
                     No hay fichajes en este período
                   </div>
-                  <div className="text-gray-400 text-sm">
+                  <div className="text-muted-foreground text-sm">
                     Prueba seleccionando un rango de fechas diferente
                   </div>
                 </div>
