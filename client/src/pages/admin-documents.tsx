@@ -736,11 +736,11 @@ export default function AdminDocuments() {
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
               >
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-lg font-medium text-gray-900 mb-2">
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium text-foreground mb-2">
                   Arrastra documentos aquí
                 </p>
-                <p className="text-gray-600 mb-2">
+                <p className="text-muted-foreground mb-2">
                   o haz click para seleccionar archivos
                 </p>
                 <p className="text-xs text-blue-600 mb-4">
@@ -779,7 +779,7 @@ export default function AdminDocuments() {
                   }}
                   className="hidden"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Máximo 10MB por archivo. PDF, JPG, PNG, DOC, DOCX
                 </p>
               </div>
@@ -796,7 +796,7 @@ export default function AdminDocuments() {
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                       <Input
                         placeholder="Buscar por nombre de archivo o empleado..."
                         value={searchTerm}
@@ -1183,8 +1183,8 @@ export default function AdminDocuments() {
                             )}
                           </div>
                           <div className="flex-1">
-                            <div className="font-medium text-gray-900">{employee.fullName}</div>
-                            <div className="text-sm text-gray-600">{employee.email}</div>
+                            <div className="font-medium text-foreground">{employee.fullName}</div>
+                            <div className="text-sm text-muted-foreground">{employee.email}</div>
                           </div>
                         </div>
                       ))}
@@ -1203,7 +1203,7 @@ export default function AdminDocuments() {
 
               {/* Sent Requests History */}
               <div>
-                <h3 className="font-medium text-gray-900 mb-4">Historial de Solicitudes ({(sentRequests || []).length})</h3>
+                <h3 className="font-medium text-foreground mb-4">Historial de Solicitudes ({(sentRequests || []).length})</h3>
                 {(sentRequests || []).length > 0 ? (
                   <div className="space-y-3">
                     {sentRequests.map((request: any) => (
@@ -1214,19 +1214,19 @@ export default function AdminDocuments() {
                               <Badge variant={request.isCompleted ? 'default' : 'secondary'}>
                                 {request.isCompleted ? 'Completada' : 'Pendiente'}
                               </Badge>
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-muted-foreground">
                                 {request.documentType}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-sm text-muted-foreground mb-2">
                               Para: <span className="font-medium">{request.user?.fullName || 'Empleado'}</span>
                             </p>
                             {request.message && (
-                              <p className="text-sm text-gray-600 mb-2">
+                              <p className="text-sm text-muted-foreground mb-2">
                                 Mensaje: "{request.message}"
                               </p>
                             )}
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span>
                                 Enviada: {(() => {
                                   const utcDate = new Date(request.createdAt);
@@ -1429,7 +1429,7 @@ export default function AdminDocuments() {
                       
                       {/* Document Type */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           Tipo de Documento
                         </label>
                         <Select value={analysis.documentType} disabled>
@@ -1496,7 +1496,7 @@ export default function AdminDocuments() {
             </DialogHeader>
             
             <div className="space-y-4">
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 ¿Estás seguro de que quieres eliminar este documento?
               </p>
               
@@ -1539,7 +1539,7 @@ export default function AdminDocuments() {
             </DialogHeader>
             
             <div className="space-y-4">
-              <p className="text-gray-700">
+              <p className="text-foreground">
                 ¿Estás seguro de que quieres eliminar permanentemente esta solicitud?
               </p>
               
