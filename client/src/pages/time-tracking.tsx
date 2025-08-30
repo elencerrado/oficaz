@@ -89,7 +89,7 @@ export default function TimeTracking() {
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/work-sessions/company?limit=40'], // Load 40 sessions with full data
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
-    staleTime: 3 * 60 * 1000, // 3 minutes cache (balanced)
+    staleTime: 0, // Force refetch after database changes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     retryDelay: 750,
