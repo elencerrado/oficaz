@@ -433,8 +433,24 @@ export default function Messages() {
   const sendModalGroupMessage = async () => {
     if (modalSelectedEmployees.length === 0 || !modalMessage.trim()) return;
     
+    // Validate message length
+    if (modalMessage.length > 1000) {
+      toast({
+        title: "Mensaje demasiado largo",
+        description: "El mensaje no puede exceder 1000 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       closeAddChatModal();
+      
+      // Show sending indicator
+      toast({
+        title: "Enviando mensajes...",
+        description: `Enviando a ${modalSelectedEmployees.length} empleados`,
+      });
       
       for (const employeeId of modalSelectedEmployees) {
         await apiRequest('POST', '/api/messages', {
@@ -446,19 +462,24 @@ export default function Messages() {
       
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       
+      // Reset states
+      setModalMessage('');
+      setModalSelectedEmployees([]);
+      setModalGroupMode(false);
+      
       setTimeout(() => {
         toast({
-          title: "Mensajes enviados",
-          description: `Mensaje enviado a ${modalSelectedEmployees.length} empleados`,
+          title: "✅ Mensajes enviados",
+          description: `Mensaje enviado exitosamente a ${modalSelectedEmployees.length} empleados`,
         });
-      }, 100);
+      }, 500);
       
     } catch (error) {
       console.error('Error sending group message:', error);
       setTimeout(() => {
         toast({
-          title: "Error",
-          description: "No se pudieron enviar los mensajes",
+          title: "❌ Error al enviar",
+          description: "No se pudieron enviar los mensajes. Inténtalo de nuevo.",
           variant: "destructive",
         });
       }, 100);
@@ -945,13 +966,26 @@ export default function Messages() {
                 )}
               </div>
               
-              <Input
-                placeholder="Escribe tu mensaje grupal..."
-                value={modalMessage}
-                onChange={(e) => setModalMessage(e.target.value)}
-                className="input-oficaz"
-                style={{ display: modalGroupMode ? 'block' : 'none' }}
-              />
+              <div style={{ display: modalGroupMode ? 'block' : 'none' }}>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Mensaje grupal
+                </label>
+                <textarea
+                  placeholder="Escribe tu mensaje grupal...&#10;&#10;Puedes escribir múltiples líneas y dar formato a tu mensaje."
+                  value={modalMessage}
+                  onChange={(e) => setModalMessage(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-muted-foreground">
+                    {modalMessage.length}/1000 caracteres
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Shift + Enter para nueva línea
+                  </span>
+                </div>
+              </div>
               
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
@@ -1023,10 +1057,11 @@ export default function Messages() {
                   </span>
                   <Button
                     onClick={sendModalGroupMessage}
-                    disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim()}
+                    disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim() || modalMessage.length > 1000}
                     className="btn-oficaz-primary"
                   >
-                    Enviar a todos
+                    <Send className="w-4 h-4 mr-2" />
+                    Enviar a {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''}
                   </Button>
                 </div>
               )}
