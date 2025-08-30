@@ -2730,23 +2730,23 @@ export default function TimeTracking() {
                           {/* Entry and exit times */}
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
+                            <div className="grid grid-cols-2 gap-1 overflow-hidden">
+                              <div className="min-w-0">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-7 text-xs w-full max-w-full"
+                                  className="h-7 text-xs w-full min-w-0 px-2"
                                   placeholder="Entrada"
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div>
+                              <div className="min-w-0">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-7 text-xs w-full max-w-full"
+                                  className="h-7 text-xs w-full min-w-0 px-2"
                                   placeholder="Salida"
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
@@ -2770,25 +2770,25 @@ export default function TimeTracking() {
                             </div>
                             
                             {editData.breakPeriods.map((breakPeriod, index) => (
-                              <div key={index} className="grid grid-cols-12 gap-1 items-center mb-2">
-                                <div className="col-span-5">
+                              <div key={index} className="grid grid-cols-12 gap-1 items-center mb-2 overflow-hidden">
+                                <div className="col-span-5 min-w-0">
                                   <Input
                                     type="time"
                                     value={breakPeriod.breakStart}
                                     onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
-                                    className="h-7 text-xs w-full"
+                                    className="h-7 text-xs w-full min-w-0 px-1"
                                     placeholder="Inicio"
                                   />
                                 </div>
                                 <div className="col-span-1 text-center">
                                   <span className="text-xs text-muted-foreground">-</span>
                                 </div>
-                                <div className="col-span-5">
+                                <div className="col-span-5 min-w-0">
                                   <Input
                                     type="time"
                                     value={breakPeriod.breakEnd || ''}
                                     onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
-                                    className="h-7 text-xs w-full"
+                                    className="h-7 text-xs w-full min-w-0 px-1"
                                     placeholder="Fin"
                                   />
                                 </div>
@@ -2798,7 +2798,7 @@ export default function TimeTracking() {
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => handleRemoveBreakPeriod(index)}
-                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    className="h-7 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                                   >
                                     <X className="w-3 h-3" />
                                   </Button>
