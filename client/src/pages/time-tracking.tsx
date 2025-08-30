@@ -1157,8 +1157,21 @@ export default function TimeTracking() {
       session.clockIn && isToday(new Date(session.clockIn))
     );
     
+    // Debug logging
+    console.log('DailyTimelineBar debug:', {
+      hasActiveSessions,
+      isTodaySession,
+      sessionsData: dayData.sessions.map((s: any) => ({
+        id: s.id,
+        clockIn: s.clockIn,
+        clockOut: s.clockOut,
+        isToday: isToday(new Date(s.clockIn))
+      }))
+    });
+
     if (hasActiveSessions && isTodaySession) {
       // Handle TODAY's active sessions - show current status with same visual style
+      console.log('Rendering active session for today');
       const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
       const sessionStart = new Date(activeSession.clockIn);
       const now = new Date();
@@ -1327,7 +1340,7 @@ export default function TimeTracking() {
     }
 
     // Handle incomplete sessions from past days - show "Incompleto" status
-    if (hasActiveSessions && !isToday) {
+    if (hasActiveSessions && !isTodaySession) {
       const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
       const sessionStart = new Date(activeSession.clockIn);
       const now = new Date();
