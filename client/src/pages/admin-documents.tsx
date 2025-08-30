@@ -792,17 +792,42 @@ export default function AdminDocuments() {
             <CardContent className="p-6 space-y-4">
               {/* Filters and View Mode */}
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                    <Input
-                      placeholder="Buscar por nombre de archivo o empleado..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
+                {/* Search and View Mode - Mobile: same row */}
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                      <Input
+                        placeholder="Buscar por nombre de archivo o empleado..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* View Mode Toggle - Mobile: right of search */}
+                  <div className="flex bg-muted rounded-lg p-1 md:order-3">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="px-3"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="px-3"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
+                
+                {/* Employee filter - Second row on mobile, same row on desktop */}
                 <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                   <SelectTrigger className="w-full md:w-64">
                     <SelectValue />
@@ -816,26 +841,6 @@ export default function AdminDocuments() {
                     ))}
                   </SelectContent>
                 </Select>
-                
-                {/* View Mode Toggle */}
-                <div className="flex bg-muted rounded-lg p-1">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="px-3"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="px-3"
-                  >
-                    <Grid3X3 className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
 
               {/* Results count */}
