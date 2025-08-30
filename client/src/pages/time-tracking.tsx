@@ -2731,7 +2731,7 @@ export default function TimeTracking() {
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
                             <div className="flex justify-between">
-                              <div className="w-[45%]">
+                              <div className="w-[42%]">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
@@ -2741,7 +2741,7 @@ export default function TimeTracking() {
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="w-[45%]">
+                              <div className="w-[42%]">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
