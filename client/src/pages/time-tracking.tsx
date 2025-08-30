@@ -1153,7 +1153,9 @@ export default function TimeTracking() {
     
     // Only show "Trabajando" status for TODAY's active sessions
     // For past days with incomplete sessions, use the normal completed view + badge
-    const isTodaySession = dayData.sessions[0]?.clockIn ? isToday(new Date(dayData.sessions[0].clockIn)) : false;
+    const isTodaySession = dayData.sessions.some((session: any) => 
+      session.clockIn && isToday(new Date(session.clockIn))
+    );
     
     if (hasActiveSessions && isTodaySession) {
       // Handle TODAY's active sessions - show current status with same visual style
@@ -2396,7 +2398,9 @@ export default function TimeTracking() {
                           ) : (
                             // Check session status to show appropriate button
                             (() => {
-                              const session = dayData.sessions[0];
+                              // When there are multiple sessions in a day, find the active one or use the first one for completed sessions
+                              const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
+                              const session = activeSession || dayData.sessions[0];
                               const sessionIsIncomplete = isSessionIncomplete(session);
                               const sessionIsActiveToday = !session.clockOut && isToday(new Date(session.clockIn)); // Active session means no clockOut AND is today
                               
@@ -2621,7 +2625,9 @@ export default function TimeTracking() {
                 }, 0);
                 
                 const isEditing = editingSession === dayData.sessions[0]?.id;
-                const session = dayData.sessions[0];
+                // When there are multiple sessions in a day, find the active one or use the first one for completed sessions
+                const activeSession = dayData.sessions.find((s: any) => !s.clockOut);
+                const session = activeSession || dayData.sessions[0];
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
