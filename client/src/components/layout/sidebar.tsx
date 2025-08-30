@@ -133,7 +133,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <img 
                 src={oficazLogo} 
                 alt="Oficaz" 
-                className="h-6 w-auto flex-shrink-0"
+                className="h-6 w-auto flex-shrink-0 dark:brightness-0 dark:invert"
               />
             )}
             <div className="flex-1 min-w-0">

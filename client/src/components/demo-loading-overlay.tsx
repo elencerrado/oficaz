@@ -87,7 +87,7 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
           <img 
             src={oficazLogo} 
             alt="Oficaz" 
-            className="h-12 w-auto"
+            className="h-12 w-auto dark:brightness-0 dark:invert"
           />
         </div>
 

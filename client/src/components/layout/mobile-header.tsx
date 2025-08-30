@@ -87,7 +87,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <img 
           src={oficazLogo} 
           alt="Oficaz" 
-          className="h-4 w-auto lg:h-6"
+          className="h-4 w-auto lg:h-6 dark:brightness-0 dark:invert"
         />
       </div>
       

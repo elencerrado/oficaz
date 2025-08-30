@@ -42,6 +42,18 @@ Preferred communication style: Simple, everyday language.
 - **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 
+### Document Cleanup System (⚠️ CRITICAL SECURITY UPDATE)
+- **Auto-cleanup**: System automatically detects and removes orphaned documents (DB records without physical files)
+- **Security principle**: "Si los documentos no existen físicamente, no deberían aparecer para nadie"
+- **Implementation**: Both user and admin document endpoints now filter and cleanup orphaned records
+- **iPad/iOS Compatibility**: Special handling for iOS devices using direct links with token in query parameters
+- **User requirement confirmed**: Documents without physical files must not appear in any list
+
+### Logo Display Standards (⚠️ VISUAL CONSISTENCY)
+- **Dark Mode Fix**: Oficaz logo uses `dark:brightness-0 dark:invert` for proper visibility in dark mode
+- **Consistent Application**: Applied to sidebar, mobile header, and demo loading overlay
+- **User issue resolved**: "El ícono loader de oficial en el modo oscuro a veces sale gris en el fondo oscuro"
+
 ## System Architecture
 
 ### Frontend Architecture
