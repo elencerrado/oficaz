@@ -759,7 +759,7 @@ export default function Reminders() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      {reminder.isPinned && <Pin className="w-4 h-4 text-gray-600" />}
+                      {reminder.isPinned && <Pin className="w-4 h-4 text-gray-700 dark:text-gray-800" />}
                       {getPriorityIcon(reminder.priority)}
                     </div>
                     <div className="flex items-center gap-1">
@@ -767,16 +767,16 @@ export default function Reminders() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEdit(reminder)}
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 hover:bg-black/10"
                       >
-                        <Edit className="w-3 h-3" />
+                        <Edit className="w-3 h-3 text-gray-700" />
                       </Button>
                       {(user?.role === 'admin' || user?.role === 'manager') && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleAssignReminder(reminder)}
-                          className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                          className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-100/50"
                           title="Asignar a empleados"
                         >
                           <Users className="w-3 h-3" />
@@ -786,46 +786,46 @@ export default function Reminders() {
                         variant="ghost"
                         size="sm"
                         onClick={() => togglePin(reminder)}
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 hover:bg-black/10"
                       >
-                        <Pin className={`w-3 h-3 ${reminder.isPinned ? 'text-blue-500' : 'text-gray-400'}`} />
+                        <Pin className={`w-3 h-3 ${reminder.isPinned ? 'text-blue-600' : 'text-gray-600'}`} />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleArchive(reminder)}
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 hover:bg-black/10"
                       >
-                        <Archive className={`w-3 h-3 ${reminder.isArchived ? 'text-gray-600' : 'text-gray-400'}`} />
+                        <Archive className={`w-3 h-3 ${reminder.isArchived ? 'text-gray-700' : 'text-gray-600'}`} />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteReminderMutation.mutate(reminder.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                        className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-100/50"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
-                  <CardTitle className={`text-sm font-medium ${reminder.isCompleted ? 'line-through' : ''}`}>
+                  <CardTitle className={`text-sm font-medium text-gray-900 dark:text-gray-900 ${reminder.isCompleted ? 'line-through' : ''}`}>
                     {reminder.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   {reminder.content && (
-                    <p className={`text-sm text-gray-600 mb-3 ${reminder.isCompleted ? 'line-through' : ''}`}>
+                    <p className={`text-sm text-gray-700 dark:text-gray-800 mb-3 ${reminder.isCompleted ? 'line-through' : ''}`}>
                       {reminder.content}
                     </p>
                   )}
                   
                   {reminder.reminderDate && (
                     <div className="flex items-center gap-1 mb-3">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className={`text-xs text-muted-foreground ${
+                      <Calendar className="w-3 h-3 text-gray-600 dark:text-gray-700" />
+                      <span className={`text-xs ${
                         isPast(new Date(reminder.reminderDate)) && !reminder.isCompleted 
-                          ? 'text-red-500 font-medium' 
-                          : ''
+                          ? 'text-red-600 font-medium' 
+                          : 'text-gray-600 dark:text-gray-700'
                       }`}>
                         {formatReminderDate(reminder.reminderDate)}
                       </span>
