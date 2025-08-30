@@ -2915,18 +2915,66 @@ Responde directamente a este email para contactar con la persona.
     try {
       // CRITICAL SECURITY: Users can ONLY see their own documents
       // No exceptions for admin/manager - they should use separate endpoints if needed
-      const documents = await storage.getDocumentsByUser(req.user!.id);
-      res.json(documents);
+      const allDocuments = await storage.getDocumentsByUser(req.user!.id);
+      
+      // Filter out documents that don't have physical files
+      const validDocuments = [];
+      const orphanedDocuments = [];
+      
+      for (const document of allDocuments) {
+        const filePath = path.join(uploadDir, document.fileName);
+        if (fs.existsSync(filePath)) {
+          validDocuments.push(document);
+        } else {
+          orphanedDocuments.push(document);
+          console.log(`CLEANUP: User ${req.user!.id} - Found orphaned document ${document.id} - ${document.originalName}`);
+        }
+      }
+      
+      // Clean up orphaned documents from database
+      if (orphanedDocuments.length > 0) {
+        console.log(`CLEANUP: User ${req.user!.id} - Removing ${orphanedDocuments.length} orphaned document records`);
+        for (const orphanDoc of orphanedDocuments) {
+          await storage.deleteDocument(orphanDoc.id);
+          console.log(`CLEANUP: User ${req.user!.id} - Deleted orphaned document record ${orphanDoc.id} - ${orphanDoc.originalName}`);
+        }
+      }
+      
+      res.json(validDocuments);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
-  // Get all documents for admin/manager view
+  // Get all documents for admin/manager view - filter out orphaned documents
   app.get('/api/documents/all', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
-      const documents = await storage.getDocumentsByCompany(req.user!.companyId);
-      res.json(documents);
+      const allDocuments = await storage.getDocumentsByCompany(req.user!.companyId);
+      
+      // Filter out documents that don't have physical files
+      const validDocuments = [];
+      const orphanedDocuments = [];
+      
+      for (const document of allDocuments) {
+        const filePath = path.join(uploadDir, document.fileName);
+        if (fs.existsSync(filePath)) {
+          validDocuments.push(document);
+        } else {
+          orphanedDocuments.push(document);
+          console.log(`CLEANUP: Found orphaned document ${document.id} - ${document.originalName} (file not found: ${filePath})`);
+        }
+      }
+      
+      // Clean up orphaned documents from database
+      if (orphanedDocuments.length > 0) {
+        console.log(`CLEANUP: Removing ${orphanedDocuments.length} orphaned document records from database`);
+        for (const orphanDoc of orphanedDocuments) {
+          await storage.deleteDocument(orphanDoc.id);
+          console.log(`CLEANUP: Deleted orphaned document record ${orphanDoc.id} - ${orphanDoc.originalName}`);
+        }
+      }
+      
+      res.json(validDocuments);
     } catch (error) {
       console.error("Error fetching all documents:", error);
       res.status(500).json({ message: "Failed to fetch documents" });
@@ -3097,114 +3145,9 @@ Responde directamente a este email para contactar con la persona.
 
       const filePath = path.join(uploadDir, document.fileName);
       
-      // If physical file doesn't exist, check if it's a demo document or serve a placeholder PDF
+      // If physical file doesn't exist, return 404 - no file should be served
       if (!fs.existsSync(filePath)) {
-        console.log(`File not found at ${filePath}, checking if it's a demo document...`);
-        
-        // Get document owner to check if it's from Test Company
-        const documentOwner = await storage.getUser(document.userId);
-        const isTestCompanyDocument = documentOwner?.companyId === 1; // Test Company has ID 1
-        const isDemoDocument = isTestCompanyDocument || 
-                              document.fileName.includes('nomina') || 
-                              document.fileName.includes('contrato') ||
-                              document.originalName.toLowerCase().includes('demo') ||
-                              document.originalName.toLowerCase().includes('prueba');
-        
-        if (isDemoDocument) {
-          console.log(`Generating demo PDF for document: ${document.originalName}`);
-          
-          // Set headers for PDF viewing/downloading
-          res.setHeader('Content-Type', 'application/pdf');
-          
-          // If view parameter, display inline; otherwise download
-          if (req.query.view === 'true') {
-            res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
-          } else {
-            res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
-          }
-          
-          // Determine document type from filename or original name
-          let docType = 'DOCUMENTO';
-          const fileName = (document.originalName || document.fileName).toLowerCase();
-          if (fileName.includes('nomina') || fileName.includes('nómina')) {
-            docType = 'NÓMINA';
-          } else if (fileName.includes('contrato')) {
-            docType = 'CONTRATO';
-          } else if (fileName.includes('dni') || fileName.includes('nie')) {
-            docType = 'DOCUMENTO IDENTIDAD';
-          } else if (fileName.includes('justificante')) {
-            docType = 'JUSTIFICANTE';
-          }
-          
-          const currentDate = new Date().toLocaleDateString('es-ES');
-          const employeeName = documentOwner?.fullName || 'Empleado';
-          const companyName = isTestCompanyDocument ? 'Test Company S.L.' : 'Oficaz S.L.';
-          
-          const pdfContent = Buffer.from(`%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length 400 >>
-stream
-BT
-/F1 18 Tf
-50 720 Td
-(${docType} - DOCUMENTO OFICIAL) Tj
-0 -30 Td
-/F2 12 Tf
-(${document.originalName}) Tj
-0 -30 Td
-0 -20 Td
-(Empleado: ${employeeName}) Tj
-0 -20 Td
-(Empresa: ${companyName}) Tj
-0 -20 Td
-(Fecha: ${currentDate}) Tj
-0 -30 Td
-0 -20 Td
-(Este es un documento de prueba generado por Oficaz.) Tj
-0 -20 Td
-(Documento válido para demostraciones del sistema.) Tj
-0 -30 Td
-0 -20 Td
-(ID del documento: ${document.id}) Tj
-0 -20 Td
-(Archivo: ${document.fileName}) Tj
-ET
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
-endobj
-6 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 7
-0000000000 65535 f 
-0000000010 00000 n 
-0000000053 00000 n 
-0000000100 00000 n 
-0000000229 00000 n 
-0000000680 00000 n 
-0000000740 00000 n 
-trailer
-<< /Size 7 /Root 1 0 R >>
-startxref
-795
-%%EOF`);
-          
-          return res.send(pdfContent);
-        }
-        
-        // If we reach here, no demo document was generated
+        console.log(`SECURITY: Physical file not found at ${filePath} for document ${document.id}. File may have been deleted or moved.`);
         return res.status(404).json({ message: 'File not found on server' });
       }
 
