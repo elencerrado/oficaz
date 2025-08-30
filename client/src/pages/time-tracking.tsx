@@ -1307,7 +1307,7 @@ export default function TimeTracking() {
           </div>
 
           {/* Contenedor para horas ABAJO de las barras */}
-          <div className="relative h-4 mt-1">
+          <div className="relative h-4 mt-0.5">
             {/* Entrada: punto alineado con inicio de barra + hora a la derecha */}
             <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
               <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
@@ -1353,7 +1353,7 @@ export default function TimeTracking() {
             </div>
 
             {/* Time labels showing start time and "Incompleto" status */}
-            <div className="relative h-4 mt-1">
+            <div className="relative h-4 mt-0.5">
               {/* Start time */}
               <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
@@ -1483,7 +1483,7 @@ export default function TimeTracking() {
         </div>
 
         {/* Contenedor para horas de entrada/salida ABAJO de las barras */}
-        <div className="relative h-6 mt-1" style={{ zIndex: 10 }}>
+        <div className="relative h-4 mt-0.5" style={{ zIndex: 10 }}>
           {(() => {
             // Preparar todas las etiquetas de tiempo con sus posiciones
             const completedSessions = dayData.sessions.filter((session: any) => session.clockOut);
