@@ -874,7 +874,7 @@ export default function AdminDocuments() {
                               <span className="text-sm text-muted-foreground">
                                 {formatFileSize(document.fileSize)}
                               </span>
-                              <span className="text-sm text-gray-500 dark:text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {(() => {
                                   // La fecha del servidor está en UTC, convertir a hora local española
                                   const utcDate = new Date(document.createdAt);
@@ -1101,11 +1101,11 @@ export default function AdminDocuments() {
                 )
               ) : (
                 <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <FileText className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     No se encontraron documentos
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     {searchTerm || selectedEmployee !== 'all'
                       ? 'Ajusta los filtros para ver más resultados'
                       : 'Los documentos aparecerán aquí cuando los empleados los suban'}
@@ -1121,11 +1121,11 @@ export default function AdminDocuments() {
             <CardContent className="p-6 space-y-6">
               {/* Send New Request */}
               <div className="border rounded-lg p-4 bg-muted">
-                <h3 className="font-medium text-gray-900 mb-4">Enviar Nueva Solicitud</h3>
+                <h3 className="font-medium text-foreground mb-4">Enviar Nueva Solicitud</h3>
                 <div className="space-y-4">
                   {/* Document Type Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Tipo de Documento
                     </label>
                     <Select value={documentType} onValueChange={setDocumentType}>
@@ -1147,7 +1147,7 @@ export default function AdminDocuments() {
 
                   {/* Message */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Mensaje (opcional)
                     </label>
                     <Input
@@ -1159,7 +1159,7 @@ export default function AdminDocuments() {
 
                   {/* Employee Selection */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Empleados ({selectedEmployees.length} seleccionados)
                     </label>
                     <div className="max-h-48 overflow-y-auto border rounded-lg p-2 space-y-1 bg-card">
@@ -1169,14 +1169,14 @@ export default function AdminDocuments() {
                           onClick={() => toggleEmployee(employee.id)}
                           className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
                             selectedEmployees.includes(employee.id)
-                              ? 'bg-blue-50 border-blue-200'
+                              ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700'
                               : 'hover:bg-muted'
                           }`}
                         >
                           <div className={`w-4 h-4 border rounded mr-3 flex items-center justify-center ${
                             selectedEmployees.includes(employee.id)
                               ? 'bg-blue-600 border-blue-600'
-                              : 'border-gray-300'
+                              : 'border-gray-300 dark:border-gray-600'
                           }`}>
                             {selectedEmployees.includes(employee.id) && (
                               <div className="w-2 h-2 bg-white rounded-sm" />
@@ -1244,10 +1244,10 @@ export default function AdminDocuments() {
                             {/* Estado del documento */}
                             <div className="mt-3">
                               {request.document ? (
-                                <div className="p-2 bg-green-50 border border-green-200 rounded space-y-2">
+                                <div className="p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded space-y-2">
                                   <div className="flex items-center">
                                     <FileCheck className="h-4 w-4 mr-2 text-green-600" />
-                                    <span className="text-green-700 text-sm">
+                                    <span className="text-green-700 dark:text-green-300 text-sm">
                                       Documento recibido: {request.document.originalName}
                                     </span>
                                   </div>
@@ -1273,16 +1273,16 @@ export default function AdminDocuments() {
                                   </div>
                                 </div>
                               ) : request.isCompleted ? (
-                                <div className="flex items-center p-2 bg-red-50 border border-red-200 rounded">
+                                <div className="flex items-center p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded">
                                   <X className="h-4 w-4 mr-2 text-red-600" />
-                                  <span className="text-red-700 text-sm">
+                                  <span className="text-red-700 dark:text-red-300 text-sm">
                                     Archivo eliminado o no encontrado
                                   </span>
                                 </div>
                               ) : (
-                                <div className="flex items-center p-2 bg-yellow-50 border border-yellow-200 rounded">
+                                <div className="flex items-center p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded">
                                   <AlertTriangle className="h-4 w-4 mr-2 text-yellow-600" />
-                                  <span className="text-yellow-700 text-sm">
+                                  <span className="text-yellow-700 dark:text-yellow-300 text-sm">
                                     Esperando respuesta del empleado
                                   </span>
                                 </div>
@@ -1333,8 +1333,8 @@ export default function AdminDocuments() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <Send className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Send className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                     <p>No hay solicitudes enviadas</p>
                     <p className="text-sm">Las solicitudes que envíes aparecerán aquí</p>
                   </div>
@@ -1355,7 +1355,7 @@ export default function AdminDocuments() {
             </DialogHeader>
             
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 He analizado los nombres de archivo para detectar automáticamente el empleado y tipo de documento. 
                 Puedes revisar y ajustar antes de subir.
               </p>
@@ -1365,12 +1365,12 @@ export default function AdminDocuments() {
                   <div key={index} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 mb-1">
+                        <h3 className="font-medium text-foreground mb-1">
                           {analysis.file.name}
                         </h3>
                         {analysis.suggestedName && (
                           <div className="mb-2">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">
                               📝 Nombre sugerido (editable):
                             </label>
                             <input
@@ -1382,7 +1382,7 @@ export default function AdminDocuments() {
                             />
                           </div>
                         )}
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           {formatFileSize(analysis.file.size)}
                         </p>
                       </div>
@@ -1398,7 +1398,7 @@ export default function AdminDocuments() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Employee Selection */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                           Empleado Destinatario
                         </label>
                         <Select 
