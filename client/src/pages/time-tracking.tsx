@@ -2623,9 +2623,9 @@ export default function TimeTracking() {
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-1 px-3 py-2 shadow-sm">
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-3 px-3 py-3 shadow-sm">
                     {/* Header with employee and date */}
-                    <div className="flex items-center justify-between mb-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2 min-w-0">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <UserAvatar 
                           fullName={dayData.userName || 'Usuario Desconocido'} 
@@ -2804,12 +2804,10 @@ export default function TimeTracking() {
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-1">
-                          <div className="bg-muted rounded-lg p-1">
+                        <div className="min-h-[40px] flex items-center">
+                          <div className="bg-muted rounded-lg p-2 w-full">
                             <DailyTimelineBar dayData={dayData} />
                           </div>
-                          
-
                         </div>
                       )}
                     </div>
