@@ -2623,7 +2623,7 @@ export default function TimeTracking() {
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-1 p-2 shadow-sm">
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-1 px-3 py-2 shadow-sm">
                     {/* Header with employee and date */}
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-3">
@@ -2728,26 +2728,26 @@ export default function TimeTracking() {
                           </div>
                           
                           {/* Entry and exit times */}
-                          <div>
+                          <div className="overflow-hidden">
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="flex justify-between">
-                              <div className="w-[42%]">
+                            <div className="flex gap-2">
+                              <div className="flex-1 min-w-0">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-7 w-full px-1"
-                                  style={{ fontSize: '10px' }}
+                                  className="h-7 w-full px-1 min-w-0"
+                                  style={{ fontSize: '10px', maxWidth: '100%' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="w-[42%]">
+                              <div className="flex-1 min-w-0">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-7 w-full px-1"
-                                  style={{ fontSize: '10px' }}
+                                  className="h-7 w-full px-1 min-w-0"
+                                  style={{ fontSize: '10px', maxWidth: '100%' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
                               </div>
