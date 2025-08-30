@@ -125,6 +125,8 @@ export default function AdminDashboard() {
   const { data: recentSessions } = useQuery({
     queryKey: ['/api/work-sessions/company', companySettings?.workingHoursPerDay],
     enabled: !!companySettings, // Wait for company settings to be loaded
+    staleTime: 0, // Force fresh data to avoid showing outdated sessions
+    refetchInterval: 30000, // Refetch every 30 seconds
     select: (data: any[]) => {
       if (!data?.length) return [];
       
@@ -219,6 +221,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      // Force immediate refetch to update dashboard
+      queryClient.refetchQueries({ queryKey: ['/api/work-sessions/company'] });
       const message = generateDynamicMessage('entrada');
       showTemporaryMessage(message);
     },
@@ -239,6 +243,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      // Force immediate refetch to update dashboard
+      queryClient.refetchQueries({ queryKey: ['/api/work-sessions/company'] });
       const message = generateDynamicMessage('salida');
       showTemporaryMessage(message);
     },
