@@ -2736,7 +2736,7 @@ export default function TimeTracking() {
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-8 text-xs w-full"
+                                  className="h-7 text-xs w-full max-w-full"
                                   placeholder="Entrada"
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
@@ -2746,7 +2746,7 @@ export default function TimeTracking() {
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-8 text-xs w-full"
+                                  className="h-7 text-xs w-full max-w-full"
                                   placeholder="Salida"
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
