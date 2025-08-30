@@ -2436,6 +2436,10 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Already clocked in' });
       }
 
+      // ⚠️ PROTECTED - DO NOT MODIFY - Critical cleanup on clock-in
+      // Close any orphaned break periods before starting new session
+      await storage.closeOrphanedBreakPeriods(req.user!.id);
+
       const session = await storage.createWorkSession({
         userId: req.user!.id,
         clockIn: new Date(),

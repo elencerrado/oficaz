@@ -23,6 +23,13 @@ Preferred communication style: Simple, everyday language.
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
+### Break Period Management System (⚠️ CRITICAL LOGIC FIX)
+- **Logical Rule**: When user clocks in, they cannot be in break by definition
+- **Fixed Issue**: `getActiveBreakPeriod` now only returns breaks for current active session
+- **Auto-cleanup**: Clock-in automatically closes orphaned break periods from previous sessions
+- **Data Integrity**: Break periods must belong to current work session to be considered active
+- **User Confirmed Bug**: "Ese fallo no debería ocurrir, es decir, si ficho la entrada, obviamente no estoy en un descanso"
+
 ### Email System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
 - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
 - **Never use dynamic domain detection for email logos** - it breaks the email display

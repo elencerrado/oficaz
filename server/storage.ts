@@ -372,14 +372,40 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveBreakPeriod(userId: number): Promise<BreakPeriod | undefined> {
+    // First get the active work session for the user
+    const activeSession = await this.getActiveWorkSession(userId);
+    if (!activeSession) {
+      return undefined; // No active session means no valid break period
+    }
+
+    // Only return break periods that belong to the current active work session
     const [breakPeriod] = await db.select().from(schema.breakPeriods)
-      .where(and(eq(schema.breakPeriods.userId, userId), eq(schema.breakPeriods.status, 'active')));
+      .where(and(
+        eq(schema.breakPeriods.userId, userId), 
+        eq(schema.breakPeriods.status, 'active'),
+        eq(schema.breakPeriods.workSessionId, activeSession.id)
+      ));
     return breakPeriod;
   }
 
   async updateBreakPeriod(id: number, updates: Partial<InsertBreakPeriod>): Promise<BreakPeriod | undefined> {
     const [breakPeriod] = await db.update(schema.breakPeriods).set(updates).where(eq(schema.breakPeriods.id, id)).returning();
     return breakPeriod;
+  }
+
+  // ⚠️ PROTECTED - DO NOT MODIFY - Critical function for data integrity
+  async closeOrphanedBreakPeriods(userId: number): Promise<void> {
+    // Find and close any active break periods that don't belong to an active session
+    // This prevents break periods from lingering when sessions are closed improperly
+    await db.update(schema.breakPeriods)
+      .set({
+        breakEnd: new Date(),
+        status: 'completed'
+      })
+      .where(and(
+        eq(schema.breakPeriods.userId, userId),
+        eq(schema.breakPeriods.status, 'active')
+      ));
   }
 
   async updateWorkSessionBreakTime(workSessionId: number): Promise<void> {
