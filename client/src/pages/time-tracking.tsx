@@ -1340,7 +1340,7 @@ export default function TimeTracking() {
       // Only show "Incompleto" if more than maxHours have passed
       if (elapsedHours > maxHours) {
         return (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {/* Contenedor vacío para mantener consistencia de altura con otras filas */}
             <div className="relative h-4"></div>
             
@@ -1385,7 +1385,7 @@ export default function TimeTracking() {
     const formatTime = (date: Date) => format(date, 'HH:mm');
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
         <div className="relative h-4">
           {dayData.sessions.map((session: any, sessionIndex: number) => {
