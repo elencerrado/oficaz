@@ -2730,24 +2730,26 @@ export default function TimeTracking() {
                           {/* Entry and exit times */}
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="grid grid-cols-2 gap-1 overflow-hidden">
-                              <div className="min-w-0">
+                            <div className="flex gap-2">
+                              <div className="flex-1 max-w-[calc(50%-4px)]">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-7 text-xs w-full min-w-0 px-2"
+                                  className="h-7 text-xs w-full px-1 max-w-full"
                                   placeholder="Entrada"
+                                  style={{ fontSize: '11px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="min-w-0">
+                              <div className="flex-1 max-w-[calc(50%-4px)]">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-7 text-xs w-full min-w-0 px-2"
+                                  className="h-7 text-xs w-full px-1 max-w-full"
                                   placeholder="Salida"
+                                  style={{ fontSize: '11px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
                               </div>
@@ -2770,39 +2772,37 @@ export default function TimeTracking() {
                             </div>
                             
                             {editData.breakPeriods.map((breakPeriod, index) => (
-                              <div key={index} className="grid grid-cols-12 gap-1 items-center mb-2 overflow-hidden">
-                                <div className="col-span-5 min-w-0">
+                              <div key={index} className="flex items-center gap-1 mb-2">
+                                <div className="flex-1 max-w-[40%]">
                                   <Input
                                     type="time"
                                     value={breakPeriod.breakStart}
                                     onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
-                                    className="h-7 text-xs w-full min-w-0 px-1"
+                                    className="h-7 text-xs w-full px-1 max-w-full"
                                     placeholder="Inicio"
+                                    style={{ fontSize: '10px' }}
                                   />
                                 </div>
-                                <div className="col-span-1 text-center">
-                                  <span className="text-xs text-muted-foreground">-</span>
-                                </div>
-                                <div className="col-span-5 min-w-0">
+                                <span className="text-xs text-muted-foreground px-1">-</span>
+                                <div className="flex-1 max-w-[40%]">
                                   <Input
                                     type="time"
                                     value={breakPeriod.breakEnd || ''}
                                     onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
-                                    className="h-7 text-xs w-full min-w-0 px-1"
+                                    className="h-7 text-xs w-full px-1 max-w-full"
                                     placeholder="Fin"
+                                    style={{ fontSize: '10px' }}
                                   />
                                 </div>
-                                <div className="col-span-1">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleRemoveBreakPeriod(index)}
-                                    className="h-7 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </Button>
-                                </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleRemoveBreakPeriod(index)}
+                                  className="h-7 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
                               </div>
                             ))}
                             
