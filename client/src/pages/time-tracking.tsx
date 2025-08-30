@@ -1180,9 +1180,9 @@ export default function TimeTracking() {
       const sessionElapsedMs = now.getTime() - sessionStart.getTime();
       
       return (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
-          <div className="relative h-4">
+          <div className="relative h-3">
             {/* Descansos completados */}
             {completedBreaks.map((breakPeriod: any, breakIndex: number) => {
               const breakStart = new Date(breakPeriod.breakStart);
@@ -2240,28 +2240,28 @@ export default function TimeTracking() {
                     const isEditing = editingSession === dayData.sessions[0]?.id;
                     
                     result.push(
-                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-10">
+                      <tr key={`day-${dayData.date}-${dayData.userId}`} className="hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-700 h-8">
                         <td className="py-1 px-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <UserAvatar 
                               fullName={dayData.userName || 'Usuario Desconocido'} 
-                              size="md"
+                              size="sm"
                               userId={dayData.userId}
                               profilePicture={dayData.profilePicture}
                             />
                             <div className="flex items-center gap-2">
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
+                              <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                                 {dayData.userName || 'Usuario Desconocido'}
                               </div>
                               {dayData.hasAutoCompleted && (
                                 <div className="flex items-center" title="Esta sesión fue cerrada automáticamente por el sistema">
-                                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                  <AlertTriangle className="w-3 h-3 text-amber-500" />
                                 </div>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="py-1 px-4">
+                        <td className="py-0.5 px-4">
                           {isEditing ? (
                             <div className="w-36">
                               <DatePickerDay
@@ -2277,12 +2277,12 @@ export default function TimeTracking() {
                               />
                             </div>
                           ) : (
-                            <div className="text-gray-700 dark:text-gray-300">
+                            <div className="text-gray-700 dark:text-gray-300 text-sm">
                               {format(new Date(dayData.date), 'dd/MM/yyyy')}
                             </div>
                           )}
                         </td>
-                        <td className="py-1 px-4 min-w-[300px]">
+                        <td className="py-0.5 px-4 min-w-[300px]">
                           {isEditing ? (
                             <div className="space-y-3">
                               {/* Entrada y Salida */}
@@ -2360,9 +2360,9 @@ export default function TimeTracking() {
                             <DailyTimelineBar dayData={dayData} />
                           )}
                         </td>
-                        <td className="py-1 px-4">
-                          <div className="space-y-1">
-                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                        <td className="py-0.5 px-4">
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                               {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                             </div>
                             {/* Show status badge for completed sessions when they exceed work hours */}
@@ -2376,7 +2376,7 @@ export default function TimeTracking() {
                             })()}
                           </div>
                         </td>
-                        <td className="py-1 px-4 text-center">
+                        <td className="py-0.5 px-4 text-center">
                           {isEditing ? (
                             <div className="flex gap-2 justify-center">
                               <Button
@@ -2623,9 +2623,9 @@ export default function TimeTracking() {
                 const sessionIsIncomplete = isSessionIncomplete(session);
                 
                 result.push(
-                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-2 p-3 shadow-sm">
+                  <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-1 p-2 shadow-sm">
                     {/* Header with employee and date */}
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-3">
                         <UserAvatar 
                           fullName={dayData.userName || 'Usuario Desconocido'} 
@@ -2708,7 +2708,7 @@ export default function TimeTracking() {
                     </div>
                     
                     {/* Timeline or edit mode */}
-                    <div className="space-y-1">
+                    <div>
                       {isEditing ? (
                         <div className="space-y-3">
                           {/* Date picker for editing */}
@@ -2806,7 +2806,7 @@ export default function TimeTracking() {
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-muted rounded-lg p-2">
+                        <div className="bg-muted rounded-lg p-1">
                           <DailyTimelineBar dayData={dayData} />
                         </div>
                       )}
