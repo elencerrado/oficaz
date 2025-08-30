@@ -1360,12 +1360,11 @@ export default function TimeTracking() {
                 <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
               </div>
               
-              {/* "Incompleto" status */}
-              <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(100%)' }}>
-                <span className="text-xs font-medium mr-1 text-red-600">
+              {/* "Incompleto" status - now as badge below */}
+              <div className="absolute flex items-center" style={{ left: '0%', top: '20px' }}>
+                <Badge variant="destructive" className="text-xs">
                   Incompleto
-                </span>
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                </Badge>
               </div>
             </div>
           </div>
