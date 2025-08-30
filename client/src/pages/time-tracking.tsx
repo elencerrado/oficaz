@@ -2730,26 +2730,24 @@ export default function TimeTracking() {
                           {/* Entry and exit times */}
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="flex gap-2">
-                              <div className="flex-1 max-w-[calc(50%-4px)]">
+                            <div className="flex gap-1">
+                              <div className="w-[120px]">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-7 text-xs w-full px-1 max-w-full"
-                                  placeholder="Entrada"
-                                  style={{ fontSize: '11px' }}
+                                  className="h-7 w-full px-1"
+                                  style={{ fontSize: '10px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="flex-1 max-w-[calc(50%-4px)]">
+                              <div className="w-[120px]">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-7 text-xs w-full px-1 max-w-full"
-                                  placeholder="Salida"
-                                  style={{ fontSize: '11px' }}
+                                  className="h-7 w-full px-1"
+                                  style={{ fontSize: '10px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
                               </div>
