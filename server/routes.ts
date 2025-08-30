@@ -3151,20 +3151,50 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'File not found on server' });
       }
 
-      // Set content type
-      res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+      // Set content type based on file extension if mimeType is not available
+      let contentType = document.mimeType;
+      if (!contentType) {
+        const ext = path.extname(document.originalName || document.fileName).toLowerCase();
+        switch (ext) {
+          case '.pdf':
+            contentType = 'application/pdf';
+            break;
+          case '.jpg':
+          case '.jpeg':
+            contentType = 'image/jpeg';
+            break;
+          case '.png':
+            contentType = 'image/png';
+            break;
+          case '.gif':
+            contentType = 'image/gif';
+            break;
+          case '.txt':
+            contentType = 'text/plain';
+            break;
+          default:
+            contentType = 'application/octet-stream';
+        }
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      
+      // Set CORS headers to allow iframe embedding
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
       
       // Set disposition based on whether it's preview or download
       if (isPreview) {
-        console.log(`Setting inline disposition for preview: ${document.originalName}`);
-        res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+        console.log(`Setting inline disposition for preview: ${document.originalName} (${contentType})`);
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(document.originalName)}"`);
       } else {
-        console.log(`Setting attachment disposition for download: ${document.originalName}`);
-        res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+        console.log(`Setting attachment disposition for download: ${document.originalName} (${contentType})`);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.originalName)}"`);
       }
 
-      // Send file
-      res.sendFile(filePath);
+      // Send file with absolute path
+      const absolutePath = path.resolve(filePath);
+      res.sendFile(absolutePath);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
