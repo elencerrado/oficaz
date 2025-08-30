@@ -614,6 +614,11 @@ export default function AdminDocuments() {
   };
 
   // Handle secure document viewing
+  // Detect iOS devices
+  const isIOS = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  };
+
   const handleViewDocument = async (docId: number) => {
     try {
       const authData = localStorage.getItem('authData');
@@ -628,7 +633,29 @@ export default function AdminDocuments() {
         return;
       }
 
-      // Fetch document with authentication and open in new tab
+      // For iOS devices, use direct link approach
+      if (isIOS()) {
+        // Create a direct download link with token in query parameter
+        const downloadUrl = `/api/documents/${docId}/download?view=true&token=${encodeURIComponent(token)}`;
+        
+        // Create a temporary link element and click it
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Documento abierto",
+          description: "El documento se ha abierto en una nueva pestaña",
+        });
+        
+        return;
+      }
+
+      // For desktop browsers, use blob approach
       const response = await fetch(`/api/documents/${docId}/download?preview=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -644,6 +671,17 @@ export default function AdminDocuments() {
       
       // Open in new tab
       const newWindow = window.open(blobUrl, '_blank');
+      
+      if (!newWindow) {
+        // Fallback: create download link if popup was blocked
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
       
       // Clean up blob URL after opening
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);

@@ -3078,10 +3078,10 @@ Responde directamente a este email para contactar con la persona.
   const authenticateTokenOrQuery = (req: any, res: any, next: any) => {
     let token = req.headers.authorization?.split(' ')[1];
     
-    // If no token in headers, try query parameter
+    // If no token in headers, try query parameter (iOS/iPad compatibility)
     if (!token && req.query.token) {
       token = req.query.token;
-      // Using token from query parameter
+      console.log(`Using token from query parameter for iOS/iPad compatibility`);
     } else if (token) {
       // Using token from headers
     }
