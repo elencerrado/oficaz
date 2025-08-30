@@ -2649,20 +2649,20 @@ export default function TimeTracking() {
                       </div>
                       
                       {/* Action button */}
-                      <div className="flex items-center gap-1 min-w-0">
-                        <div className="text-right min-w-0 flex-shrink-0">
+                      <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                        <div className="text-right">
                           <div className="font-medium text-foreground text-sm">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                           {totalDayHours > 0 && (() => {
                             const status = calculateSessionStatus(dayData);
                             return status === 'incomplete' ? (
-                              <Badge variant="destructive" className="text-xs whitespace-nowrap">
-                                Incompleto
+                              <Badge variant="destructive" className="text-xs text-[10px] px-1 py-0">
+                                Inc.
                               </Badge>
                             ) : status === 'working' ? (
-                              <Badge variant="default" className="text-xs bg-green-500 text-white whitespace-nowrap">
-                                Trabajando
+                              <Badge variant="default" className="text-xs text-[10px] bg-green-500 text-white px-1 py-0">
+                                Trab.
                               </Badge>
                             ) : null;
                           })()}
