@@ -818,7 +818,7 @@ export default function AdminDocuments() {
                 </Select>
                 
                 {/* View Mode Toggle */}
-                <div className="flex bg-gray-100 rounded-lg p-1">
+                <div className="flex bg-muted rounded-lg p-1">
                   <Button
                     variant={viewMode === 'list' ? 'default' : 'ghost'}
                     size="sm"
@@ -839,7 +839,7 @@ export default function AdminDocuments() {
               </div>
 
               {/* Results count */}
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 Mostrando {(filteredDocuments || []).length} documento{(filteredDocuments || []).length !== 1 ? 's' : ''}
               </div>
 
@@ -855,18 +855,18 @@ export default function AdminDocuments() {
                           key={document.id}
                           className="flex items-center p-4 border border-border rounded-lg hover:bg-muted bg-card"
                         >
-                          <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 mr-4">
-                            <FileIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
+                          <div className="p-2 rounded-lg bg-muted mr-4">
+                            <FileIcon className="h-6 w-6 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                            <h3 className="font-medium text-foreground truncate">
                               {document.originalName || document.fileName || 'Documento sin nombre'}
                             </h3>
                             <div className="flex items-center gap-4 mt-1">
-                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                              <span className="text-sm text-muted-foreground">
                                 {document.user?.fullName || 'Empleado desconocido'}
                               </span>
-                              <span className="text-sm text-gray-500 dark:text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {formatFileSize(document.fileSize)}
                               </span>
                               <span className="text-sm text-gray-500 dark:text-gray-500">
