@@ -2654,18 +2654,6 @@ export default function TimeTracking() {
                           <div className="font-medium text-foreground text-sm">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
-                          {totalDayHours > 0 && (() => {
-                            const status = calculateSessionStatus(dayData);
-                            return status === 'incomplete' ? (
-                              <Badge variant="destructive" className="text-xs text-[10px] px-1 py-0">
-                                Inc.
-                              </Badge>
-                            ) : status === 'working' ? (
-                              <Badge variant="default" className="text-xs text-[10px] bg-green-500 text-white px-1 py-0">
-                                Trab.
-                              </Badge>
-                            ) : null;
-                          })()}
                         </div>
                         
                         {isEditing ? (
@@ -2816,8 +2804,28 @@ export default function TimeTracking() {
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-muted rounded-lg p-1">
-                          <DailyTimelineBar dayData={dayData} />
+                        <div className="space-y-1">
+                          <div className="bg-muted rounded-lg p-1">
+                            <DailyTimelineBar dayData={dayData} />
+                          </div>
+                          
+                          {/* Status badge below timeline - mobile only */}
+                          {totalDayHours > 0 && (() => {
+                            const status = calculateSessionStatus(dayData);
+                            return status === 'incomplete' ? (
+                              <div className="flex justify-start">
+                                <Badge variant="destructive" className="text-xs">
+                                  Incompleto
+                                </Badge>
+                              </div>
+                            ) : status === 'working' ? (
+                              <div className="flex justify-start">
+                                <Badge variant="default" className="text-xs bg-green-500 text-white">
+                                  Trabajando
+                                </Badge>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       )}
                     </div>
