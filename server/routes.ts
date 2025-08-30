@@ -3097,23 +3097,50 @@ Responde directamente a este email para contactar con la persona.
 
       const filePath = path.join(uploadDir, document.fileName);
       
-      // If physical file doesn't exist but it's a demo document, serve a placeholder PDF
-      if (!fs.existsSync(filePath) && (document.fileName.includes('nomina') || document.fileName.includes('contrato'))) {
-        // Set headers for PDF viewing/downloading
-        res.setHeader('Content-Type', 'application/pdf');
+      // If physical file doesn't exist, check if it's a demo document or serve a placeholder PDF
+      if (!fs.existsSync(filePath)) {
+        console.log(`File not found at ${filePath}, checking if it's a demo document...`);
         
-        // If view parameter, display inline; otherwise download
-        if (req.query.view === 'true') {
-          res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
-        } else {
-          res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
-        }
+        // Get document owner to check if it's from Test Company
+        const documentOwner = await storage.getUser(document.userId);
+        const isTestCompanyDocument = documentOwner?.companyId === 1; // Test Company has ID 1
+        const isDemoDocument = isTestCompanyDocument || 
+                              document.fileName.includes('nomina') || 
+                              document.fileName.includes('contrato') ||
+                              document.originalName.toLowerCase().includes('demo') ||
+                              document.originalName.toLowerCase().includes('prueba');
         
-        // Create a proper PDF with realistic content
-        const docType = document.fileName.includes('nomina') ? 'NÓMINA' : 'CONTRATO';
-        const currentDate = new Date().toLocaleDateString('es-ES');
-        
-        const pdfContent = Buffer.from(`%PDF-1.4
+        if (isDemoDocument) {
+          console.log(`Generating demo PDF for document: ${document.originalName}`);
+          
+          // Set headers for PDF viewing/downloading
+          res.setHeader('Content-Type', 'application/pdf');
+          
+          // If view parameter, display inline; otherwise download
+          if (req.query.view === 'true') {
+            res.setHeader('Content-Disposition', `inline; filename="${document.originalName}"`);
+          } else {
+            res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
+          }
+          
+          // Determine document type from filename or original name
+          let docType = 'DOCUMENTO';
+          const fileName = (document.originalName || document.fileName).toLowerCase();
+          if (fileName.includes('nomina') || fileName.includes('nómina')) {
+            docType = 'NÓMINA';
+          } else if (fileName.includes('contrato')) {
+            docType = 'CONTRATO';
+          } else if (fileName.includes('dni') || fileName.includes('nie')) {
+            docType = 'DOCUMENTO IDENTIDAD';
+          } else if (fileName.includes('justificante')) {
+            docType = 'JUSTIFICANTE';
+          }
+          
+          const currentDate = new Date().toLocaleDateString('es-ES');
+          const employeeName = documentOwner?.fullName || 'Empleado';
+          const companyName = isTestCompanyDocument ? 'Test Company S.L.' : 'Oficaz S.L.';
+          
+          const pdfContent = Buffer.from(`%PDF-1.4
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
@@ -3124,7 +3151,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
 endobj
 4 0 obj
-<< /Length 300 >>
+<< /Length 400 >>
 stream
 BT
 /F1 18 Tf
@@ -3135,9 +3162,9 @@ BT
 (${document.originalName}) Tj
 0 -30 Td
 0 -20 Td
-(Empleado: Juan Ramirez) Tj
+(Empleado: ${employeeName}) Tj
 0 -20 Td
-(Empresa: Test Company S.L.) Tj
+(Empresa: ${companyName}) Tj
 0 -20 Td
 (Fecha: ${currentDate}) Tj
 0 -30 Td
@@ -3145,6 +3172,11 @@ BT
 (Este es un documento de prueba generado por Oficaz.) Tj
 0 -20 Td
 (Documento válido para demostraciones del sistema.) Tj
+0 -30 Td
+0 -20 Td
+(ID del documento: ${document.id}) Tj
+0 -20 Td
+(Archivo: ${document.fileName}) Tj
 ET
 endstream
 endobj
@@ -3161,18 +3193,18 @@ xref
 0000000053 00000 n 
 0000000100 00000 n 
 0000000229 00000 n 
-0000000580 00000 n 
-0000000640 00000 n 
+0000000680 00000 n 
+0000000740 00000 n 
 trailer
 << /Size 7 /Root 1 0 R >>
 startxref
-695
+795
 %%EOF`);
+          
+          return res.send(pdfContent);
+        }
         
-        return res.send(pdfContent);
-      }
-      
-      if (!fs.existsSync(filePath)) {
+        // If we reach here, no demo document was generated
         return res.status(404).json({ message: 'File not found on server' });
       }
 
