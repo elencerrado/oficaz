@@ -1360,11 +1360,12 @@ export default function TimeTracking() {
                 <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
               </div>
               
-              {/* "Incompleto" status - now as badge below */}
-              <div className="absolute flex items-center" style={{ left: '0%', top: '20px' }}>
-                <Badge variant="destructive" className="text-xs">
+              {/* "Incompleto" status */}
+              <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(50%)' }}>
+                <span className="text-xs font-medium mr-1 text-red-600 whitespace-nowrap">
                   Incompleto
-                </Badge>
+                </span>
+                <div className="w-2 h-2 rounded-full bg-red-500"></div>
               </div>
             </div>
           </div>
@@ -2808,23 +2809,7 @@ export default function TimeTracking() {
                             <DailyTimelineBar dayData={dayData} />
                           </div>
                           
-                          {/* Status badge below timeline - mobile only */}
-                          {totalDayHours > 0 && (() => {
-                            const status = calculateSessionStatus(dayData);
-                            return status === 'incomplete' ? (
-                              <div className="flex justify-start">
-                                <Badge variant="destructive" className="text-xs">
-                                  Incompleto
-                                </Badge>
-                              </div>
-                            ) : status === 'working' ? (
-                              <div className="flex justify-start">
-                                <Badge variant="default" className="text-xs bg-green-500 text-white">
-                                  Trabajando
-                                </Badge>
-                              </div>
-                            ) : null;
-                          })()}
+
                         </div>
                       )}
                     </div>
