@@ -1153,11 +1153,9 @@ export default function TimeTracking() {
     
     // Only show "Trabajando" status for TODAY's active sessions
     // For past days with incomplete sessions, use the normal completed view + badge
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const dayDate = dayData.date || (dayData.sessions[0]?.clockIn ? format(new Date(dayData.sessions[0].clockIn), 'yyyy-MM-dd') : '');
-    const isToday = dayDate === today;
+    const isTodaySession = dayData.sessions[0]?.clockIn ? isToday(new Date(dayData.sessions[0].clockIn)) : false;
     
-    if (hasActiveSessions && isToday) {
+    if (hasActiveSessions && isTodaySession) {
       // Handle TODAY's active sessions - show current status with same visual style
       const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
       const sessionStart = new Date(activeSession.clockIn);
