@@ -347,9 +347,13 @@ export default function AdminDashboard() {
         return format(clockDate, "'el' dd/MM 'a las' HH:mm", { locale: es });
       }
     }
-    if (recentSessions?.length > 0) {
-      const lastEvent = recentSessions[0];
-      return format(parseISO(lastEvent.timestamp), "'el' dd/MM 'a las' HH:mm", { locale: es });
+    // Filter sessions to show only admin's own sessions
+    if (recentSessions?.length > 0 && user?.fullName) {
+      const adminSessions = recentSessions.filter(session => session.userName === user.fullName);
+      if (adminSessions.length > 0) {
+        const lastEvent = adminSessions[0];
+        return format(parseISO(lastEvent.timestamp), "'el' dd/MM 'a las' HH:mm", { locale: es });
+      }
     }
     return 'No hay fichajes recientes';
   };
