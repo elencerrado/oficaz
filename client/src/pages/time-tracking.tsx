@@ -2730,26 +2730,26 @@ export default function TimeTracking() {
                           {/* Entry and exit times */}
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="flex space-x-2">
-                              <div className="flex-1">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
-                                  className="h-8 text-sm"
+                                  className="h-8 text-xs w-full"
                                   placeholder="Entrada"
                                 />
-                                <span className="text-xs text-muted-foreground mt-1 block">Entrada</span>
+                                <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="flex-1">
+                              <div>
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
-                                  className="h-8 text-sm"
+                                  className="h-8 text-xs w-full"
                                   placeholder="Salida"
                                 />
-                                <span className="text-xs text-muted-foreground mt-1 block">Salida</span>
+                                <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
                               </div>
                             </div>
                           </div>
@@ -2770,31 +2770,39 @@ export default function TimeTracking() {
                             </div>
                             
                             {editData.breakPeriods.map((breakPeriod, index) => (
-                              <div key={index} className="flex items-center space-x-2 mb-2">
-                                <Input
-                                  type="time"
-                                  value={breakPeriod.breakStart}
-                                  onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
-                                  className="flex-1 h-7 text-xs"
-                                  placeholder="Inicio"
-                                />
-                                <span className="text-xs text-muted-foreground">-</span>
-                                <Input
-                                  type="time"
-                                  value={breakPeriod.breakEnd || ''}
-                                  onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
-                                  className="flex-1 h-7 text-xs"
-                                  placeholder="Fin"
-                                />
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveBreakPeriod(index)}
-                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
+                              <div key={index} className="grid grid-cols-12 gap-1 items-center mb-2">
+                                <div className="col-span-5">
+                                  <Input
+                                    type="time"
+                                    value={breakPeriod.breakStart}
+                                    onChange={(e) => handleUpdateBreakPeriod(index, 'breakStart', e.target.value)}
+                                    className="h-7 text-xs w-full"
+                                    placeholder="Inicio"
+                                  />
+                                </div>
+                                <div className="col-span-1 text-center">
+                                  <span className="text-xs text-muted-foreground">-</span>
+                                </div>
+                                <div className="col-span-5">
+                                  <Input
+                                    type="time"
+                                    value={breakPeriod.breakEnd || ''}
+                                    onChange={(e) => handleUpdateBreakPeriod(index, 'breakEnd', e.target.value)}
+                                    className="h-7 text-xs w-full"
+                                    placeholder="Fin"
+                                  />
+                                </div>
+                                <div className="col-span-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleRemoveBreakPeriod(index)}
+                                    className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               </div>
                             ))}
                             
