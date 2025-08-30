@@ -1361,8 +1361,8 @@ export default function TimeTracking() {
               </div>
               
               {/* "Incompleto" status */}
-              <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(-100%)' }}>
-                <span className="text-xs font-medium mr-1 text-red-600 whitespace-nowrap">
+              <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
+                <span className="text-xs font-medium text-red-600 whitespace-nowrap mr-1">
                   Incompleto
                 </span>
                 <div className="w-2 h-2 rounded-full bg-red-500"></div>
