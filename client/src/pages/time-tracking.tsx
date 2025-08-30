@@ -85,7 +85,7 @@ export default function TimeTracking() {
   const [tooltipContent, setTooltipContent] = useState('');
   const [activeStatsFilter, setActiveStatsFilter] = useState<'today' | 'week' | 'month' | 'incomplete' | null>(null);
 
-  // Optimized query with restored functionality
+  // Optimized query with real-time updates
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['/api/work-sessions/company?limit=40'], // Load 40 sessions with full data
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
@@ -93,8 +93,8 @@ export default function TimeTracking() {
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 2,
     retryDelay: 750,
-    refetchInterval: false,
-    refetchIntervalInBackground: false,
+    refetchInterval: 30 * 1000, // Refresh every 30 seconds for real-time updates
+    refetchIntervalInBackground: true, // Keep updating even when window is not focused
   });
 
   // Employees with ultra-aggressive caching 
