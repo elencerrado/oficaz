@@ -2625,16 +2625,16 @@ export default function TimeTracking() {
                 result.push(
                   <div key={`day-${dayData.date}-${dayData.userId}`} className="bg-background border border-border rounded-lg mx-4 mb-1 px-3 py-2 shadow-sm">
                     {/* Header with employee and date */}
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between mb-1 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <UserAvatar 
                           fullName={dayData.userName || 'Usuario Desconocido'} 
                           size="sm"
                           userId={dayData.userId}
                           profilePicture={dayData.profilePicture}
                         />
-                        <div>
-                          <div className="font-medium text-foreground text-sm">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-foreground text-sm truncate">
                             {dayData.userName || 'Usuario Desconocido'}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -2642,23 +2642,27 @@ export default function TimeTracking() {
                           </div>
                         </div>
                         {dayData.hasAutoCompleted && (
-                          <div className="flex items-center" title="Esta sesión fue cerrada automáticamente por el sistema">
+                          <div className="flex items-center flex-shrink-0" title="Esta sesión fue cerrada automáticamente por el sistema">
                             <AlertTriangle className="w-4 h-4 text-amber-500" />
                           </div>
                         )}
                       </div>
                       
                       {/* Action button */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-right">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <div className="text-right min-w-0 flex-shrink-0">
                           <div className="font-medium text-foreground text-sm">
                             {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                           {totalDayHours > 0 && (() => {
                             const status = calculateSessionStatus(dayData);
                             return status === 'incomplete' ? (
-                              <Badge variant="destructive" className="text-xs">
+                              <Badge variant="destructive" className="text-xs whitespace-nowrap">
                                 Incompleto
+                              </Badge>
+                            ) : status === 'working' ? (
+                              <Badge variant="default" className="text-xs bg-green-500 text-white whitespace-nowrap">
+                                Trabajando
                               </Badge>
                             ) : null;
                           })()}
