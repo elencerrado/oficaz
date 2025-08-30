@@ -30,10 +30,11 @@ Preferred communication style: Simple, everyday language.
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
 ### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
-- **Color Palette**: Standardized vivid colors for all reminders (#FFE6E6, #FFE6CC, #FFEB99, #E6F7E6, #E6F3FF, #F0E6FF, #FFE6F7, #F5F5F5, #FFD4B3, #D4F4DD, #B3E5FC, #F8BBD9)
+- **Color Palette**: Standardized vivid and distinct colors for all reminders (#FFB3BA coral red, #FFDFBA peach orange, #FFFFBA bright yellow, #BAFFC9 bright green, #BAE1FF bright blue, #E6B3FF bright purple, #FFB3E6 bright pink, #F0F0F0 light gray, #FFD1A9 warm orange, #A9F5BC fresh mint, #A9D0F5 cool blue, #F5A9D0 rose pink)
 - **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
 - **Action Buttons**: Standardized "Marcar como hecho" button with icons and improved visibility
-- **Demo Data**: Uses same vivid color palette as user-selectable colors for consistency
+- **Demo Data**: Uses exact same color palette as user-selectable colors for perfect consistency
+- **User confirmed**: "Los colores están mucho mejor" - colors are now vivid and clearly distinguishable
 
 ### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
 - **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data.

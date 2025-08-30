@@ -70,18 +70,18 @@ const PRIORITY_COLORS = {
 };
 
 const REMINDER_COLORS = [
-  '#FFE6E6', // Light red
-  '#FFE6CC', // Light orange  
-  '#FFEB99', // Light yellow
-  '#E6F7E6', // Light green
-  '#E6F3FF', // Light blue
-  '#F0E6FF', // Light purple
-  '#FFE6F7', // Light pink
-  '#F5F5F5', // Light gray
-  '#FFD4B3', // Peach
-  '#D4F4DD', // Mint
-  '#B3E5FC', // Sky blue
-  '#F8BBD9'  // Rose
+  '#FFB3BA', // Coral red - more vivid
+  '#FFDFBA', // Peach orange - more vivid
+  '#FFFFBA', // Bright yellow - more vivid
+  '#BAFFC9', // Bright green - more vivid
+  '#BAE1FF', // Bright blue - more vivid
+  '#E6B3FF', // Bright purple - more vivid
+  '#FFB3E6', // Bright pink - more vivid
+  '#F0F0F0', // Light gray - neutral
+  '#FFD1A9', // Warm orange - distinct
+  '#A9F5BC', // Fresh mint - distinct
+  '#A9D0F5', // Cool blue - distinct
+  '#F5A9D0'  // Rose pink - distinct
 ];
 
 // Component to display assigned user avatars with a limit
@@ -299,11 +299,11 @@ export default function Reminders() {
       content: '',
       reminderDate: '',
       priority: 'medium',
-      color: '#FFE6E6',
+      color: '#FFB3BA',
       showBanner: false,
       assignedUserIds: []
     });
-    setSelectedColor('#FFE6E6');
+    setSelectedColor('#FFB3BA');
     setEditingReminder(null);
     setEmployeeSearchTerm('');
   };
