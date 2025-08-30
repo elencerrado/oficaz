@@ -929,9 +929,9 @@ export default function VacationManagement() {
                   </div>
 
                   {/* Mobile: Header compacto */}
-                  <div className="md:hidden p-3 border-b bg-gray-50 space-y-3">
+                  <div className="md:hidden p-3 border-b bg-muted space-y-3">
                     {/* Leyenda móvil */}
-                    <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
+                    <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
                         <span>Aprobado</span>
@@ -956,7 +956,7 @@ export default function VacationManagement() {
                         </Button>
                         
                         <div className="text-center min-w-[100px]">
-                          <span className="text-xs font-medium text-gray-900">
+                          <span className="text-xs font-medium text-foreground">
                             {timelineViewMode === 'month' 
                               ? format(timelineViewDate, "MMM yyyy", { locale: es })
                               : `${format(subMonths(timelineViewDate, 1), "MMM", { locale: es })} - ${format(addMonths(timelineViewDate, 1), "MMM yyyy", { locale: es })}`
