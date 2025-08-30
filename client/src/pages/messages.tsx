@@ -179,26 +179,14 @@ export default function Messages() {
           });
         }
 
-        // MÉTODO 2: Forzar scroll en contenedores específicos
-        const adminDesktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
-        if (adminDesktopContainer) {
-          adminDesktopContainer.scrollTop = adminDesktopContainer.scrollHeight;
-        }
-
-        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50');
-        if (adminMobileContainer) {
-          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
-        }
-
-        const employeeContainer = document.querySelector('.min-h-screen.bg-employee-gradient .overflow-y-auto');
-        if (employeeContainer) {
-          employeeContainer.scrollTop = employeeContainer.scrollHeight;
-        }
-
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-      }, 300);
+        // Usar la función de scroll mejorada
+        scrollToBottom();
+        
+        // Múltiples intentos para garantizar el scroll después del envío
+        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 300);
+        setTimeout(scrollToBottom, 500);
+      }, 100);
     } catch (error) {
       console.error('Error sending employee message:', error);
     }
@@ -251,53 +239,67 @@ export default function Messages() {
     return handleKeyboardVisibility();
   }, []);
 
-  // ⚠️ PROTECTED: Auto-scroll forzando scroll en contenedores exactos - DO NOT MODIFY
+  // ⚠️ PROTECTED: Auto-scroll mejorado con múltiples métodos - DO NOT MODIFY
+  const scrollToBottom = useCallback(() => {
+    // MÉTODO 1: Usar scrollIntoView en messagesEndRef
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'auto', 
+        block: 'end',
+        inline: 'nearest'
+      });
+    }
+
+    // MÉTODO 2: Scroll directo en contenedores más específicos
+    // Admin desktop - buscar contenedor de mensajes más específico
+    const adminDesktopMessages = document.querySelector('[class*="overflow-y-auto"][class*="p-4"][class*="bg-gray-50"]');
+    if (adminDesktopMessages) {
+      adminDesktopMessages.scrollTop = adminDesktopMessages.scrollHeight;
+    }
+
+    // Admin mobile - contenedor específico
+    const adminMobileMessages = document.querySelector('[class*="overflow-y-auto"][class*="px-4"][class*="bg-gray-50"]');
+    if (adminMobileMessages) {
+      adminMobileMessages.scrollTop = adminMobileMessages.scrollHeight;
+    }
+
+    // Buscar cualquier contenedor con overflow-y-auto que contenga mensajes
+    const scrollableContainers = document.querySelectorAll('.overflow-y-auto');
+    scrollableContainers.forEach(container => {
+      if (container.querySelector('[data-message-id]') || container.textContent?.includes('mensaje')) {
+        (container as HTMLElement).scrollTop = (container as HTMLElement).scrollHeight;
+      }
+    });
+
+    // MÉTODO 3: Usar messagesContainerRef si existe
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+
+    // MÉTODO 4: Buscar contenedor padre de los mensajes por clase
+    const messageContainer = document.querySelector('.space-y-4')?.parentElement;
+    if (messageContainer && messageContainer.classList.contains('overflow-y-auto')) {
+      messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+
+    return true;
+  }, []);
+
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0) {
-      const scrollToBottom = () => {
-        // MÉTODO 1: Usar scrollIntoView en messagesEndRef
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ 
-            behavior: 'auto', 
-            block: 'end',
-            inline: 'nearest'
-          });
-        }
-
-        // MÉTODO 2: Forzar scroll en contenedores específicos
-        // Vista admin desktop: flex-1 overflow-y-auto p-4 bg-gray-50
-        const adminDesktopContainer = document.querySelector('.flex-1.overflow-y-auto.p-4.bg-gray-50');
-        if (adminDesktopContainer) {
-          adminDesktopContainer.scrollTop = adminDesktopContainer.scrollHeight;
-        }
-
-        // Vista admin móvil: overflow-y-auto px-4 bg-gray-50
-        const adminMobileContainer = document.querySelector('.flex-1.overflow-y-auto.px-4.bg-gray-50');
-        if (adminMobileContainer) {
-          adminMobileContainer.scrollTop = adminMobileContainer.scrollHeight;
-        }
-
-        // Vista empleado: el contenedor con el fondo degradado
-        const employeeContainer = document.querySelector('.min-h-screen.bg-employee-gradient .overflow-y-auto');
-        if (employeeContainer) {
-          employeeContainer.scrollTop = employeeContainer.scrollHeight;
-        }
-
-        // MÉTODO 3: Usar messagesContainerRef si existe
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-        }
-
-        return true;
-      };
-
-      // Scroll inmediato y después delay para asegurar que DOM está listo
+      // Scroll inmediato
       scrollToBottom();
-      const timer = setTimeout(scrollToBottom, 300);
+      
+      // Múltiples intentos para asegurar el scroll
+      const timers = [
+        setTimeout(scrollToBottom, 100),
+        setTimeout(scrollToBottom, 300),
+        setTimeout(scrollToBottom, 500)
+      ];
 
-      return () => clearTimeout(timer);
+      return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [selectedChat, messages?.length]);
+  }, [selectedChat, messages?.length, scrollToBottom]);
 
 
 
@@ -640,6 +642,7 @@ export default function Messages() {
                               {group.messages.map((message) => (
                                 <div
                                   key={message.id}
+                                  data-message-id={message.id}
                                   className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                                 >
                                   <div
@@ -846,6 +849,7 @@ export default function Messages() {
                           {group.messages.map((message) => (
                             <div
                               key={message.id}
+                              data-message-id={message.id}
                               className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                             >
                               <div
@@ -1258,7 +1262,7 @@ export default function Messages() {
                         {/* Messages for this date */}
                         <div className="space-y-3">
                           {group.messages.map((message) => (
-                            <div key={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                            <div key={message.id} data-message-id={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
                               <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
