@@ -1182,7 +1182,7 @@ export default function TimeTracking() {
       return (
         <div className="space-y-0.5">
           {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
-          <div className="relative h-3">
+          <div className="relative h-4">
             {/* Descansos completados */}
             {completedBreaks.map((breakPeriod: any, breakIndex: number) => {
               const breakStart = new Date(breakPeriod.breakStart);
@@ -1341,7 +1341,7 @@ export default function TimeTracking() {
       if (elapsedHours > maxHours) {
         return (
           <div className="space-y-0.5">
-            {/* Contenedor vacío para mantener consistencia de altura con otras filas */}
+            {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
             <div className="relative h-4"></div>
             
             {/* Simple timeline showing incomplete session */}
