@@ -2730,24 +2730,24 @@ export default function TimeTracking() {
                           {/* Entry and exit times */}
                           <div>
                             <label className="text-xs font-medium text-foreground block mb-1">Horarios</label>
-                            <div className="flex gap-1">
-                              <div className="w-[120px]">
+                            <div className="flex gap-3">
+                              <div className="w-[100px]">
                                 <Input
                                   type="time"
                                   value={editData.clockIn}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockIn: e.target.value }))}
                                   className="h-7 w-full px-1"
-                                  style={{ fontSize: '10px' }}
+                                  style={{ fontSize: '9px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Entrada</span>
                               </div>
-                              <div className="w-[120px]">
+                              <div className="w-[100px]">
                                 <Input
                                   type="time"
                                   value={editData.clockOut}
                                   onChange={(e) => setEditData(prev => ({ ...prev, clockOut: e.target.value }))}
                                   className="h-7 w-full px-1"
-                                  style={{ fontSize: '10px' }}
+                                  style={{ fontSize: '9px' }}
                                 />
                                 <span className="text-xs text-muted-foreground mt-0.5 block">Salida</span>
                               </div>
