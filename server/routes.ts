@@ -799,7 +799,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: tomorrow,
       assignedEmployees: [employees[0]], // Solo María García
       createdBy: admin,
-      color: '#fff3cd', // Light yellow - good contrast
+      color: '#FFEB99', // Vivid yellow
       priority: 'high' as const,
     },
     // 2. Multiple employees - assigned to 2 people
@@ -809,7 +809,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: nextWeek,
       assignedEmployees: [employees[0], employees[1]], // María y Carlos
       createdBy: admin,
-      color: '#d4edda', // Light green - good contrast
+      color: '#E6F7E6', // Vivid green
       priority: 'medium' as const,
     },
     // 3. Individual reminder - different employee
@@ -819,7 +819,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[2]], // Solo Ana Fernández
       createdBy: admin,
-      color: '#d1ecf1', // Light blue - good contrast
+      color: '#E6F3FF', // Vivid blue
       priority: 'high' as const,
     },
     // 4. Group task - assigned to 3 employees
@@ -829,7 +829,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[0], employees[1], employees[3]], // María, Carlos y David
       createdBy: admin,
-      color: '#e0f2f1', // Light mint - good contrast
+      color: '#D4F4DD', // Vivid mint
       priority: 'medium' as const,
     },
     // 5. Individual personal reminder
@@ -839,7 +839,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
       assignedEmployees: [employees[3]], // Solo David López
       createdBy: admin,
-      color: '#fef7e0', // Light peach - good contrast
+      color: '#FFD4B3', // Vivid peach
       priority: 'low' as const,
     },
     // 6. Unassigned company reminder (admin only)
@@ -849,7 +849,7 @@ async function generateDemoReminders(companyId: number, employees: any[]) {
       dueDateTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       assignedEmployees: [], // Sin asignar - solo admin
       createdBy: admin,
-      color: '#f8f9fa', // Light gray - good contrast
+      color: '#F0E6FF', // Vivid lavender
       priority: 'medium' as const,
     }
   ];

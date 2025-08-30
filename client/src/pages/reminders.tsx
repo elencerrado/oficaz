@@ -70,8 +70,18 @@ const PRIORITY_COLORS = {
 };
 
 const REMINDER_COLORS = [
-  '#ffffff', '#f8f9fa', '#fff3cd', '#d4edda', '#d1ecf1', '#f8d7da', '#e2e3e5',
-  '#fef7e0', '#e8f5e8', '#e1f5fe', '#fce4ec', '#f3e5f5', '#e0f2f1'
+  '#FFE6E6', // Light red
+  '#FFE6CC', // Light orange  
+  '#FFEB99', // Light yellow
+  '#E6F7E6', // Light green
+  '#E6F3FF', // Light blue
+  '#F0E6FF', // Light purple
+  '#FFE6F7', // Light pink
+  '#F5F5F5', // Light gray
+  '#FFD4B3', // Peach
+  '#D4F4DD', // Mint
+  '#B3E5FC', // Sky blue
+  '#F8BBD9'  // Rose
 ];
 
 // Component to display assigned user avatars with a limit
@@ -289,11 +299,11 @@ export default function Reminders() {
       content: '',
       reminderDate: '',
       priority: 'medium',
-      color: '#ffffff',
+      color: '#FFE6E6',
       showBanner: false,
       assignedUserIds: []
     });
-    setSelectedColor('#ffffff');
+    setSelectedColor('#FFE6E6');
     setEditingReminder(null);
     setEmployeeSearchTerm('');
   };
@@ -849,13 +859,23 @@ export default function Reminders() {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleComplete(reminder)}
-                      className={`h-6 px-2 text-xs ${
+                      className={`h-7 px-3 text-xs font-medium transition-colors ${
                         reminder.isCompleted 
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                          : 'hover:bg-gray-100'
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300' 
+                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
                       }`}
                     >
-                      {reminder.isCompleted ? 'Completado' : 'Marcar como hecho'}
+                      {reminder.isCompleted ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Completado
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Marcar
+                        </span>
+                      )}
                     </Button>
                   </div>
                 </CardContent>

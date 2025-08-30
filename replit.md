@@ -29,6 +29,12 @@ Preferred communication style: Simple, everyday language.
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
+### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
+- **Color Palette**: Standardized vivid colors for all reminders (#FFE6E6, #FFE6CC, #FFEB99, #E6F7E6, #E6F3FF, #F0E6FF, #FFE6F7, #F5F5F5, #FFD4B3, #D4F4DD, #B3E5FC, #F8BBD9)
+- **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
+- **Action Buttons**: Standardized "Marcar como hecho" button with icons and improved visibility
+- **Demo Data**: Uses same vivid color palette as user-selectable colors for consistency
+
 ### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
 - **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data.
 - **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions.
