@@ -1314,9 +1314,9 @@ export default function TimeTracking() {
               <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
             </div>
             
-            {/* Estado actual en tiempo real con punto pulsante - derecha */}
-            <div className="absolute flex items-center" style={{ right: '0%', top: '0px', transform: 'translateX(100%)' }}>
-              <span className={`text-xs font-medium mr-1 ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
+            {/* Estado actual en tiempo real con punto pulsante - MISMO LUGAR que salida */}
+            <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
+              <span className={`text-xs font-medium mr-1 whitespace-nowrap ${activeBreakPeriod ? 'text-orange-600' : 'text-blue-600'}`}>
                 {activeBreakPeriod ? 'En descanso' : 'Trabajando'}
               </span>
               <div className={`w-2 h-2 rounded-full ${activeBreakPeriod ? 'bg-orange-500 animate-pulse' : 'bg-blue-500 animate-pulse'}`}></div>
