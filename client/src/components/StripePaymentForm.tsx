@@ -1,13 +1,5 @@
-import { useState, lazy, Suspense } from 'react';
-
-// Placeholder component for when Stripe is not needed
-function StripeNotAvailable() {
-  return (
-    <div className="p-4 text-center text-gray-500">
-      <p>Sistema de pagos no disponible</p>
-    </div>
-  );
-}
+import { useState } from 'react';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, CheckCircle, X } from 'lucide-react';
@@ -22,12 +14,11 @@ interface StripePaymentFormProps {
 }
 
 export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: StripePaymentFormProps) {
-  // For now, use placeholder until full lazy loading is implemented
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Return not available component for now
-  return <StripeNotAvailable />;
+  const stripe = useStripe();
+  const elements = useElements();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
