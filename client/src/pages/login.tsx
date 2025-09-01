@@ -141,6 +141,16 @@ export default function Login() {
       const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
       console.log('🔐 Frontend login completed successfully:', { hasResponse: !!response });
       
+      // Debug: Check localStorage immediately after login
+      setTimeout(() => {
+        const authDataCheck = localStorage.getItem('authData');
+        console.log('🔍 Debug - localStorage after login:', { 
+          hasAuthData: !!authDataCheck, 
+          dataLength: authDataCheck?.length,
+          preview: authDataCheck?.substring(0, 100) + '...'
+        });
+      }, 500);
+      
       // Handle remember me
       if (rememberMe) {
         localStorage.setItem('rememberedCredentials', JSON.stringify({
@@ -151,8 +161,15 @@ export default function Login() {
         localStorage.removeItem('rememberedCredentials');
       }
       
+      // Wait for auth state to update before redirect
+      console.log('🔐 Login successful, waiting for auth state update...');
+      
+      // Wait a bit for the auth state to be fully updated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Redirect
       const redirectAlias = companyAlias || (response as any)?.company?.companyAlias || 'test';
+      console.log('🔐 Redirecting to:', `/${redirectAlias}/inicio`);
       setLocation(`/${redirectAlias}/inicio`);
       
     } catch (error: any) {

@@ -123,7 +123,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    console.log('🔐 Login response received:', { hasToken: !!data.token, hasUser: !!data.user, tokenPreview: data.token?.substring(0, 20) + '...' });
+    console.log('🔐 Login response received:', { 
+      hasToken: !!data.token, 
+      hasUser: !!data.user, 
+      tokenLength: data.token?.length,
+      userEmail: data.user?.email,
+      companyName: data.company?.name
+    });
     
     // CRITICAL SECURITY FIX: Clear cache when logging into different company
     const previousCompanyId = company?.id;
