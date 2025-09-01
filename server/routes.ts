@@ -2431,6 +2431,15 @@ Responde directamente a este email para contactar con la persona.
 
       const company = await storage.getCompany(user.companyId);
       
+      // CRITICAL: Check if company is scheduled for cancellation and block access
+      if (company?.scheduledForCancellation) {
+        console.log(`🚫 Access denied for cancelled company: ${company.name} (ID: ${company.id})`);
+        return res.status(403).json({ 
+          message: 'Account access suspended due to cancellation. Please contact support to restore your account.',
+          code: 'ACCOUNT_CANCELLED'
+        });
+      }
+      
       const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
 
       res.json({

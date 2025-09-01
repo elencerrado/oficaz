@@ -65,12 +65,14 @@ Preferred communication style: Simple, everyday language.
 - **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 
-### Account Deletion Grace Period Protection (⚠️ BUSINESS LOGIC FIX)
-- **Registration Conflict Prevention**: System now prevents registration with emails/CIFs from companies in 30-day grace period
-- **Smart Error Messages**: Users attempting to register with conflicted data receive specific guidance to restore existing accounts instead
-- **Data Integrity**: Prevents accidental data loss by guiding users to restore rather than recreate accounts
-- **User education**: Clear messaging explains the restoration process vs new registration
-- **Business rule**: "Una empresa borra su cuenta, se guarda 30 días. No puede hacer login pero si intenta registrarse con el mismo email, que ocurre?"
+### Account Cancellation System (⚠️ CRITICAL BUSINESS LOGIC)
+- **Immediate Access Blocking**: When account is cancelled, users are immediately blocked from accessing the system
+- **Authentication Block**: /api/auth/me endpoint checks scheduledForCancellation status and returns 403 error
+- **Recovery Process**: Cancelled accounts can only be accessed through email verification recovery process
+- **No Grace Period Usage**: Unlike trial systems, cancelled accounts cannot continue using the system
+- **Clear Messaging**: Users receive specific message about account cancellation and recovery options
+- **Frontend Handling**: Auth system detects ACCOUNT_CANCELLED error code and redirects to login with message
+- **User Requirement**: "si cancelas no puedes acceder a la cuenta, a menos que la recuperes como hemos hecho al solicitar codigo con el mail que ya existe"
 
 ### Account Recovery Flow System (⚠️ CRITICAL RECOVERY MECHANISM)
 - **Smart Detection**: When requesting verification code, system detects emails from accounts in 30-day grace period

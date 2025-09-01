@@ -29,6 +29,17 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
+  // Check for account cancellation message from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+    if (message === 'account_cancelled') {
+      setLoginError('Tu cuenta ha sido cancelada y el acceso está suspendido. Para recuperar tu cuenta, solicita un código de verificación con tu email.');
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // CRITICAL: Clean up corrupted tokens and ensure proper login state
   useEffect(() => {
     // SECURITY FIX: Ensure clean login state - reset dark mode if coming from logout

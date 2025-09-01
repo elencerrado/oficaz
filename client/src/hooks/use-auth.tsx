@@ -58,6 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               window.location.href = '/login';
               return;
             }
+          } else if (response.status === 403) {
+            // Check if it's a cancelled account
+            const errorData = await response.json();
+            if (errorData.code === 'ACCOUNT_CANCELLED') {
+              console.log('🚫 ACCOUNT CANCELLED - BLOCKING ACCESS');
+              // Clear auth data and redirect to login with a message
+              localStorage.removeItem('authData');
+              window.location.href = '/login?message=account_cancelled';
+              return;
+            }
             
             // CRITICAL SECURITY FIX: Detect company changes and clear cache to prevent data leakage
             const previousCompanyId = company?.id;
