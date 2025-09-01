@@ -384,9 +384,9 @@ export default function Messages() {
     })();
     
     const roleConfig = {
-      admin: { color: 'bg-red-500', letter: 'A', size: 'text-[8px]' },
-      manager: { color: 'bg-orange-500', letter: 'M', size: 'text-[8px]' },
-      employee: { color: 'bg-blue-500', letter: 'E', size: 'text-[8px]' }
+      admin: { color: 'bg-orange-500', letter: 'A', size: 'text-[8px]' },
+      manager: { color: 'bg-purple-500', letter: 'M', size: 'text-[8px]' },
+      employee: { color: 'bg-emerald-600', letter: 'E', size: 'text-[8px]' }
     };
     
     const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.employee;
