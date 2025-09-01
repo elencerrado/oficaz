@@ -34,14 +34,14 @@ export function GlobalDemoBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200 px-4 h-[60px]">
+    <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-green-200 dark:border-green-700 px-4 h-[60px]">
       <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-sm font-bold">✓</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-700 font-medium truncate sm:text-sm">
+            <p className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate sm:text-sm">
               <span className="hidden sm:inline">Te hemos añadido algunos datos de demostración para que curiosees cómo funciona la app</span>
               <span className="sm:hidden">Datos demo añadidos para probar la app</span>
             </p>
@@ -52,7 +52,7 @@ export function GlobalDemoBanner() {
           size="sm"
           variant="outline"
           onClick={handleOpenDeleteDialog}
-          className="text-xs border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 ml-2 flex-shrink-0"
+          className="text-xs border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 ml-2 flex-shrink-0"
         >
           <span className="hidden sm:inline">Borrar datos demo</span>
           <span className="sm:hidden">Borrar</span>
