@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { 
   Clock, 
@@ -30,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TrialManager } from '@/components/TrialManager';
 import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -39,6 +41,7 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
@@ -471,7 +474,7 @@ export default function AdminDashboard() {
                 variant="ghost"
                 size="sm"
                 className="text-xs text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800"
-                onClick={() => setLocation('/test/configuracion')}
+                onClick={() => setShowPaymentModal(true)}
               >
                 Gestionar pago
               </Button>
@@ -1001,6 +1004,27 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gestionar Métodos de Pago</DialogTitle>
+          </DialogHeader>
+          <PaymentMethodManager 
+            paymentMethods={paymentMethods || []}
+            onPaymentSuccess={() => {
+              setShowPaymentModal(false);
+              queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
+              toast({
+                title: "Método de pago añadido",
+                description: "Tu método de pago se ha configurado correctamente",
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
