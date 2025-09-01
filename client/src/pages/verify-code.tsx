@@ -127,10 +127,15 @@ export default function VerifyCode() {
       console.log('Verify response data:', result);
       
       if (response.ok) {
-
-        
-        // Redirect to registration with verification token
-        setLocation(`/register?token=${result.verificationToken}`);
+        // Check if this is account recovery
+        if (result.isRecovery && result.action === 'account_restored') {
+          // Show success message and redirect to login
+          alert('¡Cuenta recuperada exitosamente!\n\nTu cuenta ha sido restaurada con todos tus datos y configuraciones anteriores.\n\nAhora puedes iniciar sesión normalmente.');
+          setLocation('/login');
+        } else {
+          // Normal registration flow - redirect to registration with verification token
+          setLocation(`/register?token=${result.verificationToken}`);
+        }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');
         console.error('Verification error:', result.message || 'El código no es válido o ha expirado.');

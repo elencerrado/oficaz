@@ -109,7 +109,12 @@ export default function RequestCode() {
       console.log('Response data:', result);
       
       if (response.ok) {
-
+        console.log('Verification code sent:', result.message);
+        
+        // Check if this is account recovery
+        if (result.isRecovery) {
+          alert(`Se ha detectado que tu cuenta está programada para eliminación.\n\n✓ Se ha enviado un código de recuperación a tu email\n✓ Usa este código para restaurar tu cuenta con todos tus datos\n✓ Tu suscripción y configuraciones se mantendrán\n\nRevisa tu bandeja de entrada y sigue las instrucciones.`);
+        }
         
         // Redirect to verification page with secure session ID
         const sessionId = result.sessionId;

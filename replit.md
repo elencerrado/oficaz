@@ -72,6 +72,15 @@ Preferred communication style: Simple, everyday language.
 - **User education**: Clear messaging explains the restoration process vs new registration
 - **Business rule**: "Una empresa borra su cuenta, se guarda 30 días. No puede hacer login pero si intenta registrarse con el mismo email, que ocurre?"
 
+### Account Recovery Flow System (⚠️ CRITICAL RECOVERY MECHANISM)
+- **Smart Detection**: When requesting verification code, system detects emails from accounts in 30-day grace period
+- **Recovery Email Template**: Special email template for account recovery vs normal registration
+- **Automatic Restoration**: Code verification automatically cancels deletion schedule and restores account
+- **Data Preservation**: All company data, subscriptions, and configurations are maintained during recovery
+- **User Flow**: Recovery bypasses registration wizard and redirects directly to login after successful restoration
+- **Clear Messaging**: Users receive explicit notifications about recovery process and account status
+- **User requirement**: "en la pagina de registro cuando solicita el codigo, si ya existe el mail, la cuenta se ha borrado y esta en ese peridodo de 30 dias. Se envia el codigo igualmente, pero en lugar del wizard de registro habra una ventana que acepte recuperar la cuenta en el mismo estado"
+
 ### Document Cleanup System (⚠️ CRITICAL SECURITY UPDATE)
 - **Auto-cleanup**: System automatically detects and removes orphaned documents (DB records without physical files)
 - **Security principle**: "Si los documentos no existen físicamente, no deberían aparecer para nadie"

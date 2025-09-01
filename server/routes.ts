@@ -1106,7 +1106,7 @@ Responde directamente a este email para contactar con la persona.
   const generateSecureToken = (): string => crypto.randomBytes(32).toString('hex');
   
   // Helper function to send verification emails
-  const sendVerificationEmail = async (email: string, code: string, req: any) => {
+  const sendVerificationEmail = async (email: string, code: string, req: any, isRecovery = false) => {
     // ⚠️ PROTECTED NODEMAILER CONFIG - DO NOT MODIFY ⚠️
     // MUST use createTransport (NOT createTransporter) - user confirmed working
     const transporter = nodemailer.createTransport({
@@ -1143,12 +1143,24 @@ Responde directamente a este email para contactar con la persona.
       </a>
     `;
 
+    const subject = isRecovery ? 'Código de recuperación de cuenta - Oficaz' : 'Código de verificación - Oficaz';
+    const titleText = isRecovery ? 'Recuperación de cuenta' : 'Verificación de email';
+    const descriptionText = isRecovery 
+      ? 'Tu código para recuperar tu cuenta de <strong>Oficaz</strong>:'
+      : 'Tu código de verificación para <strong>Oficaz</strong>:';
+    const instructionText = isRecovery
+      ? 'Introduce este código para recuperar tu cuenta'
+      : 'Introduce este código en la página de verificación';
+    const textMessage = isRecovery
+      ? `Tu código de recuperación de cuenta para Oficaz es: ${code}. Este código expira en 10 minutos.`
+      : `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`;
+
     const mailOptions = {
       from: '"Oficaz - Sistema de Gestión" <soy@oficaz.es>',
       to: email,
-      subject: 'Código de verificación - Oficaz',
+      subject: subject,
       replyTo: 'soy@oficaz.es',
-      text: `Tu código de verificación para Oficaz es: ${code}. Este código expira en 10 minutos.`,
+      text: textMessage,
       headers: {
         'X-Priority': '1',
         'X-MSMail-Priority': 'High',
@@ -1160,7 +1172,7 @@ Responde directamente a este email para contactar con la persona.
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Código de verificación - Oficaz</title>
+          <title>${subject}</title>
         </head>
         <body style="margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
@@ -1172,10 +1184,10 @@ Responde directamente a este email para contactar con la persona.
 
             <!-- Main content with more padding -->
             <div style="padding: 20px 25px 30px 25px;">
-              <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">Verificación de email</h2>
+              <h2 style="color: #323A46; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; text-align: center;">${titleText}</h2>
               
               <p style="color: #4a5568; font-size: 14px; line-height: 1.4; margin-bottom: 15px; text-align: center;">
-                Tu código de verificación para <strong>Oficaz</strong>:
+                ${descriptionText}
               </p>
 
               <!-- Compact verification code box -->
@@ -1189,9 +1201,9 @@ Responde directamente a este email para contactar con la persona.
               </div>
 
               <!-- Compact instructions -->
-              <div style="background: #FFF3CD; border-left: 4px solid #FFD43B; padding: 10px 12px; margin: 15px 0; border-radius: 4px;">
-                <p style="color: #856404; font-size: 13px; margin: 0; font-weight: 500;">
-                  Introduce este código en la página de verificación
+              <div style="background: ${isRecovery ? '#E3F2FD' : '#FFF3CD'}; border-left: 4px solid ${isRecovery ? '#2196F3' : '#FFD43B'}; padding: 10px 12px; margin: 15px 0; border-radius: 4px;">
+                <p style="color: ${isRecovery ? '#1565C0' : '#856404'}; font-size: 13px; margin: 0; font-weight: 500;">
+                  ${instructionText}
                 </p>
               </div>
             </div>
@@ -1365,6 +1377,53 @@ Responde directamente a este email para contactar con la persona.
       // Check if email is already registered
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
+        // Check if the company is scheduled for deletion (grace period)
+        const cancellationStatus = await storage.getCompanyCancellationStatus(existingUser.companyId);
+        
+        if (cancellationStatus?.scheduledForDeletion) {
+          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+          const now = new Date();
+          
+          if (deletionDate > now) {
+            // Account is in grace period - send verification code but mark for recovery flow
+            const sessionId = generateSecureToken();
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+            const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+            const emailHash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+
+            // Store session with recovery flag
+            verificationSessions.set(sessionId, { 
+              email,
+              emailHash, 
+              code: crypto.createHash('sha256').update(code).digest('hex'),
+              expires, 
+              verified: false,
+              attempts: 0,
+              isRecovery: true, // Flag to indicate this is account recovery
+              companyId: existingUser.companyId,
+              userId: existingUser.id
+            });
+
+            // Send recovery email
+            try {
+              const emailResult = await sendVerificationEmail(email, code, req, true); // true = recovery mode
+              console.log('✅ Recovery email enviado exitosamente:', emailResult.messageId);
+            } catch (emailError) {
+              console.error('❌ Error sending recovery email:', emailError);
+              console.log(`🔐 FALLBACK - CÓDIGO DE RECUPERACIÓN para ${email}: ${code}`);
+            }
+
+            return res.json({ 
+              success: true, 
+              message: 'Código de recuperación enviado',
+              sessionId,
+              isRecovery: true,
+              deletionDate: deletionDate.toISOString(),
+              hint: 'Este email pertenece a una cuenta programada para eliminación. Usa el código para recuperar tu cuenta.'
+            });
+          }
+        }
+        
         return res.status(400).json({ error: 'Este email ya está registrado' });
       }
 
@@ -1546,24 +1605,46 @@ Responde directamente a este email para contactar con la persona.
       // Mark as verified
       session.verified = true;
       
-      // Generate secure verification token (valid for 30 minutes)
-      const verificationToken = generateSecureToken();
-      const tokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
-      
-      verificationTokens.set(verificationToken, {
-        emailHash: session.emailHash,
-        expires: tokenExpires,
-        used: false
-      });
+      // Check if this is a recovery session
+      if (session.isRecovery) {
+        // This is account recovery - restore the company
+        const companyId = session.companyId;
+        const userId = session.userId;
+        
+        // Cancel the deletion schedule
+        await storage.cancelAccountDeletion(companyId);
+        
+        // Clean up verification session
+        verificationSessions.delete(sessionId);
+        
+        console.log(`✅ Account recovery successful for companyId: ${companyId}, userId: ${userId}`);
+        
+        return res.json({ 
+          success: true, 
+          message: 'Cuenta recuperada exitosamente',
+          isRecovery: true,
+          action: 'account_restored'
+        });
+      } else {
+        // Normal registration flow - generate verification token
+        const verificationToken = generateSecureToken();
+        const tokenExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
+        
+        verificationTokens.set(verificationToken, {
+          emailHash: session.emailHash,
+          expires: tokenExpires,
+          used: false
+        });
 
-      // Clean up the session
-      verificationSessions.delete(sessionId);
+        // Clean up the session
+        verificationSessions.delete(sessionId);
 
-      res.json({ 
-        success: true, 
-        message: 'Código verificado correctamente',
-        verificationToken 
-      });
+        res.json({ 
+          success: true, 
+          message: 'Código verificado correctamente',
+          verificationToken 
+        });
+      }
     } catch (error) {
       console.error('Error verifying code:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
