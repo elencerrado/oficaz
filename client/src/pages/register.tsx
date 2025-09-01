@@ -301,13 +301,39 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       } catch (error: any) {
         console.error('Registration failed:', error);
         setShowDemoLoading(false);
-        alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
+        
+        // Handle scheduled deletion conflicts specially
+        if (error.message && error.message.includes('programada para eliminación')) {
+          const isEmailConflict = error.message.includes('email');
+          const isCifConflict = error.message.includes('CIF');
+          
+          const restoreMessage = isEmailConflict 
+            ? 'Si eres el administrador original, puedes restaurar tu cuenta haciendo login en lugar de crear una nueva empresa.'
+            : 'El administrador original puede restaurar la cuenta haciendo login en lugar de crear una nueva empresa.';
+            
+          alert(`${error.message}\n\n${restoreMessage}\n\nSi necesitas ayuda, contacta con soporte técnico.`);
+        } else {
+          alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
+        }
       }
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
       setShowDemoLoading(false);
-      // Show user-friendly error message
-      alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
+      
+      // Handle scheduled deletion conflicts specially
+      if (error.message && error.message.includes('programada para eliminación')) {
+        const isEmailConflict = error.message.includes('email');
+        const isCifConflict = error.message.includes('CIF');
+        
+        const restoreMessage = isEmailConflict 
+          ? 'Si eres el administrador original, puedes restaurar tu cuenta haciendo login en lugar de crear una nueva empresa.'
+          : 'El administrador original puede restaurar la cuenta haciendo login en lugar de crear una nueva empresa.';
+          
+        alert(`${error.message}\n\n${restoreMessage}\n\nSi necesitas ayuda, contacta con soporte técnico.`);
+      } else {
+        // Show user-friendly error message
+        alert('Error al crear la empresa: ' + (error.message || 'Inténtalo de nuevo'));
+      }
     } finally {
       setIsLoading(false);
     }

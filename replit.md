@@ -48,7 +48,7 @@ Preferred communication style: Simple, everyday language.
 - **Intelligent Key Detection**: Uses STRIPE_SECRET_KEY for production, falls back to STRIPE_SECRET_KEY_TEST for development
 - **Live Payment Processing**: All payments now process real money - no test mode
 - **Key Type Validation**: Confirms sk_live_ prefix for production mode activation
-- **Production Status**: System confirmed working with live Stripe integration (September 1, 2025)
+- **Production Status**: System confirmed working with live Stripe integration
 - **Custom Pricing Integration**: Both backend and frontend now support custom monthly pricing per company
 - **Fixed Price Display**: Payment forms now show correct custom price (€0.50/month) instead of standard plan pricing (€39.95/month)
 
@@ -64,6 +64,13 @@ Preferred communication style: Simple, everyday language.
 - **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions.
 - **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
 - **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
+
+### Account Deletion Grace Period Protection (⚠️ BUSINESS LOGIC FIX)
+- **Registration Conflict Prevention**: System now prevents registration with emails/CIFs from companies in 30-day grace period
+- **Smart Error Messages**: Users attempting to register with conflicted data receive specific guidance to restore existing accounts instead
+- **Data Integrity**: Prevents accidental data loss by guiding users to restore rather than recreate accounts
+- **User education**: Clear messaging explains the restoration process vs new registration
+- **Business rule**: "Una empresa borra su cuenta, se guarda 30 días. No puede hacer login pero si intenta registrarse con el mismo email, que ocurre?"
 
 ### Document Cleanup System (⚠️ CRITICAL SECURITY UPDATE)
 - **Auto-cleanup**: System automatically detects and removes orphaned documents (DB records without physical files)
@@ -91,7 +98,7 @@ Preferred communication style: Simple, everyday language.
 - **Oficaz SL Case**: Specific solution for test-to-production transition where test card was configured but now in production mode
 - **User confirmed issue**: "se acabo del periodo de prueba y puse la tarjteta test de stripe y ahora estoy usandolo pero no tengo metodo de pago añadido"
 
-### SuperAdmin Company Deletion Fix (⚠️ CRITICAL SECURITY FIX - September 1, 2025)
+### SuperAdmin Company Deletion Fix (⚠️ CRITICAL SECURITY FIX)
 - **Foreign Key Constraint Error**: Fixed critical error in permanent company deletion where password_reset_tokens were not being deleted
 - **Error Details**: "update or delete on table companies violates foreign key constraint password_reset_tokens_company_id_fkey"
 - **Solution**: Added password reset tokens deletion step in correct order (step 8) before user deletion
@@ -132,17 +139,17 @@ Preferred communication style: Simple, everyday language.
 ### Key Features & Implementations
 - **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings via admin interface.
 - **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions from previous days.
-- **Manager Role Permissions System**: Backend API supports manager role assignment. Managers have restricted access to admin features (view-only settings, cannot assign admin/manager roles).
-- **Navigation Performance Optimization**: Eliminated full page reloads during admin navigation for a smoother experience.
-- **Scroll Position Reset System**: `useScrollReset` hook automatically resets scroll position on route changes for improved UX.
+- **Manager Role Permissions System**: Backend API supports manager role assignment. Managers have restricted access to admin features.
+- **Navigation Performance Optimization**: Eliminated full page reloads during admin navigation.
+- **Scroll Position Reset System**: `useScrollReset` hook automatically resets scroll position on route changes.
 - **Performance Optimization - Time Tracking Page**: Database optimizations (batching queries, indexing), frontend caching (employees, company settings), reduced network overhead.
-- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views) with compact, intuitive design and full functionality.
-- **SuperAdmin Security System**: Exclusive access via email verification (`soy@oficaz.es`) replacing `/fast` page.
-- **Performance Optimization System**: Implemented lazy loading (`React.lazy()`, `Suspense`), code splitting, async resource loading, critical CSS optimization, and resource hints to reduce LCP and improve TBT.
-- **Error Monitoring System**: Integrated Sentry for error tracking and performance monitoring in production.
+- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views) with compact, intuitive design.
+- **SuperAdmin Security System**: Exclusive access via email verification (`soy@oficaz.es`).
+- **Performance Optimization System**: Implemented lazy loading, code splitting, async resource loading, critical CSS optimization, and resource hints to reduce LCP and improve TBT.
+- **Error Monitoring System**: Integrated Sentry for error tracking and performance monitoring.
 - **SEO Optimization System**: Direct file serving of `robots.txt` and `sitemap.xml` from client/public with explicit headers.
 - **Account Deletion with 30-Day Grace Period System**: Comprehensive system for scheduling and canceling account deletion, with visual countdowns and SuperAdmin dashboard for monitoring.
-- **Dark Mode System**: Full dark mode support for admin interface (Light, Dark, System options) with `localStorage` persistence, managed by React Context and Tailwind's `darkMode: ["class"]`. Complete implementation covers all major components: admin dashboard, time tracking (including desktop table and mobile cards), vacation management (both pages with holiday cards), settings (employee and admin views), messages admin page, admin-documents page, and navigation components using semantic CSS variables for consistent theme adaptation. All UI elements properly adapt between light and dark themes with appropriate contrast ratios. **Mobile Support**: Fully functional on mobile devices with enhanced route detection including Replit custom domain paths (`/oficaz/`), multiple event listeners (popstate, hashchange, MutationObserver), periodic verification fallback, and CSS color-scheme integration. **Scope**: Admin interface only - landing page, login, and registration maintain original light theme design.
+- **Dark Mode System**: Full dark mode support for admin interface (Light, Dark, System options) with `localStorage` persistence, managed by React Context and Tailwind's `darkMode: ["class"]`. All UI elements adapt between light and dark themes with appropriate contrast ratios. Mobile support included.
 
 ## External Dependencies
 

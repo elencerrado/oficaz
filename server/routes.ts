@@ -1630,13 +1630,73 @@ Responde directamente a este email para contactar con la persona.
       // Check if user already exists by email
       const existingUser = await storage.getUserByEmail(data.companyEmail);
       if (existingUser) {
-        return res.status(400).json({ message: 'Email already exists' });
+        // Check if the company is scheduled for deletion (grace period)
+        const cancellationStatus = await storage.getCompanyCancellationStatus(existingUser.companyId);
+        
+        if (cancellationStatus?.scheduledForDeletion) {
+          // Company is in 30-day grace period - check if we can restore or if it's truly conflicting
+          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+          const now = new Date();
+          
+          if (deletionDate > now) {
+            // Still in grace period - inform user they can restore instead
+            return res.status(409).json({ 
+              message: 'Ya existe una cuenta con este email que está programada para eliminación. Puedes restaurar tu cuenta haciendo login en lugar de crear una nueva.',
+              type: 'scheduled_for_deletion',
+              deletionDate: deletionDate.toISOString(),
+              canRestore: true
+            });
+          } else {
+            // Grace period expired but deletion might not have run yet - this is a system issue
+            console.warn('⚠️ Found user with expired deletion date that should have been deleted:', {
+              userId: existingUser.id,
+              companyId: existingUser.companyId,
+              deletionDate: deletionDate.toISOString()
+            });
+            return res.status(500).json({ 
+              message: 'Error del sistema. Contacta con soporte técnico.' 
+            });
+          }
+        } else {
+          // Normal active account conflict
+          return res.status(400).json({ message: 'Email already exists' });
+        }
       }
 
       // Check if company CIF already exists
       const existingCompany = await storage.getCompanyByCif?.(data.cif);
       if (existingCompany) {
-        return res.status(400).json({ message: 'CIF already exists' });
+        // Check if this company is scheduled for deletion (grace period)
+        const cancellationStatus = await storage.getCompanyCancellationStatus(existingCompany.id);
+        
+        if (cancellationStatus?.scheduledForDeletion) {
+          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+          const now = new Date();
+          
+          if (deletionDate > now) {
+            // Still in grace period - inform user they can restore instead
+            return res.status(409).json({ 
+              message: 'Ya existe una empresa con este CIF que está programada para eliminación. El administrador puede restaurar la cuenta haciendo login en lugar de crear una nueva.',
+              type: 'scheduled_for_deletion',
+              deletionDate: deletionDate.toISOString(),
+              canRestore: true,
+              conflictField: 'cif'
+            });
+          } else {
+            // Grace period expired but deletion might not have run yet
+            console.warn('⚠️ Found company with expired deletion date that should have been deleted:', {
+              companyId: existingCompany.id,
+              cif: data.cif,
+              deletionDate: deletionDate.toISOString()
+            });
+            return res.status(500).json({ 
+              message: 'Error del sistema. Contacta con soporte técnico.' 
+            });
+          }
+        } else {
+          // Normal active company conflict
+          return res.status(400).json({ message: 'CIF already exists' });
+        }
       }
 
       // Hash password
