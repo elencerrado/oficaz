@@ -254,6 +254,12 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     });
   };
 
+  const handleClearCustomPrice = () => {
+    updateCompanyMutation.mutate({ 
+      customMonthlyPrice: null 
+    });
+  };
+
   const handleTrialDurationSave = () => {
     updateCompanyMutation.mutate({ 
       trialDurationDays: newTrialDuration ? parseInt(newTrialDuration) : null 
@@ -298,7 +304,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     if (company) {
       setNewPlan(company.subscription.plan);
       setNewMaxUsers(company.subscription.maxUsers?.toString() || '');
-      setNewPrice(company.subscription.customPricePerUser?.toString() || company.subscription.pricePerUser?.toString() || '');
+      setNewPrice(company.subscription.customMonthlyPrice?.toString() || company.subscription.monthlyPrice?.toString() || '');
       setNewTrialDuration(company.trialDurationDays?.toString() || '14');
       setCustomFeatures(company.subscription.features || {});
       
@@ -456,7 +462,10 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
 
               {/* Custom Price */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Precio Personalizado (€/usuario/mes)</label>
+                <label className="text-sm font-medium text-white/80">Precio Mensual Personalizado (€/mes)</label>
+                <p className="text-xs text-white/60">
+                  Precio fijo mensual para toda la empresa. Si no se establece, se usa el precio estándar del plan ({company.subscription.monthlyPrice || '0'}€/mes).
+                </p>
                 <div className="flex items-center gap-2">
                   {editingPrice ? (
                     <>
@@ -481,12 +490,32 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                     <>
                       <div className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white flex items-center gap-2">
                         <Euro className="w-4 h-4 text-green-400" />
-                        {company.subscription.customMonthlyPrice || company.subscription.monthlyPrice || '0'}
-                        <span className="text-white/60">€ fijo/mes</span>
+                        {company.subscription.customMonthlyPrice ? (
+                          <>
+                            {company.subscription.customMonthlyPrice}
+                            <span className="text-white/60">€/mes (personalizado)</span>
+                          </>
+                        ) : (
+                          <>
+                            {company.subscription.monthlyPrice || '0'}
+                            <span className="text-white/60">€/mes (estándar {company.subscription.plan})</span>
+                          </>
+                        )}
                       </div>
                       <Button size="sm" variant="ghost" onClick={() => setEditingPrice(true)} className="text-white/60">
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {company.subscription.customMonthlyPrice && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={handleClearCustomPrice} 
+                          className="text-red-400 hover:text-red-300"
+                          title="Usar precio estándar del plan"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
