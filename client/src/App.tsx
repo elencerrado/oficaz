@@ -87,9 +87,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   // SECURITY FIX: Clean up auth data when no valid session exists
   useEffect(() => {
     if (!isLoading && (!user || !token)) {
-      // Clear any remaining auth data and force redirect
-      localStorage.clear();
-      sessionStorage.clear();
+      // Clear only auth data, not entire localStorage
+      localStorage.removeItem('authData');
       
       // Prevent browser history navigation to admin pages
       if (window.history?.replaceState) {

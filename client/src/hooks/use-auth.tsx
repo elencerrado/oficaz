@@ -53,9 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // CRITICAL FIX: Check for corrupted user data (undefined role, invalid ID)
             if (!data.user || !data.user.id || data.user.id === 4 || !data.user.role) {
               console.log('🚨 CORRUPTED USER DATA DETECTED - FORCING LOGOUT');
-              // Force complete cleanup
-              localStorage.clear();
-              sessionStorage.clear();
+              // Clear only auth data, preserve other localStorage items
+              localStorage.removeItem('authData');
               window.location.href = '/login';
               return;
             }
@@ -80,9 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } else {
             console.log('Auth verification failed, clearing data');
             clearAuthData();
-            // CRITICAL: Also clear localStorage and sessionStorage on failed auth
-            localStorage.clear();
-            sessionStorage.clear();
+            // CRITICAL: Only clear auth data, not entire localStorage
+            localStorage.removeItem('authData');
             setUser(null);
             setCompany(null);
             setToken(null);
@@ -90,10 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.log('Auth init error:', error);
-          // Clear corrupted auth data completely
+          // Clear corrupted auth data only
           clearAuthData();
-          localStorage.clear();
-          sessionStorage.clear();
+          localStorage.removeItem('authData');
           setUser(null);
           setCompany(null);
           setToken(null);
@@ -232,13 +229,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthData(null);
     clearAuthData();
     
-    // SECURITY FIX: Clear ALL storage and invalidate history to prevent back navigation
+    // SECURITY FIX: Clear only user auth data, preserve important tokens
+    const superAdminToken = localStorage.getItem('superAdminToken');
+    const theme = localStorage.getItem('theme');
+    
     localStorage.clear();
     sessionStorage.clear();
     
-    // Reset dark mode to prevent UI issues on login
-    document.documentElement.classList.remove('dark');
-    localStorage.removeItem('theme');
+    // Restore important tokens
+    if (superAdminToken) {
+      localStorage.setItem('superAdminToken', superAdminToken);
+    }
+    if (theme) {
+      localStorage.setItem('theme', theme);
+    }
     
     // Clear browser history to prevent back navigation to admin pages
     if (window.history?.replaceState) {
