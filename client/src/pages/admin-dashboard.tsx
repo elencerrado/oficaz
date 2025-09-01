@@ -471,7 +471,7 @@ export default function AdminDashboard() {
                 variant="ghost"
                 size="sm"
                 className="text-xs text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800"
-                onClick={() => setLocation('/configuracion')}
+                onClick={() => setLocation('/test/configuracion')}
               >
                 Gestionar pago
               </Button>

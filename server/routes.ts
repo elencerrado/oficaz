@@ -4595,6 +4595,20 @@ Responde directamente a este email para contactar con la persona.
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
       
+      // Check if customer exists in Stripe (handles test->production transition)
+      if (stripeCustomerId) {
+        try {
+          await stripe.customers.retrieve(stripeCustomerId);
+        } catch (error: any) {
+          if (error.code === 'resource_missing') {
+            console.log(`Customer ${stripeCustomerId} not found (likely test mode data), creating new one`);
+            stripeCustomerId = null; // Force creation of new customer
+          } else {
+            throw error; // Re-throw other errors
+          }
+        }
+      }
+      
       if (!stripeCustomerId) {
         // Get company data for unified email
         const company = await storage.getCompanyByUserId(userId);
@@ -4610,6 +4624,7 @@ Responde directamente a este email para contactar con la persona.
         
         stripeCustomerId = customer.id;
         await storage.updateUserStripeCustomerId(userId, stripeCustomerId);
+        console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
       // Create setup intent for future payments
@@ -4672,6 +4687,20 @@ Responde directamente a este email para contactar con la persona.
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
       
+      // Check if customer exists in Stripe (handles test->production transition)
+      if (stripeCustomerId) {
+        try {
+          await stripe.customers.retrieve(stripeCustomerId);
+        } catch (error: any) {
+          if (error.code === 'resource_missing') {
+            console.log(`Customer ${stripeCustomerId} not found (likely test mode data), creating new one`);
+            stripeCustomerId = null; // Force creation of new customer
+          } else {
+            throw error; // Re-throw other errors
+          }
+        }
+      }
+      
       if (!stripeCustomerId) {
         // Create Stripe customer with complete company information for accurate invoicing
         const customer = await stripe.customers.create({
@@ -4695,6 +4724,7 @@ Responde directamente a este email para contactar con la persona.
         
         stripeCustomerId = customer.id;
         await storage.updateUserStripeCustomerId(userId, stripeCustomerId);
+        console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
       // Attach payment method to customer
@@ -4927,14 +4957,24 @@ Responde directamente a este email para contactar con la persona.
       }
 
       try {
+        // Check if customer exists (handles test->production transition)
+        let customer;
+        try {
+          customer = await stripe.customers.retrieve(user.stripeCustomerId);
+        } catch (error: any) {
+          if (error.code === 'resource_missing') {
+            console.log(`Customer ${user.stripeCustomerId} not found (likely test mode data)`);
+            return res.json([]); // Return empty array for missing customers
+          }
+          throw error;
+        }
+
         // Get payment methods from Stripe
         const paymentMethods = await stripe.paymentMethods.list({
           customer: user.stripeCustomerId,
           type: 'card',
         });
 
-        // Get customer default payment method
-        const customer = await stripe.customers.retrieve(user.stripeCustomerId);
         const defaultPaymentMethodId = (customer as any).invoice_settings?.default_payment_method;
 
         // Transform Stripe data to our format
