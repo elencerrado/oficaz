@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -35,13 +35,30 @@ const stripePromise = loadStripe(
   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST!
 );
 
-export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan = "basic", selectedPlanPrice = 29.99 }: PaymentMethodManagerProps) {
+export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selectedPlan, selectedPlanPrice }: PaymentMethodManagerProps) {
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { refreshUser } = useAuth();
+
+  // Get current subscription to determine the actual plan and price
+  const { data: subscription } = useQuery({
+    queryKey: ['/api/account/subscription'],
+    staleTime: 30000,
+  });
+
+  // Get all subscription plans to find the correct price
+  const { data: subscriptionPlans } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    staleTime: 60000,
+  });
+
+  // Determine the actual plan and price to display
+  const actualPlan = selectedPlan || subscription?.plan || "basic";
+  const currentPlanData = subscriptionPlans?.find((plan: any) => plan.name === actualPlan);
+  const actualPrice = selectedPlanPrice || currentPlanData?.monthlyPrice || (actualPlan === "pro" ? 79.99 : 29.99);
 
 
 
@@ -128,7 +145,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   const handlePaymentSuccess = async () => {
     try {
       // Only change the plan if it's different from the current one
-      if (selectedPlan) {
+      if (selectedPlan && actualPlan !== subscription?.plan) {
         console.log('Checking if plan change is needed. Selected plan:', selectedPlan);
         
         // Get current subscription status to check if plan change is needed
@@ -174,7 +191,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
       
       toast({
         title: "¡Suscripción activada!",
-        description: `Tu plan ${selectedPlan?.toUpperCase()} se ha activado correctamente.`,
+        description: `Tu plan ${actualPlan?.toUpperCase()} se ha activado correctamente.`,
       });
       
       // Call the parent's onPaymentSuccess callback if provided
@@ -351,8 +368,8 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
               }}
             >
               <StripePaymentForm
-                planName={selectedPlan}
-                planPrice={selectedPlanPrice}
+                planName={actualPlan}
+                planPrice={actualPrice}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
               />
