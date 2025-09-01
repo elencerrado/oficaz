@@ -125,11 +125,27 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
 
   const handlePaymentSuccess = async () => {
     try {
-      // First, change the plan to the selected one
+      // Only change the plan if it's different from the current one
       if (selectedPlan) {
-        console.log('Changing plan to:', selectedPlan);
-        await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
-        console.log('Plan changed successfully to:', selectedPlan);
+        console.log('Checking if plan change is needed. Selected plan:', selectedPlan);
+        
+        // Get current subscription status to check if plan change is needed
+        try {
+          const currentSubscription = await apiRequest('GET', '/api/account/subscription');
+          const currentPlan = currentSubscription?.plan;
+          
+          if (currentPlan !== selectedPlan) {
+            console.log('Changing plan from', currentPlan, 'to:', selectedPlan);
+            await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
+            console.log('Plan changed successfully to:', selectedPlan);
+          } else {
+            console.log('Plan is already', selectedPlan, '- no change needed');
+          }
+        } catch (planError) {
+          console.log('Could not check current plan, attempting plan change anyway');
+          await apiRequest('PATCH', '/api/subscription/change-plan', { plan: selectedPlan });
+          console.log('Plan changed successfully to:', selectedPlan);
+        }
       }
       
       // Then close modal and invalidate ALL relevant cache
