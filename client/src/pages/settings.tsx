@@ -1535,9 +1535,10 @@ const AccountManagement = () => {
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">Gestiona la configuración de tu empresa y perfil</p>
       </div>
 
-      {/* Trial Manager - shown for companies in trial or active accounts */}
-      {(subscription?.status === 'trial' && subscription?.isTrialActive) || 
-       (subscription?.status === 'active') ? (
+      {/* Trial Manager - shown for companies in trial or active accounts (but not blocked) */}
+      {((subscription?.status === 'trial' && subscription?.isTrialActive) || 
+        (subscription?.status === 'active')) && 
+        subscription?.status !== 'blocked' ? (
         <div className="mb-6">
           <TrialManagerSimple />
         </div>
