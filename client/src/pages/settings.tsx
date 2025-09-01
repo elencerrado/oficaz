@@ -74,53 +74,48 @@ const AccountManagement = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Force refresh of account data when component mounts
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['/api/account/info'] });
-    queryClient.refetchQueries({ queryKey: ['/api/account/info'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-    queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
-    queryClient.refetchQueries({ queryKey: ['/api/account/trial-status'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-    queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
-    queryClient.refetchQueries({ queryKey: ['/api/subscription-plans'] });
-  }, [queryClient]);
+  // Remove problematic useEffect that was causing infinite re-renders
   
   const { data: accountInfo } = useQuery({
     queryKey: ['/api/account/info'],
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['/api/account/subscription'],
     retry: false,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: paymentMethods } = useQuery({
     queryKey: ['/api/account/payment-methods'],
     retry: false,
+    staleTime: 60000, // 1 minute
   });
 
   const { data: invoices } = useQuery({
     queryKey: ['/api/account/invoices'],
     retry: false,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   const { data: usageData } = useQuery({
     queryKey: ['/api/account/usage-stats'],
     retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: cancellationStatus } = useQuery({
     queryKey: ['/api/account/cancellation-status'],
     retry: false,
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: trialStatus } = useQuery({
     queryKey: ['/api/account/trial-status'],
     retry: false,
+    staleTime: 30000, // 30 seconds
     meta: {
       authRequired: true
     }
@@ -129,6 +124,7 @@ const AccountManagement = () => {
   const { data: subscriptionPlans } = useQuery({
     queryKey: ['/api/subscription-plans'],
     retry: false,
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Estado para el modal de gestión de métodos de pago
