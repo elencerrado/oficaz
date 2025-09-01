@@ -21,7 +21,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    // Initialize token from localStorage immediately
+    const authData = getAuthData();
+    return authData?.token || null;
+  });
   const [authData, setAuthData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -123,20 +127,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     }
     
-    // Save auth data to localStorage FIRST
-    localStorage.setItem('authData', JSON.stringify(data));
+    // Save auth data to localStorage using proper function
+    const authDataToSave = { user: data.user, token: data.token, company: data.company, subscription: data.subscription };
+    setAuthData(authDataToSave);
     console.log('🔐 Auth data saved to localStorage');
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
-    setAuthData(data);
+    setAuthData(authDataToSave);
     console.log('🔐 Auth state updated, token length:', data.token?.length);
     
-    // Force refresh all queries to use the new auth token
-    queryClient.clear();
-    queryClient.invalidateQueries();
+    // Wait a bit for state to propagate, then refresh queries
+    setTimeout(() => {
+      queryClient.clear();
+      queryClient.invalidateQueries();
+      console.log('🔄 Queries invalidated after auth update');
+    }, 100);
     
     return data;
   };

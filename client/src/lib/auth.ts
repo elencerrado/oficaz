@@ -9,7 +9,17 @@ interface AuthData {
 
 export function setAuthData(data: AuthData) {
   try {
+    console.log('🔐 Saving auth data to localStorage:', { hasToken: !!data.token, tokenLength: data.token?.length });
     localStorage.setItem('authData', JSON.stringify(data));
+    
+    // Verify it was saved correctly
+    const saved = localStorage.getItem('authData');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      console.log('✅ Auth data verification - saved successfully:', { hasToken: !!parsed.token });
+    } else {
+      console.error('❌ Auth data was not saved to localStorage');
+    }
   } catch (error) {
     console.error('Error saving to localStorage:', error);
   }
@@ -60,7 +70,14 @@ export function getAuthHeaders(): HeadersInit {
   // Fall back to regular user token
   const authData = getAuthData();
   console.log('🔑 Auth data:', authData ? 'exists' : 'missing', 'Token:', authData?.token ? 'exists' : 'missing');
-  return authData && authData.token ? { Authorization: `Bearer ${authData.token}` } : {};
+  
+  if (authData && authData.token) {
+    console.log('✅ Returning auth header with token');
+    return { Authorization: `Bearer ${authData.token}` };
+  } else {
+    console.log('❌ No token available, returning empty headers');
+    return {};
+  }
 }
 
 // Helper function to check if token is likely expired
