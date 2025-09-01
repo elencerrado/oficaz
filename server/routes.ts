@@ -5009,25 +5009,33 @@ Responde directamente a este email para contactar con la persona.
       
       const user = userResult.rows[0] as any;
       
+      console.log('📄 Invoices Debug - Company ID:', companyId);
+      console.log('📄 Invoices Debug - Admin user found:', !!user);
+      console.log('📄 Invoices Debug - Stripe customer ID:', user?.stripe_customer_id);
+      
       if (!user?.stripe_customer_id) {
+        console.log('📄 Invoices Debug - No Stripe customer ID found, returning empty array');
         return res.json([]);
       }
 
       try {
-        // Get invoices from Stripe
+        // Get ALL invoices from Stripe (not just paid ones)
         const invoices = await stripe.invoices.list({
           customer: user.stripe_customer_id,
           limit: 20,
-          status: 'paid', // Only show paid invoices
+          // Remove status filter to show all invoices
         });
+        
+        console.log('📄 Invoices Debug - Total invoices found:', invoices.data.length);
+        console.log('📄 Invoices Debug - Invoice statuses:', invoices.data.map(inv => ({ id: inv.id, status: inv.status })));
 
         // Format invoices for frontend
         const formattedInvoices = invoices.data.map((invoice, index) => ({
           id: invoice.id,
           invoice_number: invoice.number || `INV-${String(index + 1).padStart(3, '0')}`,
-          amount: (invoice.amount_paid / 100).toFixed(2), // Convert from cents to euros
+          amount: (invoice.total / 100).toFixed(2), // Use total amount instead of amount_paid
           currency: invoice.currency.toUpperCase(),
-          status: invoice.status === 'paid' ? 'paid' : 'pending',
+          status: invoice.status, // Show actual status from Stripe
           description: invoice.description || invoice.lines.data[0]?.description || 'Suscripción Oficaz',
           created_at: new Date(invoice.created * 1000).toISOString(),
           paid_at: invoice.status_transitions.paid_at 
@@ -5035,6 +5043,8 @@ Responde directamente a este email para contactar con la persona.
             : null,
           download_url: invoice.invoice_pdf
         }));
+        
+        console.log('📄 Invoices Debug - Formatted invoices:', formattedInvoices.length);
 
         res.json(formattedInvoices);
       } catch (stripeError: any) {
