@@ -153,8 +153,15 @@ function Router() {
   const { user, company } = useAuth();
   const [location] = useLocation();
   
-  // Super admin routes handled separately - no company context needed
+  // Super admin routes handled separately - PROTECTED: Only if no regular user session exists
   if (location.startsWith('/super-admin')) {
+    // CRITICAL FIX: If user is logged in as regular user, redirect them out of SuperAdmin area
+    if (user && company) {
+      console.log('🚨 SECURITY: Regular user attempting to access SuperAdmin - redirecting');
+      window.location.href = `/${company.companyAlias}/admin`;
+      return <PageLoading />;
+    }
+    
     return (
       <Switch>
         <Route path="/super-admin/security">

@@ -76,6 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           } else {
             console.log('Auth verification failed, clearing data');
             clearAuthData();
+            // CRITICAL: Also clear localStorage and sessionStorage on failed auth
+            localStorage.clear();
+            sessionStorage.clear();
             setUser(null);
             setCompany(null);
             setToken(null);
@@ -83,11 +86,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.log('Auth init error:', error);
-          // Clear corrupted auth data
+          // Clear corrupted auth data completely
           clearAuthData();
+          localStorage.clear();
+          sessionStorage.clear();
           setUser(null);
           setCompany(null);
           setToken(null);
+          setAuthData(null);
         }
       }
       setIsLoading(false);
