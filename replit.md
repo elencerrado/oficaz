@@ -91,6 +91,13 @@ Preferred communication style: Simple, everyday language.
 - **Oficaz SL Case**: Specific solution for test-to-production transition where test card was configured but now in production mode
 - **User confirmed issue**: "se acabo del periodo de prueba y puse la tarjteta test de stripe y ahora estoy usandolo pero no tengo metodo de pago añadido"
 
+### SuperAdmin Company Deletion Fix (⚠️ CRITICAL SECURITY FIX - September 1, 2025)
+- **Foreign Key Constraint Error**: Fixed critical error in permanent company deletion where password_reset_tokens were not being deleted
+- **Error Details**: "update or delete on table companies violates foreign key constraint password_reset_tokens_company_id_fkey"
+- **Solution**: Added password reset tokens deletion step in correct order (step 8) before user deletion
+- **Database Integrity**: Ensures all dependent records are properly cleaned up during SuperAdmin permanent deletions
+- **Prevention**: Added comprehensive logging to track deletion progress and identify any future constraint violations
+
 ## System Architecture
 
 ### Frontend Architecture

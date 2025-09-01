@@ -6291,14 +6291,19 @@ Responde directamente a este email para contactar con la persona.
         .where(eq(subscriptions.companyId, companyId));
       console.log('✅ Deleted subscription');
 
-      // 8. Delete all users
+      // 8. Delete password reset tokens (CRITICAL: Must be deleted before company)
+      await db.delete(passwordResetTokens)
+        .where(eq(passwordResetTokens.companyId, companyId));
+      console.log('✅ Deleted password reset tokens');
+
+      // 9. Delete all users
       if (userIdsForAdmin.length > 0) {
         await db.delete(users)
           .where(eq(users.companyId, companyId));
         console.log('✅ Deleted users');
       }
 
-      // 9. Finally, delete the company
+      // 10. Finally, delete the company
       await db.delete(companies)
         .where(eq(companies.id, companyId));
       console.log('✅ Deleted company');
