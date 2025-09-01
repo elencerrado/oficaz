@@ -60,7 +60,7 @@ const getPlanIconColor = (plan: string) => {
 
 // Component for Account Management
 const AccountManagement = () => {
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const queryClient = useQueryClient();
   
   // Payment modal states
