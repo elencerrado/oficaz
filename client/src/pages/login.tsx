@@ -137,7 +137,9 @@ export default function Login() {
           : data.dniOrEmail.toUpperCase().trim()
       };
       
+      console.log('🔐 Frontend login starting...');
       const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
+      console.log('🔐 Frontend login completed successfully:', { hasResponse: !!response });
       
       // Handle remember me
       if (rememberMe) {

@@ -158,12 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('❌ localStorage verification failed - no data found');
     }
     
-    // Wait a bit for state to propagate, then refresh queries
-    setTimeout(() => {
-      queryClient.clear();
-      queryClient.invalidateQueries();
-      console.log('🔄 Queries invalidated after auth update');
-    }, 100);
+    // Clear and invalidate queries immediately since auth is now available
+    queryClient.clear();
+    queryClient.invalidateQueries();
+    console.log('🔄 Queries cleared and invalidated after successful auth update');
     
     return data;
   };
