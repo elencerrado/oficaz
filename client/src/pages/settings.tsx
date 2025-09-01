@@ -62,6 +62,7 @@ const getPlanIconColor = (plan: string) => {
 const AccountManagement = () => {
   const { user, company, subscription } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Payment modal states
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -78,8 +79,191 @@ const AccountManagement = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [planPreview, setPlanPreview] = useState(null);
   
-  // Remove problematic useEffect that was causing infinite re-renders
+  // Add missing functions and mutations that were in the main component
   
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (confirmationText: string) => {
+      const response = await fetch('/api/account/schedule-deletion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ confirmationText }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al programar la eliminación de la cuenta');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Cuenta programada para eliminación",
+        description: "Tu cuenta será eliminada en 30 días. Puedes cancelar esta acción desde configuración.",
+        variant: "destructive",
+      });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al programar eliminación",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Cancel scheduled deletion
+  const cancelDeletionMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/account/cancel-deletion', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al cancelar la eliminación');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Eliminación cancelada",
+        description: "La eliminación de tu cuenta ha sido cancelada exitosamente.",
+      });
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cancelar eliminación",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Preview plan change mutation
+  const previewPlanMutation = useMutation({
+    mutationFn: async (plan: string) => {
+      const response = await fetch('/api/subscription/preview-plan-change', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener preview del plan');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setPlanPreview(data);
+      setShowConfirmation(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al obtener información del plan",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Plan change mutation
+  const changePlanMutation = useMutation({
+    mutationFn: async (newPlan: string) => {
+      const response = await fetch('/api/subscription/change-plan', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ plan: newPlan }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cambiar el plan');
+      }
+      
+      return response.json();
+    },
+    onSuccess: async (data) => {
+      toast({
+        title: "Plan actualizado",
+        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
+      });
+      setIsPlanModalOpen(false);
+      setIsChangingPlan(false);
+      setShowConfirmation(false);
+      setPlanPreview(null);
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error al cambiar plan",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsChangingPlan(false);
+    },
+  });
+
+  // Handler functions
+  const handleDeleteAccount = () => {
+    if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
+      toast({
+        title: "Error de confirmación",
+        description: 'Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"',
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDeleting(true);
+    deleteAccountMutation.mutate(confirmationText);
+  };
+
+  const handleCancelDeletion = () => {
+    cancelDeletionMutation.mutate();
+  };
+
+  const handleChangePlan = () => {
+    previewPlanMutation.mutate(selectedPlan);
+  };
+
+  const confirmPlanChange = () => {
+    setIsChangingPlan(true);
+    changePlanMutation.mutate(selectedPlan);
+  };
+
+  // Initialize selected plan when subscription data loads
+  useEffect(() => {
+    if (subscription?.plan) {
+      setSelectedPlan(subscription.plan);
+    }
+  }, [subscription?.plan]);
+
   const { data: accountInfo } = useQuery({
     queryKey: ['/api/account/info'],
     retry: false,
