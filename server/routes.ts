@@ -4181,6 +4181,12 @@ Responde directamente a este email para contactar con la persona.
       return res.status(401).json({ message: "No token provided" });
     }
 
+    // Check for malformed token
+    if (token.length < 10 || !token.includes('.')) {
+      console.log('🚨 SuperAdmin auth failed: Malformed token');
+      return res.status(401).json({ message: "Invalid token format" });
+    }
+
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
       console.log('🔐 SuperAdmin token decoded:', { type: decoded.type, role: decoded.role, email: decoded.email });
@@ -4204,6 +4210,14 @@ Responde directamente a este email para contactar con la persona.
   // Super Admin Access Code Verification
   const SUPER_ADMIN_ACCESS_CODE = 'SA!9x7$Kz2&mQ5'; // ⚠️ PROTECTED - DO NOT MODIFY
   const tempTokens = new Map(); // In-memory storage for temporary tokens
+
+  // Endpoint to clear corrupted SuperAdmin token
+  app.post('/api/super-admin/clear-token', async (req, res) => {
+    res.json({ 
+      success: true, 
+      message: 'SuperAdmin token cleared. Please login again.' 
+    });
+  });
 
   app.post('/api/super-admin/verify-access-code', async (req, res) => {
     try {
