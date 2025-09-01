@@ -72,8 +72,8 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
   };
 
   return (
-    <>
-      {/* Overlay que cubre toda la pantalla */}
+    <div className="light">
+      {/* Overlay que cubre toda la pantalla - FORZAR MODO CLARO */}
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl border-red-200 bg-white shadow-2xl">
           <CardHeader className="text-center space-y-4 pb-6">
@@ -192,6 +192,6 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
