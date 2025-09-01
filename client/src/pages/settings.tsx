@@ -1017,40 +1017,40 @@ const AccountManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-      {/* Modal de eliminación permanente */}
+      {/* Modal de eliminación permanente - Adaptado para modo oscuro */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center space-x-2">
+            <DialogTitle className="text-red-600 dark:text-red-400 flex items-center space-x-2">
               <X className="h-5 w-5" />
-              <span>Eliminar cuenta permanentemente</span>
+              <span>Programar eliminación de cuenta</span>
             </DialogTitle>
-            <DialogDescription className="text-gray-700">
-              Esta acción eliminará completamente tu empresa y todos los datos asociados de forma permanente.
+            <DialogDescription className="text-gray-700 dark:text-gray-300">
+              Tu cuenta será programada para eliminación con un período de gracia de 30 días.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4">
               <div className="flex items-start space-x-2">
-                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                <div className="text-sm text-red-700">
-                  <p className="font-semibold mb-2">⚠️ ADVERTENCIA: Esta acción es irreversible</p>
+                <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5" />
+                <div className="text-sm text-red-700 dark:text-red-300">
+                  <p className="font-semibold mb-2">⚠️ ADVERTENCIA: Eliminación programada</p>
                   <ul className="space-y-1 text-xs">
-                    <li>• Se eliminarán todos los usuarios y empleados</li>
-                    <li>• Se perderán todos los fichajes y datos de trabajo</li>
-                    <li>• Se eliminarán todas las vacaciones y documentos</li>
-                    <li>• Se borrarán todos los mensajes y notificaciones</li>
+                    <li>• Se programará la eliminación para dentro de 30 días</li>
+                    <li>• Durante estos 30 días podrás cancelar la eliminación</li>
+                    <li>• Después de 30 días se eliminarán TODOS los datos</li>
+                    <li>• Se borrarán usuarios, fichajes, vacaciones y documentos</li>
                     <li>• Se cancelará automáticamente la suscripción</li>
-                    <li>• Los datos NO se pueden recuperar después</li>
+                    <li>• Una vez eliminados, los datos NO se pueden recuperar</li>
                   </ul>
                 </div>
               </div>
             </div>
 
             <div>
-              <Label htmlFor="confirmationInput" className="text-sm font-medium text-gray-700">
-                Para confirmar, escribe exactamente: <span className="font-mono bg-gray-100 px-1 rounded">ELIMINAR PERMANENTEMENTE</span>
+              <Label htmlFor="confirmationInput" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Para confirmar, escribe exactamente: <span className="font-mono bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1 rounded">ELIMINAR PERMANENTEMENTE</span>
               </Label>
               <Input
                 id="confirmationInput"
@@ -1058,7 +1058,7 @@ const AccountManagement = () => {
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
                 placeholder="Escribe aquí..."
-                className="mt-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="mt-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:border-red-500 dark:focus:border-red-400"
                 disabled={isDeleting}
                 autoComplete="off"
                 spellCheck="false"
@@ -1074,7 +1074,7 @@ const AccountManagement = () => {
                   setIsDeleting(false);
                 }}
                 disabled={isDeleting}
-                className="flex-1"
+                className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Cancelar
               </Button>
@@ -1082,17 +1082,17 @@ const AccountManagement = () => {
                 variant="destructive"
                 onClick={handleDeleteAccount}
                 disabled={confirmationText !== 'ELIMINAR PERMANENTEMENTE' || isDeleting}
-                className="flex-1"
+                className="flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
               >
                 {isDeleting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                    Eliminando...
+                    Programando...
                   </>
                 ) : (
                   <>
                     <X className="h-4 w-4 mr-2" />
-                    Eliminar para siempre
+                    Programar eliminación
                   </>
                 )}
               </Button>
