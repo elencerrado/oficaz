@@ -30,10 +30,8 @@ export function LazyStripeForm({
   useEffect(() => {
     const initializeStripe = async () => {
       try {
-        const isDevelopment = import.meta.env.DEV;
-        const publicKey = isDevelopment 
-          ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST 
-          : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+        // Use production key first, fallback to test key (same logic as backend)
+        const publicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
         
         if (!publicKey) {
           setError('FALTAN CLAVES DE TEST DE STRIPE');
