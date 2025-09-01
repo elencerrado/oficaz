@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Company } from '@shared/schema';
-import { getAuthData, setAuthData, clearAuthData, clearExpiredTokens } from '@/lib/auth';
+import { getAuthData, setAuthData as saveAuthData, clearAuthData, clearExpiredTokens } from '@/lib/auth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
 interface AuthContextType {
@@ -139,8 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Save auth data to localStorage using proper function
     const authDataToSave = { user: data.user, token: data.token, company: data.company, subscription: data.subscription };
-    setAuthData(authDataToSave);
-    console.log('🔐 Auth data saved to localStorage');
+    
+    // Save to localStorage first
+    localStorage.setItem('authData', JSON.stringify(authDataToSave));
+    console.log('🔐 Auth data saved directly to localStorage');
+    
+    // Also use the helper function
+    saveAuthData(authDataToSave);
     
     // Update state immediately
     setUser(data.user);
@@ -153,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verification = localStorage.getItem('authData');
     if (verification) {
       const parsed = JSON.parse(verification);
-      console.log('✅ localStorage verification successful:', { hasToken: !!parsed.token, companyName: parsed.company?.name });
+      console.log('✅ localStorage verification successful:', { hasToken: !!parsed.token, tokenLength: parsed.token?.length, companyName: parsed.company?.name });
     } else {
       console.error('❌ localStorage verification failed - no data found');
     }
@@ -173,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Save initial auth data to localStorage
     localStorage.setItem('authData', JSON.stringify(data));
-    setAuthData(data);
+    saveAuthData(data);
     console.log('🔐 Auth data saved to localStorage');
     
     // Update state
@@ -205,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           subscription: completeData.subscription 
         };
         setAuthData(completeAuthData);
-        localStorage.setItem('authData', JSON.stringify(completeAuthData));
+        saveAuthData(completeAuthData);
         console.log('✅ Complete auth data saved with subscription info');
       }
     } catch (error) {
