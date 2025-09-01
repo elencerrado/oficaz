@@ -43,6 +43,13 @@ Preferred communication style: Simple, everyday language.
 - **Status Mapping**: Comprehensive status display with proper colors and translations (Pendiente, Pagada, Borrador, etc.)
 - **User issue resolved**: "porque no me aparece ninguna factura aqui? si se supone acabo de pagar?" - facturas now appear immediately after payment
 
+### Stripe Production Mode Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+- **Production Mode Active**: System automatically detects and uses live Stripe keys when available
+- **Intelligent Key Detection**: Uses STRIPE_SECRET_KEY for production, falls back to STRIPE_SECRET_KEY_TEST for development
+- **Live Payment Processing**: All payments now process real money - no test mode
+- **Key Type Validation**: Confirms sk_live_ prefix for production mode activation
+- **Production Status**: System confirmed working with live Stripe integration (September 1, 2025)
+
 ### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
 - **Color Palette**: 7 optimized harmonious colors for all reminders (#FFB3BA coral red, #FFE4B5 warm peach, #FFFFCC light yellow, #C8E6C9 soft green, #BBDEFB sky blue, #E1BEE7 lavender purple, #F8BBD9 rose pink)
 - **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds

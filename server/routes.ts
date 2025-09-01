@@ -19,17 +19,16 @@ import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
 
-// Initialize Stripe with environment-specific keys
-const isDevelopment = process.env.NODE_ENV === 'development';
-const stripeSecretKey = isDevelopment 
-  ? process.env.STRIPE_SECRET_KEY_TEST 
-  : process.env.STRIPE_SECRET_KEY;
+// Initialize Stripe with intelligent key detection
+// Priority: Use production keys if available, otherwise fall back to test keys
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST;
+const isProduction = !!process.env.STRIPE_SECRET_KEY && stripeSecretKey?.startsWith('sk_live');
 
 if (!stripeSecretKey) {
-  throw new Error(`STRIPE_SECRET_KEY${isDevelopment ? '_TEST' : ''} environment variable is required`);
+  throw new Error('STRIPE_SECRET_KEY or STRIPE_SECRET_KEY_TEST environment variable is required');
 }
 
-console.log('Stripe Environment:', isDevelopment ? 'Development (Test)' : 'Production (Live)');
+console.log('Stripe Environment:', isProduction ? 'Production (Live)' : 'Development (Test)');
 console.log('Stripe key type:', stripeSecretKey.substring(0, 7));
 
 const stripe = new Stripe(stripeSecretKey, {
