@@ -112,8 +112,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : { dniOrEmail, password };
       
     console.log('🔐 Login attempt starting...');
-    const data = await apiRequest('POST', '/api/auth/login', loginData);
-    console.log('🔐 Login response received:', { hasToken: !!data.token, hasUser: !!data.user });
+    
+    // Make login request without using apiRequest to avoid token dependency
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(loginData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error de login');
+    }
+
+    const data = await response.json();
+    console.log('🔐 Login response received:', { hasToken: !!data.token, hasUser: !!data.user, tokenPreview: data.token?.substring(0, 20) + '...' });
     
     // CRITICAL SECURITY FIX: Clear cache when logging into different company
     const previousCompanyId = company?.id;
@@ -132,12 +145,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthData(authDataToSave);
     console.log('🔐 Auth data saved to localStorage');
     
-    // Update state
+    // Update state immediately
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
     setAuthData(authDataToSave);
     console.log('🔐 Auth state updated, token length:', data.token?.length);
+    
+    // Verify localStorage was updated
+    const verification = localStorage.getItem('authData');
+    if (verification) {
+      const parsed = JSON.parse(verification);
+      console.log('✅ localStorage verification successful:', { hasToken: !!parsed.token, companyName: parsed.company?.name });
+    } else {
+      console.error('❌ localStorage verification failed - no data found');
+    }
     
     // Wait a bit for state to propagate, then refresh queries
     setTimeout(() => {
