@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { CreditCard, CheckCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -101,23 +101,13 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
   };
 
   return (
-    <Card data-testid="stripe-payment-form" className="max-w-md mx-auto card !bg-white !text-gray-900 !border-gray-200 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_button]:!border-gray-300 [&_button]:!rounded-lg [&_input]:!bg-white [&_input]:!text-gray-900 [&_input]:!border-gray-300 [&_input]:!rounded-lg [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900 [&_.stripe-payment-element_*]:!bg-white [&_.stripe-payment-element_*]:!text-gray-900" style={{ borderRadius: '0.5rem !important' }}>
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <CreditCard className="w-5 h-5 mr-2 text-blue-600" />
-            Añadir método de pago
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </CardTitle>
-        <div className="bg-blue-50 rounded-lg p-3 mt-3">
+    <div data-testid="stripe-payment-form" className="space-y-6">
+      <div className="text-center">
+        <div className="flex items-center justify-center mb-4">
+          <CreditCard className="w-6 h-6 mr-2 text-blue-600" />
+          <h3 className="text-xl font-semibold text-gray-900">Añadir método de pago</h3>
+        </div>
+        <div className="bg-blue-50 rounded-lg p-4 inline-block">
           <p className="text-sm text-blue-800 font-medium">
             Plan {planName.charAt(0).toUpperCase() + planName.slice(1)}
           </p>
@@ -125,58 +115,56 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
             €{planPrice}/mes • Facturación mensual
           </p>
         </div>
-      </CardHeader>
+      </div>
       
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="stripe-payment-element">
-            <PaymentElement 
-              options={{
-                layout: 'tabs',
-                paymentMethodOrder: ['card'],
-              }}
-            />
-          </div>
-          
-          <div className="flex space-x-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              className="flex-1"
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={!stripe || !elements || isLoading}
-              className="flex-1"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Confirmar pago
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-        
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex items-center text-xs text-gray-500">
-            <div className="w-4 h-4 mr-2 bg-gray-200 rounded flex items-center justify-center">
-              🔒
-            </div>
-            Procesado de forma segura por Stripe
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="stripe-payment-element">
+          <PaymentElement 
+            options={{
+              layout: 'tabs',
+              paymentMethodOrder: ['card'],
+            }}
+          />
         </div>
-      </CardContent>
-    </Card>
+        
+        <div className="flex space-x-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="flex-1"
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={!stripe || !elements || isLoading}
+            className="flex-1"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
+                Procesando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Confirmar pago
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+      
+      <div className="pt-4 border-t">
+        <div className="flex items-center justify-center text-xs text-gray-500">
+          <div className="w-4 h-4 mr-2 bg-gray-200 rounded flex items-center justify-center">
+            🔒
+          </div>
+          Procesado de forma segura por Stripe
+        </div>
+      </div>
+    </div>
   );
 }
