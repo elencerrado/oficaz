@@ -446,11 +446,11 @@ export default function AdminDashboard() {
       {cancellationStatus?.scheduledForCancellation && 
        (!paymentMethods || paymentMethods.length === 0) && (
         <div className="mb-6">
-          <div className="rounded-lg border p-3 bg-amber-50/30 border-amber-200/50">
+          <div className="rounded-lg border p-3 bg-amber-50/30 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="p-1.5 rounded-full bg-amber-100">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <div className="p-1.5 rounded-full bg-amber-100 dark:bg-amber-800">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" />
                 </div>
                 <div>
                   <span className="text-sm font-medium text-foreground">
@@ -470,7 +470,7 @@ export default function AdminDashboard() {
               <Button 
                 variant="ghost"
                 size="sm"
-                className="text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-100"
+                className="text-xs text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-800"
                 onClick={() => setLocation('/configuracion')}
               >
                 Gestionar pago
