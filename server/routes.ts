@@ -4582,6 +4582,64 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Clean up test mode Stripe data endpoint
+  app.post('/api/account/cleanup-test-stripe', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      
+      console.log(`🧹 Cleaning up test Stripe data for company ${companyId}`);
+      
+      // Get current subscription
+      const subscription = await storage.getSubscriptionByCompanyId(companyId);
+      if (!subscription) {
+        return res.status(404).json({ message: 'No subscription found' });
+      }
+      
+      // Check if this looks like test data (has stripeSubscriptionId but no valid customer)
+      if (subscription.stripeSubscriptionId && !subscription.stripeCustomerId) {
+        console.log(`🔍 Found test subscription: ${subscription.stripeSubscriptionId}`);
+        
+        // Try to retrieve the subscription from Stripe
+        try {
+          const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripeSubscriptionId);
+          console.log(`❌ Test subscription still exists in Stripe, canceling it`);
+          
+          // Cancel the test subscription
+          await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+        } catch (error: any) {
+          if (error.code === 'resource_missing') {
+            console.log(`✅ Test subscription not found in Stripe (already cleaned up)`);
+          } else {
+            console.log(`⚠️ Error checking test subscription: ${error.message}`);
+          }
+        }
+        
+        // Clean up the subscription record - reset to trial status
+        const cleanedSubscription = await storage.updateCompanySubscription(companyId, {
+          stripeSubscriptionId: null,
+          status: 'trial', // Reset to trial so they can properly subscribe
+          endDate: null,
+          firstPaymentDate: null,
+          nextPaymentDate: null,
+          updatedAt: new Date()
+        });
+        
+        console.log(`✅ Cleaned up test data for company ${companyId}`);
+        res.json({ 
+          message: 'Test data cleaned up successfully',
+          subscription: cleanedSubscription
+        });
+      } else {
+        res.json({ message: 'No test data found to clean up' });
+      }
+      
+    } catch (error) {
+      console.error('Error cleaning up test Stripe data:', error);
+      res.status(500).json({ message: 'Error al limpiar datos de prueba' });
+    }
+  });
+
   // Stripe payment setup intent endpoint
   app.post('/api/account/create-setup-intent', authenticateToken, async (req: AuthRequest, res) => {
     try {

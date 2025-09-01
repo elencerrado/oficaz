@@ -83,6 +83,14 @@ Preferred communication style: Simple, everyday language.
 - **Consistent Behavior**: All SuperAdmin pages now use the same navigation pattern
 - **User issue resolved**: "sigo teniendo problema en las paginas del superadmin al usar el boton atras dentro de ellas, a veces me saca al login del pueradmin"
 
+### Test-to-Production Migration System (⚠️ STRIPE TRANSITION HANDLER)
+- **Edge Case Detection**: Automatically detects hybrid subscription states (test Stripe subscription with production mode)
+- **Data Cleanup Endpoint**: `/api/account/cleanup-test-stripe` safely removes test mode Stripe data
+- **Visual Alert System**: PaymentMethodManager shows migration alert for affected companies
+- **Automatic Resolution**: Cancels orphaned test subscriptions and resets to trial status for proper re-subscription
+- **Oficaz SL Case**: Specific solution for test-to-production transition where test card was configured but now in production mode
+- **User confirmed issue**: "se acabo del periodo de prueba y puse la tarjteta test de stripe y ahora estoy usandolo pero no tengo metodo de pago añadido"
+
 ## System Architecture
 
 ### Frontend Architecture
