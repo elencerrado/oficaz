@@ -254,7 +254,7 @@ const AccountManagement = () => {
               <div className="pt-2 border-t border-gray-200/50">
                 {paymentMethods && paymentMethods.length > 0 ? (
                   // Show payment info when payment methods exist
-                  <div className="flex items-center justify-between">
+                  (<div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Próximo cobro:</span>
@@ -268,10 +268,10 @@ const AccountManagement = () => {
                         {getPlanPrice()}/mes
                       </span>
                     </div>
-                  </div>
+                  </div>)
                 ) : cancellationStatus?.scheduledForCancellation && (
                   // Show cancellation warning when no payment methods
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  (<div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-center space-x-2">
                       <AlertCircle className="h-4 w-4 text-red-600" />
                       <div className="flex-1">
@@ -283,7 +283,7 @@ const AccountManagement = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </div>)
                 )}
               </div>
             )}
@@ -307,7 +307,6 @@ const AccountManagement = () => {
           )}
         </CardContent>
       </Card>
-
       {/* Company Registration Info */}
       <Card>
         <CardHeader>
@@ -340,7 +339,6 @@ const AccountManagement = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Billing Information */}
       <Card>
         <CardHeader>
@@ -409,7 +407,7 @@ const AccountManagement = () => {
                     <div>
                       {trialStatus?.isTrialActive ? (
                         // Durante período de prueba (con o sin haber tenido método de pago antes)
-                        <>
+                        (<>
                           <p className="text-sm font-medium text-red-800" key={trialStatus?.trialEndDate}>
                             ⚠️ Tu período de prueba terminará el {trialStatus?.trialEndDate ? formatDate(trialStatus.trialEndDate) : '(fecha no disponible)'} ({trialStatus?.daysRemaining} días restantes)
                           </p>
@@ -419,10 +417,10 @@ const AccountManagement = () => {
                           <p className="text-xs text-red-600 mt-2">
                             Añade una tarjeta de crédito o débito para continuar usando Oficaz después del período de prueba.
                           </p>
-                        </>
+                        </>)
                       ) : (
                         // Suscripción activa sin método de pago (eliminado durante suscripción activa)
-                        <>
+                        (<>
                           <p className="text-sm font-medium text-red-800" key={subscription?.nextPaymentDate}>
                             ⚠️ Tu suscripción no se renovará el {subscription?.nextPaymentDate ? formatDate(subscription.nextPaymentDate) : '(fecha no disponible)'}
                           </p>
@@ -432,7 +430,7 @@ const AccountManagement = () => {
                           <p className="text-xs text-red-600 mt-2">
                             Añade una tarjeta de crédito o débito para que tu suscripción se renueve automáticamente.
                           </p>
-                        </>
+                        </>)
                       )}
                     </div>
                   </div>
@@ -454,7 +452,6 @@ const AccountManagement = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Invoice History - Solo mostrar si hay métodos de pago */}
       {paymentMethods && paymentMethods.length > 0 && (
         <Card>
@@ -513,7 +510,6 @@ const AccountManagement = () => {
           </CardContent>
         </Card>
       )}
-
       {/* Management Actions */}
       <Card>
         <CardHeader>
@@ -596,7 +592,6 @@ const AccountManagement = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Modal de gestión de métodos de pago */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent className="max-w-4xl">
@@ -609,7 +604,6 @@ const AccountManagement = () => {
           <PaymentMethodManager paymentMethods={paymentMethods || []} />
         </DialogContent>
       </Dialog>
-
       {/* Modal de cambio de plan */}
       <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -751,7 +745,6 @@ const AccountManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Modal de confirmación de cambio de plan con preview */}
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
         <DialogContent className="max-w-lg">
@@ -839,7 +832,6 @@ const AccountManagement = () => {
           )}
         </DialogContent>
       </Dialog>
-
       {/* Modal de eliminación permanente */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="max-w-md">
@@ -1563,7 +1555,6 @@ const AccountManagement = () => {
         <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">Gestiona la configuración de tu empresa y perfil</p>
       </div>
-
       {/* Trial Manager - shown for companies in trial or active accounts (but not blocked) */}
       {((subscription?.status === 'trial' && subscription?.isTrialActive) || 
         (subscription?.status === 'active')) && 
@@ -1572,7 +1563,6 @@ const AccountManagement = () => {
           <TrialManagerSimple />
         </div>
       ) : null}
-
       <TabNavigation
           tabs={[
             { id: 'company', label: 'Empresa', icon: Building2 },
@@ -1583,7 +1573,6 @@ const AccountManagement = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
       />
-
       <div className="mt-6">
         {/* Company Information Tab */}
         {activeTab === 'company' && (
@@ -2149,7 +2138,7 @@ const AccountManagement = () => {
                     showUpload={true}
                   />
                   <div>
-                    <h3 className="font-medium text-gray-900">{user?.fullName}</h3>
+                    <h3 className="font-medium text-[#ffffff]">{user?.fullName}</h3>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary">
                         {user?.role === 'admin' ? 'Administrador' : 'Manager'}
