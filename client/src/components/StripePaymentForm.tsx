@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 
-import { CreditCard, CheckCircle, X } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -103,10 +103,6 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
   return (
     <div data-testid="stripe-payment-form" className="space-y-6">
       <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <CreditCard className="w-6 h-6 mr-2 text-blue-600" />
-          <h3 className="text-xl font-semibold text-gray-900">Añadir método de pago</h3>
-        </div>
         <div className="bg-blue-50 rounded-lg p-4 inline-block">
           <p className="text-sm text-blue-800 font-medium">
             Plan {planName.charAt(0).toUpperCase() + planName.slice(1)}
