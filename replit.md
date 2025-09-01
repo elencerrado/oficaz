@@ -123,7 +123,7 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
 - **Build Tool**: Vite
-- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system.
+- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system. Full dark mode support with `localStorage` persistence.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
@@ -146,19 +146,17 @@ Preferred communication style: Simple, everyday language.
 - **Replit Configuration**: `nodejs-20`, `web`, `postgresql-16` modules.
 
 ### Key Features & Implementations
-- **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings via admin interface.
-- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions from previous days.
-- **Manager Role Permissions System**: Backend API supports manager role assignment. Managers have restricted access to admin features.
-- **Navigation Performance Optimization**: Eliminated full page reloads during admin navigation.
-- **Scroll Position Reset System**: `useScrollReset` hook automatically resets scroll position on route changes.
-- **Performance Optimization - Time Tracking Page**: Database optimizations (batching queries, indexing), frontend caching (employees, company settings), reduced network overhead.
-- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views) with compact, intuitive design.
+- **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings.
+- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions.
+- **Manager Role Permissions System**: Backend API supports manager role assignment with restricted access.
+- **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook.
+- **Performance Optimization - Time Tracking Page**: Database optimizations, frontend caching, reduced network overhead.
+- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views).
 - **SuperAdmin Security System**: Exclusive access via email verification (`soy@oficaz.es`).
-- **Performance Optimization System**: Implemented lazy loading, code splitting, async resource loading, critical CSS optimization, and resource hints to reduce LCP and improve TBT.
-- **Error Monitoring System**: Integrated Sentry for error tracking and performance monitoring.
-- **SEO Optimization System**: Direct file serving of `robots.txt` and `sitemap.xml` from client/public with explicit headers.
-- **Account Deletion with 30-Day Grace Period System**: Comprehensive system for scheduling and canceling account deletion, with visual countdowns and SuperAdmin dashboard for monitoring.
-- **Dark Mode System**: Full dark mode support for admin interface (Light, Dark, System options) with `localStorage` persistence, managed by React Context and Tailwind's `darkMode: ["class"]`. All UI elements adapt between light and dark themes with appropriate contrast ratios. Mobile support included.
+- **Performance Optimization System**: Lazy loading, code splitting, async resource loading, critical CSS, resource hints.
+- **Error Monitoring System**: Integrated Sentry.
+- **SEO Optimization System**: Direct file serving of `robots.txt` and `sitemap.xml`.
+- **Account Deletion with 30-Day Grace Period System**: Comprehensive system for scheduling and canceling account deletion.
 
 ## External Dependencies
 
