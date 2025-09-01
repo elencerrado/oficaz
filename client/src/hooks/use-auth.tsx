@@ -123,16 +123,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     }
     
-    // Save auth data to localStorage
+    // Save auth data to localStorage FIRST
     localStorage.setItem('authData', JSON.stringify(data));
-    setAuthData(data);
     console.log('🔐 Auth data saved to localStorage');
     
     // Update state
     setUser(data.user);
     setCompany(data.company);
     setToken(data.token);
+    setAuthData(data);
     console.log('🔐 Auth state updated, token length:', data.token?.length);
+    
+    // Force refresh all queries to use the new auth token
+    queryClient.clear();
+    queryClient.invalidateQueries();
     
     return data;
   };

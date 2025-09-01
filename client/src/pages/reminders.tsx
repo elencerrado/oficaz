@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import FeatureRestrictedPage from '@/components/feature-restricted-page';
@@ -186,12 +186,22 @@ export default function Reminders() {
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ['/api/reminders'],
     retry: false,
+    select: (data) => {
+      // Ensure reminders data is an array
+      if (!data || !Array.isArray(data)) return [];
+      return data;
+    }
   });
 
   // Fetch employees for assignment (only for admins/managers)
   const { data: employees = [], isLoading: employeesLoading, error: employeesError } = useQuery<Employee[]>({
     queryKey: ['/api/users/employees'],
     enabled: user?.role === 'admin' || user?.role === 'manager',
+    select: (data) => {
+      // Ensure employees data is an array
+      if (!data || !Array.isArray(data)) return [];
+      return data;
+    }
   });
 
 
@@ -466,18 +476,26 @@ export default function Reminders() {
   };
 
   // Filter reminders - protect against null data
-  const filteredReminders = Array.isArray(reminders) ? reminders.filter((reminder: Reminder) => {
-    const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reminder.content?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredReminders = React.useMemo(() => {
+    if (!Array.isArray(reminders)) return [];
     
-    const matchesFilter = 
-      filterStatus === 'all' ||
-      (filterStatus === 'active' && !reminder.isCompleted && !reminder.isArchived) ||
-      (filterStatus === 'completed' && reminder.isCompleted) ||
-      (filterStatus === 'archived' && reminder.isArchived);
+    return reminders.filter((reminder: Reminder) => {
+      // Safely handle null/undefined fields
+      const title = reminder.title || '';
+      const content = reminder.content || '';
+      
+      const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           content.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesFilter = 
+        filterStatus === 'all' ||
+        (filterStatus === 'active' && !reminder.isCompleted && !reminder.isArchived) ||
+        (filterStatus === 'completed' && reminder.isCompleted) ||
+        (filterStatus === 'archived' && reminder.isArchived);
 
-    return matchesSearch && matchesFilter;
-  }) : [];
+      return matchesSearch && matchesFilter;
+    });
+  }, [reminders, searchTerm, filterStatus]);
 
   // Sort reminders: pinned first, then by date
   const sortedReminders = filteredReminders.sort((a: Reminder, b: Reminder) => {
