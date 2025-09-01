@@ -34,9 +34,9 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
   });
 
   const getPlanPrice = (planName: string) => {
-    if (!Array.isArray(subscriptionPlans)) return '0';
+    if (!Array.isArray(subscriptionPlans)) return 0;
     const plan = subscriptionPlans.find((p: any) => p.name === planName);
-    return plan?.pricePerUser || '0';
+    return Number(plan?.monthlyPrice) || 0;
   };
 
   const getPlanDisplayName = (planName: string) => {
