@@ -537,3 +537,113 @@ Si no solicitaste este cambio de contraseña, puedes ignorar este email de forma
     return false;
   }
 }
+
+export async function sendNewCompanyRegistrationNotification(
+  companyName: string,
+  companyEmail: string,
+  contactName: string,
+  cif: string,
+  registrationDate: Date
+): Promise<boolean> {
+  try {
+    console.log('🏢 Sending new company registration notification to soy@oficaz.es');
+    
+    // Configure Nodemailer with Hostinger SMTP
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: 'soy@oficaz.es',
+        pass: 'Sanisidro@2025',
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const formattedDate = registrationDate.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center;">
+          <img src="https://oficaz.es/email-logo.png" alt="Oficaz" style="height: 60px; margin-bottom: 20px;">
+          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">🎉 Nueva Empresa Registrada</h1>
+        </div>
+        
+        <div style="padding: 40px 20px;">
+          <p style="font-size: 16px; color: #374151; margin-bottom: 30px;">
+            Una nueva empresa se ha registrado en Oficaz.
+          </p>
+          
+          <div style="background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 30px; margin: 30px 0;">
+            <h3 style="color: #166534; margin: 0 0 20px 0; font-size: 18px;">Datos de la Empresa</h3>
+            
+            <div style="margin-bottom: 15px;">
+              <strong style="color: #374151;">Nombre:</strong>
+              <span style="color: #065f46; margin-left: 10px;">${companyName}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <strong style="color: #374151;">CIF:</strong>
+              <span style="color: #065f46; margin-left: 10px;">${cif}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <strong style="color: #374151;">Email:</strong>
+              <span style="color: #065f46; margin-left: 10px;">${companyEmail}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <strong style="color: #374151;">Contacto:</strong>
+              <span style="color: #065f46; margin-left: 10px;">${contactName}</span>
+            </div>
+            
+            <div style="margin-bottom: 0;">
+              <strong style="color: #374151;">Fecha de Registro:</strong>
+              <span style="color: #065f46; margin-left: 10px;">${formattedDate}</span>
+            </div>
+          </div>
+          
+          <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 30px 0;">
+            <p style="color: #1e40af; margin: 0; font-size: 14px;">
+              <strong>📊 Información Adicional:</strong><br>
+              • La empresa ha iniciado automáticamente el período de prueba de 14 días<br>
+              • Se han generado datos de demostración para facilitar la exploración<br>
+              • El administrador puede acceder inmediatamente al sistema
+            </p>
+          </div>
+          
+          <p style="font-size: 14px; color: #6b7280; margin-top: 40px;">
+            Este es un mensaje automático del sistema de registro de Oficaz.
+          </p>
+        </div>
+        
+        <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+            © 2025 Oficaz. Sistema de gestión empresarial.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: '"Oficaz Notificaciones" <soy@oficaz.es>',
+      to: 'soy@oficaz.es',
+      subject: `🏢 Nueva Empresa Registrada: ${companyName}`,
+      html: htmlContent
+    });
+
+    console.log('✅ New company registration notification sent successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending new company registration notification:', error);
+    return false;
+  }
+}

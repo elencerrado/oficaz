@@ -17,7 +17,7 @@ import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
-import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode } from './email';
+import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -2382,6 +2382,22 @@ Responde directamente a este email para contactar con la persona.
       } catch (demoError) {
         console.error('⚠️ Warning: Could not generate demo data for new company:', demoError);
         // Continue with registration even if demo data fails
+      }
+
+      // Send notification email to soy@oficaz.es about new company registration
+      try {
+        console.log('📧 Sending new company registration notification...');
+        await sendNewCompanyRegistrationNotification(
+          company.name,
+          company.email,
+          data.contactName,
+          company.cif,
+          new Date()
+        );
+        console.log('✅ Registration notification email sent successfully');
+      } catch (emailError) {
+        console.error('⚠️ Warning: Could not send registration notification email:', emailError);
+        // Continue with registration even if email fails
       }
 
       // Get subscription data for immediate access to features
