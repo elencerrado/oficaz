@@ -5009,25 +5009,17 @@ Responde directamente a este email para contactar con la persona.
       
       const user = userResult.rows[0] as any;
       
-      console.log('📄 Invoices Debug - Company ID:', companyId);
-      console.log('📄 Invoices Debug - Admin user found:', !!user);
-      console.log('📄 Invoices Debug - Stripe customer ID:', user?.stripe_customer_id);
-      
       if (!user?.stripe_customer_id) {
-        console.log('📄 Invoices Debug - No Stripe customer ID found, returning empty array');
         return res.json([]);
       }
 
       try {
-        // Get ALL invoices from Stripe (not just paid ones)
+        // Get ALL invoices from Stripe (show all statuses: paid, open, draft, etc.)
         const invoices = await stripe.invoices.list({
           customer: user.stripe_customer_id,
           limit: 20,
-          // Remove status filter to show all invoices
+          // No status filter - show all invoice states for complete billing history
         });
-        
-        console.log('📄 Invoices Debug - Total invoices found:', invoices.data.length);
-        console.log('📄 Invoices Debug - Invoice statuses:', invoices.data.map(inv => ({ id: inv.id, status: inv.status })));
 
         // Format invoices for frontend
         const formattedInvoices = invoices.data.map((invoice, index) => ({
@@ -5044,8 +5036,6 @@ Responde directamente a este email para contactar con la persona.
           download_url: invoice.invoice_pdf
         }));
         
-        console.log('📄 Invoices Debug - Formatted invoices:', formattedInvoices.length);
-
         res.json(formattedInvoices);
       } catch (stripeError: any) {
         console.error('Error fetching Stripe invoices:', stripeError.message);

@@ -36,6 +36,13 @@ Preferred communication style: Simple, everyday language.
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
 - **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
+### Invoice System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+- **Show All Invoice States**: System displays ALL invoice statuses (paid, open, draft, void, uncollectible) for complete billing history
+- **No Status Filtering**: Removed `status: 'paid'` filter from Stripe API calls to ensure users always see their invoices
+- **Immediate Visibility**: New invoices appear immediately, even in "open" status while Stripe processes payment
+- **Status Mapping**: Comprehensive status display with proper colors and translations (Pendiente, Pagada, Borrador, etc.)
+- **User issue resolved**: "porque no me aparece ninguna factura aqui? si se supone acabo de pagar?" - facturas now appear immediately after payment
+
 ### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
 - **Color Palette**: 7 optimized harmonious colors for all reminders (#FFB3BA coral red, #FFE4B5 warm peach, #FFFFCC light yellow, #C8E6C9 soft green, #BBDEFB sky blue, #E1BEE7 lavender purple, #F8BBD9 rose pink)
 - **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
