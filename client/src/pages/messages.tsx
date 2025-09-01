@@ -531,7 +531,7 @@ export default function Messages() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex-1 min-w-0">
-                    <h2 className="heading-3">Conversaciones ({filteredEmployees.length})</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Conversaciones ({filteredEmployees.length})</h2>
                     <p className="text-xs text-muted-foreground mt-1">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length} conversación{(messages as Message[] || []).filter(m => !m.isRead && m.receiverId === user?.id).length !== 1 ? 'es' : ''} sin leer
                     </p>
@@ -611,10 +611,10 @@ export default function Messages() {
                         profilePicture={filteredEmployees.find(e => e.id === selectedChat)?.profilePicture}
                       />
                       <div>
-                        <h3 className="heading-4">
+                        <h3 className="font-semibold text-foreground">
                           {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
                         </h3>
-                        <div className="caption-text">
+                        <div className="text-sm text-muted-foreground">
                           {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
                         </div>
                       </div>
@@ -632,7 +632,7 @@ export default function Messages() {
                           <div key={group.date} className="space-y-4">
                             {/* Date separator */}
                             <div className="flex items-center justify-center">
-                              <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
+                              <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
                                 {group.dateFormatted}
                               </div>
                             </div>
@@ -718,8 +718,8 @@ export default function Messages() {
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center text-muted-foreground">
                     <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="heading-3 mb-2">Selecciona un empleado</h3>
-                    <p className="body-text">Elige un empleado de la lista para comenzar a chatear</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Selecciona un empleado</h3>
+                    <p className="text-sm text-muted-foreground">Elige un empleado de la lista para comenzar a chatear</p>
                   </div>
                 </div>
               )}
@@ -839,7 +839,7 @@ export default function Messages() {
                       <div key={group.date} className="space-y-4">
                         {/* Date separator */}
                         <div className="flex items-center justify-center">
-                          <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
+                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
                             {group.dateFormatted}
                           </div>
                         </div>
@@ -971,7 +971,7 @@ export default function Messages() {
               </div>
               
               <div style={{ display: modalGroupMode ? 'block' : 'none' }}>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Mensaje grupal
                 </label>
                 <textarea
@@ -979,13 +979,13 @@ export default function Messages() {
                   value={modalMessage}
                   onChange={(e) => setModalMessage(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
                 />
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     {modalMessage.length}/1000 caracteres
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     Shift + Enter para nueva línea
                   </span>
                 </div>
