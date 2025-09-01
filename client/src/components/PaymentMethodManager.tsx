@@ -55,6 +55,12 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     staleTime: 60000,
   });
 
+  // Get cancellation status to show warnings
+  const { data: cancellationStatus } = useQuery({
+    queryKey: ['/api/account/cancellation-status'],
+    staleTime: 30000,
+  });
+
   // Determine the actual plan and price to display
   const actualPlan = selectedPlan || subscription?.plan || "basic";
   const currentPlanData = subscriptionPlans?.find((plan: any) => plan.name === actualPlan);
@@ -244,6 +250,30 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
 
   return (
     <div className="space-y-4">
+      {/* Account Scheduled for Deletion Alert */}
+      {cancellationStatus?.scheduledForCancellation && (
+        <Card className="!border-red-200 !bg-red-50 !border-2" style={{ borderRadius: '0.5rem !important' }}>
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h4 className="font-medium text-red-900 mb-2">Cuenta programada para cancelación</h4>
+                <p className="text-sm text-red-800 mb-3">
+                  Tu cuenta está programada para ser cancelada el {new Date(cancellationStatus.scheduledCancellationDate).toLocaleDateString('es-ES', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}. Tienes un período de gracia de 30 días para cambiar de opinión.
+                </p>
+                <p className="text-sm text-red-800 mb-3">
+                  Si deseas mantener tu cuenta activa, puedes cancelar la programación desde la página de configuración.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Test Data Migration Alert */}
       {hasTestData && (
         <Card className="!border-orange-200 !bg-orange-50 !border-2" style={{ borderRadius: '0.5rem !important' }}>
