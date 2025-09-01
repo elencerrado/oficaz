@@ -101,7 +101,7 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
   };
 
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className="max-w-md mx-auto !bg-white !text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_button]:!border-gray-300 [&_input]:!bg-white [&_input]:!text-gray-900 [&_input]:!border-gray-300 [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900 [&_.stripe-payment-element_*]:!bg-white [&_.stripe-payment-element_*]:!text-gray-900">
       <CardHeader className="text-center pb-4">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">

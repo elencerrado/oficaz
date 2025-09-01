@@ -306,7 +306,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
 
       {/* Modal para añadir método de pago */}
       <Dialog open={isAddingCard} onOpenChange={setIsAddingCard}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-white !text-gray-900 [&>*]:!bg-white [&>*]:!text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_input]:!bg-white [&_input]:!text-gray-900 [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900">
           <DialogHeader>
             <DialogTitle>Añadir método de pago</DialogTitle>
             <DialogDescription>
@@ -314,7 +314,24 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
             </DialogDescription>
           </DialogHeader>
           {clientSecret ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <Elements 
+              stripe={stripePromise} 
+              options={{ 
+                clientSecret,
+                appearance: {
+                  theme: 'stripe',
+                  variables: {
+                    colorPrimary: '#007AFF',
+                    colorBackground: '#ffffff',
+                    colorText: '#1f2937',
+                    colorDanger: '#ef4444',
+                    fontFamily: 'system-ui, sans-serif',
+                    spacingUnit: '4px',
+                    borderRadius: '6px'
+                  }
+                }
+              }}
+            >
               <StripePaymentForm
                 planName={selectedPlan}
                 planPrice={selectedPlanPrice}
