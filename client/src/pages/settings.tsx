@@ -869,11 +869,14 @@ const AccountManagement = () => {
               </Label>
               <Input
                 id="confirmationInput"
+                type="text"
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
                 placeholder="Escribe aquí..."
-                className="mt-2"
+                className="mt-2 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                 disabled={isDeleting}
+                autoComplete="off"
+                spellCheck="false"
               />
             </div>
 
