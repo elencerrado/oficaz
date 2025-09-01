@@ -197,6 +197,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setAuthData(null);
     clearAuthData();
+    
+    // SECURITY FIX: Clear ALL storage and invalidate history to prevent back navigation
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Reset dark mode to prevent UI issues on login
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('theme');
+    
+    // Clear browser history to prevent back navigation to admin pages
+    if (window.history?.replaceState) {
+      window.history.replaceState(null, '', '/login');
+    }
+    
+    // Force redirect to login and prevent caching
+    window.location.replace('/login');
   };
 
   const refreshUser = async () => {

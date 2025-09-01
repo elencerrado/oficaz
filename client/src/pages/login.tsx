@@ -29,8 +29,11 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // CRITICAL: Clean up corrupted tokens for user ID 4 (non-existent user)
+  // CRITICAL: Clean up corrupted tokens and ensure proper login state
   useEffect(() => {
+    // SECURITY FIX: Ensure clean login state - reset dark mode if coming from logout
+    document.documentElement.classList.remove('dark');
+    
     const cleanupCorruptedTokens = () => {
       const authData = localStorage.getItem('authData');
       if (authData) {

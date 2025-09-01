@@ -80,13 +80,23 @@ function DashboardRouter() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, token } = useAuth();
 
   if (isLoading) {
     return <PageLoading />;
   }
 
-  if (!user) {
+  // SECURITY FIX: Enhanced validation to prevent back navigation after logout
+  if (!user || !token) {
+    // Clear any remaining auth data and force redirect
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Prevent browser history navigation to admin pages
+    if (window.history?.replaceState) {
+      window.history.replaceState(null, '', '/login');
+    }
+    
     return <Redirect to="/login" />;
   }
 
