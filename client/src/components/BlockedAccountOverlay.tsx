@@ -120,14 +120,14 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
                 {Array.isArray(subscriptionPlans) && subscriptionPlans.filter((plan: any) => plan.name !== 'master').map((plan: any) => (
                   <Card 
                     key={plan.name}
-                    className={`cursor-pointer transition-all ${
+                    className={`cursor-pointer transition-all bg-white border-gray-200 text-gray-900 ${
                       selectedPlan === plan.name 
                         ? 'border-blue-500 bg-blue-50 shadow-md' 
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                     onClick={() => setSelectedPlan(plan.name)}
                   >
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 bg-transparent">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center space-x-2">
@@ -177,7 +177,7 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
 
       {/* Modal para gestionar métodos de pago */}
       <Dialog open={showPaymentManager} onOpenChange={setShowPaymentManager}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl bg-white text-gray-900 border-gray-200">
           <DialogHeader>
             <DialogTitle>Activar Plan {getPlanDisplayName(selectedPlan)}</DialogTitle>
             <DialogDescription>
