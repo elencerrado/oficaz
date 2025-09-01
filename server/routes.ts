@@ -4682,7 +4682,11 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Plan no encontrado' });
       }
 
-      const monthlyPrice = (planResult.rows[0] as any).monthly_price;
+      const standardMonthlyPrice = (planResult.rows[0] as any).monthly_price;
+      
+      // Use custom monthly price if set, otherwise use standard plan price
+      const monthlyPrice = company.subscription.customMonthlyPrice || standardMonthlyPrice;
+      console.log(`💰 Using ${company.subscription.customMonthlyPrice ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
 
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;

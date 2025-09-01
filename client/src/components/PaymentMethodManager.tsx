@@ -58,7 +58,10 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   // Determine the actual plan and price to display
   const actualPlan = selectedPlan || subscription?.plan || "basic";
   const currentPlanData = subscriptionPlans?.find((plan: any) => plan.name === actualPlan);
-  const actualPrice = selectedPlanPrice || currentPlanData?.monthlyPrice || (actualPlan === "pro" ? 79.99 : 29.99);
+  
+  // Use custom monthly price if available, otherwise use standard plan price
+  const standardPrice = currentPlanData?.monthlyPrice || (actualPlan === "pro" ? 79.99 : 29.99);
+  const actualPrice = selectedPlanPrice || subscription?.customMonthlyPrice || standardPrice;
 
 
 
