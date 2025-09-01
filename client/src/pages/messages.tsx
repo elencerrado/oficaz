@@ -927,7 +927,7 @@ export default function Messages() {
         </div>
         {/* Modal for new chat - Group message functionality */}
         <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
-          <DialogContent className="max-w-md mx-auto">
+          <DialogContent className="max-w-md lg:max-w-4xl mx-auto">
             <DialogHeader>
               <DialogTitle>Nuevo mensaje</DialogTitle>
             </DialogHeader>
@@ -970,92 +970,121 @@ export default function Messages() {
                 )}
               </div>
               
-              <div style={{ display: modalGroupMode ? 'block' : 'none' }}>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Mensaje grupal
-                </label>
-                <textarea
-                  placeholder="Escribe tu mensaje grupal...&#10;&#10;Puedes escribir múltiples líneas y dar formato a tu mensaje."
-                  value={modalMessage}
-                  onChange={(e) => setModalMessage(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {modalMessage.length}/1000 caracteres
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Shift + Enter para nueva línea
-                  </span>
-                </div>
-              </div>
-              
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
-                <Input
-                  placeholder="Buscar empleado..."
-                  value={modalSearchTerm}
-                  onChange={(e) => setModalSearchTerm(e.target.value)}
-                  className="input-oficaz bg-muted pr-4"
-                  style={{ paddingLeft: '2.75rem' }}
-                />
-              </div>
-
-              <div className="max-h-60 overflow-y-auto space-y-2">
-                {filteredEmployees
-                  .filter(employee => 
-                    employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
-                  )
-                  .map((employee) => (
-                    <div
-                      key={employee.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        modalGroupMode && modalSelectedEmployees.includes(employee.id)
-                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                          : 'bg-muted hover:bg-muted/80 border-border'
-                      }`}
-                      onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
+              {/* Responsive layout: Stack on mobile, 2-column on desktop */}
+              <div className={`${modalGroupMode ? 'lg:grid lg:grid-cols-2 lg:gap-6' : ''} space-y-4 lg:space-y-0`}>
+                
+                {/* Left Column: Message composition */}
+                <div style={{ display: modalGroupMode ? 'block' : 'none' }} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                      Mensaje grupal
+                    </label>
+                    <textarea
+                      placeholder="Escribe tu mensaje grupal...&#10;&#10;Puedes escribir múltiples líneas y dar formato a tu mensaje."
+                      value={modalMessage}
+                      onChange={(e) => setModalMessage(e.target.value)}
+                      rows={8}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {modalMessage.length}/1000 caracteres
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Shift + Enter para nueva línea
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Send button for desktop (hidden on mobile) */}
+                  <div className="hidden lg:block">
+                    <Button
+                      onClick={sendModalGroupMessage}
+                      disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim() || modalMessage.length > 1000}
+                      className="btn-oficaz-primary w-full"
+                      size="lg"
                     >
-                      <div className="flex items-center space-x-3">
-                        {modalGroupMode && (
-                          <div className={`w-4 h-4 border-2 rounded ${
-                            modalSelectedEmployees.includes(employee.id)
-                              ? 'bg-card border-background'
-                              : 'border-gray-300'
-                          } flex items-center justify-center`}>
-                            {modalSelectedEmployees.includes(employee.id) && (
-                              <Check className="w-3 h-3 text-oficaz-primary" />
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar a {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''}
+                    </Button>
+                    <div className="text-center mt-2">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Employee selection */}
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+                    <Input
+                      placeholder="Buscar empleado..."
+                      value={modalSearchTerm}
+                      onChange={(e) => setModalSearchTerm(e.target.value)}
+                      className="input-oficaz bg-muted pr-4"
+                      style={{ paddingLeft: '2.75rem' }}
+                    />
+                  </div>
+
+                  <div className="max-h-60 lg:max-h-80 overflow-y-auto space-y-2">
+                    {filteredEmployees
+                      .filter(employee => 
+                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
+                      )
+                      .map((employee) => (
+                        <div
+                          key={employee.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            modalGroupMode && modalSelectedEmployees.includes(employee.id)
+                              ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                              : 'bg-muted hover:bg-muted/80 border-border'
+                          }`}
+                          onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {modalGroupMode && (
+                              <div className={`w-4 h-4 border-2 rounded ${
+                                modalSelectedEmployees.includes(employee.id)
+                                  ? 'bg-card border-background'
+                                  : 'border-gray-300'
+                              } flex items-center justify-center`}>
+                                {modalSelectedEmployees.includes(employee.id) && (
+                                  <Check className="w-3 h-3 text-oficaz-primary" />
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                        
-                        <UserAvatar 
-                          fullName={employee.fullName || ''} 
-                          size="md" 
-                          userId={employee.id}
-                          profilePicture={employee.profilePicture}
-                        />
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-medium text-sm truncate ${
-                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-foreground'
-                          }`}>
-                            {employee.fullName}
-                          </p>
-                          <div className={`text-xs truncate ${
-                            modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-gray-500'
-                          }`}>
-                            {getRoleDisplay(employee)}
+                            
+                            <UserAvatar 
+                              fullName={employee.fullName || ''} 
+                              size="md" 
+                              userId={employee.id}
+                              profilePicture={employee.profilePicture}
+                            />
+                            
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-medium text-sm truncate ${
+                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-foreground'
+                              }`}>
+                                {employee.fullName}
+                              </p>
+                              <div className={`text-xs truncate ${
+                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-gray-500'
+                              }`}>
+                                {getRoleDisplay(employee)}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      ))}
+                  </div>
+                </div>
               </div>
 
+              {/* Mobile send button (shown only on mobile when in group mode) */}
               {modalGroupMode && (
-                <div className="flex items-center justify-between pt-2 border-t">
+                <div className="lg:hidden flex items-center justify-between pt-2 border-t">
                   <span className="text-sm text-muted-foreground">
                     {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
                   </span>
