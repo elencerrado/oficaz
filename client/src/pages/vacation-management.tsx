@@ -77,11 +77,11 @@ export default function VacationManagement() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [newHoliday, setNewHoliday] = useState({ name: "", date: "", type: "regional" as const });
+  const [newHoliday, setNewHoliday] = useState<{ name: string; date: string; type: 'national' | 'regional' | 'local' }>({ name: "", date: "", type: "regional" });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit'>('approve');
+  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit' | 'revert'>('approve');
   const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
   
@@ -214,9 +214,10 @@ export default function VacationManagement() {
   };
 
   const getVacationPeriodsForEmployee = (employeeId: number) => {
+    if (!vacationRequests || !Array.isArray(vacationRequests)) return [];
     return vacationRequests
-      .filter(req => req.userId === employeeId && (req.status === 'approved' || req.status === 'pending'))
-      .map(req => ({
+      .filter((req: any) => req.userId === employeeId && (req.status === 'approved' || req.status === 'pending'))
+      .map((req: any) => ({
         ...req,
         startDate: parseISO(req.startDate),
         endDate: parseISO(req.endDate)
@@ -241,7 +242,9 @@ export default function VacationManagement() {
     const periods = getVacationPeriodsForEmployee(employee.id);
     const { start: rangeStart, end: rangeEnd } = timelineRange;
     
-    return periods.map((period, index) => {
+    if (!periods || !Array.isArray(periods)) return [];
+    
+    return periods.map((period: any, index: number) => {
       // Verificar si el período se solapa con el rango visible
       const periodStart = period.startDate;
       const periodEnd = period.endDate;
@@ -261,7 +264,7 @@ export default function VacationManagement() {
       const leftPercent = (startOffset / totalDays) * 100;
       const widthPercent = (duration / totalDays) * 100;
       
-      const fullRequest = vacationRequests.find(req => req.id === period.id);
+      const fullRequest = vacationRequests?.find((req: any) => req.id === period.id);
       const periodText = `${format(periodStart, "dd/MM")} - ${format(periodEnd, "dd/MM")}`;
       
       const tooltipId = `${employee.id}-${period.id}-${index}`;
@@ -423,6 +426,7 @@ export default function VacationManagement() {
     staleTime: 5 * 60 * 1000,
     select: (data) => {
       // Ensure data consistency and handle missing fields
+      if (!data || !Array.isArray(data)) return [];
       return data.map((request: any) => ({
         ...request,
         days: request.days || 0,
@@ -436,6 +440,11 @@ export default function VacationManagement() {
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['/api/employees'],
     staleTime: 5 * 60 * 1000,
+    select: (data) => {
+      // Ensure employees data is an array
+      if (!data || !Array.isArray(data)) return [];
+      return data;
+    }
   });
 
   // Update vacation request status
@@ -1361,10 +1370,12 @@ export default function VacationManagement() {
               {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
               {modalAction === 'deny' && <X className="w-5 h-5 text-red-600" />}
               {modalAction === 'edit' && <Edit className="w-5 h-5 text-blue-600" />}
+              {modalAction === 'revert' && <RotateCcw className="w-5 h-5 text-orange-600" />}
               
               {modalAction === 'approve' && 'Aprobar Solicitud'}
               {modalAction === 'deny' && 'Denegar Solicitud'}
               {modalAction === 'edit' && 'Modificar Solicitud'}
+              {modalAction === 'revert' && 'Revertir a Pendiente'}
             </DialogTitle>
           </DialogHeader>
 
@@ -1397,8 +1408,8 @@ export default function VacationManagement() {
                       Nuevo período de vacaciones
                     </label>
                     <DatePickerPeriod
-                      startDate={editDates.startDate}
-                      endDate={editDates.endDate}
+                      startDate={editDates.startDate || undefined}
+                      endDate={editDates.endDate || undefined}
                       onStartDateChange={(date) => setEditDates(prev => ({ ...prev, startDate: date || null }))}
                       onEndDateChange={(date) => setEditDates(prev => ({ ...prev, endDate: date || null }))}
                     />

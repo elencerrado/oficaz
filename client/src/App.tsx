@@ -1,4 +1,5 @@
 import { Switch, Route, Redirect, useLocation } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -81,23 +82,30 @@ function DashboardRouter() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading, token } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // SECURITY FIX: Clean up auth data when no valid session exists
+  useEffect(() => {
+    if (!isLoading && (!user || !token)) {
+      // Clear any remaining auth data and force redirect
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Prevent browser history navigation to admin pages
+      if (window.history?.replaceState) {
+        window.history.replaceState(null, '', '/login');
+      }
+      
+      setLocation('/login');
+    }
+  }, [user, token, isLoading, setLocation]);
 
   if (isLoading) {
     return <PageLoading />;
   }
 
-  // SECURITY FIX: Enhanced validation to prevent back navigation after logout
   if (!user || !token) {
-    // Clear any remaining auth data and force redirect
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Prevent browser history navigation to admin pages
-    if (window.history?.replaceState) {
-      window.history.replaceState(null, '', '/login');
-    }
-    
-    return <Redirect to="/login" />;
+    return <PageLoading />; // Show loading while cleanup happens
   }
 
   return <>{children}</>;
