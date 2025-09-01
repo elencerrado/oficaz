@@ -939,6 +939,13 @@ export default function Settings() {
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Plan change modal states - missing variables
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(subscription?.plan || 'basic');
+  const [isChangingPlan, setIsChangingPlan] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [planPreview, setPlanPreview] = useState(null);
+
   // User profile data
   const [profileData, setProfileData] = useState({
     personalPhone: user?.personalPhone || '',
@@ -1104,49 +1111,6 @@ export default function Settings() {
     }
   });
 
-  const handleDeleteLogo = async () => {
-    setIsUploading(true);
-    try {
-      const response = await fetch('/api/companies/delete-logo', {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Error al eliminar el logo');
-      }
-      
-      // Update local state immediately
-      setCompanyData(prev => ({
-        ...prev,
-        logoUrl: ''
-      }));
-      
-      setLogoPreview(null);
-      setLogoFile(null);
-      
-      toast({
-        title: "Logo eliminado",
-        description: "El logo de la empresa ha sido eliminado correctamente",
-      });
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      
-      // Refresh authentication context to update logo in all components
-      refreshUser();
-      
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo eliminar el logo",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   // Preview plan change mutation
   const previewPlanMutation = useMutation({
     mutationFn: async (plan: string) => {
@@ -1199,48 +1163,19 @@ export default function Settings() {
       return response.json();
     },
     onSuccess: async (data) => {
-      // Show success message with prorated billing info if available
-      const baseMessage = `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`;
-      let description = baseMessage;
-      
-      if (data.message && data.message !== baseMessage) {
-        description = data.message;
-      }
-      
       toast({
         title: "Plan actualizado",
-        description: description,
+        description: `Has cambiado al plan ${selectedPlan === 'basic' ? 'Basic' : 'Pro'} exitosamente`,
       });
       setIsPlanModalOpen(false);
       setIsChangingPlan(false);
       setShowConfirmation(false);
       setPlanPreview(null);
       
-      // Invalidate ALL subscription-related queries to refresh the data immediately
+      // Refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/cancellation-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
-      
-      // Invalidate dashboard queries that depend on plan features
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      
-      // Force immediate refetch of critical subscription data
-      queryClient.refetchQueries({ queryKey: ['/api/account/subscription'] });
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      
-      // Refresh authentication context with updated subscription data
       await refreshUser();
-      
-      // Update local state immediately
-      if (data.subscription) {
-        setSelectedPlan(data.subscription.plan);
-      }
     },
     onError: (error: Error) => {
       toast({
@@ -1251,6 +1186,65 @@ export default function Settings() {
       setIsChangingPlan(false);
     },
   });
+
+  const handleChangePlan = () => {
+    previewPlanMutation.mutate(selectedPlan);
+  };
+
+  const confirmPlanChange = () => {
+    setIsChangingPlan(true);
+    changePlanMutation.mutate(selectedPlan);
+  };
+
+  // Initialize selected plan when subscription data loads
+  useEffect(() => {
+    if (subscription?.plan) {
+      setSelectedPlan(subscription.plan);
+    }
+  }, [subscription?.plan]);
+
+  const handleDeleteLogo = async () => {
+    setIsUploading(true);
+    try {
+      const response = await fetch('/api/companies/delete-logo', {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Error al eliminar el logo');
+      }
+      
+      // Update local state immediately
+      setCompanyData(prev => ({
+        ...prev,
+        logoUrl: ''
+      }));
+      
+      setLogoPreview(null);
+      setLogoFile(null);
+      
+      toast({
+        title: "Logo eliminado",
+        description: "El logo de la empresa ha sido eliminado correctamente",
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      
+      // Refresh authentication context to update logo in all components
+      refreshUser();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el logo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Schedule account deletion - 30 day grace period
   const deleteAccountMutation = useMutation({
@@ -1343,23 +1337,6 @@ export default function Settings() {
   const handleCancelDeletion = () => {
     cancelDeletionMutation.mutate();
   };
-
-  const handleChangePlan = () => {
-    // First get preview of the plan change
-    previewPlanMutation.mutate(selectedPlan);
-  };
-
-  const confirmPlanChange = () => {
-    setIsChangingPlan(true);
-    changePlanMutation.mutate(selectedPlan);
-  };
-
-  // Initialize selected plan when subscription data loads
-  useEffect(() => {
-    if (subscription?.plan) {
-      setSelectedPlan(subscription.plan);
-    }
-  }, [subscription?.plan]);
 
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
