@@ -1105,4 +1105,19 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   opacity: 0.6;
 }
 
+/* Force rounded corners for payment modals - Override any conflicting styles */
+[data-testid="stripe-payment-form"],
+[data-testid="payment-method-manager"],
+.payment-modal,
+.payment-form {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+/* Additional selectors for payment components */
+.max-w-md.mx-auto {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
 

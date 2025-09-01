@@ -183,7 +183,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   return (
     <div className="space-y-4">
       {/* Current Payment Methods */}
-      <Card className="!border-gray-200" style={{ borderRadius: '0.5rem !important' }}>
+      <Card data-testid="payment-method-manager" className="!border-gray-200" style={{ borderRadius: '0.5rem !important' }}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
