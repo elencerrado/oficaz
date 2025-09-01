@@ -183,7 +183,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
   return (
     <div className="space-y-4">
       {/* Current Payment Methods */}
-      <Card>
+      <Card className="!rounded-lg !border-gray-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -306,7 +306,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
 
       {/* Modal para añadir método de pago */}
       <Dialog open={isAddingCard} onOpenChange={setIsAddingCard}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-white !text-gray-900 [&>*]:!bg-white [&>*]:!text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_input]:!bg-white [&_input]:!text-gray-900 [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto !bg-white !text-gray-900 [&>*]:!bg-white [&>*]:!text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_button]:!border-gray-300 [&_button]:!rounded-lg [&_input]:!bg-white [&_input]:!text-gray-900 [&_input]:!border-gray-300 [&_input]:!rounded-lg [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900 [&_.card]:!rounded-lg [&_.card]:!border-gray-200">
           <DialogHeader>
             <DialogTitle>Añadir método de pago</DialogTitle>
             <DialogDescription>

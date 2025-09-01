@@ -177,7 +177,7 @@ export default function BlockedAccountOverlay({ trialStatus }: BlockedAccountOve
 
       {/* Modal para gestionar métodos de pago */}
       <Dialog open={showPaymentManager} onOpenChange={setShowPaymentManager}>
-        <DialogContent className="max-w-4xl !bg-white !text-gray-900 !border-gray-200 [&>*]:!bg-white [&>*]:!text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_button]:!border-gray-300 [&_input]:!bg-white [&_input]:!text-gray-900 [&_input]:!border-gray-300 [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900 [&_h2]:!text-gray-900 [&_.card]:!bg-white [&_.card]:!text-gray-900 [&_.card]:!border-gray-200">
+        <DialogContent className="max-w-4xl !bg-white !text-gray-900 !border-gray-200 [&>*]:!bg-white [&>*]:!text-gray-900 [&_*]:!bg-white [&_*]:!text-gray-900 [&_button]:!bg-white [&_button]:!text-gray-900 [&_button]:!border-gray-300 [&_input]:!bg-white [&_input]:!text-gray-900 [&_input]:!border-gray-300 [&_label]:!text-gray-900 [&_p]:!text-gray-600 [&_h3]:!text-gray-900 [&_h2]:!text-gray-900 [&_.card]:!bg-white [&_.card]:!text-gray-900 [&_.card]:!border-gray-200 [&_.card]:!rounded-lg [&_*]:!rounded-lg">
           <DialogHeader>
             <DialogTitle>Activar Plan {getPlanDisplayName(selectedPlan)}</DialogTitle>
             <DialogDescription>
