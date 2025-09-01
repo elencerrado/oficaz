@@ -722,16 +722,11 @@ const AccountManagement = () => {
               Estas acciones son permanentes y no se pueden deshacer.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="justify-start border-orange-200 text-orange-700 hover:bg-orange-50">
-                <AlertCircle className="mr-2 h-4 w-4" />
-                Pausar cuenta temporalmente
-              </Button>
-              
               {/* Show different buttons based on deletion status */}
               {cancellationStatus?.scheduledForDeletion ? (
                 <Button 
                   variant="outline" 
-                  className="justify-start border-green-200 text-green-700 hover:bg-green-50"
+                  className="justify-start border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950/30"
                   onClick={handleCancelDeletion}
                   disabled={cancelDeletionMutation.isPending}
                 >
@@ -741,21 +736,21 @@ const AccountManagement = () => {
               ) : (
                 <Button 
                   variant="outline" 
-                  className="justify-start border-red-200 text-red-700 hover:bg-red-50"
+                  className="justify-start border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-300 dark:hover:border-red-700"
                   onClick={() => setIsDeleteModalOpen(true)}
                 >
                   <X className="mr-2 h-4 w-4" />
-                  Cancelar cuenta permanentemente
+                  Cancelar cuenta
                 </Button>
               )}
             </div>
 
-            {/* Show deletion warning if scheduled */}
+            {/* Show deletion warning if scheduled - Adaptado para modo oscuro */}
             {cancellationStatus?.scheduledForDeletion && cancellationStatus?.deletionWillOccurAt && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+              <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg p-4 mt-4">
                 <div className="flex items-start space-x-2">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
-                  <div className="text-sm text-red-700">
+                  <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5" />
+                  <div className="text-sm text-red-700 dark:text-red-300">
                     <p className="font-semibold mb-1">⚠️ Cuenta programada para eliminación</p>
                     <p className="mb-2">
                       Tu cuenta será eliminada permanentemente el{' '}
