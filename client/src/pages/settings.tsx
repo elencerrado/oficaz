@@ -2138,7 +2138,7 @@ const AccountManagement = () => {
                     showUpload={true}
                   />
                   <div>
-                    <h3 className="font-medium text-[#ffffff]">{user?.fullName}</h3>
+                    <h3 className="font-medium text-[#0ea5e9]">{user?.fullName}</h3>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary">
                         {user?.role === 'admin' ? 'Administrador' : 'Manager'}
