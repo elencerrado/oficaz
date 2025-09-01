@@ -77,6 +77,12 @@ Preferred communication style: Simple, everyday language.
 - **Consistent Application**: Applied to sidebar, mobile header, and demo loading overlay
 - **User issue resolved**: "El ícono loader de oficial en el modo oscuro a veces sale gris en el fondo oscuro"
 
+### SuperAdmin Navigation System (⚠️ USER EXPERIENCE FIX)
+- **Smart Back Navigation**: Implemented `window.history.back()` as primary navigation method
+- **Fallback Routes**: Added appropriate fallbacks when history is empty (companies list, dashboard)
+- **Consistent Behavior**: All SuperAdmin pages now use the same navigation pattern
+- **User issue resolved**: "sigo teniendo problema en las paginas del superadmin al usar el boton atras dentro de ellas, a veces me saca al login del pueradmin"
+
 ## System Architecture
 
 ### Frontend Architecture

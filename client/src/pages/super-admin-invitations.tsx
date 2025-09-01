@@ -190,12 +190,22 @@ export default function SuperAdminInvitations() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/super-admin/dashboard">
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al Dashboard
-                </Button>
-              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  // Try to go back in history, fallback to dashboard
+                  if (window.history.length > 1) {
+                    window.history.back();
+                  } else {
+                    window.location.href = '/super-admin/dashboard';
+                  }
+                }}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
               <div>
                 <h1 className="text-2xl font-bold text-white">Gestión de Invitaciones</h1>
                 <p className="text-white/70 text-sm">Controla el acceso al registro de nuevas empresas</p>

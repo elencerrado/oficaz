@@ -326,8 +326,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
           <h2 className="text-xl font-semibold mb-2">Empresa no encontrada</h2>
-          <Button onClick={() => setLocation('/super-admin')} variant="outline">
-            Volver al Dashboard
+          <Button onClick={() => setLocation('/super-admin/companies')} variant="outline">
+            Volver a Empresas
           </Button>
         </div>
       </div>
@@ -341,7 +341,14 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
-            onClick={() => setLocation('/super-admin')}
+            onClick={() => {
+              // Try to go back in history, fallback to companies list
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                setLocation('/super-admin/companies');
+              }
+            }}
             className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
