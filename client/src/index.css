@@ -266,13 +266,14 @@ body .dark .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_tod
   border-color: #6b7280 !important;
 }
 
-/* DÍA DE HOY - MÁXIMA ESPECIFICIDAD ABSOLUTA */
-body .calendar-admin-override .rdp-day_today.national-holiday-day,
-body .calendar-admin-override .rdp-day_today.custom-holiday-day,
-body .calendar-admin-override .rdp-day_today.approved-vacation-day,
-body .calendar-admin-override button.rdp-day_today,
-body .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
-body .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
+/* DÍA DE HOY - ESPECIFICIDAD ABSOLUTA ULTRA ALTA */
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.national-holiday-day,
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.custom-holiday-day,
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.approved-vacation-day,
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today,
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-pressed="true"],
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-selected="true"],
+html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[style] {
   background-color: #3b82f6 !important;
   background: #3b82f6 !important;
   color: white !important;
@@ -286,13 +287,14 @@ body .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
   opacity: 1 !important;
 }
 
-/* Modo oscuro para día de hoy con máxima prioridad */
-body .dark .calendar-admin-override .rdp-day_today.national-holiday-day,
-body .dark .calendar-admin-override .rdp-day_today.custom-holiday-day,
-body .dark .calendar-admin-override .rdp-day_today.approved-vacation-day,
-body .dark .calendar-admin-override button.rdp-day_today,
-body .dark .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
-body .dark .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
+/* Modo oscuro para día de hoy con especificidad ultra alta */
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.national-holiday-day,
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.custom-holiday-day,
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.approved-vacation-day,
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today,
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-pressed="true"],
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-selected="true"],
+html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[style] {
   background-color: #2563eb !important;
   background: #2563eb !important;
   color: white !important;

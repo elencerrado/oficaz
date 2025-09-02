@@ -48,6 +48,56 @@ export default function AdminDashboard() {
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
 
+  // Hook para destacar el día de hoy en el calendario con estilos inline
+  useEffect(() => {
+    const highlightTodayInCalendar = () => {
+      const calendarContainer = document.querySelector('.calendar-admin-override');
+      if (!calendarContainer) return;
+
+      // Buscar todos los botones con clase rdp-day_today
+      const todayButtons = calendarContainer.querySelectorAll('button.rdp-day_today');
+      
+      todayButtons.forEach((button: Element) => {
+        const htmlButton = button as HTMLElement;
+        // Aplicar estilos inline con máxima prioridad
+        htmlButton.style.cssText = `
+          background-color: #3b82f6 !important;
+          background: #3b82f6 !important;
+          color: white !important;
+          border: 3px solid #1d4ed8 !important;
+          border-radius: 50% !important;
+          font-weight: 900 !important;
+          box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+          transform: scale(1.1) !important;
+          opacity: 1 !important;
+          position: relative !important;
+          z-index: 99999 !important;
+        `;
+      });
+    };
+
+    // Ejecutar inmediatamente y después de cualquier re-renderizado
+    const timeoutId = setTimeout(highlightTodayInCalendar, 100);
+    
+    // Observer para cambios en el DOM del calendario
+    const observer = new MutationObserver(highlightTodayInCalendar);
+    const calendarContainer = document.querySelector('.calendar-admin-override');
+    
+    if (calendarContainer) {
+      observer.observe(calendarContainer, { 
+        childList: true, 
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      });
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [selectedDate]); // Re-ejecutar cuando cambie la fecha seleccionada
+
   // ⚠️ PROTECTED - DO NOT MODIFY - Dynamic message functions identical to employee system
   const generateDynamicMessage = (type: 'entrada' | 'salida') => {
     const hour = new Date().getHours();
