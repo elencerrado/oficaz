@@ -4771,6 +4771,8 @@ Responde directamente a este email para contactar con la persona.
       const userRole = req.user!.role;
       const companyId = req.user!.companyId;
       
+      console.log(`📋 GET /api/reminders - User ${userId} (${userRole}) from company ${companyId}`);
+      
       let reminders;
       
       // If admin/manager, show all company reminders; otherwise show user's reminders + assigned ones
