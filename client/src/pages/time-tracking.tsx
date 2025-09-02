@@ -1983,10 +1983,10 @@ export default function TimeTracking() {
                         ? format(currentDate, 'd/MM', { locale: es })
                         : 'Día'
                       }
-                      className={cn(
-                        "h-9 text-xs font-normal text-center",
-                        dateFilter === 'day' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                      )}
+                      className={dateFilter === 'day' 
+                        ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "h-9 text-xs font-normal text-center"
+                      }
                     />
 
                     <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
@@ -2012,14 +2012,15 @@ export default function TimeTracking() {
                                 key={monthKey}
                                 variant="ghost"
                                 className="w-full justify-start text-sm"
-                                onClick={() => {
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
                                   setCurrentMonth(monthDate);
                                   setDateFilter('month');
-                                  setIsMonthDialogOpen(false);
                                   setSelectedStartDate(null);
                                   setSelectedEndDate(null);
                                   setStartDate('');
                                   setEndDate('');
+                                  setTimeout(() => setIsMonthDialogOpen(false), 50);
                                 }}
                               >
                                 {format(monthDate, 'MMMM yyyy', { locale: es })}
@@ -2050,10 +2051,10 @@ export default function TimeTracking() {
                           setDateFilter('custom');
                         }
                       }}
-                      className={cn(
-                        "h-9 text-xs font-normal text-center",
-                        dateFilter === 'custom' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                      )}
+                      className={dateFilter === 'custom' 
+                        ? "h-9 text-xs font-normal text-center bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        : "h-9 text-xs font-normal text-center"
+                      }
                     />
 
                     <Button
