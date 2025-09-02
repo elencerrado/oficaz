@@ -1641,13 +1641,41 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getRemindersByUserWithAssignments(userId: number): Promise<any[]> {
-    // Only return user's own reminders (not assigned reminders from others)
-    // Assigned reminders should only appear in active notifications, not in main list
+    // Get user's own reminders
     const ownReminders = await db.select().from(schema.reminders)
       .where(eq(schema.reminders.userId, userId))
       .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
-    // Filter out reminders that the current user has already completed individually
+    // Get reminders that the user has completed (even if not their own)
+    const completedByUserReminders = await db.select({
+      id: schema.reminders.id,
+      userId: schema.reminders.userId,
+      companyId: schema.reminders.companyId,
+      title: schema.reminders.title,
+      content: schema.reminders.content,
+      reminderDate: schema.reminders.reminderDate,
+      priority: schema.reminders.priority,
+      color: schema.reminders.color,
+      isCompleted: schema.reminders.isCompleted,
+      isArchived: schema.reminders.isArchived,
+      isPinned: schema.reminders.isPinned,
+      notificationShown: schema.reminders.notificationShown,
+      showBanner: schema.reminders.showBanner,
+      assignedUserIds: schema.reminders.assignedUserIds,
+      completedByUserIds: schema.reminders.completedByUserIds,
+      assignedBy: schema.reminders.assignedBy,
+      assignedAt: schema.reminders.assignedAt,
+      createdBy: schema.reminders.createdBy,
+      createdAt: schema.reminders.createdAt,
+      updatedAt: schema.reminders.updatedAt,
+      creatorName: schema.users.fullName
+    })
+    .from(schema.reminders)
+    .leftJoin(schema.users, eq(schema.reminders.createdBy, schema.users.id))
+    .where(sql`${userId} = ANY(${schema.reminders.completedByUserIds})`)
+    .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+
+    // Process own reminders - only show active ones (not completed by user)
     const ownRemindersWithFlag = ownReminders
       .filter(reminder => {
         const completedByUserIds = reminder.completedByUserIds || [];
@@ -1656,10 +1684,18 @@ export class DrizzleStorage implements IStorage {
       .map(reminder => ({
         ...reminder,
         isAssigned: false,
-        creatorName: null // Own reminders don't need creator name
+        creatorName: null
       }));
 
-    return ownRemindersWithFlag;
+    // Process completed reminders - only show ones not owned by user
+    const completedRemindersWithFlag = completedByUserReminders
+      .filter(reminder => reminder.userId !== userId) // Only show completed reminders from others
+      .map(reminder => ({
+        ...reminder,
+        isAssigned: true
+      }));
+
+    return [...ownRemindersWithFlag, ...completedRemindersWithFlag];
   }
 
   async getEmployeesByCompany(companyId: number): Promise<any[]> {
