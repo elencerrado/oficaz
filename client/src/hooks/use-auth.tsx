@@ -242,38 +242,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    // Clear all cached data on logout to prevent data leakage
     console.log('🚪 LOGOUT - CLEARING ALL CACHE AND AUTH DATA');
-    queryClient.clear();
     
+    // Clear state immediately
     setUser(null);
     setCompany(null);
     setToken(null);
     setAuthData(null);
-    clearAuthData();
     
-    // SECURITY FIX: Clear only user auth data, preserve important tokens
+    // Clear auth data efficiently - only remove specific items instead of clearing everything
     const superAdminToken = localStorage.getItem('superAdminToken');
     const theme = localStorage.getItem('theme');
     
-    localStorage.clear();
+    // Clear only auth-related items instead of localStorage.clear()
+    localStorage.removeItem('authData');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('company');
     sessionStorage.clear();
     
-    // Restore important tokens
-    if (superAdminToken) {
-      localStorage.setItem('superAdminToken', superAdminToken);
-    }
-    if (theme) {
-      localStorage.setItem('theme', theme);
-    }
+    // Restore preserved items
+    if (superAdminToken) localStorage.setItem('superAdminToken', superAdminToken);
+    if (theme) localStorage.setItem('theme', theme);
     
-    // Clear browser history to prevent back navigation to admin pages
-    if (window.history?.replaceState) {
-      window.history.replaceState(null, '', '/login');
-    }
+    // Clear queries asynchronously to avoid blocking UI
+    setTimeout(() => {
+      queryClient.clear();
+    }, 0);
     
-    // Force redirect to login and prevent caching
-    window.location.replace('/login');
+    // Direct redirect without history manipulation
+    window.location.href = '/login';
   };
 
   const refreshUser = async () => {
