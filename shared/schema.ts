@@ -341,6 +341,7 @@ export const reminders = pgTable("reminders", {
   isCompleted: boolean("is_completed").default(false).notNull(),
   isArchived: boolean("is_archived").default(false).notNull(),
   isPinned: boolean("is_pinned").default(false).notNull(),
+  enableNotifications: boolean("enable_notifications").default(false).notNull(), // Enable toast notifications for this reminder
   notificationShown: boolean("notification_shown").default(false).notNull(),
   showBanner: boolean("show_banner").default(false).notNull(),
   assignedUserIds: integer("assigned_user_ids").array(), // Array of user IDs for assignments

@@ -4974,6 +4974,37 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Check for reminder notifications that should be shown
+  app.get('/api/reminders/check-notifications', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const companyId = req.user!.companyId;
+      
+      // Get user's reminders with notifications enabled and due dates that have passed
+      const now = new Date();
+      const remindersDue = await storage.getReminderNotificationsDue(userId, companyId, now);
+      
+      res.json(remindersDue);
+    } catch (error) {
+      console.error("Error checking reminder notifications:", error);
+      res.status(500).json({ message: "Failed to check reminder notifications" });
+    }
+  });
+
+  // Mark reminder notification as shown
+  app.post('/api/reminders/:id/mark-notification-shown', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      await storage.markReminderNotificationShown(reminderId, userId);
+      res.json({ message: "Notification marked as shown" });
+    } catch (error) {
+      console.error("Error marking notification as shown:", error);
+      res.status(500).json({ message: "Failed to mark notification as shown" });
+    }
+  });
+
   // Reminder assignment endpoints - only for admin/manager
   app.post('/api/reminders/:id/assign', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {

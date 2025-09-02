@@ -110,6 +110,10 @@ export interface IStorage {
   clearReminderAssignments(reminderId: number): Promise<boolean>;
   getReminderAssignments(reminderId: number): Promise<any[]>;
   getRemindersByUserWithAssignments(userId: number): Promise<any[]>;
+  
+  // Reminder Notifications
+  getReminderNotificationsDue(userId: number, companyId: number, currentTime: Date): Promise<Reminder[]>;
+  markReminderNotificationShown(reminderId: number, userId: number): Promise<boolean>;
 
   // Employee Activation Tokens
   createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
@@ -1880,6 +1884,55 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error getting company deletion status:', error);
       return null;
+    }
+  }
+
+  // Reminder Notifications
+  async getReminderNotificationsDue(userId: number, companyId: number, currentTime: Date): Promise<Reminder[]> {
+    try {
+      // Get reminders that:
+      // 1. Belong to the user or are assigned to them
+      // 2. Have enableNotifications = true
+      // 3. Have a reminder date that has passed
+      // 4. Are not completed
+      // 5. Haven't been shown yet (notificationShown = false)
+      const remindersDue = await db.select()
+        .from(schema.reminders)
+        .where(
+          and(
+            eq(schema.reminders.companyId, companyId),
+            or(
+              eq(schema.reminders.userId, userId),
+              sql`${userId} = ANY(${schema.reminders.assignedUserIds})`
+            ),
+            eq(schema.reminders.enableNotifications, true),
+            lte(schema.reminders.reminderDate, currentTime),
+            eq(schema.reminders.isCompleted, false),
+            eq(schema.reminders.isArchived, false),
+            eq(schema.reminders.notificationShown, false)
+          )
+        );
+
+      return remindersDue;
+    } catch (error) {
+      console.error('Error getting reminder notifications due:', error);
+      return [];
+    }
+  }
+
+  async markReminderNotificationShown(reminderId: number, userId: number): Promise<boolean> {
+    try {
+      await db.update(schema.reminders)
+        .set({ 
+          notificationShown: true,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.reminders.id, reminderId));
+      
+      return true;
+    } catch (error) {
+      console.error('Error marking reminder notification as shown:', error);
+      return false;
     }
   }
 }

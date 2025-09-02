@@ -17,6 +17,7 @@ import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
 import { useScrollReset } from "@/hooks/use-scroll-reset";
+import { useReminderNotifications } from "@/hooks/useReminderNotifications";
 
 import { lazy, Suspense } from "react";
 
@@ -117,6 +118,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Reset scroll position on route changes
   useScrollReset();
+  
+  // Enable reminder notifications for all authenticated users
+  useReminderNotifications();
 
   // Calculate padding-top dynamically
   // Header is positioned at top-[60px] when banner is shown, plus header height (60px) = 120px total

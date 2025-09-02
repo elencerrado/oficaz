@@ -36,6 +36,7 @@ interface Reminder {
   isCompleted: boolean;
   isArchived: boolean;
   isPinned: boolean;
+  enableNotifications?: boolean;
   createdAt: string;
   completedByUserIds?: number[];
   // Assignment properties (for assigned reminders)
@@ -103,7 +104,8 @@ export default function EmployeeReminders() {
     content: '',
     reminderDate: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    color: '#ffffff'
+    color: '#ffffff',
+    enableNotifications: false
   });
 
   // Get all reminders
@@ -125,7 +127,7 @@ export default function EmployeeReminders() {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
       setIsDialogOpen(false);
       setEditingReminder(null);
-      setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff' });
+      setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
       toast({
         title: editingReminder ? "Recordatorio actualizado" : "Recordatorio creado",
         description: editingReminder ? "El recordatorio se ha actualizado correctamente" : "Se ha creado un nuevo recordatorio",
@@ -205,7 +207,8 @@ export default function EmployeeReminders() {
       content: reminder.content || '',
       reminderDate: reminder.reminderDate ? reminder.reminderDate.slice(0, 16) : '',
       priority: reminder.priority,
-      color: reminder.color
+      color: reminder.color,
+      enableNotifications: reminder.enableNotifications || false
     });
     setIsDialogOpen(true);
   };
@@ -317,7 +320,7 @@ export default function EmployeeReminders() {
                 className="bg-white/20 hover:bg-white/30 text-white border-white/20"
                 onClick={() => {
                   setEditingReminder(null);
-                  setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff' });
+                  setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -359,6 +362,22 @@ export default function EmployeeReminders() {
                     className="bg-gray-800 border-gray-600 text-white"
                   />
                 </div>
+
+                {/* Checkbox para activar notificaciones - solo si hay fecha */}
+                {formData.reminderDate && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="enableNotifications"
+                      checked={formData.enableNotifications}
+                      onChange={(e) => setFormData({ ...formData, enableNotifications: e.target.checked })}
+                      className="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="enableNotifications" className="text-white text-sm">
+                      Mostrar notificación cuando llegue la fecha
+                    </label>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
