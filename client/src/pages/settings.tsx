@@ -14,7 +14,6 @@ import {
   Users, 
   Settings as SettingsIcon, 
   Clock, 
-  Calendar, 
   Mail, 
   Phone, 
   MapPin,
@@ -45,6 +44,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useTheme } from '@/lib/theme-provider';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { CalendarIcon } from 'lucide-react';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import flameIcon from '@assets/icon flam_1751450814463.png';
 
@@ -2565,7 +2569,7 @@ export default function Settings() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5" />
+                    <CalendarIcon className="h-5 w-5" />
                     <span>Política de vacaciones</span>
                   </CardTitle>
                   <CardDescription>
@@ -2646,7 +2650,7 @@ export default function Settings() {
                               </>
                             ) : (
                               <>
-                                <Calendar className="h-4 w-4 mr-2" />
+                                <CalendarIcon className="h-4 w-4 mr-2" />
                                 Recalcular días de vacaciones
                               </>
                             )}
@@ -2762,16 +2766,41 @@ export default function Settings() {
                       <div>
                         <Label htmlFor="adminStartDate">Fecha de incorporación</Label>
                         {isEditingProfile ? (
-                          <Input
-                            id="adminStartDate"
-                            type="date"
-                            value={profileData.startDate ? new Date(profileData.startDate).toISOString().split('T')[0] : ''}
-                            onChange={(e) => setProfileData(prev => ({ ...prev, startDate: e.target.value }))}
-                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal mt-1"
+                                type="button"
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {profileData.startDate 
+                                  ? format(new Date(profileData.startDate), 'PPP', { locale: es })
+                                  : 'Seleccionar fecha'
+                                }
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={profileData.startDate ? new Date(profileData.startDate) : undefined}
+                                onSelect={(date) => {
+                                  if (date) {
+                                    setProfileData(prev => ({ ...prev, startDate: date.toISOString() }));
+                                  }
+                                }}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date('1950-01-01')
+                                }
+                                initialFocus
+                                locale={es}
+                              />
+                            </PopoverContent>
+                          </Popover>
                         ) : (
                           <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.startDate ? 
-                              new Date(profileData.startDate).toLocaleDateString('es-ES') : 
+                              format(new Date(profileData.startDate), 'PPP', { locale: es }) : 
                               'No especificada'
                             }
                           </div>
