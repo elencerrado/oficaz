@@ -428,13 +428,10 @@ export default function EmployeesSimple() {
         />
       </div>
 
-
-
       {/* Employee List */}
       <Card>
         <CardHeader>
-          <CardTitle className="tracking-tight flex items-center space-x-2 text-[14px] font-medium">
-            <Users className="h-5 w-5" />
+          <CardTitle className="text-sm font-medium">
             Lista de Empleados
           </CardTitle>
         </CardHeader>
