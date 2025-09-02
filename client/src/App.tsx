@@ -172,8 +172,9 @@ function Router() {
   
   // Super admin routes handled separately - PROTECTED: Only if no regular user session exists
   if (location.startsWith('/super-admin')) {
-    // CRITICAL FIX: If user is logged in as regular user, redirect them out of SuperAdmin area
-    if (user && company) {
+    // CRITICAL FIX: Allow access to /super-admin/security (entry point) even when logged in
+    // But redirect from other super-admin routes when regular user is logged in
+    if (user && company && location !== '/super-admin/security' && location !== '/super-admin') {
       console.log('🚨 SECURITY: Regular user attempting to access SuperAdmin - redirecting');
       window.location.href = `/${company.companyAlias}/admin`;
       return <PageLoading />;
