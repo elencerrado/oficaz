@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StatsCard from '@/components/StatsCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -362,105 +363,34 @@ export default function EmployeesSimple() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
-        {/* Total Users Card */}
-        <Card>
-          <CardContent className="p-2 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Usuarios</p>
-                <p className="text-lg sm:text-2xl font-bold text-foreground">
-                  {totalUsers} <span className="text-xs sm:text-sm font-normal text-muted-foreground">/{subscription?.maxUsers || 30}</span>
-                </p>
-              </div>
-              <div className="hidden sm:block h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                <div 
-                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, (totalUsers / (subscription?.maxUsers || 30)) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Managers Card */}
-        <Card>
-          <CardContent className="p-2 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Managers</p>
-                <p className="text-lg sm:text-2xl font-bold text-foreground">
-                  {employeeList?.filter(emp => emp.role === 'manager').length || 0} <span className="text-xs sm:text-sm font-normal text-muted-foreground">/3</span>
-                </p>
-              </div>
-              <div className="hidden sm:block h-8 w-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                <div 
-                  className="bg-green-600 h-1.5 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'manager').length || 0) / 3) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Employees Card */}
-        <Card>
-          <CardContent className="p-2 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Empleados</p>
-                <p className="text-lg sm:text-2xl font-bold text-foreground">
-                  {employeeList?.filter(emp => emp.role === 'employee').length || 0} <span className="text-xs sm:text-sm font-normal text-muted-foreground">/{(subscription?.maxUsers || 30) - 4}</span>
-                </p>
-              </div>
-              <div className="hidden sm:block h-8 w-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                <User className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                <div 
-                  className="bg-orange-600 h-1.5 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'employee').length || 0) / ((subscription?.maxUsers || 30) - 4)) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Admins Card */}
-        <Card>
-          <CardContent className="p-2 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Admins</p>
-                <p className="text-lg sm:text-2xl font-bold text-foreground">
-                  {employeeList?.filter(emp => emp.role === 'admin').length || 0} <span className="text-xs sm:text-sm font-normal text-muted-foreground">/1</span>
-                </p>
-              </div>
-              <div className="hidden sm:block h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                <div 
-                  className="bg-purple-600 h-1.5 rounded-full transition-all duration-300" 
-                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'admin').length || 0) / 1) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Usuarios"
+          subtitle={`de ${subscription?.maxUsers || 30}`}
+          value={totalUsers}
+          color="blue"
+          icon={Users}
+        />
+        <StatsCard
+          title="Managers"
+          subtitle="de 3"
+          value={employeeList?.filter(emp => emp.role === 'manager').length || 0}
+          color="green"
+          icon={UserCheck}
+        />
+        <StatsCard
+          title="Empleados"
+          subtitle={`de ${(subscription?.maxUsers || 30) - 4}`}
+          value={employeeList?.filter(emp => emp.role === 'employee').length || 0}
+          color="orange"
+          icon={User}
+        />
+        <StatsCard
+          title="Admins"
+          subtitle="de 1"
+          value={employeeList?.filter(emp => emp.role === 'admin').length || 0}
+          color="purple"
+          icon={Shield}
+        />
       </div>
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">{/* Moved button section below header */}
