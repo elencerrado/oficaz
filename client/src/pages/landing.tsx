@@ -1046,7 +1046,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-400" />
-              <span className="text-sm font-medium">15 días gratis</span>
+              <span className="text-sm font-medium">14 días gratis</span>
             </div>
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-purple-400" />
