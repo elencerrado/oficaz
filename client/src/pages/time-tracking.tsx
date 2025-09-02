@@ -1868,9 +1868,12 @@ export default function TimeTracking() {
                   <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
                     <PopoverTrigger asChild>
                       <Button
-                        variant={dateFilter === 'month' ? 'default' : 'outline'}
+                        variant="outline"
                         size="sm"
-                        className="h-10 text-xs font-normal whitespace-nowrap flex-1 text-center"
+                        className={cn(
+                          "h-10 text-xs font-normal whitespace-nowrap flex-1 text-center",
+                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        )}
                       >
                         {dateFilter === 'month' ? format(currentMonth, 'MMM yyyy', { locale: es }) : 'Mes'}
                       </Button>
@@ -1989,9 +1992,12 @@ export default function TimeTracking() {
                     <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
                       <PopoverTrigger asChild>
                         <Button
-                          variant={dateFilter === 'month' ? 'default' : 'outline'}
+                          variant="outline"
                           size="sm"
-                          className="h-9 text-xs font-normal text-center"
+                          className={cn(
+                            "h-9 text-xs font-normal text-center",
+                            dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                          )}
                         >
                           {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
                         </Button>
