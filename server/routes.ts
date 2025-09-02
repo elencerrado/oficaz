@@ -3974,10 +3974,22 @@ Responde directamente a este email para contactar con la persona.
   app.patch('/api/users/profile', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const updates = req.body;
+      
+      // Handle startDate conversion if provided
+      if (updates.startDate) {
+        updates.startDate = new Date(updates.startDate);
+      }
+      
       const updatedUser = await storage.updateUser(req.user!.id, updates);
       if (!updatedUser) {
         return res.status(404).json({ error: 'User not found' });
       }
+      
+      // If startDate was updated, recalculate vacation days
+      if (req.body.startDate) {
+        await storage.updateUserVacationDays(req.user!.id);
+      }
+      
       res.json(updatedUser);
     } catch (error: any) {
       console.error('Error updating user profile:', error);
