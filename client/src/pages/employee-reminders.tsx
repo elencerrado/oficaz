@@ -538,7 +538,7 @@ export default function EmployeeReminders() {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col gap-1 ml-2">
+                    <div className="flex flex-row gap-1 ml-2">
                       {/* Solo los empleados pueden hacer pin en sus recordatorios propios */}
                       {!reminder.isAssigned && (
                         <Button
