@@ -196,48 +196,39 @@ export default function VerifyCode() {
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center py-4 md:py-12 px-4 sm:px-6 lg:px-8"
-      style={{
-        background: `radial-gradient(circle at center, #323A46, #232B36)`,
-      }}
-    >
-      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
-        <CardHeader className="space-y-4">
-          {/* Mobile optimized header */}
-          <div className="text-center">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="h-6 md:h-8 w-auto mx-auto mb-3"
-            />
-            
-            <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Verificar email</CardTitle>
-            <CardDescription className="text-xs md:text-sm text-gray-600 mt-1">
-              Introduce el código que hemos enviado a tu email
-            </CardDescription>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+        <CardHeader className="text-center pt-8 pb-6">
+          <div className="flex justify-center mb-6">
+            <Link href="/">
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="h-10 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </Link>
           </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Verificar email
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Introduce el código que hemos enviado a tu email
+          </p>
         </CardHeader>
-        <CardContent className="p-8 pt-0">
-          {/* Additional instructions */}
-          <div className="text-center mb-8">
-            <p className="text-sm text-gray-500 mb-2">
-              Revisa tu carpeta de spam o correo no deseado. A veces los emails de verificación terminan ahí.
-            </p>
-            <p className="text-sm text-gray-500">
-              Tip: Copia el código antes de volver al navegador
-            </p>
-          </div>
 
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <CardContent className="px-8 pb-8">
+          <p className="text-xs text-gray-500 mb-6 text-center">
+            Revisa tu carpeta de spam o correo no deseado. Copia el código antes de volver al navegador.
+          </p>
+
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Código de verificación</Label>
+              <Label htmlFor="code" className="text-sm font-medium text-gray-700">Código de verificación</Label>
               <div className="relative">
-                <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="code"
                   type="text"
-                  className="pl-10 rounded-xl text-center text-lg tracking-widest"
+                  className="rounded-xl border-gray-300 py-3 px-4 text-center text-lg tracking-widest focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   {...form.register('code')}
                   placeholder="123456"
                   maxLength={6}
@@ -250,75 +241,82 @@ export default function VerifyCode() {
                     form.setValue('code', e.target.value);
                   }}
                 />
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <Shield className="h-4 w-4 text-gray-400" />
+                </div>
               </div>
+              
               {form.formState.errors.code && (
-                <p className="text-sm text-red-600">{form.formState.errors.code.message}</p>
+                <p className="text-xs text-red-500 mt-1">{form.formState.errors.code.message}</p>
               )}
               {errorMessage && (
-                <p className="text-sm text-red-600">{errorMessage}</p>
+                <p className="text-xs text-red-500 mt-1">{errorMessage}</p>
               )}
             </div>
 
-            <div className="space-y-3">
-              <Button 
-                type="submit" 
-                className="w-full rounded-xl" 
-                disabled={isLoading}
-              >
-                {isLoading ? 'Verificando...' : 'Verificar código'}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-
-              <Button 
-                type="button"
-                variant="outline"
-                className="w-full rounded-xl"
-                onClick={handleResendCode}
-                disabled={isLoading || isResending || !canResend}
-              >
-                {isResending ? (
-                  <>
-                    Enviando...
-                    <RotateCcw className="h-4 w-4 ml-2 animate-spin" />
-                  </>
-                ) : !canResend ? (
-                  <>
-                    Solicitar nuevo código ({countdown}s)
-                    <Clock className="h-4 w-4 ml-2" />
-                  </>
-                ) : (
-                  <>
-                    Solicitar nuevo código
-                    <RotateCcw className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button 
+              type="submit" 
+              className="w-full rounded-xl py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  Verificando...
+                </div>
+              ) : (
+                <>
+                  Verificar código
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
           </form>
 
-          <div className="mt-6 text-center space-y-3">
+          <div className="space-y-3 mt-6">
+            <Button 
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl py-3 border-gray-300"
+              onClick={handleResendCode}
+              disabled={isLoading || isResending || !canResend}
+            >
+              {isResending ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full"></div>
+                  Enviando...
+                </div>
+              ) : !canResend ? (
+                <>
+                  Solicitar nuevo código ({countdown}s)
+                  <Clock className="h-4 w-4 ml-2" />
+                </>
+              ) : (
+                <>
+                  Solicitar nuevo código
+                  <RotateCcw className="h-4 w-4 ml-2" />
+                </>
+              )}
+            </Button>
+
             <Button 
               variant="ghost" 
               onClick={() => {
                 setIsLoading(false);
                 setLocation('/request-code');
               }}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="w-full text-sm text-gray-600 hover:text-gray-900"
               disabled={isLoading}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cambiar email
             </Button>
-
           </div>
 
-          <div className="mt-4 text-center">
-            <p className="text-sm text-gray-600">
-              ¿Ya tienes una cuenta?{' '}
-              <Link href="/login" className="font-medium text-oficaz-primary hover:text-blue-500">
-                Iniciar sesión
-              </Link>
-            </p>
+          <div className="text-center mt-6">
+            <Link href="/login" className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+              ¿Ya tienes una cuenta? Iniciar sesión
+            </Link>
           </div>
         </CardContent>
       </Card>
