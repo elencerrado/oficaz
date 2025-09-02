@@ -1,7 +1,7 @@
 # Oficaz - Employee Management System
 
 ## Overview
-Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It provides features such as time tracking, vacation management, document handling, messaging, and various administrative tools. The project aims to automate tedious tasks, boost productivity, and allow businesses to focus on their core operations through a modern, full-stack application.
+Oficaz is a comprehensive employee management system designed to streamline employee management for companies. It provides features such as time tracking, vacation management, document handling, messaging, and various administrative tools. The project aims to automate tedious tasks, boost productivity, and allow businesses to focus on their core operations through a modern, full-stack application, ready for official publication.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -23,112 +23,10 @@ Preferred communication style: Simple, everyday language.
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
-### Break Period Management System
-- **Logical Rule**: When user clocks in, they cannot be in break by definition
-- **Fixed Issue**: `getActiveBreakPeriod` now only returns breaks for current active session
-- **Auto-cleanup**: Clock-in automatically closes orphaned break periods from previous sessions
-- **Data Integrity**: Break periods must belong to current work session to be considered active
-
 ### Email System Configuration
 - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
 - **Never use dynamic domain detection for email logos** - it breaks the email display
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
-
-### Invoice System Configuration
-- **Show All Invoice States**: System displays ALL invoice statuses (paid, open, draft, void, uncollectible) for complete billing history
-- **No Status Filtering**: Removed `status: 'paid'` filter from Stripe API calls to ensure users always see their invoices
-- **Immediate Visibility**: New invoices appear immediately, even in "open" status while Stripe processes payment
-- **Status Mapping**: Comprehensive status display with proper colors and translations (Pendiente, Pagada, Borrador, etc.)
-
-### Stripe Production Mode Configuration
-- **Production Mode Active**: System automatically detects and uses live Stripe keys when available
-- **Intelligent Key Detection**: Uses STRIPE_SECRET_KEY for production, falls back to STRIPE_SECRET_KEY_TEST for development
-- **Live Payment Processing**: All payments now process real money - no test mode
-- **Key Type Validation**: Confirms sk_live_ prefix for production mode activation
-- **Custom Pricing Integration**: Both backend and frontend now support custom monthly pricing per company
-- **Fixed Price Display**: Payment forms now show correct custom price (€0.50/month) instead of standard plan pricing (€39.95/month)
-
-### Reminder System Standards
-- **Color Palette**: 7 optimized harmonious colors for all reminders (#FFB3BA coral red, #FFE4B5 warm peach, #FFFFCC light yellow, #C8E6C9 soft green, #BBDEFB sky blue, #E1BEE7 lavender purple, #F8BBD9 rose pink)
-- **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
-- **Action Buttons**: Standardized "Marcar como hecho" button with icons and improved visibility
-- **Demo Data**: Uses exact same color palette as user-selectable colors for perfect consistency
-
-### Automatic Demo Data Generation
-- **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data.
-- **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions.
-- **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
-
-### Account Cancellation System
-- **Immediate Access Blocking**: When account is cancelled, users are immediately blocked from accessing the system
-- **Authentication Block**: /api/auth/me endpoint checks scheduledForCancellation status and returns 403 error
-- **Recovery Process**: Cancelled accounts can only be accessed through email verification recovery process
-- **No Grace Period Usage**: Unlike trial systems, cancelled accounts cannot continue using the system
-- **Clear Messaging**: Users receive specific message about account cancellation and recovery options
-- **Frontend Handling**: Auth system detects ACCOUNT_CANCELLED error code and redirects to login with message
-
-### Account Recovery Flow System
-- **Smart Detection**: When requesting verification code, system detects emails from accounts in 30-day grace period
-- **Recovery Email Template**: Special email template for account recovery vs normal registration
-- **Automatic Restoration**: Code verification automatically cancels deletion schedule and restores account
-- **Data Preservation**: All company data, subscriptions, and configurations are maintained during recovery
-- **User Flow**: Recovery bypasses registration wizard and redirects directly to login after successful restoration
-- **Seamless Integration**: No browser alerts or popups - completely integrated user experience
-- **Admin-Only Recovery**: Only administrators can recover cancelled accounts, employees are blocked
-- **Visual Indicators**: Orange recovery button, specific cancellation messages, and proper UI feedback
-
-### Document Cleanup System
-- **Auto-cleanup**: System automatically detects and removes orphaned documents (DB records without physical files)
-- **Security principle**: "Si los documentos no existen físicamente, no deberían aparecer para nadie"
-- **Implementation**: Both user and admin document endpoints now filter and cleanup orphaned records
-- **iPad/iOS Compatibility**: Special handling for iOS devices using direct links with token in query parameters
-
-### Logo Display Standards
-- **Dark Mode Fix**: Oficaz logo uses `dark:brightness-0 dark:invert` for proper visibility in dark mode
-- **Consistent Application**: Applied to sidebar, mobile header, and demo loading overlay
-
-### SuperAdmin Navigation System
-- **Smart Back Navigation**: Implemented `window.history.back()` as primary navigation method
-- **Fallback Routes**: Added appropriate fallbacks when history is empty (companies list, dashboard)
-- **Consistent Behavior**: All SuperAdmin pages now use the same navigation pattern
-
-### Test-to-Production Migration System
-- **Edge Case Detection**: Automatically detects hybrid subscription states (test Stripe subscription with production mode)
-- **Data Cleanup Endpoint**: `/api/account/cleanup-test-stripe` safely removes test mode Stripe data
-- **Visual Alert System**: PaymentMethodManager shows migration alert for affected companies
-- **Automatic Resolution**: Cancels orphaned test subscriptions and resets to trial status for proper re-subscription
-- **Oficaz SL Case**: Specific solution for test-to-production transition where test card was configured but now in production mode
-
-### SuperAdmin Company Deletion Fix
-- **Foreign Key Constraint Error**: Fixed critical error in permanent company deletion where password_reset_tokens were not being deleted
-- **Solution**: Added password reset tokens deletion step in correct order (step 8) before user deletion
-- **Database Integrity**: Ensures all dependent records are properly cleaned up during SuperAdmin permanent deletions
-- **Prevention**: Added comprehensive logging to track deletion progress and identify any future constraint violations
-
-### Registration Wizard Improvements
-- **Plan Recommendation Algorithm**: Fixed overly aggressive scoring system that recommended Master plan too frequently
-- **Conservative Scoring**: Teams of 1-5 employees now primarily recommended Basic plan unless many advanced features selected
-- **Master Plan Hidden**: Temporarily removed Master plan from registration wizard to improve user experience
-- **UI Layout**: Changed plan selection grid from 3 columns to 2 columns for better visual balance
-- **Visual Continuity**: Updated verify-code page to match request-code visual design for seamless user flow
-
-### Individual Reminder Completion System
-- **Three-State Logic**: Implemented comprehensive individual completion tracking with visual states
-- **State Management**: Not completed (gray), completed by current user (green), completed by assigned only (orange banner)
-- **Backend Logic**: Fixed `is_completed` calculation to require ALL assigned users (including creator) to complete
-- **Visual Separation**: "Completado por asignados" appears as informational banner, not button text
-- **User Privacy**: Employees only see own reminders + reminders they completed (for completion history)
-- **Data Integrity**: Individual completion tracked in `completedByUserIds` array with proper filtering
-
-### Production Readiness Status
-- **TypeScript Errors**: All critical LSP diagnostics resolved
-- **Database Connection**: PostgreSQL fully operational and accessible via DATABASE_URL
-- **Stripe Integration**: Production mode active with live payment processing
-- **API Endpoints**: All core endpoints tested and functional
-- **Security**: All required environment secrets present
-- **Build System**: Vite/Express development server running without errors
-- **Code Quality**: DatePickerPeriod component fixed, duplicate type definitions removed, missing properties added
-- **Status Badge Logic**: Fixed subscription status display to show "PRUEBA" correctly for trial accounts
 
 ## System Architecture
 
@@ -139,17 +37,19 @@ Preferred communication style: Simple, everyday language.
 - **State Management**: TanStack Query (React Query)
 - **Form Handling**: React Hook Form with Zod validation
 - **Build Tool**: Vite
-- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system. Full dark mode support with `localStorage` persistence.
+- **UI/UX Decisions**: Consistent header layouts (px-6 py-4, no custom containers), modern aesthetic (glassmorphism, shadows, rounded borders), responsive design, professional color scheme (Oficaz primary color #007AFF), animated elements, unified avatar system. Full dark mode support with `localStorage` persistence. Logo uses `dark:brightness-0 dark:invert` for dark mode compatibility.
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
 - **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: JWT-based with role-based access control (DNI/NIE or email login), bcrypt hashing.
-- **File Uploads**: Multer with Sharp (image compression).
+- **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
-- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries.
+- **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
 - **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders.
+- **Account Management**: Includes a 30-day grace period for account deletion with a recovery process that bypasses the registration wizard. Cancelled accounts are immediately blocked.
+- **Data Integrity**: Break periods must belong to the current work session. Orphaned documents (DB records without physical files) are automatically removed.
 
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect.
@@ -163,16 +63,18 @@ Preferred communication style: Simple, everyday language.
 
 ### Key Features & Implementations
 - **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings.
-- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions.
+- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions; clock-in automatically closes orphaned break periods.
 - **Manager Role Permissions System**: Backend API supports manager role assignment with restricted access.
-- **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook.
-- **Performance Optimization - Time Tracking Page**: Database optimizations, frontend caching, reduced network overhead.
-- **Mobile-Responsive Time Tracking Interface**: Dual-layout system (desktop table, mobile card views).
-- **SuperAdmin Security System**: Exclusive access via email verification (`soy@oficaz.es`).
-- **Performance Optimization System**: Lazy loading, code splitting, async resource loading, critical CSS, resource hints.
-- **Error Monitoring System**: Integrated Sentry.
-- **SEO Optimization System**: Direct file serving of `robots.txt` and `sitemap.xml`.
-- **Account Deletion with 30-Day Grace Period System**: Comprehensive system for scheduling and canceling account deletion.
+- **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook; SuperAdmin uses `window.history.back()`.
+- **Performance Optimization**: Database optimizations, frontend caching, reduced network overhead, lazy loading, code splitting, async resource loading, critical CSS, resource hints.
+- **Mobile-Responsive Interfaces**: Dual-layout system for time tracking (desktop table, mobile card views).
+- **Error Monitoring**: Integrated Sentry.
+- **SEO Optimization**: Direct file serving of `robots.txt` and `sitemap.xml`.
+- **Reminder System**: Uses 7 harmonious colors with optimal text contrast. Supports three-state individual completion logic, requiring all assigned users to complete.
+- **Invoice System**: Displays all Stripe invoice statuses (paid, open, draft, void, uncollectible) without filtering.
+- **Automatic Demo Data Generation**: Comprehensive demo data is generated for new company registrations, including incomplete sessions.
+- **Test-to-Production Migration**: System detects and resolves hybrid Stripe subscription states, with an alert system and data cleanup endpoint.
+- **Registration Wizard**: Plan recommendation algorithm adjusted to be more conservative, prioritizing Basic plan for smaller teams. Master plan temporarily hidden.
 
 ## External Dependencies
 
