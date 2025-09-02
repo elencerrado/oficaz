@@ -47,7 +47,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useTheme } from '@/lib/theme-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { DatePickerDay } from '@/components/ui/date-picker';
+import { DatePickerDayEmployee } from '@/components/ui/date-picker';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
@@ -2769,7 +2769,7 @@ export default function Settings() {
                       <div>
                         <Label htmlFor="adminStartDate">Fecha de incorporación</Label>
                         {isEditingProfile ? (
-                          <DatePickerDay
+                          <DatePickerDayEmployee
                             date={profileData.startDate ? new Date(profileData.startDate) : undefined}
                             onDateChange={(date) => {
                               if (date) {
