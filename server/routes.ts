@@ -1391,10 +1391,10 @@ Responde directamente a este email para contactar con la persona.
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
         // Check if the company is scheduled for deletion (grace period)
-        const cancellationStatus = await storage.getCompanyCancellationStatus(existingUser.companyId);
+        const company = await storage.getCompany(existingUser.companyId);
         
-        if (cancellationStatus?.scheduledForDeletion) {
-          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+        if (company?.scheduledForDeletion && existingUser.role === 'admin') {
+          const deletionDate = new Date(company.deletionWillOccurAt);
           const now = new Date();
           
           if (deletionDate > now) {
@@ -1725,11 +1725,11 @@ Responde directamente a este email para contactar con la persona.
       const existingUser = await storage.getUserByEmail(data.companyEmail);
       if (existingUser) {
         // Check if the company is scheduled for deletion (grace period)
-        const cancellationStatus = await storage.getCompanyCancellationStatus(existingUser.companyId);
+        const company = await storage.getCompany(existingUser.companyId);
         
-        if (cancellationStatus?.scheduledForDeletion) {
+        if (company?.scheduledForDeletion) {
           // Company is in 30-day grace period - check if we can restore or if it's truly conflicting
-          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+          const deletionDate = new Date(company.deletionWillOccurAt);
           const now = new Date();
           
           if (deletionDate > now) {
@@ -1761,10 +1761,10 @@ Responde directamente a este email para contactar con la persona.
       const existingCompany = await storage.getCompanyByCif?.(data.cif);
       if (existingCompany) {
         // Check if this company is scheduled for deletion (grace period)
-        const cancellationStatus = await storage.getCompanyCancellationStatus(existingCompany.id);
+        const companyCancellation = await storage.getCompany(existingCompany.id);
         
-        if (cancellationStatus?.scheduledForDeletion) {
-          const deletionDate = new Date(cancellationStatus.deletionWillOccurAt);
+        if (companyCancellation?.scheduledForDeletion) {
+          const deletionDate = new Date(companyCancellation.deletionWillOccurAt);
           const now = new Date();
           
           if (deletionDate > now) {
