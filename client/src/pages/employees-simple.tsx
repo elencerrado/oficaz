@@ -648,7 +648,7 @@ export default function EmployeesSimple() {
                 {/* Desktop View */}
                 <div 
                   className="hidden sm:block bg-card border rounded-lg p-4 hover:bg-muted cursor-pointer"
-                  onDoubleClick={() => handleEditEmployee(employee)}
+                  onClick={() => handleEditEmployee(employee)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
