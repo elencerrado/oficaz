@@ -6,7 +6,7 @@ import { Link, useLocation, useSearch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock, CheckCircle } from 'lucide-react';
 
@@ -196,16 +196,23 @@ export default function VerifyCode() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="p-8">
-          {/* Logo and header */}
+    <div
+      className="min-h-screen flex items-center justify-center py-4 md:py-12 px-4 sm:px-6 lg:px-8"
+      style={{
+        background: `radial-gradient(circle at center, #323A46, #232B36)`,
+      }}
+    >
+      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
+        <CardHeader className="text-center pb-6">
+          <img 
+            src={oficazLogo} 
+            alt="Oficaz" 
+            className="h-6 md:h-8 w-auto mx-auto mb-3"
+          />
+        </CardHeader>
+        <CardContent className="p-8 pt-0">
+          {/* Header section */}
           <div className="text-center mb-8">
-            <img 
-              src={oficazLogo} 
-              alt="Oficaz" 
-              className="h-12 mx-auto mb-4"
-            />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Verificar email
             </h1>
