@@ -1654,6 +1654,7 @@ export class DrizzleStorage implements IStorage {
       notificationShown: schema.reminders.notificationShown,
       showBanner: schema.reminders.showBanner,
       assignedUserIds: schema.reminders.assignedUserIds,
+      completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
       createdBy: schema.reminders.createdBy,
