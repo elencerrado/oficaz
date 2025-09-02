@@ -1983,8 +1983,8 @@ Responde directamente a este email para contactar con la persona.
 
       const company = await storage.getCompany(user.companyId);
       
-      // CRITICAL: Check if company is scheduled for cancellation and block login
-      if (company?.scheduledForCancellation) {
+      // CRITICAL: Check if company is scheduled for deletion and block login
+      if (company?.scheduledForDeletion) {
         console.log(`🚫 Login denied for cancelled company: ${company.name} (ID: ${company.id})`);
         return res.status(403).json({ 
           message: 'Account access suspended due to cancellation. Please contact support to restore your account.',
@@ -2441,8 +2441,8 @@ Responde directamente a este email para contactar con la persona.
 
       const company = await storage.getCompany(user.companyId);
       
-      // CRITICAL: Check if company is scheduled for cancellation and block access
-      if (company?.scheduledForCancellation) {
+      // CRITICAL: Check if company is scheduled for deletion and block access
+      if (company?.scheduledForDeletion) {
         console.log(`🚫 Access denied for cancelled company: ${company.name} (ID: ${company.id})`);
         return res.status(403).json({ 
           message: 'Account access suspended due to cancellation. Please contact support to restore your account.',
