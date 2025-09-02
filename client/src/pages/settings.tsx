@@ -1400,7 +1400,8 @@ export default function Settings() {
     companyPhone: user?.companyPhone || '',
     position: user?.position || '',
     emergencyContactName: user?.emergencyContactName || '',
-    emergencyContactPhone: user?.emergencyContactPhone || ''
+    emergencyContactPhone: user?.emergencyContactPhone || '',
+    startDate: user?.startDate || ''
   });
 
   // Company configuration data
@@ -1462,6 +1463,23 @@ export default function Settings() {
       setLogoFile(null);
     }
   }, [company]);
+
+  // Initialize profile data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        personalPhone: user.personalPhone || '',
+        personalEmail: user.personalEmail || '',
+        postalAddress: user.postalAddress || '',
+        companyEmail: user.companyEmail || '',
+        companyPhone: user.companyPhone || '',
+        position: user.position || '',
+        emergencyContactName: user.emergencyContactName || '',
+        emergencyContactPhone: user.emergencyContactPhone || '',
+        startDate: user.startDate || ''
+      });
+    }
+  }, [user]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: typeof profileData) => {
@@ -2537,7 +2555,7 @@ export default function Settings() {
                       className="mt-1"
                       disabled={user?.role !== 'admin'}
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Usado para calcular las horas esperadas y generar alertas
                     </p>
                   </div>
@@ -2555,12 +2573,12 @@ export default function Settings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Shield className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium text-blue-900">Normativa española</span>
+                      <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium text-blue-900 dark:text-blue-100">Normativa española</span>
                     </div>
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-300">
                       El sistema calcula automáticamente 30 días naturales por año trabajado (2.5 días por mes) 
                       desde la fecha de incorporación del empleado.
                     </p>
@@ -2578,7 +2596,7 @@ export default function Settings() {
                       className="mt-1"
                       disabled={user?.role !== 'admin'}
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Mínimo legal: 22 días laborables (30 días naturales)
                     </p>
                   </div>
@@ -2596,7 +2614,7 @@ export default function Settings() {
                       className="mt-1"
                       disabled={user?.role !== 'admin'}
                     />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Valor estándar: 2.5 días (30 días ÷ 12 meses)
                     </p>
                   </div>
@@ -2691,7 +2709,7 @@ export default function Settings() {
                 <div className="space-y-6">
                   {/* Información corporativa */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3">Información corporativa</h4>
+                    <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">Información corporativa</h4>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="adminCompanyEmail">Email corporativo</Label>
@@ -2725,7 +2743,7 @@ export default function Settings() {
                         )}
                       </div>
                       
-                      <div className="md:col-span-2">
+                      <div>
                         <Label htmlFor="adminPosition">Cargo/Puesto</Label>
                         {isEditingProfile ? (
                           <Input
@@ -2739,6 +2757,28 @@ export default function Settings() {
                             {profileData.position || 'No especificado'}
                           </div>
                         )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="adminStartDate">Fecha de incorporación</Label>
+                        {isEditingProfile ? (
+                          <Input
+                            id="adminStartDate"
+                            type="date"
+                            value={profileData.startDate ? new Date(profileData.startDate).toISOString().split('T')[0] : ''}
+                            onChange={(e) => setProfileData(prev => ({ ...prev, startDate: e.target.value }))}
+                          />
+                        ) : (
+                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                            {profileData.startDate ? 
+                              new Date(profileData.startDate).toLocaleDateString('es-ES') : 
+                              'No especificada'
+                            }
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Para calcular tus días de vacaciones correctamente
+                        </p>
                       </div>
                     </div>
                   </div>
