@@ -1150,6 +1150,7 @@ export class DrizzleStorage implements IStorage {
       notificationShown: schema.reminders.notificationShown,
       showBanner: schema.reminders.showBanner,
       assignedUserIds: schema.reminders.assignedUserIds,
+      completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
       createdBy: schema.reminders.createdBy,
@@ -1675,14 +1676,25 @@ export class DrizzleStorage implements IStorage {
     .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
     // Mark own reminders as not assigned and assigned reminders as assigned
-    const ownRemindersWithFlag = ownReminders.map(reminder => ({
-      ...reminder,
-      isAssigned: false,
-      creatorName: null // Own reminders don't need creator name
-    }));
+    const ownRemindersWithFlag = ownReminders
+      .filter(reminder => {
+        // Filter out reminders that the current user has already completed individually
+        const completedByUserIds = reminder.completedByUserIds || [];
+        return !completedByUserIds.includes(userId);
+      })
+      .map(reminder => ({
+        ...reminder,
+        isAssigned: false,
+        creatorName: null // Own reminders don't need creator name
+      }));
 
     const assignedRemindersWithFlag = assignedReminders
       .filter(reminder => reminder.userId !== userId) // Only include reminders not owned by user
+      .filter(reminder => {
+        // Filter out reminders that the current user has already completed individually
+        const completedByUserIds = reminder.completedByUserIds || [];
+        return !completedByUserIds.includes(userId);
+      })
       .map(reminder => ({
         ...reminder,
         isAssigned: true
