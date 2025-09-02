@@ -22,8 +22,9 @@ type EmailData = z.infer<typeof emailSchema>;
 export default function RequestCode() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable' | 'cancelled'>('idle');
   const [emailMessage, setEmailMessage] = useState('');
+  const [canRecover, setCanRecover] = useState(false);
 
   // Check if public registration is enabled
   const { data: registrationSettings, isLoading: isLoadingSettings } = useQuery({
@@ -70,9 +71,15 @@ export default function RequestCode() {
       if (result.available) {
         setEmailStatus('available');
         setEmailMessage('Email disponible');
+        setCanRecover(false);
+      } else if (result.isCancelled && result.canRecover) {
+        setEmailStatus('cancelled');
+        setEmailMessage(result.error || 'La cuenta con este email está cancelada');
+        setCanRecover(true);
       } else {
         setEmailStatus('unavailable');
         setEmailMessage(result.error || 'Este email ya está registrado');
+        setCanRecover(false);
       }
     } catch (error) {
       setEmailStatus('idle');
@@ -233,6 +240,7 @@ export default function RequestCode() {
                   className={`rounded-xl border-gray-300 py-3 px-4 pr-20 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${
                     emailStatus === 'available' ? 'border-green-500 focus:border-green-500' :
                     emailStatus === 'unavailable' ? 'border-red-500 focus:border-red-500' :
+                    emailStatus === 'cancelled' ? 'border-orange-500 focus:border-orange-500' :
                     ''
                   }`}
                   {...form.register('email')}
@@ -250,6 +258,9 @@ export default function RequestCode() {
                     {emailStatus === 'unavailable' && (
                       <XCircle className="h-4 w-4 text-red-500" />
                     )}
+                    {emailStatus === 'cancelled' && (
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    )}
                     <Mail className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
@@ -265,6 +276,12 @@ export default function RequestCode() {
                   {emailMessage}
                 </p>
               )}
+              {emailMessage && emailStatus === 'cancelled' && (
+                <p className="text-xs text-orange-600 flex items-center gap-1 mt-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {emailMessage}
+                </p>
+              )}
               {emailMessage && emailStatus === 'available' && (
                 <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
                   <CheckCircle className="h-3 w-3" />
@@ -273,23 +290,30 @@ export default function RequestCode() {
               )}
               
               <p className="text-xs text-gray-500 mt-1">
-                Te enviaremos un código de verificación. Mantendremos tu sesión activa mientras verificas.
+                {canRecover 
+                  ? 'Te enviaremos un código de recuperación para restaurar tu cuenta cancelada.'
+                  : 'Te enviaremos un código de verificación. Mantendremos tu sesión activa mientras verificas.'
+                }
               </p>
             </div>
 
             <Button 
               type="submit" 
-              className="w-full rounded-xl py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium" 
+              className={`w-full rounded-xl py-3 text-white font-medium ${
+                canRecover 
+                  ? 'bg-orange-600 hover:bg-orange-700' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
               disabled={isLoading || emailStatus === 'unavailable' || emailStatus === 'checking'}
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  Enviando código...
+                  {canRecover ? 'Enviando código de recuperación...' : 'Enviando código...'}
                 </div>
               ) : (
                 <>
-                  Enviar código de verificación
+                  {canRecover ? 'Enviar código de recuperación' : 'Enviar código de verificación'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}

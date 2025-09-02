@@ -1341,6 +1341,19 @@ Responde directamente a este email para contactar con la persona.
       const existingUser = await storage.getUserByEmail(email);
       
       if (existingUser) {
+        // Check if user is admin and if company is cancelled
+        if (existingUser.role === 'admin') {
+          const company = await storage.getCompany(existingUser.companyId);
+          if (company?.scheduledForDeletion) {
+            return res.json({ 
+              available: false, 
+              error: 'La cuenta con este email está cancelada',
+              isCancelled: true,
+              canRecover: true
+            });
+          }
+        }
+        
         return res.json({ 
           available: false, 
           error: 'Este email ya está registrado' 
