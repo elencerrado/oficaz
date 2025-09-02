@@ -344,6 +344,7 @@ export const reminders = pgTable("reminders", {
   notificationShown: boolean("notification_shown").default(false).notNull(),
   showBanner: boolean("show_banner").default(false).notNull(),
   assignedUserIds: integer("assigned_user_ids").array(), // Array of user IDs for assignments
+  completedByUserIds: integer("completed_by_user_ids").array(), // Array of user IDs who completed the reminder
   assignedBy: integer("assigned_by").references(() => users.id), // Who assigned the reminder
   assignedAt: timestamp("assigned_at"), // When it was assigned
   createdBy: integer("created_by").references(() => users.id).notNull(),

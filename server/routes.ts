@@ -4799,13 +4799,20 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: "Reminder not found" });
       }
       
+      // Special case: if user is trying to mark reminder as completed and is assigned to it
+      const isMarkingComplete = req.body.isCompleted !== undefined;
+      const isAssignedToReminder = existingReminder.assignedUserIds && 
+                                  existingReminder.assignedUserIds.includes(userId);
+      
       // Allow editing if:
       // 1. User owns the reminder, OR
       // 2. User created the reminder (createdBy), OR  
-      // 3. User is admin/manager
+      // 3. User is admin/manager, OR
+      // 4. User is assigned to reminder and only marking as complete
       const canEdit = existingReminder.userId === userId || 
                      existingReminder.createdBy === userId || 
-                     ['admin', 'manager'].includes(userRole);
+                     ['admin', 'manager'].includes(userRole) ||
+                     (isMarkingComplete && isAssignedToReminder);
       
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to edit this reminder" });
@@ -4825,6 +4832,33 @@ Responde directamente a este email para contactar con la persona.
         updateData.assignedUserIds = [...new Set([userId, ...updateData.assignedUserIds])];
         updateData.assignedBy = userId;
         updateData.assignedAt = new Date();
+      }
+      
+      // Handle individual completion tracking
+      if (updateData.isCompleted !== undefined) {
+        const currentCompletedByUserIds = existingReminder.completedByUserIds || [];
+        
+        if (updateData.isCompleted) {
+          // Add user to completed list if not already there
+          if (!currentCompletedByUserIds.includes(userId)) {
+            updateData.completedByUserIds = [...currentCompletedByUserIds, userId];
+          }
+        } else {
+          // Remove user from completed list
+          updateData.completedByUserIds = currentCompletedByUserIds.filter(id => id !== userId);
+        }
+        
+        // Update overall completion status based on assigned users
+        const assignedUserIds = existingReminder.assignedUserIds || [];
+        const newCompletedByUserIds = updateData.completedByUserIds || [];
+        
+        // If all assigned users have completed, mark reminder as completed
+        if (assignedUserIds.length > 0) {
+          updateData.isCompleted = assignedUserIds.every(id => newCompletedByUserIds.includes(id));
+        } else {
+          // If no users assigned, just use the individual completion status
+          updateData.isCompleted = newCompletedByUserIds.includes(existingReminder.userId);
+        }
       }
       
       const updatedReminder = await storage.updateReminder(reminderId, updateData);

@@ -80,11 +80,12 @@ const REMINDER_COLORS = [
 ];
 
 // Component to display assigned user avatars with a limit
-const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, currentUserId }: {
+const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, currentUserId, completedByUserIds }: {
   assignedUserIds?: number[];
   employees: Employee[];
   maxDisplay?: number;
   currentUserId?: number;
+  completedByUserIds?: number[];
 }) => {
   if (!assignedUserIds?.length) return null;
 
@@ -113,22 +114,27 @@ const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, curr
 
   return (
     <div className="flex items-center -space-x-1 mt-2">
-      {displayEmployees.map((employee) => (
-        <Avatar 
-          key={employee.id} 
-          className="w-5 h-5 border-2 border-white shadow-sm hover:scale-110 transition-transform cursor-pointer"
-          title={employee.fullName}
-        >
-          <AvatarImage 
-            src={employee.profilePicture ? `/uploads/${employee.profilePicture}` : undefined} 
-            alt={employee.fullName}
-            className="object-cover"
-          />
-          <AvatarFallback className={`text-[10px] font-medium ${getAvatarColor(employee.id)}`}>
-            {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-      ))}
+      {displayEmployees.map((employee) => {
+        const isCompleted = completedByUserIds?.includes(employee.id) || false;
+        return (
+          <Avatar 
+            key={employee.id} 
+            className={`w-5 h-5 border-2 shadow-sm hover:scale-110 transition-transform cursor-pointer ${
+              isCompleted ? 'border-green-500' : 'border-white'
+            }`}
+            title={`${employee.fullName}${isCompleted ? ' (Completado)' : ''}`}
+          >
+            <AvatarImage 
+              src={employee.profilePicture ? `/uploads/${employee.profilePicture}` : undefined} 
+              alt={employee.fullName}
+              className="object-cover"
+            />
+            <AvatarFallback className={`text-[10px] font-medium ${getAvatarColor(employee.id)}`}>
+              {employee.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        );
+      })}
       
       {remainingCount > 0 && (
         <div 
@@ -861,6 +867,7 @@ export default function Reminders() {
                     employees={employees} 
                     maxDisplay={3}
                     currentUserId={user?.id}
+                    completedByUserIds={reminder.completedByUserIds}
                   />
                   
                   <div className="flex items-center justify-between mt-4">
@@ -939,9 +946,14 @@ export default function Reminders() {
                   />
                   <label
                     htmlFor={`employee-${employee.id}`}
-                    className="flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className="flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-between"
                   >
-                    {employee.fullName}
+                    <span>{employee.fullName}</span>
+                    {selectedReminderForAssignment?.completedByUserIds?.includes(employee.id) && (
+                      <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Completado
+                      </span>
+                    )}
                   </label>
                 </div>
               ))}
