@@ -390,13 +390,13 @@ export default function TimeTracking() {
   // ⚠️ PROTECTED: Data processing and filtering functions - DO NOT MODIFY
   // These functions are CRITICAL for data accuracy and filtering logic
   const { employeesList, sessionsList, availableMonths } = useMemo(() => {
-    const allEmployees = employees as any[];
+    const allEmployees = (employees as any[]) || [];
     // Include admin for employee list so admin can see their own time tracking
-    const filteredEmployees = (allEmployees || []);
+    const filteredEmployees = allEmployees;
     // Include all sessions including admin sessions
-    const filteredSessions = (sessions || []);
+    const filteredSessions = (sessions as any[]) || [];
 
-    const months = (filteredSessions || []).reduce((acc: string[], session: any) => {
+    const months = filteredSessions.reduce((acc: string[], session: any) => {
       const monthKey = format(new Date(session.clockIn), 'yyyy-MM');
       if (!acc.includes(monthKey)) acc.push(monthKey);
       return acc;
@@ -410,7 +410,7 @@ export default function TimeTracking() {
   }, [employees, sessions]);
 
   const filteredSessions = useMemo(() => {
-    return (sessionsList || []).filter((session: any) => {
+    return sessionsList.filter((session: any) => {
       const sessionDate = new Date(session.clockIn);
       
       const matchesEmployee = selectedEmployee === 'all' || session.userId.toString() === selectedEmployee;
@@ -451,7 +451,7 @@ export default function TimeTracking() {
           const clockInTime = new Date(session.clockIn).getTime();
           const now = Date.now();
           const hoursElapsed = (now - clockInTime) / (1000 * 60 * 60);
-          const maxHours = companySettings?.workingHoursPerDay || 8;
+          const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
           
           // Solo mostrar como incompleta si han pasado más horas que las configuradas
           return matchesEmployee && matchesSearch && matchesDate && hoursElapsed > maxHours;
@@ -533,13 +533,13 @@ export default function TimeTracking() {
     }
 
     // Calculate incomplete sessions - sessions without clockOut that exceed working hours
-    const incompleteSessionsCount = sessionsList.filter((session: any) => {
+    const incompleteSessionsCount = (sessionsList || []).filter((session: any) => {
       if (session.clockOut) return false; // Has clockOut, not incomplete
       
       const clockInTime = new Date(session.clockIn).getTime();
       const now = Date.now();
       const hoursElapsed = (now - clockInTime) / (1000 * 60 * 60);
-      const maxHours = companySettings?.workingHoursPerDay || 8;
+      const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
       
       return hoursElapsed > maxHours;
     }).length;
@@ -1335,7 +1335,7 @@ export default function TimeTracking() {
       const formatTime = (date: Date) => format(date, 'HH:mm');
 
       // Use configured max hours from company settings (same as calculateSessionStatus function)
-      const maxHours = companySettings?.workingHoursPerDay || 8;
+      const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
       
       // Only show "Incompleto" if more than maxHours have passed
       if (elapsedHours > maxHours) {
@@ -1378,8 +1378,8 @@ export default function TimeTracking() {
       new Date(session.clockIn),
       session.clockOut ? new Date(session.clockOut) : null
     ]).filter(Boolean);
-    const dayStart = new Date(Math.min(...allTimes.map(d => d.getTime())));
-    const dayEnd = new Date(Math.max(...allTimes.map(d => d.getTime())));
+    const dayStart = new Date(Math.min(...allTimes.map((d: any) => d.getTime())));
+    const dayEnd = new Date(Math.max(...allTimes.map((d: any) => d.getTime())));
     const totalDayDuration = (dayEnd.getTime() - dayStart.getTime()) / (1000 * 60 * 60); // en horas
 
     const formatTime = (date: Date) => format(date, 'HH:mm');
@@ -2090,7 +2090,7 @@ export default function TimeTracking() {
               <tbody>
                 {(() => {
                   const sortedSessions = filteredSessions
-                    .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                    .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
                   
                   const showSummaries = selectedEmployee !== 'all';
                   let currentWeekStart: Date | null = null;
@@ -2104,7 +2104,7 @@ export default function TimeTracking() {
                         const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                         return sessionWeekStart.getTime() === weekStart.getTime();
                       })
-                      .reduce((total, session) => {
+                      .reduce((total: number, session: any) => {
                         let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
                         
                         // Validación: Limitar a máximo 24 horas por sesión
@@ -2123,7 +2123,7 @@ export default function TimeTracking() {
                   const calculateMonthTotal = (monthKey: string) => 
                     (sortedSessions || [])
                       .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
-                      .reduce((total, session) => {
+                      .reduce((total: number, session: any) => {
                         let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
                         
                         // Validación: Limitar a máximo 24 horas por sesión
@@ -2500,7 +2500,7 @@ export default function TimeTracking() {
           <div className="md:hidden">
             {(() => {
               const sortedSessions = filteredSessions
-                .sort((a, b) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
+                .sort((a: any, b: any) => new Date(b.clockIn).getTime() - new Date(a.clockIn).getTime());
               
               const showSummaries = selectedEmployee !== 'all';
               let currentWeekStart: Date | null = null;
@@ -2514,7 +2514,7 @@ export default function TimeTracking() {
                     const sessionWeekStart = startOfWeek(new Date(session.clockIn), { weekStartsOn: 1 });
                     return sessionWeekStart.getTime() === weekStart.getTime();
                   })
-                  .reduce((total, session) => {
+                  .reduce((total: number, session: any) => {
                     let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
                     if (totalSessionHours > 24) totalSessionHours = 24;
                     const breakHours = session.breakPeriods 
@@ -2528,7 +2528,7 @@ export default function TimeTracking() {
               const calculateMonthTotal = (monthKey: string) => 
                 (sortedSessions || [])
                   .filter(session => format(new Date(session.clockIn), 'yyyy-MM') === monthKey)
-                  .reduce((total, session) => {
+                  .reduce((total: number, session: any) => {
                     let totalSessionHours = calculateHours(session.clockIn, session.clockOut);
                     if (totalSessionHours > 24) totalSessionHours = 24;
                     const breakHours = session.breakPeriods 
