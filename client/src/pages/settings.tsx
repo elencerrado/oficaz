@@ -453,17 +453,17 @@ const AccountManagement = () => {
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <Badge variant="secondary" className={`transition-colors ${
-                  trialStatus?.isTrialActive 
+                  trialStatus?.status === 'trial' 
                     ? "bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200" 
                     : "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200"
                 }`}>
-                  {trialStatus?.isTrialActive ? 'PRUEBA' : 'ACTIVO'}
+                  {trialStatus?.status === 'trial' ? 'PRUEBA' : 'ACTIVO'}
                 </Badge>
               </div>
             </div>
             
             {/* Payment Information or Cancellation Warning */}
-            {subscription?.nextPaymentDate && !trialStatus?.isTrialActive && (
+            {subscription?.nextPaymentDate && trialStatus?.status !== 'trial' && (
               <div className="pt-2 border-t border-gray-200/50">
                 {paymentMethods && paymentMethods.length > 0 ? (
                   // Show payment info when payment methods exist
@@ -618,7 +618,7 @@ const AccountManagement = () => {
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      {trialStatus?.isTrialActive ? (
+                      {trialStatus?.status === 'trial' ? (
                         // Durante período de prueba (con o sin haber tenido método de pago antes)
                         (<>
                           <p className="text-sm font-medium text-red-800" key={trialStatus?.trialEndDate}>
