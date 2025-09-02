@@ -696,14 +696,20 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
     {
       sender: employees[0], // María García
       recipient: admin,
-      content: 'Hola! He estado probando el sistema de fichajes y me parece muy intuitivo. ¿Hay alguna función especial para reportar horas extra?',
+      content: 'Hola! He estado revisando el sistema y tengo una duda. ¿Cómo se calculan exactamente los días de vacaciones? Veo que tengo 22 días disponibles.',
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
     },
     {
       sender: admin,
       recipient: employees[0],
-      content: 'Me alegra que te guste el sistema, María. Las horas extra se calculan automáticamente cuando superas las 8 horas diarias. También puedes ver el detalle en la sección de reportes.',
+      content: 'Buena pregunta, María. Los días se calculan proporcionalmente según tu fecha de incorporación. Como llevas un año completo, tienes los 22 días estándar. Los nuevos empleados acumulan 1.83 días por mes trabajado.',
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 4 days ago + 2 hours
+    },
+    {
+      sender: employees[0], // María García
+      recipient: admin,
+      content: 'Entiendo, así que si alguien entra en julio, tendría (22 días ÷ 12 meses) × 6 meses = 11 días hasta fin de año. ¡Muy útil saberlo para explicárselo al equipo!',
+      sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // 4 days ago + 3 hours
     },
     
     // Conversation 2: Admin <-> Carlos (Manager)
