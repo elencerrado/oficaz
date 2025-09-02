@@ -199,56 +199,59 @@ div.rdp button.rdp-day_today[style] {
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
 }
 
-/* Estilos para días festivos y vacaciones usando clases CSS */
-.calendar-admin-override .national-holiday-day {
+/* Estilos para días festivos y vacaciones - máxima especificidad */
+body .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
   background-color: #fee2e2 !important;
   color: #dc2626 !important;
   font-weight: 600 !important;
+  border-radius: 6px !important;
 }
 
-.calendar-admin-override .custom-holiday-day {
+body .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
   background-color: #fed7aa !important;
   color: #d97706 !important;
   font-weight: 600 !important;
+  border-radius: 6px !important;
 }
 
-.calendar-admin-override .approved-vacation-day {
+body .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
   background-color: #e5e7eb !important;
   color: #374151 !important;
   font-weight: 600 !important;
+  border-radius: 6px !important;
 }
 
 /* Modo oscuro para días festivos y vacaciones */
-.dark .calendar-admin-override .national-holiday-day {
+body .dark .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
   background-color: #991b1b !important;
   color: #fca5a5 !important;
 }
 
-.dark .calendar-admin-override .custom-holiday-day {
+body .dark .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
   background-color: #92400e !important;
   color: #fdba74 !important;
 }
 
-.dark .calendar-admin-override .approved-vacation-day {
+body .dark .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
   background-color: #4b5563 !important;
   color: #d1d5db !important;
 }
 
-/* Días pasados con opacidad reducida */
-.calendar-admin-override .rdp-day_outside,
-.calendar-admin-override .rdp-day_disabled {
+/* Días pasados con opacidad reducida - fuerza máxima especificidad */
+body .calendar-admin-override .rdp-day_outside,
+body .calendar-admin-override .rdp-day_disabled {
   opacity: 0.4 !important;
   pointer-events: none !important;
 }
 
-/* Días pasados del mes actual */
-.calendar-admin-override button[data-today="false"] {
+/* Días que no son hoy - reducir opacidad */
+body .calendar-admin-override button:not(.rdp-day_today) {
   opacity: 0.6 !important;
 }
 
-/* Día seleccionado con bordes redondeados */
-.calendar-admin-override .rdp-day_selected,
-.calendar-admin-override button[aria-pressed="true"] {
+/* Día seleccionado con bordes redondeados - máxima especificidad */
+body .calendar-admin-override .rdp-day_selected,
+body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
   background-color: #e5e7eb !important;
   color: #374151 !important;
   border-radius: 50% !important;
@@ -256,18 +259,20 @@ div.rdp button.rdp-day_today[style] {
   font-weight: 600 !important;
 }
 
-.dark .calendar-admin-override .rdp-day_selected,
-.dark .calendar-admin-override button[aria-pressed="true"] {
+body .dark .calendar-admin-override .rdp-day_selected,
+body .dark .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
   background-color: #4b5563 !important;
   color: #d1d5db !important;
   border-color: #6b7280 !important;
 }
 
-/* DÍA DE HOY siempre tiene MÁXIMA PRIORIDAD sobre todo */
-.calendar-admin-override .rdp-day_today.national-holiday-day,
-.calendar-admin-override .rdp-day_today.custom-holiday-day,
-.calendar-admin-override .rdp-day_today.approved-vacation-day,
-.calendar-admin-override button.rdp-day_today {
+/* DÍA DE HOY - MÁXIMA ESPECIFICIDAD ABSOLUTA */
+body .calendar-admin-override .rdp-day_today.national-holiday-day,
+body .calendar-admin-override .rdp-day_today.custom-holiday-day,
+body .calendar-admin-override .rdp-day_today.approved-vacation-day,
+body .calendar-admin-override button.rdp-day_today,
+body .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
+body .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
   background-color: #3b82f6 !important;
   background: #3b82f6 !important;
   color: white !important;
@@ -282,24 +287,35 @@ div.rdp button.rdp-day_today[style] {
 }
 
 /* Modo oscuro para día de hoy con máxima prioridad */
-.dark .calendar-admin-override .rdp-day_today.national-holiday-day,
-.dark .calendar-admin-override .rdp-day_today.custom-holiday-day,
-.dark .calendar-admin-override .rdp-day_today.approved-vacation-day,
-.dark .calendar-admin-override button.rdp-day_today {
+body .dark .calendar-admin-override .rdp-day_today.national-holiday-day,
+body .dark .calendar-admin-override .rdp-day_today.custom-holiday-day,
+body .dark .calendar-admin-override .rdp-day_today.approved-vacation-day,
+body .dark .calendar-admin-override button.rdp-day_today,
+body .dark .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
+body .dark .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
   background-color: #2563eb !important;
   background: #2563eb !important;
-  border-color: #60a5fa !important;
+  color: white !important;
+  border: 3px solid #60a5fa !important;
+  border-radius: 50% !important;
+  font-weight: 900 !important;
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+  transform: scale(1.1) !important;
+  opacity: 1 !important;
 }
 
-/* Día de hoy cuando está seleccionado también */
-.calendar-admin-override .rdp-day_today.rdp-day_selected,
-.calendar-admin-override button.rdp-day_today[aria-pressed="true"] {
+/* Día de hoy cuando está seleccionado también - máxima especificidad */
+body .calendar-admin-override .rdp-day_today.rdp-day_selected,
+body .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
+body .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
   background-color: #3b82f6 !important;
   background: #3b82f6 !important;
   color: white !important;
   border: 3px solid #1d4ed8 !important;
   border-radius: 50% !important;
+  font-weight: 900 !important;
+  transform: scale(1.1) !important;
+  opacity: 1 !important;
 }
 
 /* Hero Icons Grid - Optimized CSS Performance */
