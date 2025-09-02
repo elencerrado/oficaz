@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { DatePickerPeriod, DatePickerDay } from '@/components/ui/date-picker';
 import { 
@@ -1989,8 +1990,8 @@ export default function TimeTracking() {
                       }
                     />
 
-                    <Popover open={isMonthDialogOpen} onOpenChange={setIsMonthDialogOpen}>
-                      <PopoverTrigger asChild>
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <Button
                           variant="outline"
                           size="sm"
@@ -2001,9 +2002,12 @@ export default function TimeTracking() {
                         >
                           {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
                         </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-2" align="start">
-                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="text-center">Seleccionar mes</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-1 max-h-60 overflow-y-auto p-4">
                           {availableMonths.map((monthKey: string) => {
                             const [year, month] = monthKey.split('-');
                             const monthDate = new Date(parseInt(year), parseInt(month) - 1);
@@ -2011,20 +2015,17 @@ export default function TimeTracking() {
                               <Button
                                 key={monthKey}
                                 variant="ghost"
-                                className="w-full justify-start text-sm"
-                                onPointerDown={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
+                                className="w-full justify-center text-sm"
+                                onClick={() => {
                                   setCurrentMonth(monthDate);
                                   setDateFilter('month');
                                   setSelectedStartDate(null);
                                   setSelectedEndDate(null);
                                   setStartDate('');
                                   setEndDate('');
-                                  // Cerrar con un pequeño delay para asegurar que el estado se actualiza
-                                  requestAnimationFrame(() => {
-                                    setIsMonthDialogOpen(false);
-                                  });
+                                  // Cerrar el dialog
+                                  const closeButton = document.querySelector('[data-dialog-close]') as HTMLElement;
+                                  if (closeButton) closeButton.click();
                                 }}
                               >
                                 {format(monthDate, 'MMMM yyyy', { locale: es })}
@@ -2032,8 +2033,8 @@ export default function TimeTracking() {
                             );
                           })}
                         </div>
-                      </PopoverContent>
-                    </Popover>
+                      </DialogContent>
+                    </Dialog>
                   </div>
 
                   {/* Second row: Range picker and clear button */}
