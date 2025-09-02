@@ -35,7 +35,7 @@ import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { WelcomeModal } from '@/components/welcome-modal';
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1052,7 +1052,7 @@ export default function AdminDashboard() {
       <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={() => setShowWelcomeModal(false)}
-        companyName={(user as any)?.companyName || 'tu empresa'}
+        companyName={company?.name || 'tu empresa'}
       />
     </div>
   );
