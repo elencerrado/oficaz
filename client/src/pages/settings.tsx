@@ -2769,19 +2769,14 @@ export default function Settings() {
                       <div>
                         <Label htmlFor="adminStartDate">Fecha de incorporación</Label>
                         {isEditingProfile ? (
-                          <Input
-                            id="adminStartDate"
-                            type="date"
-                            value={profileData.startDate ? 
-                              (typeof profileData.startDate === 'string' ? profileData.startDate.split('T')[0] : 
-                               format(profileData.startDate, 'yyyy-MM-dd')) : 
-                              ''}
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                const date = new Date(e.target.value);
+                          <DatePickerDayEmployee
+                            selected={profileData.startDate ? new Date(profileData.startDate) : undefined}
+                            onSelect={(date) => {
+                              if (date) {
                                 setProfileData(prev => ({ ...prev, startDate: date.toISOString() }));
                               }
                             }}
+                            placeholder="Selecciona fecha de incorporación"
                             className="mt-1"
                           />
                         ) : (
