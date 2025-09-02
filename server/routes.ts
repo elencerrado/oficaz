@@ -4907,7 +4907,37 @@ Responde directamente a este email para contactar con la persona.
   app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const activeReminders = await storage.getActiveReminders(userId);
+      const userRole = req.user!.role;
+      const companyId = req.user!.companyId;
+      
+      console.log(`📋 GET /api/reminders/active - User ${userId} (${userRole}) from company ${companyId}`);
+      
+      let activeReminders;
+      
+      if (userRole === 'admin' || userRole === 'manager') {
+        // Admin/Manager: Get all company reminders (active only)
+        console.log(`📋 Admin/Manager ${userId} fetching active company reminders`);
+        activeReminders = await storage.getActiveReminders(userId);
+      } else {
+        // Employee: Get reminders using the same logic as main reminders endpoint but filter for active only
+        console.log(`📋 Employee ${userId} fetching active user reminders with assignments`);
+        const allReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
+        
+        // Filter to only include active reminders (not completed by all assignees)
+        activeReminders = allReminders.filter(reminder => {
+          // A reminder is active if it's not completed by ALL assigned users + creator
+          const assignedUserIds = reminder.assignedUserIds || [];
+          const completedByUserIds = reminder.completedByUserIds || [];
+          const allRequiredUsers = [...new Set([reminder.userId, ...assignedUserIds])];
+          
+          // Check if ALL required users have completed it
+          const allCompleted = allRequiredUsers.every(uid => completedByUserIds.includes(uid));
+          
+          return !allCompleted; // Return true if NOT all completed (i.e., still active)
+        });
+        
+        console.log(`📋 Employee ${userId} active reminders count: ${activeReminders.length}`);
+      }
       
       // Add anti-cache headers for real-time updates
       res.set({
