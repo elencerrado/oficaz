@@ -1893,7 +1893,7 @@ export class DrizzleStorage implements IStorage {
       // 1. Belong to the user or are assigned to them
       // 2. Have enableNotifications = true
       // 3. Have a reminder date that has passed
-      // 4. Are not completed
+      // 4. Are not completed OR not completed by this user individually
       // 5. Haven't been shown yet (notificationShown = false)
       const remindersDue = await db.select()
         .from(schema.reminders)
@@ -1908,7 +1908,9 @@ export class DrizzleStorage implements IStorage {
             lte(schema.reminders.reminderDate, currentTime),
             eq(schema.reminders.isCompleted, false),
             eq(schema.reminders.isArchived, false),
-            eq(schema.reminders.notificationShown, false)
+            eq(schema.reminders.notificationShown, false),
+            // Don't show notifications for reminders the user has completed individually
+            sql`NOT (${userId} = ANY(${schema.reminders.completedByUserIds}))`
           )
         );
 
