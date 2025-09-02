@@ -123,18 +123,31 @@
   @apply bg-gray-400 text-white dark:bg-gray-600 dark:text-gray-100 !important;
 }
 
-/* Día de hoy cuando coincide con vacaciones - Prioridad sobre rangos */
-.rdp-day_today.rdp-day_range_middle,
-.rdp-day_today.rdp-day_range_start,
-.rdp-day_today.rdp-day_range_end {
-  @apply bg-blue-500 text-white dark:bg-blue-600 dark:text-white border-2 border-blue-700 dark:border-blue-400 !important;
+/* Día de hoy cuando coincide con vacaciones - Máxima prioridad */
+button.rdp-day_today.rdp-day_range_middle,
+button.rdp-day_today.rdp-day_range_start, 
+button.rdp-day_today.rdp-day_range_end {
+  background-color: #3b82f6 !important;
+  color: white !important;
+  border: 2px solid #1d4ed8 !important;
+  font-weight: bold !important;
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 100 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Modo oscuro para día de hoy en vacaciones */
+.dark button.rdp-day_today.rdp-day_range_middle,
+.dark button.rdp-day_today.rdp-day_range_start,
+.dark button.rdp-day_today.rdp-day_range_end {
+  background-color: #2563eb !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
 }
 
 /* Asegurar que el día de hoy se distinga claramente */
-.rdp-day_today {
-  @apply font-bold !important;
+button.rdp-day_today {
+  font-weight: bold !important;
 }
 
 /* Hero Icons Grid - Optimized CSS Performance */
