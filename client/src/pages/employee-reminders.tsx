@@ -222,10 +222,12 @@ export default function EmployeeReminders() {
     const matchesSearch = reminder.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (reminder.content || '').toLowerCase().includes(searchTerm.toLowerCase());
     
+    const userCompleted = isCompletedByCurrentUser(reminder);
+    
     const matchesStatus = 
       statusFilter === 'all' ||
-      (statusFilter === 'active' && !reminder.isCompleted && !reminder.isArchived) ||
-      (statusFilter === 'completed' && reminder.isCompleted) ||
+      (statusFilter === 'active' && !userCompleted && !reminder.isArchived) ||
+      (statusFilter === 'completed' && userCompleted) ||
       (statusFilter === 'archived' && reminder.isArchived);
     
     return matchesSearch && matchesStatus;
