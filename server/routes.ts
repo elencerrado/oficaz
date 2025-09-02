@@ -3861,7 +3861,6 @@ Responde directamente a este email para contactar con la persona.
         address, 
         province,
         logoUrl,
-        logoUrlDark,
         workingHoursPerDay,
         defaultVacationDays,
         vacationDaysPerMonth
@@ -3903,7 +3902,6 @@ Responde directamente a este email para contactar con la persona.
         address,
         province,
         logoUrl,
-        logoUrlDark,
         workingHoursPerDay,
         defaultVacationDays,
         vacationDaysPerMonth
@@ -3917,8 +3915,7 @@ Responde directamente a este email para contactar con la persona.
         message: 'Empresa actualizada correctamente',
         company: {
           ...updatedCompany,
-          logoUrl: updatedCompany.logoUrl || null,
-          logoUrlDark: updatedCompany.logoUrlDark || null
+          logoUrl: updatedCompany.logoUrl || null
         }
       });
     } catch (error) {

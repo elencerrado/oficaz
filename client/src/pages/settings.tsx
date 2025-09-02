@@ -1381,8 +1381,6 @@ export default function Settings() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [logoFileDark, setLogoFileDark] = useState<File | null>(null);
-  const [logoPreviewDark, setLogoPreviewDark] = useState<string | null>(null);
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -1416,7 +1414,6 @@ export default function Settings() {
     address: '',
     province: '',
     logoUrl: '',
-    logoUrlDark: '',
     // Configuration settings
     defaultVacationDays: 30,
     vacationDaysPerMonth: 2.5,
@@ -1454,7 +1451,6 @@ export default function Settings() {
         address: company.address || '',
         province: company.province || '',
         logoUrl: company.logoUrl || '',
-        logoUrlDark: company.logoUrlDark || '',
         // employeeTimeEditPermission ahora manejado por sistema de features
         workingHoursPerDay: Number(company.workingHoursPerDay) || 8,
         defaultVacationDays: Number(company.defaultVacationDays) || 30,
@@ -1464,8 +1460,6 @@ export default function Settings() {
       // Clear any preview when company data changes
       setLogoPreview(null);
       setLogoFile(null);
-      setLogoPreviewDark(null);
-      setLogoFileDark(null);
     }
   }, [company]);
 
@@ -1506,7 +1500,6 @@ export default function Settings() {
   const updateCompanyMutation = useMutation({
     mutationFn: async (data: typeof companyData) => {
       let logoUrl = data.logoUrl;
-      let logoUrlDark = data.logoUrlDark;
       
       // Si hay un nuevo archivo de logo, súbelo primero
       if (logoFile) {
@@ -1527,32 +1520,13 @@ export default function Settings() {
         logoUrl = uploadResult.logoUrl;
       }
       
-      // Si hay un nuevo archivo de logo oscuro, súbelo
-      if (logoFileDark) {
-        const formData = new FormData();
-        formData.append('logo', logoFileDark);
-        
-        const uploadResponse = await fetch('/api/companies/upload-logo', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: formData
-        });
-        
-        if (!uploadResponse.ok) {
-          throw new Error('Error al subir el logo en modo oscuro');
-        }
-        
-        const uploadResult = await uploadResponse.json();
-        logoUrlDark = uploadResult.logoUrl;
-      }
-      
       const response = await fetch('/api/companies/update', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders()
         },
-        body: JSON.stringify({ ...data, logoUrl, logoUrlDark })
+        body: JSON.stringify({ ...data, logoUrl })
       });
       
       if (!response.ok) {
@@ -1570,15 +1544,12 @@ export default function Settings() {
       setIsEditingCompany(false);
       setLogoFile(null);
       setLogoPreview(null);
-      setLogoFileDark(null);
-      setLogoPreviewDark(null);
       
-      // Update company data in the local state immediately to show the logos
+      // Update company data in the local state immediately to show the logo
       if (data.company) {
         setCompanyData(prev => ({
           ...prev,
-          logoUrl: data.company.logoUrl,
-          logoUrlDark: data.company.logoUrlDark
+          logoUrl: data.company.logoUrl
         }));
       }
       
@@ -2132,60 +2103,31 @@ export default function Settings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Logo Section - Dual Mode */}
+                {/* Logo Section */}
                 <div>
-                  <Label>Logos de la empresa</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Sube logos optimizados para modo claro y oscuro. Si no subes logo para modo oscuro, se usará el logo claro con fondo blanco.
-                  </p>
-                  
-                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Logo Modo Claro */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Logo para modo claro</Label>
-                      <div className="flex items-center space-x-4">
-                        {logoPreview || companyData.logoUrl ? (
-                          <div className="w-32 h-16 border rounded-lg bg-white flex items-center justify-center p-2">
-                            <img 
-                              src={logoPreview || companyData.logoUrl} 
-                              alt="Logo modo claro" 
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-32 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-gray-400" />
-                          </div>
-                        )}
+                  <Label>Logo de la empresa</Label>
+                  <div className="mt-2 flex items-center space-x-4">
+                    {logoPreview || companyData.logoUrl ? (
+                      <div className="w-32 h-16 border rounded-lg bg-white flex items-center justify-center p-2">
+                        <img 
+                          src={logoPreview || companyData.logoUrl} 
+                          alt="Logo de la empresa" 
+                          className="max-w-full max-h-full object-contain"
+                          onLoad={() => console.log('Logo loaded successfully:', logoPreview || companyData.logoUrl)}
+                          onError={(e) => {
+                            console.error('Error loading logo:', logoPreview || companyData.logoUrl);
+                            console.error('Image element:', e.currentTarget);
+                          }}
+                        />
                       </div>
-                    </div>
-
-                    {/* Logo Modo Oscuro */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium">Logo para modo oscuro</Label>
-                      <div className="flex items-center space-x-4">
-                        {logoPreviewDark || companyData.logoUrlDark ? (
-                          <div className="w-32 h-16 border rounded-lg bg-gray-900 flex items-center justify-center p-2">
-                            <img 
-                              src={logoPreviewDark || companyData.logoUrlDark} 
-                              alt="Logo modo oscuro" 
-                              className="max-w-full max-h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-32 h-16 bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-gray-500" />
-                          </div>
-                        )}
+                    ) : (
+                      <div className="w-32 h-16 bg-gray-100 border-2 border-dashed rounded-lg flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-gray-400" />
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Logo upload/change only for Pro+ plans */}
-                  {isEditingCompany && hasAccess('logoUpload') && (
-                    <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Controles Logo Claro */}
-                      <div className="space-y-2">
+                    )}
+                    {/* Logo upload/change only for Pro+ plans */}
+                    {isEditingCompany && hasAccess('logoUpload') && (
+                      <div className="flex-1 space-y-2">
                         <div className="flex items-center space-x-2">
                           <Button
                             type="button"
@@ -2195,7 +2137,7 @@ export default function Settings() {
                             className="flex items-center space-x-2"
                           >
                             <Upload className="w-4 h-4" />
-                            <span>Subir logo claro</span>
+                            <span>Subir logo</span>
                           </Button>
                           {(companyData.logoUrl || logoPreview) && (
                             <Button
@@ -2214,163 +2156,107 @@ export default function Settings() {
                             </Button>
                           )}
                         </div>
-                      </div>
-
-                      {/* Controles Logo Oscuro */}
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => document.getElementById('logo-upload-dark')?.click()}
-                            className="flex items-center space-x-2"
-                          >
-                            <Upload className="w-4 h-4" />
-                            <span>Subir logo oscuro</span>
-                          </Button>
-                          {(companyData.logoUrlDark || logoPreviewDark) && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setCompanyData(prev => ({ ...prev, logoUrlDark: '' }));
-                                setLogoFileDark(null);
-                                setLogoPreviewDark(null);
-                              }}
-                              className="flex items-center space-x-2 text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              <span>Eliminar</span>
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* File inputs - Dual */}
-                  {isEditingCompany && hasAccess('logoUpload') && (
-                    <div>
-                      {/* Input para logo claro */}
-                      <input
-                        id="logo-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            // Validate file size
-                            if (file.size > 2 * 1024 * 1024) {
-                              toast({
-                                title: 'Archivo demasiado grande',
-                                description: 'El logo debe ser menor a 2MB',
-                                variant: 'destructive'
-                              });
-                              return;
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              // Validate file size
+                              if (file.size > 2 * 1024 * 1024) {
+                                toast({
+                                  title: 'Archivo demasiado grande',
+                                  description: 'El logo debe ser menor a 2MB',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              
+                              // Validate file type
+                              const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
+                              if (!allowedTypes.includes(file.type)) {
+                                toast({
+                                  title: 'Formato no soportado',
+                                  description: 'Solo se permiten archivos JPG, PNG, GIF, SVG',
+                                  variant: 'destructive'
+                                });
+                                return;
+                              }
+                              
+                              setLogoFile(file);
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                setLogoPreview(e.target?.result as string);
+                              };
+                              reader.readAsDataURL(file);
                             }
-                            
-                            // Validate file type
-                            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
-                            if (!allowedTypes.includes(file.type)) {
-                              toast({
-                                title: 'Formato no soportado',
-                                description: 'Solo se permiten archivos JPG, PNG, GIF, SVG',
-                                variant: 'destructive'
-                              });
-                              return;
-                            }
-                            
-                            setLogoFile(file);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              setLogoPreview(e.target?.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-
-                      {/* Input para logo oscuro */}
-                      <input
-                        id="logo-upload-dark"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            // Validate file size
-                            if (file.size > 2 * 1024 * 1024) {
-                              toast({
-                                title: 'Archivo demasiado grande',
-                                description: 'El logo oscuro debe ser menor a 2MB',
-                                variant: 'destructive'
-                              });
-                              return;
-                            }
-                            
-                            // Validate file type
-                            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
-                            if (!allowedTypes.includes(file.type)) {
-                              toast({
-                                title: 'Formato no soportado',
-                                description: 'Solo se permiten archivos JPG, PNG, GIF, SVG',
-                                variant: 'destructive'
-                              });
-                              return;
-                            }
-                            
-                            setLogoFileDark(file);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              setLogoPreviewDark(e.target?.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                      />
-
-                      {/* Información y recomendaciones para ambos logos */}
-                      <div className="mt-4 space-y-3">
-                        <p className="text-xs text-muted-foreground">
-                          Formatos: JPG, PNG, SVG (máx. 2MB cada uno)
-                        </p>
-                        
-                        {/* Logo recommendations */}
-                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
-                          <div className="flex items-start space-x-2 mb-2">
-                            <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                            <div className="text-sm">
-                              <p className="font-medium text-blue-900 dark:text-blue-200 mb-2">Para que tus logos se vean perfectos:</p>
-                              <div className="space-y-2">
-                                <div>
-                                  <span className="font-medium text-blue-800 dark:text-blue-300">• Logo claro:</span>
-                                  <span className="text-blue-700 dark:text-blue-400"> Optimizado para fondos claros</span>
+                          }}
+                        />
+                        <div className="space-y-3">
+                          <p className="text-xs text-gray-500">
+                            Formatos: JPG, PNG, SVG (máx. 2MB)
+                          </p>
+                          
+                          {/* Logo recommendations */}
+                          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
+                            <div className="flex items-start space-x-2 mb-2">
+                              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-sm">
+                                <p className="font-medium text-blue-900 dark:text-blue-200 mb-2">Para que tu logo se vea perfecto en la app, recomendamos usar:</p>
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="font-medium text-blue-800 dark:text-blue-300">• Logotipo:</span>
+                                    <span className="text-blue-700 dark:text-blue-400"> Solo letras, sin imágenes.</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-blue-800 dark:text-blue-300">• Imagotipo:</span>
+                                    <span className="text-blue-700 dark:text-blue-400"> Letras junto con un icono, todo en una misma línea.</span>
+                                  </div>
                                 </div>
-                                <div>
-                                  <span className="font-medium text-blue-800 dark:text-blue-300">• Logo oscuro:</span>
-                                  <span className="text-blue-700 dark:text-blue-400"> Optimizado para fondos oscuros</span>
+                                <div className="mt-3 p-2 bg-white dark:bg-gray-800 rounded border border-border flex items-center space-x-2">
+                                  <img 
+                                    src={oficazLogo} 
+                                    alt="Ejemplo de imagotipo" 
+                                    className="h-5 w-auto object-contain"
+                                  />
+                                  <span className="text-xs text-gray-600 dark:text-gray-400">Ejemplo: imagotipo de Oficaz</span>
                                 </div>
-                              </div>
-                              <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-800/30 rounded border border-border">
-                                <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">📏 Tamaño recomendado:</p>
-                                <p className="text-xs text-blue-700 dark:text-blue-300">
-                                  • <strong>Ancho:</strong> 200-400 píxeles<br/>
-                                  • <strong>Alto:</strong> 60-120 píxeles<br/>
-                                  • <strong>Formato:</strong> PNG o SVG para mejor calidad
+                                <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-800/30 rounded border border-border">
+                                  <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">📏 Tamaño recomendado:</p>
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                                    • <strong>Ancho:</strong> 200-400 píxeles<br/>
+                                    • <strong>Alto:</strong> 60-120 píxeles<br/>
+                                    • <strong>Formato:</strong> PNG o SVG para mejor calidad
+                                  </p>
+                                </div>
+                                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                                  Esto asegura que tu logo se vea nítido, se cargue rápido y se ajuste perfectamente en toda la aplicación.
                                 </p>
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Restriction message for Basic plan users without logo */}
+                    )}
+                    {/* Delete existing logo (available for all plans) */}
+                    {isEditingCompany && (logoPreview || companyData.logoUrl) && (
+                      <div className="flex-1 space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDeleteLogo}
+                          disabled={isUploading}
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Eliminar logo
+                        </Button>
+                      </div>
+                    )}
+                    {/* Restriction message for Basic plan users without logo */}
                     {!hasAccess('logoUpload') && isEditingCompany && !companyData.logoUrl && (
                       <div className="flex-1">
                         <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">

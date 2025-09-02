@@ -124,13 +124,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center space-x-3">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
-              <div className="p-1 rounded bg-white/80 dark:bg-white/90 backdrop-blur-sm flex-shrink-0">
-                <img 
-                  src={company.logoUrl || ''} 
-                  alt={company.name} 
-                  className="h-4 w-auto object-contain"
-                />
-              </div>
+              <img 
+                src={company.logoUrl || ''} 
+                alt={company.name} 
+                className="h-6 w-auto object-contain flex-shrink-0"
+              />
             ) : (
               <img 
                 src={oficazLogo} 

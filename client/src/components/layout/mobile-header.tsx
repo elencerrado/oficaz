@@ -70,13 +70,11 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         </Button>
         {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
         {shouldShowLogo && company.logoUrl ? (
-          <div className="ml-2 lg:ml-0 p-1 rounded bg-white/80 dark:bg-white/90 backdrop-blur-sm">
-            <img 
-              src={company.logoUrl} 
-              alt={company.name} 
-              className="h-4 lg:h-6 w-auto object-contain"
-            />
-          </div>
+          <img 
+            src={company.logoUrl} 
+            alt={company.name} 
+            className="h-6 lg:h-8 w-auto ml-2 lg:ml-0 object-contain"
+          />
         ) : (
           <h1 className="text-sm font-medium text-foreground ml-2 lg:ml-0 lg:text-lg lg:font-semibold truncate">
             {company?.name || 'Oficaz'}
