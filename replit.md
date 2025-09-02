@@ -80,7 +80,9 @@ Preferred communication style: Simple, everyday language.
 - **Automatic Restoration**: Code verification automatically cancels deletion schedule and restores account
 - **Data Preservation**: All company data, subscriptions, and configurations are maintained during recovery
 - **User Flow**: Recovery bypasses registration wizard and redirects directly to login after successful restoration
-- **Clear Messaging**: Users receive explicit notifications about recovery process and account status
+- **Seamless Integration**: No browser alerts or popups - completely integrated user experience
+- **Admin-Only Recovery**: Only administrators can recover cancelled accounts, employees are blocked
+- **Visual Indicators**: Orange recovery button, specific cancellation messages, and proper UI feedback
 - **User requirement**: "en la pagina de registro cuando solicita el codigo, si ya existe el mail, la cuenta se ha borrado y esta en ese peridodo de 30 dias. Se envia el codigo igualmente, pero en lugar del wizard de registro habra una ventana que acepte recuperar la cuenta en el mismo estado"
 
 ### Document Cleanup System (⚠️ CRITICAL SECURITY UPDATE)

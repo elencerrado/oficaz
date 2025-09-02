@@ -129,8 +129,8 @@ export default function VerifyCode() {
       if (response.ok) {
         // Check if this is account recovery
         if (result.isRecovery && result.action === 'account_restored') {
-          // Show success message and redirect to login
-          alert('¡Cuenta recuperada exitosamente!\n\nTu cuenta ha sido restaurada con todos tus datos y configuraciones anteriores.\n\nAhora puedes iniciar sesión normalmente.');
+          // Account recovered successfully - redirect to login
+          console.log('Account recovery successful, redirecting to login');
           setLocation('/login');
         } else {
           // Normal registration flow - redirect to registration with verification token
