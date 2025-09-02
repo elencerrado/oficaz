@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { 
   Building2, 
+  Building,
   Users, 
   Settings as SettingsIcon, 
   Clock, 
@@ -523,7 +524,7 @@ const AccountManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5" />
+            <Building className="h-5 w-5" />
             <span>Información de registro</span>
           </CardTitle>
           <CardDescription>
