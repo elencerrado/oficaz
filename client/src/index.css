@@ -199,6 +199,69 @@ div.rdp button.rdp-day_today[style] {
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
 }
 
+/* Estilos para días festivos y vacaciones usando clases CSS */
+.calendar-admin-override .national-holiday-day {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+  font-weight: 600 !important;
+}
+
+.calendar-admin-override .custom-holiday-day {
+  background-color: #fed7aa !important;
+  color: #d97706 !important;
+  font-weight: 600 !important;
+}
+
+.calendar-admin-override .approved-vacation-day {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+}
+
+/* Modo oscuro para días festivos y vacaciones */
+.dark .calendar-admin-override .national-holiday-day {
+  background-color: #991b1b !important;
+  color: #fca5a5 !important;
+}
+
+.dark .calendar-admin-override .custom-holiday-day {
+  background-color: #92400e !important;
+  color: #fdba74 !important;
+}
+
+.dark .calendar-admin-override .approved-vacation-day {
+  background-color: #4b5563 !important;
+  color: #d1d5db !important;
+}
+
+/* DÍA DE HOY siempre tiene MÁXIMA PRIORIDAD sobre todo */
+.calendar-admin-override .rdp-day_today.national-holiday-day,
+.calendar-admin-override .rdp-day_today.custom-holiday-day,
+.calendar-admin-override .rdp-day_today.approved-vacation-day,
+.calendar-admin-override button.rdp-day_today {
+  background-color: #3b82f6 !important;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: 3px solid #1d4ed8 !important;
+  border-radius: 8px !important;
+  font-weight: 900 !important;
+  position: relative !important;
+  z-index: 99999 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Modo oscuro para día de hoy con máxima prioridad */
+.dark .calendar-admin-override .rdp-day_today.national-holiday-day,
+.dark .calendar-admin-override .rdp-day_today.custom-holiday-day,
+.dark .calendar-admin-override .rdp-day_today.approved-vacation-day,
+.dark .calendar-admin-override button.rdp-day_today {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+}
+
 /* Hero Icons Grid - Optimized CSS Performance */
 .hero-icons-grid {
   display: grid;

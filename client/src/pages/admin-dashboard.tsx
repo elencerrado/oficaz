@@ -857,22 +857,10 @@ export default function AdminDashboard() {
                         return dates;
                       }).flat()
                     }}
-                    modifiersStyles={{
-                      nationalHoliday: { 
-                        backgroundColor: '#fee2e2', 
-                        color: '#dc2626', 
-                        fontWeight: '600'
-                      },
-                      customHoliday: { 
-                        backgroundColor: '#fed7aa', 
-                        color: '#d97706', 
-                        fontWeight: '600'
-                      },
-                      approvedVacation: { 
-                        backgroundColor: '#e5e7eb', 
-                        color: '#374151', 
-                        fontWeight: '600'
-                      }
+                    modifiersClassNames={{
+                      nationalHoliday: 'national-holiday-day',
+                      customHoliday: 'custom-holiday-day',
+                      approvedVacation: 'approved-vacation-day'
                     }}
                   />
                 </div>
