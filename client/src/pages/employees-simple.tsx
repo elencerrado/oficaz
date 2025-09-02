@@ -857,7 +857,7 @@ export default function EmployeesSimple() {
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-hidden">
           <DialogHeader className="pb-2">
-            <DialogTitle className="text-xl font-bold text-gray-900">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Editar Empleado
             </DialogTitle>
           </DialogHeader>
@@ -865,12 +865,12 @@ export default function EmployeesSimple() {
           {selectedEmployee && (
             <div className="overflow-y-auto max-h-[calc(95vh-140px)] px-1">
               {/* Employee Header */}
-              <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 p-4 rounded-lg mb-4">
+              <div className="bg-gradient-to-r from-oficaz-primary/5 to-blue-50 dark:from-oficaz-primary/10 dark:to-blue-950/30 p-4 rounded-lg mb-4">
                 <div className="flex items-center gap-3">
                   <UserAvatar fullName={selectedEmployee.fullName || ''} size="lg" userId={selectedEmployee.id} profilePicture={selectedEmployee.profilePicture} showUpload={true} />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-gray-900 truncate">{selectedEmployee.fullName}</h3>
-                    <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 truncate">{selectedEmployee.fullName}</h3>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mt-1">
                       <div className="flex items-center gap-1">
                         <IdCard className="h-3 w-3" />
                         <span>{selectedEmployee.dni}</span>
@@ -889,17 +889,17 @@ export default function EmployeesSimple() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Left Column - Corporate Fields */}
                 <div className="space-y-4">
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Shield className="h-3 w-3 text-blue-600" />
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <Shield className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                       </div>
                       Información Corporativa
                     </h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700">Email Corporativo</Label>
+                        <Label htmlFor="companyEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Corporativo</Label>
                         <Input
                           id="companyEmail"
                           type="email"
@@ -911,7 +911,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="companyPhone" className="text-sm font-medium text-gray-700">Teléfono Corporativo</Label>
+                        <Label htmlFor="companyPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono Corporativo</Label>
                         <Input
                           id="companyPhone"
                           value={editEmployee.companyPhone}
@@ -922,7 +922,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="position" className="text-sm font-medium text-gray-700">Cargo/Puesto</Label>
+                        <Label htmlFor="position" className="text-sm font-medium text-gray-700 dark:text-gray-300">Cargo/Puesto</Label>
                         <Input
                           id="position"
                           value={editEmployee.position}
@@ -933,7 +933,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="startDate" className="text-sm font-medium text-gray-700">Fecha de Incorporación</Label>
+                        <Label htmlFor="startDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de Incorporación</Label>
                         <div className="mt-1">
                           <DatePickerDayEmployee
                             date={editEmployee.startDate}
@@ -944,7 +944,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="status" className="text-sm font-medium text-gray-700">Estado del Empleado</Label>
+                        <Label htmlFor="status" className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado del Empleado</Label>
                         <Select 
                           value={editEmployee.status}
                           onValueChange={(value) => setEditEmployee({ ...editEmployee, status: value })}
@@ -962,7 +962,7 @@ export default function EmployeesSimple() {
                       </div>
 
                       <div>
-                        <Label htmlFor="role" className="text-sm font-medium text-gray-700">Tipo de Usuario</Label>
+                        <Label htmlFor="role" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo de Usuario</Label>
                         {user?.role === 'admin' ? (
                           <Select 
                             value={editEmployee.role}
@@ -992,7 +992,7 @@ export default function EmployeesSimple() {
                           </Select>
                         )}
                         {user?.role === 'manager' && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Como manager, no puedes asignar rol de administrador
                           </p>
                         )}
@@ -1003,17 +1003,17 @@ export default function EmployeesSimple() {
 
                 {/* Right Column - Personal Info */}
                 <div className="space-y-4">
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                        <User className="h-3 w-3 text-green-600" />
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <User className="h-3 w-3 text-green-600 dark:text-green-400" />
                       </div>
                       Información Personal
                     </h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="personalEmail" className="text-sm font-medium text-gray-700">Email Personal</Label>
+                        <Label htmlFor="personalEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Personal</Label>
                         <Input
                           id="personalEmail"
                           type="email"
@@ -1025,7 +1025,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="personalPhone" className="text-sm font-medium text-gray-700">Teléfono Personal</Label>
+                        <Label htmlFor="personalPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono Personal</Label>
                         <Input
                           id="personalPhone"
                           value={editEmployee.personalPhone}
@@ -1036,7 +1036,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="address" className="text-sm font-medium text-gray-700">Dirección</Label>
+                        <Label htmlFor="address" className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección</Label>
                         <Input
                           id="address"
                           value={editEmployee.address}
@@ -1047,7 +1047,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="emergencyContactName" className="text-sm font-medium text-gray-700">Persona de Contacto</Label>
+                        <Label htmlFor="emergencyContactName" className="text-sm font-medium text-gray-700 dark:text-gray-300">Persona de Contacto</Label>
                         <Input
                           id="emergencyContactName"
                           value={editEmployee.emergencyContactName}
@@ -1058,7 +1058,7 @@ export default function EmployeesSimple() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="emergencyContactPhone" className="text-sm font-medium text-gray-700">Teléfono de Contacto</Label>
+                        <Label htmlFor="emergencyContactPhone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono de Contacto</Label>
                         <Input
                           id="emergencyContactPhone"
                           value={editEmployee.emergencyContactPhone}
@@ -1071,17 +1071,17 @@ export default function EmployeesSimple() {
                   </div>
 
                   {/* Vacation Management */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-4">
-                    <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-3 w-3 text-green-600" />
+                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-3 w-3 text-green-600 dark:text-green-400" />
                       </div>
                       Gestión de Vacaciones
                     </h4>
                     
                     <div className="space-y-3">
                       {/* Current Vacation Status */}
-                      <div className="bg-gradient-to-r from-blue-50 to-green-50 p-3 rounded-lg border border-blue-100">
+                      <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
                             <p className="text-lg font-bold text-blue-600">
@@ -1091,13 +1091,13 @@ export default function EmployeesSimple() {
                                 return Math.round(total + adjustment);
                               })()}
                             </p>
-                            <p className="text-xs text-gray-600">Total</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Total</p>
                           </div>
                           <div>
                             <p className="text-lg font-bold text-orange-600">
                               {Math.round(Number(selectedEmployee?.usedVacationDays || 0))}
                             </p>
-                            <p className="text-xs text-gray-600">Usados</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Usados</p>
                           </div>
                           <div>
                             <p className="text-lg font-bold text-green-600">
@@ -1108,14 +1108,14 @@ export default function EmployeesSimple() {
                                 return Math.max(0, Math.round((total + adjustment) - used));
                               })()}
                             </p>
-                            <p className="text-xs text-gray-600">Disponibles</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Disponibles</p>
                           </div>
                         </div>
                       </div>
                       
                       {/* Vacation Adjustment Controls */}
                       <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                           Ajuste Manual
                         </Label>
                         <div className="bg-muted p-3 rounded-lg">
@@ -1156,7 +1156,7 @@ export default function EmployeesSimple() {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
-                          <p className="text-xs text-gray-500 text-center mt-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
                             Días extra (+ o -)
                           </p>
                         </div>
@@ -1167,7 +1167,7 @@ export default function EmployeesSimple() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 mt-6">
+              <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
                 {/* Delete Button on Left */}
                 <Button 
                   variant="destructive" 
@@ -1197,19 +1197,19 @@ export default function EmployeesSimple() {
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-600">Confirmar Eliminación</DialogTitle>
+            <DialogTitle className="text-red-600 dark:text-red-400">Confirmar Eliminación</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <AlertTriangle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
                     ¡Atención! Esta acción no se puede deshacer
                   </h3>
-                  <div className="mt-2 text-sm text-red-700">
+                  <div className="mt-2 text-sm text-red-700 dark:text-red-300">
                     <p>
                       Estás a punto de eliminar permanentemente al empleado{' '}
                       <strong>{selectedEmployee?.fullName}</strong> y todos sus datos asociados:
@@ -1227,7 +1227,7 @@ export default function EmployeesSimple() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmText" className="text-sm font-medium">
+              <Label htmlFor="confirmText" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 Para confirmar, escribe: <strong>ELIMINAR PERMANENTEMENTE</strong>
               </Label>
               <Input
@@ -1271,14 +1271,14 @@ export default function EmployeesSimple() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+                <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-semibold text-gray-900">
+                <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Límite de usuarios alcanzado
                 </DialogTitle>
-                <DialogDescription className="text-sm text-gray-600">
+                <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
                   No puedes crear más usuarios en tu plan actual.
                 </DialogDescription>
               </div>
@@ -1287,7 +1287,7 @@ export default function EmployeesSimple() {
           
           <div className="py-4">
             <div className="rounded-lg bg-muted p-4">
-              <p className="text-sm text-gray-700 whitespace-pre-line">
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
                 {limitMessage}
               </p>
             </div>
