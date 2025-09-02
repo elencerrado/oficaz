@@ -3783,8 +3783,6 @@ Responde directamente a este email para contactar con la persona.
       if (company?.logoUrl) {
         // Delete old logo file if it exists in uploads directory
         const oldLogoPath = company.logoUrl.replace('/uploads/', '');
-        const fs = require('fs');
-        const path = require('path');
         const oldFullPath = path.join(process.cwd(), 'uploads', oldLogoPath);
         
         try {
