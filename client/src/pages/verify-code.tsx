@@ -202,7 +202,7 @@ export default function VerifyCode() {
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
       }}
     >
-      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
+      <Card className="w-full max-w-md shadow-2xl rounded-xl md:rounded-2xl">
         <CardHeader className="text-center pb-6">
           <img 
             src={oficazLogo} 
