@@ -114,6 +114,9 @@ export interface IStorage {
   // Reminder Notifications
   getReminderNotificationsDue(userId: number, companyId: number, currentTime: Date): Promise<Reminder[]>;
   markReminderNotificationShown(reminderId: number, userId: number): Promise<boolean>;
+  
+  // Individual completion
+  completeReminderIndividually(reminderId: number, userId: number): Promise<Reminder | undefined>;
 
   // Employee Activation Tokens
   createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken>;
@@ -1684,12 +1687,8 @@ export class DrizzleStorage implements IStorage {
     console.log(`Completed by user reminders count: ${completedByUserReminders.length}`);
     console.log(`Completed reminders:`, completedByUserReminders.map(r => ({ id: r.id, title: r.title, userId: r.userId, completedBy: r.completedByUserIds })));
 
-    // Process own reminders - only show active ones (not completed by user)
+    // Process own reminders - include ALL own reminders (let frontend handle filtering)
     const ownRemindersWithFlag = ownReminders
-      .filter(reminder => {
-        const completedByUserIds = reminder.completedByUserIds || [];
-        return !completedByUserIds.includes(userId);
-      })
       .map(reminder => ({
         ...reminder,
         isAssigned: false,
@@ -1933,6 +1932,52 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error marking reminder notification as shown:', error);
       return false;
+    }
+  }
+
+  async completeReminderIndividually(reminderId: number, userId: number): Promise<Reminder | undefined> {
+    try {
+      // First get the current reminder
+      const [reminder] = await db.select().from(schema.reminders).where(eq(schema.reminders.id, reminderId));
+      if (!reminder) return undefined;
+
+      // Get current completedByUserIds or initialize as empty array
+      const currentCompletedBy = reminder.completedByUserIds || [];
+      
+      // Add user to completed list if not already there
+      if (!currentCompletedBy.includes(userId)) {
+        currentCompletedBy.push(userId);
+      }
+
+      // Check if this reminder should be globally completed
+      // For assigned reminders: all assigned users + creator must complete
+      // For personal reminders: just the creator
+      let shouldBeGloballyCompleted = false;
+      
+      if (reminder.assignedUserIds && reminder.assignedUserIds.length > 0) {
+        // This is an assigned reminder - check if all assigned users + creator have completed
+        const allRequiredUsers = [...reminder.assignedUserIds, reminder.createdBy];
+        const uniqueRequiredUsers = [...new Set(allRequiredUsers)];
+        shouldBeGloballyCompleted = uniqueRequiredUsers.every(reqUserId => currentCompletedBy.includes(reqUserId));
+      } else {
+        // This is a personal reminder - only creator needs to complete
+        shouldBeGloballyCompleted = currentCompletedBy.includes(reminder.createdBy);
+      }
+
+      // Update the reminder
+      const [updatedReminder] = await db.update(schema.reminders)
+        .set({
+          completedByUserIds: currentCompletedBy,
+          isCompleted: shouldBeGloballyCompleted,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.reminders.id, reminderId))
+        .returning();
+
+      return updatedReminder;
+    } catch (error) {
+      console.error('Error completing reminder individually:', error);
+      return undefined;
     }
   }
 }

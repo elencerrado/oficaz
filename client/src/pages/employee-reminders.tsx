@@ -164,14 +164,36 @@ export default function EmployeeReminders() {
     },
   });
 
-  // Update status mutation
+  // Update status mutation (for archiving only)
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: number; updates: { isCompleted?: boolean; isArchived?: boolean } }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: { isArchived?: boolean } }) => {
       return await apiRequest('PATCH', `/api/reminders/${id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+    },
+  });
+
+  // Complete reminder individually
+  const completeReminderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest('POST', `/api/reminders/${id}/complete-individual`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      toast({
+        title: "Recordatorio completado",
+        description: "Has marcado el recordatorio como completado",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Error al completar el recordatorio",
+        variant: "destructive",
+      });
     },
   });
 
@@ -546,7 +568,7 @@ export default function EmployeeReminders() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateStatusMutation.mutate({ id: reminder.id, updates: { isCompleted: true } })}
+                          onClick={() => completeReminderMutation.mutate(reminder.id)}
                           className="h-8 w-8 p-0 text-white/60 hover:text-green-400 hover:bg-white/10"
                         >
                           <CheckCircle className="h-4 w-4" />

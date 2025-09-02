@@ -5005,6 +5005,20 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Complete reminder individually (add user to completedByUserIds)
+  app.post('/api/reminders/:id/complete-individual', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const reminderId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      const updatedReminder = await storage.completeReminderIndividually(reminderId, userId);
+      res.json(updatedReminder);
+    } catch (error) {
+      console.error("Error completing reminder individually:", error);
+      res.status(500).json({ message: "Failed to complete reminder individually" });
+    }
+  });
+
   // Reminder assignment endpoints - only for admin/manager
   app.post('/api/reminders/:id/assign', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
