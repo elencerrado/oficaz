@@ -1692,18 +1692,9 @@ export class DrizzleStorage implements IStorage {
         creatorName: null
       }));
 
-    // Process completed reminders - only show ones not owned by user AND that user hasn't completed individually
+    // Process completed reminders - only show ones not owned by user
     const completedRemindersWithFlag = completedByUserReminders
-      .filter(reminder => {
-        // Don't show if it's user's own reminder
-        if (reminder.userId === userId) return false;
-        
-        // Don't show if user has completed it individually (they already see it as "completed")
-        const completedByUserIds = reminder.completedByUserIds || [];
-        const userCompletedIndividually = completedByUserIds.includes(userId);
-        
-        return !userCompletedIndividually;
-      })
+      .filter(reminder => reminder.userId !== userId) // Only show completed reminders from others
       .map(reminder => ({
         ...reminder,
         isAssigned: true

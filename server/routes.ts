@@ -4920,24 +4920,9 @@ Responde directamente a este email para contactar con la persona.
         console.log(`📋 Admin/Manager ${userId} fetching active company reminders`);
         activeReminders = await storage.getActiveReminders(userId);
       } else {
-        // Employee: Get reminders using the same logic as main reminders endpoint but filter for active only
-        console.log(`📋 Employee ${userId} fetching active user reminders with assignments`);
-        const allReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
-        
-        console.log(`📋 Before filtering: ${allReminders.length} reminders`);
-        console.log(`📋 All reminders data:`, JSON.stringify(allReminders.map(r => ({ id: r.id, completedByUserIds: r.completedByUserIds })), null, 2));
-        
-        // Filter to only include active reminders for this specific user
-        activeReminders = allReminders.filter(reminder => {
-          const completedByUserIds = reminder.completedByUserIds || [];
-          const userCompletedIndividually = completedByUserIds.includes(userId);
-          
-          console.log(`📋 Reminder ${reminder.id}: completedBy=${JSON.stringify(completedByUserIds)}, userCompleted=${userCompletedIndividually}, keep=${!userCompletedIndividually}`);
-          
-          return !userCompletedIndividually;
-        });
-        
-        console.log(`📋 After filtering: ${activeReminders.length} reminders`);
+        // Employee: Get reminders using the same logic as main reminders endpoint
+        console.log(`📋 Employee ${userId} fetching user reminders with assignments`);
+        activeReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
         
         console.log(`📋 Employee ${userId} active reminders count: ${activeReminders.length}`);
       }
