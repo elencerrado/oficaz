@@ -2715,7 +2715,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Create user without password (pending activation)
       const user = await storage.createUser({
-        companyEmail,
+        companyEmail: companyEmail || null, // Use null instead of empty string to avoid unique constraint issues
         password: '', // Empty password initially 
         fullName,
         dni,

@@ -203,7 +203,7 @@ export const users = pgTable("users", {
   dni: text("dni").notNull().unique(), // Lo escribe admin/manager
   role: text("role").notNull().default("employee"), // admin, manager, employee - Lo da admin/manager
   personalEmail: text("personal_email"), // Lo escribe el empleado
-  companyEmail: text("company_email").notNull().unique(), // Lo introduce admin/manager
+  companyEmail: text("company_email").unique(), // Lo introduce admin/manager - puede ser null si solo usa email personal
   personalPhone: text("personal_phone"), // Lo escribe el empleado
   companyPhone: text("company_phone"), // Lo introduce admin/manager
   password: text("password").notNull(), // Encriptada
