@@ -4920,9 +4920,20 @@ Responde directamente a este email para contactar con la persona.
         console.log(`📋 Admin/Manager ${userId} fetching active company reminders`);
         activeReminders = await storage.getActiveReminders(userId);
       } else {
-        // Employee: Get reminders using the same logic as main reminders endpoint
+        // Employee: Get reminders but filter out ones they completed individually
         console.log(`📋 Employee ${userId} fetching user reminders with assignments`);
-        activeReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
+        const allReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
+        
+        // Filter out reminders that this user has completed individually
+        activeReminders = allReminders.filter(reminder => {
+          const completedByUserIds = reminder.completedByUserIds || [];
+          const userCompletedIndividually = completedByUserIds.includes(userId);
+          
+          console.log(`📋 Reminder ${reminder.id}: userCompleted=${userCompletedIndividually}, keep=${!userCompletedIndividually}`);
+          
+          // Only keep reminders the user hasn't completed individually
+          return !userCompletedIndividually;
+        });
         
         console.log(`📋 Employee ${userId} active reminders count: ${activeReminders.length}`);
       }
