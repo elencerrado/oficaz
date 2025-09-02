@@ -4848,16 +4848,20 @@ Responde directamente a este email para contactar con la persona.
           updateData.completedByUserIds = currentCompletedByUserIds.filter(id => id !== userId);
         }
         
-        // Update overall completion status based on assigned users
+        // Update overall completion status based on assigned users (excluding the creator)
         const assignedUserIds = existingReminder.assignedUserIds || [];
+        const creatorId = existingReminder.createdBy || existingReminder.userId;
         const newCompletedByUserIds = updateData.completedByUserIds || [];
         
-        // If all assigned users have completed, mark reminder as completed
-        if (assignedUserIds.length > 0) {
-          updateData.isCompleted = assignedUserIds.every(id => newCompletedByUserIds.includes(id));
+        // Get assigned users excluding the creator
+        const assignedNonCreators = assignedUserIds.filter(id => id !== creatorId);
+        
+        // If there are assigned users (excluding creator), check if all have completed
+        if (assignedNonCreators.length > 0) {
+          updateData.isCompleted = assignedNonCreators.every(id => newCompletedByUserIds.includes(id));
         } else {
-          // If no users assigned, just use the individual completion status
-          updateData.isCompleted = newCompletedByUserIds.includes(existingReminder.userId);
+          // If no users assigned (or only creator assigned), use individual completion status
+          updateData.isCompleted = newCompletedByUserIds.includes(creatorId);
         }
       }
       

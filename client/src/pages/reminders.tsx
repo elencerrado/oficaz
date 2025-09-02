@@ -441,10 +441,17 @@ export default function Reminders() {
     setIsDialogOpen(true);
   };
 
+  // Helper function to check if current user has completed the reminder individually
+  const isCompletedByCurrentUser = (reminder: Reminder): boolean => {
+    if (!user?.id) return false;
+    return reminder.completedByUserIds?.includes(user.id) || false;
+  };
+
   const toggleComplete = (reminder: Reminder) => {
+    const userHasCompleted = isCompletedByCurrentUser(reminder);
     updateReminderMutation.mutate({
       id: reminder.id,
-      data: { isCompleted: !reminder.isCompleted }
+      data: { isCompleted: !userHasCompleted }
     });
   };
 
@@ -837,13 +844,13 @@ export default function Reminders() {
                       </Button>
                     </div>
                   </div>
-                  <CardTitle className={`text-sm font-medium text-gray-900 dark:text-gray-900 ${reminder.isCompleted ? 'line-through' : ''}`}>
+                  <CardTitle className={`text-sm font-medium text-gray-900 dark:text-gray-900 ${isCompletedByCurrentUser(reminder) ? 'line-through' : ''}`}>
                     {reminder.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   {reminder.content && (
-                    <p className={`text-sm text-gray-700 dark:text-gray-800 mb-3 ${reminder.isCompleted ? 'line-through' : ''}`}>
+                    <p className={`text-sm text-gray-700 dark:text-gray-800 mb-3 ${isCompletedByCurrentUser(reminder) ? 'line-through' : ''}`}>
                       {reminder.content}
                     </p>
                   )}
@@ -852,7 +859,7 @@ export default function Reminders() {
                     <div className="flex items-center gap-1 mb-3">
                       <Calendar className="w-3 h-3 text-gray-600 dark:text-gray-700" />
                       <span className={`text-xs ${
-                        isPast(new Date(reminder.reminderDate)) && !reminder.isCompleted 
+                        isPast(new Date(reminder.reminderDate)) && !isCompletedByCurrentUser(reminder)
                           ? 'text-red-600 font-medium' 
                           : 'text-gray-600 dark:text-gray-700'
                       }`}>
@@ -880,12 +887,12 @@ export default function Reminders() {
                       size="sm"
                       onClick={() => toggleComplete(reminder)}
                       className={`h-7 px-3 text-xs font-medium transition-colors ${
-                        reminder.isCompleted 
+                        isCompletedByCurrentUser(reminder)
                           ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300' 
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
                       }`}
                     >
-                      {reminder.isCompleted ? (
+                      {isCompletedByCurrentUser(reminder) ? (
                         <span className="flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Completado

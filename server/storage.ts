@@ -1224,6 +1224,7 @@ export class DrizzleStorage implements IStorage {
       notificationShown: schema.reminders.notificationShown,
       showBanner: schema.reminders.showBanner,
       assignedUserIds: schema.reminders.assignedUserIds,
+      completedByUserIds: schema.reminders.completedByUserIds,
       assignedBy: schema.reminders.assignedBy,
       assignedAt: schema.reminders.assignedAt,
       createdBy: schema.reminders.createdBy,
@@ -1250,11 +1251,17 @@ export class DrizzleStorage implements IStorage {
     )
     .orderBy(schema.reminders.reminderDate);
     
-    // Mark reminders as assigned or not
-    return activeReminders.map(reminder => ({
-      ...reminder,
-      isAssigned: reminder.userId !== userId
-    }));
+    // Mark reminders as assigned or not and filter out individually completed ones
+    return activeReminders
+      .filter(reminder => {
+        // Exclude reminders that the current user has already completed individually
+        const completedByUserIds = reminder.completedByUserIds || [];
+        return !completedByUserIds.includes(userId);
+      })
+      .map(reminder => ({
+        ...reminder,
+        isAssigned: reminder.userId !== userId
+      }));
   }
 
   async getDashboardReminders(userId: number): Promise<any[]> {
