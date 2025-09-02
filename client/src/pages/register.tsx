@@ -970,7 +970,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       <div className="text-center">
                         <h4 className="font-semibold text-lg capitalize">{plan.displayName}</h4>
                         <div className="text-2xl font-bold text-oficaz-primary mt-2">
-                          €{plan.pricePerUser}
+                          €{plan.monthlyPrice}
                           <span className="text-sm font-normal text-gray-500">/mes</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
