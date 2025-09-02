@@ -2012,15 +2012,14 @@ export default function TimeTracking() {
                                 key={monthKey}
                                 variant="ghost"
                                 className="w-full justify-start text-sm"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
+                                onClick={() => {
                                   setCurrentMonth(monthDate);
                                   setDateFilter('month');
                                   setSelectedStartDate(null);
                                   setSelectedEndDate(null);
                                   setStartDate('');
                                   setEndDate('');
-                                  setTimeout(() => setIsMonthDialogOpen(false), 50);
+                                  setIsMonthDialogOpen(false);
                                 }}
                               >
                                 {format(monthDate, 'MMMM yyyy', { locale: es })}

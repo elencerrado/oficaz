@@ -31,13 +31,7 @@ export function DatePickerDay({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={className?.includes('bg-[#007AFF]') 
-            ? className 
-            : cn(
-                "justify-center text-center font-normal w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100",
-                className
-              )
-          }
+          className={className || "justify-center text-center font-normal w-full"}
         >
           <span className="truncate text-xs">
             {buttonText || (date 
@@ -285,13 +279,7 @@ export function DatePickerPeriod({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={className?.includes('bg-[#007AFF]') 
-            ? className 
-            : cn(
-                "justify-center text-center font-normal w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100",
-                className
-              )
-          }
+          className={className || "justify-center text-center font-normal w-full"}
         >
           <span className="truncate text-xs"> {/* ⚠️ NO MODIFICAR: tipografía uniforme con otros filtros */}
             {buttonText || (startDate && endDate
