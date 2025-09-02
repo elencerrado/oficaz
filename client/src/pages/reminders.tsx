@@ -50,6 +50,8 @@ interface Reminder {
   userId?: number;
   userFullName?: string;
   assignedUserIds?: number[];
+  completedByUserIds?: number[];
+  createdBy?: number;
   assignedBy?: number;
   assignedAt?: string;
 }
@@ -445,6 +447,23 @@ export default function Reminders() {
   const isCompletedByCurrentUser = (reminder: Reminder): boolean => {
     if (!user?.id) return false;
     return reminder.completedByUserIds?.includes(user.id) || false;
+  };
+
+  // Helper function to check if reminder is completed by all assigned users but not creator
+  const isCompletedByAssignedOnly = (reminder: Reminder): boolean => {
+    const assignedUserIds = reminder.assignedUserIds || [];
+    const completedByUserIds = reminder.completedByUserIds || [];
+    const creatorId = reminder.createdBy || reminder.userId;
+    
+    // Get assigned users excluding the creator
+    const assignedNonCreators = assignedUserIds.filter(id => id !== creatorId);
+    
+    // Check if all assigned non-creators completed but creator hasn't
+    const allAssignedCompleted = assignedNonCreators.length > 0 && 
+                                assignedNonCreators.every(id => completedByUserIds.includes(id));
+    const creatorNotCompleted = creatorId && !completedByUserIds.includes(creatorId);
+    
+    return allAssignedCompleted && creatorNotCompleted;
   };
 
   const toggleComplete = (reminder: Reminder) => {
@@ -888,7 +907,9 @@ export default function Reminders() {
                       onClick={() => toggleComplete(reminder)}
                       className={`h-7 px-3 text-xs font-medium transition-colors ${
                         isCompletedByCurrentUser(reminder)
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300' 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
+                          : isCompletedByAssignedOnly(reminder) 
+                          ? 'bg-orange-100 text-orange-800 hover:bg-orange-200 border border-orange-300'
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
                       }`}
                     >
@@ -896,6 +917,11 @@ export default function Reminders() {
                         <span className="flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Completado
+                        </span>
+                      ) : isCompletedByAssignedOnly(reminder) ? (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          Completado por asignados
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
