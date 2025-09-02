@@ -25,7 +25,10 @@ import {
   X,
   Upload,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Key,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -37,10 +40,29 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { TrialManagerSimple } from '@/components/TrialManagerSimple';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useTheme } from '@/lib/theme-provider';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import flameIcon from '@assets/icon flam_1751450814463.png';
+
+// Password change schema
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Contraseña actual requerida"),
+  newPassword: z.string().min(8, "Contraseña debe tener al menos 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[a-z]/, "Debe contener al menos una minúscula") 
+    .regex(/[0-9]/, "Debe contener al menos un número")
+    .regex(/[^A-Za-z0-9]/, "Debe contener al menos un carácter especial"),
+  confirmPassword: z.string().min(1, "Confirmar contraseña requerido")
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"]
+});
+
+type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
 // Function to get plan icon color
 const getPlanIconColor = (plan: string) => {
@@ -1096,6 +1118,250 @@ const AccountManagement = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+// Change Password Modal Component
+const ChangePasswordModalComponent = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<ChangePasswordData>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordData) => {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al cambiar la contraseña');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: '✅ Contraseña actualizada',
+        description: 'Tu contraseña ha sido cambiada exitosamente.',
+      });
+      setIsOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: '❌ Error',
+        description: error.message || 'No se pudo cambiar la contraseña',
+        variant: 'destructive'
+      });
+    }
+  });
+
+  const onSubmit = (data: ChangePasswordData) => {
+    changePasswordMutation.mutate(data);
+  };
+
+  const getPasswordStrength = (password: string) => {
+    let score = 0;
+    const checks = [
+      /[A-Z]/.test(password), // Mayúscula
+      /[a-z]/.test(password), // Minúscula
+      /[0-9]/.test(password), // Número
+      /[^A-Za-z0-9]/.test(password), // Carácter especial
+      password.length >= 8 // Longitud mínima
+    ];
+    
+    score = checks.filter(Boolean).length;
+    
+    if (score < 2) return { label: 'Muy débil', color: 'bg-red-500', width: '20%' };
+    if (score < 3) return { label: 'Débil', color: 'bg-orange-500', width: '40%' };
+    if (score < 4) return { label: 'Media', color: 'bg-yellow-500', width: '60%' };
+    if (score < 5) return { label: 'Fuerte', color: 'bg-blue-500', width: '80%' };
+    return { label: 'Muy fuerte', color: 'bg-green-500', width: '100%' };
+  };
+
+  const passwordStrength = getPasswordStrength(form.watch('newPassword') || '');
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Key className="h-4 w-4 mr-2" />
+          Cambiar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <Key className="h-5 w-5 mr-2" />
+            Cambiar contraseña
+          </DialogTitle>
+          <DialogDescription>
+            Introduce tu contraseña actual y la nueva contraseña.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Contraseña actual */}
+          <div>
+            <Label htmlFor="currentPassword">Contraseña actual</Label>
+            <div className="relative">
+              <Input
+                id="currentPassword"
+                type={showCurrentPassword ? 'text' : 'password'}
+                placeholder="Introduce tu contraseña actual"
+                {...form.register('currentPassword')}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {form.formState.errors.currentPassword && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.currentPassword.message}</p>
+            )}
+          </div>
+
+          {/* Nueva contraseña */}
+          <div>
+            <Label htmlFor="newPassword">Nueva contraseña</Label>
+            <div className="relative">
+              <Input
+                id="newPassword"
+                type={showNewPassword ? 'text' : 'password'}
+                placeholder="Introduce tu nueva contraseña"
+                {...form.register('newPassword')}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            
+            {/* Indicador de fuerza de contraseña */}
+            {form.watch('newPassword') && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <span>Fuerza de la contraseña</span>
+                  <span className={`font-medium ${
+                    passwordStrength.label === 'Muy fuerte' ? 'text-green-600' :
+                    passwordStrength.label === 'Fuerte' ? 'text-blue-600' :
+                    passwordStrength.label === 'Media' ? 'text-yellow-600' :
+                    passwordStrength.label === 'Débil' ? 'text-orange-600' :
+                    'text-red-600'
+                  }`}>
+                    {passwordStrength.label}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div 
+                    className={`h-1.5 rounded-full transition-all duration-300 ${passwordStrength.color}`}
+                    style={{ width: passwordStrength.width }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {form.formState.errors.newPassword && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.newPassword.message}</p>
+            )}
+
+            {/* Requisitos de contraseña */}
+            <div className="mt-2 text-xs text-gray-600 space-y-1">
+              <p className="font-medium">La contraseña debe contener:</p>
+              <ul className="space-y-1">
+                <li className={`flex items-center ${/[A-Z]/.test(form.watch('newPassword') || '') ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className="mr-2">•</span> Al menos una mayúscula
+                </li>
+                <li className={`flex items-center ${/[a-z]/.test(form.watch('newPassword') || '') ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className="mr-2">•</span> Al menos una minúscula
+                </li>
+                <li className={`flex items-center ${/[0-9]/.test(form.watch('newPassword') || '') ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className="mr-2">•</span> Al menos un número
+                </li>
+                <li className={`flex items-center ${/[^A-Za-z0-9]/.test(form.watch('newPassword') || '') ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className="mr-2">•</span> Al menos un carácter especial
+                </li>
+                <li className={`flex items-center ${(form.watch('newPassword') || '').length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className="mr-2">•</span> Mínimo 8 caracteres
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Confirmar contraseña */}
+          <div>
+            <Label htmlFor="confirmPassword">Confirmar nueva contraseña</Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirma tu nueva contraseña"
+                {...form.register('confirmPassword')}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {form.formState.errors.confirmPassword && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsOpen(false);
+                form.reset();
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={changePasswordMutation.isPending}
+            >
+              {changePasswordMutation.isPending ? 'Cambiando...' : 'Cambiar contraseña'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -2453,6 +2719,25 @@ export default function Settings() {
                           </div>
                         )}
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cambiar contraseña */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <h3 className="text-lg font-medium text-foreground mb-3 flex items-center">
+                      <Key className="h-5 w-5 mr-2" />
+                      Seguridad
+                    </h3>
+                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                      <div>
+                        <Label className="text-sm font-medium text-foreground">Cambiar contraseña</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Actualiza tu contraseña para mantener tu cuenta segura
+                        </p>
+                      </div>
+                      <ChangePasswordModalComponent />
                     </div>
                   </div>
                 </div>

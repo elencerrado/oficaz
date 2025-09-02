@@ -2206,6 +2206,67 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Change password endpoint (authenticated users)
+  app.post('/api/auth/change-password', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Contraseña actual y nueva contraseña son requeridas' });
+      }
+
+      const userId = req.user!.id;
+      
+      // Get user from database
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+      }
+
+      // Validate new password format (same as registration)
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 8 caracteres' });
+      }
+      
+      if (!/[A-Z]/.test(newPassword)) {
+        return res.status(400).json({ message: 'La nueva contraseña debe contener al menos una mayúscula' });
+      }
+      
+      if (!/[a-z]/.test(newPassword)) {
+        return res.status(400).json({ message: 'La nueva contraseña debe contener al menos una minúscula' });
+      }
+      
+      if (!/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ message: 'La nueva contraseña debe contener al menos un número' });
+      }
+      
+      if (!/[^A-Za-z0-9]/.test(newPassword)) {
+        return res.status(400).json({ message: 'La nueva contraseña debe contener al menos un carácter especial' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password
+      await db.update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, userId));
+
+      console.log(`Password changed successfully for user ${userId} (${user.fullName})`);
+      
+      res.json({ message: 'Contraseña actualizada exitosamente' });
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
   // Employee activation routes
   app.get('/api/auth/verify-activation-token', async (req, res) => {
     try {
