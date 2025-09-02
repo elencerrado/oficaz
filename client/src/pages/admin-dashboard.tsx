@@ -439,22 +439,11 @@ export default function AdminDashboard() {
   return (
     <div className="px-6 py-4 min-h-screen bg-background">
       {/* Header */}
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Panel Principal</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Gestión rápida y vista general de la empresa
-          </p>
-        </div>
-        {/* Botón temporal para probar modal de bienvenida */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowWelcomeModal(true)}
-          className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
-        >
-          Ver Modal Bienvenida
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">Panel Principal</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          Gestión rápida y vista general de la empresa
+        </p>
       </div>
 
       {/* Trial Status Management */}

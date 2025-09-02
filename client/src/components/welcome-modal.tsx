@@ -27,10 +27,10 @@ export function WelcomeModal({ isOpen, onClose, companyName }: WelcomeModalProps
             />
           </div>
           
-          <h2 className="text-xl font-bold text-center mb-2 text-gray-900">Te damos la bienvenida</h2>
+          <h2 className="text-xl font-bold text-center mb-2 text-gray-900">Te damos la bienvenida a Oficaz</h2>
           
           <p className="text-center text-gray-600 text-sm mb-5">
-            Tu empresa <span className="font-medium text-oficaz-primary">{companyName}</span> ha sido creada exitosamente
+            Tu empresa <span className="font-medium text-oficaz-primary">{companyName}</span> ha sido creada con éxito
           </p>
 
           {/* Trial info */}
