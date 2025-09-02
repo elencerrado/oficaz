@@ -1675,6 +1675,11 @@ export class DrizzleStorage implements IStorage {
     .where(sql`${userId} = ANY(${schema.reminders.completedByUserIds})`)
     .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
+    console.log(`📋 Reminders debug for user ${userId}:`);
+    console.log(`Own reminders count: ${ownReminders.length}`);
+    console.log(`Completed by user reminders count: ${completedByUserReminders.length}`);
+    console.log(`Completed reminders:`, completedByUserReminders.map(r => ({ id: r.id, title: r.title, userId: r.userId, completedBy: r.completedByUserIds })));
+
     // Process own reminders - only show active ones (not completed by user)
     const ownRemindersWithFlag = ownReminders
       .filter(reminder => {
