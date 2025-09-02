@@ -378,7 +378,6 @@ export default function Landing() {
           </div>
         </div>
       </header>
-
       {/* Hero Section - Responsive Height */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-gray-900 min-h-screen flex items-center justify-center py-20 lg:py-24 pt-16"
                style={{ minHeight: '100vh' }}>
@@ -483,7 +482,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Features Section - Full Viewport Height */}
       <section id="funciones" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 relative overflow-hidden flex items-center py-8 md:py-12">
         {/* Background Pattern */}
@@ -552,7 +550,6 @@ export default function Landing() {
 
 
       </section>
-
       {/* Interface Preview Section */}
       <section className="py-20 md:py-32 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative overflow-hidden">
         {/* Modern Background Pattern */}
@@ -860,7 +857,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-
       {/* Pricing Section */}
       <section id="precios" className="py-24 md:py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 relative overflow-hidden">
         {/* Modern Background Elements */}
@@ -964,13 +960,12 @@ export default function Landing() {
           <div className="text-center mt-16">
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-4xl mx-auto">
               <p className="text-white/90 text-lg">
-                <span className="font-bold text-white">15 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
+                <span className="font-bold text-white">14 días de prueba gratuita</span> • Sin tarjeta de crédito • Cancela cuando quieras
               </p>
             </div>
           </div>
         </div>
       </section>
-
       {/* Enhanced CTA Section */}
       <section className="py-32 md:py-40 bg-gradient-to-br from-[#007AFF] via-blue-600 to-indigo-700 relative overflow-hidden">
         {/* Background Elements */}
@@ -1060,7 +1055,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -1106,7 +1100,6 @@ export default function Landing() {
           </div>
         </div>
       </footer>
-
       {/* Contact Form Modal - Lazy loaded */}
       {isContactFormOpen && (
         <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div className="bg-white rounded-lg p-6">Cargando...</div></div>}>
