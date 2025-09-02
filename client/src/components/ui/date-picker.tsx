@@ -32,7 +32,8 @@ export function DatePickerDay({
         <Button
           variant="outline"
           className={cn(
-            "justify-center text-center font-normal bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 w-full",
+            "justify-center text-center font-normal w-full",
+            !className?.includes('bg-[#007AFF]') && "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100",
             className
           )}
         >
@@ -283,7 +284,8 @@ export function DatePickerPeriod({
         <Button
           variant="outline"
           className={cn(
-            "justify-center text-center font-normal bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 w-full",
+            "justify-center text-center font-normal w-full",
+            !className?.includes('bg-[#007AFF]') && "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100",
             className
           )}
         >
