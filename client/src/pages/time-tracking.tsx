@@ -1990,51 +1990,43 @@ export default function TimeTracking() {
                       }
                     />
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "h-9 text-xs font-normal text-center",
-                            dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
-                          )}
-                        >
+                    <Select 
+                      value={dateFilter === 'month' ? format(currentMonth, 'yyyy-MM') : ''} 
+                      onValueChange={(value) => {
+                        if (value) {
+                          const [year, month] = value.split('-');
+                          const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                          setCurrentMonth(monthDate);
+                          setDateFilter('month');
+                          setSelectedStartDate(null);
+                          setSelectedEndDate(null);
+                          setStartDate('');
+                          setEndDate('');
+                        }
+                      }}
+                    >
+                      <SelectTrigger 
+                        className={cn(
+                          "h-9 text-xs font-normal text-center",
+                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                        )}
+                      >
+                        <SelectValue placeholder="Mes">
                           {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-sm">
-                        <DialogHeader>
-                          <DialogTitle className="text-center">Seleccionar mes</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-1 max-h-60 overflow-y-auto p-4">
-                          {availableMonths.map((monthKey: string) => {
-                            const [year, month] = monthKey.split('-');
-                            const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-                            return (
-                              <Button
-                                key={monthKey}
-                                variant="ghost"
-                                className="w-full justify-center text-sm"
-                                onClick={() => {
-                                  setCurrentMonth(monthDate);
-                                  setDateFilter('month');
-                                  setSelectedStartDate(null);
-                                  setSelectedEndDate(null);
-                                  setStartDate('');
-                                  setEndDate('');
-                                  // Cerrar el dialog
-                                  const closeButton = document.querySelector('[data-dialog-close]') as HTMLElement;
-                                  if (closeButton) closeButton.click();
-                                }}
-                              >
-                                {format(monthDate, 'MMMM yyyy', { locale: es })}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {availableMonths.map((monthKey: string) => {
+                          const [year, month] = monthKey.split('-');
+                          const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+                          return (
+                            <SelectItem key={monthKey} value={monthKey}>
+                              {format(monthDate, 'MMMM yyyy', { locale: es })}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Second row: Range picker and clear button */}
