@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Building2, Users, Crown, Settings, Edit2, Check, X, Euro, AlertCircle, Trash2 } from 'lucide-react';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface CompanyDetailProps {
   companyId: string;
@@ -68,11 +69,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const { data: company, isLoading } = useQuery({
     queryKey: ['/api/super-admin/companies', companyId],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch company');
       return response.json();
@@ -84,11 +82,8 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   const { data: plans } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch('/api/super-admin/subscription-plans', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error('Failed to fetch plans');
       return response.json();
@@ -99,16 +94,18 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
   // Update company subscription mutation
   const updateCompanyMutation = useMutation({
     mutationFn: async (data: any) => {
-      const token = localStorage.getItem('superAdminToken');
       const response = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to update company');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update company');
+      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -227,7 +224,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     // Si no usa configuración personalizada, actualizar funcionalidades automáticamente
     let finalFeatures = customFeatures;
     if (!useCustomSettings) {
-      const planDefaults = plans?.find(p => p.name === newPlan)?.features;
+      const planDefaults = plans?.find((p: any) => p.name === newPlan)?.features;
       if (planDefaults) {
         finalFeatures = planDefaults;
         setCustomFeatures(planDefaults);
@@ -272,7 +269,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
     
     // Si desactiva personalización, resetear a configuración del plan
     if (!newCustomState) {
-      const planFeatures = plans?.find(p => p.name === company?.subscription?.plan)?.features;
+      const planFeatures = plans?.find((p: any) => p.name === company?.subscription?.plan)?.features;
       if (planFeatures) {
         setCustomFeatures(planFeatures);
         // Guardar inmediatamente el cambio al desactivar personalización
@@ -652,7 +649,7 @@ export default function SuperAdminCompanyDetail({ companyId }: CompanyDetailProp
                         <Switch
                           checked={enabled as boolean}
                           onCheckedChange={(checked) => {
-                            setCustomFeatures(prev => ({
+                            setCustomFeatures((prev: any) => ({
                               ...prev,
                               [key]: checked
                             }));
