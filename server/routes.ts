@@ -702,13 +702,13 @@ async function generateBidirectionalMessages(companyId: number, employees: any[]
     {
       sender: admin,
       recipient: employees[0],
-      content: 'Buena pregunta, María. Los días se calculan proporcionalmente según tu fecha de incorporación. Como llevas un año completo, tienes los 22 días estándar. Los nuevos empleados acumulan 1.83 días por mes trabajado.',
+      content: 'Buena pregunta, María. Son mínimo 30 días naturales al año, 2.5 por mes trabajado. El sistema los calcula proporcionalmente según tu fecha de incorporación, y tenemos una opción de ajuste para añadir o restar días según las necesidades de cada empleado.',
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 4 days ago + 2 hours
     },
     {
       sender: employees[0], // María García
       recipient: admin,
-      content: 'Entiendo, así que si alguien entra en julio, tendría (22 días ÷ 12 meses) × 6 meses = 11 días hasta fin de año. ¡Muy útil saberlo para explicárselo al equipo!',
+      content: 'Perfecto, entonces si alguien entra en julio tendría 2.5 × 6 meses = 15 días hasta fin de año. Y si necesitamos ajustar por convenio o situación especial, podemos hacerlo manualmente. ¡Muy flexible el sistema!',
       sentAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // 4 days ago + 3 hours
     },
     
