@@ -23,58 +23,51 @@ Preferred communication style: Simple, everyday language.
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
-### Break Period Management System (⚠️ CRITICAL LOGIC FIX)
+### Break Period Management System
 - **Logical Rule**: When user clocks in, they cannot be in break by definition
 - **Fixed Issue**: `getActiveBreakPeriod` now only returns breaks for current active session
 - **Auto-cleanup**: Clock-in automatically closes orphaned break periods from previous sessions
 - **Data Integrity**: Break periods must belong to current work session to be considered active
-- **User Confirmed Bug**: "Ese fallo no debería ocurrir, es decir, si ficho la entrada, obviamente no estoy en un descanso"
 
-### Email System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+### Email System Configuration
 - **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
 - **Never use dynamic domain detection for email logos** - it breaks the email display
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
-- **User confirmed working**: "ya funciona el mail, guarda esta configuracion a muerte"
 
-### Invoice System Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+### Invoice System Configuration
 - **Show All Invoice States**: System displays ALL invoice statuses (paid, open, draft, void, uncollectible) for complete billing history
 - **No Status Filtering**: Removed `status: 'paid'` filter from Stripe API calls to ensure users always see their invoices
 - **Immediate Visibility**: New invoices appear immediately, even in "open" status while Stripe processes payment
 - **Status Mapping**: Comprehensive status display with proper colors and translations (Pendiente, Pagada, Borrador, etc.)
-- **User issue resolved**: "porque no me aparece ninguna factura aqui? si se supone acabo de pagar?" - facturas now appear immediately after payment
 
-### Stripe Production Mode Configuration (⚠️ CRITICAL - DO NOT MODIFY)
+### Stripe Production Mode Configuration
 - **Production Mode Active**: System automatically detects and uses live Stripe keys when available
 - **Intelligent Key Detection**: Uses STRIPE_SECRET_KEY for production, falls back to STRIPE_SECRET_KEY_TEST for development
 - **Live Payment Processing**: All payments now process real money - no test mode
 - **Key Type Validation**: Confirms sk_live_ prefix for production mode activation
-- **Production Status**: System confirmed working with live Stripe integration
 - **Custom Pricing Integration**: Both backend and frontend now support custom monthly pricing per company
 - **Fixed Price Display**: Payment forms now show correct custom price (€0.50/month) instead of standard plan pricing (€39.95/month)
 
-### Reminder System Standards (⚠️ CRITICAL - DO NOT MODIFY)
+### Reminder System Standards
 - **Color Palette**: 7 optimized harmonious colors for all reminders (#FFB3BA coral red, #FFE4B5 warm peach, #FFFFCC light yellow, #C8E6C9 soft green, #BBDEFB sky blue, #E1BEE7 lavender purple, #F8BBD9 rose pink)
 - **Text Contrast**: All text uses gray-900/gray-800 for optimal readability on light backgrounds
 - **Action Buttons**: Standardized "Marcar como hecho" button with icons and improved visibility
 - **Demo Data**: Uses exact same color palette as user-selectable colors for perfect consistency
-- **User confirmed**: "Los colores están mucho mejor" - colors are now vivid and clearly distinguishable
 
-### Automatic Demo Data Generation (⚠️ CRITICAL SYSTEM)
+### Automatic Demo Data Generation
 - **Auto-generation on registration**: Every new company registration automatically generates comprehensive demo data.
 - **Demo content includes**: 4 employees (3 working, 1 on vacation), work sessions, bidirectional messages, vacation requests, reminders with multiple assignments, and incomplete sessions.
 - **Incomplete Sessions**: System generates 1-3 realistic incomplete sessions from previous days that exceed company working hours.
-- **User requirement confirmed**: "Se tienen que crear bien cada vez que alguien registra su cuenta admin"
 
-### Account Cancellation System (⚠️ CRITICAL BUSINESS LOGIC)
+### Account Cancellation System
 - **Immediate Access Blocking**: When account is cancelled, users are immediately blocked from accessing the system
 - **Authentication Block**: /api/auth/me endpoint checks scheduledForCancellation status and returns 403 error
 - **Recovery Process**: Cancelled accounts can only be accessed through email verification recovery process
 - **No Grace Period Usage**: Unlike trial systems, cancelled accounts cannot continue using the system
 - **Clear Messaging**: Users receive specific message about account cancellation and recovery options
 - **Frontend Handling**: Auth system detects ACCOUNT_CANCELLED error code and redirects to login with message
-- **User Requirement**: "si cancelas no puedes acceder a la cuenta, a menos que la recuperes como hemos hecho al solicitar codigo con el mail que ya existe"
 
-### Account Recovery Flow System (⚠️ CRITICAL RECOVERY MECHANISM)
+### Account Recovery Flow System
 - **Smart Detection**: When requesting verification code, system detects emails from accounts in 30-day grace period
 - **Recovery Email Template**: Special email template for account recovery vs normal registration
 - **Automatic Restoration**: Code verification automatically cancels deletion schedule and restores account
@@ -83,37 +76,31 @@ Preferred communication style: Simple, everyday language.
 - **Seamless Integration**: No browser alerts or popups - completely integrated user experience
 - **Admin-Only Recovery**: Only administrators can recover cancelled accounts, employees are blocked
 - **Visual Indicators**: Orange recovery button, specific cancellation messages, and proper UI feedback
-- **User requirement**: "en la pagina de registro cuando solicita el codigo, si ya existe el mail, la cuenta se ha borrado y esta en ese peridodo de 30 dias. Se envia el codigo igualmente, pero en lugar del wizard de registro habra una ventana que acepte recuperar la cuenta en el mismo estado"
 
-### Document Cleanup System (⚠️ CRITICAL SECURITY UPDATE)
+### Document Cleanup System
 - **Auto-cleanup**: System automatically detects and removes orphaned documents (DB records without physical files)
 - **Security principle**: "Si los documentos no existen físicamente, no deberían aparecer para nadie"
 - **Implementation**: Both user and admin document endpoints now filter and cleanup orphaned records
 - **iPad/iOS Compatibility**: Special handling for iOS devices using direct links with token in query parameters
-- **User requirement confirmed**: Documents without physical files must not appear in any list
 
-### Logo Display Standards (⚠️ VISUAL CONSISTENCY)
+### Logo Display Standards
 - **Dark Mode Fix**: Oficaz logo uses `dark:brightness-0 dark:invert` for proper visibility in dark mode
 - **Consistent Application**: Applied to sidebar, mobile header, and demo loading overlay
-- **User issue resolved**: "El ícono loader de oficial en el modo oscuro a veces sale gris en el fondo oscuro"
 
-### SuperAdmin Navigation System (⚠️ USER EXPERIENCE FIX)
+### SuperAdmin Navigation System
 - **Smart Back Navigation**: Implemented `window.history.back()` as primary navigation method
 - **Fallback Routes**: Added appropriate fallbacks when history is empty (companies list, dashboard)
 - **Consistent Behavior**: All SuperAdmin pages now use the same navigation pattern
-- **User issue resolved**: "sigo teniendo problema en las paginas del superadmin al usar el boton atras dentro de ellas, a veces me saca al login del pueradmin"
 
-### Test-to-Production Migration System (⚠️ STRIPE TRANSITION HANDLER)
+### Test-to-Production Migration System
 - **Edge Case Detection**: Automatically detects hybrid subscription states (test Stripe subscription with production mode)
 - **Data Cleanup Endpoint**: `/api/account/cleanup-test-stripe` safely removes test mode Stripe data
 - **Visual Alert System**: PaymentMethodManager shows migration alert for affected companies
 - **Automatic Resolution**: Cancels orphaned test subscriptions and resets to trial status for proper re-subscription
 - **Oficaz SL Case**: Specific solution for test-to-production transition where test card was configured but now in production mode
-- **User confirmed issue**: "se acabo del periodo de prueba y puse la tarjteta test de stripe y ahora estoy usandolo pero no tengo metodo de pago añadido"
 
-### SuperAdmin Company Deletion Fix (⚠️ CRITICAL SECURITY FIX)
+### SuperAdmin Company Deletion Fix
 - **Foreign Key Constraint Error**: Fixed critical error in permanent company deletion where password_reset_tokens were not being deleted
-- **Error Details**: "update or delete on table companies violates foreign key constraint password_reset_tokens_company_id_fkey"
 - **Solution**: Added password reset tokens deletion step in correct order (step 8) before user deletion
 - **Database Integrity**: Ensures all dependent records are properly cleaned up during SuperAdmin permanent deletions
 - **Prevention**: Added comprehensive logging to track deletion progress and identify any future constraint violations

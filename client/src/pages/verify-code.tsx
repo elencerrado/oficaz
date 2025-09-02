@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock, CheckCircle } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -27,6 +28,7 @@ export default function VerifyCode() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(false);
+  const [showRecoverySuccessModal, setShowRecoverySuccessModal] = useState(false);
   
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
@@ -129,9 +131,8 @@ export default function VerifyCode() {
       if (response.ok) {
         // Check if this is account recovery
         if (result.isRecovery && result.action === 'account_restored') {
-          // Account recovered successfully - redirect to login
-          console.log('Account recovery successful, redirecting to login');
-          setLocation('/login');
+          // Show success modal for account recovery
+          setShowRecoverySuccessModal(true);
         } else {
           // Normal registration flow - redirect to registration with verification token
           setLocation(`/register?token=${result.verificationToken}`);
@@ -312,6 +313,45 @@ export default function VerifyCode() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recovery Success Modal */}
+      <Dialog open={showRecoverySuccessModal} onOpenChange={setShowRecoverySuccessModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              ¡Cuenta recuperada exitosamente!
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 text-center">
+            <p className="text-gray-600">
+              Tu cuenta ha sido restaurada completamente con todos tus datos, configuraciones y suscripciones anteriores.
+            </p>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 font-medium">
+                Ya puedes iniciar sesión normalmente con tus credenciales habituales.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={() => {
+                setShowRecoverySuccessModal(false);
+                setLocation('/login');
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+            >
+              Ir al inicio de sesión
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
