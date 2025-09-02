@@ -4924,17 +4924,16 @@ Responde directamente a este email para contactar con la persona.
         console.log(`📋 Employee ${userId} fetching active user reminders with assignments`);
         const allReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
         
-        // Filter to only include active reminders (not completed by all assignees)
+        // Filter to only include active reminders for this specific user
         activeReminders = allReminders.filter(reminder => {
-          // A reminder is active if it's not completed by ALL assigned users + creator
-          const assignedUserIds = reminder.assignedUserIds || [];
           const completedByUserIds = reminder.completedByUserIds || [];
-          const allRequiredUsers = [...new Set([reminder.userId, ...assignedUserIds])];
           
-          // Check if ALL required users have completed it
-          const allCompleted = allRequiredUsers.every(uid => completedByUserIds.includes(uid));
+          // For employees: if they completed it individually, it's no longer active for them
+          const userCompletedIndividually = completedByUserIds.includes(userId);
           
-          return !allCompleted; // Return true if NOT all completed (i.e., still active)
+          console.log(`📋 Filtering reminder ${reminder.id}: userId=${userId}, completedByUserIds=${JSON.stringify(completedByUserIds)}, userCompletedIndividually=${userCompletedIndividually}`);
+          
+          return !userCompletedIndividually; // Return true if user hasn't completed it individually
         });
         
         console.log(`📋 Employee ${userId} active reminders count: ${activeReminders.length}`);
