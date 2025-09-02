@@ -2767,17 +2767,18 @@ export default function Settings() {
                       <div>
                         <Label htmlFor="adminStartDate">Fecha de incorporación</Label>
                         {isEditingProfile ? (
-                          <div className="mt-1">
-                            <DatePickerDayEmployee
-                              date={profileData.startDate ? new Date(profileData.startDate) : undefined}
-                              onDateChange={(date) => {
-                                if (date) {
-                                  setProfileData(prev => ({ ...prev, startDate: date.toISOString() }));
-                                }
-                              }}
-                              placeholder="Seleccionar fecha"
-                            />
-                          </div>
+                          <Input
+                            id="adminStartDate"
+                            type="date"
+                            value={profileData.startDate ? profileData.startDate.split('T')[0] : ''}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                const date = new Date(e.target.value);
+                                setProfileData(prev => ({ ...prev, startDate: date.toISOString() }));
+                              }
+                            }}
+                            className="mt-1"
+                          />
                         ) : (
                           <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
                             {profileData.startDate ? 
