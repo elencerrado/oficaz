@@ -105,6 +105,13 @@ Preferred communication style: Simple, everyday language.
 - **Database Integrity**: Ensures all dependent records are properly cleaned up during SuperAdmin permanent deletions
 - **Prevention**: Added comprehensive logging to track deletion progress and identify any future constraint violations
 
+### Registration Wizard Improvements (September 2, 2025)
+- **Plan Recommendation Algorithm**: Fixed overly aggressive scoring system that recommended Master plan too frequently
+- **Conservative Scoring**: Teams of 1-5 employees now primarily recommended Basic plan unless many advanced features selected
+- **Master Plan Hidden**: Temporarily removed Master plan from registration wizard to improve user experience
+- **UI Layout**: Changed plan selection grid from 3 columns to 2 columns for better visual balance
+- **Visual Continuity**: Updated verify-code page to match request-code visual design for seamless user flow
+
 ### Production Readiness Status (September 2, 2025)
 - **TypeScript Errors**: All critical LSP diagnostics resolved - 57 errors fixed including DatePickerPeriod props, settings.tsx type issues
 - **Database Connection**: PostgreSQL fully operational and accessible via DATABASE_URL

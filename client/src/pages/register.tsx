@@ -343,11 +343,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     setCurrentStep(step);
   };
 
-  // Fetch subscription plans
-  const { data: subscriptionPlans = [] } = useQuery({
+  // Fetch subscription plans and filter out Master plan for now
+  const { data: allSubscriptionPlans = [] } = useQuery({
     queryKey: ['/api/public/subscription-plans'],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+  
+  // Filter out Master plan from wizard
+  const subscriptionPlans = allSubscriptionPlans.filter((plan: any) => plan.name !== 'master');
 
   // Plan recommendation logic based on step 1 answers
   const getRecommendedPlan = () => {
@@ -356,24 +359,25 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     // Basic scoring system
     let score = 0;
     
-    // Team size scoring
+    // Team size scoring (more conservative)
     if (teamSize === '1-5') score += 1;
     else if (teamSize === '6-15') score += 2;
     else if (teamSize === '16-50') score += 3;
     else if (teamSize === '51+') score += 4;
     
-    // Features scoring
+    // Features scoring (reduced impact)
     const featureCount = interestedFeatures?.length || 0;
-    if (featureCount >= 3) score += 2;
-    else if (featureCount >= 2) score += 1;
+    if (featureCount >= 4) score += 2;
+    else if (featureCount >= 3) score += 1;
     
-    // Advanced features boost
-    if (interestedFeatures?.includes('documents')) score += 1;
-    if (interestedFeatures?.includes('messages')) score += 1;
+    // Advanced features boost (only for very advanced features)
+    if (interestedFeatures?.includes('reports')) score += 1;
+    if (interestedFeatures?.includes('notifications')) score += 1;
     
-    // Recommendation logic
-    if (score >= 6) return 'master';
-    else if (score >= 3) return 'pro';
+    // Conservative recommendation logic (Master plan hidden for now)
+    // Only recommend Pro for larger teams with many features
+    if (score >= 5 && teamSize !== '1-5') return 'pro';
+    else if (score >= 3 && teamSize !== '1-5') return 'pro';
     else return 'basic';
   };
 
@@ -941,7 +945,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {subscriptionPlans.map((plan: any) => {
                   const isRecommended = plan.name === recommendedPlan;
                   return (
