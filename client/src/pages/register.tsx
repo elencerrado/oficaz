@@ -91,6 +91,9 @@ const step3Schema = z.object({
 
 const step4Schema = z.object({
   selectedPlan: z.string().min(1, 'Selecciona un plan de suscripción'),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: 'Debes aceptar los términos y condiciones para continuar',
+  }),
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
@@ -186,6 +189,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     resolver: zodResolver(step4Schema),
     defaultValues: {
       selectedPlan: '',
+      acceptTerms: false,
     },
   });
 
@@ -1039,6 +1043,39 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   }, el plan {recommendedPlan} ofrece la mejor relación calidad-precio para tus necesidades.
                 </p>
               </div>
+
+              {/* Terms and Conditions checkbox */}
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+                <Checkbox
+                  id="acceptTerms"
+                  checked={step4Form.watch('acceptTerms') || false}
+                  onCheckedChange={(checked) => step4Form.setValue('acceptTerms', checked as boolean)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <Label htmlFor="acceptTerms" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
+                    Acepto los{' '}
+                    <a href="/terms" target="_blank" className="text-oficaz-primary hover:underline font-medium">
+                      Términos y Condiciones
+                    </a>
+                    , la{' '}
+                    <a href="/privacy" target="_blank" className="text-oficaz-primary hover:underline font-medium">
+                      Política de Privacidad
+                    </a>
+                    {' '}y las{' '}
+                    <a href="/cookies" target="_blank" className="text-oficaz-primary hover:underline font-medium">
+                      Políticas de Cookies
+                    </a>
+                    {' '}de Oficaz.
+                  </Label>
+                </div>
+              </div>
+
+              {step4Form.formState.errors.acceptTerms && (
+                <p className="text-sm text-red-600 text-center">
+                  {step4Form.formState.errors.acceptTerms.message}
+                </p>
+              )}
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                 <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading}>
