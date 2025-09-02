@@ -6,7 +6,7 @@ import { Link, useLocation, useSearch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Shield, ArrowRight, ArrowLeft, RotateCcw, Clock, CheckCircle } from 'lucide-react';
 
@@ -202,24 +202,26 @@ export default function VerifyCode() {
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
       }}
     >
-      <Card className="w-full max-w-md shadow-2xl rounded-xl md:rounded-2xl">
-        <CardHeader className="text-center pb-6">
-          <img 
-            src={oficazLogo} 
-            alt="Oficaz" 
-            className="h-6 md:h-8 w-auto mx-auto mb-3"
-          />
+      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
+        <CardHeader className="space-y-4">
+          {/* Mobile optimized header */}
+          <div className="text-center">
+            <img 
+              src={oficazLogo} 
+              alt="Oficaz" 
+              className="h-6 md:h-8 w-auto mx-auto mb-3"
+            />
+            
+            <CardTitle className="text-lg md:text-xl font-semibold text-gray-900">Verificar email</CardTitle>
+            <CardDescription className="text-xs md:text-sm text-gray-600 mt-1">
+              Introduce el código que hemos enviado a tu email
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent className="p-8 pt-0">
-          {/* Header section */}
+          {/* Additional instructions */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Verificar email
-            </h1>
-            <p className="text-gray-600 mb-2">
-              Introduce el código que hemos enviado a tu email.
-            </p>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 mb-2">
               Revisa tu carpeta de spam o correo no deseado. A veces los emails de verificación terminan ahí.
             </p>
             <p className="text-sm text-gray-500">
