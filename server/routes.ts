@@ -2353,6 +2353,8 @@ Responde directamente a este email para contactar con la persona.
 
       const response = {
         workingHoursPerDay: company.workingHoursPerDay || 8,
+        defaultVacationDays: company.defaultVacationDays || 30,
+        vacationDaysPerMonth: company.vacationDaysPerMonth || '2.5',
         name: company.name,
         alias: company.companyAlias,
       };
@@ -2361,6 +2363,65 @@ Responde directamente a este email para contactar con la persona.
       res.json(response);
     } catch (error: any) {
       console.error('Error getting company settings:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Update company vacation settings
+  app.patch('/api/settings/vacation-policy', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const { vacationDaysPerMonth } = req.body;
+      
+      if (!vacationDaysPerMonth || isNaN(parseFloat(vacationDaysPerMonth))) {
+        return res.status(400).json({ message: 'Días de vacaciones por mes debe ser un número válido' });
+      }
+
+      const companyId = req.user!.companyId;
+      
+      // Update company vacation policy
+      await db.update(companies)
+        .set({ 
+          vacationDaysPerMonth: vacationDaysPerMonth.toString(),
+          updatedAt: sql`NOW()`
+        })
+        .where(eq(companies.id, companyId));
+
+      // Recalculate vacation days for all employees
+      const employees = await storage.getUsersByCompany(companyId);
+      
+      for (const employee of employees) {
+        await storage.updateUserVacationDays(employee.id);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Política de vacaciones actualizada y días recalculados para todos los empleados' 
+      });
+    } catch (error: any) {
+      console.error('Error updating vacation policy:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Recalculate vacation days for all employees
+  app.post('/api/settings/recalculate-vacation-days', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const employees = await storage.getUsersByCompany(companyId);
+      
+      let updatedCount = 0;
+      for (const employee of employees) {
+        await storage.updateUserVacationDays(employee.id);
+        updatedCount++;
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Días de vacaciones recalculados para ${updatedCount} empleados`,
+        updatedEmployees: updatedCount
+      });
+    } catch (error: any) {
+      console.error('Error recalculating vacation days:', error);
       res.status(500).json({ message: error.message });
     }
   });

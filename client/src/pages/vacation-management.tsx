@@ -1015,7 +1015,7 @@ export default function VacationManagement() {
                       const usedDays = employeeRequests.reduce((sum, req) => 
                         sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
                       );
-                      const totalDays = parseInt(employee.totalVacationDays) || 22;
+                      const totalDays = parseFloat(employee.totalVacationDays) || 0;
                       const availableDays = Math.max(0, totalDays - usedDays);
                       const usagePercent = (usedDays / totalDays) * 100;
                       
@@ -1140,7 +1140,7 @@ export default function VacationManagement() {
                       const usedDays = employeeRequests.reduce((sum, req) => 
                         sum + (req.startDate && req.endDate ? calculateDays(req.startDate, req.endDate) : 0), 0
                       );
-                      const totalDays = parseInt(employee.totalVacationDays) || 22;
+                      const totalDays = parseFloat(employee.totalVacationDays) || 0;
                       const availableDays = Math.max(0, totalDays - usedDays);
                       const usagePercent = (usedDays / totalDays) * 100;
                       

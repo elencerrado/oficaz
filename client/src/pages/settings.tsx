@@ -1421,7 +1421,24 @@ export default function Settings() {
     // employeeTimeEditPermission movido a sistema de features
   });
 
+  // Query para cargar configuración de la empresa
+  const { data: companySettings } = useQuery({
+    queryKey: ['/api/settings/work-hours'],
+    staleTime: 60000, // Cache for 1 minute
+  });
+
   // Initialize form data when company data loads
+  useEffect(() => {
+    if (companySettings) {
+      setCompanyData(prev => ({
+        ...prev,
+        workingHoursPerDay: companySettings.workingHoursPerDay || 8,
+        defaultVacationDays: companySettings.defaultVacationDays || 30,
+        vacationDaysPerMonth: parseFloat(companySettings.vacationDaysPerMonth || '2.5'),
+      }));
+    }
+  }, [companySettings]);
+
   useEffect(() => {
     if (company) {
       setCompanyData({
@@ -1519,7 +1536,7 @@ export default function Settings() {
       
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast({
         title: 'Empresa actualizada',
         description: 'La información de la empresa ha sido guardada correctamente.',
@@ -1534,6 +1551,29 @@ export default function Settings() {
           ...prev,
           logoUrl: data.company.logoUrl
         }));
+      }
+      
+      // Si se actualizaron políticas de vacaciones, recalcular días automáticamente
+      if (data.company && (data.company.vacationDaysPerMonth || data.company.defaultVacationDays)) {
+        try {
+          const recalcResponse = await fetch('/api/settings/recalculate-vacation-days', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders()
+            }
+          });
+          
+          if (recalcResponse.ok) {
+            const recalcResult = await recalcResponse.json();
+            toast({
+              title: 'Días de vacaciones recalculados',
+              description: `Se actualizaron los días de vacaciones de ${recalcResult.updatedEmployees} empleados`,
+            });
+          }
+        } catch (error) {
+          console.error('Error al recalcular días de vacaciones:', error);
+        }
       }
       
       // Force immediate refresh of auth data to update company info including logo
@@ -1551,6 +1591,43 @@ export default function Settings() {
       toast({
         title: 'Error al actualizar empresa',
         description: errorMessage,
+        variant: 'destructive',
+      });
+    }
+  });
+
+  // Mutation para recalcular días de vacaciones manualmente
+  const recalculateVacationDaysMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/settings/recalculate-vacation-days', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al recalcular días de vacaciones');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Días de vacaciones recalculados',
+        description: `Se actualizaron los días de vacaciones de ${data.updatedEmployees} empleados según la política actual`,
+      });
+      
+      // Invalidar queries relacionadas con empleados y vacaciones
+      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error al recalcular días',
+        description: error.message,
         variant: 'destructive',
       });
     }
@@ -2523,6 +2600,43 @@ export default function Settings() {
                       Valor estándar: 2.5 días (30 días ÷ 12 meses)
                     </p>
                   </div>
+
+                  {/* Botón para recalcular días de vacaciones manualmente */}
+                  {user?.role === 'admin' && (
+                    <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2">
+                            Recalcular días de vacaciones
+                          </h4>
+                          <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                            Si has cambiado la política de vacaciones, puedes recalcular automáticamente 
+                            los días de todos los empleados según la nueva configuración.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => recalculateVacationDaysMutation.mutate()}
+                            disabled={recalculateVacationDaysMutation.isPending}
+                            className="bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900/70 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100"
+                          >
+                            {recalculateVacationDaysMutation.isPending ? (
+                              <>
+                                <Clock className="h-4 w-4 mr-2 animate-spin" />
+                                Recalculando...
+                              </>
+                            ) : (
+                              <>
+                                <Calendar className="h-4 w-4 mr-2" />
+                                Recalcular días de vacaciones
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
