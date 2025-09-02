@@ -957,23 +957,38 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       key={plan.id}
                       className={`relative border rounded-xl p-4 cursor-pointer transition-all ${
                         step4Form.watch('selectedPlan') === plan.name
-                          ? 'border-oficaz-primary bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      } ${isRecommended ? 'ring-2 ring-oficaz-primary ring-opacity-50' : ''}`}
+                          ? 'border-green-500 bg-green-50 shadow-md'
+                          : isRecommended 
+                            ? 'border-orange-300 bg-orange-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                      }`}
                       onClick={() => step4Form.setValue('selectedPlan', plan.name)}
                     >
                       {isRecommended && (
                         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                          <Badge className="bg-oficaz-primary text-white">
-                            <Star className="h-3 w-3 mr-1" />
+                          <Badge className="bg-orange-500 text-white shadow-md">
+                            <Star className="h-3 w-3 mr-1 fill-current" />
                             Recomendado
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {step4Form.watch('selectedPlan') === plan.name && (
+                        <div className="absolute -top-3 right-4">
+                          <Badge className="bg-green-500 text-white shadow-md">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Seleccionado
                           </Badge>
                         </div>
                       )}
                       
                       <div className="text-center">
                         <h4 className="font-semibold text-lg capitalize">{plan.displayName}</h4>
-                        <div className="text-2xl font-bold text-oficaz-primary mt-2">
+                        <div className={`text-2xl font-bold mt-2 ${
+                          step4Form.watch('selectedPlan') === plan.name 
+                            ? 'text-green-600' 
+                            : 'text-oficaz-primary'
+                        }`}>
                           €{plan.monthlyPrice}
                           <span className="text-sm font-normal text-gray-500">/mes</span>
                         </div>
