@@ -2014,7 +2014,10 @@ export default function TimeTracking() {
                         )}
                       >
                         <SelectValue asChild>
-                          <div className="w-full text-center text-current">
+                          <div className={cn(
+                            "w-full text-center",
+                            dateFilter === 'month' ? "text-white" : "text-foreground"
+                          )}>
                             {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
                           </div>
                         </SelectValue>
