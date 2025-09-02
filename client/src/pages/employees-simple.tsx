@@ -790,23 +790,6 @@ export default function EmployeesSimple() {
                         <Select 
                           value={newEmployee.role}
                           onValueChange={(value) => {
-                            // Check role limits before allowing selection
-                            const limits = (window as any).currentRoleLimits;
-                            if (limits) {
-                              const currentCount = limits.usersByRole[value] || 0;
-                              const roleLimit = limits.planLimits[value] || 0;
-                              
-                              if (roleLimit !== 999 && currentCount >= roleLimit) {
-                                const roleNames: Record<string, string> = {
-                                  admin: 'administradores',
-                                  manager: 'managers',
-                                  employee: 'empleados'
-                                };
-                                setLimitMessage(`Límite de ${roleNames[value]} alcanzado.\n\nTu plan permite máximo ${roleLimit} ${roleNames[value]} y actualmente tienes ${currentCount}.\n\nContacta con soporte para ampliar tu plan.`);
-                                setShowLimitDialog(true);
-                                return; // Don't update the role
-                              }
-                            }
                             setNewEmployee({ ...newEmployee, role: value });
                           }}
                         >
@@ -814,36 +797,54 @@ export default function EmployeesSimple() {
                             <SelectValue placeholder="Seleccionar tipo" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="employee">Empleado</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
+                            {(() => {
+                              const limits = (window as any).currentRoleLimits;
+                              if (!limits) {
+                                return (
+                                  <>
+                                    <SelectItem value="employee">Empleado</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Administrador</SelectItem>
+                                  </>
+                                );
+                              }
+                              
+                              const adminCount = limits.usersByRole.admin || 0;
+                              const managerCount = limits.usersByRole.manager || 0;
+                              const employeeCount = limits.usersByRole.employee || 0;
+                              const adminLimit = limits.planLimits.admin;
+                              const managerLimit = limits.planLimits.manager;
+                              const employeeLimit = limits.planLimits.employee;
+                              
+                              const adminRemaining = adminLimit === 999 ? 999 : Math.max(0, adminLimit - adminCount);
+                              const managerRemaining = managerLimit === 999 ? 999 : Math.max(0, managerLimit - managerCount);
+                              const employeeRemaining = employeeLimit === 999 ? 999 : Math.max(0, employeeLimit - employeeCount);
+                              
+                              return (
+                                <>
+                                  <SelectItem 
+                                    value="employee" 
+                                    disabled={employeeRemaining === 0}
+                                  >
+                                    Empleado {employeeRemaining === 999 ? '' : `(${employeeRemaining} restantes)`}
+                                  </SelectItem>
+                                  <SelectItem 
+                                    value="manager" 
+                                    disabled={managerRemaining === 0}
+                                  >
+                                    Manager {managerRemaining === 999 ? '' : `(${managerRemaining} restantes)`}
+                                  </SelectItem>
+                                  <SelectItem 
+                                    value="admin" 
+                                    disabled={adminRemaining === 0}
+                                  >
+                                    Administrador {adminRemaining === 999 ? '' : `(${adminRemaining} restantes)`}
+                                  </SelectItem>
+                                </>
+                              );
+                            })()}
                           </SelectContent>
                         </Select>
-                        
-                        {/* Show role limits info */}
-                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          {(() => {
-                            const limits = (window as any).currentRoleLimits;
-                            if (!limits) return null;
-                            
-                            const planName = subscription?.plan || 'basic';
-                            const adminCount = limits.usersByRole.admin || 0;
-                            const managerCount = limits.usersByRole.manager || 0;
-                            const employeeCount = limits.usersByRole.employee || 0;
-                            const adminLimit = limits.planLimits.admin;
-                            const managerLimit = limits.planLimits.manager;
-                            const employeeLimit = limits.planLimits.employee;
-                            
-                            return (
-                              <div className="space-y-1">
-                                <p className="font-medium">Límites de tu plan {planName.toUpperCase()}:</p>
-                                <p>• Administradores: {adminCount}/{adminLimit === 999 ? '∞' : adminLimit}</p>
-                                <p>• Managers: {managerCount}/{managerLimit === 999 ? '∞' : managerLimit}</p>
-                                <p>• Empleados: {employeeCount}/{employeeLimit === 999 ? '∞' : employeeLimit}</p>
-                              </div>
-                            );
-                          })()}
-                        </div>
                       </>
                     ) : (
                       <div className="mt-1">
