@@ -334,7 +334,6 @@ export default function VacationRequests() {
           </div>
         </div>
       </div>
-
       {/* Page Title */}
       <div className="px-6 pb-6">
         <h1 className="text-3xl font-bold text-foreground mb-2">Vacaciones</h1>
@@ -342,7 +341,6 @@ export default function VacationRequests() {
           Solicita y consulta el estado de tus vacaciones
         </p>
       </div>
-
       {/* Compact Vacation Summary */}
       <div className="px-6 mb-6">
         <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6 border border-border">
@@ -440,7 +438,6 @@ export default function VacationRequests() {
           </div>
         </div>
       </div>
-
       {/* Request button */}
       <div className="px-6 mb-6">
         <Dialog open={isModalOpen} onOpenChange={(open) => {
@@ -607,7 +604,6 @@ export default function VacationRequests() {
           </DialogContent>
         </Dialog>
       </div>
-
       {/* Requests table */}
       <div className="px-6 mb-6 flex-1">
         <div className="bg-card rounded-lg overflow-hidden border border-border">
@@ -651,7 +647,7 @@ export default function VacationRequests() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <MessageCircle className="w-4 h-4 text-blue-600" />
-                                <span className="text-sm font-medium text-gray-700">Comentario del administrador</span>
+                                <span className="text-sm font-medium text-[#d1d1d1]">Comentario del administrador</span>
                               </div>
                               <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                                 {request.adminComment}
@@ -683,7 +679,6 @@ export default function VacationRequests() {
           </div>
         </div>
       </div>
-
       {/* Copyright at bottom */}
       <div className="text-center pb-4 mt-auto">
         <div className="flex items-center justify-center space-x-1 text-muted-foreground text-xs">
