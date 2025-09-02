@@ -4924,17 +4924,20 @@ Responde directamente a este email para contactar con la persona.
         console.log(`📋 Employee ${userId} fetching active user reminders with assignments`);
         const allReminders = await storage.getRemindersByUserWithAssignments(userId, companyId);
         
+        console.log(`📋 Before filtering: ${allReminders.length} reminders`);
+        console.log(`📋 All reminders data:`, JSON.stringify(allReminders.map(r => ({ id: r.id, completedByUserIds: r.completedByUserIds })), null, 2));
+        
         // Filter to only include active reminders for this specific user
         activeReminders = allReminders.filter(reminder => {
           const completedByUserIds = reminder.completedByUserIds || [];
-          
-          // For employees: if they completed it individually, it's no longer active for them
           const userCompletedIndividually = completedByUserIds.includes(userId);
           
-          console.log(`📋 Filtering reminder ${reminder.id}: userId=${userId}, completedByUserIds=${JSON.stringify(completedByUserIds)}, userCompletedIndividually=${userCompletedIndividually}`);
+          console.log(`📋 Reminder ${reminder.id}: completedBy=${JSON.stringify(completedByUserIds)}, userCompleted=${userCompletedIndividually}, keep=${!userCompletedIndividually}`);
           
-          return !userCompletedIndividually; // Return true if user hasn't completed it individually
+          return !userCompletedIndividually;
         });
+        
+        console.log(`📋 After filtering: ${activeReminders.length} reminders`);
         
         console.log(`📋 Employee ${userId} active reminders count: ${activeReminders.length}`);
       }
