@@ -1819,6 +1819,11 @@ export class DrizzleStorage implements IStorage {
     }
   }
 
+  // Alias for interface compatibility
+  async cancelAccountDeletion(companyId: number): Promise<boolean> {
+    return this.cancelCompanyDeletion(companyId);
+  }
+
   async getCompaniesPendingDeletion(): Promise<any[]> {
     try {
       const companies = await db.select({

@@ -18,6 +18,7 @@ export const companies = pgTable("companies", {
   defaultVacationDays: integer("default_vacation_days").default(30),
   vacationDaysPerMonth: decimal("vacation_days_per_month", { precision: 3, scale: 1 }).default("2.5"),
   logoUrl: text("logo_url"),
+  logoUrlDark: text("logo_url_dark"), // Logo para modo oscuro
   // Campos migrados desde company_configs
   workingHoursStart: text("working_hours_start").default("08:00").notNull(),
   workingHoursEnd: text("working_hours_end").default("17:00").notNull(),
