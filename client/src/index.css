@@ -150,20 +150,53 @@ button.rdp-day_today {
   font-weight: bold !important;
 }
 
-/* Día de hoy con prioridad sobre cualquier modifier en calendario admin */
-.rdp-day_today[aria-pressed="true"] {
+/* Máxima especificidad para día de hoy en calendario admin */
+div.rdp button.rdp-day_today,
+div.rdp button.rdp-day_today[aria-pressed="true"],
+div.rdp button.rdp-day_today[style] {
   background-color: #3b82f6 !important;
   color: white !important;
   border: 2px solid #1d4ed8 !important;
   border-radius: 6px !important;
+  font-weight: bold !important;
   position: relative !important;
-  z-index: 999 !important;
+  z-index: 9999 !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5) !important;
 }
 
-/* Modo oscuro para día de hoy seleccionado */
-.dark .rdp-day_today[aria-pressed="true"] {
+/* Modo oscuro con máxima especificidad */
+.dark div.rdp button.rdp-day_today,
+.dark div.rdp button.rdp-day_today[aria-pressed="true"],
+.dark div.rdp button.rdp-day_today[style] {
   background-color: #2563eb !important;
   border-color: #60a5fa !important;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5) !important;
+}
+
+/* Especificidad ultra alta para calendario admin con clase específica */
+.calendar-admin-override div.rdp button.rdp-day_today,
+.calendar-admin-override div.rdp button.rdp-day_today[aria-pressed="true"],
+.calendar-admin-override div.rdp button.rdp-day_today[style*="background"] {
+  background-color: #3b82f6 !important;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: 3px solid #1d4ed8 !important;
+  border-radius: 8px !important;
+  font-weight: 900 !important;
+  position: relative !important;
+  z-index: 99999 !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Modo oscuro para calendario admin específico */
+.dark .calendar-admin-override div.rdp button.rdp-day_today,
+.dark .calendar-admin-override div.rdp button.rdp-day_today[aria-pressed="true"],
+.dark .calendar-admin-override div.rdp button.rdp-day_today[style*="background"] {
+  background-color: #2563eb !important;
+  background: #2563eb !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
 }
 
 /* Hero Icons Grid - Optimized CSS Performance */

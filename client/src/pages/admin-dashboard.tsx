@@ -843,7 +843,7 @@ export default function AdminDashboard() {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     locale={es}
-                    className="w-full mx-auto"
+                    className="w-full mx-auto calendar-admin-override"
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
                       customHoliday: customHolidays.map(h => parseISO(h.date)),
