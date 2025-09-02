@@ -2013,14 +2013,12 @@ export default function TimeTracking() {
                             : "text-foreground"
                         )}
                       >
-                        <SelectValue asChild>
-                          <div className={cn(
-                            "w-full text-center",
-                            dateFilter === 'month' ? "text-white" : "text-foreground"
-                          )}>
-                            {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
-                          </div>
-                        </SelectValue>
+                        <span className={cn(
+                          "w-full text-center block",
+                          dateFilter === 'month' ? "text-white" : "text-foreground"
+                        )}>
+                          {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
+                        </span>
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {availableMonths.map((monthKey: string) => {
