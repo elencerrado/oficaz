@@ -234,6 +234,35 @@ div.rdp button.rdp-day_today[style] {
   color: #d1d5db !important;
 }
 
+/* Días pasados con opacidad reducida */
+.calendar-admin-override .rdp-day_outside,
+.calendar-admin-override .rdp-day_disabled {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+
+/* Días pasados del mes actual */
+.calendar-admin-override button[data-today="false"] {
+  opacity: 0.6 !important;
+}
+
+/* Día seleccionado con bordes redondeados */
+.calendar-admin-override .rdp-day_selected,
+.calendar-admin-override button[aria-pressed="true"] {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+  border-radius: 50% !important;
+  border: 2px solid #9ca3af !important;
+  font-weight: 600 !important;
+}
+
+.dark .calendar-admin-override .rdp-day_selected,
+.dark .calendar-admin-override button[aria-pressed="true"] {
+  background-color: #4b5563 !important;
+  color: #d1d5db !important;
+  border-color: #6b7280 !important;
+}
+
 /* DÍA DE HOY siempre tiene MÁXIMA PRIORIDAD sobre todo */
 .calendar-admin-override .rdp-day_today.national-holiday-day,
 .calendar-admin-override .rdp-day_today.custom-holiday-day,
@@ -243,12 +272,13 @@ div.rdp button.rdp-day_today[style] {
   background: #3b82f6 !important;
   color: white !important;
   border: 3px solid #1d4ed8 !important;
-  border-radius: 8px !important;
+  border-radius: 50% !important;
   font-weight: 900 !important;
   position: relative !important;
   z-index: 99999 !important;
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  transform: scale(1.05) !important;
+  transform: scale(1.1) !important;
+  opacity: 1 !important;
 }
 
 /* Modo oscuro para día de hoy con máxima prioridad */
@@ -260,6 +290,16 @@ div.rdp button.rdp-day_today[style] {
   background: #2563eb !important;
   border-color: #60a5fa !important;
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Día de hoy cuando está seleccionado también */
+.calendar-admin-override .rdp-day_today.rdp-day_selected,
+.calendar-admin-override button.rdp-day_today[aria-pressed="true"] {
+  background-color: #3b82f6 !important;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: 3px solid #1d4ed8 !important;
+  border-radius: 50% !important;
 }
 
 /* Hero Icons Grid - Optimized CSS Performance */
