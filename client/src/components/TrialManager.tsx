@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertCircle, CreditCard, Clock, Calendar, CheckCircle, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
+import { useAuth } from '@/hooks/use-auth';
 
 interface TrialStatus {
   isTrialActive: boolean;
@@ -33,6 +34,7 @@ export function TrialManager() {
   const [selectedPlan, setSelectedPlan] = useState('basic');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { subscription } = useAuth();
 
   // Fetch trial status
   const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
@@ -54,6 +56,14 @@ export function TrialManager() {
 
   // Función para obtener el precio de un plan
   const getPlanPrice = (planName: string) => {
+    // Use custom monthly price if available (regardless of useCustomSettings)
+    if (subscription?.customMonthlyPrice) {
+      const customPrice = Number(subscription.customMonthlyPrice);
+      if (customPrice > 0) {
+        return customPrice.toFixed(2);
+      }
+    }
+    
     const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
     if (plan && plan.monthlyPrice) {
       return Number(plan.monthlyPrice).toFixed(2);
