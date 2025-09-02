@@ -153,6 +153,10 @@ export interface IStorage {
   
   // Features operations
   getCompanyFeatures(companyId: number, planName: string): Promise<any>;
+  
+  // Account deletion operations
+  scheduleCompanyDeletion(companyId: number): Promise<boolean>;
+  cancelAccountDeletion(companyId: number): Promise<boolean>;
 }
 
 export class DrizzleStorage implements IStorage {

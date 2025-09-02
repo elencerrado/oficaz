@@ -118,9 +118,9 @@ export default function RequestCode() {
       if (response.ok) {
         console.log('Verification code sent:', result.message);
         
-        // Check if this is account recovery
+        // Check if this is account recovery - no alert, just proceed
         if (result.isRecovery) {
-          alert(`Se ha detectado que tu cuenta está programada para eliminación.\n\n✓ Se ha enviado un código de recuperación a tu email\n✓ Usa este código para restaurar tu cuenta con todos tus datos\n✓ Tu suscripción y configuraciones se mantendrán\n\nRevisa tu bandeja de entrada y sigue las instrucciones.`);
+          console.log('Account recovery flow initiated');
         }
         
         // Redirect to verification page with secure session ID

@@ -1625,7 +1625,7 @@ Responde directamente a este email para contactar con la persona.
         const userId = session.userId;
         
         // Cancel the deletion schedule
-        await storage.cancelAccountDeletion(companyId);
+        await storage.cancelCompanyDeletion(companyId);
         
         // Clean up verification session
         verificationSessions.delete(sessionId);
