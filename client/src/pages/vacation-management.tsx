@@ -589,7 +589,7 @@ export default function VacationManagement() {
       </div>
       {/* Stats Cards with Navigation - Unified Component */}
       <div className="mb-6">
-        <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6">
+        <div className="grid grid-cols-4 gap-2 md:gap-6">
           <StatsCard
             title="Solicitudes"
             subtitle="Pendientes"

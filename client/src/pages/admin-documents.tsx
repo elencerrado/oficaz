@@ -707,7 +707,7 @@ export default function AdminDocuments() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-6 mb-6">
+        <div className="grid grid-cols-4 gap-2 md:gap-6 mb-6">
           <StatsCard
             title="Total Documentos"
             subtitle="En sistema"
