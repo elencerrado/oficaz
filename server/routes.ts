@@ -1982,6 +1982,16 @@ Responde directamente a este email para contactar con la persona.
       recordLoginAttempt(identifier, true);
 
       const company = await storage.getCompany(user.companyId);
+      
+      // CRITICAL: Check if company is scheduled for cancellation and block login
+      if (company?.scheduledForCancellation) {
+        console.log(`🚫 Login denied for cancelled company: ${company.name} (ID: ${company.id})`);
+        return res.status(403).json({ 
+          message: 'Account access suspended due to cancellation. Please contact support to restore your account.',
+          code: 'ACCOUNT_CANCELLED'
+        });
+      }
+      
       const subscription = await storage.getSubscriptionByCompanyId(user.companyId);
 
       const token = generateToken({

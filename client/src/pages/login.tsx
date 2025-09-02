@@ -186,7 +186,9 @@ export default function Login() {
     } catch (error: any) {
       console.error('Login failed:', error);
       
-      if (error.message?.includes('429')) {
+      if (error.message === 'ACCOUNT_CANCELLED') {
+        setLoginError('Tu cuenta ha sido cancelada y el acceso está suspendido. Para recuperar tu cuenta, solicita un código de verificación con tu email.');
+      } else if (error.message?.includes('429')) {
         setLoginError('Demasiados intentos. Espera unos minutos antes de intentar de nuevo.');
       } else if (error.message?.includes('desactivada')) {
         setLoginError('Tu cuenta está desactivada. Contacta con tu administrador.');

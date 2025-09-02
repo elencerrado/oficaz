@@ -129,6 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!response.ok) {
       const errorData = await response.json();
+      // Check for cancelled account during login
+      if (response.status === 403 && errorData.code === 'ACCOUNT_CANCELLED') {
+        throw new Error('ACCOUNT_CANCELLED');
+      }
       throw new Error(errorData.message || 'Error de login');
     }
 
