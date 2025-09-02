@@ -696,7 +696,7 @@ export default function EmployeesSimple() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent className="max-w-4xl w-full max-h-[95vh] overflow-hidden">
           <DialogHeader className="pb-2">
-            <DialogTitle className="text-xl font-bold text-gray-900">
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Crear Nuevo Empleado
             </DialogTitle>
           </DialogHeader>
@@ -705,17 +705,17 @@ export default function EmployeesSimple() {
             {/* Simplified Form Layout */}
             <div className="space-y-6">
               {/* Required Fields */}
-              <div className="bg-white border border-red-200 rounded-xl p-6">
-                <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-red-100 rounded-lg flex items-center justify-center">
-                    <Shield className="h-3 w-3 text-red-600" />
+              <div className="bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 rounded-xl p-6">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <Shield className="h-3 w-3 text-red-600 dark:text-red-400" />
                   </div>
                   Campos Obligatorios
                 </h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="newFullName" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newFullName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Nombre Completo <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -729,7 +729,7 @@ export default function EmployeesSimple() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="newDni" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newDni" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       DNI/NIE <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -743,7 +743,7 @@ export default function EmployeesSimple() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newStartDate" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Fecha de Incorporación <span className="text-red-500">*</span>
                     </Label>
                     <div className="mt-1">
@@ -756,7 +756,7 @@ export default function EmployeesSimple() {
                   </div>
 
                   <div>
-                    <Label htmlFor="newRole" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newRole" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Tipo de Usuario <span className="text-red-500">*</span>
                     </Label>
                     {user?.role === 'admin' ? (
@@ -776,12 +776,12 @@ export default function EmployeesSimple() {
                     ) : (
                       <div className="mt-1">
                         <div className="flex items-center justify-between p-3 bg-muted border border-border rounded-md">
-                          <span className="text-sm font-medium text-gray-700">Empleado</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Empleado</span>
+                          <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
                             Por defecto
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Como manager, solo puedes crear usuarios con rol de empleado
                         </p>
                       </div>
@@ -791,20 +791,20 @@ export default function EmployeesSimple() {
               </div>
 
               {/* Email for Activation */}
-              <div className="bg-white border border-blue-200 rounded-xl p-6">
-                <h4 className="font-medium text-gray-900 flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Mail className="h-3 w-3 text-blue-600" />
+              <div className="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <Mail className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                   </div>
                   Email de Activación
                 </h4>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   <span className="text-red-500">*</span> Debe proporcionar al menos uno de estos emails donde se enviará el correo de bienvenida para configurar la contraseña
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="newCompanyEmail" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newCompanyEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email Corporativo
                     </Label>
                     <Input
@@ -818,7 +818,7 @@ export default function EmployeesSimple() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="newPersonalEmail" className="text-sm font-medium text-gray-700">
+                    <Label htmlFor="newPersonalEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email Personal
                     </Label>
                     <Input
@@ -833,7 +833,7 @@ export default function EmployeesSimple() {
                 </div>
                 
                 <div className="mt-3 text-center">
-                  <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                     Al menos uno de los emails es obligatorio
                   </span>
                 </div>
@@ -841,7 +841,7 @@ export default function EmployeesSimple() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
               <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={createEmployeeMutation.isPending}>
                 Cancelar
               </Button>
