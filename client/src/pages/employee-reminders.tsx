@@ -37,6 +37,7 @@ interface Reminder {
   isArchived: boolean;
   isPinned: boolean;
   createdAt: string;
+  completedByUserIds?: number[];
   // Assignment properties (for assigned reminders)
   isAssigned?: boolean;
   assignedBy?: number;
@@ -71,6 +72,13 @@ export default function EmployeeReminders() {
   const { hasAccess } = useFeatureCheck();
   
   const canAccessReminders = hasAccess('reminders');
+
+  // Helper function to check if user completed this reminder individually
+  const isCompletedByCurrentUser = (reminder: Reminder): boolean => {
+    if (!user) return false;
+    const completedByUserIds = reminder.completedByUserIds || [];
+    return completedByUserIds.includes(user.id);
+  };
 
   if (!canAccessReminders) {
     return (
@@ -472,8 +480,8 @@ export default function EmployeeReminders() {
                           variant="outline" 
                           className="text-xs border-white/30 text-white/70"
                         >
-                          {!reminder.isCompleted && !reminder.isArchived ? 'Activo' : 
-                           reminder.isCompleted ? 'Completado' : 'Archivado'}
+                          {reminder.isArchived ? 'Archivado' : 
+                           isCompletedByCurrentUser(reminder) ? 'Completado' : 'Activo'}
                         </Badge>
                         
                         {reminder.isAssigned && (
@@ -513,7 +521,7 @@ export default function EmployeeReminders() {
                       )}
                       
                       {/* Completar recordatorios (tanto propios como asignados) */}
-                      {!reminder.isCompleted && !reminder.isArchived && (
+                      {!isCompletedByCurrentUser(reminder) && !reminder.isArchived && (
                         <Button
                           size="sm"
                           variant="ghost"
