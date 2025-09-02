@@ -300,6 +300,8 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       try {
         await register(finalData);
         console.log('Registration successful, redirecting to dashboard');
+        // Set flag to show welcome modal on dashboard
+        localStorage.setItem('showWelcomeModal', 'true');
         // Keep loading overlay visible until redirect
         setLocation('/dashboard');
       } catch (error: any) {
@@ -354,7 +356,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   });
   
   // Filter out Master plan from wizard
-  const subscriptionPlans = allSubscriptionPlans.filter((plan: any) => plan.name !== 'master');
+  const subscriptionPlans = (allSubscriptionPlans as any[]).filter((plan: any) => plan.name !== 'master');
 
   // Plan recommendation logic based on step 1 answers
   const getRecommendedPlan = () => {

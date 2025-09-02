@@ -32,6 +32,7 @@ import { TrialManager } from '@/components/TrialManager';
 import BlockedAccountOverlay from '@/components/BlockedAccountOverlay';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentMethodManager } from '@/components/PaymentMethodManager';
+import { WelcomeModal } from '@/components/welcome-modal';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ export default function AdminDashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   
   // ⚠️ PROTECTED - DO NOT MODIFY - Message system states identical to employee system
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
@@ -80,6 +82,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Check for welcome modal display
+  useEffect(() => {
+    const shouldShowWelcome = localStorage.getItem('showWelcomeModal');
+    if (shouldShowWelcome === 'true') {
+      setShowWelcomeModal(true);
+      localStorage.removeItem('showWelcomeModal');
+    }
   }, []);
 
   // Fetch cancellation status for subscription termination warning
@@ -1025,6 +1036,13 @@ export default function AdminDashboard() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+        companyName={(user as any)?.companyName || 'tu empresa'}
+      />
     </div>
   );
 }
