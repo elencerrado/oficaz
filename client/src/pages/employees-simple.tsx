@@ -411,20 +411,56 @@ export default function EmployeesSimple() {
                 }
               }).then(r => r.json());
               
-              const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
+              const maxUsers = freshSubscription?.maxUsers || freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
               const currentUserCount = employeeList?.length || 0;
+              const planName = freshSubscription?.plan || 'basic';
+              
+              // Count users by role for validation
+              const usersByRole = (employeeList || []).reduce((acc: Record<string, number>, emp: any) => {
+                acc[emp.role] = (acc[emp.role] || 0) + 1;
+                return acc;
+              }, {});
               
               console.log('USER LIMIT CHECK:', { 
                 maxUsers, 
                 currentUserCount, 
+                planName,
+                usersByRole,
                 freshSubscription 
               });
               
+              // Check total user limit first
               if (maxUsers && currentUserCount >= maxUsers) {
                 setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
                 setShowLimitDialog(true);
                 return; // Do NOT open modal
               }
+              
+              // Define role limits by plan (same as backend)
+              const roleLimits: Record<string, Record<string, number>> = {
+                'basic': {
+                  admin: 1,
+                  manager: 1,
+                  employee: (maxUsers || 5) - 2
+                },
+                'pro': {
+                  admin: 1,
+                  manager: 3,
+                  employee: (maxUsers || 30) - 4
+                },
+                'master': {
+                  admin: 999,
+                  manager: 999,
+                  employee: 999
+                }
+              };
+              
+              // Store role limits for modal validation
+              const currentPlanLimits = roleLimits[planName] || roleLimits['basic'];
+              console.log('ROLE LIMITS FOR PLAN:', currentPlanLimits);
+              
+              // Store in component state for modal use
+              (window as any).currentRoleLimits = { planLimits: currentPlanLimits, usersByRole };
               
               setShowCreateModal(true);
             }} size="sm">
@@ -750,19 +786,65 @@ export default function EmployeesSimple() {
                       Tipo de Usuario <span className="text-red-500">*</span>
                     </Label>
                     {user?.role === 'admin' ? (
-                      <Select 
-                        value={newEmployee.role}
-                        onValueChange={(value) => setNewEmployee({ ...newEmployee, role: value })}
-                      >
-                        <SelectTrigger className="w-full mt-1">
-                          <SelectValue placeholder="Seleccionar tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="employee">Empleado</SelectItem>
-                          <SelectItem value="manager">Manager</SelectItem>
-                          <SelectItem value="admin">Administrador</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <>
+                        <Select 
+                          value={newEmployee.role}
+                          onValueChange={(value) => {
+                            // Check role limits before allowing selection
+                            const limits = (window as any).currentRoleLimits;
+                            if (limits) {
+                              const currentCount = limits.usersByRole[value] || 0;
+                              const roleLimit = limits.planLimits[value] || 0;
+                              
+                              if (roleLimit !== 999 && currentCount >= roleLimit) {
+                                const roleNames: Record<string, string> = {
+                                  admin: 'administradores',
+                                  manager: 'managers',
+                                  employee: 'empleados'
+                                };
+                                setLimitMessage(`Límite de ${roleNames[value]} alcanzado.\n\nTu plan permite máximo ${roleLimit} ${roleNames[value]} y actualmente tienes ${currentCount}.\n\nContacta con soporte para ampliar tu plan.`);
+                                setShowLimitDialog(true);
+                                return; // Don't update the role
+                              }
+                            }
+                            setNewEmployee({ ...newEmployee, role: value });
+                          }}
+                        >
+                          <SelectTrigger className="w-full mt-1">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="employee">Empleado</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Show role limits info */}
+                        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          {(() => {
+                            const limits = (window as any).currentRoleLimits;
+                            if (!limits) return null;
+                            
+                            const planName = subscription?.plan || 'basic';
+                            const adminCount = limits.usersByRole.admin || 0;
+                            const managerCount = limits.usersByRole.manager || 0;
+                            const employeeCount = limits.usersByRole.employee || 0;
+                            const adminLimit = limits.planLimits.admin;
+                            const managerLimit = limits.planLimits.manager;
+                            const employeeLimit = limits.planLimits.employee;
+                            
+                            return (
+                              <div className="space-y-1">
+                                <p className="font-medium">Límites de tu plan {planName.toUpperCase()}:</p>
+                                <p>• Administradores: {adminCount}/{adminLimit === 999 ? '∞' : adminLimit}</p>
+                                <p>• Managers: {managerCount}/{managerLimit === 999 ? '∞' : managerLimit}</p>
+                                <p>• Empleados: {employeeCount}/{employeeLimit === 999 ? '∞' : employeeLimit}</p>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </>
                     ) : (
                       <div className="mt-1">
                         <div className="flex items-center justify-between p-3 bg-muted border border-border rounded-md">

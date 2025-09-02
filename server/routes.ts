@@ -2641,11 +2641,60 @@ Responde directamente a este email para contactar con la persona.
       const currentEmployees = await storage.getUsersByCompany((req as AuthRequest).user!.companyId);
       const currentUserCount = currentEmployees.length; // Count ALL users including admins
       
-      console.log(`🔒 USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${subscription?.maxUsers}`);
+      // Count users by role for plan limits
+      const usersByRole = currentEmployees.reduce((acc: Record<string, number>, user: any) => {
+        acc[user.role] = (acc[user.role] || 0) + 1;
+        return acc;
+      }, {});
       
+      const requestedRole = role || 'employee';
+      const planName = subscription?.plan || 'basic';
+      
+      console.log(`🔒 USER LIMIT CHECK: Current users: ${currentUserCount}, Max allowed: ${subscription?.maxUsers}`);
+      console.log(`🔒 ROLE COUNT CHECK: Current roles:`, usersByRole);
+      console.log(`🔒 REQUESTING ROLE: ${requestedRole} for plan: ${planName}`);
+      
+      // Define role limits by plan
+      const roleLimits: Record<string, Record<string, number>> = {
+        'basic': {
+          admin: 1,
+          manager: 1,
+          employee: (subscription?.maxUsers || 5) - 2 // Total minus admin and manager
+        },
+        'pro': {
+          admin: 1,
+          manager: 3,
+          employee: (subscription?.maxUsers || 30) - 4 // Total minus admin and managers
+        },
+        'master': {
+          admin: 999, // Unlimited
+          manager: 999, // Unlimited
+          employee: 999 // Unlimited
+        }
+      };
+      
+      // Get current role limits for this plan
+      const currentPlanLimits = roleLimits[planName] || roleLimits['basic'];
+      const roleLimit = currentPlanLimits[requestedRole];
+      const currentRoleCount = usersByRole[requestedRole] || 0;
+      
+      // Check total user limit first
       if (subscription?.maxUsers && currentUserCount >= subscription.maxUsers) {
         return res.status(400).json({ 
           message: `Límite de usuarios alcanzado. Tu plan permite máximo ${subscription.maxUsers} usuarios y actualmente tienes ${currentUserCount}.` 
+        });
+      }
+      
+      // Check role-specific limits
+      if (roleLimit !== 999 && currentRoleCount >= roleLimit) {
+        const roleNames: Record<string, string> = {
+          admin: 'administradores',
+          manager: 'managers',
+          employee: 'empleados'
+        };
+        
+        return res.status(400).json({ 
+          message: `Límite de ${roleNames[requestedRole]} alcanzado. Tu plan ${planName.toUpperCase()} permite máximo ${roleLimit} ${roleNames[requestedRole]} y actualmente tienes ${currentRoleCount}.` 
         });
       }
 
