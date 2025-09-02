@@ -869,8 +869,8 @@ export default function AdminDashboard() {
                         fontWeight: '600'
                       },
                       approvedVacation: { 
-                        backgroundColor: '#dcfce7', 
-                        color: '#16a34a', 
+                        backgroundColor: '#e5e7eb', 
+                        color: '#374151', 
                         fontWeight: '600'
                       }
                     }}
