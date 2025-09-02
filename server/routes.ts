@@ -4905,6 +4905,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   app.get('/api/reminders/active', authenticateToken, async (req: AuthRequest, res) => {
+    console.log('📋 ENTERING /api/reminders/active endpoint');
     try {
       const userId = req.user!.id;
       const userRole = req.user!.role;
