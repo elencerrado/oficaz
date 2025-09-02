@@ -1937,9 +1937,12 @@ export class DrizzleStorage implements IStorage {
 
   async completeReminderIndividually(reminderId: number, userId: number): Promise<Reminder | undefined> {
     try {
-      // First get the current reminder
+      // First get the current reminder and user info
       const [reminder] = await db.select().from(schema.reminders).where(eq(schema.reminders.id, reminderId));
       if (!reminder) return undefined;
+
+      const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId));
+      if (!user) return undefined;
 
       // Get current completedByUserIds or initialize as empty array
       const currentCompletedBy = reminder.completedByUserIds || [];
@@ -1950,18 +1953,23 @@ export class DrizzleStorage implements IStorage {
       }
 
       // Check if this reminder should be globally completed
-      // For assigned reminders: all assigned users + creator must complete
-      // For personal reminders: just the creator
       let shouldBeGloballyCompleted = false;
       
-      if (reminder.assignedUserIds && reminder.assignedUserIds.length > 0) {
-        // This is an assigned reminder - check if all assigned users + creator have completed
-        const allRequiredUsers = [...reminder.assignedUserIds, reminder.createdBy];
-        const uniqueRequiredUsers = [...new Set(allRequiredUsers)];
-        shouldBeGloballyCompleted = uniqueRequiredUsers.every(reqUserId => currentCompletedBy.includes(reqUserId));
+      // For employee-created reminders: only the creator can complete them (simple personal reminders)
+      if (user.role === 'employee') {
+        // Employee reminders are always personal - only creator completes
+        shouldBeGloballyCompleted = (userId === reminder.createdBy);
       } else {
-        // This is a personal reminder - only creator needs to complete
-        shouldBeGloballyCompleted = currentCompletedBy.includes(reminder.createdBy);
+        // For admin/manager reminders: check assignments
+        if (reminder.assignedUserIds && reminder.assignedUserIds.length > 0) {
+          // This is an assigned reminder - check if all assigned users + creator have completed
+          const allRequiredUsers = [...reminder.assignedUserIds, reminder.createdBy];
+          const uniqueRequiredUsers = [...new Set(allRequiredUsers)];
+          shouldBeGloballyCompleted = uniqueRequiredUsers.every(reqUserId => currentCompletedBy.includes(reqUserId));
+        } else {
+          // This is a personal reminder - only creator needs to complete
+          shouldBeGloballyCompleted = currentCompletedBy.includes(reminder.createdBy);
+        }
       }
 
       // Update the reminder
