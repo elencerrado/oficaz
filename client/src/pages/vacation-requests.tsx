@@ -358,7 +358,7 @@ export default function VacationRequests() {
                   <DialogContent 
                     className="max-w-md border-0 p-0 bg-transparent"
                   >
-                    <div className="bg-card/95 backdrop-blur-sm rounded-xl p-6 border border-border">
+                    <div className="backdrop-blur-sm rounded-xl p-6 border border-border text-[#e1e7ef] bg-[#0000008c]">
                       <DialogHeader className="mb-4">
                         <DialogTitle className="text-primary text-lg font-medium">
                           ¿Por qué tengo {totalDays} días?
