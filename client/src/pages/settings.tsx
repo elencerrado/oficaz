@@ -2051,7 +2051,8 @@ export default function Settings() {
                           companyPhone: user?.companyPhone || '',
                           position: user?.position || '',
                           emergencyContactName: user?.emergencyContactName || '',
-                          emergencyContactPhone: user?.emergencyContactPhone || ''
+                          emergencyContactPhone: user?.emergencyContactPhone || '',
+                          startDate: user?.startDate || new Date()
                         });
                       }}
                     >
@@ -2771,7 +2772,10 @@ export default function Settings() {
                           <Input
                             id="adminStartDate"
                             type="date"
-                            value={profileData.startDate ? profileData.startDate.split('T')[0] : ''}
+                            value={profileData.startDate ? 
+                              (typeof profileData.startDate === 'string' ? profileData.startDate.split('T')[0] : 
+                               format(profileData.startDate, 'yyyy-MM-dd')) : 
+                              ''}
                             onChange={(e) => {
                               if (e.target.value) {
                                 const date = new Date(e.target.value);

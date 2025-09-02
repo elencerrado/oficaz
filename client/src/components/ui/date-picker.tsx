@@ -241,16 +241,6 @@ export function DatePickerDayEmployee({
 }
 
 interface DatePickerPeriodProps {
-  value?: Date;
-  onChange: (date: Date | undefined) => void;
-  placeholder?: string;
-  disabled?: (date: Date) => boolean;
-  className?: string;
-}
-
-
-
-interface DatePickerPeriodProps {
   startDate?: Date;
   endDate?: Date;
   onStartDateChange: (date: Date | undefined) => void;
