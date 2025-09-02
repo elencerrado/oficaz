@@ -20,6 +20,7 @@ import {
   Calendar,
   Plus,
   UserPlus,
+  UserCheck,
   IdCard,
   Mail,
   User,
@@ -357,6 +358,109 @@ export default function EmployeesSimple() {
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Administra usuarios y gestiona información de empleados
         </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Total Users Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Usuarios Totales</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {totalUsers} <span className="text-sm font-normal text-muted-foreground">de {subscription?.maxUsers || 30}</span>
+                </p>
+              </div>
+              <div className="h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div 
+                  className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(100, (totalUsers / (subscription?.maxUsers || 30)) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Managers Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Managers</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {employeeList?.filter(emp => emp.role === 'manager').length || 0} <span className="text-sm font-normal text-muted-foreground">de 3</span>
+                </p>
+              </div>
+              <div className="h-8 w-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <UserCheck className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div 
+                  className="bg-green-600 h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'manager').length || 0) / 3) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Employees Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Empleados</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {employeeList?.filter(emp => emp.role === 'employee').length || 0} <span className="text-sm font-normal text-muted-foreground">de {(subscription?.maxUsers || 30) - 4}</span>
+                </p>
+              </div>
+              <div className="h-8 w-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <User className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div 
+                  className="bg-orange-600 h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'employee').length || 0) / ((subscription?.maxUsers || 30) - 4)) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Admins Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Administradores</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {employeeList?.filter(emp => emp.role === 'admin').length || 0} <span className="text-sm font-normal text-muted-foreground">de 1</span>
+                </p>
+              </div>
+              <div className="h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <Shield className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div 
+                  className="bg-purple-600 h-1.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${Math.min(100, ((employeeList?.filter(emp => emp.role === 'admin').length || 0) / 1) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">{/* Moved button section below header */}
