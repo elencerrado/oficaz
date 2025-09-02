@@ -355,10 +355,45 @@ export default function EmployeesSimple() {
     <div className="px-6 py-4 min-h-screen bg-background space-y-6" style={{ overflowX: 'clip' }}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Gestión de Empleados</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Administra usuarios y gestiona información de empleados
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Gestión de Empleados</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+              Administra usuarios y gestiona información de empleados
+            </p>
+          </div>
+          <Button onClick={async () => {
+            // CRITICAL: Force fresh subscription data
+            queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+            
+            // Get fresh data directly from API with auth token
+            const freshSubscription = await fetch('/api/account/subscription', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }).then(r => r.json());
+            
+            const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
+            const currentUserCount = employeeList?.length || 0;
+            
+            console.log('USER LIMIT CHECK:', { 
+              maxUsers, 
+              currentUserCount, 
+              freshSubscription 
+            });
+            
+            if (maxUsers && currentUserCount >= maxUsers) {
+              setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
+              setShowLimitDialog(true);
+              return; // Do NOT open modal
+            }
+            
+            setShowCreateModal(true);
+          }} size="default">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Crear Usuario
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -392,80 +427,6 @@ export default function EmployeesSimple() {
           icon={Shield}
         />
       </div>
-      
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">{/* Moved button section below header */}
-        {/* Desktop: Button and count side by side */}
-        <div className="hidden sm:flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{totalUsers} usuarios</span>
-          <Button onClick={async () => {
-            // CRITICAL: Force fresh subscription data
-            queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-            
-            // Get fresh data directly from API with auth token
-            const freshSubscription = await fetch('/api/account/subscription', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            }).then(r => r.json());
-            
-            const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
-            const currentUserCount = employeeList?.length || 0;
-            
-            console.log('USER LIMIT CHECK:', { 
-              maxUsers, 
-              currentUserCount, 
-              freshSubscription 
-            });
-            
-            if (maxUsers && currentUserCount >= maxUsers) {
-              setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
-              setShowLimitDialog(true);
-              return; // Do NOT open modal
-            }
-            
-            setShowCreateModal(true);
-          }} size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Crear Usuario
-          </Button>
-        </div>
-        
-        {/* Mobile: Button and count in same line, compact */}
-        <div className="flex sm:hidden items-center justify-between">
-          <span className="text-xs text-muted-foreground">{totalUsers} usuarios</span>
-          <Button onClick={async () => {
-            // CRITICAL: Force fresh subscription data
-            queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-            
-            // Get fresh data directly from API with auth token
-            const freshSubscription = await fetch('/api/account/subscription', {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            }).then(r => r.json());
-            
-            const maxUsers = freshSubscription?.max_users || freshSubscription?.dynamic_max_users;
-            const currentUserCount = employeeList?.length || 0;
-            
-            console.log('USER LIMIT CHECK MOBILE:', { 
-              maxUsers, 
-              currentUserCount, 
-              freshSubscription 
-            });
-            
-            if (maxUsers && currentUserCount >= maxUsers) {
-              setLimitMessage(`No puedes añadir más usuarios.\n\nTu plan permite máximo ${maxUsers} usuarios y actualmente tienes ${currentUserCount}.\n\nContacta con soporte para ampliar tu plan.`);
-              setShowLimitDialog(true);
-              return; // Do NOT open modal
-            }
-            
-            setShowCreateModal(true);
-          }} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Crear
-          </Button>
-        </div>
-      </div>
 
 
 
@@ -474,7 +435,7 @@ export default function EmployeesSimple() {
         <CardHeader>
           <CardTitle className="tracking-tight flex items-center space-x-2 text-[14px] font-medium">
             <Users className="h-5 w-5" />
-            Lista de Empleados ({filteredEmployees.length} de {totalUsers})
+            Lista de Empleados
           </CardTitle>
         </CardHeader>
         <CardContent>
