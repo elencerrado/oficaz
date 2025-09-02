@@ -2007,8 +2007,8 @@ export default function TimeTracking() {
                     >
                       <SelectTrigger 
                         className={cn(
-                          "h-9 text-xs font-normal text-center border border-input bg-background hover:bg-accent hover:text-accent-foreground [&>svg]:hidden",
-                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90"
+                          "h-9 text-xs font-normal text-center text-foreground [&>svg]:hidden focus:ring-0 focus:ring-offset-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90 focus:bg-[#007AFF] focus:border-[#007AFF]"
                         )}
                       >
                         <div className="w-full text-center">
