@@ -896,6 +896,18 @@ export default function Reminders() {
                     completedByUserIds={reminder.completedByUserIds}
                   />
                   
+                  {/* Status indicator for assigned completion */}
+                  {isCompletedByAssignedOnly(reminder) && (
+                    <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-orange-600" />
+                        <span className="text-xs text-orange-700 font-medium">
+                          Completado por todos los asignados
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between mt-4">
                     <Badge variant="secondary" className={`text-xs ${PRIORITY_COLORS[reminder.priority]}`}>
                       {reminder.priority === 'high' ? 'Alta' : reminder.priority === 'medium' ? 'Media' : 'Baja'}
@@ -908,8 +920,6 @@ export default function Reminders() {
                       className={`h-7 px-3 text-xs font-medium transition-colors ${
                         isCompletedByCurrentUser(reminder)
                           ? 'bg-green-100 text-green-800 hover:bg-green-200 border border-green-300'
-                          : isCompletedByAssignedOnly(reminder) 
-                          ? 'bg-orange-100 text-orange-800 hover:bg-orange-200 border border-orange-300'
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300'
                       }`}
                     >
@@ -918,15 +928,10 @@ export default function Reminders() {
                           <CheckCircle className="w-3 h-3" />
                           Completado
                         </span>
-                      ) : isCompletedByAssignedOnly(reminder) ? (
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          Completado por asignados
-                        </span>
                       ) : (
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Marcar
+                          Marcar como hecho
                         </span>
                       )}
                     </Button>
