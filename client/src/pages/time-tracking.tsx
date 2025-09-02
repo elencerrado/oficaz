@@ -2007,13 +2007,17 @@ export default function TimeTracking() {
                     >
                       <SelectTrigger 
                         className={cn(
-                          "h-9 text-xs font-normal text-center text-foreground [&>svg]:hidden focus:ring-0 focus:ring-offset-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-                          dateFilter === 'month' && "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90 focus:bg-[#007AFF] focus:border-[#007AFF]"
+                          "h-9 text-xs font-normal text-center [&>svg]:hidden focus:ring-0 focus:ring-offset-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                          dateFilter === 'month' 
+                            ? "bg-[#007AFF] text-white border-[#007AFF] hover:bg-[#007AFF]/90 focus:bg-[#007AFF] focus:border-[#007AFF]"
+                            : "text-foreground"
                         )}
                       >
-                        <div className="w-full text-center">
-                          {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
-                        </div>
+                        <SelectValue asChild>
+                          <div className="w-full text-center text-current">
+                            {dateFilter === 'month' ? format(currentMonth, 'MMM', { locale: es }) : 'Mes'}
+                          </div>
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
                         {availableMonths.map((monthKey: string) => {
