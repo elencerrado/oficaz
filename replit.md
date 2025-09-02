@@ -105,19 +105,27 @@ Preferred communication style: Simple, everyday language.
 - **Database Integrity**: Ensures all dependent records are properly cleaned up during SuperAdmin permanent deletions
 - **Prevention**: Added comprehensive logging to track deletion progress and identify any future constraint violations
 
-### Registration Wizard Improvements (September 2, 2025)
+### Registration Wizard Improvements
 - **Plan Recommendation Algorithm**: Fixed overly aggressive scoring system that recommended Master plan too frequently
 - **Conservative Scoring**: Teams of 1-5 employees now primarily recommended Basic plan unless many advanced features selected
 - **Master Plan Hidden**: Temporarily removed Master plan from registration wizard to improve user experience
 - **UI Layout**: Changed plan selection grid from 3 columns to 2 columns for better visual balance
 - **Visual Continuity**: Updated verify-code page to match request-code visual design for seamless user flow
 
-### Production Readiness Status (September 2, 2025)
-- **TypeScript Errors**: All critical LSP diagnostics resolved - 57 errors fixed including DatePickerPeriod props, settings.tsx type issues
+### Individual Reminder Completion System
+- **Three-State Logic**: Implemented comprehensive individual completion tracking with visual states
+- **State Management**: Not completed (gray), completed by current user (green), completed by assigned only (orange banner)
+- **Backend Logic**: Fixed `is_completed` calculation to require ALL assigned users (including creator) to complete
+- **Visual Separation**: "Completado por asignados" appears as informational banner, not button text
+- **User Privacy**: Employees only see own reminders + reminders they completed (for completion history)
+- **Data Integrity**: Individual completion tracked in `completedByUserIds` array with proper filtering
+
+### Production Readiness Status
+- **TypeScript Errors**: All critical LSP diagnostics resolved
 - **Database Connection**: PostgreSQL fully operational and accessible via DATABASE_URL
-- **Stripe Integration**: Production mode active with live payment processing (sk_live_ keys confirmed)
-- **API Endpoints**: All core endpoints tested and functional (auth, subscription, registration)
-- **Security**: All required environment secrets present (STRIPE_SECRET_KEY, VITE_STRIPE_PUBLISHABLE_KEY, DATABASE_URL)
+- **Stripe Integration**: Production mode active with live payment processing
+- **API Endpoints**: All core endpoints tested and functional
+- **Security**: All required environment secrets present
 - **Build System**: Vite/Express development server running without errors
 - **Code Quality**: DatePickerPeriod component fixed, duplicate type definitions removed, missing properties added
 - **Status Badge Logic**: Fixed subscription status display to show "PRUEBA" correctly for trial accounts

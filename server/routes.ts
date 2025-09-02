@@ -4775,9 +4775,12 @@ Responde directamente a este email para contactar con la persona.
       
       // If admin/manager, show all company reminders; otherwise show user's reminders + assigned ones
       if (userRole === 'admin' || userRole === 'manager') {
+        console.log(`📋 Admin/Manager ${userId} fetching company reminders`);
         reminders = await storage.getRemindersByCompany(companyId);
       } else {
+        console.log(`📋 Employee ${userId} fetching user reminders with assignments`);
         reminders = await storage.getRemindersByUserWithAssignments(userId);
+        console.log(`📋 Employee ${userId} got ${reminders.length} reminders`);
       }
       
       res.json(reminders);
