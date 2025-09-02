@@ -459,7 +459,7 @@ export default function VacationRequests() {
               Solicitar Vacaciones
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md mx-auto bg-card border border-border text-foreground rounded-2xl mt-4 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md mx-auto bg-card border border-border text-foreground rounded-2xl mt-4 max-h-[95vh] overflow-hidden flex flex-col">
             <DialogHeader className="pb-4 pt-2">
               <DialogTitle className="text-xl font-semibold text-center text-foreground">
                 Solicitar Vacaciones
@@ -476,7 +476,7 @@ export default function VacationRequests() {
               )}
             </DialogHeader>
             
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto px-1 space-y-4">
               {/* Calendar */}
               <div className="bg-muted rounded-xl p-3">
                 <div className="flex items-center justify-between mb-3">
@@ -586,23 +586,23 @@ export default function VacationRequests() {
                   rows={3}
                 />
               </div>
-              
-              {/* Action buttons */}
-              <div className="flex space-x-4 pt-2">
-                <Button
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium py-3 rounded-xl h-12"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 rounded-xl h-12 disabled:opacity-50"
-                >
-                  {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
-                </Button>
-              </div>
+            </div>
+            
+            {/* Action buttons - Fixed at bottom */}
+            <div className="flex space-x-4 pt-4 px-1 border-t border-border/50 mt-4">
+              <Button
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium py-3 rounded-xl h-12"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={createRequestMutation.isPending || !selectedStartDate || !selectedEndDate || exceedsAvailable}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 rounded-xl h-12 disabled:opacity-50"
+              >
+                {createRequestMutation.isPending ? 'Solicitando...' : 'Solicitar'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
