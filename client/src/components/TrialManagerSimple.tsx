@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PaymentMethodManager } from "./PaymentMethodManager";
+import { useAuth } from "@/hooks/use-auth";
 
 interface TrialStatus {
   isTrialActive: boolean;
@@ -28,6 +29,7 @@ interface PaymentMethod {
 
 export function TrialManagerSimple() {
   const queryClient = useQueryClient();
+  const { subscription } = useAuth();
 
   // Fetch trial status
   const { data: trialStatus, isLoading: loadingTrial } = useQuery<TrialStatus>({
@@ -49,6 +51,14 @@ export function TrialManagerSimple() {
   });
 
   const getPlanPrice = (planName: string): string => {
+    // Use custom monthly price if available (regardless of useCustomSettings)
+    if (subscription?.customMonthlyPrice) {
+      const customPrice = Number(subscription.customMonthlyPrice);
+      if (customPrice > 0) {
+        return customPrice.toFixed(2);
+      }
+    }
+    
     if (!subscriptionPlans) return '0.00';
     const plan = subscriptionPlans.find((p: any) => p.name.toLowerCase() === planName.toLowerCase());
     return plan ? Number(plan.monthlyPrice).toFixed(2) : '0.00';
