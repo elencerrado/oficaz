@@ -27,9 +27,7 @@ export default function EmployeeDashboard() {
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
-  const [hasVacationUpdates, setHasVacationUpdates] = useState(() => {
-    return localStorage.getItem('hasVacationUpdates') === 'true';
-  });
+  const [hasVacationUpdates, setHasVacationUpdates] = useState(false);
   const [lastVacationCheck, setLastVacationCheck] = useState<any[]>([]);
   
   // Estado para mensajes temporales en el cajón de fichaje
