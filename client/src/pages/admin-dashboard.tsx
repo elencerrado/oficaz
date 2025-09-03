@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentLocation, setLocation] = useLocation();
+  const [currentLocation, setLocation] = useLocation() || ['', () => {}];
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
