@@ -264,6 +264,17 @@ export function CustomCalendar({
             const isPending = isPendingVacation(date);
             const hasSpecialEvent = holiday || isApproved || isPending;
             
+            // Debug for Sep 5
+            if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+              console.log('🔍 Sep 5 hasSpecialEvent:', {
+                dateStr: format(date, 'yyyy-MM-dd'),
+                hasSpecialEvent,
+                holiday: holiday ? holiday.name : null,
+                isApproved,
+                isPending
+              });
+            }
+            
             const elements = [];
             
             // ⚠️ PROTECTED: Day Button and Connector Logic - DO NOT MODIFY - Critical worm effect core ⚠️
@@ -296,16 +307,7 @@ export function CustomCalendar({
                   rangePosition = 'middle';
                 }
                 
-                // Debug for Sep 5
-                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-                  console.log('🔍 Sep 5 DEBUG:', {
-                    dateStr: format(date, 'yyyy-MM-dd'),
-                    rangeStart: format(currentRange.startDate, 'yyyy-MM-dd'), 
-                    rangeEnd: format(currentRange.endDate, 'yyyy-MM-dd'),
-                    isSameStart: isSameDay(date, currentRange.startDate),
-                    rangePosition
-                  });
-                }
+
               }
             }
             
@@ -358,43 +360,11 @@ export function CustomCalendar({
                       )}
                       
                       {/* First day: C shape with curvature but no right border */}
-                      {(rangePosition === 'first' || format(date, 'yyyy-MM-dd') === '2025-09-05') && (
+                      {rangePosition === 'first' && (
                         <>
-                          <div 
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: '50%',
-                              right: 0,
-                              height: '2px',
-                              backgroundColor: '#f97316',
-                              zIndex: 20
-                            }}
-                          ></div>
-                          <div 
-                            style={{
-                              position: 'absolute',
-                              bottom: 0,
-                              left: '50%',
-                              right: 0,
-                              height: '2px',
-                              backgroundColor: '#f97316',
-                              zIndex: 20
-                            }}
-                          ></div>
-                          <div 
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              borderLeft: '2px solid #f97316',
-                              borderTop: '2px solid #f97316',
-                              borderBottom: '2px solid #f97316',
-                              borderTopLeftRadius: '50%',
-                              borderBottomLeftRadius: '50%',
-                              pointerEvents: 'none',
-                              zIndex: 20
-                            }}
-                          ></div>
+                          <div className="absolute top-0 left-1/2 right-0 h-0.5 bg-orange-500 z-20"></div>
+                          <div className="absolute bottom-0 left-1/2 right-0 h-0.5 bg-orange-500 z-20"></div>
+                          <div className="absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-orange-500 pointer-events-none z-20"></div>
                         </>
                       )}
                       
