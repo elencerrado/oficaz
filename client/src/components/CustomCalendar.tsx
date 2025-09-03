@@ -260,16 +260,92 @@ export function CustomCalendar({
             
             // ⚠️ PROTECTED: Day Button and Connector Logic - DO NOT MODIFY - Critical worm effect core ⚠️
             // Add the day button (fixed width column)
+            
+            // Determine position in consecutive range for worm effect
+            let rangePosition = 'none'; // 'first', 'middle', 'last', 'single', 'none'
+            let eventColor = '';
+            
+            if (hasSpecialEvent) {
+              const currentRange = consecutiveDayRanges.find(range => {
+                const rangeDates = [];
+                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+                  rangeDates.push(new Date(d));
+                }
+                return rangeDates.some(d => isSameDay(d, date));
+              });
+              
+              if (currentRange) {
+                eventColor = holiday ? (holiday.type === 'national' ? 'red-500' : 'orange-500') :
+                           isApproved ? 'green-500' : 'yellow-500';
+                
+                const rangeDates = [];
+                for (let d = new Date(currentRange.startDate); d <= currentRange.endDate; d.setDate(d.getDate() + 1)) {
+                  rangeDates.push(new Date(d));
+                }
+                
+                const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+                if (rangeDates.length === 1) {
+                  rangePosition = 'single';
+                } else if (currentIndex === 0) {
+                  rangePosition = 'first';
+                } else if (currentIndex === rangeDates.length - 1) {
+                  rangePosition = 'last';
+                } else {
+                  rangePosition = 'middle';
+                }
+              }
+            }
+            
             elements.push(
-              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9">
+              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9 relative">
                 <button
                   onClick={() => onDateSelect(date)}
-                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10 w-9 h-9`}
+                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center
+                    ${rangePosition === 'single' ? 'rounded-full' : 
+                      rangePosition === 'first' ? 'rounded-l-full' :
+                      rangePosition === 'last' ? 'rounded-r-full' :
+                      rangePosition === 'middle' ? '' : 'rounded-full'}`}
                 >
                   {format(date, 'd')}
                   
-                  {/* Show event overlay for special days (including today if it has events) */}
-                  {((selectedDate && isSameDay(date, selectedDate)) || hasSpecialEvent) && hasSpecialEvent && (
+                  {/* Worm effect borders and lines */}
+                  {hasSpecialEvent && rangePosition !== 'none' && (
+                    <>
+                      {/* Top and bottom lines for middle days */}
+                      {rangePosition === 'middle' && (
+                        <>
+                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                        </>
+                      )}
+                      
+                      {/* Border for single days (normal circle) */}
+                      {rangePosition === 'single' && (
+                        <div className={`absolute inset-0 rounded-full border-2 border-${eventColor} pointer-events-none`}></div>
+                      )}
+                      
+                      {/* C shape for first day */}
+                      {rangePosition === 'first' && (
+                        <>
+                          <div className={`absolute top-0 left-0 bottom-0 w-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
+                        </>
+                      )}
+                      
+                      {/* Inverted C shape for last day */}
+                      {rangePosition === 'last' && (
+                        <>
+                          <div className={`absolute top-0 right-0 bottom-0 w-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 right-0 left-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 right-0 left-1/2 h-0.5 bg-${eventColor}`}></div>
+                        </>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Show simple overlay for non-range special days or selected days */}
+                  {((selectedDate && isSameDay(date, selectedDate)) || (hasSpecialEvent && rangePosition === 'none')) && (
                     <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
                       holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
                       isApproved ? 'border-green-500' :
@@ -300,7 +376,7 @@ export function CustomCalendar({
                        isSameDay(calendarDays[nextGlobalIndex], nextDate);
               });
               
-              const connectionColor = consecutiveDayRanges.find(range => {
+              const connectionColorClass = consecutiveDayRanges.find(range => {
                 const rangeDates = [];
                 for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
                   rangeDates.push(new Date(d));
@@ -308,13 +384,37 @@ export function CustomCalendar({
                 return rangeDates.some(d => isSameDay(d, date));
               })?.borderColor.replace('border-', 'bg-') || '';
               
+              const connectionColor = consecutiveDayRanges.find(range => {
+                const rangeDates = [];
+                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+                  rangeDates.push(new Date(d));
+                }
+                return rangeDates.some(d => isSameDay(d, date));
+              });
+              
+              let connectorEventColor = '';
+              if (connectionColor) {
+                // Extract color from border class
+                const currentDate = date;
+                const currentHoliday = getHolidayInfo(currentDate);
+                const currentApproved = isApprovedVacation(currentDate);
+                connectorEventColor = currentHoliday ? (currentHoliday.type === 'national' ? 'red-500' : 'orange-500') :
+                                    currentApproved ? 'green-500' : 'yellow-500';
+              }
+              
               elements.push(
                 <div 
                   key={`connector-${date.toISOString()}`}
-                  className="flex items-center justify-center h-9"
+                  className="flex items-center justify-center h-9 relative"
                 >
                   {shouldShowConnection && (
-                    <div className={`w-full h-0.5 ${connectionColor}`}></div>
+                    <>
+                      {/* Top and bottom connecting lines for worm effect */}
+                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
+                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
+                      {/* Middle horizontal line */}
+                      <div className={`w-full h-0.5 bg-${connectorEventColor}`}></div>
+                    </>
                   )}
                 </div>
               );
