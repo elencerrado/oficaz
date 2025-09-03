@@ -108,15 +108,13 @@ export function CustomCalendar({
       const start = parseISO(holiday.startDate);
       const end = parseISO(holiday.endDate);
       
-      // Only add if it's more than one day
-      if (start.getTime() !== end.getTime()) {
-        ranges.push({
-          startDate: start,
-          endDate: end,
-          type: 'custom',
-          borderColor: 'border-orange-500'
-        });
-      }
+      // Always add the range (even for single days)
+      ranges.push({
+        startDate: start,
+        endDate: end,
+        type: 'custom',
+        borderColor: 'border-orange-500'
+      });
     });
 
     // Process vacation ranges
@@ -297,18 +295,6 @@ export function CustomCalendar({
                 }
                 
                 const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
-                
-                // Debug logging for September 5th
-                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-                  console.log('Sept 5 Debug:', {
-                    date: format(date, 'yyyy-MM-dd'),
-                    rangeDates: rangeDates.map(d => format(d, 'yyyy-MM-dd')),
-                    currentIndex,
-                    rangeLength: rangeDates.length,
-                    currentRange: currentRange.name
-                  });
-                }
-                
                 if (rangeDates.length === 1) {
                   rangePosition = 'single';
                 } else if (currentIndex === 0) {
