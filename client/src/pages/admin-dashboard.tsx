@@ -372,7 +372,14 @@ export default function AdminDashboard() {
   // Fetch custom holidays from database
   const { data: customHolidays = [] } = useQuery({
     queryKey: ['/api/holidays/custom'],
-    select: (data: any[]) => data?.map((h: any) => ({ ...h, type: 'custom' })) || [],
+    select: (data: any[]) => {
+      if (!data || !Array.isArray(data)) return [];
+      return data.filter(h => h && h.startDate).map((h: any) => ({ 
+        ...h, 
+        type: 'custom',
+        date: h.startDate // Map startDate to date for compatibility
+      }));
+    },
   });
 
   const allHolidays = [...nationalHolidays, ...customHolidays];
@@ -896,7 +903,7 @@ export default function AdminDashboard() {
                     className="w-full mx-auto calendar-admin-override"
                     modifiers={{
                       nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.map(h => parseISO(h.date)),
+                      customHoliday: customHolidays.filter(h => h.date).map(h => parseISO(h.date)),
                       approvedVacation: approvedVacations.map(v => {
                         const dates = [];
                         const start = parseISO(v.startDate);
@@ -1016,37 +1023,53 @@ export default function AdminDashboard() {
                 <div className="space-y-3">
                   {allHolidays
                     .filter(holiday => {
-                      const holidayDate = parseISO(holiday.date);
-                      const today = new Date();
-                      return holidayDate > today;
+                      if (!holiday.date) return false;
+                      try {
+                        const holidayDate = parseISO(holiday.date);
+                        const today = new Date();
+                        return holidayDate > today;
+                      } catch (error) {
+                        return false;
+                      }
                     })
-                    .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+                    .sort((a, b) => {
+                      try {
+                        return parseISO(a.date).getTime() - parseISO(b.date).getTime();
+                      } catch (error) {
+                        return 0;
+                      }
+                    })
                     .slice(0, 4)
                     .map((holiday, idx) => {
-                      const holidayDate = parseISO(holiday.date);
-                      const isCustom = holiday.type === 'custom';
+                      if (!holiday.date) return null;
+                      try {
+                        const holidayDate = parseISO(holiday.date);
+                        const isCustom = holiday.type === 'custom';
                       
-                      return (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
-                          <div className={`w-3 h-3 rounded-full ${
-                            isCustom ? 'bg-orange-500' : 'bg-red-500'
-                          }`}></div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {holiday.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
-                              {isCustom && (
-                                <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                                  Personalizado
-                                </span>
-                              )}
-                            </p>
+                        return (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                            <div className={`w-3 h-3 rounded-full ${
+                              isCustom ? 'bg-orange-500' : 'bg-red-500'
+                            }`}></div>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {holiday.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
+                                {isCustom && (
+                                  <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                                    Personalizado
+                                  </span>
+                                )}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      } catch (error) {
+                        return null;
+                      }
+                    }).filter(Boolean)}
                 </div>
               </div>
             </CardContent>
