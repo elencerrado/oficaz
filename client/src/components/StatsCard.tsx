@@ -69,7 +69,7 @@ export default function StatsCard({
         isActive 
           ? `${config.activeBorder} ${config.activeBg} shadow-md` 
           : `${config.hover}`
-      } mb-4 ${className}`}
+      } mb-4 min-w-[120px] sm:min-w-0 flex-shrink-0 ${className}`}
       onClick={onClick}
     >
       <CardContent className="p-3 h-24 sm:h-20 flex flex-col items-center text-center overflow-hidden">
