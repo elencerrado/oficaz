@@ -83,20 +83,18 @@ export function CustomCalendar({
   };
 
   const isApprovedVacation = (date: Date) => {
-    const dateString = format(date, 'yyyy-MM-dd');
     return approvedVacations.some(v => {
-      const startDateStr = v.startDate.split('T')[0];
-      const endDateStr = v.endDate.split('T')[0];
-      return dateString >= startDateStr && dateString <= endDateStr;
+      const start = parseISO(v.startDate);
+      const end = parseISO(v.endDate);
+      return date >= start && date <= end;
     });
   };
 
   const isPendingVacation = (date: Date) => {
-    const dateString = format(date, 'yyyy-MM-dd');
     return pendingVacations.some(v => {
-      const startDateStr = v.startDate.split('T')[0];
-      const endDateStr = v.endDate.split('T')[0];
-      return dateString >= startDateStr && dateString <= endDateStr;
+      const start = parseISO(v.startDate);
+      const end = parseISO(v.endDate);
+      return date >= start && date <= end;
     });
   };
 
