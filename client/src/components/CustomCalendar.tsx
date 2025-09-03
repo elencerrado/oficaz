@@ -303,49 +303,50 @@ export function CustomCalendar({
                 <button
                   onClick={() => onDateSelect(date)}
                   className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center
-                    ${rangePosition === 'single' ? 'rounded-full' : 
+                    ${isTodayDate ? 'rounded-full' : 
+                      rangePosition === 'single' ? 'rounded-full' : 
                       rangePosition === 'first' ? 'rounded-l-full rounded-r-none' :
                       rangePosition === 'last' ? 'rounded-r-full rounded-l-none' :
                       rangePosition === 'middle' ? 'rounded-none' : 'rounded-full'}`}
                 >
                   {format(date, 'd')}
                   
-                  {/* Today always gets a white circle, regardless of events */}
+                  {/* Today always gets a white circle, regardless of events - behind other elements */}
                   {isTodayDate && (
-                    <div className="absolute inset-0 rounded-full border-2 border-gray-300 dark:border-gray-600 pointer-events-none"></div>
+                    <div className="absolute inset-0 rounded-full border-2 border-gray-300 dark:border-gray-600 pointer-events-none z-0"></div>
                   )}
                   
-                  {/* Worm effect borders and lines - but NOT for today */}
-                  {hasSpecialEvent && rangePosition !== 'none' && !isTodayDate && (
+                  {/* Worm effect borders and lines - ON TOP of today circle and picker */}
+                  {hasSpecialEvent && rangePosition !== 'none' && (
                     <>
                       {/* Top and bottom lines for middle days */}
                       {rangePosition === 'middle' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor} z-20`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor} z-20`}></div>
                         </>
                       )}
                       
                       {/* Border for single days (normal circle) */}
                       {rangePosition === 'single' && (
-                        <div className={`absolute inset-0 rounded-full border-2 border-${eventColor} pointer-events-none`}></div>
+                        <div className={`absolute inset-0 rounded-full border-2 border-${eventColor} pointer-events-none z-20`}></div>
                       )}
                       
                       {/* First day: C shape with curvature but no right border */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
+                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
+                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none z-20`}></div>
                         </>
                       )}
                       
                       {/* Last day: Inverted C shape with curvature but no left border */}
                       {rangePosition === 'last' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor} z-20`}></div>
+                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor} z-20`}></div>
+                          <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none z-20`}></div>
                         </>
                       )}
                     </>
@@ -353,7 +354,7 @@ export function CustomCalendar({
                   
                   {/* Show simple overlay for selected days or non-range special days (but not today) */}
                   {((selectedDate && isSameDay(date, selectedDate)) || (hasSpecialEvent && rangePosition === 'none' && !isTodayDate)) && (
-                    <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
+                    <div className={`absolute inset-0 rounded-full border-2 pointer-events-none z-10 ${
                       selectedDate && isSameDay(date, selectedDate) ? 'border-blue-500' :
                       holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
                       isApproved ? 'border-green-500' :
