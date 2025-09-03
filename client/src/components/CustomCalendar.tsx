@@ -235,10 +235,10 @@ export function CustomCalendar({
       </div>
 
       {/* Week days header - now with connector columns */}
-      <div className="grid mb-2" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr', gap: '0.125rem' }}>
+      <div className="grid mb-2" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr' }}>
         {weekDays.map((day, index) => (
           <>
-            <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
+            <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase col-span-2">
               {day}
             </div>
             {index < 6 && <div key={`spacer-${index}`} className="h-8"></div>}
@@ -247,7 +247,7 @@ export function CustomCalendar({
       </div>
 
       {/* Calendar grid - with connector columns */}
-      <div className="grid relative" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr', gap: '0.125rem' }}>
+      <div className="grid relative" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr' }}>
 
 
         {/* Calendar days and connectors */}
@@ -268,12 +268,12 @@ export function CustomCalendar({
             
             const elements = [];
             
-            // Add the day button
+            // Add the day button (spans 2 columns)
             elements.push(
               <button
                 key={`day-${date.toISOString()}`}
                 onClick={() => onDateSelect(date)}
-                className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
+                className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10 col-span-2`}
               >
                 {format(date, 'd')}
                 
@@ -319,7 +319,7 @@ export function CustomCalendar({
               elements.push(
                 <div 
                   key={`connector-${date.toISOString()}`}
-                  className="flex items-center justify-center h-9"
+                  className="flex items-center justify-center h-9 w-full"
                 >
                   {shouldShowConnection && (
                     <div className={`w-full h-px ${connectionColor}`}></div>
