@@ -6,7 +6,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
+import { CustomCalendar } from '@/components/CustomCalendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { 
@@ -122,10 +122,8 @@ export default function AdminDashboard() {
   };
 
   // Función para manejar clics en días del calendario
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-    }
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
   };
 
   // Update current time every second
@@ -918,40 +916,14 @@ export default function AdminDashboard() {
               {/* Calendar - Simple and Compact */}
               <div className="bg-card rounded-lg border border-border shadow-sm">
                 <div className="p-4">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={handleDateSelect}
-                    locale={es}
-                    className="w-full mx-auto calendar-admin-override"
-                    modifiers={{
-                      nationalHoliday: nationalHolidays.map(h => parseISO(h.date)),
-                      customHoliday: customHolidays.filter(h => h.date).map(h => parseISO(h.date)),
-                      approvedVacation: approvedVacations.map(v => {
-                        const dates = [];
-                        const start = parseISO(v.startDate);
-                        const end = parseISO(v.endDate);
-                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-                          dates.push(new Date(date));
-                        }
-                        return dates;
-                      }).flat(),
-                      pendingVacation: pendingVacations.map(v => {
-                        const dates = [];
-                        const start = parseISO(v.startDate);
-                        const end = parseISO(v.endDate);
-                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
-                          dates.push(new Date(date));
-                        }
-                        return dates;
-                      }).flat()
-                    }}
-                    modifiersClassNames={{
-                      nationalHoliday: 'national-holiday-day',
-                      customHoliday: 'custom-holiday-day',
-                      approvedVacation: 'approved-vacation-day',
-                      pendingVacation: 'pending-vacation-day'
-                    }}
+                  <CustomCalendar
+                    selectedDate={selectedDate}
+                    onDateSelect={handleDateSelect}
+                    nationalHolidays={nationalHolidays}
+                    customHolidays={customHolidays.filter(h => h.date)}
+                    approvedVacations={approvedVacations}
+                    pendingVacations={pendingVacations}
+                    className="w-full mx-auto"
                   />
                 </div>
 
