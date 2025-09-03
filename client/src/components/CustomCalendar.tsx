@@ -350,7 +350,7 @@ export function CustomCalendar({
                         <>
                           <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
                           <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none z-20`}></div>
+                          <div className={`absolute inset-0 rounded-l-full border-l-4 border-t-4 border-b-4 border-${eventColor} pointer-events-none z-20`}></div>
                         </>
                       )}
                       
