@@ -20,6 +20,7 @@ import StatsCard from "@/components/StatsCard";
 import { useAuth } from "@/hooks/use-auth";
 import { TabNavigation } from "@/components/ui/tab-navigation";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { CustomCalendar } from "@/components/CustomCalendar";
 
 interface VacationRequest {
   id: number;
@@ -73,7 +74,7 @@ const regions = [
 
 export default function VacationManagement() {
   const { company } = useAuth();
-  const [activeTab, setActiveTab] = useState("employees");
+  const [activeTab, setActiveTab] = useState("calendar");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -722,6 +723,7 @@ export default function VacationManagement() {
       {/* Tabs Navigation */}
       <TabNavigation
         tabs={[
+          { id: 'calendar', label: 'Calendario', icon: Calendar },
           { id: 'employees', label: 'Timeline de Vacaciones', icon: Users },
           { id: 'requests', label: 'Solicitudes', icon: Clock },
           { id: 'holidays', label: 'Días Festivos', icon: CalendarDays }
@@ -731,6 +733,107 @@ export default function VacationManagement() {
       />
       {/* Content based on active tab */}
       <div>
+          {activeTab === 'calendar' && (
+            <div className="space-y-6">
+              {/* Información del calendario */}
+              <div className="bg-card rounded-lg border border-border p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">Vista Calendario</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Visualiza todas las vacaciones, días festivos y fechas importantes en formato calendario.
+                </p>
+                
+                {/* Contenedor principal con el calendario */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Calendario principal */}
+                  <div className="lg:col-span-2">
+                    <CustomCalendar
+                      vacationDays={vacationRequests
+                        .filter(req => req.status === 'approved')
+                        .flatMap(req => {
+                          if (!req.startDate || !req.endDate) return [];
+                          return eachDayOfInterval({
+                            start: parseISO(req.startDate),
+                            end: parseISO(req.endDate)
+                          });
+                        })}
+                      pendingVacationDays={vacationRequests
+                        .filter(req => req.status === 'pending')
+                        .flatMap(req => {
+                          if (!req.startDate || !req.endDate) return [];
+                          return eachDayOfInterval({
+                            start: parseISO(req.startDate),
+                            end: parseISO(req.endDate)
+                          });
+                        })}
+                      holidays={[
+                        ...spanishHolidays2025.map(h => ({
+                          date: parseISO(h.date),
+                          name: h.name,
+                          type: h.type as 'national' | 'regional' | 'custom'
+                        })),
+                        ...(customHolidays || []).map(h => ({
+                          date: parseISO(h.date),
+                          name: h.name,
+                          type: h.type as 'national' | 'regional' | 'custom'
+                        }))
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* Panel lateral con información */}
+                  <div className="space-y-4">
+                    {/* Próximas vacaciones */}
+                    <div className="bg-muted/20 rounded-lg p-4">
+                      <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                        <Plane className="w-4 h-4" />
+                        Próximas Vacaciones
+                      </h4>
+                      <div className="space-y-2">
+                        {vacationRequests
+                          .filter(req => req.status === 'approved' && req.startDate && new Date(req.startDate) > new Date())
+                          .slice(0, 3)
+                          .map(req => (
+                            <div key={req.id} className="text-sm">
+                              <div className="font-medium text-foreground">{req.user?.fullName}</div>
+                              <div className="text-muted-foreground">
+                                {req.startDate && format(parseISO(req.startDate), "dd MMM", { locale: es })} - 
+                                {req.endDate && format(parseISO(req.endDate), "dd MMM", { locale: es })}
+                              </div>
+                            </div>
+                          ))}
+                        {vacationRequests.filter(req => req.status === 'approved' && req.startDate && new Date(req.startDate) > new Date()).length === 0 && (
+                          <p className="text-sm text-muted-foreground">No hay vacaciones programadas</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Próximos festivos */}
+                    <div className="bg-muted/20 rounded-lg p-4">
+                      <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                        <CalendarDays className="w-4 h-4" />
+                        Próximos Festivos
+                      </h4>
+                      <div className="space-y-2">
+                        {[...spanishHolidays2025, ...(customHolidays || [])]
+                          .filter(h => new Date(h.date) > new Date())
+                          .slice(0, 3)
+                          .map(holiday => (
+                            <div key={holiday.name} className="text-sm">
+                              <div className="font-medium text-foreground">{holiday.name}</div>
+                              <div className="text-muted-foreground">
+                                {format(parseISO(holiday.date), "dd MMM yyyy", { locale: es })}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'requests' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
