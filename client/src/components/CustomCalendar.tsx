@@ -103,56 +103,14 @@ export function CustomCalendar({
       borderColor: string;
     }> = [];
 
-    // Group custom holidays by name and find consecutive date ranges
-    const customHolidayGroups: { [key: string]: Date[] } = {};
+    // Process custom holidays directly as ranges
     customHolidays.forEach(holiday => {
       const start = parseISO(holiday.startDate);
       const end = parseISO(holiday.endDate);
       
-      if (!customHolidayGroups[holiday.name]) {
-        customHolidayGroups[holiday.name] = [];
-      }
-      
-      // Add all dates in the range
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        customHolidayGroups[holiday.name].push(new Date(d));
-      }
-    });
-
-    // Process custom holiday groups to find consecutive ranges
-    Object.entries(customHolidayGroups).forEach(([name, dates]) => {
-      // Sort dates
-      dates.sort((a, b) => a.getTime() - b.getTime());
-      
-      // Group consecutive dates
-      let rangeStart = dates[0];
-      let rangeEnd = dates[0];
-      
-      for (let i = 1; i < dates.length; i++) {
-        const prevDate = dates[i - 1];
-        const currentDate = dates[i];
-        
-        // Check if dates are consecutive (1 day apart)
-        if (currentDate.getTime() - prevDate.getTime() === 24 * 60 * 60 * 1000) {
-          rangeEnd = currentDate;
-        } else {
-          // End of consecutive range, add it
-          ranges.push({
-            startDate: rangeStart,
-            endDate: rangeEnd,
-            type: 'custom',
-            borderColor: 'border-orange-500'
-          });
-          
-          rangeStart = currentDate;
-          rangeEnd = currentDate;
-        }
-      }
-      
-      // Add the final range
       ranges.push({
-        startDate: rangeStart,
-        endDate: rangeEnd,
+        startDate: start,
+        endDate: end,
         type: 'custom',
         borderColor: 'border-orange-500'
       });
