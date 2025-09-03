@@ -291,7 +291,7 @@ export default function EmployeesSimple() {
     return matchesSearch && matchesStatus;
   });
 
-  const totalUsers = (employeeList || []).filter((employee: any) => employee.role !== 'admin').length;
+  const totalUsers = (employeeList || []).length;
 
   // Function to handle opening edit modal
   const handleEditEmployee = (employee: any) => {
