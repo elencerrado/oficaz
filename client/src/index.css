@@ -199,114 +199,73 @@ div.rdp button.rdp-day_today[style] {
   box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
 }
 
-/* Estilos para días festivos y vacaciones - máxima especificidad */
-body .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
-  background-color: transparent !important;
-  color: #dc2626 !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  border: 2px solid #dc2626 !important;
+/* ========================================
+   CALENDAR STYLES - CLEAN AND ORGANIZED
+   ======================================== */
+
+/* Base calendar setup */
+.calendar-admin-override {
+  /* Remove all default backgrounds */
 }
 
-body .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
-  background-color: transparent !important;
-  color: #d97706 !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  border: 2px solid #d97706 !important;
+.calendar-admin-override .rdp-button_reset,
+.calendar-admin-override .rdp-day {
+  background: transparent !important;
 }
 
-body .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
-  background-color: transparent !important;
-  color: #059669 !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  border: 2px solid #059669 !important;
+/* Opacity for non-today days */
+.calendar-admin-override button:not(.rdp-day_today):not(.rdp-day_selected):not([aria-pressed="true"]) {
+  opacity: 0.6 !important;
 }
 
-body .calendar-admin-override .pending-vacation-day:not(.rdp-day_today) {
-  background-color: transparent !important;
-  color: #f59e0b !important;
-  font-weight: 700 !important;
-  border-radius: 50% !important;
-  border: 2px dashed #f59e0b !important;
-}
-
-/* Modo oscuro para días festivos y vacaciones */
-body .dark .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
-  background-color: #991b1b !important;
-  color: #fca5a5 !important;
-}
-
-body .dark .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
-  background-color: #92400e !important;
-  color: #fdba74 !important;
-}
-
-body .dark .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
-  background-color: #4b5563 !important;
-  color: #d1d5db !important;
-}
-
-/* Días pasados con opacidad reducida - fuerza máxima especificidad */
-body .calendar-admin-override .rdp-day_outside,
-body .calendar-admin-override .rdp-day_disabled {
+/* Disabled days */
+.calendar-admin-override .rdp-day_outside,
+.calendar-admin-override .rdp-day_disabled {
   opacity: 0.4 !important;
   pointer-events: none !important;
 }
 
-/* Días que no son hoy - reducir opacidad */
-body .calendar-admin-override button:not(.rdp-day_today) {
-  opacity: 0.6 !important;
-}
-
-/* Día seleccionado con bordes redondeados - máxima especificidad */
-body .calendar-admin-override .rdp-day_selected,
-body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
-  background-color: #3b82f6 !important;
-  color: white !important;
-  border-radius: 50% !important;
-  border: 3px solid #1d4ed8 !important;
+/* HOLIDAY STYLES - Circle border, no fill */
+.calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
+  background: transparent !important;
+  color: #dc2626 !important;
   font-weight: 700 !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+  border: 2px solid #dc2626 !important;
+  border-radius: 50% !important;
   opacity: 1 !important;
 }
 
-/* Eliminar fondos por defecto del calendario - máxima especificidad */
-body .calendar-admin-override .rdp-day_selected::before,
-body .calendar-admin-override button[aria-pressed="true"]::before,
-body .calendar-admin-override .rdp-day_selected::after,
-body .calendar-admin-override button[aria-pressed="true"]::after {
-  display: none !important;
-}
-
-/* Asegurar que no haya fondos grises en días seleccionados */
-body .calendar-admin-override .rdp-day_selected {
-  background: #3b82f6 !important;
-}
-
-body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
-  background: #3b82f6 !important;
-}
-
-/* Eliminar estilos por defecto de react-day-picker - SOLO para días normales */
-.calendar-admin-override .rdp-button_reset:not(.rdp-day_selected):not([aria-pressed="true"]) {
+.calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
   background: transparent !important;
+  color: #d97706 !important;
+  font-weight: 700 !important;
+  border: 2px solid #d97706 !important;
+  border-radius: 50% !important;
+  opacity: 1 !important;
 }
 
-.calendar-admin-override .rdp-day:not(.rdp-day_selected):not([aria-pressed="true"]) {
+/* VACATION STYLES - Circle border, no fill */
+.calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
   background: transparent !important;
+  color: #059669 !important;
+  font-weight: 700 !important;
+  border: 2px solid #059669 !important;
+  border-radius: 50% !important;
+  opacity: 1 !important;
 }
 
-/* MÁXIMA ESPECIFICIDAD PARA DÍA SELECCIONADO */
-html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button.rdp-day_selected,
-html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button[aria-pressed="true"]:not(.rdp-day_today),
-html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button.rdp-day[aria-pressed="true"],
-html body .calendar-admin-override .rdp-day_selected,
-html body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today),
-html body .calendar-admin-override button.rdp-day_selected {
-  background-color: #3b82f6 !important;
+.calendar-admin-override .pending-vacation-day:not(.rdp-day_today) {
+  background: transparent !important;
+  color: #f59e0b !important;
+  font-weight: 700 !important;
+  border: 2px dashed #f59e0b !important;
+  border-radius: 50% !important;
+  opacity: 1 !important;
+}
+
+/* SELECTED DAY - Blue filled circle */
+.calendar-admin-override .rdp-day_selected:not(.rdp-day_today),
+.calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day) {
   background: #3b82f6 !important;
   color: white !important;
   border: 3px solid #1d4ed8 !important;
@@ -315,87 +274,58 @@ html body .calendar-admin-override button.rdp-day_selected {
   transform: scale(1.05) !important;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
   opacity: 1 !important;
+  z-index: 10 !important;
   position: relative !important;
-  z-index: 100 !important;
 }
 
-body .dark .calendar-admin-override .rdp-day_selected,
-body .dark .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
-  background-color: #2563eb !important;
+/* TODAY DAY STYLES - Higher priority than selected */
+.calendar-admin-override .rdp-day_today {
+  background: #3b82f6 !important;
   color: white !important;
+  border: 3px solid #1d4ed8 !important;
+  border-radius: 50% !important;
+  font-weight: 900 !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  opacity: 1 !important;
+  z-index: 20 !important;
+  position: relative !important;
+}
+
+/* Dark mode for today */
+.dark .calendar-admin-override .rdp-day_today {
+  background: #2563eb !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Dark mode for holidays and vacations */
+.dark .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
+  color: #fca5a5 !important;
+  border-color: #dc2626 !important;
+}
+
+.dark .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
+  color: #fdba74 !important;
+  border-color: #d97706 !important;
+}
+
+.dark .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
+  color: #6ee7b7 !important;
+  border-color: #059669 !important;
+}
+
+.dark .calendar-admin-override .pending-vacation-day:not(.rdp-day_today) {
+  color: #fde68a !important;
+  border-color: #f59e0b !important;
+}
+
+/* Dark mode for selected day */
+.dark .calendar-admin-override .rdp-day_selected:not(.rdp-day_today),
+.dark .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day) {
+  background: #2563eb !important;
   border-color: #60a5fa !important;
   box-shadow: 0 0 8px rgba(37, 99, 235, 0.4) !important;
-}
-
-/* DÍA DE HOY - ESPECIFICIDAD ABSOLUTA ULTRA ALTA */
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.national-holiday-day,
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.custom-holiday-day,
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.approved-vacation-day,
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today,
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-pressed="true"],
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-selected="true"],
-html body .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[style] {
-  background-color: #3b82f6 !important;
-  background: #3b82f6 !important;
-  color: white !important;
-  border: 3px solid #1d4ed8 !important;
-  border-radius: 50% !important;
-  font-weight: 900 !important;
-  position: relative !important;
-  z-index: 99999 !important;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  transform: scale(1.1) !important;
-  opacity: 1 !important;
-}
-
-/* Modo oscuro para día de hoy con especificidad ultra alta */
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.national-holiday-day,
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.custom-holiday-day,
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today.approved-vacation-day,
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today,
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-pressed="true"],
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[aria-selected="true"],
-html body .dark .calendar-admin-override div.rdp .rdp-months .rdp-month .rdp-table .rdp-tbody .rdp-row .rdp-cell button.rdp-day_today[style] {
-  background-color: #2563eb !important;
-  background: #2563eb !important;
-  color: white !important;
-  border: 3px solid #60a5fa !important;
-  border-radius: 50% !important;
-  font-weight: 900 !important;
-  box-shadow: 0 0 12px rgba(37, 99, 235, 0.8), 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
-  transform: scale(1.1) !important;
-  opacity: 1 !important;
-}
-
-/* Día de hoy cuando está seleccionado también - máxima especificidad */
-body .calendar-admin-override .rdp-day_today.rdp-day_selected,
-body .calendar-admin-override button.rdp-day_today[aria-pressed="true"],
-body .calendar-admin-override button.rdp-day_today[aria-selected="true"] {
-  background-color: #3b82f6 !important;
-  background: #3b82f6 !important;
-  color: white !important;
-  border: 3px solid #1d4ed8 !important;
-  border-radius: 50% !important;
-  font-weight: 900 !important;
-  transform: scale(1.1) !important;
-  opacity: 1 !important;
-}
-
-/* FORZAR CÍRCULO AZUL PARA DÍA SELECCIONADO - ESPECIFICIDAD EXTREMA */
-html body div.calendar-admin-override div.rdp button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day),
-html body div.calendar-admin-override div.rdp button.rdp-day_selected:not(.rdp-day_today),
-html body div.calendar-admin-override div.rdp button[aria-selected="true"]:not(.rdp-day_today) {
-  background: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  border: 3px solid #1d4ed8 !important;
-  border-radius: 50% !important;
-  font-weight: 700 !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
-  opacity: 1 !important;
-  position: relative !important;
-  z-index: 999 !important;
 }
 
 /* Hero Icons Grid - Optimized CSS Performance */
