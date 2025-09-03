@@ -172,7 +172,7 @@ export function CustomCalendar({
     }
     
     if (isTodayDate) {
-      return 'bg-white dark:bg-white border-2 border-gray-400 dark:border-gray-500';
+      return 'bg-white dark:bg-white';
     }
 
     return 'bg-transparent';
