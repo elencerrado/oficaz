@@ -361,33 +361,38 @@ export function CustomCalendar({
                       {(rangePosition === 'first' || format(date, 'yyyy-MM-dd') === '2025-09-05') && (
                         <>
                           <div 
-                            className="absolute top-0 left-1/2 right-0 h-0.5 z-20"
                             style={{
-                              backgroundColor: eventColor === 'red-500' ? '#ef4444' :
-                                             eventColor === 'orange-500' ? '#f97316' :
-                                             eventColor === 'green-500' ? '#22c55e' : '#eab308'
+                              position: 'absolute',
+                              top: 0,
+                              left: '50%',
+                              right: 0,
+                              height: '2px',
+                              backgroundColor: '#f97316',
+                              zIndex: 20
                             }}
                           ></div>
                           <div 
-                            className="absolute bottom-0 left-1/2 right-0 h-0.5 z-20"
                             style={{
-                              backgroundColor: eventColor === 'red-500' ? '#ef4444' :
-                                             eventColor === 'orange-500' ? '#f97316' :
-                                             eventColor === 'green-500' ? '#22c55e' : '#eab308'
+                              position: 'absolute',
+                              bottom: 0,
+                              left: '50%',
+                              right: 0,
+                              height: '2px',
+                              backgroundColor: '#f97316',
+                              zIndex: 20
                             }}
                           ></div>
                           <div 
-                            className="absolute inset-0 rounded-l-full pointer-events-none z-20"
                             style={{
-                              borderLeft: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
-                                                         eventColor === 'orange-500' ? '#f97316' :
-                                                         eventColor === 'green-500' ? '#22c55e' : '#eab308'),
-                              borderTop: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
-                                                        eventColor === 'orange-500' ? '#f97316' :
-                                                        eventColor === 'green-500' ? '#22c55e' : '#eab308'),
-                              borderBottom: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
-                                                           eventColor === 'orange-500' ? '#f97316' :
-                                                           eventColor === 'green-500' ? '#22c55e' : '#eab308')
+                              position: 'absolute',
+                              inset: 0,
+                              borderLeft: '2px solid #f97316',
+                              borderTop: '2px solid #f97316',
+                              borderBottom: '2px solid #f97316',
+                              borderTopLeftRadius: '50%',
+                              borderBottomLeftRadius: '50%',
+                              pointerEvents: 'none',
+                              zIndex: 20
                             }}
                           ></div>
                         </>
