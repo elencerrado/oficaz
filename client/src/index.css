@@ -204,20 +204,32 @@ body .calendar-admin-override .national-holiday-day:not(.rdp-day_today) {
   background-color: #fee2e2 !important;
   color: #dc2626 !important;
   font-weight: 600 !important;
-  border-radius: 6px !important;
+  border-radius: 50% !important;
+  border: 2px solid #dc2626 !important;
 }
 
 body .calendar-admin-override .custom-holiday-day:not(.rdp-day_today) {
   background-color: #fed7aa !important;
   color: #d97706 !important;
   font-weight: 600 !important;
-  border-radius: 6px !important;
+  border-radius: 50% !important;
+  border: 2px solid #d97706 !important;
 }
 
 body .calendar-admin-override .approved-vacation-day:not(.rdp-day_today) {
   background-color: #e5e7eb !important;
   color: #374151 !important;
   font-weight: 600 !important;
+  border-radius: 50% !important;
+  border: 2px solid #6b7280 !important;
+}
+
+body .calendar-admin-override .pending-vacation-day:not(.rdp-day_today) {
+  background-color: #fef3c7 !important;
+  color: #d97706 !important;
+  font-weight: 600 !important;
+  border-radius: 50% !important;
+  border: 2px dashed #d97706 !important;
   border-radius: 6px !important;
 }
 

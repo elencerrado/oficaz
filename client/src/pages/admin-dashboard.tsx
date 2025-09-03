@@ -935,12 +935,22 @@ export default function AdminDashboard() {
                           dates.push(new Date(date));
                         }
                         return dates;
+                      }).flat(),
+                      pendingVacation: pendingVacations.map(v => {
+                        const dates = [];
+                        const start = parseISO(v.startDate);
+                        const end = parseISO(v.endDate);
+                        for (let date = start; date <= end; date.setDate(date.getDate() + 1)) {
+                          dates.push(new Date(date));
+                        }
+                        return dates;
                       }).flat()
                     }}
                     modifiersClassNames={{
                       nationalHoliday: 'national-holiday-day',
                       customHoliday: 'custom-holiday-day',
-                      approvedVacation: 'approved-vacation-day'
+                      approvedVacation: 'approved-vacation-day',
+                      pendingVacation: 'pending-vacation-day'
                     }}
                   />
                 </div>
