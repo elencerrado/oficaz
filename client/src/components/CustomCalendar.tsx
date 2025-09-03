@@ -295,6 +295,20 @@ export function CustomCalendar({
                 }
                 
                 const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+                
+                // Debug for September 5th
+                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+                  console.log('Sept 5 Range Debug:', {
+                    date: format(date, 'yyyy-MM-dd'),
+                    currentRange: currentRange.name,
+                    rangeDatesCount: rangeDates.length,
+                    rangeDates: rangeDates.map(d => format(d, 'yyyy-MM-dd')),
+                    currentIndex,
+                    startDate: format(currentRange.startDate, 'yyyy-MM-dd'),
+                    endDate: format(currentRange.endDate, 'yyyy-MM-dd')
+                  });
+                }
+                
                 if (rangeDates.length === 1) {
                   rangePosition = 'single';
                 } else if (currentIndex === 0) {
@@ -303,6 +317,16 @@ export function CustomCalendar({
                   rangePosition = 'last';
                 } else {
                   rangePosition = 'middle';
+                }
+                
+                // Debug for September 5th position
+                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+                  console.log('Sept 5 Position:', rangePosition);
+                }
+              } else {
+                // Debug when no range found
+                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+                  console.log('Sept 5 NO RANGE FOUND, hasSpecialEvent:', hasSpecialEvent, 'consecutiveDayRanges:', consecutiveDayRanges);
                 }
               }
             }
