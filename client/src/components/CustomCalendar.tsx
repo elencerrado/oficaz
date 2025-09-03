@@ -235,7 +235,7 @@ export function CustomCalendar({
       </div>
 
       {/* Week days header - with connector spaces */}
-      <div className="grid mb-2" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr' }}>
+      <div className="grid mb-2" style={{ gridTemplateColumns: '2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem' }}>
         {weekDays.map((day, index) => (
           <>
             <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
@@ -247,7 +247,7 @@ export function CustomCalendar({
       </div>
 
       {/* Calendar grid - with connector columns */}
-      <div className="grid relative" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr' }}>
+      <div className="grid relative" style={{ gridTemplateColumns: '2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem' }}>
 
 
         {/* Calendar days and connectors in alternating pattern */}
@@ -268,9 +268,9 @@ export function CustomCalendar({
             
             const elements = [];
             
-            // Add the day button (centered in its column)
+            // Add the day button (fixed width column)
             elements.push(
-              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9">
+              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9">
                 <button
                   onClick={() => onDateSelect(date)}
                   className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10 w-9 h-9`}
