@@ -273,6 +273,41 @@ body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
   opacity: 1 !important;
 }
 
+/* Eliminar fondos por defecto del calendario - máxima especificidad */
+body .calendar-admin-override .rdp-day_selected::before,
+body .calendar-admin-override button[aria-pressed="true"]::before,
+body .calendar-admin-override .rdp-day_selected::after,
+body .calendar-admin-override button[aria-pressed="true"]::after {
+  display: none !important;
+}
+
+/* Asegurar que no haya fondos grises en días seleccionados */
+body .calendar-admin-override .rdp-day_selected {
+  background: #3b82f6 !important;
+}
+
+body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
+  background: #3b82f6 !important;
+}
+
+/* Eliminar estilos por defecto de react-day-picker */
+.calendar-admin-override .rdp-button_reset {
+  background: transparent !important;
+}
+
+.calendar-admin-override .rdp-day {
+  background: transparent !important;
+}
+
+/* Estilos ultra-específicos para día seleccionado */
+html body .calendar-admin-override .rdp-day_selected,
+html body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today),
+html body .calendar-admin-override button.rdp-day_selected {
+  background-color: #3b82f6 !important;
+  background: #3b82f6 !important;
+  border-radius: 50% !important;
+}
+
 body .dark .calendar-admin-override .rdp-day_selected,
 body .dark .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
   background-color: #2563eb !important;
