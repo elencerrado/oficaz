@@ -324,21 +324,25 @@ export function CustomCalendar({
                         <div className={`absolute inset-0 rounded-full border-2 border-${eventColor} pointer-events-none`}></div>
                       )}
                       
-                      {/* First day: connecting lines with border effect */}
+                      {/* First day: C shape without right border */}
                       {rangePosition === 'first' && (
                         <>
                           <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
                           <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 left-0 bottom-0 w-0.5 bg-${eventColor} rounded-l-full`}></div>
+                          <div className={`absolute top-0 left-0 w-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 w-1/2 h-0.5 bg-${eventColor}`}></div>
                         </>
                       )}
                       
-                      {/* Last day: connecting lines with border effect */}
+                      {/* Last day: Inverted C shape without left border */}
                       {rangePosition === 'last' && (
                         <>
                           <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
                           <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-r-full border-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 right-0 bottom-0 w-0.5 bg-${eventColor} rounded-r-full`}></div>
+                          <div className={`absolute top-0 right-0 w-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 right-0 w-1/2 h-0.5 bg-${eventColor}`}></div>
                         </>
                       )}
                     </>
