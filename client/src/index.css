@@ -300,13 +300,16 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* SELECTED DAY - Blue filled circle NO BORDER */
-.calendar-admin-override .rdp-day_selected:not(.rdp-day_today),
-.calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day),
-.calendar-admin-override button[aria-selected="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day),
-.calendar-admin-override .rdp-day[aria-pressed="true"]:not(.rdp-day_today),
-.calendar-admin-override .rdp-day[aria-selected="true"]:not(.rdp-day_today) {
+/* SELECTED DAY - ULTIMATE OVERRIDE */
+.calendar-admin-override button[aria-pressed="true"],
+.calendar-admin-override button[aria-selected="true"],
+.calendar-admin-override .rdp-day_selected,
+.calendar-admin-override .rdp-day[aria-pressed="true"],
+.calendar-admin-override .rdp-day[aria-selected="true"],
+.calendar-admin-override [role="gridcell"] button[aria-pressed="true"],
+.calendar-admin-override td button[aria-pressed="true"] {
   background: #3b82f6 !important;
+  background-color: #3b82f6 !important;
   color: white !important;
   border: none !important;
   border-radius: 50% !important;
@@ -321,27 +324,51 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* REMOVE background squares completely */
-.calendar-admin-override button,
-.calendar-admin-override .rdp-day,
-.calendar-admin-override .rdp-button_reset {
+/* Force override ANY inline styles */
+.calendar-admin-override button[style],
+.calendar-admin-override .rdp-day[style] {
   background: transparent !important;
+  background-color: transparent !important;
   border: none !important;
   border-radius: 0 !important;
+}
+
+/* Override selected with inline styles */
+.calendar-admin-override button[aria-pressed="true"][style],
+.calendar-admin-override .rdp-day_selected[style] {
+  background: #3b82f6 !important;
+  background-color: #3b82f6 !important;
+  border: none !important;
+  border-radius: 50% !important;
+}
+
+/* NUCLEAR OPTION - DESTROY ALL BUTTON STYLES */
+.calendar-admin-override button {
+  all: unset !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   width: 40px !important;
   height: 40px !important;
   min-width: 40px !important;
   min-height: 40px !important;
-  box-shadow: none !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  user-select: none !important;
 }
 
-/* Remove any hover effects that add backgrounds */
-.calendar-admin-override button:hover,
-.calendar-admin-override .rdp-day:hover,
-.calendar-admin-override .rdp-button_reset:hover {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
+.calendar-admin-override .rdp-day,
+.calendar-admin-override .rdp-button_reset,
+.calendar-admin-override [role="gridcell"] button,
+.calendar-admin-override td button {
+  all: unset !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
 }
 
 /* Apply perfect circles ONLY when we want them - with proper spacing */
