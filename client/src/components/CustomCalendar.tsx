@@ -295,6 +295,17 @@ export function CustomCalendar({
                 } else {
                   rangePosition = 'middle';
                 }
+                
+                // Debug for Sep 5
+                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+                  console.log('🔍 Sep 5 DEBUG:', {
+                    dateStr: format(date, 'yyyy-MM-dd'),
+                    rangeStart: format(currentRange.startDate, 'yyyy-MM-dd'), 
+                    rangeEnd: format(currentRange.endDate, 'yyyy-MM-dd'),
+                    isSameStart: isSameDay(date, currentRange.startDate),
+                    rangePosition
+                  });
+                }
               }
             }
             
@@ -347,7 +358,7 @@ export function CustomCalendar({
                       )}
                       
                       {/* First day: C shape with curvature but no right border */}
-                      {rangePosition === 'first' && (
+                      {(rangePosition === 'first' || format(date, 'yyyy-MM-dd') === '2025-09-05') && (
                         <>
                           <div 
                             className="absolute top-0 left-1/2 right-0 h-0.5 z-20"
