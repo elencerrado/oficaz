@@ -149,7 +149,7 @@ export function CustomCalendar({
     if (isSelected) {
       baseClasses += ' text-white';
     } else if (isTodayDate) {
-      baseClasses += ' text-black dark:text-black';
+      baseClasses += ' !text-black dark:!text-black';
     } else if (holiday) {
       baseClasses += holiday.type === 'national' ? ' text-red-600 dark:text-red-400' : ' text-orange-600 dark:text-orange-400';
     } else if (isApproved) {
@@ -309,7 +309,9 @@ export function CustomCalendar({
                       rangePosition === 'last' ? 'rounded-r-full rounded-l-none' :
                       rangePosition === 'middle' ? 'rounded-none' : 'rounded-full'}`}
                 >
-                  {format(date, 'd')}
+                  <span className={`relative z-30 ${isTodayDate ? '!text-black dark:!text-black' : ''}`}>
+                    {format(date, 'd')}
+                  </span>
                   
                   {/* Today always gets a white circle, regardless of events - behind other elements */}
                   {isTodayDate && (
