@@ -308,7 +308,13 @@ export function CustomCalendar({
               
               {/* Connection line to next day */}
               {shouldShowConnection && (
-                <div className={`absolute left-full top-1/2 w-1 h-px ${connectionColor} -translate-y-1/2 z-0`}></div>
+                <div 
+                  className={`absolute top-1/2 h-px ${connectionColor} -translate-y-1/2 z-0`}
+                  style={{
+                    left: '100%',
+                    width: '0.25rem'
+                  }}
+                ></div>
               )}
             </div>
           );
