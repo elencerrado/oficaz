@@ -268,24 +268,25 @@ export function CustomCalendar({
             
             const elements = [];
             
-            // Add the day button
+            // Add the day button (centered in its column)
             elements.push(
-              <button
-                key={`day-${date.toISOString()}`}
-                onClick={() => onDateSelect(date)}
-                className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
-              >
-                {format(date, 'd')}
-                
-                {/* Overlay circle for special days (today or selected) */}
-                {(isTodayDate || (selectedDate && isSameDay(date, selectedDate))) && hasSpecialEvent && (
-                  <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
-                    holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
-                    isApproved ? 'border-green-500' :
-                    'border-yellow-500'
-                  }`}></div>
-                )}
-              </button>
+              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9">
+                <button
+                  onClick={() => onDateSelect(date)}
+                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
+                >
+                  {format(date, 'd')}
+                  
+                  {/* Overlay circle for special days (today or selected) */}
+                  {(isTodayDate || (selectedDate && isSameDay(date, selectedDate))) && hasSpecialEvent && (
+                    <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
+                      holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
+                      isApproved ? 'border-green-500' :
+                      'border-yellow-500'
+                    }`}></div>
+                  )}
+                </button>
+              </div>
             );
             
             // Add connector column (except for the last day of the week)
