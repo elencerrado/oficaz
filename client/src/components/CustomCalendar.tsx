@@ -235,7 +235,7 @@ export function CustomCalendar({
       </div>
 
       {/* Week days header - now with connector columns */}
-      <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: '1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr' }}>
+      <div className="grid mb-2" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr', gap: '0.125rem' }}>
         {weekDays.map((day, index) => (
           <>
             <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
@@ -247,7 +247,7 @@ export function CustomCalendar({
       </div>
 
       {/* Calendar grid - with connector columns */}
-      <div className="grid gap-1 relative" style={{ gridTemplateColumns: '1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr' }}>
+      <div className="grid relative" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr', gap: '0.125rem' }}>
 
 
         {/* Calendar days and connectors */}
@@ -319,9 +319,11 @@ export function CustomCalendar({
               elements.push(
                 <div 
                   key={`connector-${date.toISOString()}`}
-                  className={`flex items-center justify-center ${shouldShowConnection ? connectionColor : ''}`}
+                  className="flex items-center justify-center h-9"
                 >
-                  {shouldShowConnection && <div className="w-full h-0.5"></div>}
+                  {shouldShowConnection && (
+                    <div className={`w-full h-px ${connectionColor}`}></div>
+                  )}
                 </div>
               );
             }
