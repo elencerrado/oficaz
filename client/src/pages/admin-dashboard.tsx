@@ -386,7 +386,8 @@ export default function AdminDashboard() {
         for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
           expandedHolidays.push({
             ...h,
-            type: 'custom',
+            type: 'custom', // Display type for UI
+            originalType: h.type, // Preserve original DB type (regional, etc)
             date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
             isMultiDay: start.getTime() !== end.getTime(),
             originalStart: h.startDate,
@@ -481,7 +482,12 @@ export default function AdminDashboard() {
     // Check holidays
     const holiday = allHolidays.find(h => h.date === dateStr);
     if (holiday) {
-      events.push({ type: 'holiday', name: holiday.name });
+      events.push({ 
+        type: 'holiday', 
+        name: holiday.name, 
+        holidayType: holiday.type,
+        originalType: holiday.originalType || holiday.type // Keep original type from DB for regional holidays
+      });
     }
 
     // Check employee vacations (approved and pending)
@@ -965,7 +971,10 @@ export default function AdminDashboard() {
                               <div>
                                 <p className="text-sm font-medium text-foreground">{event.name}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {event.holidayType === 'custom' ? 'Día festivo personalizado' : 'Día festivo nacional'}
+                                  {event.holidayType === 'custom' 
+                                    ? (event.originalType === 'regional' ? 'Día festivo regional' : 'Día festivo personalizado')
+                                    : 'Día festivo nacional'
+                                  }
                                 </p>
                               </div>
                             </div>
@@ -1094,7 +1103,7 @@ export default function AdminDashboard() {
                                 )}
                                 {isCustom && (
                                   <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                                    Personalizado
+                                    {holiday.originalType === 'regional' ? 'Regional' : 'Personalizado'}
                                   </span>
                                 )}
                               </p>
