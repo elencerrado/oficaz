@@ -310,8 +310,13 @@ export function CustomCalendar({
                 >
                   {format(date, 'd')}
                   
-                  {/* Worm effect borders and lines */}
-                  {hasSpecialEvent && rangePosition !== 'none' && (
+                  {/* Today always gets a white circle, regardless of events */}
+                  {isTodayDate && (
+                    <div className="absolute inset-0 rounded-full border-2 border-gray-300 dark:border-gray-600 pointer-events-none"></div>
+                  )}
+                  
+                  {/* Worm effect borders and lines - but NOT for today */}
+                  {hasSpecialEvent && rangePosition !== 'none' && !isTodayDate && (
                     <>
                       {/* Top and bottom lines for middle days */}
                       {rangePosition === 'middle' && (
@@ -346,9 +351,10 @@ export function CustomCalendar({
                     </>
                   )}
                   
-                  {/* Show simple overlay for non-range special days or selected days */}
-                  {((selectedDate && isSameDay(date, selectedDate)) || (hasSpecialEvent && rangePosition === 'none')) && (
+                  {/* Show simple overlay for selected days or non-range special days (but not today) */}
+                  {((selectedDate && isSameDay(date, selectedDate)) || (hasSpecialEvent && rangePosition === 'none' && !isTodayDate)) && (
                     <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
+                      selectedDate && isSameDay(date, selectedDate) ? 'border-blue-500' :
                       holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
                       isApproved ? 'border-green-500' :
                       'border-yellow-500'

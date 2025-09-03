@@ -30,8 +30,8 @@ export function DatePickerDay({
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className={className}
+          variant="ghost"
+          className={cn("border-0 bg-muted/50 hover:bg-muted text-left", className)}
         >
           <span className="truncate text-xs">
             {buttonText || (date 
@@ -278,8 +278,8 @@ export function DatePickerPeriod({
     <Dialog open={isModalOpen} onOpenChange={handleModalOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          className={className}
+          variant="ghost"
+          className={cn("border-0 bg-muted/50 hover:bg-muted text-left", className)}
         >
           <span className="truncate text-xs"> {/* ⚠️ NO MODIFICAR: tipografía uniforme con otros filtros */}
             {buttonText || (startDate && endDate
