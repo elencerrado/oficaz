@@ -327,8 +327,8 @@ export function CustomCalendar({
                       {/* First day: connecting lines with border effect */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
                           <div className={`absolute inset-0 rounded-l-full border-2 border-${eventColor} pointer-events-none`}></div>
                         </>
                       )}
@@ -336,8 +336,8 @@ export function CustomCalendar({
                       {/* Last day: connecting lines with border effect */}
                       {rangePosition === 'last' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
                           <div className={`absolute inset-0 rounded-r-full border-2 border-${eventColor} pointer-events-none`}></div>
                         </>
                       )}
