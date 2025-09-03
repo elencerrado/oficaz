@@ -326,61 +326,7 @@ export function CustomCalendar({
         }).flat()}
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 pt-4 border-t border-border">
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center">
-              <span className="text-[10px] text-black font-medium">H</span>
-            </div>
-            <span className="text-muted-foreground">Día de hoy</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
-              <span className="text-[10px] text-white font-medium">S</span>
-            </div>
-            <span className="text-muted-foreground">Día seleccionado</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 border-red-500 flex items-center justify-center">
-              <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">1</span>
-            </div>
-            <span className="text-muted-foreground">Festivo nacional</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 border-orange-500 flex items-center justify-center">
-              <span className="text-[10px] text-orange-600 dark:text-orange-400 font-medium">1</span>
-            </div>
-            <span className="text-muted-foreground">Festivo personalizado</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center">
-              <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">1</span>
-            </div>
-            <span className="text-muted-foreground">Vacaciones aprobadas</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded-full border-2 border-yellow-500 flex items-center justify-center">
-              <span className="text-[10px] text-yellow-600 dark:text-yellow-400 font-medium">1</span>
-            </div>
-            <span className="text-muted-foreground">Vacaciones pendientes</span>
-          </div>
-          
-          <div className="col-span-2 flex items-center gap-2 mt-2 pt-2 border-t border-border">
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full border-2 border-orange-500"></div>
-              <div className="w-2 h-0.5 bg-orange-500"></div>
-              <div className="w-3 h-3 rounded-full border-2 border-orange-500"></div>
-            </div>
-            <span className="text-muted-foreground text-xs">Los eventos de múltiples días se conectan</span>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
