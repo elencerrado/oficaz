@@ -395,11 +395,21 @@ export function CustomCalendar({
               });
               
               let connectorEventColor = '';
+              let connectorOpacity = '';
               if (connectionColor) {
                 // Use the same color extraction logic as range
                 connectorEventColor = connectionColor.borderColor.includes('red') ? 'red-500' : 
                                     connectionColor.borderColor.includes('orange') ? 'orange-500' :
                                     connectionColor.borderColor.includes('green') ? 'green-500' : 'yellow-500';
+                
+                // Apply same opacity logic as days
+                const isCurrentMonth = isSameMonth(date, currentMonth);
+                const isTodayDate = isToday(date);
+                const isPastDate = isPast(date) && !isTodayDate;
+                
+                if (!isCurrentMonth || isPastDate) {
+                  connectorOpacity = ' opacity-40';
+                }
               }
               
               elements.push(
@@ -410,8 +420,8 @@ export function CustomCalendar({
                   {shouldShowConnection && (
                     <>
                       {/* Top and bottom connecting lines for worm effect */}
-                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
-                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
+                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
+                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
                     </>
                   )}
                 </div>
