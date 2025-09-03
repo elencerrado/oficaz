@@ -374,11 +374,28 @@ export default function AdminDashboard() {
     queryKey: ['/api/holidays/custom'],
     select: (data: any[]) => {
       if (!data || !Array.isArray(data)) return [];
-      return data.filter(h => h && h.startDate).map((h: any) => ({ 
-        ...h, 
-        type: 'custom',
-        date: h.startDate // Map startDate to date for compatibility
-      }));
+      
+      // Expand date ranges into individual days for calendar display
+      const expandedHolidays: any[] = [];
+      
+      data.filter(h => h && h.startDate).forEach((h: any) => {
+        const start = new Date(h.startDate);
+        const end = new Date(h.endDate);
+        
+        // Create entry for each day in the range
+        for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+          expandedHolidays.push({
+            ...h,
+            type: 'custom',
+            date: date.toISOString().split('T')[0], // Format as YYYY-MM-DD
+            isMultiDay: start.getTime() !== end.getTime(),
+            originalStart: h.startDate,
+            originalEnd: h.endDate
+          });
+        }
+      });
+      
+      return expandedHolidays;
     },
   });
 
@@ -1032,6 +1049,18 @@ export default function AdminDashboard() {
                         return false;
                       }
                     })
+                    // Remove duplicates for multi-day events (show only the first day)
+                    .reduce((acc: any[], holiday: any) => {
+                      if (holiday.isMultiDay) {
+                        const existing = acc.find(h => h.id === holiday.id);
+                        if (!existing) {
+                          acc.push(holiday);
+                        }
+                      } else {
+                        acc.push(holiday);
+                      }
+                      return acc;
+                    }, [])
                     .sort((a, b) => {
                       try {
                         return parseISO(a.date).getTime() - parseISO(b.date).getTime();
@@ -1056,7 +1085,13 @@ export default function AdminDashboard() {
                                 {holiday.name}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {format(holidayDate, 'dd MMM, EEEE', { locale: es })}
+                                {holiday.isMultiDay ? (
+                                  <>
+                                    {format(parseISO(holiday.originalStart), 'dd MMM', { locale: es })} - {format(parseISO(holiday.originalEnd), 'dd MMM', { locale: es })}
+                                  </>
+                                ) : (
+                                  format(holidayDate, 'dd MMM, EEEE', { locale: es })
+                                )}
                                 {isCustom && (
                                   <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                                     Personalizado
