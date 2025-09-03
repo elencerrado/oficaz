@@ -271,16 +271,20 @@ export function CustomCalendar({
               
               // Same row connection (horizontal line)
               if (currentRow === nextRow && nextCol === currentCol + 1) {
+                const daySize = 2.25; // w-9 = 2.25rem
+                const gap = 0.25; // gap-1 = 0.25rem
+                const cellWidth = daySize + gap;
+                
                 elements.push(
                   <div
                     key={`${rangeIndex}-line-${i}`}
                     className={`absolute ${range.borderColor} border-t-2 pointer-events-none`}
                     style={{
-                      top: `${currentRow * 2.5 + 1.25}rem`,
-                      left: `${currentCol * 2.5 + 2.25}rem`,
-                      width: '0.5rem',
-                      height: '1px',
-                      zIndex: 0
+                      top: `${currentRow * cellWidth + daySize / 2}rem`,
+                      left: `${currentCol * cellWidth + daySize}rem`,
+                      width: `${gap}rem`,
+                      height: '0px',
+                      zIndex: 5
                     }}
                   />
                 );
@@ -302,16 +306,11 @@ export function CustomCalendar({
           const isPending = isPendingVacation(date);
           const hasSpecialEvent = holiday || isApproved || isPending;
           
-          // Check if this day is part of a consecutive range
-          const isPartOfRange = consecutiveDayRanges.some(range => 
-            date >= range.startDate && date <= range.endDate
-          );
-          
           return (
             <button
               key={date.toISOString()}
               onClick={() => onDateSelect(date)}
-              className={`relative ${dayStyles} ${dayBackground} ${isPartOfRange && !isTodayDate && !(selectedDate && isSameDay(date, selectedDate)) ? '' : dayBorder} rounded-full hover:bg-opacity-80 z-10`}
+              className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
             >
               {format(date, 'd')}
               
