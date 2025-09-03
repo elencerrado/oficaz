@@ -203,13 +203,38 @@ div.rdp button.rdp-day_today[style] {
    CALENDAR STYLES - CLEAN AND ORGANIZED
    ======================================== */
 
-/* Base calendar setup */
+/* Base calendar setup - Remove ALL default styles */
 .calendar-admin-override {
   /* Remove all default backgrounds */
 }
 
 .calendar-admin-override .rdp-button_reset,
 .calendar-admin-override .rdp-day {
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* FORCE REMOVE all default rdp styles that cause partial rounded borders */
+.calendar-admin-override .rdp-day::before,
+.calendar-admin-override .rdp-day::after,
+.calendar-admin-override .rdp-button_reset::before,
+.calendar-admin-override .rdp-button_reset::after {
+  display: none !important;
+}
+
+.calendar-admin-override .rdp-day[style*="border-radius"],
+.calendar-admin-override .rdp-button_reset[style*="border-radius"] {
+  border-radius: 0 !important;
+}
+
+/* Remove any range selection styles */
+.calendar-admin-override .rdp-day_range_start,
+.calendar-admin-override .rdp-day_range_middle,
+.calendar-admin-override .rdp-day_range_end,
+.calendar-admin-override .rdp-range_start,
+.calendar-admin-override .rdp-range_middle,
+.calendar-admin-override .rdp-range_end {
+  border-radius: 0 !important;
   background: transparent !important;
 }
 
@@ -263,9 +288,12 @@ div.rdp button.rdp-day_today[style] {
   opacity: 1 !important;
 }
 
-/* SELECTED DAY - Blue filled circle */
+/* SELECTED DAY - Blue filled circle - MAXIMUM SPECIFICITY */
 .calendar-admin-override .rdp-day_selected:not(.rdp-day_today),
-.calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day) {
+.calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day),
+.calendar-admin-override button[aria-selected="true"]:not(.rdp-day_today):not(.national-holiday-day):not(.custom-holiday-day):not(.approved-vacation-day):not(.pending-vacation-day),
+.calendar-admin-override .rdp-day[aria-pressed="true"]:not(.rdp-day_today),
+.calendar-admin-override .rdp-day[aria-selected="true"]:not(.rdp-day_today) {
   background: #3b82f6 !important;
   color: white !important;
   border: 3px solid #1d4ed8 !important;
@@ -276,6 +304,29 @@ div.rdp button.rdp-day_today[style] {
   opacity: 1 !important;
   z-index: 10 !important;
   position: relative !important;
+}
+
+/* FORCE perfect circles for ALL day states */
+.calendar-admin-override button,
+.calendar-admin-override .rdp-day,
+.calendar-admin-override .rdp-button_reset {
+  border-radius: 0 !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+}
+
+/* Apply perfect circles ONLY when we want them */
+.calendar-admin-override .national-holiday-day,
+.calendar-admin-override .custom-holiday-day,
+.calendar-admin-override .approved-vacation-day,
+.calendar-admin-override .pending-vacation-day,
+.calendar-admin-override .rdp-day_selected,
+.calendar-admin-override .rdp-day_today,
+.calendar-admin-override button[aria-pressed="true"],
+.calendar-admin-override button[aria-selected="true"] {
+  border-radius: 50% !important;
 }
 
 /* TODAY DAY STYLES - Higher priority than selected */
