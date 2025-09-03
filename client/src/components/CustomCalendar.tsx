@@ -275,12 +275,9 @@ export function CustomCalendar({
             let eventColor = '';
             
             if (hasSpecialEvent) {
+              // Check if this date is in any consecutive range
               const currentRange = consecutiveDayRanges.find(range => {
-                const rangeDates = [];
-                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-                  rangeDates.push(new Date(d));
-                }
-                return rangeDates.some(d => isSameDay(d, date));
+                return date >= range.startDate && date <= range.endDate;
               });
               
               if (currentRange) {
@@ -289,44 +286,15 @@ export function CustomCalendar({
                            currentRange.borderColor.includes('orange') ? 'orange-500' :
                            currentRange.borderColor.includes('green') ? 'green-500' : 'yellow-500';
                 
-                const rangeDates = [];
-                for (let d = new Date(currentRange.startDate); d <= currentRange.endDate; d.setDate(d.getDate() + 1)) {
-                  rangeDates.push(new Date(d));
-                }
-                
-                const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
-                
-                // Debug for September 5th
-                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-                  console.log('Sept 5 Range Debug:', {
-                    date: format(date, 'yyyy-MM-dd'),
-                    currentRange: currentRange.name,
-                    rangeDatesCount: rangeDates.length,
-                    rangeDates: rangeDates.map(d => format(d, 'yyyy-MM-dd')),
-                    currentIndex,
-                    startDate: format(currentRange.startDate, 'yyyy-MM-dd'),
-                    endDate: format(currentRange.endDate, 'yyyy-MM-dd')
-                  });
-                }
-                
-                if (rangeDates.length === 1) {
+                // Check position in range by comparing dates directly
+                if (isSameDay(date, currentRange.startDate) && isSameDay(date, currentRange.endDate)) {
                   rangePosition = 'single';
-                } else if (currentIndex === 0) {
+                } else if (isSameDay(date, currentRange.startDate)) {
                   rangePosition = 'first';
-                } else if (currentIndex === rangeDates.length - 1) {
+                } else if (isSameDay(date, currentRange.endDate)) {
                   rangePosition = 'last';
                 } else {
                   rangePosition = 'middle';
-                }
-                
-                // Debug for September 5th position
-                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-                  console.log('Sept 5 Position:', rangePosition);
-                }
-              } else {
-                // Debug when no range found
-                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-                  console.log('Sept 5 NO RANGE FOUND, hasSpecialEvent:', hasSpecialEvent, 'consecutiveDayRanges:', consecutiveDayRanges);
                 }
               }
             }
