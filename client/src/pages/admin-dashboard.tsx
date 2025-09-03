@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
+  const [currentLocation, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -158,14 +158,14 @@ export default function AdminDashboard() {
   });
 
   // Fetch trial status for blocking overlay
-  const { data: trialStatus } = useQuery({
+  const { data: trialStatus = {} } = useQuery({
     queryKey: ['/api/account/trial-status'],
     staleTime: 30000,
     refetchInterval: 60000,
   });
 
   // Fetch company settings for work hours configuration
-  const { data: companySettings } = useQuery({
+  const { data: companySettings = {} } = useQuery({
     queryKey: ['/api/settings/work-hours'],
     staleTime: 60000, // Cache for 1 minute
   });
@@ -186,7 +186,7 @@ export default function AdminDashboard() {
   });
 
   // Fetch recent work sessions
-  const { data: recentSessions } = useQuery({
+  const { data: recentSessions = [] } = useQuery({
     queryKey: ['/api/work-sessions/company', companySettings?.workingHoursPerDay],
     enabled: !!companySettings, // Wait for company settings to be loaded
     staleTime: 0, // Force fresh data to avoid showing outdated sessions
