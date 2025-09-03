@@ -313,7 +313,7 @@ export function CustomCalendar({
                   
                   {/* Today always gets a white circle, regardless of events - behind other elements */}
                   {isTodayDate && (
-                    <div className="absolute inset-0 rounded-full border-2 border-gray-300 dark:border-gray-600 pointer-events-none z-0"></div>
+                    <div className="absolute inset-0 rounded-full bg-white dark:bg-white pointer-events-none z-0"></div>
                   )}
                   
                   {/* Worm effect borders and lines - ON TOP of today circle and picker */}
