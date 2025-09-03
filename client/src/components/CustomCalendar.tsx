@@ -184,22 +184,11 @@ export function CustomCalendar({
     const isPending = isPendingVacation(date);
     const isSelected = selectedDate && isSameDay(date, selectedDate);
     const isTodayDate = isToday(date);
+    const hasSpecialEvent = holiday || isApproved || isPending;
 
-    // Si es día seleccionado o hoy, no mostramos borde porque usamos overlay
-    if (isSelected || isTodayDate) {
+    // Si tiene evento especial, día seleccionado o es hoy, no mostramos borde base porque usamos overlay
+    if (hasSpecialEvent || isSelected || isTodayDate) {
       return '';
-    }
-
-    if (holiday) {
-      return holiday.type === 'national' ? 'border-2 border-red-500 dark:border-red-400' : 'border-2 border-orange-500 dark:border-orange-400';
-    }
-    
-    if (isApproved) {
-      return 'border-2 border-green-500 dark:border-green-400';
-    }
-    
-    if (isPending) {
-      return 'border-2 border-yellow-500 dark:border-yellow-400';
     }
 
     return '';
