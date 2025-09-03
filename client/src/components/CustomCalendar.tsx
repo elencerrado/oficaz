@@ -310,7 +310,7 @@ export function CustomCalendar({
             }
             
             elements.push(
-              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9 relative">
+              <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-10 w-9 relative">
                 <button
                   onClick={() => onDateSelect(date)}
                   className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center transition-none
@@ -471,7 +471,7 @@ export function CustomCalendar({
               elements.push(
                 <div 
                   key={`connector-${date.toISOString()}`}
-                  className="flex items-center justify-center h-9 relative"
+                  className="flex items-center justify-center h-10 relative"
                 >
                   {shouldShowConnection && (
                     <>
