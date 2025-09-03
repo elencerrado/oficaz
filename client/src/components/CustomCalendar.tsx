@@ -279,8 +279,8 @@ export function CustomCalendar({
                 >
                   {format(date, 'd')}
                   
-                  {/* Only show event overlay if it's NOT today (today already has white background) */}
-                  {!isTodayDate && (selectedDate && isSameDay(date, selectedDate)) && hasSpecialEvent && (
+                  {/* Show event overlay for special days (including today if it has events) */}
+                  {((selectedDate && isSameDay(date, selectedDate)) || hasSpecialEvent) && hasSpecialEvent && (
                     <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
                       holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
                       isApproved ? 'border-green-500' :
