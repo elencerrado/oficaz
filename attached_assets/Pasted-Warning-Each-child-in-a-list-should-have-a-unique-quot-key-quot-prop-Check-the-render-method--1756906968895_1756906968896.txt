@@ -1,0 +1,60 @@
+Warning: Each child in a list should have a unique &quot;key&quot; prop.
+
+Check the render method of `CustomCalendar`. See https://reactjs.org/link/warning-keys for more information.
+    at CustomCalendar (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/CustomCalendar.tsx:23:3)
+    at div
+    at div
+    at div
+    at _c9 (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at AdminDashboard (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/pages/admin-dashboard.tsx:51:29)
+    at DashboardRouter (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:85:20)
+    at main
+    at div
+    at AppLayout (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:140:22)
+    at ProtectedRoute (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:103:27)
+    at Route (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f8037609:323:16)
+    at Switch (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f8037609:379:17)
+    at Router (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:235:29)
+    at Provider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=f8037609:38:15)
+    at TooltipProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f8037609:62:5)
+    at AuthProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/hooks/use-auth.tsx:22:32)
+    at QueryClientProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f8037609:2805:3)
+    at ThemeProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/lib/theme-provider.tsx:74:3)
+    at App
+
+Check the render method of &#x60;CustomCalendar&#x60;. See https://reactjs.org/link/warning-keys for more information.
+at CustomCalendar (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/CustomCalendar.tsx:23:3)
+at div
+at div
+at div
+at _c9 (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/ui/card.tsx:114:12)
+at div
+at _c (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/components/ui/card.tsx:20:11)
+at div
+at div
+at div
+at AdminDashboard (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/pages/admin-dashboard.tsx:51:29)
+at DashboardRouter (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:85:20)
+at main
+at div
+at AppLayout (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:140:22)
+at ProtectedRoute (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:103:27)
+at Route (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f8037609:323:16)
+at Switch (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=f8037609:379:17)
+at Router (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/App.tsx?v=FgiO017yYM811p_CqHdyc:235:29)
+at Provider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=f8037609:38:15)
+at TooltipProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=f8037609:62:5)
+at AuthProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/hooks/use-auth.tsx:22:32)
+at QueryClientProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=f8037609:2805:3)
+at ThemeProvider (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/src/lib/theme-provider.tsx:74:3)
+at App
+at t.value (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+at sentryWrapped (https://e32a9e7c-6365-47df-a996-cfff288472ae-00-2nx65vpbr74vn.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@sentry_react.js?v=f8037609:10626:17)

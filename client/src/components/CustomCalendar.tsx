@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO, isToday, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -238,14 +238,17 @@ export function CustomCalendar({
       {/* ⚠️ PROTECTED: Calendar Grid System - DO NOT MODIFY - Critical for perfect worm effect alignment ⚠️ */}
       {/* Week days header - with connector spaces */}
       <div className="grid mb-2" style={{ gridTemplateColumns: '2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem' }}>
-        {weekDays.map((day, index) => (
-          <>
-            <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
+        {weekDays.flatMap((day, index) => {
+          const elements = [
+            <div key={`header-${day}`} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
               {day}
             </div>
-            {index < 6 && <div key={`header-spacer-${index}`}></div>}
-          </>
-        ))}
+          ];
+          if (index < 6) {
+            elements.push(<div key={`header-spacer-${index}`}></div>);
+          }
+          return elements;
+        })}
       </div>
 
       {/* Calendar grid - with connector columns */}
@@ -487,7 +490,7 @@ export function CustomCalendar({
             
             return elements;
           }).flat();
-        }).flat()}
+        }).flat().map((element, index) => React.cloneElement(element, { key: `calendar-element-${index}` }))}
       </div>
 
 
