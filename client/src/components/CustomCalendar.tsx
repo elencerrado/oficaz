@@ -234,64 +234,44 @@ export function CustomCalendar({
         </button>
       </div>
 
-      {/* Week days header */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekDays.map((day) => (
-          <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
-            {day}
-          </div>
+      {/* Week days header - now with connector columns */}
+      <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: '1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr' }}>
+        {weekDays.map((day, index) => (
+          <>
+            <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
+              {day}
+            </div>
+            {index < 6 && <div key={`spacer-${index}`} className="h-8"></div>}
+          </>
         ))}
       </div>
 
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1 relative">
+      {/* Calendar grid - with connector columns */}
+      <div className="grid gap-1 relative" style={{ gridTemplateColumns: '1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr 0.125fr 1fr' }}>
 
 
-        {/* Calendar day buttons */}
-        {calendarDays.map((date, index) => {
-          const dayStyles = getDayStyles(date);
-          const dayBackground = getDayBackground(date);
-          const dayBorder = getDayBorder(date);
-          const isTodayDate = isToday(date);
-          const holiday = getHolidayInfo(date);
-          const isApproved = isApprovedVacation(date);
-          const isPending = isPendingVacation(date);
-          const hasSpecialEvent = holiday || isApproved || isPending;
+        {/* Calendar days and connectors */}
+        {Array.from({ length: 6 }, (_, weekIndex) => {
+          const weekStart = weekIndex * 7;
+          const weekDays = calendarDays.slice(weekStart, weekStart + 7);
           
-          // Check if this day should have a connection line to the next day
-          const shouldShowConnection = consecutiveDayRanges.some(range => {
-            const rangeDates = [];
-            for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-              rangeDates.push(new Date(d));
-            }
+          return weekDays.map((date, dayIndex) => {
+            const globalIndex = weekStart + dayIndex;
+            const dayStyles = getDayStyles(date);
+            const dayBackground = getDayBackground(date);
+            const dayBorder = getDayBorder(date);
+            const isTodayDate = isToday(date);
+            const holiday = getHolidayInfo(date);
+            const isApproved = isApprovedVacation(date);
+            const isPending = isPendingVacation(date);
+            const hasSpecialEvent = holiday || isApproved || isPending;
             
-            const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
-            if (currentIndex === -1 || currentIndex === rangeDates.length - 1) return false;
+            const elements = [];
             
-            const nextDate = rangeDates[currentIndex + 1];
-            const currentCalIndex = calendarDays.findIndex(d => isSameDay(d, date));
-            const nextCalIndex = calendarDays.findIndex(d => isSameDay(d, nextDate));
-            
-            // Only show connection if next day is in the same row (consecutive in calendar)
-            const currentRow = Math.floor(currentCalIndex / 7);
-            const nextRow = Math.floor(nextCalIndex / 7);
-            const currentCol = currentCalIndex % 7;
-            const nextCol = nextCalIndex % 7;
-            
-            return currentRow === nextRow && nextCol === currentCol + 1;
-          });
-          
-          const connectionColor = consecutiveDayRanges.find(range => {
-            const rangeDates = [];
-            for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-              rangeDates.push(new Date(d));
-            }
-            return rangeDates.some(d => isSameDay(d, date));
-          })?.borderColor.replace('border-', 'bg-') || '';
-          
-          return (
-            <div key={date.toISOString()} className="relative flex items-center">
+            // Add the day button
+            elements.push(
               <button
+                key={`day-${date.toISOString()}`}
                 onClick={() => onDateSelect(date)}
                 className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
               >
@@ -306,14 +286,49 @@ export function CustomCalendar({
                   }`}></div>
                 )}
               </button>
+            );
+            
+            // Add connector column (except for the last day of the week)
+            if (dayIndex < 6) {
+              // Check if this day should have a connection line to the next day
+              const shouldShowConnection = consecutiveDayRanges.some(range => {
+                const rangeDates = [];
+                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+                  rangeDates.push(new Date(d));
+                }
+                
+                const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+                if (currentIndex === -1 || currentIndex === rangeDates.length - 1) return false;
+                
+                const nextDate = rangeDates[currentIndex + 1];
+                const nextGlobalIndex = globalIndex + 1;
+                
+                // Only show connection if next day exists and is consecutive
+                return nextGlobalIndex < calendarDays.length && 
+                       isSameDay(calendarDays[nextGlobalIndex], nextDate);
+              });
               
-              {/* Connection line to next day */}
-              {shouldShowConnection && (
-                <div className={`absolute left-full top-1/2 w-1 h-0.5 ${connectionColor} -translate-y-1/2 z-0`}></div>
-              )}
-            </div>
-          );
-        })}
+              const connectionColor = consecutiveDayRanges.find(range => {
+                const rangeDates = [];
+                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+                  rangeDates.push(new Date(d));
+                }
+                return rangeDates.some(d => isSameDay(d, date));
+              })?.borderColor.replace('border-', 'bg-') || '';
+              
+              elements.push(
+                <div 
+                  key={`connector-${date.toISOString()}`}
+                  className={`flex items-center justify-center ${shouldShowConnection ? connectionColor : ''}`}
+                >
+                  {shouldShowConnection && <div className="w-full h-0.5"></div>}
+                </div>
+              );
+            }
+            
+            return elements;
+          }).flat();
+        }).flat()}
       </div>
 
       {/* Legend */}
