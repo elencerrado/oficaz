@@ -275,8 +275,10 @@ export function CustomCalendar({
               });
               
               if (currentRange) {
-                eventColor = holiday ? (holiday.type === 'national' ? 'red-500' : 'orange-500') :
-                           isApproved ? 'green-500' : 'yellow-500';
+                // Use the same color extraction logic as connectors
+                eventColor = currentRange.borderColor.includes('red') ? 'red-500' : 
+                           currentRange.borderColor.includes('orange') ? 'orange-500' :
+                           currentRange.borderColor.includes('green') ? 'green-500' : 'yellow-500';
                 
                 const rangeDates = [];
                 for (let d = new Date(currentRange.startDate); d <= currentRange.endDate; d.setDate(d.getDate() + 1)) {
@@ -395,12 +397,10 @@ export function CustomCalendar({
               let connectorEventColor = '';
               let connectorOpacity = '';
               if (connectionColor) {
-                // Extract color from border class
-                const currentDate = date;
-                const currentHoliday = getHolidayInfo(currentDate);
-                const currentApproved = isApprovedVacation(currentDate);
-                connectorEventColor = currentHoliday ? (currentHoliday.type === 'national' ? 'red-500' : 'orange-500') :
-                                    currentApproved ? 'green-500' : 'yellow-500';
+                // Use the same color extraction logic as range
+                connectorEventColor = connectionColor.borderColor.includes('red') ? 'red-500' : 
+                                    connectionColor.borderColor.includes('orange') ? 'orange-500' :
+                                    connectionColor.borderColor.includes('green') ? 'green-500' : 'yellow-500';
                 
                 // Apply same opacity logic as days
                 const isCurrentMonth = isSameMonth(date, currentMonth);
