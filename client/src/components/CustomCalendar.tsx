@@ -44,6 +44,8 @@ export function CustomCalendar({
   className = ''
 }: CustomCalendarProps) {
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
+  
+
 
   // Generate calendar days
   const calendarDays = useMemo(() => {
@@ -60,9 +62,9 @@ export function CustomCalendar({
     const dateString = format(date, 'yyyy-MM-dd');
     const isNational = nationalHolidays.some(h => h.date === dateString);
     const isCustom = customHolidays.some(h => {
-      const start = parseISO(h.startDate);
-      const end = parseISO(h.endDate);
-      return date >= start && date <= end;
+      const startDateStr = h.startDate.split('T')[0];
+      const endDateStr = h.endDate.split('T')[0];
+      return dateString >= startDateStr && dateString <= endDateStr;
     });
     return isNational || isCustom;
   };
@@ -71,9 +73,11 @@ export function CustomCalendar({
     const dateString = format(date, 'yyyy-MM-dd');
     const national = nationalHolidays.find(h => h.date === dateString);
     const custom = customHolidays.find(h => {
-      const start = parseISO(h.startDate);
-      const end = parseISO(h.endDate);
-      return date >= start && date <= end;
+      // Use string comparison to avoid timezone issues
+      const startDateStr = h.startDate.split('T')[0]; // Get YYYY-MM-DD part
+      const endDateStr = h.endDate.split('T')[0]; // Get YYYY-MM-DD part
+      const isInRange = dateString >= startDateStr && dateString <= endDateStr;
+      return isInRange;
     });
     return national || custom;
   };
@@ -264,16 +268,7 @@ export function CustomCalendar({
             const isPending = isPendingVacation(date);
             const hasSpecialEvent = holiday || isApproved || isPending;
             
-            // Debug for Sep 5
-            if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
-              console.log('🔍 Sep 5 hasSpecialEvent:', {
-                dateStr: format(date, 'yyyy-MM-dd'),
-                hasSpecialEvent,
-                holiday: holiday ? holiday.name : null,
-                isApproved,
-                isPending
-              });
-            }
+
             
             const elements = [];
             
