@@ -457,7 +457,7 @@ export default function Reminders() {
     // Check if all assigned non-creators completed but creator hasn't
     const allAssignedCompleted = assignedNonCreators.length > 0 && 
                                 assignedNonCreators.every(id => completedByUserIds.includes(id));
-    const creatorNotCompleted = creatorId && !completedByUserIds.includes(creatorId);
+    const creatorNotCompleted = Boolean(creatorId && !completedByUserIds.includes(creatorId));
     
     return allAssignedCompleted && creatorNotCompleted;
   };
