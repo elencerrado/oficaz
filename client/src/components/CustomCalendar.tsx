@@ -297,6 +297,18 @@ export function CustomCalendar({
                 }
                 
                 const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+                
+                // Debug logging for September 5th
+                if (format(date, 'yyyy-MM-dd') === '2025-09-05') {
+                  console.log('Sept 5 Debug:', {
+                    date: format(date, 'yyyy-MM-dd'),
+                    rangeDates: rangeDates.map(d => format(d, 'yyyy-MM-dd')),
+                    currentIndex,
+                    rangeLength: rangeDates.length,
+                    currentRange: currentRange.name
+                  });
+                }
+                
                 if (rangeDates.length === 1) {
                   rangePosition = 'single';
                 } else if (currentIndex === 0) {
@@ -350,7 +362,7 @@ export function CustomCalendar({
                         <>
                           <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
                           <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor} z-20`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-l-4 border-t-4 border-b-4 border-${eventColor} pointer-events-none z-20`}></div>
+                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none z-20`}></div>
                         </>
                       )}
                       
