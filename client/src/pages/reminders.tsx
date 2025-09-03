@@ -521,8 +521,8 @@ export default function Reminders() {
       
       const matchesFilter = 
         filterStatus === 'all' ||
-        (filterStatus === 'active' && !reminder.isCompleted && !reminder.isArchived) ||
-        (filterStatus === 'completed' && reminder.isCompleted) ||
+        (filterStatus === 'active' && !isCompletedByCurrentUser(reminder) && !reminder.isArchived) ||
+        (filterStatus === 'completed' && isCompletedByCurrentUser(reminder)) ||
         (filterStatus === 'archived' && reminder.isArchived);
 
       return matchesSearch && matchesFilter;
