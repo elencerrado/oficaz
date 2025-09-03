@@ -290,22 +290,33 @@ body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today) {
   background: #3b82f6 !important;
 }
 
-/* Eliminar estilos por defecto de react-day-picker */
-.calendar-admin-override .rdp-button_reset {
+/* Eliminar estilos por defecto de react-day-picker - SOLO para días normales */
+.calendar-admin-override .rdp-button_reset:not(.rdp-day_selected):not([aria-pressed="true"]) {
   background: transparent !important;
 }
 
-.calendar-admin-override .rdp-day {
+.calendar-admin-override .rdp-day:not(.rdp-day_selected):not([aria-pressed="true"]) {
   background: transparent !important;
 }
 
-/* Estilos ultra-específicos para día seleccionado */
+/* MÁXIMA ESPECIFICIDAD PARA DÍA SELECCIONADO */
+html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button.rdp-day_selected,
+html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button[aria-pressed="true"]:not(.rdp-day_today),
+html body div.calendar-admin-override div.rdp div.rdp-months div.rdp-month table.rdp-table tbody.rdp-tbody tr.rdp-row td.rdp-cell button.rdp-day[aria-pressed="true"],
 html body .calendar-admin-override .rdp-day_selected,
 html body .calendar-admin-override button[aria-pressed="true"]:not(.rdp-day_today),
 html body .calendar-admin-override button.rdp-day_selected {
   background-color: #3b82f6 !important;
   background: #3b82f6 !important;
+  color: white !important;
+  border: 3px solid #1d4ed8 !important;
   border-radius: 50% !important;
+  font-weight: 700 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important;
 }
 
 body .dark .calendar-admin-override .rdp-day_selected,
