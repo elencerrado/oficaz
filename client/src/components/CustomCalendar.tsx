@@ -83,18 +83,20 @@ export function CustomCalendar({
   };
 
   const isApprovedVacation = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
     return approvedVacations.some(v => {
-      const start = parseISO(v.startDate);
-      const end = parseISO(v.endDate);
-      return date >= start && date <= end;
+      const startDateStr = v.startDate.split('T')[0];
+      const endDateStr = v.endDate.split('T')[0];
+      return dateString >= startDateStr && dateString <= endDateStr;
     });
   };
 
   const isPendingVacation = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
     return pendingVacations.some(v => {
-      const start = parseISO(v.startDate);
-      const end = parseISO(v.endDate);
-      return date >= start && date <= end;
+      const startDateStr = v.startDate.split('T')[0];
+      const endDateStr = v.endDate.split('T')[0];
+      return dateString >= startDateStr && dateString <= endDateStr;
     });
   };
 
@@ -281,8 +283,11 @@ export function CustomCalendar({
             
             if (hasSpecialEvent) {
               // Check if this date is in any consecutive range
+              const dateString = format(date, 'yyyy-MM-dd');
               const currentRange = consecutiveDayRanges.find(range => {
-                return date >= range.startDate && date <= range.endDate;
+                const startStr = format(range.startDate, 'yyyy-MM-dd');
+                const endStr = format(range.endDate, 'yyyy-MM-dd');
+                return dateString >= startStr && dateString <= endStr;
               });
               
               if (currentRange) {
