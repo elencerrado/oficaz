@@ -245,55 +245,7 @@ export function CustomCalendar({
 
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1 relative">
-        {/* Render connecting lines for consecutive day ranges */}
-        {consecutiveDayRanges.map((range, rangeIndex) => {
-          const elements = [];
-          
-          // Generate all dates in the range
-          const rangeDates = [];
-          for (let date = new Date(range.startDate); date <= range.endDate; date.setDate(date.getDate() + 1)) {
-            rangeDates.push(new Date(date));
-          }
-          
-          // Create connecting elements between consecutive days
-          for (let i = 0; i < rangeDates.length - 1; i++) {
-            const currentDate = rangeDates[i];
-            const nextDate = rangeDates[i + 1];
-            
-            const currentIndex = calendarDays.findIndex(d => isSameDay(d, currentDate));
-            const nextIndex = calendarDays.findIndex(d => isSameDay(d, nextDate));
-            
-            if (currentIndex !== -1 && nextIndex !== -1) {
-              const currentRow = Math.floor(currentIndex / 7);
-              const currentCol = currentIndex % 7;
-              const nextRow = Math.floor(nextIndex / 7);
-              const nextCol = nextIndex % 7;
-              
-              // Same row connection (horizontal line)
-              if (currentRow === nextRow && nextCol === currentCol + 1) {
-                const daySize = 2.25; // w-9 = 2.25rem
-                const gap = 0.25; // gap-1 = 0.25rem
-                const cellWidth = daySize + gap;
-                
-                elements.push(
-                  <div
-                    key={`${rangeIndex}-line-${i}`}
-                    className={`absolute ${range.borderColor} border-t-2 pointer-events-none`}
-                    style={{
-                      top: `${currentRow * cellWidth + daySize / 2}rem`,
-                      left: `${currentCol * cellWidth + daySize}rem`,
-                      width: `${gap}rem`,
-                      height: '0px',
-                      zIndex: 5
-                    }}
-                  />
-                );
-              }
-            }
-          }
-          
-          return elements;
-        })}
+
 
         {/* Calendar day buttons */}
         {calendarDays.map((date, index) => {
@@ -306,23 +258,60 @@ export function CustomCalendar({
           const isPending = isPendingVacation(date);
           const hasSpecialEvent = holiday || isApproved || isPending;
           
+          // Check if this day should have a connection line to the next day
+          const shouldShowConnection = consecutiveDayRanges.some(range => {
+            const rangeDates = [];
+            for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+              rangeDates.push(new Date(d));
+            }
+            
+            const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+            if (currentIndex === -1 || currentIndex === rangeDates.length - 1) return false;
+            
+            const nextDate = rangeDates[currentIndex + 1];
+            const currentCalIndex = calendarDays.findIndex(d => isSameDay(d, date));
+            const nextCalIndex = calendarDays.findIndex(d => isSameDay(d, nextDate));
+            
+            // Only show connection if next day is in the same row (consecutive in calendar)
+            const currentRow = Math.floor(currentCalIndex / 7);
+            const nextRow = Math.floor(nextCalIndex / 7);
+            const currentCol = currentCalIndex % 7;
+            const nextCol = nextCalIndex % 7;
+            
+            return currentRow === nextRow && nextCol === currentCol + 1;
+          });
+          
+          const connectionColor = consecutiveDayRanges.find(range => {
+            const rangeDates = [];
+            for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
+              rangeDates.push(new Date(d));
+            }
+            return rangeDates.some(d => isSameDay(d, date));
+          })?.borderColor.replace('border-', 'bg-') || '';
+          
           return (
-            <button
-              key={date.toISOString()}
-              onClick={() => onDateSelect(date)}
-              className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
-            >
-              {format(date, 'd')}
+            <div key={date.toISOString()} className="relative flex items-center">
+              <button
+                onClick={() => onDateSelect(date)}
+                className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
+              >
+                {format(date, 'd')}
+                
+                {/* Overlay circle for special days (today or selected) */}
+                {(isTodayDate || (selectedDate && isSameDay(date, selectedDate))) && hasSpecialEvent && (
+                  <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
+                    holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
+                    isApproved ? 'border-green-500' :
+                    'border-yellow-500'
+                  }`}></div>
+                )}
+              </button>
               
-              {/* Overlay circle for special days (today or selected) */}
-              {(isTodayDate || (selectedDate && isSameDay(date, selectedDate))) && hasSpecialEvent && (
-                <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
-                  holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
-                  isApproved ? 'border-green-500' :
-                  'border-yellow-500'
-                }`}></div>
+              {/* Connection line to next day */}
+              {shouldShowConnection && (
+                <div className={`absolute left-full top-1/2 w-1 h-0.5 ${connectionColor} -translate-y-1/2 z-0`}></div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
