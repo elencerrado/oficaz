@@ -632,3 +632,27 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = typeof invoices.$inferInsert;
 export type UsageStats = typeof usageStats.$inferSelect;
 export type InsertUsageStats = typeof usageStats.$inferInsert;
+
+// Custom Holidays table - festivos personalizados por empresa
+export const customHolidays = pgTable("custom_holidays", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // "Feria de Sevilla", "Día de la empresa"
+  startDate: timestamp("start_date").notNull(), // Fecha de inicio del festivo
+  endDate: timestamp("end_date").notNull(), // Fecha de fin del festivo (puede ser igual al inicio)
+  type: varchar("type", { length: 20 }).notNull().default("local"), // national, regional, local
+  region: text("region"), // Región si es regional
+  description: text("description"), // Descripción opcional
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Schema for custom holidays
+export const insertCustomHolidaySchema = createInsertSchema(customHolidays).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CustomHoliday = typeof customHolidays.$inferSelect;
+export type InsertCustomHoliday = z.infer<typeof insertCustomHolidaySchema>;

@@ -7417,6 +7417,70 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Custom Holidays API Routes
+  app.get('/api/holidays/custom', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const customHolidays = await storage.getCustomHolidaysByCompany(companyId);
+      res.json(customHolidays);
+    } catch (error) {
+      console.error('Error fetching custom holidays:', error);
+      res.status(500).json({ message: 'Failed to fetch custom holidays' });
+    }
+  });
+
+  app.post('/api/holidays/custom', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const companyId = req.user!.companyId;
+      const { name, startDate, endDate, type, region, description } = req.body;
+      
+      if (!name || !startDate || !endDate) {
+        return res.status(400).json({ message: 'Name, start date, and end date are required' });
+      }
+
+      const holidayData = {
+        companyId,
+        name: name.trim(),
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        type: type || 'local',
+        region: region || null,
+        description: description || null,
+      };
+
+      const newHoliday = await storage.createCustomHoliday(holidayData);
+      res.status(201).json(newHoliday);
+    } catch (error) {
+      console.error('Error creating custom holiday:', error);
+      res.status(500).json({ message: 'Failed to create custom holiday' });
+    }
+  });
+
+  app.delete('/api/holidays/custom/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const holidayId = parseInt(req.params.id);
+      const companyId = req.user!.companyId;
+      
+      // Verify the holiday belongs to the user's company (security check)
+      const customHolidays = await storage.getCustomHolidaysByCompany(companyId);
+      const holiday = customHolidays.find(h => h.id === holidayId);
+      
+      if (!holiday) {
+        return res.status(404).json({ message: 'Holiday not found or not authorized' });
+      }
+
+      const deleted = await storage.deleteCustomHoliday(holidayId);
+      if (deleted) {
+        res.json({ message: 'Holiday deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Holiday not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting custom holiday:', error);
+      res.status(500).json({ message: 'Failed to delete custom holiday' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

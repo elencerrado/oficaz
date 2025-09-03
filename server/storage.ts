@@ -7,7 +7,8 @@ import type {
   InsertCompany, InsertUser, InsertWorkSession, InsertBreakPeriod, InsertVacationRequest, InsertDocument, InsertMessage, InsertSystemNotification,
   Reminder, InsertReminder, SuperAdmin, InsertSuperAdmin, 
   Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan,
-  EmployeeActivationToken, InsertEmployeeActivationToken
+  EmployeeActivationToken, InsertEmployeeActivationToken,
+  CustomHoliday, InsertCustomHoliday
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -89,9 +90,9 @@ export interface IStorage {
   createDocumentNotification(userId: number, documentType: string, message: string, createdBy: number, priority?: string, dueDate?: Date): Promise<SystemNotification>;
   deleteNotification(id: number): Promise<boolean>;
 
-  // Custom Holidays - using any type for now since schema is not fully defined
-  getCustomHolidaysByCompany(companyId: number): Promise<any[]>;
-  createCustomHoliday(holiday: any): Promise<any>;
+  // Custom Holidays
+  getCustomHolidaysByCompany(companyId: number): Promise<CustomHoliday[]>;
+  createCustomHoliday(holiday: InsertCustomHoliday): Promise<CustomHoliday>;
   deleteCustomHoliday(id: number): Promise<boolean>;
 
   // Reminders
@@ -1988,6 +1989,44 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error completing reminder individually:', error);
       return undefined;
+    }
+  }
+
+  // Custom Holidays methods
+  async getCustomHolidaysByCompany(companyId: number): Promise<CustomHoliday[]> {
+    try {
+      return await db.select()
+        .from(schema.customHolidays)
+        .where(eq(schema.customHolidays.companyId, companyId))
+        .orderBy(asc(schema.customHolidays.startDate));
+    } catch (error) {
+      console.error('Error fetching custom holidays:', error);
+      return [];
+    }
+  }
+
+  async createCustomHoliday(holiday: InsertCustomHoliday): Promise<CustomHoliday> {
+    const [newHoliday] = await db.insert(schema.customHolidays)
+      .values({
+        ...holiday,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return newHoliday;
+  }
+
+  async deleteCustomHoliday(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(schema.customHolidays)
+        .where(eq(schema.customHolidays.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting custom holiday:', error);
+      return false;
     }
   }
 }

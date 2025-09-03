@@ -77,7 +77,7 @@ export default function VacationManagement() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [newHoliday, setNewHoliday] = useState<{ name: string; date: string; type: 'national' | 'regional' | 'local' }>({ name: "", date: "", type: "regional" });
+  const [newHoliday, setNewHoliday] = useState<{ name: string; startDate: Date | null; endDate: Date | null; type: 'national' | 'regional' | 'local' }>({ name: "", startDate: null, endDate: null, type: "regional" });
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -482,6 +482,90 @@ export default function VacationManagement() {
       });
     },
   });
+
+  // Fetch custom holidays
+  const { data: customHolidays = [], isLoading: loadingHolidays, refetch: refetchHolidays } = useQuery({
+    queryKey: ['/api/holidays/custom'],
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Add custom holiday mutation
+  const addHolidayMutation = useMutation({
+    mutationFn: async (holidayData: {
+      name: string;
+      startDate: Date;
+      endDate: Date;
+      type: 'national' | 'regional' | 'local';
+      region?: string;
+      description?: string;
+    }) => {
+      return apiRequest('POST', '/api/holidays/custom', {
+        name: holidayData.name,
+        startDate: holidayData.startDate.toISOString(),
+        endDate: holidayData.endDate.toISOString(),
+        type: holidayData.type,
+        region: holidayData.region,
+        description: holidayData.description,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/holidays/custom'] });
+      toast({
+        title: "Festivo añadido",
+        description: `${newHoliday.name} se ha añadido correctamente`,
+      });
+      setShowAddHoliday(false);
+      setNewHoliday({ name: "", startDate: null, endDate: null, type: "regional" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `No se pudo añadir el festivo: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle add holiday
+  const handleAddHoliday = async () => {
+    if (!newHoliday.name.trim() || !newHoliday.startDate) return;
+
+    const endDate = newHoliday.endDate || newHoliday.startDate;
+    
+    await addHolidayMutation.mutateAsync({
+      name: newHoliday.name.trim(),
+      startDate: newHoliday.startDate,
+      endDate: endDate,
+      type: newHoliday.type,
+      region: newHoliday.type === 'regional' ? selectedRegion : undefined,
+    });
+  };
+
+  // Delete custom holiday mutation
+  const deleteHolidayMutation = useMutation({
+    mutationFn: async (holidayId: number) => {
+      return apiRequest('DELETE', `/api/holidays/custom/${holidayId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/holidays/custom'] });
+      toast({
+        title: "Festivo eliminado",
+        description: "El festivo personalizado se ha eliminado correctamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: `No se pudo eliminar el festivo: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle delete custom holiday
+  const deleteCustomHoliday = (holidayId: number) => {
+    deleteHolidayMutation.mutate(holidayId);
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -1292,42 +1376,90 @@ export default function VacationManagement() {
                       Añadir Festivo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Añadir Día Festivo</DialogTitle>
+                  <DialogContent className="max-w-md max-h-[90vh] sm:max-h-[80vh] overflow-y-auto">
+                    <DialogHeader className="pb-4">
+                      <DialogTitle className="text-lg sm:text-xl font-semibold text-center">Añadir Día Festivo</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="Nombre del festivo"
-                        value={newHoliday.name}
-                        onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
-                      />
-                      <Input
-                        type="date"
-                        value={newHoliday.date}
-                        onChange={(e) => setNewHoliday(prev => ({ ...prev, date: e.target.value }))}
-                      />
-                      <Select 
-                        value={newHoliday.type} 
-                        onValueChange={(value: 'national' | 'regional' | 'local') => 
-                          setNewHoliday(prev => ({ ...prev, type: value }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="national">Nacional</SelectItem>
-                          <SelectItem value="regional">Regional</SelectItem>
-                          <SelectItem value="local">Local</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setShowAddHoliday(false)}>
+                    <div className="space-y-6">
+                      {/* Nombre del festivo */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Nombre del festivo
+                        </label>
+                        <Input
+                          placeholder="Ej: Feria de Sevilla"
+                          value={newHoliday.name}
+                          onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Selector de período */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Período del festivo
+                        </label>
+                        <div className="border rounded-lg p-3 bg-muted/20">
+                          <DatePickerPeriod
+                            startDate={newHoliday.startDate || undefined}
+                            endDate={newHoliday.endDate || undefined}
+                            onStartDateChange={(date) => setNewHoliday(prev => ({ ...prev, startDate: date || null }))}
+                            onEndDateChange={(date) => setNewHoliday(prev => ({ ...prev, endDate: date || null }))}
+                            placeholder={{
+                              start: "Fecha inicio",
+                              end: "Fecha fin"
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Para un solo día, selecciona la misma fecha de inicio y fin
+                        </p>
+                      </div>
+
+                      {/* Tipo de festivo */}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">
+                          Tipo de festivo
+                        </label>
+                        <Select 
+                          value={newHoliday.type} 
+                          onValueChange={(value: 'national' | 'regional' | 'local') => 
+                            setNewHoliday(prev => ({ ...prev, type: value }))
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="national">Nacional</SelectItem>
+                            <SelectItem value="regional">Regional</SelectItem>
+                            <SelectItem value="local">Local</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Botones */}
+                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setShowAddHoliday(false);
+                            setNewHoliday({ name: "", startDate: null, endDate: null, type: "regional" });
+                          }}
+                          className="w-full sm:w-auto"
+                        >
                           Cancelar
                         </Button>
-                        <Button className="bg-[#007AFF] hover:bg-[#0056CC]">
-                          Añadir
+                        <Button 
+                          className="bg-[#007AFF] hover:bg-[#0056CC] w-full sm:w-auto"
+                          disabled={!newHoliday.name.trim() || !newHoliday.startDate || addHolidayMutation.isPending}
+                          onClick={handleAddHoliday}
+                        >
+                          {addHolidayMutation.isPending ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            'Añadir Festivo'
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -1336,8 +1468,9 @@ export default function VacationManagement() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
+              {/* Festivos nacionales */}
               {spanishHolidays2025.map((holiday, index) => (
-                <Card key={index} className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50">
+                <Card key={`national-${index}`} className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -1354,6 +1487,50 @@ export default function VacationManagement() {
                         </Badge>
                       </div>
                       <MapPin className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Festivos personalizados */}
+              {customHolidays.map((holiday: any) => (
+                <Card key={`custom-${holiday.id}`} className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-foreground">{holiday.name}</h3>
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          >
+                            Personalizado
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {holiday.startDate && holiday.endDate && 
+                           format(new Date(holiday.startDate), "dd/MM/yyyy", { locale: es }) === format(new Date(holiday.endDate), "dd/MM/yyyy", { locale: es })
+                            ? format(new Date(holiday.startDate), "dd/MM/yyyy", { locale: es }) // Un solo día
+                            : `${format(new Date(holiday.startDate), "dd/MM/yyyy", { locale: es })} - ${format(new Date(holiday.endDate), "dd/MM/yyyy", { locale: es })}` // Rango
+                          }
+                        </p>
+                        <Badge 
+                          variant="secondary" 
+                          className="mt-2 text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                        >
+                          {holiday.type === 'national' ? 'Nacional' : 
+                           holiday.type === 'regional' ? 'Regional' : 'Local'}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-950"
+                        onClick={() => deleteCustomHoliday(holiday.id)}
+                        title="Eliminar festivo personalizado"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
