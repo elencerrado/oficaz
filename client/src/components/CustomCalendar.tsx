@@ -78,15 +78,16 @@ export function CustomCalendar({
     });
   };
 
-  // Helper function to get multi-day ranges for worm effect
-  const getMultiDayRanges = () => {
+  // Helper function to detect consecutive days for worm effect
+  const getConsecutiveDayRanges = () => {
     const ranges: Array<{
-      dates: Date[];
-      type: 'national' | 'custom' | 'approved' | 'pending';
-      color: string;
+      startDate: Date;
+      endDate: Date;
+      type: 'custom' | 'approved' | 'pending';
+      borderColor: string;
     }> = [];
 
-    // Group custom holidays by name (multi-day events)
+    // Process custom holidays (group by name for multi-day events like "Feria")
     const customHolidayGroups = customHolidays.reduce((groups: any, holiday) => {
       if (!groups[holiday.name]) {
         groups[holiday.name] = [];
@@ -95,33 +96,30 @@ export function CustomCalendar({
       return groups;
     }, {});
 
-    // Add custom holiday ranges
     Object.values(customHolidayGroups).forEach((dates: any) => {
       if (dates.length > 1) {
         dates.sort((a: Date, b: Date) => a.getTime() - b.getTime());
         ranges.push({
-          dates,
+          startDate: dates[0],
+          endDate: dates[dates.length - 1],
           type: 'custom',
-          color: 'bg-orange-500'
+          borderColor: 'border-orange-500'
         });
       }
     });
 
-    // Add vacation ranges
+    // Process vacation ranges
     [...approvedVacations, ...pendingVacations].forEach(vacation => {
       const start = parseISO(vacation.startDate);
       const end = parseISO(vacation.endDate);
-      const dates = [];
       
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        dates.push(new Date(date));
-      }
-      
-      if (dates.length > 1) {
+      // Only add if it's more than one day
+      if (start.getTime() !== end.getTime()) {
         ranges.push({
-          dates,
+          startDate: start,
+          endDate: end,
           type: vacation.status === 'approved' ? 'approved' : 'pending',
-          color: vacation.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'
+          borderColor: vacation.status === 'approved' ? 'border-green-500' : 'border-yellow-500'
         });
       }
     });
@@ -129,7 +127,7 @@ export function CustomCalendar({
     return ranges;
   };
 
-  const multiDayRanges = useMemo(() => getMultiDayRanges(), [customHolidays, approvedVacations, pendingVacations]);
+  const consecutiveDayRanges = useMemo(() => getConsecutiveDayRanges(), [customHolidays, approvedVacations, pendingVacations]);
 
   const getDayStyles = (date: Date) => {
     const isCurrentMonth = isSameMonth(date, currentMonth);
@@ -245,55 +243,44 @@ export function CustomCalendar({
         ))}
       </div>
 
-      {/* Calendar grid with worm backgrounds */}
+      {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1 relative">
-        {/* Render worm backgrounds for multi-day events */}
-        {multiDayRanges.map((range, rangeIndex) => {
-          const wormElements = [];
+        {/* Render connecting lines for consecutive day ranges */}
+        {consecutiveDayRanges.map((range, rangeIndex) => {
+          const elements = [];
           
-          for (let i = 0; i < range.dates.length; i++) {
-            const date = range.dates[i];
-            const dayIndex = calendarDays.findIndex(d => isSameDay(d, date));
+          // Generate all dates in the range
+          const rangeDates = [];
+          for (let date = new Date(range.startDate); date <= range.endDate; date.setDate(date.getDate() + 1)) {
+            rangeDates.push(new Date(date));
+          }
+          
+          // Create connecting elements between consecutive days
+          for (let i = 0; i < rangeDates.length - 1; i++) {
+            const currentDate = rangeDates[i];
+            const nextDate = rangeDates[i + 1];
             
-            if (dayIndex !== -1) {
-              const row = Math.floor(dayIndex / 7);
-              const col = dayIndex % 7;
-              const isFirst = i === 0;
-              const isLast = i === range.dates.length - 1;
-              const nextDate = range.dates[i + 1];
-              const nextDayIndex = nextDate ? calendarDays.findIndex(d => isSameDay(d, nextDate)) : -1;
-              const continuesNextRow = nextDayIndex !== -1 && Math.floor(nextDayIndex / 7) !== row;
+            const currentIndex = calendarDays.findIndex(d => isSameDay(d, currentDate));
+            const nextIndex = calendarDays.findIndex(d => isSameDay(d, nextDate));
+            
+            if (currentIndex !== -1 && nextIndex !== -1) {
+              const currentRow = Math.floor(currentIndex / 7);
+              const currentCol = currentIndex % 7;
+              const nextRow = Math.floor(nextIndex / 7);
+              const nextCol = nextIndex % 7;
               
-              wormElements.push(
-                <div
-                  key={`${rangeIndex}-${i}`}
-                  className={`absolute ${range.color} opacity-20 pointer-events-none`}
-                  style={{
-                    top: `${row * 2.5 + 0.25}rem`,
-                    left: `${col * 2.5 + 0.25}rem`,
-                    width: isLast || continuesNextRow ? '2rem' : '4.5rem',
-                    height: '2rem',
-                    borderRadius: isFirst && isLast ? '1rem' :
-                                isFirst ? '1rem 0.5rem 0.5rem 1rem' :
-                                isLast || continuesNextRow ? '0.5rem 1rem 1rem 0.5rem' :
-                                '0.5rem',
-                    zIndex: 1
-                  }}
-                />
-              );
-              
-              // Add connector to next row if needed
-              if (continuesNextRow && col === 6) {
-                wormElements.push(
+              // Same row connection (horizontal line)
+              if (currentRow === nextRow && nextCol === currentCol + 1) {
+                elements.push(
                   <div
-                    key={`${rangeIndex}-connector-${i}`}
-                    className={`absolute ${range.color} opacity-20 pointer-events-none`}
+                    key={`${rangeIndex}-line-${i}`}
+                    className={`absolute ${range.borderColor} border-t-2 pointer-events-none`}
                     style={{
-                      top: `${row * 2.5 + 2.25}rem`,
-                      left: `0.25rem`,
-                      width: `${7 * 2.5 - 0.5}rem`,
-                      height: '0.5rem',
-                      zIndex: 1
+                      top: `${currentRow * 2.5 + 1.25}rem`,
+                      left: `${currentCol * 2.5 + 2.25}rem`,
+                      width: '0.5rem',
+                      height: '1px',
+                      zIndex: 0
                     }}
                   />
                 );
@@ -301,7 +288,7 @@ export function CustomCalendar({
             }
           }
           
-          return wormElements;
+          return elements;
         })}
 
         {/* Calendar day buttons */}
@@ -315,9 +302,9 @@ export function CustomCalendar({
           const isPending = isPendingVacation(date);
           const hasSpecialEvent = holiday || isApproved || isPending;
           
-          // Check if this day is part of a multi-day range
-          const isPartOfRange = multiDayRanges.some(range => 
-            range.dates.some(rangeDate => isSameDay(rangeDate, date))
+          // Check if this day is part of a consecutive range
+          const isPartOfRange = consecutiveDayRanges.some(range => 
+            date >= range.startDate && date <= range.endDate
           );
           
           return (
@@ -384,6 +371,15 @@ export function CustomCalendar({
               <span className="text-[10px] text-yellow-600 dark:text-yellow-400 font-medium">1</span>
             </div>
             <span className="text-muted-foreground">Vacaciones pendientes</span>
+          </div>
+          
+          <div className="col-span-2 flex items-center gap-2 mt-2 pt-2 border-t border-border">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full border-2 border-orange-500"></div>
+              <div className="w-2 h-0.5 bg-orange-500"></div>
+              <div className="w-3 h-3 rounded-full border-2 border-orange-500"></div>
+            </div>
+            <span className="text-muted-foreground text-xs">Los eventos de múltiples días se conectan</span>
           </div>
         </div>
       </div>
