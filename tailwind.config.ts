@@ -9,7 +9,11 @@ export default {
     'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-red-500',
     'bg-cyan-500', 'bg-amber-500', 'bg-lime-500', 'bg-rose-500',
     'bg-violet-500', 'bg-sky-500', 'bg-green-500', 'bg-yellow-500',
-    'bg-fuchsia-500', 'bg-slate-500', 'bg-oficaz-primary'
+    'bg-fuchsia-500', 'bg-slate-500', 'bg-oficaz-primary',
+    // Worm effect classes for calendar
+    'border-red-500', 'border-orange-500', 'border-green-500', 'border-yellow-500',
+    'border-l-2', 'border-r-2', 'border-t-2', 'border-b-2',
+    'rounded-l-full', 'rounded-r-full'
   ],
   theme: {
     extend: {
