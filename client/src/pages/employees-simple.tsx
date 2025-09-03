@@ -362,7 +362,7 @@ export default function EmployeesSimple() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-6 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 md:gap-6 mb-3">
         <StatsCard
           title="Usuarios"
           subtitle={`de ${subscription?.maxUsers || 30}`}
