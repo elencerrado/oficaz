@@ -350,21 +350,36 @@ export function CustomCalendar({
                       {/* First day: C shape with curvature but no right border */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
-                          }`}></div>
-                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
-                          }`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 pointer-events-none z-20 ${
-                            eventColor === 'red-500' ? 'border-red-500' :
-                            eventColor === 'orange-500' ? 'border-orange-500' :
-                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
-                          }`}></div>
+                          <div 
+                            className="absolute top-0 left-1/2 right-0 h-0.5 z-20"
+                            style={{
+                              backgroundColor: eventColor === 'red-500' ? '#ef4444' :
+                                             eventColor === 'orange-500' ? '#f97316' :
+                                             eventColor === 'green-500' ? '#22c55e' : '#eab308'
+                            }}
+                          ></div>
+                          <div 
+                            className="absolute bottom-0 left-1/2 right-0 h-0.5 z-20"
+                            style={{
+                              backgroundColor: eventColor === 'red-500' ? '#ef4444' :
+                                             eventColor === 'orange-500' ? '#f97316' :
+                                             eventColor === 'green-500' ? '#22c55e' : '#eab308'
+                            }}
+                          ></div>
+                          <div 
+                            className="absolute inset-0 rounded-l-full pointer-events-none z-20"
+                            style={{
+                              borderLeft: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
+                                                         eventColor === 'orange-500' ? '#f97316' :
+                                                         eventColor === 'green-500' ? '#22c55e' : '#eab308'),
+                              borderTop: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
+                                                        eventColor === 'orange-500' ? '#f97316' :
+                                                        eventColor === 'green-500' ? '#22c55e' : '#eab308'),
+                              borderBottom: '2px solid ' + (eventColor === 'red-500' ? '#ef4444' :
+                                                           eventColor === 'orange-500' ? '#f97316' :
+                                                           eventColor === 'green-500' ? '#22c55e' : '#eab308')
+                            }}
+                          ></div>
                         </>
                       )}
                       
