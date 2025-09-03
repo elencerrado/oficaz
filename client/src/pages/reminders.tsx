@@ -247,10 +247,6 @@ export default function Reminders() {
       setEditingReminder(null);
       setIsDialogOpen(false);
       resetForm();
-      toast({
-        title: "Recordatorio actualizado",
-        description: "Los cambios se han guardado correctamente",
-      });
     },
     onError: (error: any) => {
       toast({
