@@ -113,16 +113,13 @@ export function CustomCalendar({
   const getDayBackground = (date: Date) => {
     const isSelected = selectedDate && isSameDay(date, selectedDate);
     const isTodayDate = isToday(date);
-    const holiday = getHolidayInfo(date);
-    const isApproved = isApprovedVacation(date);
-    const isPending = isPendingVacation(date);
 
     if (isSelected) {
       return 'bg-blue-500 dark:bg-blue-600';
     }
     
     if (isTodayDate) {
-      return 'bg-blue-600 dark:bg-blue-700';
+      return 'bg-purple-600 dark:bg-purple-700';
     }
 
     return 'bg-transparent';
@@ -198,14 +195,28 @@ export function CustomCalendar({
           const dayStyles = getDayStyles(date);
           const dayBackground = getDayBackground(date);
           const dayBorder = getDayBorder(date);
+          const isTodayDate = isToday(date);
+          const holiday = getHolidayInfo(date);
+          const isApproved = isApprovedVacation(date);
+          const isPending = isPendingVacation(date);
+          const hasSpecialEvent = holiday || isApproved || isPending;
           
           return (
             <button
               key={date.toISOString()}
               onClick={() => onDateSelect(date)}
-              className={`${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80`}
+              className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80`}
             >
               {format(date, 'd')}
+              
+              {/* Overlay circle for today when it's also a special day */}
+              {isTodayDate && hasSpecialEvent && (
+                <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
+                  holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
+                  isApproved ? 'border-green-500' :
+                  'border-yellow-500'
+                }`}></div>
+              )}
             </button>
           );
         })}
@@ -214,6 +225,20 @@ export function CustomCalendar({
       {/* Legend */}
       <div className="mt-4 pt-4 border-t border-border">
         <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center">
+              <span className="text-[10px] text-white font-medium">H</span>
+            </div>
+            <span className="text-muted-foreground">Día de hoy</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+              <span className="text-[10px] text-white font-medium">S</span>
+            </div>
+            <span className="text-muted-foreground">Día seleccionado</span>
+          </div>
+          
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full border-2 border-red-500 flex items-center justify-center">
               <span className="text-[10px] text-red-600 dark:text-red-400 font-medium">1</span>
