@@ -234,6 +234,7 @@ export function CustomCalendar({
         </button>
       </div>
 
+      {/* ⚠️ PROTECTED: Calendar Grid System - DO NOT MODIFY - Critical for perfect worm effect alignment ⚠️ */}
       {/* Week days header - with connector spaces */}
       <div className="grid mb-2" style={{ gridTemplateColumns: '2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem 1fr 2.25rem' }}>
         {weekDays.map((day, index) => (
@@ -268,6 +269,7 @@ export function CustomCalendar({
             
             const elements = [];
             
+            // ⚠️ PROTECTED: Day Button and Connector Logic - DO NOT MODIFY - Critical worm effect core ⚠️
             // Add the day button (fixed width column)
             elements.push(
               <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9">
@@ -323,11 +325,12 @@ export function CustomCalendar({
                   className="flex items-center justify-center h-9"
                 >
                   {shouldShowConnection && (
-                    <div className={`w-full h-px ${connectionColor}`}></div>
+                    <div className={`w-full h-0.5 ${connectionColor}`}></div>
                   )}
                 </div>
               );
             }
+            // ⚠️ END PROTECTED SECTION ⚠️
             
             return elements;
           }).flat();

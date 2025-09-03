@@ -20,6 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **Critical Functions Must Be Protected**: User has experienced functionality regression issues
 - **Protected Code Sections**: Use ⚠️ PROTECTED comments with "DO NOT MODIFY" warnings
 - **Document Classification**: The analyzeFileName function is CRITICAL and must remain stable
+- **Calendar Grid System**: Custom calendar grid layout (2.25rem fixed day columns, 1fr responsive connectors) is PROTECTED - critical for perfect worm effect alignment
 - **User Requirement**: "Blindfold" (protect/secure) critical functionality to prevent breaking changes
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
