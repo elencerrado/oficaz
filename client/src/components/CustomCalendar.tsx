@@ -302,8 +302,8 @@ export function CustomCalendar({
               <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9 w-9 relative">
                 <button
                   onClick={() => onDateSelect(date)}
-                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center
-                    ${isTodayDate ? 'rounded-full' : 
+                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center transition-none
+                    ${isTodayDate || (selectedDate && isSameDay(date, selectedDate)) ? 'rounded-full' : 
                       rangePosition === 'single' ? 'rounded-full' : 
                       rangePosition === 'first' ? 'rounded-l-full rounded-r-none' :
                       rangePosition === 'last' ? 'rounded-r-full rounded-l-none' :
