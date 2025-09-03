@@ -314,8 +314,8 @@ export function CustomCalendar({
                       {/* Top and bottom lines for middle days */}
                       {rangePosition === 'middle' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
                         </>
                       )}
                       
@@ -327,18 +327,18 @@ export function CustomCalendar({
                       {/* First day: C shape with curvature but no right border */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
+                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
+                          <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
                         </>
                       )}
                       
                       {/* Last day: Inverted C shape with curvature but no left border */}
                       {rangePosition === 'last' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none`}></div>
+                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
+                          <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 border-${eventColor} pointer-events-none${(!isSameMonth(date, currentMonth) || (isPast(date) && !isToday(date))) ? ' opacity-40' : ''}`}></div>
                         </>
                       )}
                     </>
@@ -393,6 +393,7 @@ export function CustomCalendar({
               });
               
               let connectorEventColor = '';
+              let connectorOpacity = '';
               if (connectionColor) {
                 // Extract color from border class
                 const currentDate = date;
@@ -400,6 +401,15 @@ export function CustomCalendar({
                 const currentApproved = isApprovedVacation(currentDate);
                 connectorEventColor = currentHoliday ? (currentHoliday.type === 'national' ? 'red-500' : 'orange-500') :
                                     currentApproved ? 'green-500' : 'yellow-500';
+                
+                // Apply same opacity logic as days
+                const isCurrentMonth = isSameMonth(date, currentMonth);
+                const isTodayDate = isToday(date);
+                const isPastDate = isPast(date) && !isTodayDate;
+                
+                if (!isCurrentMonth || isPastDate) {
+                  connectorOpacity = ' opacity-40';
+                }
               }
               
               elements.push(
@@ -410,8 +420,8 @@ export function CustomCalendar({
                   {shouldShowConnection && (
                     <>
                       {/* Top and bottom connecting lines for worm effect */}
-                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
-                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
+                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
+                      <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
                     </>
                   )}
                 </div>
