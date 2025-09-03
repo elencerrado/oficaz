@@ -132,6 +132,7 @@ export function CustomCalendar({
     const isSelected = selectedDate && isSameDay(date, selectedDate);
     const isTodayDate = isToday(date);
 
+    // Si es día seleccionado o hoy, no mostramos borde porque usamos overlay
     if (isSelected || isTodayDate) {
       return '';
     }
@@ -209,8 +210,8 @@ export function CustomCalendar({
             >
               {format(date, 'd')}
               
-              {/* Overlay circle for today when it's also a special day */}
-              {isTodayDate && hasSpecialEvent && (
+              {/* Overlay circle for special days (today or selected) */}
+              {(isTodayDate || (selectedDate && isSameDay(date, selectedDate))) && hasSpecialEvent && (
                 <div className={`absolute inset-0 rounded-full border-2 pointer-events-none ${
                   holiday ? (holiday.type === 'national' ? 'border-red-500' : 'border-orange-500') :
                   isApproved ? 'border-green-500' :
