@@ -235,7 +235,7 @@ export function CustomCalendar({
       </div>
 
       {/* Week days header - with connector spaces */}
-      <div className="grid mb-2" style={{ gridTemplateColumns: 'repeat(7, 1fr) repeat(6, 0.5rem)' }}>
+      <div className="grid mb-2" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr' }}>
         {weekDays.map((day, index) => (
           <>
             <div key={day} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground uppercase">
@@ -247,7 +247,7 @@ export function CustomCalendar({
       </div>
 
       {/* Calendar grid - with connector columns */}
-      <div className="grid relative" style={{ gridTemplateColumns: 'repeat(7, 1fr) repeat(6, 0.5rem)' }}>
+      <div className="grid relative" style={{ gridTemplateColumns: '1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr 0.5rem 1fr' }}>
 
 
         {/* Calendar days and connectors in alternating pattern */}
