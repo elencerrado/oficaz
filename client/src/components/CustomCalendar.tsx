@@ -138,7 +138,7 @@ export function CustomCalendar({
     const isApproved = isApprovedVacation(date);
     const isPending = isPendingVacation(date);
 
-    let baseClasses = 'relative w-9 h-9 flex items-center justify-center text-sm font-medium transition-all duration-200 cursor-pointer hover:scale-105';
+    let baseClasses = `relative w-9 h-9 flex items-center justify-center text-sm font-medium cursor-pointer ${isTodayDate ? 'transition-none' : 'transition-all duration-200 hover:scale-105'}`;
     
     // Opacity for past days and out of month
     if (!isCurrentMonth || isPastDate) {
