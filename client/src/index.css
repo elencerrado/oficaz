@@ -300,46 +300,32 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* SELECTED DAY - ULTIMATE OVERRIDE */
-.calendar-admin-override button[aria-pressed="true"],
-.calendar-admin-override button[aria-selected="true"],
-.calendar-admin-override .rdp-day_selected,
-.calendar-admin-override .rdp-day[aria-pressed="true"],
-.calendar-admin-override .rdp-day[aria-selected="true"],
-.calendar-admin-override [role="gridcell"] button[aria-pressed="true"],
-.calendar-admin-override td button[aria-pressed="true"] {
-  background: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 50% !important;
-  font-weight: 700 !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
-  opacity: 1 !important;
-  z-index: 10 !important;
-  position: relative !important;
+/* PSEUDO-ELEMENT SOLUTION - Create circles over the ugly buttons */
+.calendar-admin-override button[aria-pressed="true"]::before,
+.calendar-admin-override button[aria-selected="true"]::before,
+.calendar-admin-override .rdp-day_selected::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
   width: 36px !important;
   height: 36px !important;
-  margin: 2px !important;
-}
-
-/* Force override ANY inline styles */
-.calendar-admin-override button[style],
-.calendar-admin-override .rdp-day[style] {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-}
-
-/* Override selected with inline styles */
-.calendar-admin-override button[aria-pressed="true"][style],
-.calendar-admin-override .rdp-day_selected[style] {
   background: #3b82f6 !important;
-  background-color: #3b82f6 !important;
-  border: none !important;
   border-radius: 50% !important;
+  z-index: 999 !important;
+  pointer-events: none !important;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Move text to front */
+.calendar-admin-override button[aria-pressed="true"],
+.calendar-admin-override button[aria-selected="true"],
+.calendar-admin-override .rdp-day_selected {
+  color: white !important;
+  font-weight: 700 !important;
+  position: relative !important;
+  z-index: 1000 !important;
 }
 
 /* NUCLEAR OPTION - DESTROY ALL BUTTON STYLES */
@@ -386,21 +372,27 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* TODAY DAY STYLES - Higher priority than selected */
-.calendar-admin-override .rdp-day_today {
-  background: #3b82f6 !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 50% !important;
-  font-weight: 900 !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  opacity: 1 !important;
-  z-index: 20 !important;
-  position: relative !important;
+/* TODAY DAY - PSEUDO ELEMENT SOLUTION */
+.calendar-admin-override .rdp-day_today::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1.1) !important;
   width: 36px !important;
   height: 36px !important;
-  margin: 2px !important;
+  background: #3b82f6 !important;
+  border-radius: 50% !important;
+  z-index: 999 !important;
+  pointer-events: none !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+}
+
+.calendar-admin-override .rdp-day_today {
+  color: white !important;
+  font-weight: 900 !important;
+  position: relative !important;
+  z-index: 1000 !important;
 }
 
 /* Dark mode for today */
