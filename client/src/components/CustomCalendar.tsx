@@ -273,7 +273,7 @@ export function CustomCalendar({
               <div key={`day-wrapper-${date.toISOString()}`} className="flex items-center justify-center h-9">
                 <button
                   onClick={() => onDateSelect(date)}
-                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10`}
+                  className={`relative ${dayStyles} ${dayBackground} ${dayBorder} rounded-full hover:bg-opacity-80 z-10 w-9 h-9`}
                 >
                   {format(date, 'd')}
                   
