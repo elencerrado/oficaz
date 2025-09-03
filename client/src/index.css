@@ -300,33 +300,40 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* DIRECT BUTTON STYLING - Make the button itself a perfect circle */
+/* TRANSFORM THE GRAY SQUARE INTO BLUE CIRCLE */
 .calendar-admin-override button[aria-pressed="true"],
 .calendar-admin-override button[aria-selected="true"],
-.calendar-admin-override .rdp-day_selected {
+.calendar-admin-override .rdp-day_selected,
+.calendar-admin-override button[data-selected="true"] {
+  background-color: #3b82f6 !important;
+  background-image: none !important;
   background: #3b82f6 !important;
   color: white !important;
   font-weight: 700 !important;
   border-radius: 50% !important;
   border: none !important;
+  border-color: transparent !important;
   width: 36px !important;
   height: 36px !important;
   margin: 2px !important;
   box-shadow: 0 0 8px rgba(59, 130, 246, 0.4) !important;
-  position: relative !important;
-  z-index: 10 !important;
-  
-  /* Force override any inline styles */
-  background-color: #3b82f6 !important;
   outline: none !important;
+  
+  /* Remove any existing styles that create the gray square */
+  box-sizing: border-box !important;
+  padding: 0 !important;
 }
 
-/* Override any style attribute that React Day Picker adds */
-.calendar-admin-override button[aria-pressed="true"][style] {
+/* Force override for inline styles and specific selectors */
+.calendar-admin-override button[aria-pressed="true"][style],
+.calendar-admin-override button[aria-selected="true"][style],
+.calendar-admin-override .rdp-day_selected[style] {
   background: #3b82f6 !important;
   background-color: #3b82f6 !important;
+  background-image: none !important;
   border-radius: 50% !important;
   border: none !important;
+  border-color: transparent !important;
 }
 
 /* NUCLEAR OPTION - DESTROY ALL BUTTON STYLES */
@@ -373,22 +380,24 @@ div.rdp button.rdp-day_today[style] {
   margin: 2px !important;
 }
 
-/* TODAY DAY - DIRECT STYLING */
+/* TODAY DAY - TRANSFORM THE BUTTON */
 .calendar-admin-override .rdp-day_today {
   background: #3b82f6 !important;
   background-color: #3b82f6 !important;
+  background-image: none !important;
   color: white !important;
   font-weight: 900 !important;
   border-radius: 50% !important;
   border: none !important;
+  border-color: transparent !important;
   width: 36px !important;
   height: 36px !important;
   margin: 2px !important;
   transform: scale(1.1) !important;
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  position: relative !important;
-  z-index: 20 !important;
   outline: none !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
 }
 
 /* Dark mode for today */
