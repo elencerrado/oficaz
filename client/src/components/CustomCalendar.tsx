@@ -10,6 +10,13 @@ interface Holiday {
   originalType?: string;
 }
 
+interface CustomHoliday {
+  name: string;
+  startDate: string;
+  endDate: string;
+  type: string;
+}
+
 interface Vacation {
   startDate: string;
   endDate: string;
@@ -21,7 +28,7 @@ interface CustomCalendarProps {
   selectedDate?: Date;
   onDateSelect: (date: Date) => void;
   nationalHolidays: Holiday[];
-  customHolidays: Holiday[];
+  customHolidays: CustomHoliday[];
   approvedVacations: Vacation[];
   pendingVacations: Vacation[];
   className?: string;
@@ -51,14 +58,23 @@ export function CustomCalendar({
   // Helper functions to check day types
   const isHoliday = (date: Date) => {
     const dateString = format(date, 'yyyy-MM-dd');
-    return nationalHolidays.some(h => h.date === dateString) || 
-           customHolidays.some(h => h.date === dateString);
+    const isNational = nationalHolidays.some(h => h.date === dateString);
+    const isCustom = customHolidays.some(h => {
+      const start = parseISO(h.startDate);
+      const end = parseISO(h.endDate);
+      return date >= start && date <= end;
+    });
+    return isNational || isCustom;
   };
 
   const getHolidayInfo = (date: Date) => {
     const dateString = format(date, 'yyyy-MM-dd');
     const national = nationalHolidays.find(h => h.date === dateString);
-    const custom = customHolidays.find(h => h.date === dateString);
+    const custom = customHolidays.find(h => {
+      const start = parseISO(h.startDate);
+      const end = parseISO(h.endDate);
+      return date >= start && date <= end;
+    });
     return national || custom;
   };
 
@@ -87,21 +103,16 @@ export function CustomCalendar({
       borderColor: string;
     }> = [];
 
-    // Process custom holidays (group by name for multi-day events like "Feria")
-    const customHolidayGroups = customHolidays.reduce((groups: any, holiday) => {
-      if (!groups[holiday.name]) {
-        groups[holiday.name] = [];
-      }
-      groups[holiday.name].push(parseISO(holiday.date));
-      return groups;
-    }, {});
-
-    Object.values(customHolidayGroups).forEach((dates: any) => {
-      if (dates.length > 1) {
-        dates.sort((a: Date, b: Date) => a.getTime() - b.getTime());
+    // Process custom holidays directly from their start/end dates
+    customHolidays.forEach(holiday => {
+      const start = parseISO(holiday.startDate);
+      const end = parseISO(holiday.endDate);
+      
+      // Only add if it's more than one day
+      if (start.getTime() !== end.getTime()) {
         ranges.push({
-          startDate: dates[0],
-          endDate: dates[dates.length - 1],
+          startDate: start,
+          endDate: end,
           type: 'custom',
           borderColor: 'border-orange-500'
         });
