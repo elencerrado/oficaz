@@ -771,7 +771,7 @@ export default function VacationManagement() {
                           name: h.name,
                           type: h.type as 'national' | 'regional' | 'custom'
                         })),
-                        ...((customHolidays as Holiday[] || [])).map(h => ({
+                        ...(customHolidays || []).map(h => ({
                           date: parseISO(h.date),
                           name: h.name,
                           type: h.type as 'national' | 'regional' | 'custom'
