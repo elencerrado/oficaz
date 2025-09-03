@@ -302,9 +302,9 @@ export function CustomCalendar({
                   onClick={() => onDateSelect(date)}
                   className={`relative ${dayStyles} ${dayBackground} ${dayBorder} hover:bg-opacity-80 z-10 w-9 h-9 flex items-center justify-center
                     ${rangePosition === 'single' ? 'rounded-full' : 
-                      rangePosition === 'first' ? 'rounded-l-full' :
-                      rangePosition === 'last' ? 'rounded-r-full' :
-                      rangePosition === 'middle' ? '' : 'rounded-full'}`}
+                      rangePosition === 'first' ? 'rounded-l-full rounded-r-none' :
+                      rangePosition === 'last' ? 'rounded-r-full rounded-l-none' :
+                      rangePosition === 'middle' ? 'rounded-none' : 'rounded-full'}`}
                 >
                   {format(date, 'd')}
                   
@@ -324,21 +324,21 @@ export function CustomCalendar({
                         <div className={`absolute inset-0 rounded-full border-2 border-${eventColor} pointer-events-none`}></div>
                       )}
                       
-                      {/* C shape for first day */}
+                      {/* First day: half circle with connecting lines */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-0 bottom-0 w-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 left-0 bottom-0 w-0.5 bg-${eventColor} rounded-l-full`}></div>
+                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
                         </>
                       )}
                       
-                      {/* Inverted C shape for last day */}
+                      {/* Last day: half circle with connecting lines */}
                       {rangePosition === 'last' && (
                         <>
-                          <div className={`absolute top-0 right-0 bottom-0 w-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute top-0 right-0 left-1/2 h-0.5 bg-${eventColor}`}></div>
-                          <div className={`absolute bottom-0 right-0 left-1/2 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute top-0 right-0 bottom-0 w-0.5 bg-${eventColor} rounded-r-full`}></div>
+                          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
+                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${eventColor}`}></div>
                         </>
                       )}
                     </>
@@ -412,8 +412,6 @@ export function CustomCalendar({
                       {/* Top and bottom connecting lines for worm effect */}
                       <div className={`absolute top-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
                       <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-${connectorEventColor}`}></div>
-                      {/* Middle horizontal line */}
-                      <div className={`w-full h-0.5 bg-${connectorEventColor}`}></div>
                     </>
                   )}
                 </div>
