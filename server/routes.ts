@@ -5241,7 +5241,12 @@ Responde directamente a este email para contactar con la persona.
       const setupIntent = await stripe.setupIntents.create({
         customer: stripeCustomerId,
         payment_method_types: ['card'],
-        usage: 'off_session'
+        usage: 'on_session',
+        confirm: false,
+        automatic_payment_methods: {
+          enabled: true,
+          allow_redirects: 'never'
+        }
       });
 
       res.json({
