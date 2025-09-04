@@ -5246,7 +5246,14 @@ Responde directamente a este email para contactar con la persona.
                            company.subscription.plan === 'basic' ? 19.95 : 
                            company.subscription.plan === 'master' ? 99.95 : 39.95;
       
-      const finalPrice = customPrice || standardPrice;
+      let finalPrice = customPrice || standardPrice;
+      
+      // Stripe requires minimum €0.50 - enforce this limit
+      if (finalPrice < 0.50) {
+        console.log(`⚠️ Price €${finalPrice} below Stripe minimum, using €0.50 for authorization`);
+        finalPrice = 0.50; // Use minimum for authorization, but keep custom price for actual billing
+      }
+      
       const authAmountCents = Math.round(finalPrice * 100); // Convert to cents
       
       console.log(`💰 AUTHORIZATION AMOUNT: customPrice=${customPrice}, standardPrice=${standardPrice}, finalPrice=${finalPrice}, authAmountCents=${authAmountCents}`);
@@ -5259,7 +5266,7 @@ Responde directamente a este email para contactar con la persona.
         payment_method_types: ['card'],
         capture_method: 'manual', // Authorize now, capture later
         setup_future_usage: 'off_session', // Save for future use
-        description: `Autorización para Plan ${company.subscription.plan} - €${finalPrice} - ${company.name}`,
+        description: `Autorización para Plan ${company.subscription.plan} - ${company.name}`,
       });
 
       res.json({
@@ -5431,11 +5438,18 @@ Responde directamente a este email para contactar con la persona.
         `);
         
         // Store the payment intent in company custom_features for later capture
+        // Save original custom price for final billing even if authorization was higher
+        const actualCustomPrice = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
+        const actualStandardPrice = company.subscription.plan === 'pro' ? 39.95 : 
+                                   company.subscription.plan === 'basic' ? 19.95 : 
+                                   company.subscription.plan === 'master' ? 99.95 : 39.95;
+        const originalCustomPrice = actualCustomPrice || actualStandardPrice;
         await db.execute(sql`
           UPDATE companies 
           SET custom_features = COALESCE(custom_features, '{}') || jsonb_build_object(
             'pending_payment_intent_id', ${paymentIntent.id},
             'authorization_amount', ${paymentIntent.amount},
+            'actual_billing_amount', ${Math.round(originalCustomPrice * 100)},
             'authorization_date', ${now.toISOString()}
           )
           WHERE id = ${company.id}
@@ -7016,10 +7030,15 @@ Responde directamente a este email para contactar con la persona.
           const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
           
           if (paymentIntent.status === 'requires_capture') {
-            console.log(`💰 CAPTURING authorized payment for ${t.company_name}: €${paymentIntent.amount/100}`);
+            // Get the actual billing amount (may be different from authorization amount)
+            const actualBillingCents = t.custom_features?.actual_billing_amount || paymentIntent.amount;
             
-            // Capture the payment
-            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId);
+            console.log(`💰 CAPTURING payment for ${t.company_name}: authorized=€${paymentIntent.amount/100}, billing=€${actualBillingCents/100}`);
+            
+            // Capture the payment (Stripe allows partial capture if actual amount is lower)
+            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId, {
+              amount_to_capture: actualBillingCents
+            });
             console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
             
             // Get plan pricing for recurring subscription
