@@ -478,9 +478,9 @@ export function CustomCalendar({
                 >
                   {shouldShowConnection && (
                     <>
-                      {/* Top and bottom connecting lines for worm effect - aligned with day border lines */}
-                      <div className={`absolute -top-px left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
-                      <div className={`absolute -bottom-px left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
+                      {/* Top and bottom connecting lines for worm effect - using same border system as days */}
+                      <div className={`absolute top-0 left-0 right-0 border-t-2 border-${connectorEventColor}${connectorOpacity}`}></div>
+                      <div className={`absolute bottom-0 left-0 right-0 border-b-2 border-${connectorEventColor}${connectorOpacity}`}></div>
                     </>
                   )}
                 </div>
