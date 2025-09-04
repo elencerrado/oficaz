@@ -7299,15 +7299,55 @@ Responde directamente a este email para contactar con la persona.
   // Schedule company deletion - 30 day grace period
   app.post('/api/account/schedule-deletion', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
-      const success = await storage.scheduleCompanyDeletion(req.user!.companyId);
+      const companyId = req.user!.companyId;
+      
+      // CRITICAL: First cancel Stripe subscription to stop billing immediately
+      console.log('🚨 ACCOUNT DELETION - Canceling Stripe subscription for company:', companyId);
+      
+      // Get company subscription to find Stripe subscription ID
+      const subscription = await storage.getCompanySubscription(companyId);
+      
+      if (subscription && subscription.stripeSubscriptionId) {
+        try {
+          console.log('💳 Canceling Stripe subscription:', subscription.stripeSubscriptionId);
+          
+          // Cancel subscription in Stripe immediately
+          const canceledSubscription = await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+          console.log('✅ Stripe subscription canceled:', {
+            id: canceledSubscription.id,
+            status: canceledSubscription.status,
+            canceled_at: canceledSubscription.canceled_at
+          });
+          
+          // Update subscription status in database
+          await storage.updateCompanySubscription(companyId, {
+            status: 'cancelled',
+            endDate: new Date()
+          });
+          
+          console.log('✅ Database subscription status updated to cancelled');
+          
+        } catch (stripeError) {
+          console.error('❌ Error canceling Stripe subscription:', stripeError);
+          // Continue with account deletion even if Stripe cancellation fails
+        }
+      } else {
+        console.log('⚠️ No active subscription found to cancel');
+      }
+      
+      // Now schedule the company deletion (30-day grace period)
+      const success = await storage.scheduleCompanyDeletion(companyId);
       
       if (!success) {
         return res.status(500).json({ error: 'Error al programar la eliminación de la cuenta' });
       }
       
+      console.log('✅ Company deletion scheduled for 30 days from now');
+      
       res.json({ 
-        message: 'Cuenta programada para eliminación en 30 días',
-        scheduledForDeletion: true
+        message: 'Cuenta programada para eliminación en 30 días. Suscripción cancelada inmediatamente.',
+        scheduledForDeletion: true,
+        subscriptionCanceled: !!subscription?.stripeSubscriptionId
       });
     } catch (error) {
       console.error('Error scheduling company deletion:', error);

@@ -1061,10 +1061,10 @@ const AccountManagement = () => {
                   <p className="font-semibold mb-2">⚠️ ADVERTENCIA: Eliminación programada</p>
                   <ul className="space-y-1 text-xs">
                     <li>• Se programará la eliminación para dentro de 30 días</li>
+                    <li>• Tu suscripción se cancelará INMEDIATAMENTE (sin más cobros)</li>
                     <li>• Durante estos 30 días podrás cancelar la eliminación</li>
                     <li>• Después de 30 días se eliminarán TODOS los datos</li>
                     <li>• Se borrarán usuarios, fichajes, vacaciones y documentos</li>
-                    <li>• Se cancelará automáticamente la suscripción</li>
                     <li>• Una vez eliminados, los datos NO se pueden recuperar</li>
                   </ul>
                 </div>
