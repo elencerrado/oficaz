@@ -72,7 +72,7 @@ const regions = [
 ];
 
 export default function VacationManagement() {
-  const { company } = useAuth();
+  const { company, user } = useAuth();
   const [activeTab, setActiveTab] = useState("employees");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,6 +84,11 @@ export default function VacationManagement() {
   const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit' | 'revert'>('approve');
   const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
+  
+  // Estados para nueva solicitud de manager/admin
+  const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+  const [newRequestDates, setNewRequestDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
+  const [newRequestReason, setNewRequestReason] = useState("");
   
   // Estados para el timeline de vacaciones (pestaña empleados)
   const [timelineViewDate, setTimelineViewDate] = useState(new Date());
@@ -357,7 +362,7 @@ export default function VacationManagement() {
                 </div>
 
                 {/* Botones de acción - Mismo estilo que las tarjetas móviles */}
-                {period.status === 'pending' ? (
+                {period.status === 'pending' && fullRequest && canManageRequest(fullRequest) ? (
                   <div className="grid grid-cols-3 gap-2 w-full">
                     <button
                       onClick={(e) => {
@@ -393,9 +398,17 @@ export default function VacationManagement() {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
+                ) : period.status === 'pending' ? (
+                  <div className="p-2 bg-yellow-50 rounded-lg text-center">
+                    <p className="text-xs text-yellow-700">
+                      {user?.role === 'manager' && fullRequest?.userId === user?.id 
+                        ? 'No puedes gestionar tus propias solicitudes' 
+                        : 'Sin permisos para gestionar esta solicitud'}
+                    </p>
+                  </div>
                 ) : (
                   <div className="flex w-full">
-                    {(period.status === 'approved' || period.status === 'denied') && (
+                    {(period.status === 'approved' || period.status === 'denied') && fullRequest && canManageRequest(fullRequest) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -478,6 +491,46 @@ export default function VacationManagement() {
       toast({ 
         title: "Error", 
         description: `No se pudo actualizar la solicitud: ${error.message}`,
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Create new vacation request (for managers and admins)
+  const createRequestMutation = useMutation({
+    mutationFn: async ({ startDate, endDate, reason }: { 
+      startDate: string; 
+      endDate: string; 
+      reason?: string;
+    }) => {
+      const requestData = {
+        startDate,
+        endDate,
+        reason: reason || undefined,
+        // Admin requests are auto-approved, manager requests are pending
+        status: user?.role === 'admin' ? 'approved' : 'pending'
+      };
+      
+      console.log('Creating vacation request:', requestData);
+      
+      return apiRequest('POST', '/api/vacation-requests', requestData);
+    },
+    onSuccess: (data) => {
+      console.log('Create successful:', data);
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
+      setShowNewRequestModal(false);
+      setNewRequestDates({ startDate: null, endDate: null });
+      setNewRequestReason("");
+      const message = user?.role === 'admin' 
+        ? "Tu solicitud de vacaciones ha sido aprobada automáticamente" 
+        : "Tu solicitud de vacaciones ha sido enviada y está pendiente de aprobación";
+      toast({ title: message });
+    },
+    onError: (error) => {
+      console.error('Create failed:', error);
+      toast({ 
+        title: "Error", 
+        description: `No se pudo crear la solicitud: ${error.message}`,
         variant: "destructive" 
       });
     },
@@ -627,6 +680,23 @@ export default function VacationManagement() {
 
   const stats = getVacationStats();
 
+  // Helper function to determine if user can manage a specific request
+  const canManageRequest = (request: VacationRequest) => {
+    // Admin can manage all requests
+    if (user?.role === 'admin') return true;
+    
+    // Manager can only manage employee requests, not their own
+    if (user?.role === 'manager') {
+      // Get the user who made the request
+      const requestUser = (employees || []).find((emp: Employee) => emp.id === request.userId);
+      // Manager cannot manage their own requests, only employee requests
+      return requestUser && requestUser.role === 'employee';
+    }
+    
+    // Employees cannot manage any requests
+    return false;
+  };
+
   const openRequestModal = (request: VacationRequest, action: 'approve' | 'deny' | 'edit' | 'revert') => {
     setSelectedRequest(request);
     setModalAction(action);
@@ -660,6 +730,17 @@ export default function VacationManagement() {
     }
 
     updateRequestMutation.mutate(updateData);
+  };
+
+  // Handle new request creation
+  const handleCreateRequest = () => {
+    if (!newRequestDates.startDate || !newRequestDates.endDate) return;
+
+    createRequestMutation.mutate({
+      startDate: newRequestDates.startDate.toISOString().split('T')[0],
+      endDate: newRequestDates.endDate.toISOString().split('T')[0],
+      reason: newRequestReason.trim() || undefined
+    });
   };
 
   return (
@@ -740,17 +821,30 @@ export default function VacationManagement() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-48"
                 />
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-36">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="pending">Pendientes</SelectItem>
-                    <SelectItem value="approved">Aprobadas</SelectItem>
-                    <SelectItem value="denied">Denegadas</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  {/* Botón Nueva Solicitud para managers y admins */}
+                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                    <Button 
+                      size="sm" 
+                      className="bg-[#007AFF] hover:bg-[#0056CC]"
+                      onClick={() => setShowNewRequestModal(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nueva Solicitud
+                    </Button>
+                  )}
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="pending">Pendientes</SelectItem>
+                      <SelectItem value="approved">Aprobadas</SelectItem>
+                      <SelectItem value="denied">Denegadas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             {loadingRequests ? (
               <div className="flex justify-center py-8">
@@ -806,7 +900,7 @@ export default function VacationManagement() {
                       </div>
                       
                       <div className="flex gap-2 ml-4">
-                        {request.status === 'pending' ? (
+                        {request.status === 'pending' && canManageRequest(request) ? (
                           <>
                             <Button
                               size="sm"
@@ -833,9 +927,15 @@ export default function VacationManagement() {
                               Denegar
                             </Button>
                           </>
+                        ) : request.status === 'pending' ? (
+                          <Badge variant="outline" className="text-xs text-yellow-700 bg-yellow-50">
+                            {user?.role === 'manager' && request.userId === user?.id 
+                              ? 'No puedes gestionar tus propias solicitudes' 
+                              : 'Sin permisos para gestionar'}
+                          </Badge>
                         ) : (
                           <div className="flex gap-2">
-                            {(request.status === 'approved' || request.status === 'denied') && (
+                            {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -887,7 +987,7 @@ export default function VacationManagement() {
                       </div>
 
                       {/* Mobile action buttons */}
-                      {request.status === 'pending' ? (
+                      {request.status === 'pending' && canManageRequest(request) ? (
                         <div className="grid grid-cols-3 gap-2 w-full">
                           <Button
                             size="sm"
@@ -915,9 +1015,17 @@ export default function VacationManagement() {
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
+                      ) : request.status === 'pending' ? (
+                        <div className="p-2 bg-yellow-50 rounded-lg text-center">
+                          <p className="text-xs text-yellow-700">
+                            {user?.role === 'manager' && request.userId === user?.id 
+                              ? 'No puedes gestionar tus propias solicitudes' 
+                              : 'Sin permisos para gestionar esta solicitud'}
+                          </p>
+                        </div>
                       ) : (
                         <div className="flex w-full">
-                          {(request.status === 'approved' || request.status === 'denied') && (
+                          {(request.status === 'approved' || request.status === 'denied') && canManageRequest(request) && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1649,6 +1757,105 @@ export default function VacationManagement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Request Modal for Managers and Admins */}
+      <Dialog open={showNewRequestModal} onOpenChange={setShowNewRequestModal}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-[#007AFF]" />
+              Nueva Solicitud de Vacaciones
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Información del solicitante */}
+            <div className="p-3 bg-muted/20 rounded-lg">
+              <h3 className="font-medium text-foreground mb-1">{user?.fullName}</h3>
+              <p className="text-sm text-muted-foreground">
+                {user?.role === 'admin' ? 'Administrador' : 'Manager'}
+              </p>
+              {user?.role === 'admin' && (
+                <p className="text-xs text-green-600 mt-1">
+                  ✓ Tu solicitud será aprobada automáticamente
+                </p>
+              )}
+              {user?.role === 'manager' && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  ⏳ Tu solicitud será enviada al administrador para aprobación
+                </p>
+              )}
+            </div>
+
+            {/* Selector de fechas */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">
+                  Período de vacaciones
+                </label>
+                <DatePickerPeriod
+                  startDate={newRequestDates.startDate || undefined}
+                  endDate={newRequestDates.endDate || undefined}
+                  onStartDateChange={(date) => setNewRequestDates(prev => ({ ...prev, startDate: date || null }))}
+                  onEndDateChange={(date) => setNewRequestDates(prev => ({ ...prev, endDate: date || null }))}
+                />
+              </div>
+              
+              {/* Mostrar días calculados */}
+              {newRequestDates.startDate && newRequestDates.endDate && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">Días solicitados:</span> {
+                    calculateDays(
+                      newRequestDates.startDate.toISOString().split('T')[0],
+                      newRequestDates.endDate.toISOString().split('T')[0]
+                    )
+                  }
+                </div>
+              )}
+            </div>
+
+            {/* Motivo (opcional) */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">
+                Motivo (opcional)
+              </label>
+              <Textarea
+                value={newRequestReason}
+                onChange={(e) => setNewRequestReason(e.target.value)}
+                placeholder="Describe el motivo de tus vacaciones..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNewRequestModal(false);
+                  setNewRequestDates({ startDate: null, endDate: null });
+                  setNewRequestReason("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateRequest}
+                disabled={createRequestMutation.isPending || !newRequestDates.startDate || !newRequestDates.endDate}
+                className="bg-[#007AFF] hover:bg-[#0056CC]"
+              >
+                {createRequestMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-1" />
+                    {user?.role === 'admin' ? 'Aprobar Solicitud' : 'Enviar Solicitud'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -3098,11 +3098,16 @@ Responde directamente a este email para contactar con la persona.
       console.log('Vacation request body:', req.body);
       console.log('User ID:', req.user!.id);
       
+      // Determine status based on user role
+      // Admin requests are auto-approved, manager/employee requests are pending
+      const status = req.user!.role === 'admin' ? 'approved' : 'pending';
+      
       const data = insertVacationRequestSchema.parse({
         ...req.body,
         userId: req.user!.id,
         startDate: new Date(req.body.startDate),
         endDate: new Date(req.body.endDate),
+        status: status, // Set status based on role
       });
 
       console.log('Parsed data:', data);
@@ -3125,6 +3130,14 @@ Responde directamente a este email para contactar con la persona.
       }
       
       const request = await storage.createVacationRequest(data);
+      
+      // Log the automatic approval for admin users
+      if (req.user!.role === 'admin') {
+        console.log(`Admin request auto-approved for user ${req.user!.id}: ${request.id}`);
+      } else {
+        console.log(`Request created pending approval for user ${req.user!.id}: ${request.id}`);
+      }
+      
       res.status(201).json(request);
     } catch (error: any) {
       console.error('Vacation request error:', error);
