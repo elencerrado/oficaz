@@ -1004,7 +1004,7 @@ export default function AdminDashboard() {
                       <div 
                         key={request.id} 
                         className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setLocation('/test/vacaciones')}
+                        onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=approve`)}
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div>

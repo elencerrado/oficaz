@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearch } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +103,7 @@ export default function VacationManagement() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const search = useSearch();
 
   // Cerrar tooltip al hacer clic fuera
   useEffect(() => {
@@ -460,6 +462,7 @@ export default function VacationManagement() {
     }
   });
 
+
   // Update vacation request status
   const updateRequestMutation = useMutation({
     mutationFn: async ({ id, status, startDate, endDate, adminComment }: { 
@@ -742,6 +745,23 @@ export default function VacationManagement() {
       reason: newRequestReason.trim() || undefined
     });
   };
+
+  // Auto-open modal from URL parameters (dashboard navigation)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(search);
+    const requestId = urlParams.get('requestId');
+    const action = urlParams.get('action');
+    
+    if (requestId && action && vacationRequests.length > 0) {
+      const request = vacationRequests.find(r => r.id === parseInt(requestId));
+      if (request && ['approve', 'deny', 'edit'].includes(action)) {
+        setActiveTab('requests'); // Switch to requests tab
+        openRequestModal(request, action as 'approve' | 'deny' | 'edit');
+        // Clean URL after opening modal
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [search, vacationRequests]);
 
   return (
     <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
