@@ -786,16 +786,16 @@ export default function AdminDocuments() {
           />
 
           <StatsCard
-            title="Subidos Hoy"
-            subtitle="Nuevos archivos"
+            title="Pendientes Firma"
+            subtitle="Nóminas sin firmar"
             value={(allDocuments || []).filter(doc => {
-              const today = new Date();
-              const docDate = new Date(doc.createdAt);
-              return docDate.toDateString() === today.toDateString();
+              const fileName = doc.originalName || doc.fileName || '';
+              const analysis = analyzeFileName(fileName, employees);
+              return analysis.documentType === 'Nómina' && !doc.isAccepted;
             }).length}
-            color="green"
-            icon={Upload}
-            onClick={() => setActiveTab('upload')}
+            color="orange"
+            icon={FileSignature}
+            onClick={() => setActiveTab('explorer')}
           />
 
           <StatsCard
