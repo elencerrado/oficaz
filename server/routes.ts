@@ -4304,7 +4304,10 @@ Responde directamente a este email para contactar con la persona.
 
       // Only allow specific fields to be updated by admin/manager
       const allowedUpdates: any = {};
-      if (updates.companyEmail !== undefined) allowedUpdates.companyEmail = updates.companyEmail;
+      // Only update companyEmail if it's provided and not empty, and different from current value
+      if (updates.companyEmail !== undefined && updates.companyEmail.trim() !== '' && updates.companyEmail !== user.companyEmail) {
+        allowedUpdates.companyEmail = updates.companyEmail.trim();
+      }
       if (updates.companyPhone !== undefined) allowedUpdates.companyPhone = updates.companyPhone;
       if (updates.position !== undefined) allowedUpdates.position = updates.position;
       if (updates.startDate !== undefined) allowedUpdates.startDate = new Date(updates.startDate);
