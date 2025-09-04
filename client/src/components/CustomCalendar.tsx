@@ -478,9 +478,9 @@ export function CustomCalendar({
                 >
                   {shouldShowConnection && (
                     <>
-                      {/* Top and bottom connecting lines - using exact same border system as days */}
-                      <div className={`absolute top-0 left-0 right-0 border-t-2 border-${connectorEventColor}${connectorOpacity}`}></div>
-                      <div className={`absolute bottom-0 left-0 right-0 border-b-2 border-${connectorEventColor}${connectorOpacity}`}></div>
+                      {/* Top and bottom connecting lines - adjusted vertical position to match day lines */}
+                      <div className={`absolute left-0 right-0 border-t-2 border-${connectorEventColor}${connectorOpacity}`} style={{ top: '0px' }}></div>
+                      <div className={`absolute left-0 right-0 border-b-2 border-${connectorEventColor}${connectorOpacity}`} style={{ bottom: '0px' }}></div>
                     </>
                   )}
                 </div>
