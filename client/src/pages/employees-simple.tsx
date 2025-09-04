@@ -1345,24 +1345,33 @@ export default function EmployeesSimple() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
-                {/* Delete Button on Left */}
+              {/* Action Buttons - Responsive layout */}
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+                {/* Delete Button */}
                 <Button 
                   variant="destructive" 
                   onClick={() => setShowDeleteModal(true)} 
                   disabled={updateEmployeeMutation.isPending || deleteEmployeeMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                 >
                   Eliminar Empleado
                 </Button>
                 
-                {/* Save/Cancel Buttons on Right */}
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={updateEmployeeMutation.isPending}>
+                {/* Save/Cancel Buttons */}
+                <div className="flex gap-3 w-full sm:w-auto">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowEditModal(false)} 
+                    disabled={updateEmployeeMutation.isPending}
+                    className="flex-1 sm:flex-initial"
+                  >
                     Cancelar
                   </Button>
-                  <Button onClick={handleSaveEmployee} disabled={updateEmployeeMutation.isPending}>
+                  <Button 
+                    onClick={handleSaveEmployee} 
+                    disabled={updateEmployeeMutation.isPending}
+                    className="flex-1 sm:flex-initial"
+                  >
                     {updateEmployeeMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
                   </Button>
                 </div>
