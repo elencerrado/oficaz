@@ -5202,6 +5202,12 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ message: 'Usuario no encontrado' });
       }
 
+      // Get company data first (needed for payment intent description)
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
       
@@ -5220,11 +5226,8 @@ Responde directamente a este email para contactar con la persona.
       }
       
       if (!stripeCustomerId) {
-        // Get company data for unified email
-        const company = await storage.getCompanyByUserId(userId);
-        
         const customer = await stripe.customers.create({
-          email: company?.email || user.companyEmail,
+          email: company.email || user.companyEmail,
           name: user.fullName,
           metadata: {
             userId: userId.toString(),
