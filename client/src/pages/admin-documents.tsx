@@ -1415,7 +1415,7 @@ export default function AdminDocuments() {
                               type="text"
                               value={analysis.suggestedName}
                               onChange={(e) => updateSuggestedName(index, e.target.value)}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                               placeholder="Edita el nombre del archivo..."
                             />
                           </div>
