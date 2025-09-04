@@ -322,6 +322,18 @@ export function CustomCalendar({
                   rangePosition = 'middle';
                 }
                 
+                // Debug logging for September 16 and 22
+                if (date.getDate() === 16 || date.getDate() === 22) {
+                  console.log(`Day ${date.getDate()} of September - Range position:`, {
+                    date: dateString,
+                    rangePosition,
+                    eventColor,
+                    rangeStart: format(currentRange.startDate, 'yyyy-MM-dd'),
+                    rangeEnd: format(currentRange.endDate, 'yyyy-MM-dd'),
+                    isFirst: isSameDay(date, currentRange.startDate),
+                    isLast: isSameDay(date, currentRange.endDate)
+                  });
+                }
 
               }
             }
