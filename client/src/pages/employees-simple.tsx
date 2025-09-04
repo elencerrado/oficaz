@@ -260,7 +260,73 @@ export default function EmployeesSimple() {
     staleTime: 0, // Always fetch fresh data for user limits
   });
 
+  // Function to calculate role limits and availability
+  const getRoleLimits = () => {
+    const planName = subscription?.plan || 'basic';
+    
+    // Define role limits by plan (same as server logic)
+    const roleLimits: Record<string, Record<string, number>> = {
+      'basic': {
+        admin: 1,
+        manager: 1,
+        employee: (subscription?.maxUsers || 5) - 2
+      },
+      'pro': {
+        admin: 1,
+        manager: 3,
+        employee: (subscription?.maxUsers || 30) - 4
+      },
+      'master': {
+        admin: 999, // Unlimited
+        manager: 999, // Unlimited
+        employee: 999 // Unlimited
+      }
+    };
 
+    // Count current users by role (including ALL users, not just filtered)
+    const allEmployees = employees as any[] || [];
+    const currentRoleCounts = {
+      admin: allEmployees.filter(emp => emp.role === 'admin').length,
+      manager: allEmployees.filter(emp => emp.role === 'manager').length,
+      employee: allEmployees.filter(emp => emp.role === 'employee').length
+    };
+
+    const limits = roleLimits[planName] || roleLimits['basic'];
+    
+    return {
+      limits,
+      currentCounts: currentRoleCounts,
+      available: {
+        admin: Math.max(0, limits.admin - currentRoleCounts.admin),
+        manager: Math.max(0, limits.manager - currentRoleCounts.manager),
+        employee: Math.max(0, limits.employee - currentRoleCounts.employee)
+      }
+    };
+  };
+
+  // Check if a role change is allowed
+  const canChangeToRole = (targetRole: string, currentEmployeeId?: number) => {
+    const { available, currentCounts } = getRoleLimits();
+    
+    // If editing existing employee, we need to account for their current role
+    if (currentEmployeeId) {
+      const currentEmployee = employees.find((emp: any) => emp.id === currentEmployeeId);
+      if (currentEmployee && currentEmployee.role === targetRole) {
+        return true; // Same role, no change needed
+      }
+      
+      // Calculate available slots considering the role change
+      if (currentEmployee) {
+        const adjustedAvailable = { ...available };
+        // Free up the current role slot
+        adjustedAvailable[currentEmployee.role as keyof typeof adjustedAvailable]++;
+        return adjustedAvailable[targetRole as keyof typeof adjustedAvailable] > 0;
+      }
+    }
+    
+    // For new employees or role changes
+    return available[targetRole as keyof typeof available] > 0;
+  };
 
   const employeeList = employees as any[];
   const filteredEmployees = (employeeList || []).filter((employee: any) => {
@@ -1045,9 +1111,24 @@ export default function EmployeesSimple() {
                               <SelectValue placeholder="Seleccionar tipo" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="employee">Empleado</SelectItem>
-                              <SelectItem value="manager">Manager</SelectItem>
-                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem 
+                                value="employee"
+                                disabled={!canChangeToRole('employee', selectedEmployee?.id)}
+                              >
+                                Empleado {!canChangeToRole('employee', selectedEmployee?.id) && '(Límite alcanzado)'}
+                              </SelectItem>
+                              <SelectItem 
+                                value="manager"
+                                disabled={!canChangeToRole('manager', selectedEmployee?.id)}
+                              >
+                                Manager {!canChangeToRole('manager', selectedEmployee?.id) && '(Límite alcanzado)'}
+                              </SelectItem>
+                              <SelectItem 
+                                value="admin"
+                                disabled={!canChangeToRole('admin', selectedEmployee?.id)}
+                              >
+                                Administrador {!canChangeToRole('admin', selectedEmployee?.id) && '(Límite alcanzado)'}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -1059,8 +1140,18 @@ export default function EmployeesSimple() {
                               <SelectValue placeholder="Seleccionar tipo" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="employee">Empleado</SelectItem>
-                              <SelectItem value="manager">Manager</SelectItem>
+                              <SelectItem 
+                                value="employee"
+                                disabled={!canChangeToRole('employee', selectedEmployee?.id)}
+                              >
+                                Empleado {!canChangeToRole('employee', selectedEmployee?.id) && '(Límite alcanzado)'}
+                              </SelectItem>
+                              <SelectItem 
+                                value="manager"
+                                disabled={!canChangeToRole('manager', selectedEmployee?.id)}
+                              >
+                                Manager {!canChangeToRole('manager', selectedEmployee?.id) && '(Límite alcanzado)'}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -1069,6 +1160,21 @@ export default function EmployeesSimple() {
                             Como manager, no puedes asignar rol de administrador
                           </p>
                         )}
+                        {/* Show plan limits info */}
+                        {(() => {
+                          const { limits, currentCounts } = getRoleLimits();
+                          const planName = subscription?.plan || 'basic';
+                          return (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+                              <p className="font-medium">Límites del plan {planName}:</p>
+                              <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div>Admin: {currentCounts.admin}/{limits.admin}</div>
+                                <div>Manager: {currentCounts.manager}/{limits.manager}</div>
+                                <div>Empleado: {currentCounts.employee}/{limits.employee}</div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
