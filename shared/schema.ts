@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -107,8 +108,11 @@ export const subscriptions = pgTable("subscriptions", {
   nextPlan: varchar("next_plan", { length: 50 }), // Plan que se activará en el próximo ciclo de facturación
   planChangeDate: timestamp("plan_change_date"), // Fecha cuando se efectuará el cambio de plan
   status: varchar("status", { length: 50 }).default("trial").notNull(), // trial, active, inactive, suspended, blocked
+  startDate: timestamp("start_date").defaultNow().notNull(), // Company start date
   endDate: timestamp("end_date"),
   isTrialActive: boolean("is_trial_active").default(true).notNull(),
+  trialStartDate: timestamp("trial_start_date").defaultNow(), // Trial start date
+  trialEndDate: timestamp("trial_end_date"), // Trial end date
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   firstPaymentDate: timestamp("first_payment_date"),
