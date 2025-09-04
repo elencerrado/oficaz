@@ -247,7 +247,7 @@ export default function Documents() {
 
   // Document signature mutations
   const markViewedMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('PATCH', `/api/documents/${id}/view`),
+    mutationFn: (id: number) => apiRequest('POST', `/api/documents/${id}/view`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
     },
@@ -262,7 +262,7 @@ export default function Documents() {
 
   const signDocumentMutation = useMutation({
     mutationFn: ({ id, signature }: { id: number; signature: string }) => 
-      apiRequest('PATCH', `/api/documents/${id}/sign`, { digitalSignature: signature }),
+      apiRequest('POST', `/api/documents/${id}/sign`, { digitalSignature: signature }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
       setSignatureModalOpen(false);

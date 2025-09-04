@@ -327,7 +327,7 @@ export default function AdminDocuments() {
 
   const signDocumentMutation = useMutation({
     mutationFn: async ({ documentId, signature }: { documentId: number; signature: string }) => {
-      return await apiRequest('POST', `/api/documents/${documentId}/sign`, { signature });
+      return await apiRequest('POST', `/api/documents/${documentId}/sign`, { digitalSignature: signature });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });

@@ -3649,7 +3649,7 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Document signature endpoints
-  app.patch('/api/documents/:id/view', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/documents/:id/view', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const document = await storage.getDocument(id);
@@ -3672,7 +3672,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  app.patch('/api/documents/:id/sign', authenticateToken, async (req: AuthRequest, res) => {
+  app.post('/api/documents/:id/sign', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { digitalSignature } = req.body;
