@@ -4302,18 +4302,42 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ error: 'No tienes permiso para editar este usuario' });
       }
 
+      // Debug logging
+      console.log('📝 Employee update request:', {
+        userId,
+        currentUser: { id: user.id, companyEmail: user.companyEmail, role: user.role },
+        updates
+      });
+
       // Only allow specific fields to be updated by admin/manager
       const allowedUpdates: any = {};
-      // Only update companyEmail if it's provided and not empty, and different from current value
-      if (updates.companyEmail !== undefined && updates.companyEmail.trim() !== '' && updates.companyEmail !== user.companyEmail) {
-        allowedUpdates.companyEmail = updates.companyEmail.trim();
+      
+      // Handle companyEmail carefully - only update if it's provided, not empty, and different
+      if (updates.companyEmail !== undefined) {
+        const newEmail = updates.companyEmail.trim();
+        if (newEmail !== '' && newEmail !== user.companyEmail) {
+          allowedUpdates.companyEmail = newEmail;
+        }
+        // If it's empty or same as current, don't include it in the update
       }
+      
       if (updates.companyPhone !== undefined) allowedUpdates.companyPhone = updates.companyPhone;
       if (updates.position !== undefined) allowedUpdates.position = updates.position;
       if (updates.startDate !== undefined) allowedUpdates.startDate = new Date(updates.startDate);
       if (updates.status !== undefined) allowedUpdates.status = updates.status;
       if (updates.role !== undefined) allowedUpdates.role = updates.role;
       if (updates.vacationDaysAdjustment !== undefined) allowedUpdates.vacationDaysAdjustment = updates.vacationDaysAdjustment.toString();
+
+      console.log('📝 Final allowedUpdates:', allowedUpdates);
+
+      // Only proceed with update if there are actually changes to make
+      if (Object.keys(allowedUpdates).length === 0) {
+        console.log('📝 No changes to make, returning current user');
+        return res.json({ 
+          message: 'No hay cambios que realizar',
+          user: user 
+        });
+      }
 
       const updatedUser = await storage.updateUser(userId, allowedUpdates);
 
