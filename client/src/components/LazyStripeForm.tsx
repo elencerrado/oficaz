@@ -29,30 +29,42 @@ export function LazyStripeForm({
 
   useEffect(() => {
     const initializeStripe = async () => {
+      console.log('🔧 STRIPE INIT - Starting Stripe initialization...');
+      console.log('🔧 STRIPE KEYS - VITE_STRIPE_PUBLISHABLE_KEY exists:', !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+      console.log('🔧 STRIPE KEYS - VITE_STRIPE_PUBLISHABLE_KEY_TEST exists:', !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST);
       try {
         // Use production key first, fallback to test key (same logic as backend)
         const publicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
+        console.log('🔧 STRIPE KEYS - Using key starting with:', publicKey ? publicKey.substring(0, 10) + '...' : 'NONE');
         
         if (!publicKey) {
+          console.log('🚨 STRIPE ERROR - No public key found!');
           setError('FALTAN CLAVES DE TEST DE STRIPE');
           setLoading(false);
           return;
         }
 
         // Lazy load Stripe
+        console.log('🔧 STRIPE LOAD - Loading Stripe library...');
         const { default: loadStripeFunc } = await loadStripe;
+        console.log('🔧 STRIPE LOAD - Library loaded, calling loadStripeFunc with key');
         const stripeInstance = await loadStripeFunc(publicKey);
+        console.log('🔧 STRIPE INSTANCE - Result:', !!stripeInstance);
         
         if (!stripeInstance) {
+          console.log('🚨 STRIPE ERROR - Instance is null!');
           setError('STRIPE NO SE PUDO CARGAR CON CLAVES DE TEST');
           setLoading(false);
           return;
         }
 
+        console.log('✅ STRIPE SUCCESS - Instance created successfully');
         setStripe(stripeInstance);
         setLoading(false);
       } catch (err) {
-        console.error('ERROR REAL DE STRIPE:', err);
+        console.error('🚨 STRIPE INIT ERROR:', err);
+        console.error('🚨 STRIPE INIT ERROR Type:', typeof err);
+        console.error('🚨 STRIPE INIT ERROR Message:', err instanceof Error ? err.message : JSON.stringify(err));
         setError(`ERROR CRITICO DE STRIPE: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
         setLoading(false);
       }
