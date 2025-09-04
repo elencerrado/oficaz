@@ -5464,19 +5464,19 @@ Responde directamente a este email para contactar con la persona.
         });
         return;
       } else {
-        // Trial has ended: Capture the authorized amount immediately
-        console.log(`🏦 TRIAL ENDED - Capturing authorized amount immediately`);
+        // Trial has ended: Create subscription WITHOUT capturing payment again 
+        // CRITICAL FIX: Don't capture PaymentIntent manually - let subscription handle billing
+        console.log(`🏦 TRIAL ENDED - Creating subscription (no manual capture needed)`);
         
-        // Capture the authorized payment
-        const capturedPayment = await stripe.paymentIntents.capture(paymentIntent.id);
-        console.log(`💰 PAYMENT CAPTURED - Amount: €${capturedPayment.amount/100}, Status: ${capturedPayment.status}`);
-        
-        // Create subscription for recurring billing starting now
+        // Create subscription which will automatically charge for first period
         const subscription = await stripe.subscriptions.create({
           customer: stripeCustomerId,
           items: [{ price: price.id }],
           default_payment_method: paymentIntent.payment_method as string,
+          // No trial_end needed - this is the actual billing moment
         });
+        
+        console.log(`💰 SUBSCRIPTION CREATED - Amount: €${price.unit_amount!/100}, Status: ${subscription.status}`);
         
         // Update database with Stripe subscription info and activate
         const firstPaymentDate = new Date(now);
@@ -7067,11 +7067,13 @@ Responde directamente a este email para contactar con la persona.
               product: product.id,
             });
             
-            // Create recurring subscription
+            // Create recurring subscription  
+            // CRITICAL FIX: Add trial_end to prevent double charging
             const subscription = await stripe.subscriptions.create({
               customer: t.stripe_customer_id,
               items: [{ price: price.id }],
               default_payment_method: paymentIntent.payment_method as string,
+              trial_end: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days trial
             });
             
             console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name}`);
