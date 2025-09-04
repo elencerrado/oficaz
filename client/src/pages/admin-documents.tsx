@@ -59,6 +59,10 @@ interface Document {
   originalName: string;
   fileSize: number;
   createdAt: string;
+  isViewed?: boolean;
+  isAccepted?: boolean;
+  acceptedAt?: string;
+  signedAt?: string;
   user?: {
     fullName: string;
     profilePicture?: string;
@@ -921,6 +925,23 @@ export default function AdminDocuments() {
                                   return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
                                 })()}
                               </span>
+                              {/* Signature status for nóminas */}
+                              {(() => {
+                                const fileName = document.originalName || document.fileName || '';
+                                const analysis = analyzeFileName(fileName, employees);
+                                return analysis.documentType === 'Nómina' && (
+                                  <Badge 
+                                    variant={document.isAccepted ? 'default' : 'outline'}
+                                    className={`text-xs ${
+                                      document.isAccepted 
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                    }`}
+                                  >
+                                    {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
+                                  </Badge>
+                                );
+                              })()}
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -1125,6 +1146,21 @@ export default function AdminDocuments() {
                                                       return format(localDate, 'd MMM yyyy', { locale: es });
                                                     })()}
                                                   </div>
+                                                  {/* Signature status for nóminas in grid view */}
+                                                  {type === 'nomina' && (
+                                                    <div>
+                                                      <Badge 
+                                                        variant={document.isAccepted ? 'default' : 'outline'}
+                                                        className={`text-xs ${
+                                                          document.isAccepted 
+                                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                                            : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                                        }`}
+                                                      >
+                                                        {document.isAccepted ? '✓ Firmada' : 'Pendiente'}
+                                                      </Badge>
+                                                    </div>
+                                                  )}
                                                 </div>
                                               </div>
                                             );
