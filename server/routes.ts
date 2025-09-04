@@ -5249,7 +5249,6 @@ Responde directamente a este email para contactar con la persona.
         capture_method: 'manual', // Authorize now, capture later
         setup_future_usage: 'off_session', // Save for future use
         description: `Autorización para Plan Pro - ${company.name}`,
-        statement_descriptor: 'OFICAZ AUTORIZACION',
       });
 
       res.json({
