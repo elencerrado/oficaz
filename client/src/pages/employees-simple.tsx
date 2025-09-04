@@ -1160,21 +1160,6 @@ export default function EmployeesSimple() {
                             Como manager, no puedes asignar rol de administrador
                           </p>
                         )}
-                        {/* Show plan limits info */}
-                        {(() => {
-                          const { limits, currentCounts } = getRoleLimits();
-                          const planName = subscription?.plan || 'basic';
-                          return (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
-                              <p className="font-medium">Límites del plan {planName}:</p>
-                              <div className="grid grid-cols-3 gap-2 text-xs">
-                                <div>Admin: {currentCounts.admin}/{limits.admin}</div>
-                                <div>Manager: {currentCounts.manager}/{limits.manager}</div>
-                                <div>Empleado: {currentCounts.employee}/{limits.employee}</div>
-                              </div>
-                            </div>
-                          );
-                        })()}
                       </div>
                     </div>
                   </div>
