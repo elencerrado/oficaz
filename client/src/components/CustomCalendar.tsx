@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO, isToday, isPast } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO, isToday, isPast, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Holiday {
@@ -125,18 +125,6 @@ export function CustomCalendar({
       const start = parseISO(vacation.startDate);
       const end = parseISO(vacation.endDate);
       
-      // Debug logging for September vacation ranges
-      if (start.getMonth() === 8) { // September is month 8 (0-based)
-        console.log('September vacation found:', {
-          id: vacation.id,
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
-          status: vacation.status,
-          startDay: start.getDate(),
-          endDay: end.getDate(),
-          sameTime: start.getTime() === end.getTime()
-        });
-      }
       
       // Only add if it's more than one day
       if (start.getTime() !== end.getTime()) {
@@ -149,7 +137,6 @@ export function CustomCalendar({
       }
     });
 
-    console.log('Total consecutive ranges found:', ranges.length);
     return ranges;
   };
 
@@ -322,18 +309,6 @@ export function CustomCalendar({
                   rangePosition = 'middle';
                 }
                 
-                // Debug logging for September 16 and 22
-                if (date.getDate() === 16 || date.getDate() === 22) {
-                  console.log(`Day ${date.getDate()} of September - Range position:`, {
-                    date: dateString,
-                    rangePosition,
-                    eventColor,
-                    rangeStart: format(currentRange.startDate, 'yyyy-MM-dd'),
-                    rangeEnd: format(currentRange.endDate, 'yyyy-MM-dd'),
-                    isFirst: isSameDay(date, currentRange.startDate),
-                    isLast: isSameDay(date, currentRange.endDate)
-                  });
-                }
 
               }
             }
@@ -447,10 +422,11 @@ export function CustomCalendar({
             if (dayIndex < 6) {
               // Check if this day should have a connection line to the next day
               const shouldShowConnection = consecutiveDayRanges.some(range => {
-                const rangeDates = [];
-                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-                  rangeDates.push(new Date(d));
-                }
+                // Use eachDayOfInterval for reliable date iteration
+                const rangeDates = eachDayOfInterval({
+                  start: range.startDate,
+                  end: range.endDate
+                });
                 
                 const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
                 if (currentIndex === -1 || currentIndex === rangeDates.length - 1) return false;
@@ -464,18 +440,20 @@ export function CustomCalendar({
               });
               
               const connectionColorClass = consecutiveDayRanges.find(range => {
-                const rangeDates = [];
-                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-                  rangeDates.push(new Date(d));
-                }
+                // Use eachDayOfInterval for reliable date iteration
+                const rangeDates = eachDayOfInterval({
+                  start: range.startDate,
+                  end: range.endDate
+                });
                 return rangeDates.some(d => isSameDay(d, date));
               })?.borderColor.replace('border-', 'bg-') || '';
               
               const connectionColor = consecutiveDayRanges.find(range => {
-                const rangeDates = [];
-                for (let d = new Date(range.startDate); d <= range.endDate; d.setDate(d.getDate() + 1)) {
-                  rangeDates.push(new Date(d));
-                }
+                // Use eachDayOfInterval for reliable date iteration
+                const rangeDates = eachDayOfInterval({
+                  start: range.startDate,
+                  end: range.endDate
+                });
                 return rangeDates.some(d => isSameDay(d, date));
               });
               
