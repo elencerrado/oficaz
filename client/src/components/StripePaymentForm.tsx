@@ -59,31 +59,52 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
           variant: "destructive",
         });
       } else if (result.paymentIntent) {
-        console.log('Payment authorization successful:', result.paymentIntent);
+        console.log('Payment authorization response:', result.paymentIntent);
         
-        // Call the backend to confirm the payment authorization
-        try {
-          await apiRequest('POST', '/api/account/confirm-payment-method', {
-            paymentIntentId: result.paymentIntent.id,
-          });
+        // Check payment intent status
+        const status = result.paymentIntent.status;
+        console.log('PaymentIntent status:', status);
+        
+        if (status === 'requires_capture' || status === 'succeeded') {
+          // Authorization successful - proceed with backend confirmation
+          try {
+            await apiRequest('POST', '/api/account/confirm-payment-method', {
+              paymentIntentId: result.paymentIntent.id,
+            });
 
+            toast({
+              title: "¡Autorización exitosa!",
+              description: "Se ha autorizado €39.95. El cobro será efectivo al finalizar el trial.",
+            });
+            
+            // Invalidate auth data to refresh subscription status
+            queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
+            
+            onSuccess();
+          } catch (backendError) {
+            console.error('Backend confirmation error:', backendError);
+            toast({
+              title: "Error",
+              description: "El método de pago se procesó pero no se pudo confirmar en el servidor",
+              variant: "destructive",
+            });
+          }
+        } else if (status === 'requires_action' || status === 'requires_source_action') {
+          // 3D Secure authentication still in progress - this is normal
+          console.log('3D Secure authentication in progress - waiting for user action');
           toast({
-            title: "¡Autorización exitosa!",
-            description: "Se ha autorizado €39.95. El cobro será efectivo al finalizar el trial.",
+            title: "Autorización en curso",
+            description: "Completa la verificación en tu banco para continuar",
           });
-          
-          // Invalidate auth data to refresh subscription status
-          queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/account/trial-status'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/account/subscription'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/account/payment-methods'] });
-          
-          onSuccess();
-        } catch (backendError) {
-          console.error('Backend confirmation error:', backendError);
+        } else {
+          // Unexpected status
+          console.error('Unexpected PaymentIntent status:', status);
           toast({
-            title: "Error",
-            description: "El método de pago se procesó pero no se pudo confirmar en el servidor",
+            title: "Estado inesperado",
+            description: `Estado del pago: ${status}. Inténtalo de nuevo.`,
             variant: "destructive",
           });
         }
