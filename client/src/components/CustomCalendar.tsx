@@ -125,6 +125,19 @@ export function CustomCalendar({
       const start = parseISO(vacation.startDate);
       const end = parseISO(vacation.endDate);
       
+      // Debug logging for September vacation ranges
+      if (start.getMonth() === 8) { // September is month 8 (0-based)
+        console.log('September vacation found:', {
+          id: vacation.id,
+          start: start.toISOString().split('T')[0],
+          end: end.toISOString().split('T')[0],
+          status: vacation.status,
+          startDay: start.getDate(),
+          endDay: end.getDate(),
+          sameTime: start.getTime() === end.getTime()
+        });
+      }
+      
       // Only add if it's more than one day
       if (start.getTime() !== end.getTime()) {
         ranges.push({
@@ -136,6 +149,7 @@ export function CustomCalendar({
       }
     });
 
+    console.log('Total consecutive ranges found:', ranges.length);
     return ranges;
   };
 
