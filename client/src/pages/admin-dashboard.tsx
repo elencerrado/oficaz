@@ -124,6 +124,23 @@ export default function AdminDashboard() {
     }, 3000);
   };
 
+  // Helper function to determine if user can manage a specific request
+  const canManageRequest = (request: any) => {
+    // Admin can manage all requests
+    if (user?.role === 'admin') return true;
+    
+    // Manager can only manage employee requests, not their own
+    if (user?.role === 'manager') {
+      // Get the user who made the request
+      const requestUser = (employees || []).find((emp: any) => emp.id === request.userId);
+      // Manager cannot manage their own requests, only employee requests
+      return requestUser && requestUser.role === 'employee';
+    }
+    
+    // Employees cannot manage any requests
+    return false;
+  };
+
   // Función para manejar clics en días del calendario
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -184,6 +201,12 @@ export default function AdminDashboard() {
     queryKey: ['/api/break-periods/active'],
     refetchInterval: 3000, // Poll every 3 seconds when session is active
     enabled: !!activeSession, // Only run when there's an active session
+  });
+
+  // Fetch employees list for permission checking
+  const { data: employees = [] } = useQuery({
+    queryKey: ['/api/employees'],
+    staleTime: 300000, // Cache for 5 minutes
   });
 
   // Fetch recent work sessions
@@ -1018,34 +1041,42 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                         
-                        {/* Action buttons like timeline */}
-                        <div className="flex gap-1 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=approve`)}
-                            className="bg-green-600 hover:bg-green-700 text-white h-8 w-8 p-0"
-                            title="Aprobar solicitud"
-                          >
-                            <Check className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=edit`)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white h-8 w-8 p-0"
-                            title="Modificar solicitud"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=deny`)}
-                            variant="destructive"
-                            className="h-8 w-8 p-0"
-                            title="Denegar solicitud"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
+                        {/* Action buttons like timeline - only show if user can manage this request */}
+                        {canManageRequest(request) ? (
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=approve`)}
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 w-8 p-0"
+                              title="Aprobar solicitud"
+                            >
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=edit`)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white h-8 w-8 p-0"
+                              title="Modificar solicitud"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=deny`)}
+                              variant="destructive"
+                              className="h-8 w-8 p-0"
+                              title="Denegar solicitud"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-muted-foreground flex-shrink-0">
+                            {user?.role === 'manager' && request.userId === user?.id 
+                              ? 'No puedes gestionar tus propias solicitudes' 
+                              : 'Sin permisos'}
+                          </Badge>
+                        )}
                       </div>
                     ))}
                   </div>
