@@ -830,24 +830,38 @@ export default function AdminDocuments() {
         {activeTab === 'explorer' && (
           <Card>
             <CardContent className="p-6 space-y-4">
-              {/* Filters and View Mode */}
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Search and View Mode - Mobile: same row */}
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                      <Input
-                        placeholder="Buscar por nombre de archivo o empleado..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+              {/* Filters and View Mode - Reorganized layout */}
+              <div className="space-y-4">
+                {/* 1. Search Bar - Full Width */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                  <Input
+                    placeholder="Buscar por nombre de archivo o empleado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                  />
+                </div>
+                
+                {/* 2. Employee Filter and 3. View Mode Toggle */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* 2. Employee Filter */}
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="w-full sm:w-64">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los empleados</SelectItem>
+                      {employees.map((employee: Employee) => (
+                        <SelectItem key={employee.id} value={employee.id.toString()}>
+                          {employee.fullName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   
-                  {/* View Mode Toggle - Mobile: right of search */}
-                  <div className="flex bg-muted rounded-lg p-1 md:order-3">
+                  {/* 3. View Mode Toggle Buttons */}
+                  <div className="flex bg-muted rounded-lg p-1 sm:ml-auto">
                     <Button
                       variant={viewMode === 'list' ? 'default' : 'ghost'}
                       size="sm"
@@ -866,21 +880,6 @@ export default function AdminDocuments() {
                     </Button>
                   </div>
                 </div>
-                
-                {/* Employee filter - Second row on mobile, same row on desktop */}
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                  <SelectTrigger className="w-full md:w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos los empleados</SelectItem>
-                    {employees.map((employee: Employee) => (
-                      <SelectItem key={employee.id} value={employee.id.toString()}>
-                        {employee.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Results count */}
