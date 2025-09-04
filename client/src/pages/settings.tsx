@@ -402,6 +402,14 @@ const AccountManagement = () => {
   };
 
   const getPlanPrice = () => {
+    // Use custom monthly price if available (set by superadmin)
+    if (subscription?.customMonthlyPrice) {
+      const customPrice = Number(subscription.customMonthlyPrice);
+      if (customPrice > 0) {
+        return `€${customPrice.toFixed(2)}`;
+      }
+    }
+    
     if (!subscription?.plan || !subscriptionPlans) {
       // Default to correct plan prices while loading
       return subscription?.plan === 'pro' ? '€39.95' : subscription?.plan === 'basic' ? '€19.95' : '€99.95';
