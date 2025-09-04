@@ -311,7 +311,7 @@ export default function Documents() {
 
   // Document signature handlers
   const handleOpenSignatureModal = (document: any) => {
-    markViewedMutation.mutate(document.id); // Mark as viewed when opening to sign
+    // No longer auto-mark as viewed - user must click view button first
     setDocumentToSign(document);
     setSignatureModalOpen(true);
   };
@@ -355,6 +355,9 @@ export default function Documents() {
   };
 
   const handleViewDocument = (id: number, filename: string) => {
+    // Mark document as viewed first
+    markViewedMutation.mutate(id);
+    
     // Open PDF directly in new tab with token authentication
     const authData = getAuthData();
     const token = authData?.token;
@@ -663,7 +666,7 @@ export default function Documents() {
                             <Download className="h-3 w-3" />
                           </Button>
                           {/* Signature button for unsigned nóminas */}
-                          {category === 'nominas' && !document.isAccepted && (
+                          {category === 'nominas' && !document.isAccepted && document.isViewed && (
                             <Button
                               variant="outline"
                               size="sm"

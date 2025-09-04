@@ -665,6 +665,9 @@ export default function AdminDocuments() {
   };
 
   const handleViewDocument = async (docId: number) => {
+    // Mark document as viewed first
+    markViewedMutation.mutate(docId);
+    
     try {
       const authData = localStorage.getItem('authData');
       const token = authData ? JSON.parse(authData).token : '';
@@ -742,11 +745,7 @@ export default function AdminDocuments() {
 
   // Sign document functions
   const handleSignDocument = (docId: number, docName: string) => {
-    // Mark as viewed first if not already
-    if (!allDocuments.find(doc => doc.id === docId)?.isViewed) {
-      markViewedMutation.mutate(docId);
-    }
-    
+    // User must have clicked view button first - no auto-marking as viewed
     setSignatureModal({
       isOpen: true,
       documentId: docId,
@@ -1027,7 +1026,8 @@ export default function AdminDocuments() {
                               const analysis = analyzeFileName(fileName, employees);
                               return analysis.documentType === 'Nómina' && 
                                      document.userId === user?.id && 
-                                     !document.isAccepted && (
+                                     !document.isAccepted && 
+                                     document.isViewed && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -1206,7 +1206,8 @@ export default function AdminDocuments() {
                                                     {/* Sign button for payroll documents owned by current user in grid view */}
                                                     {type === 'nomina' && 
                                                      document.userId === user?.id && 
-                                                     !document.isAccepted && (
+                                                     !document.isAccepted && 
+                                                     document.isViewed && (
                                                       <Button
                                                         variant="outline"
                                                         size="sm"
