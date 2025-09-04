@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { DocumentSignatureModal } from '@/components/document-signature-modal';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -137,6 +138,13 @@ export default function AdminDocuments() {
     requestId: number | null;
     documentType: string;
   }>({ show: false, requestId: null, documentType: '' });
+
+  // Signature modal states
+  const [signatureModal, setSignatureModal] = useState<{
+    isOpen: boolean;
+    documentId: number | null;
+    documentName: string;
+  }>({ isOpen: false, documentId: null, documentName: '' });
 
   // Fetch employees
   const { data: employees = [] } = useQuery<Employee[]>({
@@ -302,6 +310,37 @@ export default function AdminDocuments() {
       toast({
         title: 'Error al eliminar solicitud',
         description: error.message || 'No se pudo eliminar la solicitud',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Sign document mutations
+  const markViewedMutation = useMutation({
+    mutationFn: async (documentId: number) => {
+      return await apiRequest('POST', `/api/documents/${documentId}/view`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+    },
+  });
+
+  const signDocumentMutation = useMutation({
+    mutationFn: async ({ documentId, signature }: { documentId: number; signature: string }) => {
+      return await apiRequest('POST', `/api/documents/${documentId}/sign`, { signature });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents/all'] });
+      toast({
+        title: 'Documento firmado',
+        description: 'El documento se ha firmado digitalmente con éxito',
+      });
+      setSignatureModal({ isOpen: false, documentId: null, documentName: '' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Error al firmar el documento',
         variant: 'destructive',
       });
     },
@@ -701,6 +740,29 @@ export default function AdminDocuments() {
     }
   };
 
+  // Sign document functions
+  const handleSignDocument = (docId: number, docName: string) => {
+    // Mark as viewed first if not already
+    if (!allDocuments.find(doc => doc.id === docId)?.isViewed) {
+      markViewedMutation.mutate(docId);
+    }
+    
+    setSignatureModal({
+      isOpen: true,
+      documentId: docId,
+      documentName: docName
+    });
+  };
+
+  const handleSignature = async (signature: string) => {
+    if (!signatureModal.documentId) return;
+    
+    signDocumentMutation.mutate({
+      documentId: signatureModal.documentId,
+      signature
+    });
+  };
+
   return (
     <PageWrapper>
       <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
@@ -959,6 +1021,23 @@ export default function AdminDocuments() {
                             >
                               <Download className="h-4 w-4" />
                             </Button>
+                            {/* Sign button for payroll documents owned by current user */}
+                            {(() => {
+                              const fileName = document.originalName || document.fileName || '';
+                              const analysis = analyzeFileName(fileName, employees);
+                              return analysis.documentType === 'Nómina' && 
+                                     document.userId === user?.id && 
+                                     !document.isAccepted && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSignDocument(document.id, document.originalName || document.fileName)}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                  <FileSignature className="h-4 w-4" />
+                                </Button>
+                              );
+                            })()}
                             <Button
                               variant="outline"
                               size="sm"
@@ -1124,6 +1203,19 @@ export default function AdminDocuments() {
                                                     >
                                                       <Download className="h-3 w-3" />
                                                     </Button>
+                                                    {/* Sign button for payroll documents owned by current user in grid view */}
+                                                    {type === 'nomina' && 
+                                                     document.userId === user?.id && 
+                                                     !document.isAccepted && (
+                                                      <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => handleSignDocument(document.id, document.originalName || document.fileName)}
+                                                        className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                      >
+                                                        <FileSignature className="h-3 w-3" />
+                                                      </Button>
+                                                    )}
                                                     <Button
                                                       variant="outline"
                                                       size="sm"
@@ -1649,6 +1741,15 @@ export default function AdminDocuments() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Document Signature Modal */}
+        <DocumentSignatureModal
+          isOpen={signatureModal.isOpen}
+          onClose={() => setSignatureModal({ isOpen: false, documentId: null, documentName: '' })}
+          onSign={handleSignature}
+          documentName={signatureModal.documentName}
+          isLoading={signDocumentMutation.isPending}
+        />
     </div>
     </PageWrapper>
   );
