@@ -334,7 +334,15 @@ export function CustomCalendar({
                       rangePosition === 'last' ? 'rounded-r-full rounded-l-none' :
                       rangePosition === 'middle' ? 'rounded-none' : 'rounded-full'}`}
                 >
-                  <span className={`relative z-30 ${isTodayDate ? '!text-black dark:!text-black' : ''}`}>
+                  <span className={`relative z-30 ${
+                    isTodayDate ? '!text-black dark:!text-black' : 
+                    hasSpecialEvent && eventColor ? 
+                      eventColor === 'red-500' ? 'text-red-500' :
+                      eventColor === 'orange-500' ? 'text-orange-500' :
+                      eventColor === 'green-500' ? 'text-green-500' :
+                      eventColor === 'yellow-500' ? 'text-yellow-500' :
+                      '' : ''
+                  }`}>
                     {format(date, 'd')}
                   </span>
                   
