@@ -5242,11 +5242,7 @@ Responde directamente a este email para contactar con la persona.
         customer: stripeCustomerId,
         payment_method_types: ['card'],
         usage: 'on_session',
-        confirm: false,
-        automatic_payment_methods: {
-          enabled: true,
-          allow_redirects: 'never'
-        }
+        confirm: false
       });
 
       res.json({
