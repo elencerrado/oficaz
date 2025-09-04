@@ -84,6 +84,7 @@ export function LazyStripeForm({
 
   // Si hay error o no se pudo cargar Stripe, usar formulario de demostración
   if (error || !stripe) {
+    console.log('🚨 USANDO MOCKPAYMENTFORM - REASON:', { error, stripeExists: !!stripe });
     return (
       <MockPaymentForm
         planName={planName}

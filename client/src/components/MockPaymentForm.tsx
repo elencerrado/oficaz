@@ -65,16 +65,16 @@ export function MockPaymentForm({
 
   return (
     <div className="space-y-6">
-      {/* Alert de modo demo */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+      {/* Alert de modo demo - MUY VISIBLE */}
+      <div className="bg-red-100 border-4 border-red-500 rounded-lg p-6 animate-pulse">
         <div className="flex items-center">
-          <AlertCircle className="w-5 h-5 text-orange-500 mr-2" />
+          <AlertCircle className="w-8 h-8 text-red-600 mr-3" />
           <div>
-            <p className="text-sm font-medium text-orange-800">
-              Modo de demostración
+            <p className="text-xl font-bold text-red-800">
+              🚨 MODO SIMULACIÓN - NO ES PAGO REAL 🚨
             </p>
-            <p className="text-xs text-orange-600 mt-1">
-              Esta es una simulación. No se procesará ningún pago real.
+            <p className="text-base text-red-700 mt-2 font-semibold">
+              Esta es una simulación. Por eso cobra 0€ siempre. Stripe no funciona.
             </p>
           </div>
         </div>
