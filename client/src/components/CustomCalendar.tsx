@@ -270,10 +270,18 @@ export function CustomCalendar({
             const holiday = getHolidayInfo(date);
             const isApproved = isApprovedVacation(date);
             const isPending = isPendingVacation(date);
-            const hasSpecialEvent = holiday || isApproved || isPending;
+            // Check if this date is in any consecutive range (secondary check for consistency)
+            const isInConsecutiveRange = consecutiveDayRanges.some(range => {
+              const rangeDates = eachDayOfInterval({
+                start: range.startDate,
+                end: range.endDate
+              });
+              return rangeDates.some(d => isSameDay(d, date));
+            });
+            
+            const hasSpecialEvent = holiday || isApproved || isPending || isInConsecutiveRange;
             
 
-            
             const elements = [];
             
             // ⚠️ PROTECTED: Day Button and Connector Logic - DO NOT MODIFY - Critical worm effect core ⚠️
@@ -284,6 +292,7 @@ export function CustomCalendar({
             let eventColor = '';
             
             if (hasSpecialEvent) {
+              
               // Check if this date is in any consecutive range
               const dateString = format(date, 'yyyy-MM-dd');
               const currentRange = consecutiveDayRanges.find(range => {
@@ -308,6 +317,7 @@ export function CustomCalendar({
                 } else {
                   rangePosition = 'middle';
                 }
+                
                 
 
               }
