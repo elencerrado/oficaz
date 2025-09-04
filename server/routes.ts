@@ -5237,17 +5237,23 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
-      // Create setup intent for future payments
-      const setupIntent = await stripe.setupIntents.create({
+      // Create payment intent with authorization hold (manual capture for trial end)
+      const paymentIntent = await stripe.paymentIntents.create({
         customer: stripeCustomerId,
+        amount: 3995, // €39.95 in cents - authorize this amount
+        currency: 'eur',
         payment_method_types: ['card'],
-        usage: 'on_session',
-        confirm: false
+        capture_method: 'manual', // Authorize now, capture later
+        request_extended_authorization: 'if_available', // Hold up to 30 days
+        setup_future_usage: 'off_session', // Save for future use
+        description: `Autorización para Plan Pro - ${company.name}`,
+        statement_descriptor: 'OFICAZ AUTORIZACION',
       });
 
       res.json({
-        clientSecret: setupIntent.client_secret,
-        customerId: stripeCustomerId
+        clientSecret: paymentIntent.client_secret,
+        customerId: stripeCustomerId,
+        paymentIntentId: paymentIntent.id
       });
     } catch (error) {
       console.error('Error creating setup intent:', error);
@@ -5257,24 +5263,27 @@ Responde directamente a este email para contactar con la persona.
 
   // Confirm payment method and create recurring subscription
   app.post('/api/account/confirm-payment-method', authenticateToken, async (req: AuthRequest, res) => {
-    console.log(`🚨 PAYMENT ENDPOINT CALLED - User ${req.user!.id}, setupIntentId: ${req.body.setupIntentId}`);
+    console.log(`🚨 PAYMENT ENDPOINT CALLED - User ${req.user!.id}, paymentIntentId: ${req.body.paymentIntentId}`);
     try {
       const userId = req.user!.id;
-      const { setupIntentId } = req.body;
+      const { paymentIntentId } = req.body;
 
-      if (!setupIntentId) {
-        console.log(`🚨 PAYMENT FAILED - No setupIntentId provided`);
-        return res.status(400).json({ message: 'Setup Intent ID es requerido' });
+      if (!paymentIntentId) {
+        console.log(`🚨 PAYMENT FAILED - No paymentIntentId provided`);
+        return res.status(400).json({ message: 'Payment Intent ID es requerido' });
       }
       
-      console.log(`🚨 PAYMENT PROCESSING - Retrieving setupIntent ${setupIntentId}`);
+      console.log(`🚨 PAYMENT PROCESSING - Retrieving paymentIntent ${paymentIntentId}`);
 
-      // Retrieve the setup intent to get payment method
-      const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+      // Retrieve the payment intent to get payment method and authorization status
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
       
-      if (setupIntent.status !== 'succeeded') {
-        return res.status(400).json({ message: 'El método de pago no fue confirmado' });
+      if (paymentIntent.status !== 'requires_capture') {
+        console.log(`🚨 AUTHORIZATION FAILED - Status: ${paymentIntent.status}`);
+        return res.status(400).json({ message: 'La autorización del pago no fue exitosa' });
       }
+      
+      console.log(`🏦 AUTHORIZATION SUCCESSFUL - Amount: €${paymentIntent.amount/100}, Status: ${paymentIntent.status}`);
 
       // Get company and subscription data
       const company = await storage.getCompanyByUserId(userId);
@@ -5363,14 +5372,14 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // Attach payment method to customer
-      await stripe.paymentMethods.attach(setupIntent.payment_method as string, {
+      await stripe.paymentMethods.attach(paymentIntent.payment_method as string, {
         customer: stripeCustomerId,
       });
 
       // Set as default payment method
       await stripe.customers.update(stripeCustomerId, {
         invoice_settings: {
-          default_payment_method: setupIntent.payment_method as string,
+          default_payment_method: paymentIntent.payment_method as string,
         },
       });
 
@@ -5392,89 +5401,85 @@ Responde directamente a este email para contactar con la persona.
       });
       console.log(`💰 STRIPE PRICE CREATED: ID=${price.id}, unit_amount=${price.unit_amount} cents (€${price.unit_amount/100})`);
 
-      // Calculate exact payment dates to match what's shown in the app
+      // For trial period: Save authorization details, don't create subscription yet
       const trialEndDate = new Date(company.subscription.trialEndDate);
       const now = new Date();
-      let firstPaymentDate: Date;
-      let nextPaymentDate: Date;
-      let stripeSubscriptionParams: any;
       
       if (trialEndDate > now) {
-        // Trial still active: first payment when trial ends exactly at the date shown in app
-        firstPaymentDate = new Date(trialEndDate);
-        nextPaymentDate = new Date(trialEndDate);
-        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        // Trial active: Authorization successful, save PaymentIntent for capture at trial end
+        console.log(`🏦 TRIAL AUTHORIZATION - PaymentIntent ${paymentIntent.id} authorized for €${paymentIntent.amount/100}`);
+        console.log(`🏦 TRIAL SCHEDULE - Will capture on ${trialEndDate.toISOString()}`);
         
-        // Create subscription with trial end set to the exact trial end date
-        stripeSubscriptionParams = {
-          customer: stripeCustomerId,
-          items: [{ price: price.id }],
-          trial_end: Math.floor(trialEndDate.getTime() / 1000), // Convert to Unix timestamp
-          default_payment_method: setupIntent.payment_method as string, // Use the payment method from setup
-          expand: ['latest_invoice.payment_intent'],
-        };
+        // Store the payment intent ID in the subscription for later capture
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET updated_at = now(),
+              stripe_customer_id = ${stripeCustomerId}
+          WHERE company_id = ${company.id}
+        `);
+        
+        // Store the payment intent in company metadata for later capture
+        await db.execute(sql`
+          UPDATE companies 
+          SET metadata = COALESCE(metadata, '{}') || jsonb_build_object(
+            'pending_payment_intent_id', ${paymentIntent.id},
+            'authorization_amount', ${paymentIntent.amount},
+            'authorization_date', ${now.toISOString()}
+          )
+          WHERE id = ${company.id}
+        `);
+        
+        res.json({
+          success: true,
+          message: 'Autorización exitosa - El cobro se realizará al finalizar el trial',
+          authorizationAmount: paymentIntent.amount / 100,
+          trialEndDate: trialEndDate.toISOString(),
+          paymentIntentId: paymentIntent.id
+        });
+        return;
       } else {
-        // Trial has ended: first payment now, but align next payment with app display
-        firstPaymentDate = new Date(now);
-        nextPaymentDate = new Date(now);
-        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        // Trial has ended: Capture the authorized amount immediately
+        console.log(`🏦 TRIAL ENDED - Capturing authorized amount immediately`);
         
-        // Create subscription without trial (immediate payment)
-        stripeSubscriptionParams = {
+        // Capture the authorized payment
+        const capturedPayment = await stripe.paymentIntents.capture(paymentIntent.id);
+        console.log(`💰 PAYMENT CAPTURED - Amount: €${capturedPayment.amount/100}, Status: ${capturedPayment.status}`);
+        
+        // Create subscription for recurring billing starting now
+        const subscription = await stripe.subscriptions.create({
           customer: stripeCustomerId,
           items: [{ price: price.id }],
-          default_payment_method: setupIntent.payment_method as string, // Use the payment method from setup
-          payment_behavior: 'default_incomplete', // This will create a payment intent that needs confirmation
-          expand: ['latest_invoice.payment_intent'],
-        };
+          default_payment_method: paymentIntent.payment_method as string,
+        });
+        
+        // Update database with Stripe subscription info and activate
+        const firstPaymentDate = new Date(now);
+        const nextPaymentDate = new Date(now);
+        nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+        
+        await db.execute(sql`
+          UPDATE subscriptions 
+          SET 
+            status = 'active',
+            is_trial_active = false,
+            stripe_subscription_id = ${subscription.id},
+            stripe_customer_id = ${stripeCustomerId},
+            first_payment_date = ${firstPaymentDate.toISOString()},
+            next_payment_date = ${nextPaymentDate.toISOString()}
+          WHERE id = ${company.subscription.id}
+        `);
+
+        res.json({ 
+          success: true, 
+          message: `Pago procesado correctamente. Tu suscripción está activa.`,
+          subscriptionId: subscription.id,
+          firstPaymentDate: firstPaymentDate.toISOString(),
+          nextPaymentDate: nextPaymentDate.toISOString()
+        });
       }
-
-      // Create recurring subscription in Stripe with exact timing
-      const subscription = await stripe.subscriptions.create(stripeSubscriptionParams);
-
-      // If there's a payment intent that needs confirmation, confirm it now
-      if (subscription.latest_invoice && typeof subscription.latest_invoice === 'object') {
-        const invoice = subscription.latest_invoice as any;
-        if (invoice.payment_intent && typeof invoice.payment_intent === 'object') {
-          const paymentIntent = invoice.payment_intent;
-          console.log('Payment Intent Status:', paymentIntent.status);
-          
-          if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'requires_confirmation') {
-            console.log('Confirming payment intent:', paymentIntent.id);
-            await stripe.paymentIntents.confirm(paymentIntent.id, {
-              payment_method: setupIntent.payment_method as string,
-            });
-            console.log('Payment intent confirmed successfully');
-          }
-        }
-      }
-
-      // Update database with Stripe subscription info and activate
-      await db.execute(sql`
-        UPDATE subscriptions 
-        SET 
-          status = 'active',
-          is_trial_active = false,
-          stripe_subscription_id = ${subscription.id},
-          first_payment_date = ${firstPaymentDate.toISOString()},
-          next_payment_date = ${nextPaymentDate.toISOString()}
-        WHERE id = ${company.subscription.id}
-      `);
-
-      const firstPaymentMessage = trialEndDate > now 
-        ? `Tu primer cobro será el ${firstPaymentDate.toLocaleDateString('es-ES')} cuando termine la prueba gratuita.`
-        : `Tu primer cobro será procesado hoy ${firstPaymentDate.toLocaleDateString('es-ES')}.`;
-
-      res.json({ 
-        success: true, 
-        message: `Suscripción activada correctamente. ${firstPaymentMessage}`,
-        subscriptionId: subscription.id,
-        firstPaymentDate: firstPaymentDate.toISOString(),
-        nextPaymentDate: nextPaymentDate.toISOString()
-      });
     } catch (error) {
-      console.error('Error confirming payment method:', error);
-      res.status(500).json({ message: 'Error al confirmar método de pago: ' + (error as any).message });
+      console.error('Error confirming payment authorization:', error);
+      res.status(500).json({ message: 'Error al confirmar autorización de pago: ' + (error as any).message });
     }
   });
 

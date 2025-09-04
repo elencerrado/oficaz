@@ -39,7 +39,7 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
         setTimeout(() => reject(new Error('Timeout: Stripe setup took too long')), 30000)
       );
 
-      const stripePromise = stripe.confirmSetup({
+      const stripePromise = stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: window.location.origin + '/configuracion',
@@ -49,27 +49,27 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
 
       const result = await Promise.race([stripePromise, timeoutPromise]) as any;
 
-      console.log('Stripe response:', result);
+      console.log('Stripe payment response:', result);
 
       if (result.error) {
-        console.error('Stripe error:', result.error);
+        console.error('Stripe payment error:', result.error);
         toast({
-          title: "Error al procesar el pago",
+          title: "Error al autorizar el pago",
           description: result.error.message || "Ha ocurrido un error inesperado",
           variant: "destructive",
         });
-      } else if (result.setupIntent) {
-        console.log('Setup successful:', result.setupIntent);
+      } else if (result.paymentIntent) {
+        console.log('Payment authorization successful:', result.paymentIntent);
         
-        // Call the backend to confirm the payment method
+        // Call the backend to confirm the payment authorization
         try {
           await apiRequest('POST', '/api/account/confirm-payment-method', {
-            setupIntentId: result.setupIntent.id,
+            paymentIntentId: result.paymentIntent.id,
           });
 
           toast({
-            title: "¡Método de pago añadido!",
-            description: "Tu método de pago ha sido configurado correctamente",
+            title: "¡Autorización exitosa!",
+            description: "Se ha autorizado €39.95. El cobro será efectivo al finalizar el trial.",
           });
           
           // Invalidate auth data to refresh subscription status
@@ -111,6 +111,14 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
             €{planPrice}/mes • Facturación mensual
           </p>
         </div>
+        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            🔒 <strong>Autorización bancaria:</strong> Se verificará tu tarjeta con €{planPrice}
+          </p>
+          <p className="text-xs text-yellow-600 mt-1">
+            El cobro se realizará el 16 de septiembre cuando termine tu prueba gratuita
+          </p>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -146,7 +154,7 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Confirmar pago
+                Autorizar €{planPrice}
               </>
             )}
           </Button>
