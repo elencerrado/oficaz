@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -1012,11 +1013,13 @@ export default function AdminDocuments() {
                               }}
                             >
                               <div className="flex items-center gap-3">
-                                {isEmployeeExpanded ? (
-                                  <FolderOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                ) : (
-                                  <Folder className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                                )}
+                                <UserAvatar 
+                                  fullName={employeeData.name} 
+                                  userId={employeeData.id} 
+                                  profilePicture={employeeData.profilePicture}
+                                  size="sm"
+                                  className="flex-shrink-0"
+                                />
                                 <h3 className="font-medium text-gray-900 dark:text-gray-100">{employeeData.name}</h3>
                                 <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                                   {employeeData.documents.length} documentos
