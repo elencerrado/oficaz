@@ -469,7 +469,7 @@ const AccountManagement = () => {
                   // Show payment info when payment methods exist
                   (<div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Próximo cobro:</span>
                       <span className="text-sm font-medium text-foreground">
                         {formatDate(subscription.nextPaymentDate)}
