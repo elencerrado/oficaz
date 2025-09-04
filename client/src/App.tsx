@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme-provider";
+import { UserThemeManager } from "@/components/user-theme-manager";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileHeader } from "@/components/layout/mobile-header";
 import { ReminderBanner } from "@/components/ui/reminder-banner";
@@ -486,6 +487,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="oficaz-theme">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <UserThemeManager />
           <GlobalDemoBanner />
           <TooltipProvider>
             <Toaster />

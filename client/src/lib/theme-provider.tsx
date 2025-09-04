@@ -79,6 +79,7 @@ export function ThemeProvider({
   storageKey = 'oficaz-theme' 
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
+    // Get base theme from global storage for initial load
     const storedTheme = localStorage.getItem(storageKey) as Theme;
     return storedTheme || defaultTheme;
   });
