@@ -364,6 +364,7 @@ export function CustomCalendar({
                       {/* First day: C shape with curvature but no right border */}
                       {rangePosition === 'first' && (
                         <>
+                          {/* Extending lines to the right */}
                           <div className={`absolute top-0 left-1/2 right-0 border-t-2 z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
                             eventColor === 'orange-500' ? 'border-orange-500' :
@@ -374,6 +375,7 @@ export function CustomCalendar({
                             eventColor === 'orange-500' ? 'border-orange-500' :
                             eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
+                          {/* Left curved border */}
                           <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 pointer-events-none z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
                             eventColor === 'orange-500' ? 'border-orange-500' :
@@ -385,6 +387,7 @@ export function CustomCalendar({
                       {/* Last day: Inverted C shape with curvature but no left border */}
                       {rangePosition === 'last' && (
                         <>
+                          {/* Extending lines from the left */}
                           <div className={`absolute top-0 left-0 right-1/2 border-t-2 z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
                             eventColor === 'orange-500' ? 'border-orange-500' :
@@ -395,6 +398,7 @@ export function CustomCalendar({
                             eventColor === 'orange-500' ? 'border-orange-500' :
                             eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
+                          {/* Right curved border */}
                           <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 pointer-events-none z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
                             eventColor === 'orange-500' ? 'border-orange-500' :
@@ -418,8 +422,23 @@ export function CustomCalendar({
               </div>
             );
             
-            // Add connector column (except for the last day of the week)
-            if (dayIndex < 6) {
+            // Add connector column - allow cross-week connections for ranges
+            const isLastDayOfWeek = dayIndex === 6;
+            const needsCrossWeekConnection = consecutiveDayRanges.some(range => {
+              const rangeDates = eachDayOfInterval({
+                start: range.startDate,
+                end: range.endDate
+              });
+              const currentIndex = rangeDates.findIndex(d => isSameDay(d, date));
+              if (currentIndex === -1 || currentIndex === rangeDates.length - 1) return false;
+              
+              const nextDate = rangeDates[currentIndex + 1];
+              const nextGlobalIndex = globalIndex + 1;
+              return nextGlobalIndex < calendarDays.length && 
+                     isSameDay(calendarDays[nextGlobalIndex], nextDate);
+            });
+            
+            if (dayIndex < 6 || (isLastDayOfWeek && needsCrossWeekConnection)) {
               // Check if this day should have a connection line to the next day
               const shouldShowConnection = consecutiveDayRanges.some(range => {
                 // Use eachDayOfInterval for reliable date iteration
@@ -433,6 +452,7 @@ export function CustomCalendar({
                 
                 const nextDate = rangeDates[currentIndex + 1];
                 const nextGlobalIndex = globalIndex + 1;
+                
                 
                 // Only show connection if next day exists and is consecutive
                 return nextGlobalIndex < calendarDays.length && 
@@ -483,8 +503,16 @@ export function CustomCalendar({
                   {shouldShowConnection && (
                     <>
                       {/* Top and bottom connecting lines - positioned to match button lines (h-9 centered in h-10) */}
-                      <div className={`absolute left-0 right-0 border-t-2 border-${connectorEventColor}${connectorOpacity}`} style={{ top: '2px' }}></div>
-                      <div className={`absolute left-0 right-0 border-b-2 border-${connectorEventColor}${connectorOpacity}`} style={{ bottom: '2px' }}></div>
+                      <div className={`absolute left-0 right-0 border-t-2${connectorOpacity} ${
+                        connectorEventColor === 'red-500' ? 'border-red-500' :
+                        connectorEventColor === 'orange-500' ? 'border-orange-500' :
+                        connectorEventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
+                      }`} style={{ top: '2px' }}></div>
+                      <div className={`absolute left-0 right-0 border-b-2${connectorOpacity} ${
+                        connectorEventColor === 'red-500' ? 'border-red-500' :
+                        connectorEventColor === 'orange-500' ? 'border-orange-500' :
+                        connectorEventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
+                      }`} style={{ bottom: '2px' }}></div>
                     </>
                   )}
                 </div>
