@@ -814,37 +814,39 @@ export default function VacationManagement() {
       <div>
           {activeTab === 'requests' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row gap-4 justify-between mb-4">
+              <div className="flex items-center gap-4 mb-4">
+                {/* Izquierda: Filtros */}
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="pending">Pendientes</SelectItem>
+                    <SelectItem value="approved">Aprobadas</SelectItem>
+                    <SelectItem value="denied">Denegadas</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Centro: Búsqueda que ocupa todo el espacio disponible */}
                 <Input
                   placeholder="Buscar empleado..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-48"
+                  className="flex-1"
                 />
-                <div className="flex gap-2">
-                  {/* Botón Nueva Solicitud para managers y admins */}
-                  {(user?.role === 'admin' || user?.role === 'manager') && (
-                    <Button 
-                      size="sm" 
-                      className="bg-[#007AFF] hover:bg-[#0056CC]"
-                      onClick={() => setShowNewRequestModal(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Nueva Solicitud
-                    </Button>
-                  )}
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      <SelectItem value="pending">Pendientes</SelectItem>
-                      <SelectItem value="approved">Aprobadas</SelectItem>
-                      <SelectItem value="denied">Denegadas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                
+                {/* Derecha: Botón Nueva Solicitud */}
+                {(user?.role === 'admin' || user?.role === 'manager') && (
+                  <Button 
+                    size="sm" 
+                    className="bg-[#007AFF] hover:bg-[#0056CC]"
+                    onClick={() => setShowNewRequestModal(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Nueva Solicitud
+                  </Button>
+                )}
               </div>
             {loadingRequests ? (
               <div className="flex justify-center py-8">
