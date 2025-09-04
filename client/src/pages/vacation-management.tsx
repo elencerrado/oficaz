@@ -82,7 +82,7 @@ export default function VacationManagement() {
   const [showAddHoliday, setShowAddHoliday] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<VacationRequest | null>(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
-  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit' | 'revert' | 'manage'>('approve');
+  const [modalAction, setModalAction] = useState<'approve' | 'deny' | 'edit' | 'revert'>('approve');
   const [editDates, setEditDates] = useState({ startDate: null as Date | null, endDate: null as Date | null });
   const [adminComment, setAdminComment] = useState("");
   
@@ -754,21 +754,9 @@ export default function VacationManagement() {
     
     if (requestId && action && vacationRequests.length > 0) {
       const request = vacationRequests.find(r => r.id === parseInt(requestId));
-      if (request && ['approve', 'deny', 'edit', 'manage'].includes(action)) {
+      if (request && ['approve', 'deny', 'edit'].includes(action)) {
         setActiveTab('requests'); // Switch to requests tab
-        if (action === 'manage') {
-          // Open in manage mode with multiple options
-          setSelectedRequest(request);
-          setModalAction('manage'); // Use manage mode
-          setEditDates({
-            startDate: request.startDate ? new Date(request.startDate) : null,
-            endDate: request.endDate ? new Date(request.endDate) : null
-          });
-          setAdminComment("");
-          setShowRequestModal(true);
-        } else {
-          openRequestModal(request, action as 'approve' | 'deny' | 'edit');
-        }
+        openRequestModal(request, action as 'approve' | 'deny' | 'edit');
         // Clean URL after opening modal
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -1686,13 +1674,11 @@ export default function VacationManagement() {
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {modalAction === 'manage' && <User className="w-5 h-5 text-blue-600" />}
               {modalAction === 'approve' && <Check className="w-5 h-5 text-green-600" />}
               {modalAction === 'deny' && <X className="w-5 h-5 text-red-600" />}
               {modalAction === 'edit' && <Edit className="w-5 h-5 text-blue-600" />}
               {modalAction === 'revert' && <RotateCcw className="w-5 h-5 text-orange-600" />}
               
-              {modalAction === 'manage' && 'Gestionar Solicitud'}
               {modalAction === 'approve' && 'Aprobar Solicitud'}
               {modalAction === 'deny' && 'Denegar Solicitud'}
               {modalAction === 'edit' && 'Modificar Solicitud'}
@@ -1722,11 +1708,11 @@ export default function VacationManagement() {
                 )}
               </div>
 
-              {(modalAction === 'edit' || modalAction === 'manage') && (
+              {modalAction === 'edit' && (
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-foreground mb-1 block">
-                      {modalAction === 'manage' ? 'Período de vacaciones' : 'Nuevo período de vacaciones'}
+                      Nuevo período de vacaciones
                     </label>
                     <DatePickerPeriod
                       startDate={editDates.startDate || undefined}
@@ -1741,136 +1727,56 @@ export default function VacationManagement() {
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  {modalAction === 'deny' ? 'Motivo del rechazo' : modalAction === 'manage' ? 'Comentario para la decisión' : 'Comentario (opcional)'}
+                  {modalAction === 'deny' ? 'Motivo del rechazo' : 'Comentario (opcional)'}
                 </label>
                 <Textarea
                   value={adminComment}
                   onChange={(e) => setAdminComment(e.target.value)}
                   placeholder={modalAction === 'deny' 
                     ? "Explica el motivo del rechazo..." 
-                    : modalAction === 'manage'
-                    ? "Añade un comentario sobre tu decisión..."
                     : "Añade un comentario si es necesario..."
                   }
                   rows={3}
                 />
               </div>
 
-              {/* Show different button layouts based on modal action */}
-              {modalAction === 'manage' ? (
-                <div className="space-y-3 pt-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      onClick={() => {
-                        if (!adminComment.trim()) {
-                          toast({
-                            title: "Error",
-                            description: "Debes agregar un motivo para rechazar la solicitud",
-                            variant: "destructive"
-                          });
-                          return;
-                        }
-                        const updateData: any = {
-                          id: selectedRequest!.id,
-                          status: 'denied',
-                          adminComment: adminComment.trim()
-                        };
-                        updateRequestMutation.mutate(updateData);
-                      }}
-                      disabled={updateRequestMutation.isPending}
-                      variant="destructive"
-                      className="gap-1"
-                    >
-                      <X className="w-4 h-4" />
-                      Rechazar
-                    </Button>
-                    
-                    <Button
-                      onClick={() => {
-                        const updateData: any = {
-                          id: selectedRequest!.id,
-                          status: 'approved',
-                          startDate: editDates.startDate?.toISOString().split('T')[0],
-                          endDate: editDates.endDate?.toISOString().split('T')[0]
-                        };
-                        if (adminComment.trim()) {
-                          updateData.adminComment = adminComment.trim();
-                        }
-                        updateRequestMutation.mutate(updateData);
-                      }}
-                      disabled={updateRequestMutation.isPending || !editDates.startDate || !editDates.endDate}
-                      className="gap-1 bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Modificar
-                    </Button>
-                    
-                    <Button
-                      onClick={() => {
-                        const updateData: any = {
-                          id: selectedRequest!.id,
-                          status: 'approved'
-                        };
-                        if (adminComment.trim()) {
-                          updateData.adminComment = adminComment.trim();
-                        }
-                        updateRequestMutation.mutate(updateData);
-                      }}
-                      disabled={updateRequestMutation.isPending}
-                      className="gap-1 bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="w-4 h-4" />
-                      Aprobar
-                    </Button>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowRequestModal(false)}
-                    className="w-full"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowRequestModal(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleRequestAction}
-                    disabled={updateRequestMutation.isPending || (modalAction === 'deny' && !adminComment.trim())}
-                    className={
-                      modalAction === 'approve' 
-                        ? "bg-green-600 hover:bg-green-700"
-                        : modalAction === 'deny'
-                        ? "bg-red-600 hover:bg-red-700"
-                        : modalAction === 'revert'
-                        ? "bg-orange-600 hover:bg-orange-700"
-                        : "bg-blue-600 hover:bg-blue-700"
-                    }
-                  >
-                    {updateRequestMutation.isPending ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        {modalAction === 'approve' && <Check className="w-4 h-4 mr-1" />}
-                        {modalAction === 'deny' && <X className="w-4 h-4 mr-1" />}
-                        {modalAction === 'edit' && <Edit className="w-4 h-4 mr-1" />}
-                        {modalAction === 'revert' && <RotateCcw className="w-4 h-4 mr-1" />}
-                        
-                        {modalAction === 'approve' && 'Aprobar'}
-                        {modalAction === 'deny' && 'Denegar'}
-                        {modalAction === 'edit' && 'Modificar'}
-                        {modalAction === 'revert' && 'Revertir a Pendiente'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRequestModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleRequestAction}
+                  disabled={updateRequestMutation.isPending || (modalAction === 'deny' && !adminComment.trim())}
+                  className={
+                    modalAction === 'approve' 
+                      ? "bg-green-600 hover:bg-green-700"
+                      : modalAction === 'deny'
+                      ? "bg-red-600 hover:bg-red-700"
+                      : modalAction === 'revert'
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }
+                >
+                  {updateRequestMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {modalAction === 'approve' && <Check className="w-4 h-4 mr-1" />}
+                      {modalAction === 'deny' && <X className="w-4 h-4 mr-1" />}
+                      {modalAction === 'edit' && <Edit className="w-4 h-4 mr-1" />}
+                      {modalAction === 'revert' && <RotateCcw className="w-4 h-4 mr-1" />}
+                      
+                      {modalAction === 'approve' && 'Aprobar'}
+                      {modalAction === 'deny' && 'Denegar'}
+                      {modalAction === 'edit' && 'Modificar'}
+                      {modalAction === 'revert' && 'Revertir a Pendiente'}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

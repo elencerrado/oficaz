@@ -1003,17 +1003,45 @@ export default function AdminDashboard() {
                     {pendingVacations.slice(0, 3).map((request: any) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=manage`)}
+                        className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border"
                       >
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <div>
+                        <div className="flex-1">
                           <p className="text-sm font-medium text-foreground">
                             Vacaciones de {request.userName || 'Empleado'}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Del {format(parseISO(request.startDate), 'dd/MM')} al {format(parseISO(request.endDate), 'dd/MM')}
                           </p>
+                        </div>
+                        
+                        {/* Action buttons like timeline */}
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=approve`)}
+                            className="bg-green-600 hover:bg-green-700 text-white h-8 w-8 p-0"
+                            title="Aprobar solicitud"
+                          >
+                            <Check className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=edit`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white h-8 w-8 p-0"
+                            title="Modificar solicitud"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => setLocation(`/test/vacaciones?requestId=${request.id}&action=deny`)}
+                            variant="destructive"
+                            className="h-8 w-8 p-0"
+                            title="Denegar solicitud"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
                     ))}
