@@ -5295,11 +5295,15 @@ Responde directamente a este email para contactar con la persona.
       const standardMonthlyPrice = (planResult.rows[0] as any).monthly_price;
       
       // Use custom monthly price if set, otherwise use standard plan price
-      const monthlyPrice = company.subscription.customMonthlyPrice || standardMonthlyPrice;
-      console.log(`💰 Using ${company.subscription.customMonthlyPrice ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
-      console.log(`💰 DEBUG: customMonthlyPrice=${company.subscription.customMonthlyPrice}, type=${typeof company.subscription.customMonthlyPrice}`);
-      console.log(`💰 DEBUG: standardMonthlyPrice=${standardMonthlyPrice}, type=${typeof standardMonthlyPrice}`);
-      console.log(`💰 DEBUG: Final monthlyPrice=${monthlyPrice}, type=${typeof monthlyPrice}`);
+      // CRITICAL: Drizzle decimal fields come as strings, must convert to number for Stripe
+      const customPriceNum = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
+      const standardPriceNum = Number(standardMonthlyPrice);
+      const monthlyPrice = customPriceNum || standardPriceNum;
+      
+      console.log(`💰 Using ${customPriceNum ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
+      console.log(`💰 DEBUG: customMonthlyPrice="${company.subscription.customMonthlyPrice}" (${typeof company.subscription.customMonthlyPrice}) -> ${customPriceNum}`);
+      console.log(`💰 DEBUG: standardMonthlyPrice="${standardMonthlyPrice}" (${typeof standardMonthlyPrice}) -> ${standardPriceNum}`);
+      console.log(`💰 DEBUG: Final monthlyPrice=${monthlyPrice} (${typeof monthlyPrice})`);
 
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
