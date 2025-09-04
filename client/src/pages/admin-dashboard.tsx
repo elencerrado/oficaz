@@ -1042,7 +1042,7 @@ export default function AdminDashboard() {
                         </div>
                         
                         {/* Action buttons like timeline - only show if user can manage this request */}
-                        {canManageRequest(request) ? (
+                        {canManageRequest(request) && (
                           <div className="flex gap-1 flex-shrink-0">
                             <Button
                               size="sm"
@@ -1070,12 +1070,6 @@ export default function AdminDashboard() {
                               <X className="w-3 h-3" />
                             </Button>
                           </div>
-                        ) : (
-                          <Badge variant="outline" className="text-xs text-muted-foreground flex-shrink-0">
-                            {user?.role === 'manager' && request.userId === user?.id 
-                              ? 'No puedes gestionar tus propias solicitudes' 
-                              : 'Sin permisos'}
-                          </Badge>
                         )}
                       </div>
                     ))}
