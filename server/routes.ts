@@ -5297,6 +5297,9 @@ Responde directamente a este email para contactar con la persona.
       // Use custom monthly price if set, otherwise use standard plan price
       const monthlyPrice = company.subscription.customMonthlyPrice || standardMonthlyPrice;
       console.log(`💰 Using ${company.subscription.customMonthlyPrice ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
+      console.log(`💰 DEBUG: customMonthlyPrice=${company.subscription.customMonthlyPrice}, type=${typeof company.subscription.customMonthlyPrice}`);
+      console.log(`💰 DEBUG: standardMonthlyPrice=${standardMonthlyPrice}, type=${typeof standardMonthlyPrice}`);
+      console.log(`💰 DEBUG: Final monthlyPrice=${monthlyPrice}, type=${typeof monthlyPrice}`);
 
       // Create or get Stripe customer
       let stripeCustomerId = user.stripeCustomerId;
@@ -5359,14 +5362,17 @@ Responde directamente a este email para contactar con la persona.
       });
 
       // Create a price for that product
+      const unitAmountCents = Math.round(monthlyPrice * 100); // Convert to cents
+      console.log(`💰 STRIPE DEBUG: monthlyPrice=${monthlyPrice} -> unit_amount=${unitAmountCents} cents`);
       const price = await stripe.prices.create({
         currency: 'eur',
-        unit_amount: Math.round(monthlyPrice * 100), // Convert to cents
+        unit_amount: unitAmountCents,
         recurring: {
           interval: 'month',
         },
         product: product.id,
       });
+      console.log(`💰 STRIPE PRICE CREATED: ID=${price.id}, unit_amount=${price.unit_amount} cents (€${price.unit_amount/100})`);
 
       // Calculate exact payment dates to match what's shown in the app
       const trialEndDate = new Date(company.subscription.trialEndDate);
