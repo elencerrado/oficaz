@@ -5256,13 +5256,17 @@ Responde directamente a este email para contactar con la persona.
 
   // Confirm payment method and create recurring subscription
   app.post('/api/account/confirm-payment-method', authenticateToken, async (req: AuthRequest, res) => {
+    console.log(`🚨 PAYMENT ENDPOINT CALLED - User ${req.user!.id}, setupIntentId: ${req.body.setupIntentId}`);
     try {
       const userId = req.user!.id;
       const { setupIntentId } = req.body;
 
       if (!setupIntentId) {
+        console.log(`🚨 PAYMENT FAILED - No setupIntentId provided`);
         return res.status(400).json({ message: 'Setup Intent ID es requerido' });
       }
+      
+      console.log(`🚨 PAYMENT PROCESSING - Retrieving setupIntent ${setupIntentId}`);
 
       // Retrieve the setup intent to get payment method
       const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
