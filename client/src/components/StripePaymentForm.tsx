@@ -74,7 +74,7 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
 
             toast({
               title: "¡Autorización exitosa!",
-              description: "Se ha autorizado €39.95. El cobro será efectivo al finalizar el trial.",
+              description: `Se ha autorizado €${(result.paymentIntent.amount / 100).toFixed(2)}. El cobro será efectivo al finalizar el trial.`,
             });
             
             // Invalidate auth data to refresh subscription status

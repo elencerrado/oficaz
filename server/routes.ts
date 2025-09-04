@@ -5240,15 +5240,26 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
+      // Calculate correct authorization amount (use custom price if available)
+      const customPrice = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
+      const standardPrice = company.subscription.plan === 'pro' ? 39.95 : 
+                           company.subscription.plan === 'basic' ? 19.95 : 
+                           company.subscription.plan === 'master' ? 99.95 : 39.95;
+      
+      const finalPrice = customPrice || standardPrice;
+      const authAmountCents = Math.round(finalPrice * 100); // Convert to cents
+      
+      console.log(`💰 AUTHORIZATION AMOUNT: customPrice=${customPrice}, standardPrice=${standardPrice}, finalPrice=${finalPrice}, authAmountCents=${authAmountCents}`);
+
       // Create payment intent with authorization hold (manual capture for trial end)
       const paymentIntent = await stripe.paymentIntents.create({
         customer: stripeCustomerId,
-        amount: 3995, // €39.95 in cents - authorize this amount
+        amount: authAmountCents, // Use calculated amount based on custom or standard price
         currency: 'eur',
         payment_method_types: ['card'],
         capture_method: 'manual', // Authorize now, capture later
         setup_future_usage: 'off_session', // Save for future use
-        description: `Autorización para Plan Pro - ${company.name}`,
+        description: `Autorización para Plan ${company.subscription.plan} - €${finalPrice} - ${company.name}`,
       });
 
       res.json({
