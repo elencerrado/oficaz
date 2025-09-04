@@ -22,7 +22,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Bell,
-  AlertCircle
+  AlertCircle,
+  Check,
+  Edit,
+  X
 } from 'lucide-react';
 import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
