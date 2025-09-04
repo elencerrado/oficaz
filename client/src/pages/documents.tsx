@@ -25,7 +25,8 @@ import {
   Folder,
   Calendar,
   Eye,
-  ArrowLeft
+  ArrowLeft,
+  PenTool
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -34,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 import { useLocation } from 'wouter';
 import { getAuthData } from '@/lib/auth';
+import { DocumentSignatureModal } from '@/components/document-signature-modal';
 
 interface DocumentRequest {
   id: number;
@@ -49,6 +51,8 @@ export default function Documents() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
   const [activeRequest, setActiveRequest] = useState<DocumentRequest | null>(null);
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+  const [documentToSign, setDocumentToSign] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
@@ -241,6 +245,42 @@ export default function Documents() {
     },
   });
 
+  // Document signature mutations
+  const markViewedMutation = useMutation({
+    mutationFn: (id: number) => apiRequest('PATCH', `/api/documents/${id}/view`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo marcar el documento como visto',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const signDocumentMutation = useMutation({
+    mutationFn: ({ id, signature }: { id: number; signature: string }) => 
+      apiRequest('PATCH', `/api/documents/${id}/sign`, { digitalSignature: signature }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setSignatureModalOpen(false);
+      setDocumentToSign(null);
+      toast({
+        title: 'Documento firmado',
+        description: 'Tu firma se ha registrado correctamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error al firmar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -267,6 +307,22 @@ export default function Documents() {
     }
     
     uploadMutation.mutate(formData);
+  };
+
+  // Document signature handlers
+  const handleOpenSignatureModal = (document: any) => {
+    markViewedMutation.mutate(document.id); // Mark as viewed when opening to sign
+    setDocumentToSign(document);
+    setSignatureModalOpen(true);
+  };
+
+  const handleSignDocument = (signature: string) => {
+    if (documentToSign) {
+      signDocumentMutation.mutate({
+        id: documentToSign.id,
+        signature: signature,
+      });
+    }
   };
 
   const handleDownload = (id: number, filename: string) => {
@@ -568,6 +624,19 @@ export default function Documents() {
                               {category === 'nominas' ? 'Nómina' :
                                category === 'contratos' ? 'Contrato' : 'Documento'}
                             </Badge>
+                            {/* Signature status badge for nóminas */}
+                            {category === 'nominas' && (
+                              <Badge 
+                                variant={document.isAccepted ? 'default' : 'outline'}
+                                className={`text-xs px-2 py-0 ${
+                                  document.isAccepted 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                }`}
+                              >
+                                {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
+                              </Badge>
+                            )}
                             <span className="text-xs text-white/60">
                               {formatFileSize(document.fileSize)}
                             </span>
@@ -593,6 +662,17 @@ export default function Documents() {
                           >
                             <Download className="h-3 w-3" />
                           </Button>
+                          {/* Signature button for unsigned nóminas */}
+                          {category === 'nominas' && !document.isAccepted && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenSignatureModal(document)}
+                              className="text-green-400 border-green-400/50 hover:bg-green-400 hover:text-white h-8 px-2 bg-white/10"
+                            >
+                              <PenTool className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -636,6 +716,18 @@ export default function Documents() {
           </div>
         )}
       </div>
+
+      {/* Digital Signature Modal */}
+      <DocumentSignatureModal
+        isOpen={signatureModalOpen}
+        onClose={() => {
+          setSignatureModalOpen(false);
+          setDocumentToSign(null);
+        }}
+        onSign={handleSignDocument}
+        documentName={documentToSign?.originalName || ''}
+        isLoading={signDocumentMutation.isPending}
+      />
     </div>
   );
 }

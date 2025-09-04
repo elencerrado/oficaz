@@ -68,6 +68,10 @@ export interface IStorage {
   getDocumentsByCompany(companyId: number): Promise<any[]>;
   getDocument(id: number): Promise<Document | undefined>;
   deleteDocument(id: number): Promise<boolean>;
+  
+  // Document signature methods
+  markDocumentAsViewed(id: number): Promise<Document | undefined>;
+  markDocumentAsAcceptedAndSigned(id: number, digitalSignature: string): Promise<Document | undefined>;
 
   // Messages
   createMessage(message: InsertMessage): Promise<Message>;
@@ -525,6 +529,10 @@ export class DrizzleStorage implements IStorage {
         d.original_name as "originalName",
         d.file_size as "fileSize",
         d.created_at as "createdAt",
+        d.is_viewed as "isViewed",
+        d.is_accepted as "isAccepted",
+        d.accepted_at as "acceptedAt",
+        d.signed_at as "signedAt",
         u.full_name as "userFullName",
         u.profile_picture as "userProfilePicture"
       FROM documents d 
@@ -541,6 +549,10 @@ export class DrizzleStorage implements IStorage {
       originalName: row.originalName,
       fileSize: row.fileSize,
       createdAt: row.createdAt,
+      isViewed: row.isViewed || false,
+      isAccepted: row.isAccepted || false,
+      acceptedAt: row.acceptedAt,
+      signedAt: row.signedAt,
       user: {
         fullName: row.userFullName || 'Usuario desconocido',
         profilePicture: row.userProfilePicture || null
@@ -556,6 +568,29 @@ export class DrizzleStorage implements IStorage {
   async deleteDocument(id: number): Promise<boolean> {
     const result = await db.delete(schema.documents).where(eq(schema.documents.id, id));
     return result.rowCount > 0;
+  }
+
+  // Document signature methods
+  async markDocumentAsViewed(id: number): Promise<Document | undefined> {
+    const [document] = await db.update(schema.documents)
+      .set({ isViewed: true })
+      .where(eq(schema.documents.id, id))
+      .returning();
+    return document;
+  }
+
+  async markDocumentAsAcceptedAndSigned(id: number, digitalSignature: string): Promise<Document | undefined> {
+    const now = new Date();
+    const [document] = await db.update(schema.documents)
+      .set({ 
+        isAccepted: true,
+        acceptedAt: now,
+        digitalSignature: digitalSignature,
+        signedAt: now
+      })
+      .where(eq(schema.documents.id, id))
+      .returning();
+    return document;
   }
 
   // Messages

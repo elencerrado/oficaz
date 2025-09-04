@@ -3648,6 +3648,59 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Document signature endpoints
+  app.patch('/api/documents/:id/view', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const document = await storage.getDocument(id);
+
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // Security check: Only document owner can mark as viewed
+      if (document.userId !== req.user!.id) {
+        return res.status(403).json({ message: 'You can only view your own documents' });
+      }
+
+      const updatedDocument = await storage.markDocumentAsViewed(id);
+      console.log(`Document ${id} marked as viewed by user ${req.user!.id}`);
+      
+      res.json(updatedDocument);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/documents/:id/sign', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { digitalSignature } = req.body;
+
+      if (!digitalSignature || typeof digitalSignature !== 'string') {
+        return res.status(400).json({ message: 'Digital signature is required' });
+      }
+
+      const document = await storage.getDocument(id);
+
+      if (!document) {
+        return res.status(404).json({ message: 'Document not found' });
+      }
+
+      // Security check: Only document owner can sign
+      if (document.userId !== req.user!.id) {
+        return res.status(403).json({ message: 'You can only sign your own documents' });
+      }
+
+      const updatedDocument = await storage.markDocumentAsAcceptedAndSigned(id, digitalSignature);
+      console.log(`Document ${id} accepted and signed by user ${req.user!.id}`);
+      
+      res.json(updatedDocument);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Message routes
   app.post('/api/messages', authenticateToken, async (req: AuthRequest, res) => {
     try {

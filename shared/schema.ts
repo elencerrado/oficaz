@@ -296,6 +296,12 @@ export const documents = pgTable("documents", {
   mimeType: text("mime_type"),
   filePath: text("file_path"),
   uploadedBy: integer("uploaded_by").references(() => users.id),
+  // Document signature and acceptance tracking
+  isViewed: boolean("is_viewed").default(false).notNull(),
+  isAccepted: boolean("is_accepted").default(false).notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  digitalSignature: text("digital_signature"), // Base64 encoded signature image
+  signedAt: timestamp("signed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
