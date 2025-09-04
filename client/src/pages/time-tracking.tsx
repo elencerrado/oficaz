@@ -161,16 +161,53 @@ export default function TimeTracking() {
   // All useMutation hooks
   const updateSessionMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => apiRequest('PATCH', `/api/work-sessions/${id}`, data),
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['/api/work-sessions/company'] });
+
+      // Snapshot the previous value
+      const previousSessions = queryClient.getQueryData(['/api/work-sessions/company']);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['/api/work-sessions/company'], (old: any) => {
+        if (!old) return old;
+        
+        return old.map((session: any) => {
+          if (session.id === id) {
+            return {
+              ...session,
+              ...data,
+              // Ensure date fields are properly formatted
+              clockIn: data.clockIn,
+              clockOut: data.clockOut || session.clockOut,
+              breakPeriods: data.breakPeriods || session.breakPeriods
+            };
+          }
+          return session;
+        });
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousSessions };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
+      // Update UI immediately
       toast({
         title: 'Fichaje Actualizado',
         description: 'Los cambios se han guardado exitosamente.',
       });
       setEditingSession(null);
       setEditData({ clockIn: '', clockOut: '', date: '', breakPeriods: [] });
+      
+      // Refetch to ensure data consistency (but UI already updated)
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['/api/work-sessions/company'], context.previousSessions);
+      }
+      
       toast({
         title: 'Error',
         description: error.message || 'No se pudo actualizar el fichaje.',
@@ -199,14 +236,54 @@ export default function TimeTracking() {
         clockOut: clockOutDate.toISOString()
       });
     },
+    onMutate: async (sessionId: number) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/work-sessions/company'] });
+
+      // Snapshot the previous value
+      const previousSessions = queryClient.getQueryData(['/api/work-sessions/company']);
+
+      // Get the session and calculate clockOut
+      const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
+      const sessionToComplete = (sessions as any[])?.find((s: any) => s.id === sessionId);
+      
+      if (sessionToComplete) {
+        const clockInDate = new Date(sessionToComplete.clockIn);
+        const clockOutDate = new Date(clockInDate.getTime() + (maxHours * 60 * 60 * 1000));
+
+        // Optimistically update the session
+        queryClient.setQueryData(['/api/work-sessions/company'], (old: any) => {
+          if (!old) return old;
+          
+          return old.map((session: any) => {
+            if (session.id === sessionId) {
+              return {
+                ...session,
+                clockOut: clockOutDate.toISOString()
+              };
+            }
+            return session;
+          });
+        });
+      }
+
+      return { previousSessions };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
       toast({
         title: 'Sesión Completada',
         description: 'La sesión incompleta se ha cerrado automáticamente con las horas configuradas.',
       });
+      
+      // Refetch to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Roll back on error
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['/api/work-sessions/company'], context.previousSessions);
+      }
+      
       toast({
         title: 'Error',
         description: error.message || 'No se pudo completar la sesión.',
