@@ -830,55 +830,54 @@ export default function AdminDocuments() {
         {activeTab === 'explorer' && (
           <Card>
             <CardContent className="p-6 space-y-4">
-              {/* Filters and View Mode - Reorganized layout */}
-              <div className="space-y-4">
-                {/* 1. Search Bar - Full Width */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                  <Input
-                    placeholder="Buscar por nombre de archivo o empleado..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full"
-                  />
+              {/* Filters and View Mode - All in same row */}
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* 1. Search Bar - Takes remaining space */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                    <Input
+                      placeholder="Buscar por nombre de archivo o empleado..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full"
+                    />
+                  </div>
                 </div>
                 
-                {/* 2. Employee Filter and 3. View Mode Toggle */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* 2. Employee Filter */}
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="w-full sm:w-64">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los empleados</SelectItem>
-                      {employees.map((employee: Employee) => (
-                        <SelectItem key={employee.id} value={employee.id.toString()}>
-                          {employee.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* 3. View Mode Toggle Buttons */}
-                  <div className="flex bg-muted rounded-lg p-1 sm:ml-auto">
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className="px-3"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="px-3"
-                    >
-                      <Grid3X3 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                {/* 2. Employee Filter */}
+                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <SelectTrigger className="w-full md:w-64">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los empleados</SelectItem>
+                    {employees.map((employee: Employee) => (
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
+                        {employee.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* 3. View Mode Toggle Buttons */}
+                <div className="flex bg-muted rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="px-3"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="px-3"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
