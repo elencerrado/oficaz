@@ -5419,10 +5419,10 @@ Responde directamente a este email para contactar con la persona.
           WHERE company_id = ${company.id}
         `);
         
-        // Store the payment intent in company metadata for later capture
+        // Store the payment intent in company custom_features for later capture
         await db.execute(sql`
           UPDATE companies 
-          SET metadata = COALESCE(metadata, '{}') || jsonb_build_object(
+          SET custom_features = COALESCE(custom_features, '{}') || jsonb_build_object(
             'pending_payment_intent_id', ${paymentIntent.id},
             'authorization_amount', ${paymentIntent.amount},
             'authorization_date', ${now.toISOString()}
@@ -6953,6 +6953,175 @@ Responde directamente a este email para contactar con la persona.
     } catch (error) {
       console.error('Error in registration:', error);
       res.status(500).json({ message: 'Error interno del servidor' });
+    }
+  });
+
+  // Auto-process expired trials (capture authorized payments and activate)
+  app.post('/api/subscription/auto-trial-process', async (req, res) => {
+    try {
+      console.log('🏦 AUTO-TRIAL PROCESSING - Checking for expired trials to activate...');
+      
+      const now = new Date();
+      let processedCount = 0;
+      let errorCount = 0;
+      
+      // Get all companies with expired trials that have pending payment intents
+      const expiredTrials = await db.execute(sql`
+        SELECT 
+          c.id as company_id,
+          c.name as company_name,
+          c.custom_features,
+          s.id as subscription_id,
+          s.trial_end_date,
+          s.plan,
+          s.stripe_customer_id,
+          u.id as admin_user_id
+        FROM companies c
+        JOIN subscriptions s ON c.id = s.company_id
+        JOIN users u ON c.id = u.company_id AND u.role = 'admin'
+        WHERE 
+          s.status = 'trial'
+          AND s.trial_end_date < ${now.toISOString()}
+          AND c.custom_features ? 'pending_payment_intent_id'
+          AND c.custom_features ->> 'pending_payment_intent_id' IS NOT NULL
+      `);
+      
+      console.log(`🏦 Found ${expiredTrials.rows.length} expired trials with pending payments`);
+      
+      for (const trial of expiredTrials.rows) {
+        const t = trial as any;
+        
+        try {
+          console.log(`🏦 Processing trial for company ${t.company_name} (ID: ${t.company_id})`);
+          
+          // Get payment intent from custom_features
+          const paymentIntentId = t.custom_features?.pending_payment_intent_id;
+          if (!paymentIntentId) {
+            console.log(`⚠️ No payment intent found for company ${t.company_id}`);
+            continue;
+          }
+          
+          // Retrieve and capture the authorized payment
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          
+          if (paymentIntent.status === 'requires_capture') {
+            console.log(`💰 CAPTURING authorized payment for ${t.company_name}: €${paymentIntent.amount/100}`);
+            
+            // Capture the payment
+            const capturedPayment = await stripe.paymentIntents.capture(paymentIntentId);
+            console.log(`✅ PAYMENT CAPTURED: €${capturedPayment.amount/100} for ${t.company_name}`);
+            
+            // Get plan pricing for recurring subscription
+            const planResult = await db.execute(sql`
+              SELECT monthly_price FROM subscription_plans 
+              WHERE name = ${t.plan}
+            `);
+            
+            if (!planResult.rows[0]) {
+              console.error(`❌ Plan ${t.plan} not found for company ${t.company_id}`);
+              errorCount++;
+              continue;
+            }
+            
+            const monthlyPrice = Number((planResult.rows[0] as any).monthly_price);
+            
+            // Create recurring product and price
+            const product = await stripe.products.create({
+              name: `Plan ${t.plan.charAt(0).toUpperCase() + t.plan.slice(1)} - ${t.company_name}`,
+            });
+            
+            const price = await stripe.prices.create({
+              currency: 'eur',
+              unit_amount: Math.round(monthlyPrice * 100),
+              recurring: { interval: 'month' },
+              product: product.id,
+            });
+            
+            // Create recurring subscription
+            const subscription = await stripe.subscriptions.create({
+              customer: t.stripe_customer_id,
+              items: [{ price: price.id }],
+              default_payment_method: paymentIntent.payment_method as string,
+            });
+            
+            console.log(`🔄 RECURRING SUBSCRIPTION CREATED: ${subscription.id} for ${t.company_name}`);
+            
+            // Update database to active status
+            const firstPaymentDate = new Date(now);
+            const nextPaymentDate = new Date(now);
+            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+            
+            await db.execute(sql`
+              UPDATE subscriptions 
+              SET 
+                status = 'active',
+                is_trial_active = false,
+                stripe_subscription_id = ${subscription.id},
+                first_payment_date = ${firstPaymentDate.toISOString()},
+                next_payment_date = ${nextPaymentDate.toISOString()},
+                updated_at = now()
+              WHERE id = ${t.subscription_id}
+            `);
+            
+            // Clear pending payment intent from custom_features
+            await db.execute(sql`
+              UPDATE companies 
+              SET custom_features = custom_features - 'pending_payment_intent_id' - 'authorization_amount' - 'authorization_date'
+              WHERE id = ${t.company_id}
+            `);
+            
+            console.log(`✅ TRIAL CONVERTED: ${t.company_name} activated successfully`);
+            processedCount++;
+            
+          } else {
+            console.log(`⚠️ PaymentIntent ${paymentIntentId} status: ${paymentIntent.status} - cannot capture`);
+            errorCount++;
+          }
+          
+        } catch (error) {
+          console.error(`❌ Error processing trial for company ${t.company_id}:`, error);
+          errorCount++;
+        }
+      }
+      
+      console.log(`🏦 AUTO-TRIAL PROCESSING COMPLETE: ${processedCount} activated, ${errorCount} errors`);
+      
+      res.json({ 
+        message: `Processed ${expiredTrials.rows.length} expired trials. ${processedCount} activated, ${errorCount} errors.`,
+        processedCount,
+        errorCount 
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in auto-trial processing:', error);
+      res.status(500).json({ message: 'Error during auto-trial processing' });
+    }
+  });
+
+  // ADMIN: Test trial processing (manual trigger for testing)
+  app.post('/api/admin/test-trial-processing', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      console.log(`🧪 ADMIN TEST: Manual trial processing triggered by user ${req.user!.id}`);
+      
+      // Call the auto-trial-process logic
+      const response = await fetch(`http://localhost:5000/api/subscription/auto-trial-process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const result = await response.json();
+      
+      console.log('🧪 TEST RESULT:', result);
+      
+      res.json({
+        success: true,
+        message: 'Trial processing test completed',
+        result
+      });
+      
+    } catch (error) {
+      console.error('❌ Error in test trial processing:', error);
+      res.status(500).json({ message: 'Error during test trial processing' });
     }
   });
 
