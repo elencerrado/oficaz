@@ -5307,7 +5307,16 @@ Responde directamente a este email para contactar con la persona.
       // CRITICAL: Drizzle decimal fields come as strings, must convert to number for Stripe
       const customPriceNum = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
       const standardPriceNum = Number(standardMonthlyPrice);
-      const monthlyPrice = customPriceNum || standardPriceNum;
+      let monthlyPrice = customPriceNum || standardPriceNum;
+      
+      // EMERGENCY FIX: Force correct price if conversion fails
+      if (!monthlyPrice || monthlyPrice <= 0) {
+        console.log(`🚨 PRICE ERROR: monthlyPrice=${monthlyPrice}, forcing plan price`);
+        monthlyPrice = company.subscription.plan === 'pro' ? 39.95 : 
+                      company.subscription.plan === 'basic' ? 19.95 : 
+                      company.subscription.plan === 'master' ? 99.95 : 39.95;
+        console.log(`🚨 FORCED PRICE: Using €${monthlyPrice} for plan ${company.subscription.plan}`);
+      }
       
       console.log(`💰 Using ${customPriceNum ? 'custom' : 'standard'} price: €${monthlyPrice}/month for ${company.name}`);
       console.log(`💰 DEBUG: customMonthlyPrice="${company.subscription.customMonthlyPrice}" (${typeof company.subscription.customMonthlyPrice}) -> ${customPriceNum}`);
