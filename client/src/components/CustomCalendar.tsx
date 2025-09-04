@@ -338,15 +338,15 @@ export function CustomCalendar({
                       {/* Top and bottom lines for middle days */}
                       {rangePosition === 'middle' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute top-0 left-0 right-0 border-t-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
-                          <div className={`absolute bottom-0 left-0 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute bottom-0 left-0 right-0 border-b-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
                         </>
                       )}
@@ -363,15 +363,15 @@ export function CustomCalendar({
                       {/* First day: C shape with curvature but no right border */}
                       {rangePosition === 'first' && (
                         <>
-                          <div className={`absolute top-0 left-1/2 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute top-0 left-1/2 right-0 border-t-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
-                          <div className={`absolute bottom-0 left-1/2 right-0 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute bottom-0 left-1/2 right-0 border-b-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
                           <div className={`absolute inset-0 rounded-l-full border-l-2 border-t-2 border-b-2 pointer-events-none z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
@@ -384,15 +384,15 @@ export function CustomCalendar({
                       {/* Last day: Inverted C shape with curvature but no left border */}
                       {rangePosition === 'last' && (
                         <>
-                          <div className={`absolute top-0 left-0 right-1/2 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute top-0 left-0 right-1/2 border-t-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
-                          <div className={`absolute bottom-0 left-0 right-1/2 h-0.5 z-20 ${
-                            eventColor === 'red-500' ? 'bg-red-500' :
-                            eventColor === 'orange-500' ? 'bg-orange-500' :
-                            eventColor === 'green-500' ? 'bg-green-500' : 'bg-yellow-500'
+                          <div className={`absolute bottom-0 left-0 right-1/2 border-b-2 z-20 ${
+                            eventColor === 'red-500' ? 'border-red-500' :
+                            eventColor === 'orange-500' ? 'border-orange-500' :
+                            eventColor === 'green-500' ? 'border-green-500' : 'border-yellow-500'
                           }`}></div>
                           <div className={`absolute inset-0 rounded-r-full border-r-2 border-t-2 border-b-2 pointer-events-none z-20 ${
                             eventColor === 'red-500' ? 'border-red-500' :
@@ -479,8 +479,8 @@ export function CustomCalendar({
                   {shouldShowConnection && (
                     <>
                       {/* Top and bottom connecting lines for worm effect */}
-                      <div className={`absolute top-0.5 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
-                      <div className={`absolute bottom-0.5 left-0 right-0 h-0.5 bg-${connectorEventColor}${connectorOpacity}`}></div>
+                      <div className={`absolute top-0 left-0 right-0 border-t-2 border-${connectorEventColor}${connectorOpacity}`}></div>
+                      <div className={`absolute bottom-0 left-0 right-0 border-b-2 border-${connectorEventColor}${connectorOpacity}`}></div>
                     </>
                   )}
                 </div>
