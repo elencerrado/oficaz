@@ -61,6 +61,7 @@ interface Document {
   createdAt: string;
   user?: {
     fullName: string;
+    profilePicture?: string;
   };
 }
 
@@ -960,10 +961,13 @@ export default function AdminDocuments() {
                       const documentsByEmployee = filteredDocuments.reduce((acc: any, doc: Document) => {
                         const employeeId = doc.userId || 'unknown';
                         const employeeName = doc.user?.fullName || 'Empleado desconocido';
+                        const employeeProfile = doc.user?.profilePicture || null;
                         
                         if (!acc[employeeId]) {
                           acc[employeeId] = {
+                            id: parseInt(employeeId.toString()),
                             name: employeeName,
+                            profilePicture: employeeProfile,
                             documents: []
                           };
                         }

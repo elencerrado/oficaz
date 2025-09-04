@@ -525,7 +525,8 @@ export class DrizzleStorage implements IStorage {
         d.original_name as "originalName",
         d.file_size as "fileSize",
         d.created_at as "createdAt",
-        u.full_name as "userFullName"
+        u.full_name as "userFullName",
+        u.profile_picture as "userProfilePicture"
       FROM documents d 
       LEFT JOIN users u ON d.user_id = u.id 
       WHERE u.company_id = ${companyId}
@@ -541,7 +542,8 @@ export class DrizzleStorage implements IStorage {
       fileSize: row.fileSize,
       createdAt: row.createdAt,
       user: {
-        fullName: row.userFullName || 'Usuario desconocido'
+        fullName: row.userFullName || 'Usuario desconocido',
+        profilePicture: row.userProfilePicture || null
       }
     }));
   }
