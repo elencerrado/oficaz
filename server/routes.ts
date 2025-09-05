@@ -4173,6 +4173,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Process and compress image to 200x200 max using Sharp
       await sharp(req.file.path)
+        .rotate() // Auto-rotar basado en metadatos EXIF para corregir orientación de móviles
         .resize(200, 200, {
           fit: 'inside', // Mantiene aspect ratio, no distorsiona
           withoutEnlargement: true // No agranda imágenes pequeñas
