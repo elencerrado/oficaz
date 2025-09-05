@@ -298,7 +298,7 @@ export default function VacationRequests() {
 
   return (
     <div 
-      className="min-h-screen text-foreground bg-background"
+      className="min-h-screen bg-employee-gradient text-white"
       style={{
         overscrollBehavior: 'none'
       }}
@@ -309,7 +309,7 @@ export default function VacationRequests() {
           <Button
             variant="ghost"
             size="lg"
-            className="text-foreground hover:bg-muted/20 px-6 py-3 rounded-xl bg-muted/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             <span className="font-medium">Atrás</span>
@@ -322,14 +322,14 @@ export default function VacationRequests() {
             <img 
               src={company.logoUrl} 
               alt={company.name} 
-              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+            className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
           ) : (
-            <div className="text-foreground text-sm font-medium mb-1">
+            <div className="text-white text-sm font-medium mb-1">
               {company?.name || 'Mi Empresa'}
             </div>
           )}
-          <div className="text-muted-foreground text-xs">
+          <div className="text-white/70 text-xs">
             {user?.fullName}
           </div>
         </div>

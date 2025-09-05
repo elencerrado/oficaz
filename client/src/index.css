@@ -621,12 +621,16 @@ html.dark body {
   background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
 }
 
-/* Modo empleado - color específico del gradiente de empleado */
-html.employee-mode {
+/* Modo empleado - color específico del gradiente de empleado - MÁXIMA PRIORIDAD */
+html.employee-mode,
+html.employee-mode.light,
+html.employee-mode.dark {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
 }
 
-html.employee-mode body {
+html.employee-mode body,
+html.employee-mode.light body,
+html.employee-mode.dark body {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
 }
 
