@@ -133,7 +133,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     useScrollReset();
     
     // Apply employee-mode class to html for notch color
-    React.useEffect(() => {
+    useEffect(() => {
       document.documentElement.classList.add('employee-mode');
       return () => {
         document.documentElement.classList.remove('employee-mode');
