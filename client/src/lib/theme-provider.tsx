@@ -68,7 +68,7 @@ const isAdminRoute = () => {
   ];
   
   // Also check for company alias patterns like /companyName/recordatorios, /companyName/empleados
-  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|horas|vacaciones|documentos|mensajes|configuracion)/.test(path);
+  const hasCompanyAliasAdminRoute = /^\/[^\/]+\/(recordatorios|empleados|inicio|fichajes|horas|vacaciones|documentos|mensajes|configuracion|usuario)/.test(path);
   
   return adminRoutes.some(route => path.startsWith(route)) || hasCompanyAliasAdminRoute;
 };
