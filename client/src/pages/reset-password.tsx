@@ -35,13 +35,11 @@ export default function ResetPassword() {
     },
   });
 
-  // Set dark notch for dark background and prevent scroll
+  // Set dark notch for dark background
   useEffect(() => {
     document.documentElement.classList.add('dark-notch');
-    document.body.style.overflow = 'hidden';
     return () => {
       document.documentElement.classList.remove('dark-notch');
-      document.body.style.overflow = '';
     };
   }, []);
 
@@ -98,56 +96,53 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden relative" style={{ height: '100dvh' }}>
-        <div className="absolute inset-0 flex items-center justify-center px-4">
-            <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
-              <CardHeader className="text-center pt-8 pb-6">
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={oficazLogo} 
-                  alt="Oficaz" 
-                  className="h-10 w-auto"
-                />
-              </div>
-              <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-500" />
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900 mb-2">
-                Contraseña actualizada
-              </h1>
-              <p className="text-gray-600 text-sm">
-                Tu contraseña ha sido cambiada exitosamente
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+        <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
+          <CardHeader className="text-center pt-8 pb-6">
+            <div className="flex justify-center mb-6">
+              <img 
+                src={oficazLogo} 
+                alt="Oficaz" 
+                className="h-10 w-auto"
+              />
+            </div>
+            <div className="flex justify-center mb-4">
+              <CheckCircle className="h-16 w-16 text-green-500" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Contraseña actualizada
+            </h1>
+            <p className="text-gray-600 text-sm">
+              Tu contraseña ha sido cambiada exitosamente
+            </p>
+          </CardHeader>
+
+          <CardContent className="px-8 pb-8">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-green-700">
+                Ya puedes usar tu nueva contraseña para iniciar sesión en tu cuenta.
               </p>
-            </CardHeader>
+            </div>
 
-            <CardContent className="px-8 pb-8">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-green-700">
-                  Ya puedes usar tu nueva contraseña para iniciar sesión en tu cuenta.
-                </p>
-              </div>
-
-              <div className="text-center">
-                <Button
-                  onClick={() => setLocation('/login')}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Ir al login
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="text-center">
+              <Button
+                onClick={() => setLocation('/login')}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Ir al login
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (tokenValid === false) {
     return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden relative" style={{ height: '100dvh' }}>
-        <div className="absolute inset-0 flex items-center justify-center px-4">
-          <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
-            <CardHeader className="text-center pt-8 pb-6">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+        <Card className="w-full max-w-md shadow-2xl rounded-2xl border-0 bg-white">
+          <CardHeader className="text-center pt-8 pb-6">
             <div className="flex justify-center mb-6">
               <img 
                 src={oficazLogo} 
@@ -194,10 +189,9 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden relative" style={{ height: '100dvh' }}>
-      <div className="absolute inset-0 flex items-center justify-center px-4">
-        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-          <CardHeader className="text-center pt-8 pb-6">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+        <CardHeader className="text-center pt-8 pb-6">
           <div className="flex justify-center mb-6">
             <img 
               src={oficazLogo} 
@@ -339,8 +333,7 @@ export default function ResetPassword() {
             </form>
           )}
         </CardContent>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }

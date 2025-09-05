@@ -141,13 +141,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   }, [verificationToken, setLocation, byInvitation]);
 
-  // Set dark notch for dark background and prevent scroll
+  // Set dark notch for dark background
   useEffect(() => {
     document.documentElement.classList.add('dark-notch');
-    document.body.style.overflow = 'hidden';
     return () => {
       document.documentElement.classList.remove('dark-notch');
-      document.body.style.overflow = '';
     };
   }, []);
 
@@ -401,11 +399,9 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
   return (
     <div
-      className="h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden"
+      className="min-h-screen flex items-center justify-center py-4 md:py-12 px-4 sm:px-6 lg:px-8"
       style={{
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
-        height: '100dvh',
-        transform: 'translateY(-8px)'
       }}
     >
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
