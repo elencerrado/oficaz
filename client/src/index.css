@@ -572,9 +572,14 @@ div.rdp button.rdp-day_today[style] {
   50% { opacity: 1; }
 }
 
-/* Fix iPhone white areas */
-html, body {
-  background: #232B36 !important;
+/* SOLUCIÓN PARA NOTCH DEL IPHONE PWA */
+html {
+  min-height: calc(100% + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  margin: 0;
+}
+
+body {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   margin: 0;
@@ -583,45 +588,7 @@ html, body {
   position: relative;
 }
 
-html {
-  /* SOLUCIÓN CORRECTA PARA NOTCH DEL IPHONE PWA */
-  min-height: calc(100% + env(safe-area-inset-top));
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-/* Modo claro - valor exacto de la variable --background en modo claro */
-html.light {
-  background-color: hsl(0 0% 100%) !important; /* Blanco puro - valor de --background en modo claro */
-}
-
-/* Modo oscuro - valor EXACTO de --background que usa el header */  
-html.dark {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
-}
-
-/* Fallback para cuando no hay clase específica - modo claro por defecto */
-html {
-  background-color: hsl(0 0% 100%) !important; /* Blanco por defecto */
-}
-
-/* También aplicamos al body para asegurar */
-body {
-  /* Prevent bounce effect that shows white area */
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Body para modo claro */
-html.light body {
-  background-color: hsl(0 0% 100%) !important;
-}
-
-/* Body para modo oscuro */
-html.dark body {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
-}
-
-/* Modo empleado - color específico del gradiente de empleado - MÁXIMA PRIORIDAD */
+/* MODO EMPLEADO - MÁXIMA PRIORIDAD */
 html.employee-mode,
 html.employee-mode.light,
 html.employee-mode.dark {
@@ -633,6 +600,41 @@ html.employee-mode.light body,
 html.employee-mode.dark body {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
 }
+
+/* MODO CLARO - solo si NO es employee-mode */
+html.light:not(.employee-mode) {
+  background-color: hsl(0 0% 100%) !important; /* Blanco puro */
+}
+
+html.light:not(.employee-mode) body {
+  background-color: hsl(0 0% 100%) !important;
+}
+
+/* MODO OSCURO - solo si NO es employee-mode */
+html.dark:not(.employee-mode) {
+  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
+}
+
+html.dark:not(.employee-mode) body {
+  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
+}
+
+/* FALLBACK - solo si NO es employee-mode */
+html:not(.employee-mode):not(.light):not(.dark) {
+  background-color: hsl(0 0% 100%) !important; /* Blanco por defecto */
+}
+
+html:not(.employee-mode):not(.light):not(.dark) body {
+  background-color: hsl(0 0% 100%) !important;
+}
+
+/* Propiedades adicionales del body */
+body {
+  /* Prevent bounce effect that shows white area */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 
 /* Safe area aware padding classes for iOS PWA */
 .pt-header-safe {
