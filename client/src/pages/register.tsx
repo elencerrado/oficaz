@@ -401,14 +401,13 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
   return (
     <div
-      className="h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden"
+      className="h-screen flex justify-center px-4 sm:px-6 lg:px-8 overflow-hidden"
       style={{
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
-        height: '100dvh',
-        marginTop: 'calc(-1 * env(safe-area-inset-top, 0px) / 2)'
+        height: '100dvh'
       }}
     >
-      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
+      <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}>
         <CardHeader className="space-y-4">
           {/* Mobile optimized header */}
           <div className="text-center">
