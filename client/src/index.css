@@ -589,14 +589,19 @@ html {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Modo claro - cuando html tiene clase "light" */
+/* Modo claro - valor exacto de la variable --background en modo claro */
 html.light {
-  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
+  background-color: hsl(0 0% 100%) !important; /* Blanco puro - valor de --background en modo claro */
 }
 
-/* Modo oscuro - cuando html tiene clase "dark" */
+/* Modo oscuro - valor exacto de la variable --background en modo oscuro */  
 html.dark {
-  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
+  background-color: hsl(222.2 84% 4.9%) !important; /* Valor de --background en modo oscuro */
+}
+
+/* Fallback para cuando no hay clase específica - modo claro por defecto */
+html {
+  background-color: hsl(0 0% 100%) !important; /* Blanco por defecto */
 }
 
 /* También aplicamos al body para asegurar */
@@ -608,12 +613,12 @@ body {
 
 /* Body para modo claro */
 html.light body {
-  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
+  background-color: hsl(0 0% 100%) !important;
 }
 
 /* Body para modo oscuro */
 html.dark body {
-  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
+  background-color: hsl(222.2 84% 4.9%) !important;
 }
 
 /* Safe area aware padding classes for iOS PWA */
