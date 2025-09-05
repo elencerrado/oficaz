@@ -53,7 +53,11 @@ export default function VerifyCode() {
   // Redirect if no sessionId provided and start initial countdown
   useEffect(() => {
     if (!sessionId) {
-      window.location.href = '/request-code';
+      // Use setTimeout to avoid immediate redirect during render
+      const timer = setTimeout(() => {
+        window.location.href = '/request-code';
+      }, 100);
+      return () => clearTimeout(timer);
     } else {
       // Start initial 60 second countdown when page loads
       setCountdown(60);
@@ -200,7 +204,9 @@ export default function VerifyCode() {
   };
 
   if (!sessionId) {
-    return null; // Will redirect
+    return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="text-white">Redirigiendo...</div>
+    </div>;
   }
 
   return (

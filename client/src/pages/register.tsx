@@ -137,7 +137,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       setIsLoading(false);
       setValidatingStep2(false);
       setValidatingStep3(false);
-      window.location.href = '/request-code';
+      // Use setTimeout to avoid immediate redirect during render
+      const timer = setTimeout(() => {
+        window.location.href = '/request-code';
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [verificationToken, byInvitation]);
 
@@ -493,7 +497,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {teamSizes.map((size) => {
-                    const isSelected = step1Form.watch('teamSize') === size.value;
+                    const isSelected = step1Form.getValues('teamSize') === size.value;
                     return (
                       <div key={size.value} className="relative">
                         <input
@@ -539,7 +543,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {features.map((feature) => {
                     const Icon = feature.icon;
-                    const selectedFeatures = step1Form.watch('interestedFeatures') || [];
+                    const selectedFeatures = step1Form.getValues('interestedFeatures') || [];
                     const isSelected = selectedFeatures.includes(feature.id);
                     return (
                       <div key={feature.id} className="relative">
@@ -650,7 +654,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     {...step2Form.register('companyAlias')}
                     placeholder="miempresa"
                   />
-                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step2Form.watch('companyAlias') || 'miempresa'}</p>
+                  <p className="text-xs text-gray-500">Tu URL será: oficaz.com/{step2Form.getValues('companyAlias') || 'miempresa'}</p>
                   {step2Form.formState.errors.companyAlias && (
                     <p className="text-sm text-red-600">{step2Form.formState.errors.companyAlias.message}</p>
                   )}
@@ -880,7 +884,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="sameAsAdmin"
-                    checked={step3Form.watch('sameAsAdmin')}
+                    checked={step3Form.getValues('sameAsAdmin')}
                     onCheckedChange={(checked) => step3Form.setValue('sameAsAdmin', checked as boolean)}
                   />
                   <Label htmlFor="sameAsAdmin" className="text-sm">
@@ -888,7 +892,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   </Label>
                 </div>
 
-                {!step3Form.watch('sameAsAdmin') && (
+                {!step3Form.getValues('sameAsAdmin') && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-xl">
                     <div className="space-y-2">
                       <Label htmlFor="contactName">Nombre de contacto</Label>
@@ -968,7 +972,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                     <div
                       key={plan.id}
                       className={`relative border rounded-xl p-4 cursor-pointer transition-all ${
-                        step4Form.watch('selectedPlan') === plan.name
+                        step4Form.getValues('selectedPlan') === plan.name
                           ? 'border-green-500 bg-green-50 shadow-md'
                           : isRecommended 
                             ? 'border-orange-300 bg-orange-50'
@@ -997,7 +1001,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                       <div className="text-center">
                         <h4 className="font-semibold text-lg capitalize">{plan.displayName}</h4>
                         <div className={`text-2xl font-bold mt-2 ${
-                          step4Form.watch('selectedPlan') === plan.name 
+                          step4Form.getValues('selectedPlan') === plan.name 
                             ? 'text-green-600' 
                             : 'text-oficaz-primary'
                         }`}>
@@ -1075,7 +1079,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
                 <Checkbox
                   id="acceptTerms"
-                  checked={step4Form.watch('acceptTerms') || false}
+                  checked={step4Form.getValues('acceptTerms') || false}
                   onCheckedChange={(checked) => step4Form.setValue('acceptTerms', checked as boolean)}
                   className="mt-0.5"
                 />

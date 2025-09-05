@@ -35,7 +35,11 @@ export default function RequestCode() {
   // Redirect to home if registration is disabled
   useEffect(() => {
     if (!isLoadingSettings && registrationSettings && !registrationSettings.publicRegistrationEnabled) {
-      window.location.href = '/';
+      // Use setTimeout to avoid immediate redirect during render
+      const timer = setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [registrationSettings, isLoadingSettings]);
 
@@ -97,13 +101,15 @@ export default function RequestCode() {
 
   // Debounce para la verificación del email
   useEffect(() => {
-    const email = form.watch('email');
+    const email = form.getValues('email');
     const timeoutId = setTimeout(() => {
-      checkEmailAvailability(email);
-    }, 500); // Esperar 500ms después de que el usuario deje de escribir
+      if (email) {
+        checkEmailAvailability(email);
+      }
+    }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [form.watch('email'), checkEmailAvailability]);
+  }, [checkEmailAvailability, form]);
 
   const handleSubmit = async (data: EmailData) => {
     setIsLoading(true);
@@ -133,7 +139,10 @@ export default function RequestCode() {
         
         // Redirect to verification page with secure session ID
         const sessionId = result.sessionId;
-        window.location.href = `/verify-code?session=${sessionId}`;
+        // Use setTimeout to ensure proper navigation
+        setTimeout(() => {
+          window.location.href = `/verify-code?session=${sessionId}`;
+        }, 100);
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
       }
