@@ -717,19 +717,14 @@ export default function AdminDocuments() {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       
-      // Open in new tab
-      const newWindow = window.open(blobUrl, '_blank');
-      
-      if (!newWindow) {
-        // Fallback: create download link if popup was blocked
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      // Crear enlace de visualización sin salir del modo standalone
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.target = '_self'; // Abrir en la misma ventana para mantener standalone
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       // Clean up blob URL after opening
       setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);

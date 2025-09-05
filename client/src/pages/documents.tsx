@@ -375,7 +375,15 @@ export default function Documents() {
     
     const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}&view=true`;
     console.log('View URL:', url.replace(token, '[TOKEN_HIDDEN]'));
-    window.open(url, '_blank');
+    
+    // Crear enlace temporal para visualizar sin salir del modo standalone
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_self'; // Mantener en la misma ventana
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getFileIcon = (filename: string) => {

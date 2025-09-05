@@ -710,7 +710,16 @@ const AccountManagement = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(invoice.download_url, '_blank')}
+                          onClick={() => {
+                            // Descargar factura sin salir del modo standalone
+                            const link = document.createElement('a');
+                            link.href = invoice.download_url;
+                            link.download = `factura-${invoice.invoice_number}.pdf`;
+                            link.target = '_self';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                          }}
                           className="ml-2"
                         >
                           <FileText className="h-4 w-4 mr-1" />
