@@ -614,6 +614,15 @@ html.dark:not(.employee-mode) body {
   background: hsl(222.2 84% 4.9%) !important;
 }
 
+/* PÁGINAS PÚBLICAS - NOTCH BLANCO POR DEFECTO */
+html:not(.employee-mode):not(.light):not(.dark) {
+  background: hsl(0 0% 100%) !important; /* Blanco para páginas públicas */
+}
+
+html:not(.employee-mode):not(.light):not(.dark) body {
+  background: hsl(0 0% 100%) !important;
+}
+
 /* Propiedades adicionales del body */
 body {
   /* Prevent bounce effect that shows white area */
