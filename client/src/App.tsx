@@ -123,9 +123,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // Enable reminder notifications for all authenticated users
   useReminderNotifications();
 
-  // Calculate padding-top dynamically
+  // Calculate padding-top dynamically with safe area support for iOS PWA
   // Header is positioned at top-[60px] when banner is shown, plus header height (60px) = 120px total
-  const paddingTop = showBanner ? 'pt-[120px]' : 'pt-16'; // 60px banner + 60px header = 120px
+  const paddingTop = showBanner ? 'pt-header-banner-safe' : 'pt-header-safe';
 
   // Employee gets simplified view without sidebar - direct render
   if (user?.role === 'employee') {

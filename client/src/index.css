@@ -584,11 +584,21 @@ html, body {
 }
 
 body {
-  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area aware padding classes for iOS PWA */
+.pt-header-safe {
+  /* Header height (4rem/64px) + safe area for notch */
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
+.pt-header-banner-safe {
+  /* Banner (60px) + Header (60px) + safe area for notch */
+  padding-top: calc(120px + env(safe-area-inset-top, 0px));
 }
 
 #root {

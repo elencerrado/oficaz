@@ -62,7 +62,14 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <header className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}>
+    <header 
+      className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
+      style={{
+        // Añadir padding superior para el notch del iPhone en modo PWA
+        paddingTop: `calc(${showBanner ? '0px' : 'env(safe-area-inset-top, 0px)'} + 0.75rem)`,
+        top: showBanner ? '60px' : 'env(safe-area-inset-top, 0px)'
+      }}
+    >
       {/* Left Section */}
       <div className="flex items-center justify-start">
         <Button variant="ghost" size="sm" onClick={onMenuClick} className="lg:hidden">
