@@ -1011,20 +1011,14 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       
       if (editingAlarm) {
         // Update existing alarm
-        await apiRequest(`/api/work-alarms/${editingAlarm.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(formData)
-        });
+        await apiRequest('PUT', `/api/work-alarms/${editingAlarm.id}`, formData);
         toast({
           title: 'Éxito',
           description: 'Alarma actualizada correctamente'
         });
       } else {
         // Create new alarm
-        await apiRequest('/api/work-alarms', {
-          method: 'POST',
-          body: JSON.stringify(formData)
-        });
+        await apiRequest('POST', '/api/work-alarms', formData);
         toast({
           title: 'Éxito',
           description: 'Alarma creada correctamente'
@@ -1062,9 +1056,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
     try {
       setIsLoading(true);
-      await apiRequest(`/api/work-alarms/${alarmId}`, {
-        method: 'DELETE'
-      });
+      await apiRequest('DELETE', `/api/work-alarms/${alarmId}`);
       toast({
         title: 'Éxito',
         description: 'Alarma eliminada correctamente'

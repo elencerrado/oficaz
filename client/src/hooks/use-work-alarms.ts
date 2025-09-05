@@ -166,9 +166,7 @@ export function useWorkAlarms() {
   // Get active alarms and check them
   const checkActiveAlarms = useCallback(async () => {
     try {
-      const activeAlarms: WorkAlarm[] = await apiRequest('/api/work-alarms/active', {
-        method: 'GET'
-      });
+      const activeAlarms: WorkAlarm[] = await apiRequest('GET', '/api/work-alarms/active');
       
       for (const alarm of activeAlarms) {
         if (checkAlarmTime(alarm)) {
