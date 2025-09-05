@@ -614,12 +614,12 @@ html.dark:not(.employee-mode) body {
   background: hsl(222.2 84% 4.9%) !important;
 }
 
-/* PÁGINAS PÚBLICAS OSCURAS - Login/Registro/Código */
-html.dark-notch {
+/* PÁGINAS PÚBLICAS OSCURAS - Login/Registro/Código - MAYOR ESPECIFICIDAD */
+html.light.dark-notch:not(.employee-mode) {
   background: hsl(222.2 84% 4.9%) !important; /* Oscuro para páginas con fondo oscuro */
 }
 
-html.dark-notch body {
+html.light.dark-notch:not(.employee-mode) body {
   background: hsl(222.2 84% 4.9%) !important;
 }
 
