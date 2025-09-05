@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Fondo blanco con esquinas redondeadas para mejor aspecto en dispositivos -->
+  <rect width="180" height="180" rx="32" ry="32" fill="white"/>
+  
+  <!-- Logo Oficaz con padding generoso (30px de margen por cada lado) -->
+  <g transform="translate(30, 30)">
+    <!-- Círculo exterior azul -->
+    <circle cx="60" cy="60" r="60" fill="#007AFF"/>
+    
+    <!-- Círculo interior (hueco) -->
+    <circle cx="60" cy="60" r="20" fill="white"/>
+  </g>
+</svg>
