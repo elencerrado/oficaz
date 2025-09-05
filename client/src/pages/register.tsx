@@ -405,7 +405,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       style={{
         background: `radial-gradient(circle at center, #323A46, #232B36)`,
         height: '100dvh',
-        transform: 'translateY(-8px)'
+        marginTop: 'calc(-1 * env(safe-area-inset-top, 0px) / 2)'
       }}
     >
       <Card className="w-full max-w-3xl shadow-2xl rounded-xl md:rounded-2xl">
