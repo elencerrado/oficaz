@@ -666,3 +666,27 @@ export const insertCustomHolidaySchema = createInsertSchema(customHolidays).omit
 
 export type CustomHoliday = typeof customHolidays.$inferSelect;
 export type InsertCustomHoliday = z.infer<typeof insertCustomHolidaySchema>;
+
+// Work alarms table - alarmas personales para fichaje de empleados
+export const workAlarms = pgTable("work_alarms", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(), // "Entrada oficina", "Salida viernes"
+  type: varchar("type", { length: 20 }).notNull(), // "clock_in", "clock_out"
+  time: varchar("time", { length: 5 }).notNull(), // "08:30", "17:00" formato HH:MM
+  weekdays: integer("weekdays").array().notNull(), // [1,2,3,4,5] (1=lunes, 7=domingo)
+  isActive: boolean("is_active").notNull().default(true),
+  soundEnabled: boolean("sound_enabled").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Schema for work alarms
+export const insertWorkAlarmSchema = createInsertSchema(workAlarms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type WorkAlarm = typeof workAlarms.$inferSelect;
+export type InsertWorkAlarm = z.infer<typeof insertWorkAlarmSchema>;

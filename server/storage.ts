@@ -8,7 +8,8 @@ import type {
   Reminder, InsertReminder, SuperAdmin, InsertSuperAdmin, 
   Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan,
   EmployeeActivationToken, InsertEmployeeActivationToken,
-  CustomHoliday, InsertCustomHoliday
+  CustomHoliday, InsertCustomHoliday,
+  WorkAlarm, InsertWorkAlarm
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -169,6 +170,14 @@ export interface IStorage {
   // Account deletion operations
   scheduleCompanyDeletion(companyId: number): Promise<boolean>;
   cancelAccountDeletion(companyId: number): Promise<boolean>;
+  
+  // Work Alarms operations
+  createWorkAlarm(alarm: InsertWorkAlarm): Promise<WorkAlarm>;
+  getWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]>;
+  getWorkAlarm(id: number): Promise<WorkAlarm | undefined>;
+  updateWorkAlarm(id: number, updates: Partial<InsertWorkAlarm>): Promise<WorkAlarm | undefined>;
+  deleteWorkAlarm(id: number): Promise<boolean>;
+  getActiveWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -2064,6 +2073,89 @@ export class DrizzleStorage implements IStorage {
     } catch (error) {
       console.error('Error deleting custom holiday:', error);
       return false;
+    }
+  }
+
+  // Work Alarms methods
+  async createWorkAlarm(alarm: InsertWorkAlarm): Promise<WorkAlarm> {
+    const [newAlarm] = await db.insert(schema.workAlarms)
+      .values({
+        ...alarm,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return newAlarm;
+  }
+
+  async getWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]> {
+    try {
+      return await db.select()
+        .from(schema.workAlarms)
+        .where(eq(schema.workAlarms.userId, userId))
+        .orderBy(asc(schema.workAlarms.time));
+    } catch (error) {
+      console.error('Error fetching work alarms:', error);
+      return [];
+    }
+  }
+
+  async getWorkAlarm(id: number): Promise<WorkAlarm | undefined> {
+    try {
+      const [alarm] = await db.select()
+        .from(schema.workAlarms)
+        .where(eq(schema.workAlarms.id, id));
+      
+      return alarm;
+    } catch (error) {
+      console.error('Error fetching work alarm:', error);
+      return undefined;
+    }
+  }
+
+  async updateWorkAlarm(id: number, updates: Partial<InsertWorkAlarm>): Promise<WorkAlarm | undefined> {
+    try {
+      const [updatedAlarm] = await db.update(schema.workAlarms)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(schema.workAlarms.id, id))
+        .returning();
+      
+      return updatedAlarm;
+    } catch (error) {
+      console.error('Error updating work alarm:', error);
+      return undefined;
+    }
+  }
+
+  async deleteWorkAlarm(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(schema.workAlarms)
+        .where(eq(schema.workAlarms.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting work alarm:', error);
+      return false;
+    }
+  }
+
+  async getActiveWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]> {
+    try {
+      return await db.select()
+        .from(schema.workAlarms)
+        .where(and(
+          eq(schema.workAlarms.userId, userId),
+          eq(schema.workAlarms.isActive, true)
+        ))
+        .orderBy(asc(schema.workAlarms.time));
+    } catch (error) {
+      console.error('Error fetching active work alarms:', error);
+      return [];
     }
   }
 }

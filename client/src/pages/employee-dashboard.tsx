@@ -1,10 +1,11 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useWorkAlarms } from '@/hooks/use-work-alarms';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard } from 'lucide-react';
+import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +25,7 @@ export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { toast } = useToast();
+  const { startAlarmService, notificationPermission } = useWorkAlarms();
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
@@ -32,6 +34,9 @@ export default function EmployeeDashboard() {
   
   // Estado para mensajes temporales en el cajón de fichaje
   const [temporaryMessage, setTemporaryMessage] = useState<string | null>(null);
+  
+  // Estado para el modal de alarmas
+  const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
 
   // Función para generar mensajes dinámicos según la hora
   const generateDynamicMessage = (actionType: 'entrada' | 'salida') => {
@@ -602,6 +607,14 @@ export default function EmployeeDashboard() {
     });
   }, [hasAccess]);
 
+  // Initialize work alarms service
+  useEffect(() => {
+    if (user) {
+      const cleanup = startAlarmService();
+      return cleanup;
+    }
+  }, [user, startAlarmService]);
+
   return (
     <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
       {/* Fixed Content Container - Sin scroll */}
@@ -619,15 +632,26 @@ export default function EmployeeDashboard() {
               <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logout}
-            className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-2 py-1 text-xs"
-          >
-            <LogOut className="h-3 w-3 mr-1" />
-            <span className="font-medium">Salir</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAlarmModalOpen(true)}
+              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-2"
+              title="Configurar alarmas de trabajo"
+            >
+              <AlarmClock className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-2 py-1 text-xs"
+            >
+              <LogOut className="h-3 w-3 mr-1" />
+              <span className="font-medium">Salir</span>
+            </Button>
+          </div>
         </div>
 
         {/* Company Logo and Name - Más grande sin cajón */}
@@ -911,6 +935,371 @@ export default function EmployeeDashboard() {
         <div className="flex items-center justify-center space-x-1 text-gray-400 text-xs">
           <span className="font-semibold text-blue-400">Oficaz</span>
           <span>© {currentYear}</span>
+        </div>
+      </div>
+
+      {/* Work Alarms Modal */}
+      {isAlarmModalOpen && (
+        <WorkAlarmsModal 
+          isOpen={isAlarmModalOpen}
+          onClose={() => setIsAlarmModalOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Work Alarms Modal Component
+function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { toast } = useToast();
+  const [alarms, setAlarms] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingAlarm, setEditingAlarm] = useState<any>(null);
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'clock_in' as 'clock_in' | 'clock_out',
+    time: '',
+    weekdays: [] as number[],
+    soundEnabled: true
+  });
+
+  // Load alarms
+  const loadAlarms = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiRequest('/api/work-alarms', {
+        method: 'GET'
+      });
+      setAlarms(response || []);
+    } catch (error) {
+      console.error('Error loading alarms:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las alarmas',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load alarms when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      loadAlarms();
+    }
+  }, [isOpen]);
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim() || !formData.time || formData.weekdays.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'Por favor completa todos los campos',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      if (editingAlarm) {
+        // Update existing alarm
+        await apiRequest(`/api/work-alarms/${editingAlarm.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(formData)
+        });
+        toast({
+          title: 'Éxito',
+          description: 'Alarma actualizada correctamente'
+        });
+      } else {
+        // Create new alarm
+        await apiRequest('/api/work-alarms', {
+          method: 'POST',
+          body: JSON.stringify(formData)
+        });
+        toast({
+          title: 'Éxito',
+          description: 'Alarma creada correctamente'
+        });
+      }
+      
+      // Reset form
+      setFormData({
+        title: '',
+        type: 'clock_in',
+        time: '',
+        weekdays: [],
+        soundEnabled: true
+      });
+      setShowForm(false);
+      setEditingAlarm(null);
+      loadAlarms();
+    } catch (error) {
+      console.error('Error saving alarm:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo guardar la alarma',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle delete alarm
+  const handleDelete = async (alarmId: number) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta alarma?')) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await apiRequest(`/api/work-alarms/${alarmId}`, {
+        method: 'DELETE'
+      });
+      toast({
+        title: 'Éxito',
+        description: 'Alarma eliminada correctamente'
+      });
+      loadAlarms();
+    } catch (error) {
+      console.error('Error deleting alarm:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar la alarma',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle edit alarm
+  const handleEdit = (alarm: any) => {
+    setEditingAlarm(alarm);
+    setFormData({
+      title: alarm.title,
+      type: alarm.type,
+      time: alarm.time,
+      weekdays: alarm.weekdays,
+      soundEnabled: alarm.soundEnabled
+    });
+    setShowForm(true);
+  };
+
+  // Toggle weekday
+  const toggleWeekday = (day: number) => {
+    setFormData(prev => ({
+      ...prev,
+      weekdays: prev.weekdays.includes(day)
+        ? prev.weekdays.filter(d => d !== day)
+        : [...prev.weekdays, day].sort()
+    }));
+  };
+
+  // Weekday names
+  const weekdayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  const weekdayFullNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Alarmas de Trabajo</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Add alarm button */}
+          {!showForm && (
+            <Button
+              onClick={() => setShowForm(true)}
+              className="w-full mb-4 bg-[#007AFF] hover:bg-[#0056CC]"
+            >
+              + Nueva Alarma
+            </Button>
+          )}
+
+          {/* Alarm form */}
+          {showForm && (
+            <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h3 className="font-medium mb-4 text-gray-900">
+                {editingAlarm ? 'Editar Alarma' : 'Nueva Alarma'}
+              </h3>
+              
+              {/* Title */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Ej: Entrada oficina"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  required
+                />
+              </div>
+
+              {/* Type */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo
+                </label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clock_in' | 'clock_out' }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                >
+                  <option value="clock_in">Entrada (Fichar)</option>
+                  <option value="clock_out">Salida (Salir)</option>
+                </select>
+              </div>
+
+              {/* Time */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hora
+                </label>
+                <input
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  required
+                />
+              </div>
+
+              {/* Weekdays */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Días de la semana
+                </label>
+                <div className="flex gap-1">
+                  {weekdayNames.map((day, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => toggleWeekday(index + 1)}
+                      className={`w-8 h-8 text-xs font-medium rounded ${
+                        formData.weekdays.includes(index + 1)
+                          ? 'bg-[#007AFF] text-white'
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                      title={weekdayFullNames[index]}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sound */}
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.soundEnabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, soundEnabled: e.target.checked }))}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Activar sonido</span>
+                </label>
+              </div>
+
+              {/* Form buttons */}
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 bg-[#007AFF] hover:bg-[#0056CC]"
+                >
+                  {isLoading ? 'Guardando...' : editingAlarm ? 'Actualizar' : 'Crear'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingAlarm(null);
+                    setFormData({
+                      title: '',
+                      type: 'clock_in',
+                      time: '',
+                      weekdays: [],
+                      soundEnabled: true
+                    });
+                  }}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Alarms list */}
+          <div className="space-y-3">
+            {isLoading && !showForm ? (
+              <div className="text-center py-4">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : alarms.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No tienes alarmas configuradas
+              </div>
+            ) : (
+              alarms.map((alarm) => (
+                <div
+                  key={alarm.id}
+                  className="p-3 border rounded-lg bg-white shadow-sm"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900">{alarm.title}</h4>
+                      <p className="text-sm text-gray-600">
+                        {alarm.type === 'clock_in' ? 'Entrada' : 'Salida'} a las {alarm.time}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {alarm.weekdays.map((day: number) => weekdayNames[day - 1]).join(', ')}
+                        {alarm.soundEnabled && ' • Con sonido'}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(alarm)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(alarm.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

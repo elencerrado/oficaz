@@ -7845,6 +7845,144 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Work Alarms API Routes
+  app.get('/api/work-alarms', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const alarms = await storage.getWorkAlarmsByUser(userId);
+      res.json(alarms);
+    } catch (error) {
+      console.error('Error fetching work alarms:', error);
+      res.status(500).json({ message: 'Failed to fetch work alarms' });
+    }
+  });
+
+  app.get('/api/work-alarms/active', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const activeAlarms = await storage.getActiveWorkAlarmsByUser(userId);
+      res.json(activeAlarms);
+    } catch (error) {
+      console.error('Error fetching active work alarms:', error);
+      res.status(500).json({ message: 'Failed to fetch active work alarms' });
+    }
+  });
+
+  app.post('/api/work-alarms', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const { title, type, time, weekdays, soundEnabled } = req.body;
+      
+      if (!title || !type || !time || !weekdays || !Array.isArray(weekdays)) {
+        return res.status(400).json({ message: 'Title, type, time, and weekdays are required' });
+      }
+
+      // Validate time format (HH:MM)
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        return res.status(400).json({ message: 'Invalid time format. Use HH:MM format' });
+      }
+
+      // Validate weekdays (1-7)
+      if (!weekdays.every((day: number) => day >= 1 && day <= 7)) {
+        return res.status(400).json({ message: 'Weekdays must be between 1 (Monday) and 7 (Sunday)' });
+      }
+
+      // Validate type
+      if (!['clock_in', 'clock_out'].includes(type)) {
+        return res.status(400).json({ message: 'Type must be either clock_in or clock_out' });
+      }
+
+      const alarmData = {
+        userId,
+        title: title.trim(),
+        type,
+        time,
+        weekdays,
+        soundEnabled: soundEnabled !== undefined ? soundEnabled : true,
+        isActive: true
+      };
+
+      const newAlarm = await storage.createWorkAlarm(alarmData);
+      res.status(201).json(newAlarm);
+    } catch (error) {
+      console.error('Error creating work alarm:', error);
+      res.status(500).json({ message: 'Failed to create work alarm' });
+    }
+  });
+
+  app.put('/api/work-alarms/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const alarmId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if alarm belongs to user
+      const existingAlarm = await storage.getWorkAlarm(alarmId);
+      if (!existingAlarm || existingAlarm.userId !== userId) {
+        return res.status(404).json({ message: 'Alarm not found or not authorized' });
+      }
+
+      const { title, type, time, weekdays, soundEnabled, isActive } = req.body;
+      const updates: any = {};
+
+      if (title !== undefined) updates.title = title.trim();
+      if (type !== undefined) {
+        if (!['clock_in', 'clock_out'].includes(type)) {
+          return res.status(400).json({ message: 'Type must be either clock_in or clock_out' });
+        }
+        updates.type = type;
+      }
+      if (time !== undefined) {
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!timeRegex.test(time)) {
+          return res.status(400).json({ message: 'Invalid time format. Use HH:MM format' });
+        }
+        updates.time = time;
+      }
+      if (weekdays !== undefined) {
+        if (!Array.isArray(weekdays) || !weekdays.every((day: number) => day >= 1 && day <= 7)) {
+          return res.status(400).json({ message: 'Weekdays must be an array with values between 1 and 7' });
+        }
+        updates.weekdays = weekdays;
+      }
+      if (soundEnabled !== undefined) updates.soundEnabled = soundEnabled;
+      if (isActive !== undefined) updates.isActive = isActive;
+
+      const updatedAlarm = await storage.updateWorkAlarm(alarmId, updates);
+      if (updatedAlarm) {
+        res.json(updatedAlarm);
+      } else {
+        res.status(404).json({ message: 'Alarm not found' });
+      }
+    } catch (error) {
+      console.error('Error updating work alarm:', error);
+      res.status(500).json({ message: 'Failed to update work alarm' });
+    }
+  });
+
+  app.delete('/api/work-alarms/:id', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const alarmId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      
+      // Check if alarm belongs to user
+      const existingAlarm = await storage.getWorkAlarm(alarmId);
+      if (!existingAlarm || existingAlarm.userId !== userId) {
+        return res.status(404).json({ message: 'Alarm not found or not authorized' });
+      }
+
+      const deleted = await storage.deleteWorkAlarm(alarmId);
+      if (deleted) {
+        res.json({ message: 'Alarm deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Alarm not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting work alarm:', error);
+      res.status(500).json({ message: 'Failed to delete work alarm' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
