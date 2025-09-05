@@ -1238,7 +1238,8 @@ export default function Messages() {
               <div 
                 className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Safe area para notch iOS
                 }}
               >
                 <Button
