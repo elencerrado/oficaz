@@ -588,13 +588,30 @@ body {
   position: relative;
 }
 
-/* EMPLOYEE MODE - NOTCH COLOR PARA TODAS LAS PÁGINAS */
+/* EMPLOYEE MODE - NOTCH COLOR FIJO */
 html.employee-mode {
   background: #232B36 !important;
 }
 
 html.employee-mode body {
   background: #232B36 !important;
+}
+
+/* ADMIN MODE - NOTCH RESPONSIVE A DARK/LIGHT */
+html.light:not(.employee-mode) {
+  background: hsl(0 0% 100%) !important; /* Blanco para admin claro */
+}
+
+html.light:not(.employee-mode) body {
+  background: hsl(0 0% 100%) !important;
+}
+
+html.dark:not(.employee-mode) {
+  background: hsl(222.2 84% 4.9%) !important; /* Gris oscuro para admin oscuro */
+}
+
+html.dark:not(.employee-mode) body {
+  background: hsl(222.2 84% 4.9%) !important;
 }
 
 /* Propiedades adicionales del body */
