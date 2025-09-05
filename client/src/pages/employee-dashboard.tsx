@@ -1102,15 +1102,15 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Alarmas de Trabajo</h2>
+            <h2 className="text-xl font-semibold text-white">Alarmas de Trabajo</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-white transition-colors"
             >
               ✕
             </button>
@@ -1128,14 +1128,14 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
           {/* Alarm form */}
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-6 p-4 border rounded-lg bg-gray-50">
-              <h3 className="font-medium mb-4 text-gray-900">
+            <form onSubmit={handleSubmit} className="mb-6 p-4 border border-gray-600 rounded-lg bg-gray-800">
+              <h3 className="font-medium mb-4 text-white">
                 {editingAlarm ? 'Editar Alarma' : 'Nueva Alarma'}
               </h3>
               
               {/* Title */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Título
                 </label>
                 <input
@@ -1143,20 +1143,20 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Ej: Entrada oficina"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
                   required
                 />
               </div>
 
               {/* Type */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Tipo
                 </label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clock_in' | 'clock_out' }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
                 >
                   <option value="clock_in">Entrada (Fichar)</option>
                   <option value="clock_out">Salida (Salir)</option>
@@ -1165,21 +1165,21 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
               {/* Time */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Hora
                 </label>
                 <input
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
                   required
                 />
               </div>
 
               {/* Weekdays */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Días de la semana
                 </label>
                 <div className="flex gap-1">
@@ -1188,10 +1188,10 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                       key={index}
                       type="button"
                       onClick={() => toggleWeekday(index + 1)}
-                      className={`w-8 h-8 text-xs font-medium rounded ${
+                      className={`w-8 h-8 text-xs font-medium rounded transition-colors ${
                         formData.weekdays.includes(index + 1)
                           ? 'bg-[#007AFF] text-white'
-                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600'
                       }`}
                       title={weekdayFullNames[index]}
                     >
@@ -1208,9 +1208,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     type="checkbox"
                     checked={formData.soundEnabled}
                     onChange={(e) => setFormData(prev => ({ ...prev, soundEnabled: e.target.checked }))}
-                    className="mr-2"
+                    className="mr-2 bg-gray-700 border-gray-600 text-[#007AFF] focus:ring-[#007AFF]"
                   />
-                  <span className="text-sm text-gray-700">Activar sonido</span>
+                  <span className="text-sm text-gray-300">Activar sonido</span>
                 </label>
               </div>
 
@@ -1251,22 +1251,22 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 <LoadingSpinner size="lg" />
               </div>
             ) : alarms.length === 0 ? (
-              <div className="text-center py-4 text-gray-500">
+              <div className="text-center py-4 text-gray-400">
                 No tienes alarmas configuradas
               </div>
             ) : (
               alarms.map((alarm) => (
                 <div
                   key={alarm.id}
-                  className="p-3 border rounded-lg bg-white shadow-sm"
+                  className="p-3 border border-gray-600 rounded-lg bg-gray-800 shadow-sm"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{alarm.title}</h4>
-                      <p className="text-sm text-gray-600">
+                      <h4 className="font-medium text-white">{alarm.title}</h4>
+                      <p className="text-sm text-gray-300">
                         {alarm.type === 'clock_in' ? 'Entrada' : 'Salida'} a las {alarm.time}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-400">
                         {alarm.weekdays.map((day: number) => weekdayNames[day - 1]).join(', ')}
                         {alarm.soundEnabled && ' • Con sonido'}
                       </p>
@@ -1274,13 +1274,13 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(alarm)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(alarm.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-red-400 hover:text-red-300 text-sm transition-colors"
                       >
                         Eliminar
                       </button>
