@@ -42,6 +42,14 @@ export default function VerifyCode() {
     },
   });
 
+  // Set dark notch for dark background
+  useEffect(() => {
+    document.documentElement.classList.add('dark-notch');
+    return () => {
+      document.documentElement.classList.remove('dark-notch');
+    };
+  }, []);
+
   // Redirect if no sessionId provided and start initial countdown
   useEffect(() => {
     if (!sessionId) {

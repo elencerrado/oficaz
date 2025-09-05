@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useRoute } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +30,14 @@ export default function ForgotPassword() {
       companyAlias: companyAlias || undefined 
     },
   });
+
+  // Set dark notch for dark background
+  useEffect(() => {
+    document.documentElement.classList.add('dark-notch');
+    return () => {
+      document.documentElement.classList.remove('dark-notch');
+    };
+  }, []);
 
   const handleSubmit = async (data: ForgotPasswordData) => {
     setSubmitting(true);
