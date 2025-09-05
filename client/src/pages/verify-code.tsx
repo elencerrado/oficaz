@@ -143,7 +143,10 @@ export default function VerifyCode() {
           setShowRecoverySuccessModal(true);
         } else {
           // Normal registration flow - redirect to registration with verification token
-          setLocation(`/register?token=${result.verificationToken}`);
+          console.log('Normal registration flow - redirecting to register with token:', result.verificationToken);
+          const redirectURL = `/register?token=${result.verificationToken}`;
+          console.log('Full redirect URL:', redirectURL);
+          setLocation(redirectURL);
         }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');
