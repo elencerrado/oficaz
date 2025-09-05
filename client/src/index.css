@@ -588,11 +588,12 @@ body {
   position: relative;
 }
 
-/* MODO EMPLEADO - MÁXIMA PRIORIDAD - SOBRESCRIBE TODO */
+/* MODO EMPLEADO - FUERZA ABSOLUTA - SOBRESCRIBE TODO */
 html.employee-mode,
 html.employee-mode.light,
 html.employee-mode.dark,
-html.employee-mode:not(.light):not(.dark) {
+html.employee-mode:not(.light):not(.dark),
+html.employee-mode * {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
   background: #232B36 !important; /* También con background */
 }
@@ -603,6 +604,21 @@ html.employee-mode.dark body,
 html.employee-mode:not(.light):not(.dark) body {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
   background: #232B36 !important; /* También con background */
+}
+
+/* FUERZA EXTRA PARA ROOT EN MODO EMPLEADO */
+html.employee-mode #root {
+  background-color: #232B36 !important;
+  background: #232B36 !important;
+}
+
+/* SOBRESCRIBIR CUALQUIER CONFLICTO POSIBLE */
+html.employee-mode::before,
+html.employee-mode::after,
+html.employee-mode body::before,
+html.employee-mode body::after {
+  background-color: #232B36 !important;
+  background: #232B36 !important;
 }
 
 /* MODO CLARO - solo si NO es employee-mode */
