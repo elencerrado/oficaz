@@ -3,7 +3,7 @@ import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useWorkAlarms } from '@/hooks/use-work-alarms';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -625,34 +625,31 @@ export default function EmployeeDashboard() {
         {/* Header - Compacto */}
         <div className="flex justify-between items-center py-2 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <UserAvatar
-              fullName={user?.fullName || ''}
-              size="sm"
-              userId={user?.id}
-              profilePicture={user?.profilePicture}
-            />
-            <div>
-              <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
-            </div>
+            <button 
+              onClick={() => setIsUserModalOpen(true)}
+              className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-1 transition-colors"
+            >
+              <UserAvatar
+                fullName={user?.fullName || ''}
+                size="sm"
+                userId={user?.id}
+                profilePicture={user?.profilePicture}
+              />
+              <div>
+                <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
+              </div>
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsAlarmModalOpen(true)}
-              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg p-2"
+              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-3 py-2"
               title="Configurar alarmas de trabajo"
             >
-              <AlarmClock className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsUserModalOpen(true)}
-              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-2 py-1 text-xs"
-            >
-              <LogOut className="h-3 w-3 mr-1" />
-              <span className="font-medium">Salir</span>
+              <AlarmClock className="h-4 w-4 mr-2" />
+              <span className="font-medium text-xs">Alarmas</span>
             </Button>
           </div>
         </div>
@@ -953,6 +950,8 @@ export default function EmployeeDashboard() {
       {isUserModalOpen && (
         <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
           <DialogContent className="max-w-sm mx-auto bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-3xl shadow-2xl">
+            <DialogTitle className="sr-only">Perfil de usuario</DialogTitle>
+            <DialogDescription className="sr-only">Información del usuario y opciones de cierre de sesión</DialogDescription>
             <div className="space-y-5 p-6">
               {/* Header con avatar y nombre */}
               <div className="text-center pb-5">
