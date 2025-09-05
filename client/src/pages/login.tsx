@@ -44,12 +44,14 @@ export default function Login() {
   useEffect(() => {
     // SECURITY FIX: Ensure clean login state - reset dark mode if coming from logout
     document.documentElement.classList.remove('dark');
-    // Add dark notch class for pages with dark background
+    // Add dark notch class for pages with dark background and prevent scroll
     document.documentElement.classList.add('dark-notch');
+    document.body.style.overflow = 'hidden';
     
     return () => {
       // Cleanup dark notch class when leaving the page
       document.documentElement.classList.remove('dark-notch');
+      document.body.style.overflow = '';
     };
     
     const cleanupCorruptedTokens = () => {
@@ -210,8 +212,8 @@ export default function Login() {
   return (
     <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden">
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-        <CardHeader className="text-center pt-8 pb-6">
-          <div className="flex justify-center mb-6">
+        <CardHeader className="text-center pt-6 pb-4">
+          <div className="flex justify-center mb-4">
             {companyInfo?.logoUrl ? (
               <img 
                 src={companyInfo.logoUrl} 
@@ -242,7 +244,7 @@ export default function Login() {
           </p>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8">
+        <CardContent className="px-6 pb-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             {/* Error Message */}
             {loginError && (

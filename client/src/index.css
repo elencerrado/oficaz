@@ -628,6 +628,7 @@ body {
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 
