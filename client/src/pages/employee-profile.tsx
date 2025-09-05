@@ -12,7 +12,7 @@ import { apiRequest } from '@/lib/queryClient';
 
 export default function EmployeeProfile() {
   const { user, company, companyAlias } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -145,29 +145,9 @@ export default function EmployeeProfile() {
     setEmergencyContactPhone(user?.emergencyContactPhone || '');
   };
 
-  // FORCE notch color specifically for this page
-  useEffect(() => {
-    const html = document.documentElement;
-    const originalBg = html.style.backgroundColor;
-    
-    // Force the background color for notch
-    html.style.backgroundColor = '#232B36';
-    html.style.background = '#232B36';
-    
-    return () => {
-      // Restore original when leaving the page
-      html.style.backgroundColor = originalBg;
-    };
-  }, []);
 
   return (
-    <div 
-      className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden"
-      style={{
-        // FORCE notch color on this specific page
-        '--notch-bg': '#232B36'
-      } as React.CSSProperties}
-    >
+    <div className="min-h-screen bg-employee-gradient text-white">
       {/* Header - Exactly like other employee pages but without user name */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${currentCompanyAlias}/inicio`}>
@@ -188,16 +168,14 @@ export default function EmployeeProfile() {
         </div>
       </div>
       
-      {/* Scrolleable Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Page Title */}
-        <div className="px-6 pb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
-          <p className="text-white/70 text-sm">
-            Gestiona tu información personal y de contacto
-          </p>
-        </div>
-        <div className="px-6 space-y-6 pb-6">
+      {/* Page Title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
+        <p className="text-white/70 text-sm">
+          Gestiona tu información personal y de contacto
+        </p>
+      </div>
+      <div className="px-6 space-y-6">
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="flex items-center space-x-6 mb-6">
@@ -375,7 +353,6 @@ export default function EmployeeProfile() {
               </div>
             )}
           </div>
-        </div>
         </div>
       </div>
     </div>
