@@ -588,78 +588,9 @@ body {
   position: relative;
 }
 
-/* MODO EMPLEADO - FUERZA ABSOLUTA PARA NOTCH */
-html.employee-mode,
-html.employee-mode.light,
-html.employee-mode.dark,
-html.dark.employee-mode,
-html.light.employee-mode,
-html.employee-mode:not(.light):not(.dark),
-html[class*="employee-mode"] {
-  background: radial-gradient(circle at center, #323A46 0%, #232B36 100%) !important; /* Mismo gradiente que bg-employee-gradient */
-}
-
-html.employee-mode body,
-html.employee-mode.light body,
-html.employee-mode.dark body,
-html.dark.employee-mode body,
-html.light.employee-mode body,
-html.employee-mode:not(.light):not(.dark) body,
-html[class*="employee-mode"] body {
-  background: radial-gradient(circle at center, #323A46 0%, #232B36 100%) !important; /* Mismo gradiente que bg-employee-gradient */
-}
-
-/* EMPLOYEE MODE TIENE MÁXIMA PRIORIDAD - SOBRESCRIBE LIGHT */
-html.light.employee-mode,
-html.employee-mode.light {
-  background-color: #232B36 !important; /* Sobrescribe light mode */
-  background: #232B36 !important;
-}
-
-html.light.employee-mode body,
-html.employee-mode.light body {
-  background-color: #232B36 !important; /* Sobrescribe light mode */
-  background: #232B36 !important;
-}
-
-/* MODO CLARO - solo si NO es employee-mode */
-html.light:not(.employee-mode) {
-  background-color: hsl(0 0% 100%) !important; /* Blanco puro */
-}
-
-html.light:not(.employee-mode) body {
-  background-color: hsl(0 0% 100%) !important;
-}
-
-/* EMPLOYEE MODE SOBRESCRIBE DARK MODE - MÁXIMA PRIORIDAD */
-html.dark.employee-mode,
-html.employee-mode.dark {
-  background-color: #232B36 !important; /* Empleado siempre gana sobre dark */
-  background: #232B36 !important;
-}
-
-html.dark.employee-mode body,
-html.employee-mode.dark body {
-  background-color: #232B36 !important; /* Empleado siempre gana sobre dark */
-  background: #232B36 !important;
-}
-
-/* MODO OSCURO - solo si NO es employee-mode */
-html.dark:not(.employee-mode) {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
-}
-
-html.dark:not(.employee-mode) body {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
-}
-
-/* FALLBACK - solo si NO es employee-mode */
-html:not(.employee-mode):not(.light):not(.dark) {
-  background-color: hsl(0 0% 100%) !important; /* Blanco por defecto */
-}
-
-html:not(.employee-mode):not(.light):not(.dark) body {
-  background-color: hsl(0 0% 100%) !important;
+/* EMPLOYEE MODE - SIMPLE */
+html.employee-mode {
+  background: #323A46 !important;
 }
 
 /* Propiedades adicionales del body */
