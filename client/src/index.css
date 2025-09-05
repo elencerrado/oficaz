@@ -596,7 +596,7 @@ html.light {
 
 /* Modo oscuro - cuando html tiene clase "dark" */
 html.dark {
-  background-color: #0a0a0a !important;
+  background-color: hsl(222.2 84% 4.9%) !important; /* Color exacto del fondo admin en modo oscuro */
 }
 
 /* También aplicamos al body para asegurar */
@@ -613,7 +613,7 @@ html.light body {
 
 /* Body para modo oscuro */
 html.dark body {
-  background-color: #0a0a0a !important;
+  background-color: hsl(222.2 84% 4.9%) !important; /* Color exacto del fondo admin en modo oscuro */
 }
 
 /* Safe area aware padding classes for iOS PWA */
