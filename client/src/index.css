@@ -592,6 +592,8 @@ body {
 html.employee-mode,
 html.employee-mode.light,
 html.employee-mode.dark,
+html.dark.employee-mode,
+html.light.employee-mode,
 html.employee-mode:not(.light):not(.dark),
 html[class*="employee-mode"] {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
@@ -601,6 +603,8 @@ html[class*="employee-mode"] {
 html.employee-mode body,
 html.employee-mode.light body,
 html.employee-mode.dark body,
+html.dark.employee-mode body,
+html.light.employee-mode body,
 html.employee-mode:not(.light):not(.dark) body,
 html[class*="employee-mode"] body {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
