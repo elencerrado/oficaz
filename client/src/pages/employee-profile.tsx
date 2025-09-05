@@ -146,12 +146,7 @@ export default function EmployeeProfile() {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-employee-gradient text-white"
-      style={{
-        overscrollBehavior: 'none'
-      }}
-    >
+    <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
       {/* Header - Exactly like other employee pages but without user name */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${currentCompanyAlias}/inicio`}>
@@ -171,14 +166,17 @@ export default function EmployeeProfile() {
           </div>
         </div>
       </div>
-      {/* Page Title */}
-      <div className="px-6 pb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
-        <p className="text-white/70 text-sm">
-          Gestiona tu información personal y de contacto
-        </p>
-      </div>
-      <div className="px-6 space-y-6">
+      
+      {/* Scrolleable Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Page Title */}
+        <div className="px-6 pb-6">
+          <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil</h1>
+          <p className="text-white/70 text-sm">
+            Gestiona tu información personal y de contacto
+          </p>
+        </div>
+        <div className="px-6 space-y-6 pb-6">
         {/* Ficha de Usuario - Avatar, Nombre, Cargo */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-6">
           <div className="flex items-center space-x-6 mb-6">
@@ -356,6 +354,7 @@ export default function EmployeeProfile() {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
