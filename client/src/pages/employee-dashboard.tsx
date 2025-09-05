@@ -37,6 +37,9 @@ export default function EmployeeDashboard() {
   
   // Estado para el modal de alarmas
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+  
+  // Estado para el modal del usuario
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   // Función para generar mensajes dinámicos según la hora
   const generateDynamicMessage = (actionType: 'entrada' | 'salida') => {
@@ -645,7 +648,7 @@ export default function EmployeeDashboard() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={logout}
+              onClick={() => setIsUserModalOpen(true)}
               className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-2 py-1 text-xs"
             >
               <LogOut className="h-3 w-3 mr-1" />
@@ -944,6 +947,49 @@ export default function EmployeeDashboard() {
           isOpen={isAlarmModalOpen}
           onClose={() => setIsAlarmModalOpen(false)}
         />
+      )}
+      
+      {/* User Profile Modal */}
+      {isUserModalOpen && (
+        <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
+          <DialogContent className="max-w-sm mx-auto bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-3xl shadow-2xl">
+            <div className="space-y-5 p-6">
+              {/* Header con avatar y nombre */}
+              <div className="text-center pb-5">
+                <UserAvatar
+                  fullName={user?.fullName || ''}
+                  size="lg"
+                  userId={user?.id}
+                  profilePicture={user?.profilePicture}
+                  className="mx-auto mb-4"
+                />
+                <h2 className="text-lg font-semibold text-white">
+                  {user?.fullName || 'Usuario'}
+                </h2>
+                <p className="text-sm text-white/70 mt-1">
+                  {user?.companyEmail || user?.personalEmail || 'Sin email'}
+                </p>
+                <p className="text-xs text-white/50 mt-1 capitalize">
+                  {user?.role || 'Empleado'}
+                </p>
+              </div>
+
+              {/* Botón de cerrar sesión */}
+              <div className="pt-4 border-t border-white/20">
+                <Button
+                  onClick={() => {
+                    setIsUserModalOpen(false);
+                    logout();
+                  }}
+                  className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-200 hover:text-white transition-all duration-200"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar sesión
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
