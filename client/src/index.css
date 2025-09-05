@@ -607,6 +607,19 @@ html[class*="employee-mode"] body {
   background: #232B36 !important; /* Color del bg-employee-gradient */
 }
 
+/* EMPLOYEE MODE TIENE MÁXIMA PRIORIDAD - SOBRESCRIBE LIGHT */
+html.light.employee-mode,
+html.employee-mode.light {
+  background-color: #232B36 !important; /* Sobrescribe light mode */
+  background: #232B36 !important;
+}
+
+html.light.employee-mode body,
+html.employee-mode.light body {
+  background-color: #232B36 !important; /* Sobrescribe light mode */
+  background: #232B36 !important;
+}
+
 /* MODO CLARO - solo si NO es employee-mode */
 html.light:not(.employee-mode) {
   background-color: hsl(0 0% 100%) !important; /* Blanco puro */
