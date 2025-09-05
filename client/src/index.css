@@ -588,9 +588,13 @@ body {
   position: relative;
 }
 
-/* EMPLOYEE MODE - SIMPLE */
+/* EMPLOYEE MODE - NOTCH COLOR PARA TODAS LAS PÁGINAS */
 html.employee-mode {
-  background: #323A46 !important;
+  background: #232B36 !important;
+}
+
+html.employee-mode body {
+  background: #232B36 !important;
 }
 
 /* Propiedades adicionales del body */
