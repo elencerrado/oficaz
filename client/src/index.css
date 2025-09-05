@@ -583,24 +583,16 @@ html, body {
   position: relative;
 }
 
+html {
+  /* SOLUCIÓN CORRECTA PARA NOTCH DEL IPHONE PWA */
+  min-height: calc(100% + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 body {
-  padding-bottom: env(safe-area-inset-bottom);
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-}
-
-/* ELEMENTO GLOBAL QUE TAPA EL NOTCH DEL IPHONE EN PWA */
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background-color: hsl(var(--background));
-  z-index: 10000;
-  pointer-events: none; /* No interfiere con interacciones */
 }
 
 /* Safe area aware padding classes for iOS PWA */
