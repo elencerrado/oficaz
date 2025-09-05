@@ -34,7 +34,7 @@ export default function RequestCode() {
 
   // Redirect to home if registration is disabled
   useEffect(() => {
-    if (!isLoadingSettings && registrationSettings && !registrationSettings.publicRegistrationEnabled) {
+    if (!isLoadingSettings && registrationSettings && !registrationSettings?.publicRegistrationEnabled) {
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
         window.location.href = '/';
@@ -182,7 +182,7 @@ export default function RequestCode() {
   }
 
   // Show error page if registration is disabled
-  if (registrationSettings && !registrationSettings.publicRegistrationEnabled) {
+  if (registrationSettings && !registrationSettings?.publicRegistrationEnabled) {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
         <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">

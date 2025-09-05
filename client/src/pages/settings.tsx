@@ -1223,7 +1223,8 @@ const ChangePasswordModalComponent = () => {
     return { label: 'Muy fuerte', color: 'bg-green-500', width: '100%' };
   };
 
-  const passwordStrength = getPasswordStrength(form.watch('newPassword') || '');
+  const [passwordValue, setPasswordValue] = useState('');
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
