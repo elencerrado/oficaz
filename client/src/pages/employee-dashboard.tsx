@@ -970,9 +970,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const loadAlarms = async () => {
     try {
       setIsLoading(true);
-      const response = await apiRequest('/api/work-alarms', {
-        method: 'GET'
-      });
+      const response = await apiRequest('GET', '/api/work-alarms');
       setAlarms(response || []);
     } catch (error) {
       console.error('Error loading alarms:', error);
