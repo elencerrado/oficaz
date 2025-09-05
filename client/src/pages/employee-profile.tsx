@@ -145,8 +145,29 @@ export default function EmployeeProfile() {
     setEmergencyContactPhone(user?.emergencyContactPhone || '');
   };
 
+  // FORCE notch color specifically for this page
+  useEffect(() => {
+    const html = document.documentElement;
+    const originalBg = html.style.backgroundColor;
+    
+    // Force the background color for notch
+    html.style.backgroundColor = '#232B36';
+    html.style.background = '#232B36';
+    
+    return () => {
+      // Restore original when leaving the page
+      html.style.backgroundColor = originalBg;
+    };
+  }, []);
+
   return (
-    <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
+    <div 
+      className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden"
+      style={{
+        // FORCE notch color on this specific page
+        '--notch-bg': '#232B36'
+      } as React.CSSProperties}
+    >
       {/* Header - Exactly like other employee pages but without user name */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${currentCompanyAlias}/inicio`}>
