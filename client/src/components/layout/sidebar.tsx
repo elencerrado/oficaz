@@ -114,13 +114,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
         style={{
-          top: showBanner ? `${bannerHeight}px` : '0',
-          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
+          top: showBanner ? `${bannerHeight}px` : 'env(safe-area-inset-top, 0px)',
+          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : 'calc(100vh - env(safe-area-inset-top, 0px))',
           backgroundColor: 'hsl(var(--sidebar-background))'
         }}
       >
         {/* Fixed Company header */}
-        <div className="p-4 border-b border-border bg-sidebar flex-shrink-0">
+        <div 
+          className="p-4 border-b border-border bg-sidebar flex-shrink-0"
+          style={{
+            backgroundColor: 'hsl(var(--sidebar-background))'
+          }}
+        >
           <div className="flex items-center space-x-3">
             {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
             {shouldShowLogo ? (
@@ -145,7 +150,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
         
         {/* Scrollable Navigation */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 flex flex-col bg-sidebar">
+        <div 
+          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 flex flex-col bg-sidebar"
+          style={{
+            backgroundColor: 'hsl(var(--sidebar-background))'
+          }}
+        >
           <div className="flex-1 p-4 bg-sidebar">
             <div className="h-full flex flex-col justify-start space-y-1"
                  style={{ 

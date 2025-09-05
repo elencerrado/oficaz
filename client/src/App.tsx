@@ -150,7 +150,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <MobileHeader onMenuClick={() => setIsSidebarOpen(true)} />
       
-      <main className={`lg:ml-64 min-h-screen ${paddingTop} bg-background`}>
+      <main 
+        className={`lg:ml-64 min-h-screen ${paddingTop}`}
+        style={{
+          backgroundColor: 'hsl(var(--background))'
+        }}
+      >
         {children}
       </main>
     </div>

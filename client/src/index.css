@@ -592,13 +592,13 @@ body {
 
 /* Safe area aware padding classes for iOS PWA */
 .pt-header-safe {
-  /* Header height (4rem/64px) + safe area for notch */
-  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+  /* Solo header height normal - el safe area ya lo maneja el header mismo */
+  padding-top: 4rem; /* 64px */
 }
 
 .pt-header-banner-safe {
-  /* Banner (60px) + Header (60px) + safe area for notch */
-  padding-top: calc(120px + env(safe-area-inset-top, 0px));
+  /* Solo banner + header normal - el safe area ya lo maneja el header mismo */
+  padding-top: 120px; /* 60px banner + 60px header */
 }
 
 #root {
