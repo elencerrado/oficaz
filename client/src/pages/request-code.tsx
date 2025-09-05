@@ -35,9 +35,9 @@ export default function RequestCode() {
   // Redirect to home if registration is disabled
   useEffect(() => {
     if (!isLoadingSettings && registrationSettings && !registrationSettings.publicRegistrationEnabled) {
-      setLocation('/');
+      window.location.href = '/';
     }
-  }, [registrationSettings, isLoadingSettings, setLocation]);
+  }, [registrationSettings, isLoadingSettings]);
 
   // Set dark notch for dark background
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function RequestCode() {
         
         // Redirect to verification page with secure session ID
         const sessionId = result.sessionId;
-        setLocation(`/verify-code?session=${sessionId}`);
+        window.location.href = `/verify-code?session=${sessionId}`;
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
       }
