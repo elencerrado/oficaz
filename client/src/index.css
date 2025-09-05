@@ -596,8 +596,7 @@ html.dark.employee-mode,
 html.light.employee-mode,
 html.employee-mode:not(.light):not(.dark),
 html[class*="employee-mode"] {
-  background-color: #323A46 !important; /* Color claro del gradiente empleado */
-  background: #323A46 !important; /* Color claro del gradiente empleado */
+  background: radial-gradient(circle at center, #323A46 0%, #232B36 100%) !important; /* Mismo gradiente que bg-employee-gradient */
 }
 
 html.employee-mode body,
@@ -607,8 +606,7 @@ html.dark.employee-mode body,
 html.light.employee-mode body,
 html.employee-mode:not(.light):not(.dark) body,
 html[class*="employee-mode"] body {
-  background-color: #323A46 !important; /* Color claro del gradiente empleado */
-  background: #323A46 !important; /* Color claro del gradiente empleado */
+  background: radial-gradient(circle at center, #323A46 0%, #232B36 100%) !important; /* Mismo gradiente que bg-employee-gradient */
 }
 
 /* EMPLOYEE MODE TIENE MÁXIMA PRIORIDAD - SOBRESCRIBE LIGHT */
@@ -772,7 +770,7 @@ body::after {
 
   /* Employee dashboard solid background */
   .bg-employee-gradient {
-    background: #232B36;
+    background: radial-gradient(circle at center, #323A46 0%, #232B36 100%);
   }
 
   /* iOS Safe Area Support */
