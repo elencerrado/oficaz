@@ -132,6 +132,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     // Reset scroll for employees too
     useScrollReset();
     
+    // Apply employee-mode class to html for notch color
+    React.useEffect(() => {
+      document.documentElement.classList.add('employee-mode');
+      return () => {
+        document.documentElement.classList.remove('employee-mode');
+      };
+    }, []);
+    
     return (
       <>
         <ReminderBanner />
