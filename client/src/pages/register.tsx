@@ -658,7 +658,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                 <div className="md:col-span-2">
                   <Label htmlFor="province">Provincia *</Label>
-                  <Select value={step2Form.watch('province')} onValueChange={(value) => step2Form.setValue('province', value)}>
+                  <Select onValueChange={(value) => step2Form.setValue('province', value)}>
                     <SelectTrigger className="rounded-xl mt-2">
                       <SelectValue placeholder="Selecciona tu provincia" />
                     </SelectTrigger>
