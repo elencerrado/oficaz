@@ -596,8 +596,8 @@ html.dark.employee-mode,
 html.light.employee-mode,
 html.employee-mode:not(.light):not(.dark),
 html[class*="employee-mode"] {
-  background-color: #232B36 !important; /* Color del bg-employee-gradient */
-  background: #232B36 !important; /* Color del bg-employee-gradient */
+  background-color: #323A46 !important; /* Color claro del gradiente empleado */
+  background: #323A46 !important; /* Color claro del gradiente empleado */
 }
 
 html.employee-mode body,
@@ -607,8 +607,8 @@ html.dark.employee-mode body,
 html.light.employee-mode body,
 html.employee-mode:not(.light):not(.dark) body,
 html[class*="employee-mode"] body {
-  background-color: #232B36 !important; /* Color del bg-employee-gradient */
-  background: #232B36 !important; /* Color del bg-employee-gradient */
+  background-color: #323A46 !important; /* Color claro del gradiente empleado */
+  background: #323A46 !important; /* Color claro del gradiente empleado */
 }
 
 /* EMPLOYEE MODE TIENE MÁXIMA PRIORIDAD - SOBRESCRIBE LIGHT */
