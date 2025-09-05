@@ -959,8 +959,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   
   // Form states
   const [formData, setFormData] = useState({
-    title: '',
-    type: 'clock_in' as 'clock_in' | 'clock_out',
+    type: 'clock_in' as 'clock_in' | 'clock_out' | 'break_start' | 'break_end',
     time: '',
     weekdays: [] as number[],
     soundEnabled: true
@@ -995,7 +994,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title.trim() || !formData.time || formData.weekdays.length === 0) {
+    if (!formData.time || formData.weekdays.length === 0) {
       toast({
         title: 'Error',
         description: 'Por favor completa todos los campos',
@@ -1007,16 +1006,22 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     try {
       setIsLoading(true);
       
+      // Generate title based on type
+      const alarmData = {
+        ...formData,
+        title: getAlarmTitle(formData.type)
+      };
+      
       if (editingAlarm) {
         // Update existing alarm
-        await apiRequest('PUT', `/api/work-alarms/${editingAlarm.id}`, formData);
+        await apiRequest('PUT', `/api/work-alarms/${editingAlarm.id}`, alarmData);
         toast({
           title: 'Éxito',
           description: 'Alarma actualizada correctamente'
         });
       } else {
         // Create new alarm
-        await apiRequest('POST', '/api/work-alarms', formData);
+        await apiRequest('POST', '/api/work-alarms', alarmData);
         toast({
           title: 'Éxito',
           description: 'Alarma creada correctamente'
@@ -1025,7 +1030,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       
       // Reset form
       setFormData({
-        title: '',
         type: 'clock_in',
         time: '',
         weekdays: [],
@@ -1076,7 +1080,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const handleEdit = (alarm: any) => {
     setEditingAlarm(alarm);
     setFormData({
-      title: alarm.title,
       type: alarm.type,
       time: alarm.time,
       weekdays: alarm.weekdays,
@@ -1098,6 +1101,17 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   // Weekday names
   const weekdayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   const weekdayFullNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+  // Generate title based on alarm type
+  const getAlarmTitle = (type: string) => {
+    switch (type) {
+      case 'clock_in': return 'Entrada (Fichar)';
+      case 'clock_out': return 'Salida (Salir)';
+      case 'break_start': return 'Descanso entrada';
+      case 'break_end': return 'Descanso salida';
+      default: return 'Alarma';
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -1133,21 +1147,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 {editingAlarm ? 'Editar Alarma' : 'Nueva Alarma'}
               </h3>
               
-              {/* Title */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Título
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Ej: Entrada oficina"
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
-                  required
-                />
-              </div>
-
               {/* Type */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -1155,11 +1154,13 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clock_in' | 'clock_out' }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'clock_in' | 'clock_out' | 'break_start' | 'break_end' }))}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
                 >
                   <option value="clock_in">Entrada (Fichar)</option>
                   <option value="clock_out">Salida (Salir)</option>
+                  <option value="break_start">Descanso entrada</option>
+                  <option value="break_end">Descanso salida</option>
                 </select>
               </div>
 
@@ -1172,7 +1173,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF]"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-[#007AFF] text-sm sm:text-base"
                   required
                 />
               </div>
@@ -1230,7 +1231,6 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                     setShowForm(false);
                     setEditingAlarm(null);
                     setFormData({
-                      title: '',
                       type: 'clock_in',
                       time: '',
                       weekdays: [],
@@ -1262,9 +1262,9 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-white">{alarm.title}</h4>
+                      <h4 className="font-medium text-white">{getAlarmTitle(alarm.type)}</h4>
                       <p className="text-sm text-gray-300">
-                        {alarm.type === 'clock_in' ? 'Entrada' : 'Salida'} a las {alarm.time}
+                        a las {alarm.time}
                       </p>
                       <p className="text-xs text-gray-400">
                         {alarm.weekdays.map((day: number) => weekdayNames[day - 1]).join(', ')}

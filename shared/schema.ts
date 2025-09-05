@@ -672,7 +672,7 @@ export const workAlarms = pgTable("work_alarms", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(), // "Entrada oficina", "Salida viernes"
-  type: varchar("type", { length: 20 }).notNull(), // "clock_in", "clock_out"
+  type: varchar("type", { length: 20 }).notNull(), // "clock_in", "clock_out", "break_start", "break_end"
   time: varchar("time", { length: 5 }).notNull(), // "08:30", "17:00" formato HH:MM
   weekdays: integer("weekdays").array().notNull(), // [1,2,3,4,5] (1=lunes, 7=domingo)
   isActive: boolean("is_active").notNull().default(true),

@@ -6,7 +6,7 @@ interface WorkAlarm {
   id: number;
   userId: number;
   title: string;
-  type: 'clock_in' | 'clock_out';
+  type: 'clock_in' | 'clock_out' | 'break_start' | 'break_end';
   time: string;
   weekdays: number[];
   soundEnabled: boolean;
@@ -102,7 +102,16 @@ export function useWorkAlarms() {
   // Show notification
   const showNotification = useCallback((alarm: WorkAlarm) => {
     const title = `🚨 ${alarm.title}`;
-    const body = `Es hora de ${alarm.type === 'clock_in' ? 'fichar entrada' : 'salir del trabajo'} - ${alarm.time}`;
+    const getNotificationText = (type: string) => {
+      switch (type) {
+        case 'clock_in': return 'fichar entrada';
+        case 'clock_out': return 'salir del trabajo';
+        case 'break_start': return 'iniciar descanso';
+        case 'break_end': return 'terminar descanso';
+        default: return 'fichar';
+      }
+    };
+    const body = `Es hora de ${getNotificationText(alarm.type)} - ${alarm.time}`;
     
     if (notificationPermission === 'granted') {
       const notification = new Notification(title, {
