@@ -4172,8 +4172,10 @@ Responde directamente a este email para contactar con la persona.
       const newPath = path.join(uploadDir, filename);
 
       // Process and compress image to 200x200 max using Sharp
+      // Solución robusta para orientación EXIF en fotos de móviles
       await sharp(req.file.path)
-        .rotate() // Auto-rotar basado en metadatos EXIF para corregir orientación de móviles
+        .rotate() // Auto-rotar basado en metadatos EXIF
+        .withMetadata(false) // Eliminar metadatos EXIF después de aplicar rotación
         .resize(200, 200, {
           fit: 'inside', // Mantiene aspect ratio, no distorsiona
           withoutEnlargement: true // No agranda imágenes pequeñas
