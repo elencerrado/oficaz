@@ -69,8 +69,9 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
-      <div className="h-screen flex justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden" style={{ height: '100dvh' }}>
-        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}>
+      <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden relative" style={{ height: '100dvh' }}>
+        <div className="absolute inset-0 flex items-center justify-center px-4" style={{ transform: 'translateY(-8px)' }}>
+          <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
           <CardHeader className="text-center pt-6 pb-4">
             <div className="flex justify-center mb-4">
               <Link href="/">
@@ -111,14 +112,16 @@ export default function ForgotPassword() {
               </Button>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden" style={{ height: '100dvh' }}>
-      <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
+    <div className="h-screen bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden relative" style={{ height: '100dvh' }}>
+      <div className="absolute inset-0 flex items-center justify-center px-4">
+        <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
         <CardHeader className="text-center pt-6 pb-4">
           <div className="flex justify-center mb-4">
             <Link href="/">
@@ -209,7 +212,8 @@ export default function ForgotPassword() {
             </div>
           </form>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
