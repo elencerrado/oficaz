@@ -99,6 +99,17 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
+      {/* Elemento que tapa el notch en móvil cuando sidebar está abierto */}
+      {isOpen && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-50 lg:hidden"
+          style={{
+            height: 'env(safe-area-inset-top, 0px)',
+            backgroundColor: 'hsl(var(--sidebar-background))'
+          }}
+        />
+      )}
+      
       {/* Mobile overlay */}
       {isOpen && (
         <div 
