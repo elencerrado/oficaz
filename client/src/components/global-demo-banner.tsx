@@ -34,7 +34,7 @@ export function GlobalDemoBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 border-b border-green-200 dark:border-green-700 px-4 h-[60px]">
+    <div className="fixed left-0 right-0 z-40 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 border-b border-green-200 dark:border-green-700 px-4 h-[60px]" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
       <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="w-8 h-8 bg-green-500 dark:bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">

@@ -20,8 +20,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
   
-  // Calcular posición del header dinámicamente
-  const headerTopClass = showBanner ? 'top-[60px]' : 'top-0'; // Exactamente debajo del banner de 60px
+  // Calcular posición del header dinámicamente con safe area
+  const headerTopClass = showBanner ? '' : 'top-0'; // Con banner usamos style inline para safe area
+  const headerStyle = showBanner ? { top: 'calc(env(safe-area-inset-top, 0px) + 60px)' } : undefined;
   
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -64,11 +65,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   return (
     <header 
       className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
-      style={{
-        top: showBanner ? '60px' : '0px',
-        // Sin paddingTop adicional porque el html padding ya maneja el safe-area
-        marginTop: showBanner ? '0px' : 'env(safe-area-inset-top, 0px)' // Margin para separar del notch
-      }}
+      style={headerStyle || { marginTop: 'env(safe-area-inset-top, 0px)' }}
       >
       {/* Left Section */}
       <div className="flex items-center justify-start">
