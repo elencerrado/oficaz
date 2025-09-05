@@ -65,8 +65,9 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
     <header 
       className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
       style={{
-        top: showBanner ? '60px' : '0px', // No necesitamos safe-area aquí porque html ya lo maneja
-        paddingTop: showBanner ? '0px' : 'env(safe-area-inset-top, 0px)' // Padding para el contenido del header
+        top: showBanner ? '60px' : '0px',
+        // Sin paddingTop adicional porque el html padding ya maneja el safe-area
+        marginTop: showBanner ? '0px' : 'env(safe-area-inset-top, 0px)' // Margin para separar del notch
       }}
       >
       {/* Left Section */}

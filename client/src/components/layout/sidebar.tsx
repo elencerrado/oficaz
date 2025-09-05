@@ -115,16 +115,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
         style={{
-          top: showBanner ? `${bannerHeight}px` : '0px', // Sin safe-area en top porque html ya lo maneja
+          top: showBanner ? `${bannerHeight}px` : '0px',
           height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
           backgroundColor: 'hsl(var(--sidebar-background))',
-          paddingTop: 'env(safe-area-inset-top, 0px)', // Padding para que el contenido no se oculte bajo el notch
+          marginTop: 'env(safe-area-inset-top, 0px)', // Margin para separar del notch, no padding
           paddingLeft: 'env(safe-area-inset-left, 0px)' // Para orientación horizontal
         }}
       >
         {/* Fixed Company header */}
         <div 
-          className="p-4 border-b border-border bg-sidebar flex-shrink-0"
+          className="p-4 bg-sidebar flex-shrink-0"
           style={{
             backgroundColor: 'hsl(var(--sidebar-background))'
           }}
