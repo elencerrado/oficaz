@@ -63,12 +63,13 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
 
   return (
     <>
-      {/* Elemento que tapa el notch completamente */}
+      {/* Elemento que tapa el notch completamente - MUY POR ENCIMA DE TODO */}
       <div 
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0"
         style={{
           height: 'env(safe-area-inset-top, 0px)',
-          backgroundColor: 'hsl(var(--background))'
+          backgroundColor: 'hsl(var(--background))',
+          zIndex: 9999 // Muy por encima de todo contenido
         }}
       />
       
