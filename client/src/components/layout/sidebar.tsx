@@ -125,8 +125,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
         style={{
-          top: showBanner ? `${bannerHeight}px` : 'env(safe-area-inset-top, 0px)',
-          height: showBanner ? `calc(100vh - ${bannerHeight}px)` : 'calc(100vh - env(safe-area-inset-top, 0px))',
+          top: showBanner ? `calc(${bannerHeight}px + env(safe-area-inset-top, 0px))` : 'env(safe-area-inset-top, 0px)',
+          height: showBanner ? `calc(100vh - ${bannerHeight}px - env(safe-area-inset-top, 0px))` : 'calc(100vh - env(safe-area-inset-top, 0px))',
           backgroundColor: 'hsl(var(--sidebar-background))'
         }}
       >
@@ -134,9 +134,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div 
           className="p-4 border-b border-border bg-sidebar flex-shrink-0"
           style={{
-            backgroundColor: 'hsl(var(--sidebar-background))',
-            // Añadir padding superior en móvil para el notch
-            paddingTop: showBanner ? '1rem' : 'calc(env(safe-area-inset-top, 0px) + 1rem)'
+            backgroundColor: 'hsl(var(--sidebar-background))'
           }}
         >
           <div className="flex items-center space-x-3">
