@@ -633,6 +633,19 @@ html.light:not(.employee-mode) body {
   background-color: hsl(0 0% 100%) !important;
 }
 
+/* EMPLOYEE MODE SOBRESCRIBE DARK MODE - MÁXIMA PRIORIDAD */
+html.dark.employee-mode,
+html.employee-mode.dark {
+  background-color: #232B36 !important; /* Empleado siempre gana sobre dark */
+  background: #232B36 !important;
+}
+
+html.dark.employee-mode body,
+html.employee-mode.dark body {
+  background-color: #232B36 !important; /* Empleado siempre gana sobre dark */
+  background: #232B36 !important;
+}
+
 /* MODO OSCURO - solo si NO es employee-mode */
 html.dark:not(.employee-mode) {
   background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
