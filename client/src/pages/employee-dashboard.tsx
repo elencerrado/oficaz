@@ -1312,7 +1312,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                         a las {alarm.time}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {alarm.weekdays.map((day: number) => weekdayNames[day - 1]).join(', ')}
+                        {alarm.weekdays.map((day: number) => weekdayFullNames[day - 1]).join(', ')}
                         {alarm.soundEnabled && ' • Con sonido'}
                       </p>
                     </div>
