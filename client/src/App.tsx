@@ -393,7 +393,9 @@ function Router() {
 
       <Route path="/:companyAlias/usuario">
         <ProtectedRoute>
-          <EmployeeProfile />
+          <AppLayout>
+            <EmployeeProfile />
+          </AppLayout>
         </ProtectedRoute>
       </Route>
 
