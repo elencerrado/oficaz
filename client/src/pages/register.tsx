@@ -497,7 +497,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <Label className="text-xs font-medium">¿Cuántas personas van a usar la aplicación?</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {teamSizes.map((size) => {
-                    const isSelected = step1Form.getValues('teamSize') === size.value;
+                    const isSelected = step1Form.watch('teamSize') === size.value;
                     return (
                       <div key={size.value} className="relative">
                         <input
@@ -543,7 +543,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {features.map((feature) => {
                     const Icon = feature.icon;
-                    const selectedFeatures = step1Form.getValues('interestedFeatures') || [];
+                    const selectedFeatures = step1Form.watch('interestedFeatures') || [];
                     const isSelected = selectedFeatures.includes(feature.id);
                     return (
                       <div key={feature.id} className="relative">
@@ -662,11 +662,16 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
                 <div className="md:col-span-2">
                   <Label htmlFor="province">Provincia *</Label>
-                  <Select onValueChange={(value) => step2Form.setValue('province', value)}>
+                  <Select 
+                    value={step2Form.watch('province') || ''}
+                    onValueChange={(value) => {
+                      step2Form.setValue('province', value);
+                    }}
+                  >
                     <SelectTrigger className="rounded-xl mt-2">
                       <SelectValue placeholder="Selecciona tu provincia" />
                     </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto">
+                    <SelectContent className="max-h-60 overflow-y-auto z-50">
                       <SelectItem value="alava">Álava</SelectItem>
                       <SelectItem value="albacete">Albacete</SelectItem>
                       <SelectItem value="alicante">Alicante</SelectItem>
