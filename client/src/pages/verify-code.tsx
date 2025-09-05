@@ -53,13 +53,13 @@ export default function VerifyCode() {
   // Redirect if no sessionId provided and start initial countdown
   useEffect(() => {
     if (!sessionId) {
-      setLocation('/request-code');
+      window.location.href = '/request-code';
     } else {
       // Start initial 60 second countdown when page loads
       setCountdown(60);
       setCanResend(false);
     }
-  }, [sessionId, setLocation]);
+  }, [sessionId]);
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -143,10 +143,7 @@ export default function VerifyCode() {
           setShowRecoverySuccessModal(true);
         } else {
           // Normal registration flow - redirect to registration with verification token
-          console.log('Normal registration flow - redirecting to register with token:', result.verificationToken);
-          const redirectURL = `/register?token=${result.verificationToken}`;
-          console.log('Full redirect URL:', redirectURL);
-          setLocation(redirectURL);
+          window.location.href = `/register?token=${result.verificationToken}`;
         }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');

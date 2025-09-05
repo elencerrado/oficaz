@@ -131,29 +131,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
   
-  console.log('Register page debug:', {
-    byInvitation,
-    verificationToken,
-    search,
-    fullURL: window.location.href
-  });
-
   useEffect(() => {
-    console.log('Register useEffect check:', {
-      byInvitation,
-      verificationToken,
-      shouldRedirect: !byInvitation && !verificationToken
-    });
-    
     if (!byInvitation && !verificationToken) {
       // Clear any loading states and redirect only if not invitation
-      console.log('No verification token - redirecting to request-code');
       setIsLoading(false);
       setValidatingStep2(false);
       setValidatingStep3(false);
-      setLocation('/request-code');
+      window.location.href = '/request-code';
     }
-  }, [verificationToken, setLocation, byInvitation]);
+  }, [verificationToken, byInvitation]);
 
   // Set dark notch for dark background
   useEffect(() => {
@@ -165,7 +151,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
 
   // Don't render if no token and not by invitation
   if (!byInvitation && !verificationToken) {
-    console.log('Returning null - no token and not invitation');
     return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
       <div className="text-white">Redirigiendo...</div>
     </div>;
