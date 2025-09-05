@@ -588,17 +588,21 @@ body {
   position: relative;
 }
 
-/* MODO EMPLEADO - MÁXIMA PRIORIDAD */
+/* MODO EMPLEADO - MÁXIMA PRIORIDAD - SOBRESCRIBE TODO */
 html.employee-mode,
 html.employee-mode.light,
-html.employee-mode.dark {
+html.employee-mode.dark,
+html.employee-mode:not(.light):not(.dark) {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
+  background: #232B36 !important; /* También con background */
 }
 
 html.employee-mode body,
 html.employee-mode.light body,
-html.employee-mode.dark body {
+html.employee-mode.dark body,
+html.employee-mode:not(.light):not(.dark) body {
   background-color: #232B36 !important; /* Color del bg-employee-gradient */
+  background: #232B36 !important; /* También con background */
 }
 
 /* MODO CLARO - solo si NO es employee-mode */
