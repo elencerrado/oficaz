@@ -145,6 +145,31 @@ export default function EmployeeProfile() {
     setEmergencyContactPhone(user?.emergencyContactPhone || '');
   };
 
+  // FORÇA O NOTCH PARA A COR CORRETA NESTA PÁGINA
+  useEffect(() => {
+    const html = document.documentElement;
+    const style = document.createElement('style');
+    style.id = 'employee-profile-notch-fix';
+    style.textContent = `
+      html {
+        background-color: #232B36 !important;
+        background: #232B36 !important;
+      }
+      html body {
+        background-color: #232B36 !important;
+        background: #232B36 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      const existingStyle = document.getElementById('employee-profile-notch-fix');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-employee-gradient text-white">
