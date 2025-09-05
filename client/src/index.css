@@ -594,9 +594,9 @@ html.light {
   background-color: hsl(0 0% 100%) !important; /* Blanco puro - valor de --background en modo claro */
 }
 
-/* Modo oscuro - color más claro para que coincida con el header */  
+/* Modo oscuro - valor EXACTO de --background que usa el header */  
 html.dark {
-  background-color: hsl(220 13% 18%) !important; /* Gris más claro para modo oscuro */
+  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
 }
 
 /* Fallback para cuando no hay clase específica - modo claro por defecto */
@@ -618,7 +618,7 @@ html.light body {
 
 /* Body para modo oscuro */
 html.dark body {
-  background-color: hsl(220 13% 18%) !important; /* Gris más claro para modo oscuro */
+  background-color: hsl(222.2 84% 4.9%) !important; /* Valor exacto de --background en modo oscuro */
 }
 
 /* Safe area aware padding classes for iOS PWA */
