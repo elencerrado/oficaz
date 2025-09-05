@@ -590,6 +590,19 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ELEMENTO GLOBAL QUE TAPA EL NOTCH DEL IPHONE EN PWA */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background-color: hsl(var(--background));
+  z-index: 10000;
+  pointer-events: none; /* No interfiere con interacciones */
+}
+
 /* Safe area aware padding classes for iOS PWA */
 .pt-header-safe {
   /* Solo header height normal - el safe area ya lo maneja el header mismo */

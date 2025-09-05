@@ -62,22 +62,11 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   };
 
   return (
-    <>
-      {/* Elemento que tapa el notch completamente - MUY POR ENCIMA DE TODO */}
-      <div 
-        className="fixed top-0 left-0 right-0"
-        style={{
-          height: 'env(safe-area-inset-top, 0px)',
-          backgroundColor: 'hsl(var(--background))',
-          zIndex: 9999 // Muy por encima de todo contenido
-        }}
-      />
-      
-      <header 
-        className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
-        style={{
-          top: showBanner ? '60px' : 'env(safe-area-inset-top, 0px)'
-        }}
+    <header 
+      className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
+      style={{
+        top: showBanner ? '60px' : 'env(safe-area-inset-top, 0px)'
+      }}
       >
       {/* Left Section */}
       <div className="flex items-center justify-start">
@@ -135,6 +124,5 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         </DropdownMenu>
       </div>
     </header>
-    </>
   );
 }
