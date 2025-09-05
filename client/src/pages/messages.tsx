@@ -795,7 +795,12 @@ export default function Messages() {
               }}
             >
               {/* Chat Header with Back Button - Fixed at top */}
-              <div className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0">
+              <div 
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
+                style={{
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
+                }}
+              >
                 <Button
                   variant="ghost"
                   size="sm"
