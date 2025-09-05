@@ -588,18 +588,25 @@ html {
   min-height: calc(100% + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   /* Color del notch igual al header - modo claro */
-  background-color: hsl(0 0% 100%); /* Usando el valor exacto de --background */
+  background-color: white !important;
 }
 
 /* Modo oscuro */
 .dark html {
-  background-color: hsl(222.2 84% 4.9%); /* Usando el valor exacto de --background en modo oscuro */
+  background-color: #0a0a0a !important;
 }
 
+/* También aplicamos al body para asegurar */
 body {
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  /* Color del notch también en body para asegurar */
+  background-color: white !important;
+}
+
+.dark body {
+  background-color: #0a0a0a !important;
 }
 
 /* Safe area aware padding classes for iOS PWA */
