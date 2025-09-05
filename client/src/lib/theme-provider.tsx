@@ -92,10 +92,13 @@ export function ThemeProvider({
       root.classList.remove('light', 'dark');
 
       // Only apply dark mode for admin routes, force light mode for public pages
+      // BUT respect employee-mode for notch color
       if (!isAdminRoute()) {
         root.classList.add('light');
-        // Force light mode styling on root
-        root.style.colorScheme = 'light';
+        // Only force light color scheme if NOT in employee mode
+        if (!root.classList.contains('employee-mode')) {
+          root.style.colorScheme = 'light';
+        }
         return;
       }
 
@@ -150,6 +153,10 @@ export function ThemeProvider({
 
         if (!isAdminRoute()) {
           root.classList.add('light');
+          // Only force light color scheme if NOT in employee mode
+          if (!root.classList.contains('employee-mode')) {
+            root.style.colorScheme = 'light';
+          }
         } else {
           if (theme === 'system') {
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
