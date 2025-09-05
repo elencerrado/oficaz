@@ -587,12 +587,15 @@ html {
   /* SOLUCIÓN CORRECTA PARA NOTCH DEL IPHONE PWA */
   min-height: calc(100% + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  /* Color del notch igual al header - modo claro */
+}
+
+/* Modo claro - cuando html tiene clase "light" */
+html.light {
   background-color: white !important;
 }
 
-/* Modo oscuro */
-.dark html {
+/* Modo oscuro - cuando html tiene clase "dark" */
+html.dark {
   background-color: #0a0a0a !important;
 }
 
@@ -601,11 +604,15 @@ body {
   /* Prevent bounce effect that shows white area */
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-  /* Color del notch también en body para asegurar */
+}
+
+/* Body para modo claro */
+html.light body {
   background-color: white !important;
 }
 
-.dark body {
+/* Body para modo oscuro */
+html.dark body {
   background-color: #0a0a0a !important;
 }
 
