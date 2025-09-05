@@ -42,11 +42,13 @@ export default function VerifyCode() {
     },
   });
 
-  // Set dark notch for dark background
+  // Set dark notch for dark background and prevent scroll
   useEffect(() => {
     document.documentElement.classList.add('dark-notch');
+    document.body.style.overflow = 'hidden';
     return () => {
       document.documentElement.classList.remove('dark-notch');
+      document.body.style.overflow = '';
     };
   }, []);
 
@@ -204,10 +206,10 @@ export default function VerifyCode() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 to-slate-800 overflow-hidden" style={{ height: '100dvh', marginTop: 'calc(-1 * env(safe-area-inset-top, 0px) / 2)' }}>
       <Card className="w-full max-w-sm shadow-2xl rounded-2xl border-0 bg-white">
-        <CardHeader className="text-center pt-8 pb-6">
-          <div className="flex justify-center mb-6">
+        <CardHeader className="text-center pt-6 pb-4">
+          <div className="flex justify-center mb-4">
             <Link href="/">
               <img 
                 src={oficazLogo} 
