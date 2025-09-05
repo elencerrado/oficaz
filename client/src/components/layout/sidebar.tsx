@@ -134,7 +134,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div 
           className="p-4 border-b border-border bg-sidebar flex-shrink-0"
           style={{
-            backgroundColor: 'hsl(var(--sidebar-background))'
+            backgroundColor: 'hsl(var(--sidebar-background))',
+            // Añadir padding superior en móvil para el notch
+            paddingTop: showBanner ? '1rem' : 'calc(env(safe-area-inset-top, 0px) + 1rem)'
           }}
         >
           <div className="flex items-center space-x-3">
