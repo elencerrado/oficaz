@@ -591,12 +591,12 @@ html {
 
 /* Modo claro - cuando html tiene clase "light" */
 html.light {
-  background-color: white !important;
+  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
 }
 
 /* Modo oscuro - cuando html tiene clase "dark" */
 html.dark {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Color exacto del fondo admin en modo oscuro */
+  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
 }
 
 /* También aplicamos al body para asegurar */
@@ -608,12 +608,12 @@ body {
 
 /* Body para modo claro */
 html.light body {
-  background-color: white !important;
+  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
 }
 
 /* Body para modo oscuro */
 html.dark body {
-  background-color: hsl(222.2 84% 4.9%) !important; /* Color exacto del fondo admin en modo oscuro */
+  background-color: hsl(var(--background)) !important; /* Mismo color que bg-background del header */
 }
 
 /* Safe area aware padding classes for iOS PWA */
