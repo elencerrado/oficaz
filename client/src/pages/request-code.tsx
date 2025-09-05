@@ -39,6 +39,14 @@ export default function RequestCode() {
     }
   }, [registrationSettings, isLoadingSettings, setLocation]);
 
+  // Set dark notch for dark background
+  useEffect(() => {
+    document.documentElement.classList.add('dark-notch');
+    return () => {
+      document.documentElement.classList.remove('dark-notch');
+    };
+  }, []);
+
   const form = useForm<EmailData>({
     resolver: zodResolver(emailSchema),
     defaultValues: {

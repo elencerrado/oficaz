@@ -44,6 +44,13 @@ export default function Login() {
   useEffect(() => {
     // SECURITY FIX: Ensure clean login state - reset dark mode if coming from logout
     document.documentElement.classList.remove('dark');
+    // Add dark notch class for pages with dark background
+    document.documentElement.classList.add('dark-notch');
+    
+    return () => {
+      // Cleanup dark notch class when leaving the page
+      document.documentElement.classList.remove('dark-notch');
+    };
     
     const cleanupCorruptedTokens = () => {
       const authData = localStorage.getItem('authData');

@@ -599,7 +599,7 @@ html.employee-mode body {
 
 /* ADMIN MODE - NOTCH RESPONSIVE A DARK/LIGHT */
 html.light:not(.employee-mode) {
-  background: hsl(0 0% 100%) !important; /* Blanco para admin claro */
+  background: hsl(0 0% 100%) !important; /* Blanco por defecto para admin claro */
 }
 
 html.light:not(.employee-mode) body {
@@ -614,12 +614,12 @@ html.dark:not(.employee-mode) body {
   background: hsl(222.2 84% 4.9%) !important;
 }
 
-/* PÁGINAS PÚBLICAS - NOTCH OSCURO PARA LOGIN/REGISTRO */
-html:not(.employee-mode):not(.light):not(.dark) {
-  background: hsl(222.2 84% 4.9%) !important; /* slate-900 para páginas públicas oscuras */
+/* PÁGINAS PÚBLICAS OSCURAS - Login/Registro/Código */
+html.dark-notch {
+  background: hsl(222.2 84% 4.9%) !important; /* Oscuro para páginas con fondo oscuro */
 }
 
-html:not(.employee-mode):not(.light):not(.dark) body {
+html.dark-notch body {
   background: hsl(222.2 84% 4.9%) !important;
 }
 

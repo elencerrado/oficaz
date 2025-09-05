@@ -141,6 +141,14 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     }
   }, [verificationToken, setLocation, byInvitation]);
 
+  // Set dark notch for dark background
+  useEffect(() => {
+    document.documentElement.classList.add('dark-notch');
+    return () => {
+      document.documentElement.classList.remove('dark-notch');
+    };
+  }, []);
+
   // Don't render if no token and not by invitation
   if (!byInvitation && !verificationToken) {
     return null;
