@@ -845,8 +845,16 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - ADMIN SIN SCROLL */}
-              <div className="flex-1 px-4 py-4 bg-gray-50 dark:bg-gray-900/30">
+              {/* Messages - ADMIN RESTAURADO */}
+              <div 
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                style={{ 
+                  paddingBottom: '20px',
+                  paddingTop: '8px'
+                }}
+              >
+                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
@@ -1273,8 +1281,17 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - EMPLEADO SIN SCROLL */}
-              <div className="flex-1 px-4 py-4" style={{ background: '#1A2332' }}>
+              {/* Messages - EMPLEADO RESTAURADO */}
+              <div 
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 flex flex-col"
+                style={{ 
+                  background: '#1A2332',
+                  paddingBottom: '20px',
+                  paddingTop: '8px'
+                }}
+              >
+                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
