@@ -1243,25 +1243,20 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee Responsive Version - ⚠️ PROTECTED DO NOT MODIFY */
-            /* Desktop & Mobile visibility REQUIRED - DO NOT add lg:hidden class */
+            /* Chat View - Employee Fixed Version - Basado en Admin que funciona */
             (<div 
               className="fixed inset-0 z-[60] flex flex-col"
               style={{ 
-                touchAction: 'manipulation',
-                overscrollBehavior: 'none',
-                position: 'fixed',
                 background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
-                paddingBottom: isKeyboardOpen ? '0px' : 'env(safe-area-inset-bottom, 0px)'
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)'
               }}
             >
-              {/* Chat Header - EMPLOYEE DARK VERSION */}
+              {/* Chat Header - EMPLOYEE DARK VERSION - Simplificado */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0 sticky top-0 z-50"
+                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Safe area para notch iOS
-                  minHeight: '72px' // Altura mínima para evitar colapso
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
                 }}
               >
                 <Button
@@ -1295,24 +1290,14 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages Area - Scrollable */}
+              {/* Messages Area - Scrollable - Copiado del Admin */}
               <div 
-                className="flex-1 overflow-y-auto px-4 py-4"
+                className="flex-1 overflow-y-auto p-4"
                 style={{
-                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  paddingBottom: isKeyboardOpen ? '80px' : '16px' // Espacio extra cuando teclado abierto
+                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)'
                 }}
               >
                 <div className="space-y-6">
-                  {/* DEBUG EMPLEADO */}
-                  {user?.role === 'employee' && (
-                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'red', color: 'white', padding: '5px', fontSize: '10px', zIndex: 1000 }}>
-                      Debug: msgs={messages?.length || 0}, selected={selectedChat}, grouped={messagesGroupedByDate.length}
-                    </div>
-                  )}
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
                       <div key={group.date} className="space-y-4">
@@ -1366,41 +1351,34 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} style={{ height: '20px' }} />
               </div>
-              {/* Message Input - Fixed at bottom - DARK THEME */}
+              {/* Message Input - Fixed at bottom - Simplificado como Admin */}
               <div 
-                className="px-4 py-3 flex-shrink-0"
+                className="flex space-x-2 p-4 border-t border-gray-200/20 flex-shrink-0"
                 style={{
                   background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingBottom: isKeyboardOpen ? '8px' : 'max(16px, env(safe-area-inset-bottom))',
-                  position: isKeyboardOpen ? 'fixed' : 'relative',
-                  bottom: isKeyboardOpen ? '0px' : 'auto',
-                  left: isKeyboardOpen ? '0px' : 'auto',
-                  right: isKeyboardOpen ? '0px' : 'auto',
-                  zIndex: isKeyboardOpen ? 70 : 'auto'
+                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
                 }}
               >
-                <div className="flex space-x-2">
-                  <Input
-                    ref={messageInputRef}
-                    placeholder="Escribe tu mensaje..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
-                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white'
-                    }}
-                  />
-                  <Button
-                    onClick={handleSendEmployeeMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-blue-500 hover:bg-blue-600 text-white border-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Input
+                  ref={messageInputRef}
+                  placeholder="Escribe tu mensaje..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
+                  className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    color: 'white'
+                  }}
+                />
+                <Button
+                  onClick={handleSendEmployeeMessage}
+                  disabled={!newMessage.trim()}
+                  className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </div>)
       )}
