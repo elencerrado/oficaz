@@ -1243,9 +1243,9 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee Copiado EXACTO del Admin que funciona */
+            /* Chat View - Employee EXACTAMENTE igual al Admin */
             (<div 
-              className="fixed inset-0 z-[60] flex flex-col"
+              className="fixed inset-0 z-[60] flex flex-col lg:hidden"
               style={{ 
                 background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                 touchAction: 'manipulation',
@@ -1292,10 +1292,10 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - ESTRUCTURA EXACTA del Admin que funciona */}
+              {/* Messages - SIN flex-1 spacer que causa scroll vacío */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 flex flex-col"
+                className="flex-1 overflow-y-auto px-4"
                 style={{ 
                   background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                   paddingBottom: '20px',
@@ -1306,7 +1306,6 @@ export default function Messages() {
                   position: 'relative'
                 }}
               >
-                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
