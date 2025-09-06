@@ -816,7 +816,7 @@ export default function Messages() {
             >
               {/* Chat Header - ADMIN LIMPIO */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background sticky top-0 z-50 flex-shrink-0"
+                className="flex items-center space-x-3 px-4 py-2 border-b border-border bg-background flex-shrink-0"
               >
                 <Button
                   variant="ghost"
@@ -841,20 +841,11 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - Scrollable area with bounce prevention */}
+              {/* Messages - ADMIN SIN SCROLL PROBLEMATICO */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
-                style={{ 
-                  paddingBottom: '20px',
-                  paddingTop: '8px',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  position: 'relative'
-                }}
+                className="flex-1 px-4 py-4 bg-gray-50 dark:bg-gray-900/30"
               >
-                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
@@ -1250,9 +1241,9 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - EMPLEADO SIN PADDING EXTRA */}
+              {/* Chat Header - EMPLEADO LIMPIO */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 bg-[#323A46] sticky top-0 z-50 flex-shrink-0"
+                className="flex items-center space-x-3 px-4 py-2 border-b border-gray-200/20 bg-[#323A46] flex-shrink-0"
               >
                 <Button
                   variant="ghost"
@@ -1277,21 +1268,14 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - ESTRUCTURA EXACTA ADMIN */}
+              {/* Messages - SIN SCROLL PROBLEMATICO */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 flex flex-col" 
+                className="flex-1 px-4 py-4"
                 style={{ 
-                  background: '#1A2332',
-                  paddingBottom: '20px',
-                  paddingTop: '8px',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  position: 'relative'
+                  background: '#1A2332'
                 }}
               >
-                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
