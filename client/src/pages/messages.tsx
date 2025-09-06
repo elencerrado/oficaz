@@ -1243,21 +1243,21 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee EXACTAMENTE igual al Admin */
+            /* Chat View - ESTRUCTURA EXACTA ADMIN + tema oscuro */
             (<div 
               className="fixed inset-0 z-[60] flex flex-col lg:hidden"
               style={{ 
-                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                background: '#1A2332',
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - EMPLOYEE DARK VERSION */}
+              {/* Chat Header - ESTRUCTURA EXACTA ADMIN */}
               <div 
                 className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  background: '#323A46',
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
                 }}
               >
@@ -1292,12 +1292,12 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - CON flex-1 spacer como admin funcional */}
+              {/* Messages - ESTRUCTURA EXACTA ADMIN */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 flex flex-col"
+                className="flex-1 overflow-y-auto px-4 flex flex-col" 
                 style={{ 
-                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                  background: '#1A2332',
                   paddingBottom: '20px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
@@ -1361,11 +1361,11 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} />
               </div>
-              {/* Message Input - ESTRUCTURA EXACTA del Admin */}
+              {/* Message Input - ESTRUCTURA EXACTA ADMIN */}
               <div 
                 className="flex space-x-2 p-4 border-t border-gray-200/20 flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  background: '#323A46',
                   paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
                 }}
               >
