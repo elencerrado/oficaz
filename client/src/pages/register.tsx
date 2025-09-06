@@ -376,29 +376,34 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const getRecommendedPlan = () => {
     const { teamSize, interestedFeatures } = formData;
     
-    // Basic scoring system
+    // Advanced scoring system that considers functionality needs
     let score = 0;
     
-    // Team size scoring (more conservative)
-    if (teamSize === '1-5') score += 1;
-    else if (teamSize === '6-15') score += 2;
-    else if (teamSize === '16-50') score += 3;
-    else if (teamSize === '51+') score += 4;
+    // Team size scoring (balanced approach)
+    if (teamSize === '1-5') score += 2;
+    else if (teamSize === '6-15') score += 3;
+    else if (teamSize === '16-50') score += 4;
+    else if (teamSize === '51+') score += 5;
     
-    // Features scoring (reduced impact)
+    // Features scoring (more weight for functionality needs)
     const featureCount = interestedFeatures?.length || 0;
-    if (featureCount >= 4) score += 2;
-    else if (featureCount >= 3) score += 1;
+    if (featureCount >= 5) score += 4; // Many features = advanced needs
+    else if (featureCount >= 4) score += 3;
+    else if (featureCount >= 3) score += 2;
+    else if (featureCount >= 2) score += 1;
     
-    // Advanced features boost (only for very advanced features)
-    if (interestedFeatures?.includes('reports')) score += 1;
+    // Advanced features boost (premium functionality indicators)
+    if (interestedFeatures?.includes('reports')) score += 2;
     if (interestedFeatures?.includes('notifications')) score += 1;
+    if (interestedFeatures?.includes('documents')) score += 1;
+    if (interestedFeatures?.includes('messaging')) score += 1;
     
-    // Conservative recommendation logic (Master plan hidden for now)
-    // Only recommend Pro for larger teams with many features
-    if (score >= 5 && teamSize !== '1-5') return 'pro';
-    else if (score >= 3 && teamSize !== '1-5') return 'pro';
-    else return 'basic';
+    // Intelligent recommendation logic
+    // Consider both team size and feature complexity
+    if (score >= 8) return 'pro'; // High needs regardless of team size
+    else if (score >= 6 && featureCount >= 4) return 'pro'; // Medium-high needs with many features
+    else if (score >= 5 && featureCount >= 3) return 'pro'; // Medium needs with several features
+    else return 'basic'; // Low complexity needs
   };
 
   const recommendedPlan = getRecommendedPlan();
