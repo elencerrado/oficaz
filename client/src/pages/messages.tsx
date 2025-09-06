@@ -1243,20 +1243,22 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee Fixed Version - Basado en Admin que funciona */
+            /* Chat View - Employee Copiado EXACTO del Admin que funciona */
             (<div 
               className="fixed inset-0 z-[60] flex flex-col"
               style={{ 
                 background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
-                paddingTop: 'env(safe-area-inset-top, 0px)',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+                touchAction: 'manipulation',
+                overscrollBehavior: 'none',
+                position: 'fixed'
               }}
             >
-              {/* Chat Header - EMPLOYEE DARK VERSION - Simplificado */}
+              {/* Chat Header - EMPLOYEE DARK VERSION */}
               <div 
                 className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)'
+                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
                 }}
               >
                 <Button
@@ -1290,13 +1292,21 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages Area - Scrollable - Copiado del Admin */}
+              {/* Messages - ESTRUCTURA EXACTA del Admin que funciona */}
               <div 
-                className="flex-1 overflow-y-auto p-4"
-                style={{
-                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)'
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto px-4 flex flex-col"
+                style={{ 
+                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                  paddingBottom: '20px',
+                  paddingTop: '8px',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                  position: 'relative'
                 }}
               >
+                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
@@ -1349,9 +1359,9 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: '20px' }} />
+                <div ref={messagesEndRef} />
               </div>
-              {/* Message Input - Fixed at bottom - Simplificado como Admin */}
+              {/* Message Input - ESTRUCTURA EXACTA del Admin */}
               <div 
                 className="flex space-x-2 p-4 border-t border-gray-200/20 flex-shrink-0"
                 style={{
