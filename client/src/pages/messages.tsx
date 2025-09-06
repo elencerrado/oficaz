@@ -814,16 +814,9 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header with Back Button - RESTAURADO */}
+              {/* Chat Header - ADMIN LIMPIO */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border flex-shrink-0"
-                style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-                  backgroundColor: 'var(--background)',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 50
-                }}
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background sticky top-0 z-50 flex-shrink-0"
               >
                 <Button
                   variant="ghost"
@@ -1257,16 +1250,9 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - EMPLEADO RESTAURADO */}
+              {/* Chat Header - EMPLEADO SIN PADDING EXTRA */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
-                style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-                  backgroundColor: '#323A46',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 50
-                }}
+                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 bg-[#323A46] sticky top-0 z-50 flex-shrink-0"
               >
                 <Button
                   variant="ghost"
