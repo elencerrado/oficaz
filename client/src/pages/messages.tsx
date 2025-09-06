@@ -223,16 +223,24 @@ export default function Messages() {
 
   useEffect(() => {
     const handleKeyboardVisibility = () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        const viewport = window.visualViewport;
-        if (viewport) {
-          const handleViewportChange = () => {
-            setIsKeyboardOpen(viewport.height < window.screen.height * 0.75);
-          };
-          viewport.addEventListener('resize', handleViewportChange);
-          return () => viewport.removeEventListener('resize', handleViewportChange);
-        }
+      // Detectar tanto iOS como Android
+      const viewport = window.visualViewport;
+      if (viewport) {
+        const handleViewportChange = () => {
+          const heightDifference = window.screen.height - viewport.height;
+          // Teclado abierto si el viewport es considerablemente más pequeño
+          setIsKeyboardOpen(heightDifference > 150); // Umbral más bajo para mejor detección
+        };
+        viewport.addEventListener('resize', handleViewportChange);
+        return () => viewport.removeEventListener('resize', handleViewportChange);
+      } else {
+        // Fallback para navegadores sin visualViewport
+        const handleResize = () => {
+          const heightDifference = window.screen.height - window.innerHeight;
+          setIsKeyboardOpen(heightDifference > 200);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
       }
     };
     
