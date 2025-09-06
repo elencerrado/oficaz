@@ -263,6 +263,18 @@ export default function Messages() {
       adminMobileMessages.scrollTop = adminMobileMessages.scrollHeight;
     }
 
+    // Employee view - contenedor específico con gradiente oscuro
+    const employeeMessages = document.querySelector('.flex-1.overflow-y-auto.px-4.py-4');
+    if (employeeMessages) {
+      employeeMessages.scrollTop = employeeMessages.scrollHeight;
+    }
+
+    // Employee view - alternativo por selector de estilo
+    const employeeContainerWithGradient = document.querySelector('[style*="radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)"]');
+    if (employeeContainerWithGradient && employeeContainerWithGradient.classList.contains('overflow-y-auto')) {
+      (employeeContainerWithGradient as HTMLElement).scrollTop = (employeeContainerWithGradient as HTMLElement).scrollHeight;
+    }
+
     // Buscar cualquier contenedor con overflow-y-auto que contenga mensajes
     const scrollableContainers = document.querySelectorAll('.overflow-y-auto');
     scrollableContainers.forEach(container => {
@@ -602,7 +614,7 @@ export default function Messages() {
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 sticky top-0 z-50 bg-card">
                     <div className="flex items-center space-x-3">
                       <UserAvatar 
                         fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
@@ -1236,10 +1248,11 @@ export default function Messages() {
             >
               {/* Chat Header - EMPLOYEE DARK VERSION */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0 sticky top-0 z-50"
                 style={{
                   background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Safe area para notch iOS
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Safe area para notch iOS
+                  minHeight: '72px' // Altura mínima para evitar colapso
                 }}
               >
                 <Button
