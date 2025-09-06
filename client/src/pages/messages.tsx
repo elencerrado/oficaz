@@ -814,9 +814,13 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - ADMIN LIMPIO */}
+              {/* Chat Header - ADMIN CON NOTCH */}
               <div 
-                className="flex items-center space-x-3 px-4 py-2 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 px-4 border-b border-border bg-background flex-shrink-0"
+                style={{
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
+                  paddingBottom: '16px'
+                }}
               >
                 <Button
                   variant="ghost"
@@ -841,11 +845,8 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - ADMIN SIN SCROLL PROBLEMATICO */}
-              <div 
-                ref={messagesContainerRef}
-                className="flex-1 px-4 py-4 bg-gray-50 dark:bg-gray-900/30"
-              >
+              {/* Messages - ADMIN SIN SCROLL */}
+              <div className="flex-1 px-4 py-4 bg-gray-50 dark:bg-gray-900/30">
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
@@ -1241,9 +1242,13 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - EMPLEADO LIMPIO */}
+              {/* Chat Header - EMPLEADO CON NOTCH */}
               <div 
-                className="flex items-center space-x-3 px-4 py-2 border-b border-gray-200/20 bg-[#323A46] flex-shrink-0"
+                className="flex items-center space-x-3 px-4 border-b border-gray-200/20 bg-[#323A46] flex-shrink-0"
+                style={{
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
+                  paddingBottom: '16px'
+                }}
               >
                 <Button
                   variant="ghost"
@@ -1268,14 +1273,8 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - SIN SCROLL PROBLEMATICO */}
-              <div 
-                ref={messagesContainerRef}
-                className="flex-1 px-4 py-4"
-                style={{ 
-                  background: '#1A2332'
-                }}
-              >
+              {/* Messages - EMPLEADO SIN SCROLL */}
+              <div className="flex-1 px-4 py-4" style={{ background: '#1A2332' }}>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
