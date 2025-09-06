@@ -1243,7 +1243,8 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)'
+                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                paddingBottom: isKeyboardOpen ? '0px' : 'env(safe-area-inset-bottom, 0px)'
               }}
             >
               {/* Chat Header - EMPLOYEE DARK VERSION */}
@@ -1293,7 +1294,8 @@ export default function Messages() {
                   background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch'
+                  WebkitOverflowScrolling: 'touch',
+                  paddingBottom: isKeyboardOpen ? '80px' : '16px' // Espacio extra cuando teclado abierto
                 }}
               >
                 <div className="space-y-6">
@@ -1352,10 +1354,15 @@ export default function Messages() {
               </div>
               {/* Message Input - Fixed at bottom - DARK THEME */}
               <div 
-                className="px-4 py-3 border-t border-gray-200/20"
+                className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
                 style={{
                   background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
+                  paddingBottom: isKeyboardOpen ? '8px' : 'max(16px, env(safe-area-inset-bottom))',
+                  position: isKeyboardOpen ? 'fixed' : 'relative',
+                  bottom: isKeyboardOpen ? '0px' : 'auto',
+                  left: isKeyboardOpen ? '0px' : 'auto',
+                  right: isKeyboardOpen ? '0px' : 'auto',
+                  zIndex: isKeyboardOpen ? 70 : 'auto'
                 }}
               >
                 <div className="flex space-x-2">
