@@ -1253,19 +1253,19 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - ESTRUCTURA EXACTA ADMIN */}
+              {/* Chat Header - COPIADO EXACTO DEL ADMIN */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
                 style={{
-                  background: '#323A46',
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
+                  backgroundColor: '#323A46'
                 }}
               >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedChat(null)}
-                  className="p-2 text-white hover:bg-white/10"
+                  className="p-2"
                 >
                   <ArrowLeft className="w-5 h-5 text-white" />
                 </Button>
@@ -1280,15 +1280,7 @@ export default function Messages() {
                     {selectedChatUser?.fullName}
                   </h3>
                   <div className="text-sm text-white/70">
-                    {selectedChatUser?.position || (() => {
-                      const role = selectedChatUser?.role || 'employee';
-                      const roleDescriptions = {
-                        admin: 'Director General',
-                        manager: 'Responsable', 
-                        employee: 'Empleado'
-                      };
-                      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-                    })()}
+                    {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
               </div>
