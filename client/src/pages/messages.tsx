@@ -1307,6 +1307,12 @@ export default function Messages() {
                 }}
               >
                 <div className="space-y-6">
+                  {/* DEBUG EMPLEADO */}
+                  {user?.role === 'employee' && (
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'red', color: 'white', padding: '5px', fontSize: '10px', zIndex: 1000 }}>
+                      Debug: msgs={messages?.length || 0}, selected={selectedChat}, grouped={messagesGroupedByDate.length}
+                    </div>
+                  )}
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
                       <div key={group.date} className="space-y-4">
