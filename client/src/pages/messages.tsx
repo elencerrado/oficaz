@@ -814,11 +814,15 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header with Back Button - Fixed at top */}
+              {/* Chat Header with Back Button - RESTAURADO */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-border flex-shrink-0"
                 style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
+                  backgroundColor: 'var(--background)',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 50
                 }}
               >
                 <Button
@@ -1253,12 +1257,15 @@ export default function Messages() {
                 position: 'fixed'
               }}
             >
-              {/* Chat Header - COPIADO EXACTO DEL ADMIN */}
+              {/* Chat Header - EMPLEADO RESTAURADO */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
                 style={{
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-                  backgroundColor: '#323A46'
+                  backgroundColor: '#323A46',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 50
                 }}
               >
                 <Button
