@@ -1495,4 +1495,58 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
+/* Chatscope PWA Mobile Styles */
+@media (max-width: 768px) {
+  .cs-main-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  
+  .cs-chat-container {
+    height: 100% !important;
+  }
+  
+  .cs-message-list {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .cs-message-input {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+  }
+  
+  .cs-conversation-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+  }
+}
+
+/* Chatscope Dark Mode Overrides for Employee Theme */
+.cs-main-container[data-theme="employee"] {
+  background: #1A2332 !important;
+}
+
+.cs-main-container[data-theme="employee"] .cs-chat-container {
+  background: #1A2332 !important;
+}
+
+.cs-main-container[data-theme="employee"] .cs-message-list {
+  background: #1A2332 !important;
+}
+
+.cs-main-container[data-theme="employee"] .cs-message-input {
+  background: #323A46 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.cs-main-container[data-theme="employee"] .cs-conversation-header {
+  background: #323A46 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+}
+
 
