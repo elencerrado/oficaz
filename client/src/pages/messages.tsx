@@ -153,10 +153,7 @@ export default function Messages() {
   // Mutations
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { receiverId: number; content: string }) => {
-      return await apiRequest('/api/messages', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('POST', '/api/messages', data);
     },
     onSuccess: () => {
       setNewMessage('');
@@ -179,10 +176,7 @@ export default function Messages() {
 
   const sendGroupMessageMutation = useMutation({
     mutationFn: async (data: { receiverIds: number[]; content: string }) => {
-      return await apiRequest('/api/messages/group', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('POST', '/api/messages/group', data);
     },
     onSuccess: () => {
       setModalMessage('');
@@ -203,9 +197,7 @@ export default function Messages() {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (messageId: number) => {
-      return await apiRequest(`/api/messages/${messageId}/read`, {
-        method: 'PATCH',
-      });
+      return await apiRequest('PATCH', `/api/messages/${messageId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
@@ -452,7 +444,7 @@ export default function Messages() {
                     />
                     <ConversationHeader.Content 
                       userName={selectedChatUser.fullName}
-                      info={getRoleDisplay(selectedChatUser)}
+                      info={getRoleDisplay(selectedChatUser || null)}
                     />
                   </ConversationHeader>
                   
