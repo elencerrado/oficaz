@@ -32,6 +32,17 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message as ChatScopeMessage,
+  MessageInput,
+  ConversationHeader,
+  Avatar,
+  TypingIndicator
+} from "@chatscope/chat-ui-kit-react";
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 
 interface Message {
   id: number;
@@ -709,113 +720,59 @@ export default function Messages() {
             </div>
           </div>
         ) : (
-          /* Chat View - Implementación simple y funcional para móvil */
-          <div 
-            className="chat-mobile-container" 
-            data-employee={isEmployee}
-            style={{ height: `${viewportHeight}px` }}
+          /* Chat usando ChatScope - Librería profesional que funciona en iOS Safari */
+          <MainContainer 
+            style={{ 
+              height: `${viewportHeight}px`,
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              zIndex: 50
+            }}
           >
-            {/* Header fijo */}
-            <div className="chat-mobile-header">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedChat(null)}
-                className="p-2"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <UserAvatar 
-                fullName={selectedChatUser?.fullName || ''} 
-                size="sm" 
-                userId={selectedChatUser?.id}
-                profilePicture={selectedChatUser?.profilePicture}
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold text-sm text-foreground">
-                  {selectedChatUser?.fullName}
-                </h3>
-                <div className="text-xs text-muted-foreground">
-                  {getRoleDisplay(selectedChatUser || null)}
-                </div>
-              </div>
-            </div>
-
-            {/* Área de mensajes con scroll */}
-            <div className="chat-mobile-messages" ref={messagesContainerRef}>
-              {messagesGroupedByDate.map((group) => (
-                <div key={group.date}>
-                  {/* Separador de fecha */}
-                  <div className="flex items-center justify-center my-4">
-                    <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
-                      {group.dateFormatted}
-                    </div>
-                  </div>
-                  
-                  {/* Mensajes */}
-                  {group.messages.map((message) => (
-                    <div key={message.id} className={`mb-3 flex ${
-                      message.senderId === user?.id ? 'justify-end' : 'justify-start'
-                    }`}>
-                      <div className={`max-w-[80%] px-3 py-2 rounded-lg ${
-                        message.senderId === user?.id 
-                          ? 'bg-blue-500 text-white rounded-br-sm' 
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
-                      }`}>
-                        <p className="text-sm leading-relaxed">{message.content}</p>
-                        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
-                          <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
-                          {message.senderId === user?.id && (
-                            <div className="ml-2">
-                              {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                message.isRead ? (
-                                  <div className="flex items-center text-green-200">
-                                    <Check className="h-3 w-3" />
-                                    <Check className="h-3 w-3 -ml-1" />
-                                  </div>
-                                ) : (
-                                  <Check className="h-3 w-3 text-green-200" />
-                                )
-                              ) : (
-                                <Check className="h-3 w-3 text-green-200" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
-              {/* Elemento para scroll automático */}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input en flexbox natural */}
-            <div className="chat-mobile-input">
-              <input
-                type="text"
+            <ChatContainer>
+              <ConversationHeader>
+                <ConversationHeader.Back 
+                  onClick={() => setSelectedChat(null)}
+                />
+                <Avatar
+                  name={selectedChatUser?.fullName || ''}
+                  src={selectedChatUser?.profilePicture || ''}
+                />
+                <ConversationHeader.Content
+                  userName={selectedChatUser?.fullName || ''}
+                  info={getRoleDisplay(selectedChatUser || null)}
+                />
+              </ConversationHeader>
+              
+              <MessageList>
+                {messages?.map((message) => (
+                  <ChatScopeMessage
+                    key={message.id}
+                    model={{
+                      message: message.content,
+                      sentTime: format(new Date(message.createdAt), 'HH:mm'),
+                      sender: message.senderId === user?.id ? "user" : selectedChatUser?.fullName || '',
+                      direction: message.senderId === user?.id ? "outgoing" : "incoming",
+                      position: "single"
+                    }}
+                  />
+                )) || []}
+              </MessageList>
+              
+              <MessageInput 
                 placeholder="Escribe tu mensaje..."
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    isEmployee ? handleSendEmployeeMessage() : sendMessage();
-                  }
-                }}
+                onChange={setNewMessage}
+                onSend={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
                 disabled={sendMessageMutation.isPending}
-                className="chat-input"
+                style={{
+                  fontSize: '16px' // Evita zoom en iOS
+                }}
               />
-              <button
-                onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
-                disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                type="button"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+            </ChatContainer>
+          </MainContainer>
         )}
       </div>
 

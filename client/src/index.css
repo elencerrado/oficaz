@@ -1495,7 +1495,11 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chat Mobile - Solución iOS Safari Professional */
+/* ChatScope iOS Safari Fixes */
+.cs-main-container {
+  position: fixed !important;
+  height: var(--viewport-height, 100vh) !important;
+}
 .chat-mobile-container {
   position: fixed;
   top: 0;
