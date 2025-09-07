@@ -534,7 +534,7 @@ export default function VacationRequests() {
                             ? (isStart || isEnd)
                               ? 'bg-blue-500 text-white font-semibold'
                               : 'bg-blue-500/30 text-blue-200'
-                            : 'text-foreground hover:bg-muted-foreground/20'
+                            : 'text-white hover:bg-white/20'
                           }
                           ${isToday && !isInRange ? 'ring-1 ring-blue-400' : ''}
                         `}
@@ -572,14 +572,14 @@ export default function VacationRequests() {
               
               {/* Reason textarea */}
               <div>
-                <Label className="text-sm font-medium text-muted-foreground mb-2 block">
+                <Label className="text-sm font-medium text-white/70 mb-2 block">
                   Motivo (opcional)
                 </Label>
                 <Textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Describe el motivo de tu solicitud..."
-                  className="bg-background border-border text-foreground placeholder-muted-foreground rounded-lg resize-none"
+                  className="bg-white/10 border-white/20 text-white placeholder-white/50 rounded-lg resize-none"
                   rows={3}
                 />
               </div>
@@ -606,29 +606,29 @@ export default function VacationRequests() {
       </div>
       {/* Requests table */}
       <div className="px-6 mb-6 flex-1">
-        <div className="bg-card rounded-lg overflow-hidden border border-border">
+        <div className="bg-white/10 rounded-lg overflow-hidden border border-white/20 backdrop-blur-sm">
           {/* Table Header */}
-          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-muted/20 py-3 px-4">
-            <div className="text-sm font-semibold text-center text-foreground">Período</div>
-            <div className="text-sm font-semibold text-center text-foreground">Días</div>
-            <div className="text-sm font-semibold text-center text-foreground">Estado</div>
-            <div className="text-sm font-semibold text-center text-foreground">Fecha</div>
+          <div className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] bg-white/5 py-3 px-4">
+            <div className="text-sm font-semibold text-center text-white">Período</div>
+            <div className="text-sm font-semibold text-center text-white">Días</div>
+            <div className="text-sm font-semibold text-center text-white">Estado</div>
+            <div className="text-sm font-semibold text-center text-white">Fecha</div>
           </div>
 
           {/* Table Body - No scroll, fixed height */}
-          <div className="bg-card/50">
+          <div className="bg-white/5">
             {(requests as any[]).length > 0 ? (
               (requests as any[])
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((request: any) => (
                     <div 
                       key={request.id} 
-                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-border items-center min-h-[48px] hover:bg-muted/10"
+                      className="grid grid-cols-[2fr_1fr_1.5fr_1.5fr] py-3 px-4 border-b border-white/10 items-center min-h-[48px] hover:bg-white/5"
                     >
-                    <div className="text-sm text-center text-foreground flex items-center justify-center">
+                    <div className="text-sm text-center text-white flex items-center justify-center">
                       {formatDateRange(request.startDate, request.endDate)}
                     </div>
-                    <div className="text-sm text-center font-mono text-foreground flex items-center justify-center">
+                    <div className="text-sm text-center font-mono text-white flex items-center justify-center">
                       {calculateDays(request.startDate, request.endDate)}
                     </div>
                     <div className="flex justify-center items-center px-2">
@@ -662,17 +662,17 @@ export default function VacationRequests() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-sm text-center text-muted-foreground flex items-center justify-center">
+                    <div className="text-sm text-center text-white/70 flex items-center justify-center">
                       {formatDate(request.createdAt)}
                     </div>
                     </div>
                 ))
             ) : (
               <div className="flex items-center justify-center py-12">
-                <div className="text-center text-muted-foreground">
-                  <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No tienes solicitudes de vacaciones</p>
-                  <p className="text-sm mt-1">Solicita tus primeras vacaciones</p>
+                <div className="text-center text-white/70">
+                  <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50 text-white/50" />
+                  <p className="text-white">No tienes solicitudes de vacaciones</p>
+                  <p className="text-sm mt-1 text-white/70">Solicita tus primeras vacaciones</p>
                 </div>
               </div>
             )}
@@ -681,8 +681,8 @@ export default function VacationRequests() {
       </div>
       {/* Copyright at bottom */}
       <div className="text-center pb-4 mt-auto">
-        <div className="flex items-center justify-center space-x-1 text-muted-foreground text-xs">
-          <span className="font-semibold text-primary">Oficaz</span>
+        <div className="flex items-center justify-center space-x-1 text-white/50 text-xs">
+          <span className="font-semibold text-white">Oficaz</span>
           <span>© {new Date().getFullYear()}</span>
         </div>
       </div>
