@@ -116,61 +116,7 @@ export default function Messages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Solución definitiva iOS Safari teclado
-  useEffect(() => {
-    if (!selectedChat || !chatContainerRef.current) return;
-
-    const chatContainer = chatContainerRef.current;
-
-    const handleViewportChange = () => {
-      if (window.visualViewport && chatContainer) {
-        // Usar la altura del visualViewport que SÍ cambia con el teclado
-        const height = window.visualViewport.height;
-        chatContainer.style.height = `${height}px`;
-      }
-    };
-
-    const handleInputFocus = () => {
-      // Cuando se enfoca el input, asegurar que se ajuste inmediatamente
-      setTimeout(handleViewportChange, 100);
-    };
-
-    const handleInputBlur = () => {
-      // Cuando se desenfoca, restaurar altura completa
-      setTimeout(() => {
-        if (chatContainer) {
-          chatContainer.style.height = '100vh';
-        }
-      }, 100);
-    };
-
-    // Escuchar cambios en visualViewport
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-    }
-
-    // Escuchar focus/blur del input
-    const input = chatContainer.querySelector('.chat-input') as HTMLInputElement;
-    if (input) {
-      input.addEventListener('focus', handleInputFocus);
-      input.addEventListener('blur', handleInputBlur);
-    }
-
-    // Configuración inicial
-    handleViewportChange();
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-      }
-      if (input) {
-        input.removeEventListener('focus', handleInputFocus);
-        input.removeEventListener('blur', handleInputBlur);
-      }
-    };
-  }, [selectedChat]);
 
 
 
@@ -730,7 +676,7 @@ export default function Messages() {
           </div>
         ) : (
           /* Chat View - Implementación simple y funcional para móvil */
-          <div className="chat-mobile-container" data-employee={isEmployee} ref={chatContainerRef}>
+          <div className="chat-mobile-container" data-employee={isEmployee}>
             {/* Header fijo */}
             <div className="chat-mobile-header">
               <Button

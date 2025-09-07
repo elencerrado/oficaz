@@ -1495,21 +1495,19 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chat Mobile - Header REALMENTE fijo arriba */
+/* Chat Mobile - Solución SIMPLE que funciona */
 .chat-mobile-container {
   position: fixed;
   inset: 0;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   background: var(--background);
 }
 
 .chat-mobile-header {
-  /* Header con position fixed para que NUNCA se mueva */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 70;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1518,44 +1516,27 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   border-color: hsl(var(--border));
   background: hsl(var(--background));
   padding-top: max(12px, env(safe-area-inset-top, 0px));
-  height: 70px;
-  /* Importante para iOS */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  min-height: 60px;
 }
 
 .chat-mobile-messages {
-  /* Mensajes ocupan el espacio entre header e input fijos */
-  position: absolute;
-  top: 70px;
-  bottom: 70px;
-  left: 0;
-  right: 0;
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 1rem;
   background: hsl(var(--background));
+  min-height: 0;
 }
 
 .chat-mobile-input {
-  /* Input también fijo abajo */
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 70;
+  flex-shrink: 0;
   padding: 0.75rem 1rem;
   border-top: 1px solid;
   border-color: hsl(var(--border));
   background: hsl(var(--background));
   padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  height: 70px;
-  display: flex;
-  align-items: center;
-  /* Importante para iOS */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  min-height: 60px;
 }
 
 
