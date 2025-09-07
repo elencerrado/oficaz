@@ -1495,22 +1495,36 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* ChatScope iOS Safari Fixes - SIN HUECOS */
+/* ChatScope iOS Safari Fixes - HEADER SIEMPRE ARRIBA */
 .cs-main-container {
   position: fixed !important;
   height: var(--viewport-height, 100vh) !important;
   top: 0 !important;
   left: 0 !important;
   width: 100% !important;
+  z-index: 9999 !important;
 }
 
 .cs-chat-container {
   height: 100% !important;
 }
 
+.cs-conversation-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 10000 !important;
+  background: white !important;
+  border-bottom: 1px solid #ddd !important;
+}
+
 .cs-message-input {
-  position: sticky !important;
+  position: fixed !important;
   bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 10000 !important;
   margin-bottom: 0 !important;
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
