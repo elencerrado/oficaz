@@ -825,30 +825,32 @@ export default function Messages() {
         </div>
       )}
       
-      {/* Employee Layout - Restaurado */}
+      {/* Employee Layout - Formato consistente con dashboard */}
       {isEmployee && (
         <div className="w-full h-full">
           {!selectedChat ? (
             /* Contact List View */
-            <div className={`w-full h-full flex flex-col ${
-              isEmployee ? 'bg-employee-gradient' : 'bg-background'
-            }`}>
-              {/* Header */}
-              <div className={`p-6 ${
-                isEmployee ? 'text-white' : 'text-foreground'
-              }`}>
-                <h1 className={`text-2xl font-bold mb-2 ${
-                  isEmployee ? 'text-white' : 'text-foreground'
-                }`}>
-                  Mensajes
-                </h1>
-                <p className={isEmployee ? 'text-white/70' : 'text-muted-foreground'}>
-                  Contacta con tu equipo directivo
-                </p>
+            <div className="bg-employee-gradient min-h-screen px-4 py-4" style={{ overflowX: 'clip' }}>
+              {/* Header compacto - como dashboard */}
+              <div className="flex justify-between items-center py-2 flex-shrink-0 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <UserAvatar
+                      fullName={user?.fullName || ''}
+                      size="sm"
+                      userId={user?.id}
+                      profilePicture={user?.profilePicture}
+                    />
+                    <div>
+                      <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
+                      <p className="text-xs text-white/70">Mensajes</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Contact List */}
-              <div className="flex-1 overflow-y-auto px-4">
+              {/* Contact List - formato compacto como grid del dashboard */}
+              <div className="space-y-3">
                 {filteredEmployees.length > 0 ? (
                   filteredEmployees.map((employee) => {
                     const unreadCount = (messages || []).filter((msg: any) => 
@@ -858,11 +860,7 @@ export default function Messages() {
                     return (
                       <div
                         key={employee.id}
-                        className={`p-4 mb-3 rounded-lg border cursor-pointer transition-all ${
-                          isEmployee 
-                            ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white backdrop-blur-sm' 
-                            : 'bg-card border-border hover:bg-muted text-foreground'
-                        }`}
+                        className="bg-white/10 border-white/20 hover:bg-white/20 text-white backdrop-blur-sm p-4 rounded-lg border cursor-pointer transition-all"
                         onClick={() => setSelectedChat(employee.id)}
                       >
                         <div className="flex items-center space-x-3">
@@ -874,9 +872,7 @@ export default function Messages() {
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className={`font-medium truncate ${
-                                isEmployee ? 'text-white' : 'text-foreground'
-                              }`}>
+                              <p className="font-medium truncate text-white">
                                 {employee.fullName}
                               </p>
                               {unreadCount > 0 && (
@@ -885,31 +881,23 @@ export default function Messages() {
                                 </div>
                               )}
                             </div>
-                            <div className={`text-xs mt-1 ${
-                              isEmployee ? 'text-white/70' : 'text-muted-foreground'
-                            }`}>
+                            <div className="text-xs mt-1 text-white/70">
                               {getRoleDisplay(employee)}
                             </div>
                           </div>
                           
-                          <ChevronRight className={`w-5 h-5 ${
-                            isEmployee ? 'text-white/50' : 'text-muted-foreground'
-                          }`} />
+                          <ChevronRight className="w-5 h-5 text-white/50" />
                         </div>
                       </div>
                     );
                   })
                 ) : (
                   <div className="text-center py-8">
-                    <div className={`w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 ${
-                      isEmployee ? 'bg-white/10' : 'bg-muted'
-                    }`}>
-                      <Users className={`w-8 h-8 ${
-                        isEmployee ? 'text-white/50' : 'text-muted-foreground'
-                      }`} />
+                    <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 bg-white/10">
+                      <Users className="w-8 h-8 text-white/50" />
                     </div>
-                    <p className={isEmployee ? 'text-white/70' : 'text-muted-foreground'}>
-                      {isEmployee ? 'No hay responsables disponibles' : 'No hay empleados disponibles'}
+                    <p className="text-white/70">
+                      No hay responsables disponibles
                     </p>
                   </div>
                 )}
