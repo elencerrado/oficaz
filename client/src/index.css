@@ -1543,23 +1543,5 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   min-height: 60px;
 }
 
-/* Tema empleado */
-.chat-mobile-container[data-employee="true"] {
-  background: #1A2332;
-}
-
-.chat-mobile-container[data-employee="true"] .chat-mobile-header {
-  background: #323A46;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.chat-mobile-container[data-employee="true"] .chat-mobile-messages {
-  background: #1A2332;
-}
-
-.chat-mobile-container[data-employee="true"] .chat-mobile-input {
-  background: #323A46;
-  border-color: rgba(255, 255, 255, 0.2);
-}
 
 
