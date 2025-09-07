@@ -116,6 +116,33 @@ export default function Messages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Solución iOS Safari: Escuchar visualViewport para ajustar altura
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+
+    const updateChatHeight = () => {
+      if (chatContainerRef.current && window.visualViewport) {
+        // En iOS Safari, visualViewport cambia cuando aparece el teclado
+        const viewportHeight = window.visualViewport.height;
+        chatContainerRef.current.style.height = `${viewportHeight}px`;
+      }
+    };
+
+    // Detectar cambios en visualViewport (iOS Safari)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateChatHeight);
+      // Altura inicial
+      updateChatHeight();
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateChatHeight);
+      }
+    };
+  }, [selectedChat]);
 
 
 
@@ -675,7 +702,7 @@ export default function Messages() {
           </div>
         ) : (
           /* Chat View - Implementación simple y funcional para móvil */
-          <div className="chat-mobile-container" data-employee={isEmployee}>
+          <div className="chat-mobile-container" data-employee={isEmployee} ref={chatContainerRef}>
             {/* Header fijo */}
             <div className="chat-mobile-header">
               <Button
