@@ -747,7 +747,7 @@ export default function Messages() {
               </ConversationHeader>
               
               <MessageList>
-                {messagesData?.map((message) => (
+                {messages?.map((message: Message) => (
                   <ChatScopeMessage
                     key={message.id}
                     model={{
