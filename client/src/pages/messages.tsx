@@ -684,21 +684,18 @@ export default function Messages() {
               touchAction: 'manipulation',
               overscrollBehavior: 'none',
               position: 'relative',
-              minHeight: '100vh',
-              maxHeight: '100vh'
+              minHeight: '100vh'
             }}
           >
             {/* Chat Header */}
             <div 
-              className={`sticky top-0 z-10 flex items-center space-x-3 px-4 border-b flex-shrink-0 ${
+              className={`flex items-center space-x-3 px-4 py-4 border-b flex-shrink-0 ${
                 isEmployee 
                   ? 'border-gray-200/20 bg-[#323A46]' 
                   : 'border-border bg-background'
               }`}
               style={{
-                paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-                paddingBottom: '16px',
-                position: 'sticky'
+                paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
               }}
             >
               <Button
@@ -731,11 +728,9 @@ export default function Messages() {
 
             {/* Messages */}
             <div 
-              className="flex-1 overflow-hidden"
+              className="flex-1"
               style={{ 
-                background: isEmployee ? '#1A2332' : 'hsl(var(--background))',
-                height: 'calc(100vh - 80px)', /* Resta la altura del header */
-                maxHeight: 'calc(100vh - 80px)'
+                background: isEmployee ? '#1A2332' : 'hsl(var(--background))'
               }}
             >
               <MainContainer>
@@ -797,10 +792,7 @@ export default function Messages() {
                     onSend={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
                     disabled={sendMessageMutation.isPending}
                     style={{
-                      paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-                      position: 'sticky',
-                      bottom: 0,
-                      zIndex: 10
+                      paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
                     }}
                   />
                 </ChatContainer>
