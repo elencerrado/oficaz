@@ -1495,58 +1495,69 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chatscope PWA Mobile Styles */
-@media (max-width: 768px) {
-  .cs-main-container {
-    height: 100vh !important;
-    height: 100dvh !important;
-  }
-  
-  .cs-chat-container {
-    height: 100% !important;
-  }
-  
-  .cs-message-list {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  
-  .cs-message-input {
-    position: sticky !important;
-    bottom: 0 !important;
-    z-index: 10 !important;
-  }
-  
-  .cs-conversation-header {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 10 !important;
-  }
+/* Chat Mobile - Implementación simple y funcional */
+.chat-mobile-container {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--background);
 }
 
-/* Chatscope Dark Mode Overrides for Employee Theme */
-.cs-main-container[data-theme="employee"] {
-  background: #1A2332 !important;
+.chat-mobile-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid;
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  min-height: 60px;
 }
 
-.cs-main-container[data-theme="employee"] .cs-chat-container {
-  background: #1A2332 !important;
+.chat-mobile-messages {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+  background: hsl(var(--background));
 }
 
-.cs-main-container[data-theme="employee"] .cs-message-list {
-  background: #1A2332 !important;
+.chat-mobile-input {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid;
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
 }
 
-.cs-main-container[data-theme="employee"] .cs-message-input {
-  background: #323A46 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+/* Tema empleado */
+.chat-mobile-container[data-employee="true"] {
+  background: #1A2332;
 }
 
-.cs-main-container[data-theme="employee"] .cs-conversation-header {
-  background: #323A46 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
+.chat-mobile-container[data-employee="true"] .chat-mobile-header {
+  background: #323A46;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chat-mobile-container[data-employee="true"] .chat-mobile-messages {
+  background: #1A2332;
+}
+
+.chat-mobile-container[data-employee="true"] .chat-mobile-input {
+  background: #323A46;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 
