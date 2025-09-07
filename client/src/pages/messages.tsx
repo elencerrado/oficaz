@@ -727,105 +727,84 @@ export default function Messages() {
 
             {/* Messages Area - Flexible between header and input */}
             <div 
-              className="flex-1 overflow-hidden"
+              className="flex-1"
               style={{ 
                 background: isEmployee ? '#1A2332' : 'hsl(var(--background))'
               }}
             >
-              <div className="h-full flex flex-col">
-                {/* Messages List */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  {messagesGroupedByDate.map((group) => (
-                    <div key={group.date}>
-                      {/* Date separator */}
-                      <div className="flex items-center justify-center my-4">
-                        <div className={`text-xs px-3 py-1 rounded-full font-medium ${
-                          isEmployee 
-                            ? 'bg-white/20 text-white' 
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                        }`}>
-                          {group.dateFormatted}
-                        </div>
-                      </div>
-                      
-                      {/* Messages for this date */}
-                      {group.messages.map((message) => (
-                        <div key={message.id} className={`mb-4 flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.senderId === user?.id 
-                              ? 'bg-blue-500 text-white' 
-                              : isEmployee 
-                                ? 'bg-white/10 text-white' 
-                                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              <MainContainer>
+                <ChatContainer>
+                  <MessageList>
+                    {messagesGroupedByDate.map((group) => (
+                      <div key={group.date}>
+                        {/* Date separator */}
+                        <div className="flex items-center justify-center my-4">
+                          <div className={`text-xs px-3 py-1 rounded-full font-medium ${
+                            isEmployee 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                           }`}>
-                            <p className="text-sm">{message.content}</p>
-                            <div className="flex items-center justify-between mt-1 text-xs opacity-70">
-                              <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
-                              {message.senderId === user?.id && (
-                                <div className="ml-2">
+                            {group.dateFormatted}
+                          </div>
+                        </div>
+                        
+                        {/* Messages for this date */}
+                        {group.messages.map((message) => (
+                          <ChatMessage 
+                            key={message.id}
+                            model={{
+                              message: message.content,
+                              sentTime: format(new Date(message.createdAt), 'HH:mm'),
+                              sender: message.senderId === user?.id ? 'Tú' : selectedChatUser?.fullName || 'Usuario',
+                              direction: message.senderId === user?.id ? 'outgoing' : 'incoming',
+                              position: 'single'
+                            }}
+                          >
+                            {message.senderId === user?.id && (
+                              <ChatMessage.Footer>
+                                <div className="flex items-center justify-end mt-1">
                                   {(user?.role === 'admin' || user?.role === 'manager') ? (
                                     message.isRead ? (
-                                      <div className="flex items-center text-green-200">
+                                      <div className="flex items-center text-green-400">
                                         <Check className="h-3 w-3" />
                                         <Check className="h-3 w-3 -ml-1" />
                                       </div>
                                     ) : (
-                                      <Check className="h-3 w-3 text-green-200" />
+                                      <Check className="h-3 w-3 text-green-400" />
                                     )
                                   ) : (
-                                    <Check className="h-3 w-3 text-green-200" />
+                                    <Check className="h-3 w-3 text-green-400" />
                                   )}
                                 </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                              </ChatMessage.Footer>
+                            )}
+                          </ChatMessage>
+                        ))}
+                      </div>
+                    ))}
+                  </MessageList>
+                </ChatContainer>
+              </MainContainer>
             </div>
 
             {/* Message Input - Sticky Bottom */}
             <div 
-              className={`sticky bottom-0 z-20 border-t px-4 py-3 ${
+              className={`sticky bottom-0 z-20 border-t ${
                 isEmployee 
                   ? 'border-gray-200/20 bg-[#323A46]' 
                   : 'border-border bg-background'
               }`}
               style={{
-                paddingBottom: `calc(12px + env(safe-area-inset-bottom, 0px))`
+                paddingBottom: `env(safe-area-inset-bottom, 0px)`
               }}
             >
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  placeholder="Escribe tu mensaje..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      isEmployee ? handleSendEmployeeMessage() : sendMessage();
-                    }
-                  }}
-                  disabled={sendMessageMutation.isPending}
-                  className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 ${
-                    isEmployee 
-                      ? 'bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-white/40' 
-                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-blue-500'
-                  }`}
-                />
-                <Button
-                  onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                  size="sm"
-                  className={isEmployee ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+              <MessageInput 
+                placeholder="Escribe tu mensaje..."
+                value={newMessage}
+                onChange={(val) => setNewMessage(val)}
+                onSend={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
+                disabled={sendMessageMutation.isPending}
+              />
             </div>
           </div>
         )}
