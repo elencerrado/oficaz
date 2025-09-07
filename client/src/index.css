@@ -1,5 +1,7 @@
 /* Removed Google Fonts import - using system fonts for better performance */
 
+@import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
