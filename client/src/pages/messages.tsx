@@ -223,22 +223,6 @@ export default function Messages() {
     ).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [selectedChat, messages, user]);
 
-  // Convert messages to Chatscope format
-  const chatScopeMessages = useMemo(() => {
-    return chatMessages.map((msg): MessageModel => ({
-      message: msg.content,
-      sentTime: format(new Date(msg.createdAt), 'HH:mm'),
-      sender: msg.senderId === user?.id ? 'Tú' : (selectedChatUser?.fullName || 'Usuario'),
-      direction: msg.senderId === user?.id ? 'outgoing' : 'incoming',
-      position: 'single',
-      payload: {
-        id: msg.id,
-        isRead: msg.isRead,
-        senderId: msg.senderId,
-        fullTimestamp: msg.createdAt
-      }
-    }));
-  }, [chatMessages, user, selectedChatUser]);
 
   // Group messages by date
   const messagesGroupedByDate = useMemo(() => {
@@ -416,80 +400,103 @@ export default function Messages() {
           </div>
         </div>
 
-        {/* Chat Area */}
+        {/* Chat Area - Solo para escritorio */}
         <div className="flex-1 flex flex-col">
           {selectedChat && selectedChatUser ? (
-            <div style={{ position: "relative", height: "100%" }}>
-              <MainContainer>
-                <ChatContainer>
-                  <ConversationHeader>
-                    <UserAvatar 
-                      fullName={selectedChatUser.fullName || ''} 
-                      size="sm" 
-                      userId={selectedChatUser.id}
-                      profilePicture={selectedChatUser.profilePicture}
-                    />
-                    <ConversationHeader.Content 
-                      userName={selectedChatUser.fullName}
-                      info={getRoleDisplay(selectedChatUser || null)}
-                    />
-                  </ConversationHeader>
-                  
-                  <MessageList>
-                    {messagesGroupedByDate.map((group) => (
-                      <div key={group.date}>
-                        {/* Date separator */}
-                        <div className="flex items-center justify-center my-4">
-                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
-                            {group.dateFormatted}
+            <div className="flex flex-col h-full">
+              {/* Desktop header */}
+              <div className="flex items-center space-x-3 p-4 border-b">
+                <UserAvatar 
+                  fullName={selectedChatUser.fullName || ''} 
+                  size="sm" 
+                  userId={selectedChatUser.id}
+                  profilePicture={selectedChatUser.profilePicture}
+                />
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    {selectedChatUser.fullName}
+                  </h3>
+                  <div className="text-sm text-muted-foreground">
+                    {getRoleDisplay(selectedChatUser || null)}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Messages area */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {messagesGroupedByDate.map((group) => (
+                  <div key={group.date}>
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center my-4">
+                      <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
+                        {group.dateFormatted}
+                      </div>
+                    </div>
+                    
+                    {/* Messages */}
+                    {group.messages.map((message) => (
+                      <div key={message.id} className={`mb-3 flex ${
+                        message.senderId === user?.id ? 'justify-end' : 'justify-start'
+                      }`}>
+                        <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
+                          message.senderId === user?.id 
+                            ? 'bg-blue-500 text-white rounded-br-sm' 
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+                        }`}>
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <div className="flex items-center justify-between mt-1 text-xs opacity-70">
+                            <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
+                            {message.senderId === user?.id && (
+                              <div className="ml-2">
+                                {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                  message.isRead ? (
+                                    <div className="flex items-center text-green-200">
+                                      <Check className="h-3 w-3" />
+                                      <Check className="h-3 w-3 -ml-1" />
+                                    </div>
+                                  ) : (
+                                    <Check className="h-3 w-3 text-green-200" />
+                                  )
+                                ) : (
+                                  <Check className="h-3 w-3 text-green-200" />
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        
-                        {/* Messages for this date */}
-                        {group.messages.map((message) => (
-                          <ChatMessage 
-                            key={message.id}
-                            model={{
-                              message: message.content,
-                              sentTime: format(new Date(message.createdAt), 'HH:mm'),
-                              sender: message.senderId === user?.id ? 'Tú' : selectedChatUser.fullName,
-                              direction: message.senderId === user?.id ? 'outgoing' : 'incoming',
-                              position: 'single'
-                            }}
-                          >
-                            {message.senderId === user?.id && (
-                              <ChatMessage.Footer>
-                                <div className="flex items-center justify-end mt-1">
-                                  {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                    message.isRead ? (
-                                      <div className="flex items-center text-green-400">
-                                        <Check className="h-3 w-3" />
-                                        <Check className="h-3 w-3 -ml-1" />
-                                      </div>
-                                    ) : (
-                                      <Check className="h-3 w-3 text-green-400" />
-                                    )
-                                  ) : (
-                                    <Check className="h-3 w-3 text-green-400" />
-                                  )}
-                                </div>
-                              </ChatMessage.Footer>
-                            )}
-                          </ChatMessage>
-                        ))}
                       </div>
                     ))}
-                  </MessageList>
-                  
-                  <MessageInput 
+                  </div>
+                ))}
+              </div>
+              
+              {/* Input area */}
+              <div className="p-4 border-t">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
                     placeholder="Escribe tu mensaje..."
                     value={newMessage}
-                    onChange={(val) => setNewMessage(val)}
-                    onSend={() => sendMessage()}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
                     disabled={sendMessageMutation.isPending}
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </ChatContainer>
-              </MainContainer>
+                  <Button
+                    onClick={() => sendMessage()}
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-2"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900/30">
