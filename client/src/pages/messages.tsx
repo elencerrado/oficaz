@@ -850,22 +850,23 @@ export default function Messages() {
                     <img 
                       src={company.logoUrl} 
                       alt={company.name} 
-                      className="h-8 max-w-[150px] object-contain filter brightness-0 invert"
+                      className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
                     />
                   ) : (
-                    <div className="text-white text-lg font-medium">
-                      {company?.name || 'Empresa'}
+                    <div className="text-white text-sm font-medium mb-1">
+                      {company?.name || 'Mi Empresa'}
                     </div>
                   )}
+                  <div className="text-white/70 text-xs">
+                    {user?.fullName}
+                  </div>
                 </div>
               </div>
 
-              {/* Title and Controls Section - igual a recordatorios */}
-              <div className="flex items-center justify-between px-6 pb-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-white mb-1">Mensajes</h1>
-                  <p className="text-white/70">Contacta con tu equipo directivo</p>
-                </div>
+              {/* Page title - EXACTO como recordatorios */}
+              <div className="px-6 pb-6">
+                <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
+                <p className="text-white/70 text-sm">Contacta con tu equipo directivo</p>
               </div>
 
               {/* Contact List - FORMATO EXACTO de recordatorios */}
