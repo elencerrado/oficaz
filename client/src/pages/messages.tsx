@@ -371,36 +371,45 @@ export default function Messages() {
   const isEmployee = user?.role === 'employee';
 
   return (
-    <div className="h-screen w-full flex flex-col lg:flex-row">
-      {/* Desktop Layout */}
-      <div className="hidden lg:flex w-full h-full">
-        {/* Sidebar */}
-        <div className="w-1/3 bg-card border-r border-border flex flex-col">
-          {/* Header */}
-          <div className="p-6 border-b border-border bg-background">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
-              {(user?.role === 'admin' || user?.role === 'manager') && (
-                <Button
-                  onClick={() => setShowAddChatModal(true)}
-                  size="sm"
-                  className="btn-oficaz-primary"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nuevo
-                </Button>
-              )}
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Buscar conversaciones..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+    <>
+      {/* Admin Layout - Patrón consistente */}
+      {!isEmployee && (
+        <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
+            <p className="text-gray-500 mt-1">
+              Comunícate con tu equipo y gestiona conversaciones.
+            </p>
           </div>
+          
+          {/* Desktop Layout */}
+          <div className="hidden lg:flex w-full h-full">
+            {/* Sidebar */}
+            <div className="w-1/3 bg-card border-r border-border flex flex-col">
+              {/* Header sin línea abajo */}
+              <div className="p-6 bg-background">
+                <div className="flex items-center justify-between mb-4">
+                  {(user?.role === 'admin' || user?.role === 'manager') && (
+                    <Button
+                      onClick={() => setShowAddChatModal(true)}
+                      size="sm"
+                      className="btn-oficaz-primary ml-auto"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nuevo
+                    </Button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder="Buscar conversaciones..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
 
           {/* Contacts List */}
           <div className="flex-1 overflow-y-auto">
@@ -812,7 +821,16 @@ export default function Messages() {
             </div>
           </div>
         )}
-      </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Employee Layout - Mantener como estaba */}
+      {isEmployee && (
+        <div className="h-screen w-full flex flex-col lg:flex-row">
+          {/* Contenido del employee aquí - lo arreglaré después */}
+        </div>
+      )}
 
       {/* Modal for new chat - Group message functionality */}
       <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
@@ -992,7 +1010,7 @@ export default function Messages() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 
