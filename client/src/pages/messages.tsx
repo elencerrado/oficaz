@@ -27,23 +27,8 @@ import {
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
 
-// Chatscope imports
-import {
-  MainContainer,
-  ChatContainer,
-  MessageList,
-  Message as ChatMessage,
-  MessageInput,
-  Avatar,
-  ConversationHeader,
-  TypingIndicator,
-  MessageModel
-} from '@chatscope/chat-ui-kit-react';
-
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-// @ts-ignore - No types available for virtual-keyboard-offset
-import { useKeyboardOffset } from 'virtual-keyboard-offset';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
@@ -678,20 +663,120 @@ export default function Messages() {
             </div>
           </div>
         ) : (
-          /* Chat View - Usando Chatscope con mejores prácticas móviles */
-          <ChatView 
-            isEmployee={isEmployee}
-            selectedChatUser={selectedChatUser}
-            messagesGroupedByDate={messagesGroupedByDate}
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            user={user}
-            sendMessageMutation={sendMessageMutation}
-            handleSendEmployeeMessage={handleSendEmployeeMessage}
-            sendMessage={sendMessage}
-            setSelectedChat={setSelectedChat}
-            getRoleDisplay={getRoleDisplay}
-          />
+          /* Chat View - Implementación simple y funcional para móvil */
+          <div className="chat-mobile-container">
+            {/* Header fijo */}
+            <div className="chat-mobile-header">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedChat(null)}
+                className="p-2"
+              >
+                <ArrowLeft className={`w-5 h-5 ${isEmployee ? 'text-white' : ''}`} />
+              </Button>
+              <UserAvatar 
+                fullName={selectedChatUser?.fullName || ''} 
+                size="sm" 
+                userId={selectedChatUser?.id}
+                profilePicture={selectedChatUser?.profilePicture}
+              />
+              <div className="flex-1">
+                <h3 className={`font-semibold text-sm ${isEmployee ? 'text-white' : 'text-foreground'}`}>
+                  {selectedChatUser?.fullName}
+                </h3>
+                <div className={`text-xs ${isEmployee ? 'text-white/70' : 'text-muted-foreground'}`}>
+                  {getRoleDisplay(selectedChatUser || null)}
+                </div>
+              </div>
+            </div>
+
+            {/* Área de mensajes con scroll */}
+            <div className="chat-mobile-messages">
+              {messagesGroupedByDate.map((group) => (
+                <div key={group.date}>
+                  {/* Separador de fecha */}
+                  <div className="flex items-center justify-center my-4">
+                    <div className={`text-xs px-3 py-1 rounded-full font-medium ${
+                      isEmployee 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {group.dateFormatted}
+                    </div>
+                  </div>
+                  
+                  {/* Mensajes */}
+                  {group.messages.map((message) => (
+                    <div key={message.id} className={`mb-3 flex ${
+                      message.senderId === user?.id ? 'justify-end' : 'justify-start'
+                    }`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-lg ${
+                        message.senderId === user?.id 
+                          ? 'bg-blue-500 text-white rounded-br-sm' 
+                          : isEmployee 
+                            ? 'bg-white/10 text-white rounded-bl-sm' 
+                            : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+                      }`}>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
+                          <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
+                          {message.senderId === user?.id && (
+                            <div className="ml-2">
+                              {(user?.role === 'admin' || user?.role === 'manager') ? (
+                                message.isRead ? (
+                                  <div className="flex items-center text-green-200">
+                                    <Check className="h-3 w-3" />
+                                    <Check className="h-3 w-3 -ml-1" />
+                                  </div>
+                                ) : (
+                                  <Check className="h-3 w-3 text-green-200" />
+                                )
+                              ) : (
+                                <Check className="h-3 w-3 text-green-200" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Input fijo abajo */}
+            <div className="chat-mobile-input">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder="Escribe tu mensaje..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      isEmployee ? handleSendEmployeeMessage() : sendMessage();
+                    }
+                  }}
+                  disabled={sendMessageMutation.isPending}
+                  className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 text-sm ${
+                    isEmployee 
+                      ? 'bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-white/40' 
+                      : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-blue-500'
+                  }`}
+                />
+                <Button
+                  onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
+                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                  size="sm"
+                  className={`p-2 ${isEmployee ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
