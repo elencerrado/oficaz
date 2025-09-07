@@ -1517,11 +1517,14 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   padding: 0.75rem 1rem;
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   min-height: 60px;
-  background: hsl(var(--background));
+  background: hsl(var(--background)) !important;
+  backdrop-filter: none !important;
   border-bottom: 1px solid hsl(var(--border));
   position: sticky;
   top: 0;
-  z-index: 41; /* Menos que el header principal pero más que el container */
+  z-index: 41;
+  /* Fondo completamente sólido, NO transparente */
+  opacity: 1 !important;
 }
 
 .simple-chat-messages {
