@@ -1495,54 +1495,92 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chat Mobile - Solución SIMPLE que funciona */
+/* Chat Mobile - Solución iOS Safari Professional */
 .chat-mobile-container {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Altura controlada por JavaScript usando visualViewport */
+  height: var(--viewport-height, 100vh);
   z-index: 50;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--background);
 }
 
 .chat-mobile-header {
+  /* STICKY header que siempre queda arriba */
+  position: sticky;
+  top: 0;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid;
-  border-color: hsl(var(--border));
-  background: hsl(var(--background));
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   min-height: 60px;
+  background: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  z-index: 100;
 }
 
 .chat-mobile-messages {
+  /* Área de mensajes que ocupa el espacio disponible */
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   padding: 1rem;
   background: hsl(var(--background));
-  min-height: 0;
+  min-height: 0; /* Crítico para flexbox */
 }
 
 .chat-mobile-input {
+  /* Input al final del flex, nunca se oculta */
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-top: 1px solid;
-  border-color: hsl(var(--border));
-  background: hsl(var(--background));
   padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  min-height: 60px;
-  /* Asegurar que siempre sea visible */
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  background: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+}
+
+.chat-mobile-input input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--input));
+  color: hsl(var(--foreground));
+  font-size: 16px; /* Evita zoom en iOS */
+}
+
+.chat-mobile-input input:focus {
+  outline: none;
+  border-color: #007AFF;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+}
+
+.chat-mobile-input button {
+  flex-shrink: 0;
+  padding: 0.75rem;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.chat-mobile-input button:hover {
+  background: #0056CC;
+}
+
+.chat-mobile-input button:disabled {
+  background: #999;
+  cursor: not-allowed;
 }
 
 

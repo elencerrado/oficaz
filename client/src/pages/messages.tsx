@@ -117,6 +117,40 @@ export default function Messages() {
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Hook para manejar altura del viewport en iOS Safari
+  const [viewportHeight, setViewportHeight] = useState(
+    typeof window !== 'undefined' ? window.innerHeight : 0
+  );
+
+  useEffect(() => {
+    function updateHeight() {
+      const height = window.visualViewport 
+        ? window.visualViewport.height 
+        : window.innerHeight;
+      
+      // Set CSS custom property for use in styles
+      document.documentElement.style.setProperty('--viewport-height', `${height}px`);
+      setViewportHeight(height);
+    }
+
+    updateHeight(); // Initial call
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateHeight);
+      window.visualViewport.addEventListener('scroll', updateHeight);
+    }
+    
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateHeight);
+        window.visualViewport.removeEventListener('scroll', updateHeight);
+      }
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, []);
+
 
 
 
@@ -676,7 +710,11 @@ export default function Messages() {
           </div>
         ) : (
           /* Chat View - Implementación simple y funcional para móvil */
-          <div className="chat-mobile-container" data-employee={isEmployee}>
+          <div 
+            className="chat-mobile-container" 
+            data-employee={isEmployee}
+            style={{ height: `${viewportHeight}px` }}
+          >
             {/* Header fijo */}
             <div className="chat-mobile-header">
               <Button
@@ -753,32 +791,29 @@ export default function Messages() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input fijo abajo */}
+            {/* Input en flexbox natural */}
             <div className="chat-mobile-input">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  placeholder="Escribe tu mensaje..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      isEmployee ? handleSendEmployeeMessage() : sendMessage();
-                    }
-                  }}
-                  disabled={sendMessageMutation.isPending}
-                  className="chat-input flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-                <Button
-                  onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 text-white p-2"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+              <input
+                type="text"
+                placeholder="Escribe tu mensaje..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    isEmployee ? handleSendEmployeeMessage() : sendMessage();
+                  }
+                }}
+                disabled={sendMessageMutation.isPending}
+                className="chat-input"
+              />
+              <button
+                onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                type="button"
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
           </div>
         )}
