@@ -1495,10 +1495,59 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* ChatScope iOS Safari Fixes */
+/* ChatScope iOS Safari Fixes - SIN HUECOS */
 .cs-main-container {
   position: fixed !important;
   height: var(--viewport-height, 100vh) !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+}
+
+.cs-chat-container {
+  height: 100% !important;
+}
+
+.cs-message-input {
+  position: sticky !important;
+  bottom: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+.cs-message-input__content-editor {
+  font-size: 16px !important; /* Evita zoom iOS */
+}
+
+/* Eliminar cualquier espacio extra */
+.cs-message-input__content,
+.cs-message-input__tools {
+  margin: 0 !important;
+  padding: 8px !important;
+}
+
+/* Asegurar que no hay gaps */
+.cs-message-list {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* CRÍTICO: Eliminar COMPLETAMENTE el hueco del teclado iOS */
+@supports (-webkit-touch-callout: none) {
+  .cs-main-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+  
+  .cs-message-input {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
 }
 .chat-mobile-container {
   position: fixed;
