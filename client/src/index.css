@@ -1495,22 +1495,24 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chat Mobile - Implementación simple y funcional */
+/* Chat Mobile - Implementación simple y funcional con teclado virtual */
 .chat-mobile-container {
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   height: 100dvh;
   background: var(--background);
 }
 
 .chat-mobile-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1520,6 +1522,9 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   background: hsl(var(--background));
   padding-top: max(12px, env(safe-area-inset-top, 0px));
   min-height: 60px;
+  /* Importante: asegurar que esté sobre el teclado virtual */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .chat-mobile-messages {
@@ -1527,18 +1532,54 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 1rem;
+  margin-top: 60px; /* Espacio para el header fijo */
+  margin-bottom: 80px; /* Espacio para el input fijo */
   background: hsl(var(--background));
+  /* Ajustar altura para teclado virtual */
+  max-height: calc(100vh - 140px);
+  max-height: calc(100dvh - 140px);
 }
 
 .chat-mobile-input {
-  position: sticky;
+  position: fixed;
   bottom: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 20;
   padding: 0.75rem 1rem;
   border-top: 1px solid;
   border-color: hsl(var(--border));
   background: hsl(var(--background));
   padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  min-height: 80px;
+  /* Importante: asegurar que esté sobre el teclado virtual */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Soporte específico para teclado virtual en iOS */
+@supports (height: 100dvh) {
+  .chat-mobile-container {
+    height: 100dvh;
+  }
+  
+  .chat-mobile-messages {
+    max-height: calc(100dvh - env(keyboard-inset-height, 140px));
+  }
+}
+
+/* Media query para dispositivos móviles */
+@media screen and (max-width: 768px) {
+  .chat-mobile-header,
+  .chat-mobile-input {
+    /* Evitar que se muevan cuando aparece el teclado */
+    position: fixed !important;
+  }
+  
+  .chat-mobile-messages {
+    /* Ajustar dinámicamente cuando el teclado esté visible */
+    padding-bottom: env(keyboard-inset-height, 0px);
+  }
 }
 
 /* Tema empleado */
