@@ -193,7 +193,6 @@ export default function Messages() {
     onSuccess: () => {
       setNewMessage('');
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      toast({ description: "Mensaje enviado correctamente" });
       
       setTimeout(() => {
         scrollToBottom();
