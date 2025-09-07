@@ -525,25 +525,41 @@ export default function Messages() {
         {!selectedChat ? (
           /* Contact List View */
           <div className={`w-full h-full flex flex-col ${
-            isEmployee ? 'bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900' : 'bg-background'
+            isEmployee ? 'bg-employee-gradient' : 'bg-background'
           }`}>
             {/* Header */}
             <div 
-              className={`px-6 border-b flex-shrink-0 ${
-                isEmployee ? 'border-white/20 bg-transparent' : 'border-border bg-background'
+              className={`flex items-center justify-between p-6 pb-8 h-20 ${
+                isEmployee ? '' : 'border-b border-border bg-background'
               }`}
               style={{
-                paddingTop: `calc(24px + env(safe-area-inset-top, 0px))`,
-                paddingBottom: '24px'
+                paddingTop: `calc(24px + env(safe-area-inset-top, 0px))`
               }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h1 className={`text-2xl font-semibold ${
-                  isEmployee ? 'text-white' : 'text-foreground'
-                }`}>
-                  Mensajes
-                </h1>
-                {(user?.role === 'admin' || user?.role === 'manager') && (
+              {isEmployee ? (
+                <>
+                  <Link href={`/${companyAlias}/inicio`}>
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+                    >
+                      <ArrowLeft className="h-5 w-5 mr-2" />
+                      <span className="font-medium">Atrás</span>
+                    </Button>
+                  </Link>
+                  
+                  <div className="flex-1 flex flex-col items-end text-right">
+                    <div className="text-white text-sm font-medium">
+                      {company?.name || 'Mi Empresa'}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-semibold text-foreground">
+                    Mensajes
+                  </h1>
                   <Button
                     onClick={() => setShowAddChatModal(true)}
                     size="sm"
@@ -552,8 +568,22 @@ export default function Messages() {
                     <Plus className="w-4 h-4 mr-1" />
                     Nuevo
                   </Button>
-                )}
+                </>
+              )}
+            </div>
+
+            {/* Page Title for Employee */}
+            {isEmployee && (
+              <div className="px-6 pb-6">
+                <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
+                <p className="text-white/70 text-sm">
+                  Comunicación con la dirección
+                </p>
               </div>
+            )}
+
+            {/* Search Bar */}
+            <div className={`px-6 ${isEmployee ? 'pb-6' : 'pb-4'}`}>
               <div className="relative">
                 <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
                   isEmployee ? 'text-white/50' : 'text-muted-foreground'
