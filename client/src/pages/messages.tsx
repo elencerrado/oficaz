@@ -116,6 +116,69 @@ export default function Messages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Detectar cambios en el viewport para el teclado móvil
+  useEffect(() => {
+    if (!chatContainerRef.current) return;
+
+    const handleResize = () => {
+      if (chatContainerRef.current) {
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        chatContainerRef.current.style.height = `${viewportHeight}px`;
+      }
+    };
+
+    // Escuchar cambios en visualViewport (mejor para teclado móvil)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+    }
+
+    // Configuración inicial
+    handleResize();
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, []);
+
+  // Focus en input para detectar teclado
+  useEffect(() => {
+    const input = document.querySelector('.chat-input') as HTMLInputElement;
+    if (!input || !chatContainerRef.current) return;
+
+    const handleFocus = () => {
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          const viewportHeight = window.visualViewport?.height || window.innerHeight;
+          chatContainerRef.current.style.height = `${viewportHeight}px`;
+          scrollToBottom();
+        }
+      }, 300);
+    };
+
+    const handleBlur = () => {
+      setTimeout(() => {
+        if (chatContainerRef.current) {
+          chatContainerRef.current.style.height = '100vh';
+        }
+      }, 300);
+    };
+
+    input.addEventListener('focus', handleFocus);
+    input.addEventListener('blur', handleBlur);
+
+    return () => {
+      input.removeEventListener('focus', handleFocus);
+      input.removeEventListener('blur', handleBlur);
+    };
+  }, [selectedChat]);
 
 
   // All queries together
@@ -674,7 +737,7 @@ export default function Messages() {
           </div>
         ) : (
           /* Chat View - Implementación simple y funcional para móvil */
-          <div className="chat-mobile-container" data-employee={isEmployee}>
+          <div className="chat-mobile-container" data-employee={isEmployee} ref={chatContainerRef}>
             {/* Header fijo */}
             <div className="chat-mobile-header">
               <Button
@@ -772,7 +835,7 @@ export default function Messages() {
                     }
                   }}
                   disabled={sendMessageMutation.isPending}
-                  className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 text-sm ${
+                  className={`chat-input flex-1 px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 text-sm ${
                     isEmployee 
                       ? 'bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:ring-white/40' 
                       : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-blue-500'
