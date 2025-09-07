@@ -688,7 +688,7 @@ export default function Messages() {
                 <div className={`text-sm ${
                   isEmployee ? 'text-white/70' : 'text-muted-foreground'
                 }`}>
-                  {getRoleDisplay(selectedChatUser)}
+                  {getRoleDisplay(selectedChatUser || null)}
                 </div>
               </div>
             </div>
