@@ -118,28 +118,56 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Solución iOS Safari: Escuchar visualViewport para ajustar altura
+  // Solución definitiva iOS Safari teclado
   useEffect(() => {
-    if (!chatContainerRef.current) return;
+    if (!selectedChat || !chatContainerRef.current) return;
 
-    const updateChatHeight = () => {
-      if (chatContainerRef.current && window.visualViewport) {
-        // En iOS Safari, visualViewport cambia cuando aparece el teclado
-        const viewportHeight = window.visualViewport.height;
-        chatContainerRef.current.style.height = `${viewportHeight}px`;
+    const chatContainer = chatContainerRef.current;
+
+    const handleViewportChange = () => {
+      if (window.visualViewport && chatContainer) {
+        // Usar la altura del visualViewport que SÍ cambia con el teclado
+        const height = window.visualViewport.height;
+        chatContainer.style.height = `${height}px`;
       }
     };
 
-    // Detectar cambios en visualViewport (iOS Safari)
+    const handleInputFocus = () => {
+      // Cuando se enfoca el input, asegurar que se ajuste inmediatamente
+      setTimeout(handleViewportChange, 100);
+    };
+
+    const handleInputBlur = () => {
+      // Cuando se desenfoca, restaurar altura completa
+      setTimeout(() => {
+        if (chatContainer) {
+          chatContainer.style.height = '100vh';
+        }
+      }, 100);
+    };
+
+    // Escuchar cambios en visualViewport
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateChatHeight);
-      // Altura inicial
-      updateChatHeight();
+      window.visualViewport.addEventListener('resize', handleViewportChange);
     }
+
+    // Escuchar focus/blur del input
+    const input = chatContainer.querySelector('.chat-input') as HTMLInputElement;
+    if (input) {
+      input.addEventListener('focus', handleInputFocus);
+      input.addEventListener('blur', handleInputBlur);
+    }
+
+    // Configuración inicial
+    handleViewportChange();
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateChatHeight);
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+      }
+      if (input) {
+        input.removeEventListener('focus', handleInputFocus);
+        input.removeEventListener('blur', handleInputBlur);
       }
     };
   }, [selectedChat]);
