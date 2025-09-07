@@ -866,7 +866,7 @@ export default function Messages() {
               {/* Page title - EXACTO como recordatorios */}
               <div className="px-6 pb-6">
                 <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
-                <p className="text-white/70 text-sm">Contacta con tu equipo directivo</p>
+                <p className="text-white/70 text-sm">Contacta con tu equipo</p>
               </div>
 
               {/* Contact List - FORMATO EXACTO de recordatorios */}
