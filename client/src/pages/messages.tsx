@@ -720,59 +720,97 @@ export default function Messages() {
             </div>
           </div>
         ) : (
-          /* Chat usando ChatScope - Librería profesional que funciona en iOS Safari */
-          <MainContainer 
-            style={{ 
-              height: `${viewportHeight}px`,
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              zIndex: 50
-            }}
-          >
-            <ChatContainer>
-              <ConversationHeader>
-                <ConversationHeader.Back 
-                  onClick={() => setSelectedChat(null)}
-                />
-                <Avatar
-                  name={selectedChatUser?.fullName || ''}
-                  src={selectedChatUser?.profilePicture || ''}
-                />
-                <ConversationHeader.Content
-                  userName={selectedChatUser?.fullName || ''}
-                  info={getRoleDisplay(selectedChatUser || null)}
-                />
-              </ConversationHeader>
-              
-              <MessageList>
-                {messages?.map((message: Message) => (
-                  <ChatScopeMessage
-                    key={message.id}
-                    model={{
-                      message: message.content,
-                      sentTime: format(new Date(message.createdAt), 'HH:mm'),
-                      sender: message.senderId === user?.id ? "user" : selectedChatUser?.fullName || '',
-                      direction: message.senderId === user?.id ? "outgoing" : "incoming",
-                      position: "single"
-                    }}
-                  />
-                )) || []}
-              </MessageList>
-              
-              <MessageInput 
+          /* Chat simple y funcional - SIN complicaciones */
+          <div className="simple-chat-container">
+            {/* Header simple */}
+            <div className="simple-chat-header">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedChat(null)}
+                className="p-2"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <UserAvatar 
+                fullName={selectedChatUser?.fullName || ''} 
+                size="sm" 
+                userId={selectedChatUser?.id}
+                profilePicture={selectedChatUser?.profilePicture}
+              />
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm text-foreground">
+                  {selectedChatUser?.fullName}
+                </h3>
+                <div className="text-xs text-muted-foreground">
+                  {getRoleDisplay(selectedChatUser || null)}
+                </div>
+              </div>
+            </div>
+
+            {/* Mensajes */}
+            <div className="simple-chat-messages" ref={messagesContainerRef}>
+              {messagesGroupedByDate.map((group) => (
+                <div key={group.date}>
+                  <div className="flex items-center justify-center my-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
+                      {group.dateFormatted}
+                    </div>
+                  </div>
+                  
+                  {group.messages.map((message) => (
+                    <div key={message.id} className={`mb-3 flex ${
+                      message.senderId === user?.id ? 'justify-end' : 'justify-start'
+                    }`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-lg ${
+                        message.senderId === user?.id 
+                          ? 'bg-blue-500 text-white rounded-br-sm' 
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+                      }`}>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <div className="flex items-center justify-between mt-1 text-xs opacity-70">
+                          <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
+                          {message.senderId === user?.id && (
+                            <div className="ml-2">
+                              <Check className="h-3 w-3 text-green-200" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input simple */}
+            <div className="simple-chat-input">
+              <input
+                type="text"
                 placeholder="Escribe tu mensaje..."
                 value={newMessage}
-                onChange={setNewMessage}
-                onSend={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
-                disabled={sendMessageMutation.isPending}
-                style={{
-                  fontSize: '16px' // Evita zoom en iOS
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    isEmployee ? handleSendEmployeeMessage() : sendMessage();
+                  }
                 }}
+                disabled={sendMessageMutation.isPending}
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                style={{ fontSize: '16px' }}
               />
-            </ChatContainer>
-          </MainContainer>
+              <Button
+                onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                size="sm"
+                className="bg-blue-500 hover:bg-blue-600 text-white p-2 ml-2"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </div>
 
