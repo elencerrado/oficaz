@@ -1537,6 +1537,12 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   background: hsl(var(--background));
   padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   min-height: 60px;
+  /* Asegurar que siempre sea visible */
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 
