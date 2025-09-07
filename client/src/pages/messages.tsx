@@ -117,6 +117,7 @@ export default function Messages() {
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+
   // All queries together
   const { data: messages, isLoading: messagesLoading } = useQuery({
     queryKey: ['/api/messages'],
@@ -423,7 +424,7 @@ export default function Messages() {
               </div>
               
               {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4" ref={messagesContainerRef}>
                 {messagesGroupedByDate.map((group) => (
                   <div key={group.date}>
                     {/* Date separator */}
@@ -468,6 +469,8 @@ export default function Messages() {
                     ))}
                   </div>
                 ))}
+                {/* Elemento para scroll automático */}
+                <div ref={messagesEndRef} />
               </div>
               
               {/* Input area */}
@@ -699,7 +702,7 @@ export default function Messages() {
             </div>
 
             {/* Área de mensajes con scroll */}
-            <div className="chat-mobile-messages">
+            <div className="chat-mobile-messages" ref={messagesContainerRef}>
               {messagesGroupedByDate.map((group) => (
                 <div key={group.date}>
                   {/* Separador de fecha */}
@@ -750,6 +753,8 @@ export default function Messages() {
                   ))}
                 </div>
               ))}
+              {/* Elemento para scroll automático */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Input fijo abajo */}
