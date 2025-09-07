@@ -163,8 +163,11 @@ export default function EmployeeProfile() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          <div className="text-white text-sm font-medium">
+          <div className="text-white text-sm font-medium mb-1">
             {company?.name || 'Test Company'}
+          </div>
+          <div className="text-white/70 text-xs">
+            {user?.fullName}
           </div>
         </div>
       </div>
