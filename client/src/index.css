@@ -1495,18 +1495,20 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   overflow: hidden !important;
 }
 
-/* Chat Mobile - Layout simple que funciona realmente */
+/* Chat Mobile - Header fijo arriba, input fijo abajo */
 .chat-mobile-container {
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: flex;
-  flex-direction: column;
   background: var(--background);
 }
 
 .chat-mobile-header {
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1515,26 +1517,33 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   border-color: hsl(var(--border));
   background: hsl(var(--background));
   padding-top: max(12px, env(safe-area-inset-top, 0px));
-  min-height: 60px;
+  height: 70px;
 }
 
 .chat-mobile-messages {
-  flex: 1;
+  position: absolute;
+  top: 70px;
+  bottom: 70px;
+  left: 0;
+  right: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 1rem;
   background: hsl(var(--background));
-  /* Usar toda la altura disponible */
-  min-height: 0;
 }
 
 .chat-mobile-input {
-  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
   padding: 0.75rem 1rem;
   border-top: 1px solid;
   border-color: hsl(var(--border));
   background: hsl(var(--background));
   padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  height: 70px;
 }
 
 /* Tema empleado */

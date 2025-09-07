@@ -118,65 +118,30 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Detectar cambios en el viewport para el teclado móvil
+  // Ajustar área de mensajes cuando aparece teclado móvil
   useEffect(() => {
-    if (!chatContainerRef.current) return;
+    const messagesArea = document.querySelector('.chat-mobile-messages') as HTMLElement;
+    if (!messagesArea) return;
 
     const handleResize = () => {
-      if (chatContainerRef.current) {
+      if (messagesArea) {
         const viewportHeight = window.visualViewport?.height || window.innerHeight;
-        chatContainerRef.current.style.height = `${viewportHeight}px`;
+        // Header fijo: 70px, Input fijo: 70px
+        const messagesHeight = viewportHeight - 140;
+        messagesArea.style.height = `${messagesHeight}px`;
       }
     };
 
-    // Escuchar cambios en visualViewport (mejor para teclado móvil)
+    // Solo en móvil y cuando hay visualViewport
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
-    } else {
-      window.addEventListener('resize', handleResize);
+      handleResize(); // Configuración inicial
     }
-
-    // Configuración inicial
-    handleResize();
 
     return () => {
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleResize);
-      } else {
-        window.removeEventListener('resize', handleResize);
       }
-    };
-  }, []);
-
-  // Focus en input para detectar teclado
-  useEffect(() => {
-    const input = document.querySelector('.chat-input') as HTMLInputElement;
-    if (!input || !chatContainerRef.current) return;
-
-    const handleFocus = () => {
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          const viewportHeight = window.visualViewport?.height || window.innerHeight;
-          chatContainerRef.current.style.height = `${viewportHeight}px`;
-          scrollToBottom();
-        }
-      }, 300);
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (chatContainerRef.current) {
-          chatContainerRef.current.style.height = '100vh';
-        }
-      }, 300);
-    };
-
-    input.addEventListener('focus', handleFocus);
-    input.addEventListener('blur', handleBlur);
-
-    return () => {
-      input.removeEventListener('focus', handleFocus);
-      input.removeEventListener('blur', handleBlur);
     };
   }, [selectedChat]);
 
