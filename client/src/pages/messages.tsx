@@ -825,80 +825,108 @@ export default function Messages() {
         </div>
       )}
       
-      {/* Employee Layout - Formato consistente con dashboard */}
+      {/* Employee Layout - FORMATO EXACTO de employee-reminders */}
       {isEmployee && (
         <div className="w-full h-full">
           {!selectedChat ? (
-            /* Contact List View */
-            <div className="bg-employee-gradient min-h-screen px-4 py-4" style={{ overflowX: 'clip' }}>
-              {/* Header compacto - como dashboard */}
-              <div className="flex justify-between items-center py-2 flex-shrink-0 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <UserAvatar
-                      fullName={user?.fullName || ''}
-                      size="sm"
-                      userId={user?.id}
-                      profilePicture={user?.profilePicture}
+            /* Contact List View - formato EXACTO de recordatorios */
+            <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+              {/* Header - Standard employee pattern EXACTO */}
+              <div className="flex items-center justify-between p-6 pb-8 h-20">
+                <Link href={`/${companyAlias}/inicio`}>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    <span className="font-medium">Atrás</span>
+                  </Button>
+                </Link>
+                
+                <div className="flex-1 flex flex-col items-end text-right">
+                  {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+                  {company?.logoUrl && hasAccess('logoUpload') ? (
+                    <img 
+                      src={company.logoUrl} 
+                      alt={company.name} 
+                      className="h-8 max-w-[150px] object-contain filter brightness-0 invert"
                     />
-                    <div>
-                      <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
-                      <p className="text-xs text-white/70">Mensajes</p>
+                  ) : (
+                    <div className="text-white text-lg font-medium">
+                      {company?.name || 'Empresa'}
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Contact List - formato compacto como grid del dashboard */}
-              <div className="space-y-3">
-                {filteredEmployees.length > 0 ? (
-                  filteredEmployees.map((employee) => {
-                    const unreadCount = (messages || []).filter((msg: any) => 
-                      !msg.isRead && msg.senderId === employee.id && msg.receiverId === user?.id
-                    ).length;
+              {/* Title and Controls Section - igual a recordatorios */}
+              <div className="flex items-center justify-between px-6 pb-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-white mb-1">Mensajes</h1>
+                  <p className="text-white/70">Contacta con tu equipo directivo</p>
+                </div>
+              </div>
 
-                    return (
-                      <div
-                        key={employee.id}
-                        className="bg-white/10 border-white/20 hover:bg-white/20 text-white backdrop-blur-sm p-4 rounded-lg border cursor-pointer transition-all"
-                        onClick={() => setSelectedChat(employee.id)}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <UserAvatar 
-                            fullName={employee.fullName || ''} 
-                            size="md" 
-                            userId={employee.id}
-                            profilePicture={employee.profilePicture}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className="font-medium truncate text-white">
-                                {employee.fullName}
-                              </p>
-                              {unreadCount > 0 && (
-                                <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
-                                  {unreadCount}
+              {/* Contact List - FORMATO EXACTO de recordatorios */}
+              <div className="flex-1 px-6 pb-6">
+                {!messages || !Array.isArray(messages) ? (
+                  <div className="text-center py-8">
+                    <div className="text-white/70">Cargando mensajes...</div>
+                  </div>
+                ) : filteredEmployees.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 text-white/30 mx-auto mb-4" />
+                    <div className="text-white/70 mb-2">No hay contactos</div>
+                    <div className="text-white/50 text-sm">
+                      No hay responsables disponibles para contactar
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredEmployees.map((employee) => {
+                      const unreadCount = Array.isArray(messages) ? messages.filter((msg: any) => 
+                        !msg.isRead && msg.senderId === employee.id && msg.receiverId === user?.id
+                      ).length : 0;
+
+                      return (
+                        <div
+                          key={employee.id}
+                          className="relative rounded-lg p-4 shadow-md border border-white/10 backdrop-blur-sm bg-white/5 hover:bg-white/10 cursor-pointer transition-all"
+                          onClick={() => setSelectedChat(employee.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3 flex-1">
+                              <UserAvatar 
+                                fullName={employee.fullName || ''} 
+                                size="md" 
+                                userId={employee.id}
+                                profilePicture={employee.profilePicture}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-medium text-white text-sm truncate">
+                                    {employee.fullName}
+                                  </h3>
+                                  {unreadCount > 0 && (
+                                    <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
+                                      {unreadCount}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                                <p className="text-white/70 text-xs">
+                                  {getRoleDisplay(employee)}
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-xs mt-1 text-white/70">
-                              {getRoleDisplay(employee)}
+                            
+                            <div className="flex items-center ml-2">
+                              <ChevronRight className="h-5 w-5 text-white/50" />
                             </div>
                           </div>
-                          
-                          <ChevronRight className="w-5 h-5 text-white/50" />
                         </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4 bg-white/10">
-                      <Users className="w-8 h-8 text-white/50" />
-                    </div>
-                    <p className="text-white/70">
-                      No hay responsables disponibles
-                    </p>
+                      );
+                    })}
                   </div>
                 )}
               </div>
