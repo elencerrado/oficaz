@@ -678,24 +678,27 @@ export default function Messages() {
         ) : (
           /* Chat View */
           <div 
-            className="fixed inset-0 z-[60] flex flex-col"
+            className="w-full h-full flex flex-col"
             style={{ 
               background: isEmployee ? '#1A2332' : 'hsl(var(--background))',
               touchAction: 'manipulation',
               overscrollBehavior: 'none',
-              position: 'fixed'
+              position: 'relative',
+              minHeight: '100vh',
+              maxHeight: '100vh'
             }}
           >
             {/* Chat Header */}
             <div 
-              className={`flex items-center space-x-3 px-4 border-b flex-shrink-0 ${
+              className={`sticky top-0 z-10 flex items-center space-x-3 px-4 border-b flex-shrink-0 ${
                 isEmployee 
                   ? 'border-gray-200/20 bg-[#323A46]' 
                   : 'border-border bg-background'
               }`}
               style={{
                 paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-                paddingBottom: '16px'
+                paddingBottom: '16px',
+                position: 'sticky'
               }}
             >
               <Button
@@ -728,9 +731,11 @@ export default function Messages() {
 
             {/* Messages */}
             <div 
-              className="flex-1"
+              className="flex-1 overflow-hidden"
               style={{ 
-                background: isEmployee ? '#1A2332' : 'hsl(var(--background))'
+                background: isEmployee ? '#1A2332' : 'hsl(var(--background))',
+                height: 'calc(100vh - 80px)', /* Resta la altura del header */
+                maxHeight: 'calc(100vh - 80px)'
               }}
             >
               <MainContainer>
@@ -792,7 +797,10 @@ export default function Messages() {
                     onSend={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
                     disabled={sendMessageMutation.isPending}
                     style={{
-                      paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
+                      paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+                      position: 'sticky',
+                      bottom: 0,
+                      zIndex: 10
                     }}
                   />
                 </ChatContainer>
