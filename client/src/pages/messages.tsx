@@ -116,34 +116,7 @@ export default function Messages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Ajustar área de mensajes cuando aparece teclado móvil
-  useEffect(() => {
-    const messagesArea = document.querySelector('.chat-mobile-messages') as HTMLElement;
-    if (!messagesArea) return;
-
-    const handleResize = () => {
-      if (messagesArea) {
-        const viewportHeight = window.visualViewport?.height || window.innerHeight;
-        // Header fijo: 70px, Input fijo: 70px
-        const messagesHeight = viewportHeight - 140;
-        messagesArea.style.height = `${messagesHeight}px`;
-      }
-    };
-
-    // Solo en móvil y cuando hay visualViewport
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      handleResize(); // Configuración inicial
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
-      }
-    };
-  }, [selectedChat]);
 
 
   // All queries together
@@ -702,7 +675,7 @@ export default function Messages() {
           </div>
         ) : (
           /* Chat View - Implementación simple y funcional para móvil */
-          <div className="chat-mobile-container" data-employee={isEmployee} ref={chatContainerRef}>
+          <div className="chat-mobile-container" data-employee={isEmployee}>
             {/* Header fijo */}
             <div className="chat-mobile-header">
               <Button
