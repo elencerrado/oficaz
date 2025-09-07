@@ -933,17 +933,17 @@ export default function Messages() {
               </div>
             </div>
           ) : (
-            /* Chat simple y funcional - SIN complicaciones */
+            /* Chat simple y funcional - con colores empleado */
             <div className="simple-chat-container">
-              {/* Header simple */}
-              <div className="simple-chat-header">
+              {/* Header simple con colores empleado */}
+              <div className="simple-chat-header bg-employee-gradient">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedChat(null)}
-                  className="p-2"
+                  className="p-2 text-white hover:bg-white/20"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-5 h-5 text-white" />
                 </Button>
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
@@ -952,10 +952,10 @@ export default function Messages() {
                   profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm text-foreground">
+                  <h3 className="font-semibold text-sm text-white">
                     {selectedChatUser?.fullName}
                   </h3>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-white/70">
                     {getRoleDisplay(selectedChatUser || null)}
                   </div>
                 </div>
