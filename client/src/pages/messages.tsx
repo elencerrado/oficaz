@@ -531,8 +531,7 @@ export default function Messages() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-lg font-semibold text-foreground">Conversaciones ({filteredEmployees.length})</h2>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-sm text-muted-foreground">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </p>
                   </div>
