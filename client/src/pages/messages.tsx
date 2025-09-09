@@ -914,13 +914,13 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '60px' : '20px' }} />
+                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
               </div>
               {/* Message Input - Fixed at bottom */}
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '8px' : 'max(16px, env(safe-area-inset-bottom))',
+                  paddingBottom: isKeyboardOpen ? '4px' : 'max(16px, env(safe-area-inset-bottom))',
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
@@ -1355,7 +1355,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '60px' : '20px' }} />
+                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
               </div>
               {/* Message Input - Fixed at bottom - DARK THEME */}
               <div 
