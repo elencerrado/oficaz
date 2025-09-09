@@ -83,6 +83,7 @@ export default function Messages() {
 
   // All state declarations together - FIXED ORDER
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [isPWA, setIsPWA] = useState(false);
   const [selectedChat, setSelectedChat] = useState<number | null>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const chatParam = urlParams.get('chat');
@@ -222,6 +223,11 @@ export default function Messages() {
   }, [selectedChat, messages?.length, user?.id]); // Removed markAsReadMutation from deps
 
   useEffect(() => {
+    // Detectar PWA específicamente
+    const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
+                     window.navigator.standalone === true;
+    setIsPWA(isPWAMode);
+
     const handleKeyboardVisibility = () => {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
@@ -920,9 +926,9 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '8px' : '16px',
+                  paddingBottom: '8px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : '16px',
+                  bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
                   left: 0,
                   right: 0,
                   zIndex: 50
@@ -1366,9 +1372,9 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '8px' : '16px',
+                  paddingBottom: '8px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : '16px',
+                  bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
                   left: 0,
                   right: 0,
                   zIndex: 50
