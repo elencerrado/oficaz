@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, or, desc, sql, lte, isNotNull, isNull, inArray, asc } from 'drizzle-orm';
+import { eq, and, or, desc, sql, lte, isNotNull, isNull, inArray, asc, ne } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import type {
   Company, User, WorkSession, BreakPeriod, VacationRequest, Document, Message, SystemNotification,
@@ -1714,6 +1714,40 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.reminders.userId, userId))
       .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
 
+    // FIXED: Get reminders assigned to this user (where user is in assignedUserIds)
+    const assignedToUserReminders = await db.select({
+      id: schema.reminders.id,
+      userId: schema.reminders.userId,
+      companyId: schema.reminders.companyId,
+      title: schema.reminders.title,
+      content: schema.reminders.content,
+      reminderDate: schema.reminders.reminderDate,
+      priority: schema.reminders.priority,
+      color: schema.reminders.color,
+      isCompleted: schema.reminders.isCompleted,
+      isArchived: schema.reminders.isArchived,
+      isPinned: schema.reminders.isPinned,
+      notificationShown: schema.reminders.notificationShown,
+      showBanner: schema.reminders.showBanner,
+      assignedUserIds: schema.reminders.assignedUserIds,
+      completedByUserIds: schema.reminders.completedByUserIds,
+      assignedBy: schema.reminders.assignedBy,
+      assignedAt: schema.reminders.assignedAt,
+      createdBy: schema.reminders.createdBy,
+      createdAt: schema.reminders.createdAt,
+      updatedAt: schema.reminders.updatedAt,
+      creatorName: schema.users.fullName
+    })
+    .from(schema.reminders)
+    .leftJoin(schema.users, eq(schema.reminders.userId, schema.users.id))
+    .where(
+      and(
+        ne(schema.reminders.userId, userId), // Not their own reminders (already included above)
+        sql`${userId} = ANY(${schema.reminders.assignedUserIds})` // User is assigned to this reminder
+      )
+    )
+    .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
+
     // Get reminders that the user has completed (even if not their own)
     const completedByUserReminders = await db.select({
       id: schema.reminders.id,
@@ -1745,6 +1779,7 @@ export class DrizzleStorage implements IStorage {
 
     console.log(`📋 Reminders debug for user ${userId}:`);
     console.log(`Own reminders count: ${ownReminders.length}`);
+    console.log(`Assigned to user reminders count: ${assignedToUserReminders.length}`);
     console.log(`Completed by user reminders count: ${completedByUserReminders.length}`);
     console.log(`Completed reminders:`, completedByUserReminders.map(r => ({ id: r.id, title: r.title, userId: r.userId, completedBy: r.completedByUserIds })));
 
@@ -1756,15 +1791,25 @@ export class DrizzleStorage implements IStorage {
         creatorName: null
       }));
 
-    // Process completed reminders - only show ones not owned by user
-    const completedRemindersWithFlag = completedByUserReminders
-      .filter(reminder => reminder.userId !== userId) // Only show completed reminders from others
+    // Process assigned reminders - reminders assigned to this user by admin/others
+    const assignedRemindersWithFlag = assignedToUserReminders
       .map(reminder => ({
         ...reminder,
         isAssigned: true
       }));
 
-    return [...ownRemindersWithFlag, ...completedRemindersWithFlag];
+    // Process completed reminders - only show ones not owned by user and not already assigned
+    const completedRemindersWithFlag = completedByUserReminders
+      .filter(reminder => 
+        reminder.userId !== userId && // Only show completed reminders from others
+        !assignedToUserReminders.some(assigned => assigned.id === reminder.id) // Avoid duplicates with assigned reminders
+      )
+      .map(reminder => ({
+        ...reminder,
+        isAssigned: true
+      }));
+
+    return [...ownRemindersWithFlag, ...assignedRemindersWithFlag, ...completedRemindersWithFlag];
   }
 
   async getEmployeesByCompany(companyId: number): Promise<any[]> {
