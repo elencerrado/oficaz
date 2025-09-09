@@ -53,9 +53,9 @@ export function ReminderBanner() {
   const isAuthenticated = !!(user && token);
   const isMobile = useIsMobile();
 
-  // Fetch active reminders with reduced polling for better performance
+  // Fetch reminders with notifications enabled only 
   const { data: activeReminders = [], isLoading, error } = useQuery({
-    queryKey: ['/api/reminders/active'],
+    queryKey: ['/api/reminders/check-notifications'],
     refetchInterval: isAuthenticated ? 30000 : false, // Poll every 30 seconds instead of 3
     staleTime: 25000, // Cache for 25 seconds
     gcTime: 60000, // Keep in cache for 1 minute
