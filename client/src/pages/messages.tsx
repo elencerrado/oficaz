@@ -525,7 +525,7 @@ export default function Messages() {
           </p>
         </div>
         {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex gap-6 h-[calc(100vh-200px)]">
+        <div className="hidden lg:flex h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
