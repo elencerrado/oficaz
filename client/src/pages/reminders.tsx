@@ -820,7 +820,7 @@ export default function Reminders() {
                         onClick={() => handleEdit(reminder)}
                         className="h-6 w-6 p-0 hover:bg-black/10"
                       >
-                        <Edit className="w-3 h-3 text-white drop-shadow-sm" />
+                        <Edit className="w-3 h-3 text-gray-700" />
                       </Button>
                       {(user?.role === 'admin' || user?.role === 'manager') && (
                         <Button
