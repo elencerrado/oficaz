@@ -83,6 +83,7 @@ export default function Messages() {
 
   // All state declarations together - FIXED ORDER
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const [isPWA, setIsPWA] = useState(false);
   const [selectedChat, setSelectedChat] = useState<number | null>(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -230,15 +231,32 @@ export default function Messages() {
 
     const handleKeyboardVisibility = () => {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
+      if (isIOS && window.visualViewport) {
         const viewport = window.visualViewport;
-        if (viewport) {
-          const handleViewportChange = () => {
-            setIsKeyboardOpen(viewport.height < window.screen.height * 0.75);
-          };
-          viewport.addEventListener('resize', handleViewportChange);
-          return () => viewport.removeEventListener('resize', handleViewportChange);
-        }
+        
+        const handleViewportChange = () => {
+          const heightDiff = window.innerHeight - viewport.height;
+          
+          // Detectar teclado con umbral mayor
+          if (heightDiff > 150) {
+            setIsKeyboardOpen(true);
+            // Para PWA iOS, necesitamos guardar el offset del teclado
+            if (isPWAMode) {
+              setKeyboardOffset(heightDiff);
+            }
+          } else {
+            setIsKeyboardOpen(false);
+            setKeyboardOffset(0);
+          }
+        };
+        
+        viewport.addEventListener('resize', handleViewportChange);
+        viewport.addEventListener('scroll', handleViewportChange);
+        
+        return () => {
+          viewport.removeEventListener('resize', handleViewportChange);
+          viewport.removeEventListener('scroll', handleViewportChange);
+        };
       }
     };
     
@@ -928,7 +946,12 @@ export default function Messages() {
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                  bottom: isKeyboardOpen 
+                    ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
+                    : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                  transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
+                    ? `translateY(-${keyboardOffset}px)` 
+                    : 'none',
                   left: 0,
                   right: 0,
                   zIndex: 50
@@ -1374,7 +1397,12 @@ export default function Messages() {
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                  bottom: isKeyboardOpen 
+                    ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
+                    : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                  transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
+                    ? `translateY(-${keyboardOffset}px)` 
+                    : 'none',
                   left: 0,
                   right: 0,
                   zIndex: 50
