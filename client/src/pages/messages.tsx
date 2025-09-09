@@ -944,12 +944,14 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '8px' : '0px',
-                  minHeight: isPWA ? '80px' : 'auto',
+                  minHeight: isPWA ? '60px' : 'auto',
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` : '20px',
+                    : isPWA ? '0px' : '20px',
+                  paddingBottom: isPWA && !isKeyboardOpen 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    : (isKeyboardOpen ? '8px' : '0px'),
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
                     : 'none',
@@ -1396,12 +1398,14 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '8px' : '0px',
-                  minHeight: isPWA ? '80px' : 'auto',
+                  minHeight: isPWA ? '60px' : 'auto',
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` : '20px',
+                    : isPWA ? '0px' : '20px',
+                  paddingBottom: isPWA && !isKeyboardOpen 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    : (isKeyboardOpen ? '8px' : '0px'),
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
                     : 'none',
