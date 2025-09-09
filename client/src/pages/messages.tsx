@@ -945,6 +945,7 @@ export default function Messages() {
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
+                  minHeight: isPWA ? '80px' : 'auto',
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
@@ -1396,6 +1397,7 @@ export default function Messages() {
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
+                  minHeight: isPWA ? '80px' : 'auto',
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
