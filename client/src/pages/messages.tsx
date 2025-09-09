@@ -928,7 +928,7 @@ export default function Messages() {
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : '20px',
+                  bottom: isKeyboardOpen ? '0px' : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
                   left: 0,
                   right: 0,
                   zIndex: 50
@@ -1374,7 +1374,7 @@ export default function Messages() {
                 style={{
                   paddingBottom: isKeyboardOpen ? '8px' : '0px',
                   position: 'fixed',
-                  bottom: isKeyboardOpen ? '0px' : '20px',
+                  bottom: isKeyboardOpen ? '0px' : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
                   left: 0,
                   right: 0,
                   zIndex: 50
