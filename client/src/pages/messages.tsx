@@ -920,7 +920,7 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+                  paddingBottom: isKeyboardOpen ? '8px' : 'max(16px, env(safe-area-inset-bottom))',
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
