@@ -76,13 +76,18 @@ export default function Messages() {
       />
     );
   }
+  
+  // Unified chat - works for both admin and employee
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager';
+  const canShowReadStatus = isAdmin; // Only admin/manager see double ticks
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
   const companyAlias = location.split('/')[1];
 
-  // All state declarations together - FIXED ORDER
+  // Unified state management
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [selectedChat, setSelectedChat] = useState<number | null>(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const chatParam = urlParams.get('chat');
@@ -103,6 +108,19 @@ export default function Messages() {
   const [modalSelectedEmployees, setModalSelectedEmployees] = useState<number[]>([]);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
+  
+  // iOS PWA viewport fix
+  useEffect(() => {
+    const handleResize = () => {
+      const vh = window.innerHeight;
+      setViewportHeight(vh);
+      document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // All refs together
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +140,15 @@ export default function Messages() {
     enabled: !!user && user.role === 'employee',
     staleTime: 60000,
   });
+  
+  // Unified filtered employees for admin view  
+  const filteredEmployees = useMemo(() => {
+    if (!isAdmin) return filteredContactList;
+    return (employees as Employee[] || []).filter(employee => 
+      employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      employee.id !== user?.id
+    );
+  }, [isAdmin, employees, searchTerm, user?.id, filteredContactList]);
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
@@ -156,8 +183,8 @@ export default function Messages() {
     },
   });
 
-  // Send message function for employee
-  const handleSendEmployeeMessage = useCallback(async () => {
+  // Unified send message function - works for both admin and employee
+  const sendMessage = useCallback(async () => {
     if (!newMessage.trim() || !selectedChat) return;
     
     try {
@@ -168,9 +195,8 @@ export default function Messages() {
       });
       setNewMessage("");
       
-      // Forzar scroll después de enviar mensaje con un pequeño delay - usa misma lógica que useEffect
+      // Auto-scroll after sending message
       setTimeout(() => {
-        // MÉTODO 1: Usar scrollIntoView en messagesEndRef
         if (messagesEndRef.current) {
           messagesEndRef.current.scrollIntoView({ 
             behavior: 'auto', 
@@ -178,19 +204,14 @@ export default function Messages() {
             inline: 'nearest'
           });
         }
-
-        // Usar la función de scroll mejorada
         scrollToBottom();
-        
-        // Múltiples intentos para garantizar el scroll después del envío
         setTimeout(scrollToBottom, 100);
         setTimeout(scrollToBottom, 300);
-        setTimeout(scrollToBottom, 500);
       }, 100);
     } catch (error) {
-      console.error('Error sending employee message:', error);
+      console.error('Error sending message:', error);
     }
-  }, [newMessage, selectedChat, sendMessageMutation]);
+  }, [newMessage, selectedChat, sendMessageMutation, scrollToBottom]);
 
   // All effects together
   useEffect(() => {
@@ -488,22 +509,21 @@ export default function Messages() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedChat) return;
-    
-    sendMessageMutation.mutate({
-      receiverId: selectedChat,
-      subject: 'Mensaje',
-      content: newMessage
-    });
-  };
-
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedChat) return;
-    
-    sendMessageMutation.mutate({
-      receiverId: selectedChat,
-      subject: 'Mensaje',
+  // Simplified contact list - works for both admin and employee
+  const contactList = useMemo(() => {
+    if (isAdmin) {
+      return employees as Employee[] || [];
+    } else {
+      return managers as Manager[] || [];
+    }
+  }, [isAdmin, employees, managers]);
+  
+  const filteredContactList = useMemo(() => {
+    return contactList.filter(contact => 
+      contact.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      contact.id !== user?.id
+    );
+  }, [contactList, searchTerm, user?.id]);
       content: newMessage
     });
   };
