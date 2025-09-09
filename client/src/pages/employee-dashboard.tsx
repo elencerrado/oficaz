@@ -624,6 +624,18 @@ export default function EmployeeDashboard() {
         {/* Header - Compacto */}
         <div className="flex justify-between items-center py-2 flex-shrink-0">
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsAlarmModalOpen(true)}
+              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-3 py-2"
+              title="Configurar alarmas de trabajo"
+            >
+              <AlarmClock className="h-4 w-4 mr-2" />
+              <span className="font-medium text-xs">Alarmas</span>
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-1 transition-colors">
@@ -650,18 +662,6 @@ export default function EmployeeDashboard() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsAlarmModalOpen(true)}
-              className="text-white hover:bg-white/10 backdrop-blur-xl border border-white/20 rounded-lg px-3 py-2"
-              title="Configurar alarmas de trabajo"
-            >
-              <AlarmClock className="h-4 w-4 mr-2" />
-              <span className="font-medium text-xs">Alarmas</span>
-            </Button>
           </div>
         </div>
 
