@@ -131,6 +131,15 @@ export default function Messages() {
     staleTime: 60000,
   });
 
+  // Register page visit for notifications clearing
+  useEffect(() => {
+    if (user) {
+      const now = new Date().toISOString();
+      localStorage.setItem('lastMessagesPageVisit', now);
+      console.log('💬 Messages page visited at:', now);
+    }
+  }, [user]);
+
   // All mutations together
   const sendMessageMutation = useMutation({
     mutationFn: async (data: { receiverId: number; subject: string; content: string }) => {

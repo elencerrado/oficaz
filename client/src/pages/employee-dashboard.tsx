@@ -223,6 +223,9 @@ export default function EmployeeDashboard() {
   // Check for overdue reminders 
   const [hasOverdueReminders, setHasOverdueReminders] = useState(false); // RED: recordatorios vencidos
 
+  // Check for new messages
+  const [hasNewMessages, setHasNewMessages] = useState(false); // GREEN: mensajes nuevos sin leer
+
   // Clear document notifications when returning to dashboard (after visiting documents page)
   useEffect(() => {
     const lastDocumentPageVisit = localStorage.getItem('lastDocumentPageVisit');
@@ -349,6 +352,34 @@ export default function EmployeeDashboard() {
     });
 
   }, [allReminders, user?.id]);
+
+  // Check for new messages with intelligent clearing
+  useEffect(() => {
+    if (!unreadCount?.count || unreadCount.count === 0) {
+      setHasNewMessages(false);
+      return;
+    }
+
+    // Get the last time user entered messages page
+    const lastMessagesPageVisit = localStorage.getItem('lastMessagesPageVisit');
+    const lastVisitTime = lastMessagesPageVisit ? new Date(lastMessagesPageVisit) : null;
+    
+    const currentTime = new Date();
+    const unreadMessages = parseInt(unreadCount.count.toString());
+
+    // Show green notification if there are unread messages and user hasn't visited recently
+    const showNotification = unreadMessages > 0 && (!lastVisitTime || currentTime > lastVisitTime);
+    setHasNewMessages(showNotification);
+
+    console.log('💬 Messages notification check:', {
+      unreadMessages,
+      lastVisitTime: lastVisitTime?.toISOString(),
+      currentTime: currentTime.toISOString(),
+      showNotification,
+      lastMessagesPageVisit
+    });
+
+  }, [unreadCount]);
 
   // Get recent work session for "last clock in" info
   const { data: recentSessions } = useQuery<WorkSession[]>({
@@ -654,7 +685,8 @@ export default function EmployeeDashboard() {
       icon: MessageSquare, 
       title: 'Mensajes', 
       route: `/${companyAlias}/mensajes`,
-      notification: (unreadCount?.count || 0) > 0,
+      notification: hasNewMessages,
+      notificationType: 'green',
       feature: 'messages'
     },
   ];
