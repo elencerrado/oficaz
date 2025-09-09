@@ -920,7 +920,7 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
+                  paddingBottom: isKeyboardOpen ? '0px' : `max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px))`,
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
@@ -1364,7 +1364,7 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
+                  paddingBottom: isKeyboardOpen ? '0px' : `max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px))`,
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
