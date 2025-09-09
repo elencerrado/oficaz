@@ -496,9 +496,9 @@ export default function Reminders() {
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'high': return <AlertCircle className="w-4 h-4 text-white drop-shadow-sm" />;
-      case 'medium': return <Clock className="w-4 h-4 text-white drop-shadow-sm" />;
-      case 'low': return <CheckCircle className="w-4 h-4 text-white drop-shadow-sm" />;
+      case 'high': return <AlertCircle className="w-4 h-4 text-gray-800 dark:text-gray-900" />;
+      case 'medium': return <Clock className="w-4 h-4 text-gray-800 dark:text-gray-900" />;
+      case 'low': return <CheckCircle className="w-4 h-4 text-gray-800 dark:text-gray-900" />;
       default: return null;
     }
   };
