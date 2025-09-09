@@ -841,7 +841,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: '20px',
+                  paddingBottom: isKeyboardOpen ? '100px' : '80px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -921,9 +921,11 @@ export default function Messages() {
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
                   paddingBottom: isKeyboardOpen ? '0px' : `max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))`,
-                  position: 'sticky',
-                  bottom: 0,
-                  zIndex: 10
+                  position: 'fixed',
+                  bottom: isKeyboardOpen ? '0px' : 'env(safe-area-inset-bottom, 0px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 50
                 }}
               >
                 <Input
@@ -1285,7 +1287,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: '20px',
+                  paddingBottom: isKeyboardOpen ? '100px' : '80px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -1365,9 +1367,11 @@ export default function Messages() {
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
                   paddingBottom: isKeyboardOpen ? '0px' : `max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))`,
-                  position: 'sticky',
-                  bottom: 0,
-                  zIndex: 10
+                  position: 'fixed',
+                  bottom: isKeyboardOpen ? '0px' : 'env(safe-area-inset-bottom, 0px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 50
                 }}
               >
                 <Input
