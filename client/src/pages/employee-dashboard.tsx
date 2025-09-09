@@ -208,26 +208,24 @@ export default function EmployeeDashboard() {
   }, [hasVacationUpdates]);
 
   // Check for document notifications with intelligent state tracking
-  const [hasDocumentRequests, setHasDocumentRequests] = useState(false);
-  const [hasNewDocuments, setHasNewDocuments] = useState(false);
+  const [hasDocumentRequests, setHasDocumentRequests] = useState(false); // RED: solicitudes pendientes
+  const [hasNewDocuments, setHasNewDocuments] = useState(false); // GREEN: archivos nuevos
 
-  // Clear document notifications when returning to dashboard (after viewing documents page)
+  // Clear document notifications when returning to dashboard (after visiting documents page)
   useEffect(() => {
-    // Check if user has visited documents page recently
     const lastDocumentPageVisit = localStorage.getItem('lastDocumentPageVisit');
-    if (lastDocumentPageVisit) {
-      const lastVisitDate = new Date(lastDocumentPageVisit);
-      const timeSinceVisit = Date.now() - lastVisitDate.getTime();
-      
-      // If user visited documents page in the last 30 seconds, clear new documents notification
-      if (timeSinceVisit < 30000) {
-        console.log('📋 Clearing new documents notification - user recently visited documents page');
+    if (lastDocumentPageVisit && hasNewDocuments) {
+      const timer = setTimeout(() => {
+        console.log('Dashboard: clearing non-payroll document notifications after visiting documents');
+        // This will trigger a re-evaluation of document notifications
+        // Non-payroll documents will be filtered out in the next useEffect cycle
         setHasNewDocuments(false);
         localStorage.setItem('lastDocumentCheck', new Date().toISOString());
-        localStorage.removeItem('lastDocumentPageVisit');
-      }
+      }, 2000);
+
+      return () => clearTimeout(timer);
     }
-  }, []); // Only run once on mount
+  }, [hasNewDocuments]);
 
   // Check if user is currently on vacation
   const today = new Date().toISOString().split('T')[0];
@@ -237,35 +235,60 @@ export default function EmployeeDashboard() {
     request.endDate.split('T')[0] >= today
   );
 
-  // Check document notifications and new documents with proper state logic
+  // Document notifications with specific rules
   useEffect(() => {
     if (!documentNotifications || !documents) return;
 
-    // Check for pending document requests (RED notification)
+    // 🔴 RED: Pending document upload requests (se quita cuando enviamos archivo)
     const pendingRequests = (documentNotifications as any[]).filter(notification => 
       !notification.isCompleted
     );
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
 
-    // Check for new documents (GREEN notification)
+    // 🟢 GREEN: New documents received
     const lastDocumentCheck = localStorage.getItem('lastDocumentCheck');
     const lastCheckDate = lastDocumentCheck ? new Date(lastDocumentCheck) : new Date(Date.now() - 24 * 60 * 60 * 1000);
     
-    const newDocuments = (documents as any[]).filter((doc: any) => {
-      const docDate = new Date(doc.createdAt);
-      return docDate > lastCheckDate;
+    // Check for payroll documents that need signature
+    const unsignedPayrolls = (documents as any[]).filter((doc: any) => {
+      const isPayroll = doc.fileName.toLowerCase().includes('nomina') || 
+                       doc.fileName.toLowerCase().includes('nómina') ||
+                       doc.type === 'payroll';
+      const needsSignature = !doc.isSigned;
+      const isRecent = new Date(doc.createdAt) > lastCheckDate;
+      
+      return isPayroll && needsSignature && isRecent;
     });
-    
-    const hasRecentDocuments = newDocuments.length > 0;
+
+    // Check for other new documents (non-payroll)
+    const otherNewDocuments = (documents as any[]).filter((doc: any) => {
+      const isPayroll = doc.fileName.toLowerCase().includes('nomina') || 
+                       doc.fileName.toLowerCase().includes('nómina') ||
+                       doc.type === 'payroll';
+      const isRecent = new Date(doc.createdAt) > lastCheckDate;
+      
+      // For non-payroll docs, check if user has visited documents page
+      if (!isPayroll && isRecent) {
+        const lastPageVisit = localStorage.getItem('lastDocumentPageVisit');
+        if (lastPageVisit) {
+          const visitDate = new Date(lastPageVisit);
+          // Clear if visited after document creation
+          return new Date(doc.createdAt) > visitDate;
+        }
+        return true;
+      }
+      
+      return false;
+    });
+
+    const hasRecentDocuments = unsignedPayrolls.length > 0 || otherNewDocuments.length > 0;
     setHasNewDocuments(hasRecentDocuments);
 
     console.log('📋 Document notifications check:', {
-      totalNotifications: (documentNotifications as any[]).length,
-      notificationsData: documentNotifications,
       pendingRequests: pendingRequests.length,
-      pendingRequestsData: pendingRequests,
-      newDocuments: newDocuments.length,
+      unsignedPayrolls: unsignedPayrolls.length,
+      otherNewDocuments: otherNewDocuments.length,
       lastCheck: lastCheckDate.toISOString(),
       hasPendingRequests,
       hasRecentDocuments
@@ -788,6 +811,14 @@ export default function EmployeeDashboard() {
                           localStorage.removeItem('vacationNotificationType');
                         }
                       }
+                      
+                      if (item.title === 'Documentos') {
+                        // Mark visit time for clearing non-payroll document notifications
+                        localStorage.setItem('lastDocumentPageVisit', new Date().toISOString());
+                        // Note: Green notifications for payrolls will only clear when document is signed
+                        // Green notifications for other documents will clear on next dashboard load
+                      }
+                      
                       handleNavigation(item.route);
                     }}
                     className={`relative w-24 h-24 transition-all duration-200 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-xl border ${
