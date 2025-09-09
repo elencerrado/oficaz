@@ -529,17 +529,18 @@ export default function Messages() {
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex items-center justify-between" style={{ minHeight: '56px' }}>
-                  <div className="flex-1 min-w-0 flex items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm text-muted-foreground">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </p>
+                    <div className="text-xs text-transparent">‎</div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={openAddChatModal}
-                    className="btn-oficaz-primary flex-shrink-0 ml-2"
+                    className="btn-oficaz-primary"
                   >
                     <Plus className="icon-sm mr-1" />
                     Nuevo
