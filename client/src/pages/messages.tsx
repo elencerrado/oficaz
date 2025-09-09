@@ -530,21 +530,28 @@ export default function Messages() {
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex items-center space-x-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-muted-foreground">
-                      {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
-                    </p>
-                    <div className="text-xs text-transparent">‎</div>
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm font-medium">#</span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAddChatModal}
-                    className="btn-oficaz-primary"
-                  >
-                    <Plus className="icon-sm mr-1" />
-                    Nuevo
-                  </Button>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
+                    </h3>
+                    <div className="text-sm text-muted-foreground">
+                      Conversaciones
+                    </div>
+                  </div>
+                  <div className="ml-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openAddChatModal}
+                      className="btn-oficaz-primary"
+                    >
+                      <Plus className="icon-sm mr-1" />
+                      Nuevo
+                    </Button>
+                  </div>
                 </div>
               </div>
               
