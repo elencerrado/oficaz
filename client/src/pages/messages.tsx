@@ -225,7 +225,7 @@ export default function Messages() {
   useEffect(() => {
     // Detectar PWA específicamente
     const isPWAMode = window.matchMedia('(display-mode: standalone)').matches || 
-                     window.navigator.standalone === true;
+                     (window.navigator as any).standalone === true;
     setIsPWA(isPWAMode);
 
     const handleKeyboardVisibility = () => {
@@ -926,9 +926,9 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isPWA ? (isKeyboardOpen ? '8px' : '16px') : '16px',
+                  paddingBottom: isKeyboardOpen ? '8px' : '20px',
                   position: 'fixed',
-                  bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
+                  bottom: isKeyboardOpen ? '0px' : '20px',
                   left: 0,
                   right: 0,
                   zIndex: 50
@@ -1372,9 +1372,9 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: isPWA ? (isKeyboardOpen ? '8px' : '16px') : '16px',
+                  paddingBottom: isKeyboardOpen ? '8px' : '20px',
                   position: 'fixed',
-                  bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
+                  bottom: isKeyboardOpen ? '0px' : '20px',
                   left: 0,
                   right: 0,
                   zIndex: 50
