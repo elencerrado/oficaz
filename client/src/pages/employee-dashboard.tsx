@@ -259,7 +259,7 @@ export default function EmployeeDashboard() {
 
     // 🔴 RED: Pending document upload requests (se quita cuando enviamos archivo)
     const pendingRequests = (documentNotifications as any[]).filter(notification => 
-      !notification.isCompleted
+      !notification.completed
     );
     const hasPendingRequests = pendingRequests.length > 0;
     setHasDocumentRequests(hasPendingRequests);
