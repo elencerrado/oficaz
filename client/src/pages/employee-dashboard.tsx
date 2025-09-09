@@ -134,6 +134,15 @@ export default function EmployeeDashboard() {
     staleTime: 90000, // Cache for 90 seconds
   });
 
+  // Get all reminders to check for overdue ones
+  const { data: allReminders = [] } = useQuery({
+    queryKey: ['/api/reminders'],
+    enabled: !!user,
+    refetchInterval: 120000, // Check every 2 minutes 
+    refetchIntervalInBackground: false,
+    staleTime: 90000,
+  });
+
   // Check for vacation updates - clear notification when back on dashboard
   useEffect(() => {
     if (!vacationRequests?.length) return;
@@ -210,6 +219,9 @@ export default function EmployeeDashboard() {
   // Check for document notifications with intelligent state tracking
   const [hasDocumentRequests, setHasDocumentRequests] = useState(false); // RED: solicitudes pendientes
   const [hasNewDocuments, setHasNewDocuments] = useState(false); // GREEN: archivos nuevos
+
+  // Check for overdue reminders 
+  const [hasOverdueReminders, setHasOverdueReminders] = useState(false); // RED: recordatorios vencidos
 
   // Clear document notifications when returning to dashboard (after visiting documents page)
   useEffect(() => {
@@ -295,6 +307,48 @@ export default function EmployeeDashboard() {
     });
 
   }, [documentNotifications, documents]);
+
+  // Check for overdue reminders 
+  useEffect(() => {
+    if (!allReminders?.length) {
+      setHasOverdueReminders(false);
+      return;
+    }
+
+    const now = new Date();
+    const overdueReminders = (allReminders as any[]).filter((reminder: any) => {
+      // Skip if reminder doesn't have a due date
+      if (!reminder.dueDate) return false;
+      
+      const dueDate = new Date(reminder.dueDate);
+      const isOverdue = dueDate < now;
+      
+      // Check if user has completed this reminder
+      const userCompleted = reminder.completedBy?.includes(user?.id);
+      
+      console.log('🔔 Reminder overdue check:', {
+        id: reminder.id,
+        title: reminder.title,
+        dueDate: reminder.dueDate,
+        isOverdue,
+        userCompleted,
+        completedBy: reminder.completedBy
+      });
+      
+      return isOverdue && !userCompleted;
+    });
+
+    const hasOverdue = overdueReminders.length > 0;
+    setHasOverdueReminders(hasOverdue);
+
+    console.log('🔔 Overdue reminders check:', {
+      totalReminders: allReminders.length,
+      overdueCount: overdueReminders.length,
+      hasOverdue,
+      overdueReminders: overdueReminders.map((r: any) => ({ id: r.id, title: r.title, dueDate: r.dueDate }))
+    });
+
+  }, [allReminders, user?.id]);
 
   // Get recent work session for "last clock in" info
   const { data: recentSessions } = useQuery<WorkSession[]>({
@@ -592,7 +646,8 @@ export default function EmployeeDashboard() {
       icon: Bell, 
       title: 'Recordatorios', 
       route: `/${companyAlias}/recordatorios`,
-      notification: false,
+      notification: hasOverdueReminders,
+      notificationType: 'red',
       feature: 'reminders'
     },
     { 
