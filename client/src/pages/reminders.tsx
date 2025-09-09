@@ -409,12 +409,13 @@ export default function Reminders() {
     let localDateTimeString = '';
     if (reminder.reminderDate) {
       const reminderDate = new Date(reminder.reminderDate);
-      // Extract components as Madrid local time
-      const year = reminderDate.getFullYear();
-      const month = String(reminderDate.getMonth() + 1).padStart(2, '0');
-      const day = String(reminderDate.getDate()).padStart(2, '0');
-      const hour = String(reminderDate.getHours()).padStart(2, '0');
-      const minute = String(reminderDate.getMinutes()).padStart(2, '0');
+      // FIXED: Use consistent Madrid timezone for all users
+      const madridDate = new Date(reminderDate.toLocaleString('en-CA', { timeZone: 'Europe/Madrid' }));
+      const year = madridDate.getFullYear();
+      const month = String(madridDate.getMonth() + 1).padStart(2, '0');
+      const day = String(madridDate.getDate()).padStart(2, '0');
+      const hour = String(madridDate.getHours()).padStart(2, '0');
+      const minute = String(madridDate.getMinutes()).padStart(2, '0');
       
       localDateTimeString = `${year}-${month}-${day}T${hour}:${minute}`;
       
