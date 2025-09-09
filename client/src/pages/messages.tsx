@@ -847,7 +847,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '100px' : '80px',
+                  paddingBottom: isKeyboardOpen ? '100px' : '120px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -1293,7 +1293,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '100px' : '80px',
+                  paddingBottom: isKeyboardOpen ? '100px' : '120px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
