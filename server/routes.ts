@@ -4848,8 +4848,12 @@ Responde directamente a este email para contactar con la persona.
         priority: priority || 'medium',
         color: color || '#ffffff',
         showBanner: showBanner || false,
-        // Always include creator + any additional assigned users, avoiding duplicates
-        assignedUserIds: assignedUserIds ? [...new Set([userId, ...assignedUserIds])] : [userId],
+        // FIXED: Only include creator if no other users assigned, or if creator is admin/manager
+        assignedUserIds: assignedUserIds && assignedUserIds.length > 0 ? 
+          (req.user!.role === 'admin' || req.user!.role === 'manager' ? 
+            [...new Set([userId, ...assignedUserIds])] : // Admin creates shared reminders
+            assignedUserIds) : // Employee assigns to others only
+          [userId], // No assignments = private to creator
         assignedBy: userId,
         assignedAt: new Date()
       });
