@@ -1293,12 +1293,14 @@ export default function Messages() {
               </div>
               {/* Messages Area - Scrollable */}
               <div 
+                ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 py-4"
                 style={{
                   background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch'
+                  WebkitOverflowScrolling: 'touch',
+                  position: 'relative'
                 }}
               >
                 <div className="space-y-6">
@@ -1357,10 +1359,13 @@ export default function Messages() {
               </div>
               {/* Message Input - Fixed at bottom - DARK THEME */}
               <div 
-                className="px-4 py-3 border-t border-gray-200/20"
+                className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
                 style={{
                   background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))'
+                  paddingBottom: isKeyboardOpen ? '16px' : 'max(16px, env(safe-area-inset-bottom))',
+                  position: 'sticky',
+                  bottom: 0,
+                  zIndex: 10
                 }}
               >
                 <div className="flex space-x-2">
