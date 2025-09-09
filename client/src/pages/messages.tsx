@@ -529,8 +529,8 @@ export default function Messages() {
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between" style={{ minHeight: '56px' }}>
+                  <div className="flex-1 min-w-0 flex items-center">
                     <p className="text-sm text-muted-foreground">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </p>
