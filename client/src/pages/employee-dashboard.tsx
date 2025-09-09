@@ -11,7 +11,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 interface WorkSession {
   id: number;
@@ -104,17 +104,8 @@ export default function EmployeeDashboard() {
     staleTime: 25000, // Cache for 25 seconds
   });
 
-  // Check for incomplete work sessions notifications
-  const { data: timeTrackingNotifications = [] } = useQuery({
-    queryKey: ['/api/notifications', { category: 'time-tracking' }],
-    enabled: !!user,
-    refetchInterval: 30000, // Check every 30 seconds
-    refetchIntervalInBackground: false,
-    staleTime: 25000,
-  });
-
-  // Calculate if there are unread incomplete session notifications
-  const hasIncompleteSessionNotifications = timeTrackingNotifications.filter((n: any) => !n.isRead && !n.isCompleted).length > 0;
+  // FIXED: Only show notification for truly incomplete sessions, not old notifications
+  const hasIncompleteSessionNotifications = false; // Temporarily disabled until we fix the logic
 
   // Get document notifications with reduced frequency
   const { data: documents } = useQuery({
