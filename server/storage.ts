@@ -103,7 +103,7 @@ export interface IStorage {
   // Reminders
   createReminder(reminder: InsertReminder): Promise<Reminder>;
   getRemindersByUser(userId: number): Promise<Reminder[]>;
-  getRemindersByCompany(companyId: number): Promise<Reminder[]>;
+  getRemindersByCompany(companyId: number, adminUserId: number): Promise<Reminder[]>;
   getReminder(id: number): Promise<Reminder | undefined>;
   updateReminder(id: number, updates: Partial<InsertReminder>): Promise<Reminder | undefined>;
   deleteReminder(id: number): Promise<boolean>;
@@ -1188,7 +1188,12 @@ export class DrizzleStorage implements IStorage {
     return await this.getRemindersByUserWithAssignments(userId);
   }
 
-  async getRemindersByCompany(companyId: number): Promise<any[]> {
+  // FIXED: Admin version that respects privacy - only shows admin's own reminders + ones shared with admin
+  async getRemindersByCompany(companyId: number, adminUserId: number): Promise<any[]> {
+    // Admin should only see:
+    // 1. Reminders created by admin (createdBy = adminUserId)
+    // 2. Reminders where admin is assigned (adminUserId in assignedUserIds)
+    
     return await db.select({
       id: schema.reminders.id,
       userId: schema.reminders.userId,
@@ -1214,7 +1219,16 @@ export class DrizzleStorage implements IStorage {
     })
     .from(schema.reminders)
     .leftJoin(schema.users, eq(schema.reminders.userId, schema.users.id))
-    .where(eq(schema.reminders.companyId, companyId))
+    .where(
+      and(
+        eq(schema.reminders.companyId, companyId),
+        or(
+          eq(schema.reminders.createdBy, adminUserId), // Admin's own reminders
+          // Check if admin is in assignedUserIds array using JSON functions
+          sql`JSON_CONTAINS(${schema.reminders.assignedUserIds}, ${adminUserId}, '$')`
+        )
+      )
+    )
     .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
   }
 
