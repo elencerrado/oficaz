@@ -1375,23 +1375,11 @@ export default function Messages() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
-                    onFocus={() => {
-                      // Forzar focus en iOS cuando aparece teclado
-                      setTimeout(() => {
-                        if (messageInputRef.current) {
-                          messageInputRef.current.focus();
-                          // Mover cursor al final
-                          messageInputRef.current.setSelectionRange(newMessage.length, newMessage.length);
-                        }
-                      }, 100);
-                    }}
-                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-0"
+                    className="input-oficaz flex-1"
                     style={{
                       backgroundColor: 'rgba(255, 255, 255, 0.1)',
                       borderColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white',
-                      WebkitAppearance: 'none', // Evitar estilos iOS nativos
-                      WebkitTapHighlightColor: 'transparent' // Quitar highlight iOS
+                      color: 'white'
                     }}
                   />
                   <Button
