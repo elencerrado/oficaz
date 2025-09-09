@@ -2701,13 +2701,30 @@ export default function Settings() {
           {activeTab === 'profile' && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5" />
-                  <span>Mi perfil personal</span>
-                </CardTitle>
-                <CardDescription>
-                  Tu información personal como administrador
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Users className="h-5 w-5" />
+                      <span>Mi perfil personal</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Tu información personal como administrador
+                    </CardDescription>
+                  </div>
+                  <div>
+                    {isEditingProfile ? (
+                      <Button onClick={() => setIsEditingProfile(false)} variant="outline">
+                        <X className="h-4 w-4 mr-2" />
+                        Cancelar
+                      </Button>
+                    ) : (
+                      <Button onClick={() => setIsEditingProfile(true)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar perfil
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* User info header */}
@@ -2944,30 +2961,17 @@ export default function Settings() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
-                  {isEditingProfile ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsEditingProfile(false)}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        onClick={() => updateProfileMutation.mutate(profileData)}
-                        disabled={updateProfileMutation.isPending}
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {updateProfileMutation.isPending ? 'Guardando...' : 'Guardar'}
-                      </Button>
-                    </>
-                  ) : (
-                    <Button onClick={() => setIsEditingProfile(true)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Editar perfil
+                {isEditingProfile && (
+                  <div className="flex justify-end space-x-2 pt-4 border-t">
+                    <Button
+                      onClick={() => updateProfileMutation.mutate(profileData)}
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {updateProfileMutation.isPending ? 'Guardando...' : 'Guardar'}
                     </Button>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
