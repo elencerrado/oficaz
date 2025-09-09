@@ -800,7 +800,10 @@ export default function Messages() {
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
-                position: 'fixed'
+                position: 'fixed',
+                height: '100vh',
+                height: '100dvh',
+                minHeight: '-webkit-fill-available'
               }}
             >
               {/* Chat Header with Back Button - Fixed at top */}
@@ -917,7 +920,10 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))'
+                  paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+                  position: 'sticky',
+                  bottom: 0,
+                  zIndex: 10
                 }}
               >
                 <Input
@@ -1240,7 +1246,10 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)'
+                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                height: '100vh',
+                height: '100dvh',
+                minHeight: '-webkit-fill-available'
               }}
             >
               {/* Chat Header - EMPLOYEE DARK VERSION */}
