@@ -4,7 +4,6 @@ import { useWorkAlarms } from '@/hooks/use-work-alarms';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Clock, User, FileText, Calendar, Bell, MessageSquare, LogOut, Palmtree, Building2, MapPin, CreditCard, AlarmClock } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -38,6 +37,9 @@ export default function EmployeeDashboard() {
   
   // Estado para el modal de alarmas
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+  
+  // Estado para el modal del usuario
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   // Función para generar mensajes dinámicos según la hora
   const generateDynamicMessage = (actionType: 'entrada' | 'salida') => {
@@ -623,32 +625,20 @@ export default function EmployeeDashboard() {
         {/* Header - Compacto */}
         <div className="flex justify-between items-center py-2 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-1 transition-colors">
-                  <UserAvatar
-                    fullName={user?.fullName || ''}
-                    size="sm"
-                    userId={user?.id}
-                    profilePicture={user?.profilePicture}
-                  />
-                  <div>
-                    <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white" align="start" forceMount>
-                <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium text-white">{user?.fullName}</p>
-                  <p className="text-xs text-white/70">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-white/50 opacity-75 capitalize">{user?.role || 'Empleado'}</p>
-                </div>
-                <DropdownMenuItem onClick={logout} className="text-red-300 hover:text-red-200 hover:bg-red-500/20">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Cerrar sesión
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button 
+              onClick={() => setIsUserModalOpen(true)}
+              className="flex items-center gap-2 hover:bg-white/10 rounded-lg p-1 transition-colors"
+            >
+              <UserAvatar
+                fullName={user?.fullName || ''}
+                size="sm"
+                userId={user?.id}
+                profilePicture={user?.profilePicture}
+              />
+              <div>
+                <h1 className="text-xs font-medium text-white drop-shadow-lg">{user?.fullName}</h1>
+              </div>
+            </button>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -956,6 +946,50 @@ export default function EmployeeDashboard() {
         />
       )}
       
+      {/* User Profile Modal */}
+      {isUserModalOpen && (
+        <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
+          <DialogContent className="max-w-sm mx-auto bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-3xl shadow-2xl">
+            <DialogTitle className="sr-only">Perfil de usuario</DialogTitle>
+            <DialogDescription className="sr-only">Información del usuario y opciones de cierre de sesión</DialogDescription>
+            <div className="space-y-5 p-6">
+              {/* Header con avatar y nombre */}
+              <div className="text-center pb-5">
+                <UserAvatar
+                  fullName={user?.fullName || ''}
+                  size="lg"
+                  userId={user?.id}
+                  profilePicture={user?.profilePicture}
+                  className="mx-auto mb-4"
+                />
+                <h2 className="text-lg font-semibold text-white">
+                  {user?.fullName || 'Usuario'}
+                </h2>
+                <p className="text-sm text-white/70 mt-1">
+                  {user?.companyEmail || user?.personalEmail || 'Sin email'}
+                </p>
+                <p className="text-xs text-white/50 mt-1 capitalize">
+                  {user?.role || 'Empleado'}
+                </p>
+              </div>
+
+              {/* Botón de cerrar sesión */}
+              <div className="pt-4 border-t border-white/20">
+                <Button
+                  onClick={() => {
+                    setIsUserModalOpen(false);
+                    logout();
+                  }}
+                  className="w-full bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 text-red-200 hover:text-white transition-all duration-200"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar sesión
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

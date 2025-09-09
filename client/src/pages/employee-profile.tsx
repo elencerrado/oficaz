@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function EmployeeProfile() {
-  const { user, company } = useAuth();
+  const { user, company, companyAlias } = useAuth();
   const [location] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -27,7 +27,7 @@ export default function EmployeeProfile() {
   
   // Get company alias from current URL
   const urlParts = window.location.pathname.split('/').filter((part: string) => part.length > 0);
-  const currentCompanyAlias = urlParts[0] || company?.companyAlias || 'test';
+  const currentCompanyAlias = urlParts[0] || companyAlias || 'test';
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -163,11 +163,8 @@ export default function EmployeeProfile() {
         </Link>
         
         <div className="flex-1 flex flex-col items-end text-right">
-          <div className="text-white text-sm font-medium mb-1">
+          <div className="text-white text-sm font-medium">
             {company?.name || 'Test Company'}
-          </div>
-          <div className="text-white/70 text-xs">
-            {user?.fullName}
           </div>
         </div>
       </div>
