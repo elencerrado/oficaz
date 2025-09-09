@@ -127,6 +127,7 @@ export default function Messages() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const markedAsReadRef = useRef<Set<number>>(new Set());
 
   // Hook para manejar altura del viewport en iOS Safari
   const [viewportHeight, setViewportHeight] = useState(
@@ -314,14 +315,23 @@ export default function Messages() {
   useEffect(() => {
     if (selectedChat && chatMessages.length > 0) {
       const unreadMessages = chatMessages.filter(msg => 
-        !msg.isRead && msg.senderId === selectedChat && msg.receiverId === user?.id
+        !msg.isRead && 
+        msg.senderId === selectedChat && 
+        msg.receiverId === user?.id &&
+        !markedAsReadRef.current.has(msg.id)
       );
       
       unreadMessages.forEach(msg => {
+        markedAsReadRef.current.add(msg.id);
         markAsReadMutation.mutate(msg.id);
       });
     }
-  }, [selectedChat, chatMessages, user, markAsReadMutation]);
+  }, [selectedChat, chatMessages, user]);
+
+  // Clean up marked as read refs when changing chats
+  useEffect(() => {
+    markedAsReadRef.current.clear();
+  }, [selectedChat]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
