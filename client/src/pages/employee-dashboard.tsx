@@ -226,6 +226,9 @@ export default function EmployeeDashboard() {
   // Check for new messages
   const [hasNewMessages, setHasNewMessages] = useState(false); // GREEN: mensajes nuevos sin leer
 
+  // Check for active reminders (not completed, not archived)
+  const [hasActiveReminders, setHasActiveReminders] = useState(false); // BLUE: recordatorios activos
+
   // Clear document notifications when returning to dashboard (after visiting documents page)
   useEffect(() => {
     const lastDocumentPageVisit = localStorage.getItem('lastDocumentPageVisit');
@@ -380,6 +383,28 @@ export default function EmployeeDashboard() {
     });
 
   }, [unreadCount]);
+
+  // Check for active reminders from the /api/reminders/active endpoint
+  const { data: activeReminders = [] } = useQuery({
+    queryKey: ['/api/reminders/active'],
+    enabled: !!user,
+    refetchInterval: 120000, // Check every 2 minutes
+    refetchIntervalInBackground: false,
+    staleTime: 90000,
+  });
+
+  // Update active reminders state
+  useEffect(() => {
+    const hasActive = (activeReminders as any[]).length > 0;
+    setHasActiveReminders(hasActive);
+
+    console.log('📋 Active reminders check:', {
+      activeCount: activeReminders.length,
+      hasActiveReminders: hasActive,
+      reminders: (activeReminders as any[]).map((r: any) => ({ id: r.id, title: r.title }))
+    });
+
+  }, [activeReminders]);
 
   // Get recent work session for "last clock in" info
   const { data: recentSessions } = useQuery<WorkSession[]>({
@@ -677,8 +702,8 @@ export default function EmployeeDashboard() {
       icon: Bell, 
       title: 'Recordatorios', 
       route: `/${companyAlias}/recordatorios`,
-      notification: hasOverdueReminders,
-      notificationType: 'red',
+      notification: hasOverdueReminders || hasActiveReminders,
+      notificationType: hasOverdueReminders ? 'red' : (hasActiveReminders ? 'blue' : 'none'),
       feature: 'reminders'
     },
     { 
