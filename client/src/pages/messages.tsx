@@ -948,7 +948,7 @@ export default function Messages() {
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                    : isPWA ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` : '20px',
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
                     : 'none',
@@ -1399,7 +1399,7 @@ export default function Messages() {
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? `max(20px, calc(env(safe-area-inset-bottom, 0px) + 8px))` : '20px',
+                    : isPWA ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` : '20px',
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
                     : 'none',
