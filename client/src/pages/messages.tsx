@@ -1362,7 +1362,7 @@ export default function Messages() {
                 className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
                 style={{
                   background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingBottom: `calc(16px + env(safe-area-inset-bottom, 0px))`,
+                  paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
