@@ -306,12 +306,13 @@ export default function Messages() {
 
   // Scroll functions
   const scrollToBottom = useCallback(() => {
-    // Try scrolling via messagesEndRef first (mobile layouts)
+    // Force scroll both ways to ensure it works on all layouts
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
-    // Fallback: scroll container to bottom (desktop layout)
-    else if (messagesContainerRef.current) {
+    
+    // Also force container scroll for desktop
+    if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, []);
