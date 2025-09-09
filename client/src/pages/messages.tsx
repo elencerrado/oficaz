@@ -392,9 +392,9 @@ export default function Messages() {
           </div>
           
           {/* Desktop Layout */}
-          <div className="hidden lg:flex w-full h-full">
+          <div className="hidden lg:flex w-full h-[calc(100vh-120px)]">
             {/* Sidebar */}
-            <div className="w-1/3 bg-card border-r border-border flex flex-col">
+            <div className="w-1/3 bg-card border-r border-border flex flex-col h-full">
               {/* Header sin línea - búsqueda y botón en la misma línea */}
               <div className="p-6 bg-background">
                 <div className="flex items-center gap-3">
@@ -467,11 +467,11 @@ export default function Messages() {
         </div>
 
         {/* Chat Area - Solo para escritorio */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col h-full">
           {selectedChat && selectedChatUser ? (
             <div className="flex flex-col h-full">
               {/* Desktop header */}
-              <div className="flex items-center space-x-3 p-4 border-b">
+              <div className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0">
                 <UserAvatar 
                   fullName={selectedChatUser.fullName || ''} 
                   size="sm" 
@@ -539,7 +539,7 @@ export default function Messages() {
               </div>
               
               {/* Input area */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t border-border bg-background flex-shrink-0">
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
