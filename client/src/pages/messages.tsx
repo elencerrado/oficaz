@@ -533,11 +533,11 @@ export default function Messages() {
                   <div className="w-10 h-10 bg-transparent flex items-center justify-center flex-shrink-0">
                     <MessageCircle className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </h3>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground truncate">
                       Conversaciones
                     </div>
                   </div>
