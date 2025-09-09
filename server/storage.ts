@@ -1936,6 +1936,34 @@ export class DrizzleStorage implements IStorage {
   // Reminder Notifications
   async getReminderNotificationsDue(userId: number, companyId: number, currentTime: Date): Promise<Reminder[]> {
     try {
+      console.log(`🔔 CHECKING reminder notifications for user ${userId} at ${currentTime.toISOString()}`);
+      
+      // First, get all reminders for this user to debug
+      const allUserReminders = await db.select()
+        .from(schema.reminders)
+        .where(
+          and(
+            eq(schema.reminders.companyId, companyId),
+            or(
+              eq(schema.reminders.userId, userId),
+              sql`${userId} = ANY(${schema.reminders.assignedUserIds})`
+            )
+          )
+        );
+
+      console.log(`🔔 User ${userId} has ${allUserReminders.length} reminders:`, 
+        allUserReminders.map(r => ({
+          id: r.id,
+          title: r.title,
+          enableNotifications: r.enableNotifications,
+          reminderDate: r.reminderDate,
+          isCompleted: r.isCompleted,
+          isArchived: r.isArchived,
+          notificationShown: r.notificationShown,
+          completedByUserIds: r.completedByUserIds
+        }))
+      );
+
       // Get reminders that:
       // 1. Belong to the user or are assigned to them
       // 2. Have enableNotifications = true
@@ -1960,6 +1988,14 @@ export class DrizzleStorage implements IStorage {
             sql`NOT (${userId} = ANY(${schema.reminders.completedByUserIds}))`
           )
         );
+
+      console.log(`🔔 Found ${remindersDue.length} reminders due for notifications:`, 
+        remindersDue.map(r => ({
+          id: r.id,
+          title: r.title,
+          reminderDate: r.reminderDate
+        }))
+      );
 
       return remindersDue;
     } catch (error) {
