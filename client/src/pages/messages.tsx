@@ -350,7 +350,7 @@ export default function Messages() {
       receiverId: selectedChat,
       content: newMessage.trim()
     });
-  }, [newMessage, selectedChat, sendMessageMutation]);
+  }, [newMessage, selectedChat]);
 
   const sendModalGroupMessage = useCallback(() => {
     if (!modalMessage.trim() || modalSelectedEmployees.length === 0) {
