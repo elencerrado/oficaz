@@ -1224,8 +1224,8 @@ export class DrizzleStorage implements IStorage {
         eq(schema.reminders.companyId, companyId),
         or(
           eq(schema.reminders.createdBy, adminUserId), // Admin's own reminders
-          // Check if admin is in assignedUserIds array using JSON functions
-          sql`JSON_CONTAINS(${schema.reminders.assignedUserIds}, ${adminUserId}, '$')`
+          // Check if admin is in assignedUserIds array using PostgreSQL syntax
+          sql`${adminUserId} = ANY(${schema.reminders.assignedUserIds})`
         )
       )
     )
