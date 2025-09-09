@@ -383,10 +383,10 @@ export default function Messages() {
     <>
       {/* Admin Layout - Patrón consistente */}
       {!isEmployee && (
-        <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+        <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Mensajes</h1>
-            <p className="text-gray-500 mt-1">
+            <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
+            <p className="text-muted-foreground mt-1">
               Comunícate con tu equipo y gestiona conversaciones.
             </p>
           </div>
@@ -494,7 +494,7 @@ export default function Messages() {
                   <div key={group.date}>
                     {/* Date separator */}
                     <div className="flex items-center justify-center my-4">
-                      <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
+                      <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
                         {group.dateFormatted}
                       </div>
                     </div>
@@ -506,8 +506,8 @@ export default function Messages() {
                       }`}>
                         <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
                           message.senderId === user?.id 
-                            ? 'bg-blue-500 text-white rounded-br-sm' 
-                            : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+                            ? 'bg-primary text-primary-foreground rounded-br-sm' 
+                            : 'bg-muted text-foreground rounded-bl-sm'
                         }`}>
                           <p className="text-sm leading-relaxed">{message.content}</p>
                           <div className="flex items-center justify-between mt-1 text-xs opacity-70">
@@ -553,13 +553,13 @@ export default function Messages() {
                       }
                     }}
                     disabled={sendMessageMutation.isPending}
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                   <Button
                     onClick={() => sendMessage()}
                     disabled={!newMessage.trim() || sendMessageMutation.isPending}
                     size="sm"
-                    className="bg-blue-500 hover:bg-blue-600 text-white p-2"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground p-2"
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -567,7 +567,7 @@ export default function Messages() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900/30">
+            <div className="flex-1 flex items-center justify-center bg-muted/30">
               <div className="text-center">
                 <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <h3 className="text-lg font-medium text-foreground mb-2">
@@ -771,7 +771,7 @@ export default function Messages() {
               {messagesGroupedByDate.map((group) => (
                 <div key={group.date}>
                   <div className="flex items-center justify-center my-4">
-                    <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
+                    <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1 rounded-full font-medium">
                       {group.dateFormatted}
                     </div>
                   </div>
@@ -782,8 +782,8 @@ export default function Messages() {
                     }`}>
                       <div className={`max-w-[80%] px-3 py-2 rounded-lg ${
                         message.senderId === user?.id 
-                          ? 'bg-blue-500 text-white rounded-br-sm' 
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-sm'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm' 
+                          : 'bg-muted text-foreground rounded-bl-sm'
                       }`}>
                         <p className="text-sm leading-relaxed">{message.content}</p>
                         <div className="flex items-center justify-between mt-1 text-xs opacity-70">
@@ -816,14 +816,14 @@ export default function Messages() {
                   }
                 }}
                 disabled={sendMessageMutation.isPending}
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground"
                 style={{ fontSize: '16px' }}
               />
               <Button
                 onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
                 disabled={!newMessage.trim() || sendMessageMutation.isPending}
                 size="sm"
-                className="bg-blue-500 hover:bg-blue-600 text-white p-2 ml-2"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 ml-2"
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -1027,7 +1027,7 @@ export default function Messages() {
                   onClick={() => isEmployee ? handleSendEmployeeMessage() : sendMessage()}
                   disabled={!newMessage.trim() || sendMessageMutation.isPending}
                   size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 text-white p-2 ml-2"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2 ml-2"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
