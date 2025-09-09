@@ -496,9 +496,9 @@ export default function Reminders() {
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'high': return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'medium': return <Clock className="w-4 h-4 text-yellow-500" />;
-      case 'low': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'high': return <AlertCircle className="w-4 h-4 text-white drop-shadow-sm" />;
+      case 'medium': return <Clock className="w-4 h-4 text-white drop-shadow-sm" />;
+      case 'low': return <CheckCircle className="w-4 h-4 text-white drop-shadow-sm" />;
       default: return null;
     }
   };
@@ -810,7 +810,7 @@ export default function Reminders() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      {reminder.isPinned && <Pin className="w-4 h-4 text-gray-700 dark:text-gray-800" />}
+                      {reminder.isPinned && <Pin className="w-4 h-4 text-white drop-shadow-sm" />}
                       {getPriorityIcon(reminder.priority)}
                     </div>
                     <div className="flex items-center gap-1">
@@ -820,7 +820,7 @@ export default function Reminders() {
                         onClick={() => handleEdit(reminder)}
                         className="h-6 w-6 p-0 hover:bg-black/10"
                       >
-                        <Edit className="w-3 h-3 text-gray-700" />
+                        <Edit className="w-3 h-3 text-white drop-shadow-sm" />
                       </Button>
                       {(user?.role === 'admin' || user?.role === 'manager') && (
                         <Button
