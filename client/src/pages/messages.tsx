@@ -383,8 +383,8 @@ export default function Messages() {
     <>
       {/* Admin Layout - Patrón consistente */}
       {!isEmployee && (
-        <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-          <div className="mb-6">
+        <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ overflowX: 'clip' }}>
+          <div className="px-6 py-4 flex-shrink-0">
             <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
             <p className="text-muted-foreground mt-1">
               Comunícate con tu equipo y gestiona conversaciones.
@@ -392,7 +392,7 @@ export default function Messages() {
           </div>
           
           {/* Desktop Layout */}
-          <div className="hidden lg:flex w-full h-[calc(100vh-120px)]">
+          <div className="hidden lg:flex w-full flex-1 px-6 pb-4">
             {/* Sidebar */}
             <div className="w-1/3 bg-card border-r border-border flex flex-col h-full">
               {/* Header sin línea - búsqueda y botón en la misma línea */}
@@ -582,13 +582,13 @@ export default function Messages() {
         </div>
       </div>
 
-      {/* Mobile Layout */}
-      <div className="lg:hidden w-full h-full">
-        {!selectedChat ? (
-          /* Contact List View */
-          <div className={`w-full h-full flex flex-col ${
-            isEmployee ? 'bg-employee-gradient' : 'bg-background'
-          }`}>
+          {/* Mobile Layout */}
+          <div className="lg:hidden w-full flex-1">
+            {!selectedChat ? (
+              /* Contact List View */
+              <div className={`w-full h-full flex flex-col ${
+                isEmployee ? 'bg-employee-gradient' : 'bg-background'
+              }`}>
             {/* Header */}
             <div 
               className={`flex items-center justify-between p-6 pb-8 h-20 ${
@@ -829,7 +829,7 @@ export default function Messages() {
               </Button>
             </div>
           </div>
-        )}
+            )}
           </div>
         </div>
       )}
