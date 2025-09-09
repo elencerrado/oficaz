@@ -699,7 +699,7 @@ export default function Messages() {
                         </div>
                       )}
                     </div>
-                    <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '200px' : '100px' }} />
+                    <div ref={messagesEndRef} style={{ height: '20px' }} />
                   </div>
 
                   {/* Message Input - Fixed at bottom */}
