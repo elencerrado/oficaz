@@ -1283,7 +1283,7 @@ export default function Messages() {
       ) : (
             /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed inset-0 bg-background z-[60] flex flex-col lg:hidden"
+              className="fixed inset-0 bg-background z-[60] flex flex-col"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
