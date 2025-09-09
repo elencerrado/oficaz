@@ -529,8 +529,11 @@ export default function Messages() {
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex items-center space-x-3" style={{ minHeight: '56px' }}>
-                  <div className="flex-1">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-transparent flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div>
                     <h3 className="font-semibold text-foreground">
                       {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </h3>
@@ -538,15 +541,17 @@ export default function Messages() {
                       Conversaciones
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAddChatModal}
-                    className="btn-oficaz-primary"
-                  >
-                    <Plus className="icon-sm mr-1" />
-                    Nuevo
-                  </Button>
+                  <div className="ml-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openAddChatModal}
+                      className="btn-oficaz-primary"
+                    >
+                      <Plus className="icon-sm mr-1" />
+                      Nuevo
+                    </Button>
+                  </div>
                 </div>
               </div>
               
