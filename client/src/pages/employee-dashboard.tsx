@@ -164,6 +164,19 @@ export default function EmployeeDashboard() {
     const hasUpdates = newlyProcessedRequests.length > 0;
     setHasVacationUpdates(hasUpdates);
     
+    // Determine notification type based on latest status
+    if (hasUpdates) {
+      const hasApproved = newlyProcessedRequests.some((req: any) => req.status === 'approved');
+      const hasRejected = newlyProcessedRequests.some((req: any) => req.status === 'denied');
+      
+      // Priority: red for rejected, green for approved
+      if (hasRejected) {
+        localStorage.setItem('vacationNotificationType', 'red');
+      } else if (hasApproved) {
+        localStorage.setItem('vacationNotificationType', 'green');
+      }
+    }
+    
     if (hasUpdates) {
       console.log('Dashboard setting vacation notification flag for', newlyProcessedRequests.length, 'requests');
       localStorage.setItem('hasVacationUpdates', 'true');
@@ -187,6 +200,7 @@ export default function EmployeeDashboard() {
         console.log('Dashboard: clearing vacation notifications after viewing dashboard');
         setHasVacationUpdates(false);
         localStorage.setItem('lastVacationCheck', new Date().toISOString());
+        localStorage.removeItem('vacationNotificationType');
       }, 2000);
 
       return () => clearTimeout(timer);
@@ -540,7 +554,7 @@ export default function EmployeeDashboard() {
       title: 'Vacaciones', 
       route: `/${companyAlias}/vacaciones`,
       notification: hasVacationUpdates,
-      notificationType: 'red',
+      notificationType: hasVacationUpdates ? (localStorage.getItem('vacationNotificationType') || 'red') : 'red',
       feature: 'vacation'
     },
     { 
@@ -771,6 +785,7 @@ export default function EmployeeDashboard() {
                         if (hasVacationUpdates) {
                           setHasVacationUpdates(false);
                           localStorage.removeItem('hasVacationUpdates');
+                          localStorage.removeItem('vacationNotificationType');
                         }
                       }
                       handleNavigation(item.route);
