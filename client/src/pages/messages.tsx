@@ -340,7 +340,16 @@ export default function Messages() {
         scrollToBottom();
       }, 100);
     }
-  }, [chatMessages.length, selectedChat, scrollToBottom]);
+  }, [chatMessages.length, scrollToBottom]);
+
+  // Auto-scroll when selecting a chat (ensure we see the latest message)
+  useEffect(() => {
+    if (selectedChat && chatMessages.length > 0) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 200);
+    }
+  }, [selectedChat]);
 
   // Send message functions
   const sendMessage = useCallback(() => {
