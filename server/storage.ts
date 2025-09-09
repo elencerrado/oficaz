@@ -1964,6 +1964,20 @@ export class DrizzleStorage implements IStorage {
         }))
       );
 
+      // Debug each condition for record 138
+      allUserReminders.forEach(r => {
+        if (r.id === 138) {
+          console.log(`🔔 DEBUGGING reminder ${r.id}:`);
+          console.log(`  - enableNotifications: ${r.enableNotifications} (required: true)`);
+          console.log(`  - reminderDate: ${r.reminderDate} vs currentTime: ${currentTime} (should be <=)`);
+          console.log(`  - isCompleted: ${r.isCompleted} (required: false)`);
+          console.log(`  - isArchived: ${r.isArchived} (required: false)`);
+          console.log(`  - notificationShown: ${r.notificationShown} (required: false)`);
+          console.log(`  - completedByUserIds: ${r.completedByUserIds} (should be null or not contain ${userId})`);
+          console.log(`  - datePassed: ${new Date(r.reminderDate) <= currentTime}`);
+        }
+      });
+
       // Get reminders that:
       // 1. Belong to the user or are assigned to them
       // 2. Have enableNotifications = true
@@ -1985,7 +1999,10 @@ export class DrizzleStorage implements IStorage {
             eq(schema.reminders.isArchived, false),
             eq(schema.reminders.notificationShown, false),
             // Don't show notifications for reminders the user has completed individually
-            sql`NOT (${userId} = ANY(${schema.reminders.completedByUserIds}))`
+            or(
+              isNull(schema.reminders.completedByUserIds),
+              sql`NOT (${userId} = ANY(${schema.reminders.completedByUserIds}))`
+            )
           )
         );
 
