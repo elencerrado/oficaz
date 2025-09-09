@@ -306,14 +306,14 @@ export default function Messages() {
 
   // Scroll functions
   const scrollToBottom = useCallback(() => {
-    // Force scroll both ways to ensure it works on all layouts
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
-    }
-    
-    // Also force container scroll for desktop
+    // Desktop: Force scroll on container
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+    
+    // Mobile: Use scrollIntoView
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
   }, []);
 
@@ -351,9 +351,10 @@ export default function Messages() {
   // Auto-scroll when selecting a chat (ensure we see the latest message)
   useEffect(() => {
     if (selectedChat && chatMessages.length > 0) {
-      setTimeout(() => {
-        scrollToBottom();
-      }, 200);
+      // Multiple attempts to ensure scroll works
+      setTimeout(() => scrollToBottom(), 100);
+      setTimeout(() => scrollToBottom(), 300);
+      setTimeout(() => scrollToBottom(), 500);
     }
   }, [selectedChat]);
 
