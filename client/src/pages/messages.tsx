@@ -926,7 +926,7 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: '8px',
+                  paddingBottom: isPWA ? (isKeyboardOpen ? '8px' : '16px') : '16px',
                   position: 'fixed',
                   bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
                   left: 0,
@@ -1372,7 +1372,7 @@ export default function Messages() {
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  paddingBottom: '8px',
+                  paddingBottom: isPWA ? (isKeyboardOpen ? '8px' : '16px') : '16px',
                   position: 'fixed',
                   bottom: isPWA && isKeyboardOpen ? '0px' : isPWA ? '8px' : '16px',
                   left: 0,
