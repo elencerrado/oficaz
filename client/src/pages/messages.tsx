@@ -26,7 +26,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-loading';
-
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
@@ -50,6 +49,7 @@ interface Employee {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 interface Manager {
@@ -59,6 +59,7 @@ interface Manager {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 export default function Messages() {
@@ -80,6 +81,7 @@ export default function Messages() {
   // Unified chat - works for both admin and employee
   const isAdmin = user?.role === 'admin' || user?.role === 'manager';
   const canShowReadStatus = isAdmin; // Only admin/manager see double ticks
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [location] = useLocation();
@@ -100,8 +102,6 @@ export default function Messages() {
     return null;
   });
   const [newMessage, setNewMessage] = useState("");
-  const [isGroupMode, setIsGroupMode] = useState(false);
-  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddChatModal, setShowAddChatModal] = useState(false);
   const [modalGroupMode, setModalGroupMode] = useState(false);
@@ -141,43 +141,24 @@ export default function Messages() {
     staleTime: 60000,
   });
   
-  // Unified filtered employees for admin view  
-  const filteredEmployees = useMemo(() => {
-    if (!isAdmin) return filteredContactList;
-    return (employees as Employee[] || []).filter(employee => 
-      employee.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && 
-      employee.id !== user?.id
-    );
-  }, [isAdmin, employees, searchTerm, user?.id, filteredContactList]);
-
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
+    enabled: !!user && isAdmin,
     staleTime: 60000,
   });
 
   // All mutations together
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { receiverId: number; subject: string; content: string }) => {
-      return apiRequest('POST', '/api/messages', data);
-    },
+    mutationFn: (messageData: { receiverId: number; subject: string; content: string }) =>
+      apiRequest('POST', '/api/messages', messageData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      setNewMessage('');
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje",
-        variant: "destructive",
-      });
+      setNewMessage("");
     },
   });
 
   const markAsReadMutation = useMutation({
-    mutationFn: async (messageId: number) => {
-      return apiRequest('PATCH', `/api/messages/${messageId}/read`);
-    },
+    mutationFn: (messageId: number) => apiRequest('PUT', `/api/messages/${messageId}/read`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
     },
@@ -211,19 +192,34 @@ export default function Messages() {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, [newMessage, selectedChat, sendMessageMutation, scrollToBottom]);
+  }, [newMessage, selectedChat, sendMessageMutation]);
+
+  // Simplified contact list - works for both admin and employee
+  const contactList = useMemo(() => {
+    if (isAdmin) {
+      return employees as Employee[] || [];
+    } else {
+      return managers as Manager[] || [];
+    }
+  }, [isAdmin, employees, managers]);
+  
+  const filteredContactList = useMemo(() => {
+    return contactList.filter(contact => 
+      contact.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      contact.id !== user?.id
+    );
+  }, [contactList, searchTerm, user?.id]);
 
   // All effects together
   useEffect(() => {
     if (selectedChat) {
       console.log('Selected chat is now:', selectedChat);
-      const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
       const selectedEmployee = contactList.find(e => e.id === selectedChat);
       if (selectedEmployee) {
-        console.log('Found employee for chat:', selectedEmployee.fullName);
+        console.log('Found contact for chat:', selectedEmployee.fullName);
       }
     }
-  }, [selectedChat, user?.role, managers, employees]);
+  }, [selectedChat, contactList]);
 
   useEffect(() => {
     if (selectedChat && messages && messages.length > 0 && !markAsReadMutation.isPending) {
@@ -240,7 +236,7 @@ export default function Messages() {
         });
       }
     }
-  }, [selectedChat, messages?.length, user?.id]); // Removed markAsReadMutation from deps
+  }, [selectedChat, messages?.length, user?.id]);
 
   useEffect(() => {
     const handleKeyboardVisibility = () => {
@@ -271,37 +267,18 @@ export default function Messages() {
       });
     }
 
-    // MÉTODO 2: Scroll directo en contenedores más específicos
-    // Admin desktop - buscar contenedor de mensajes más específico
-    const adminDesktopMessages = document.querySelector('[class*="overflow-y-auto"][class*="p-4"][class*="bg-gray-50"]');
-    if (adminDesktopMessages) {
-      adminDesktopMessages.scrollTop = adminDesktopMessages.scrollHeight;
+    // MÉTODO 2: Usar messagesContainerRef si existe
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
 
-    // Admin mobile - contenedor específico
-    const adminMobileMessages = document.querySelector('[class*="overflow-y-auto"][class*="px-4"][class*="bg-gray-50"]');
-    if (adminMobileMessages) {
-      adminMobileMessages.scrollTop = adminMobileMessages.scrollHeight;
-    }
-
-    // Buscar cualquier contenedor con overflow-y-auto que contenga mensajes
+    // MÉTODO 3: Buscar cualquier contenedor con overflow-y-auto que contenga mensajes
     const scrollableContainers = document.querySelectorAll('.overflow-y-auto');
     scrollableContainers.forEach(container => {
       if (container.querySelector('[data-message-id]') || container.textContent?.includes('mensaje')) {
         (container as HTMLElement).scrollTop = (container as HTMLElement).scrollHeight;
       }
     });
-
-    // MÉTODO 3: Usar messagesContainerRef si existe
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-
-    // MÉTODO 4: Buscar contenedor padre de los mensajes por clase
-    const messageContainer = document.querySelector('.space-y-4')?.parentElement;
-    if (messageContainer && messageContainer.classList.contains('overflow-y-auto')) {
-      messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
 
     return true;
   }, []);
@@ -322,31 +299,12 @@ export default function Messages() {
     }
   }, [selectedChat, messages?.length, scrollToBottom]);
 
-
-
   // All computed values and callbacks together
-  const contactList = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-  const filteredEmployees = contactList.filter(person => 
-    person.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && person.id !== user?.id
-  );
-
-  // CRITICAL: selectedChatUser for EMPLOYEE chat header - DO NOT MODIFY
   const selectedChatUser = useMemo(() => {
     if (!selectedChat) return null;
-    
-    // Get the correct list based on user role
-    const list = user?.role === 'employee' ? (managers as Manager[] || []) : (employees as Employee[] || []);
-    const foundUser = list.find(person => person.id === selectedChat);
-    
-    console.log('Chat user lookup:', {
-      selectedChat,
-      userRole: user?.role,
-      listLength: list.length,
-      foundUser: foundUser?.fullName
-    });
-    
+    const foundUser = contactList.find(person => person.id === selectedChat);
     return foundUser || null;
-  }, [selectedChat, user?.role, managers, employees]);
+  }, [selectedChat, contactList]);
 
   const getChatMessages = useCallback((chatUserId: number) => {
     const allMessages = messages as Message[] || [];
@@ -385,44 +343,6 @@ export default function Messages() {
     selectedChat ? getMessagesGroupedByDate(selectedChat) : [], 
     [selectedChat, getMessagesGroupedByDate]
   );
-
-
-
-  // Role display helper with icons - shows position from user profile
-  const getRoleDisplay = useCallback((person: any) => {
-    if (!person) return null;
-    
-    const role = person.role || 'employee';
-    
-    // Use position field if available, otherwise fallback to role-based descriptions
-    const displayText = person.position || (() => {
-      const roleDescriptions = {
-        admin: 'Director General',
-        manager: 'Responsable',
-        employee: 'Empleado'
-      };
-      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-    })();
-    
-    const roleConfig = {
-      admin: { color: 'bg-orange-500', letter: 'A', size: 'text-[8px]' },
-      manager: { color: 'bg-purple-500', letter: 'M', size: 'text-[8px]' },
-      employee: { color: 'bg-emerald-600', letter: 'E', size: 'text-[8px]' }
-    };
-    
-    const config = roleConfig[role as keyof typeof roleConfig] || roleConfig.employee;
-    
-    return (
-      <div className="flex items-center space-x-1">
-        <div className={`w-3 h-3 ${config.color} rounded-full flex items-center justify-center flex-shrink-0`}>
-          <span className={`text-white ${config.size} font-bold leading-none`}>{config.letter}</span>
-        </div>
-        <span>{displayText}</span>
-      </div>
-    );
-  }, []);
-
-
 
   // Modal functions
   const toggleModalEmployeeSelection = (employeeId: number) => {
@@ -509,463 +429,312 @@ export default function Messages() {
     }
   };
 
-  // Simplified contact list - works for both admin and employee
-  const contactList = useMemo(() => {
-    if (isAdmin) {
-      return employees as Employee[] || [];
-    } else {
-      return managers as Manager[] || [];
-    }
-  }, [isAdmin, employees, managers]);
-  
-  const filteredContactList = useMemo(() => {
-    return contactList.filter(contact => 
-      contact.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) && 
-      contact.id !== user?.id
-    );
-  }, [contactList, searchTerm, user?.id]);
-      content: newMessage
-    });
-  };
-
-  // Loading state
   if (messagesLoading) {
-    return <PageLoading message="Cargando mensajes..." />;
+    return <PageLoading />;
   }
 
-  // Admin/Manager view
-  if (user?.role === 'admin' || user?.role === 'manager') {
-    return (
-      <div className="px-6 py-4 h-[calc(100vh-100px)] bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Comunícate con empleados y gestiona mensajes
-          </p>
-        </div>
-        {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex h-[calc(100vh-200px)]">
-          {/* Left Column: Employee List (1/3 width) */}
-          <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-transparent flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="w-6 h-6 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">
-                      {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
-                    </h3>
-                    <div className="text-sm text-muted-foreground truncate">
-                      Conversaciones
-                    </div>
-                  </div>
-                  <div className="ml-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={openAddChatModal}
-                      className="btn-oficaz-primary"
-                    >
-                      <Plus className="icon-sm mr-1" />
-                      Nuevo
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-4 space-y-4 overflow-y-auto flex-1">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10 pointer-events-none" />
-                  <Input
-                    placeholder="Buscar conversación..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-muted"
-                    style={{ paddingLeft: '3rem', paddingRight: '1rem' }}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  {filteredEmployees.map((employee) => (
-                    <div
-                      key={employee.id}
-                      className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
-                        selectedChat === employee.id
-                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                          : 'bg-muted hover:bg-muted/80 border-border'
-                      }`}
-                      onClick={() => setSelectedChat(employee.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <UserAvatar 
-                          fullName={employee.fullName || ''} 
-                          size="md" 
-                          userId={employee.id}
-                          profilePicture={employee.profilePicture}
-                        />
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className={`truncate font-medium text-sm ${
-                            selectedChat === employee.id ? 'text-white' : 'text-foreground'
-                          }`}>
-                            {employee.fullName}
-                          </p>
-                          <div className={`truncate text-xs ${
-                            selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
-                          }`}>
-                            {getRoleDisplay(employee)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+  if (!user) {
+    return <div>No autorizado</div>;
+  }
 
-            {/* Right Column: Chat Area (2/3 width) */}
-            <div className="flex-1 bg-card rounded-lg border border-border flex flex-col overflow-hidden">
-              {selectedChat ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                    <div className="flex items-center space-x-3">
-                      <UserAvatar 
-                        fullName={filteredEmployees.find(e => e.id === selectedChat)?.fullName || ''} 
-                        size="md" 
-                        userId={selectedChat}
-                        profilePicture={filteredEmployees.find(e => e.id === selectedChat)?.profilePicture}
-                      />
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {filteredEmployees.find(e => e.id === selectedChat)?.fullName}
-                        </h3>
-                        <div className="text-sm text-muted-foreground">
-                          {getRoleDisplay(filteredEmployees.find(e => e.id === selectedChat))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Messages - Scrollable middle section */}
-                  <div 
-                    ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30"
-                  >
-                    <div className="space-y-6">
-                      {messagesGroupedByDate.length > 0 ? (
-                        messagesGroupedByDate.map((group) => (
-                          <div key={group.date} className="space-y-4">
-                            {/* Date separator */}
-                            <div className="flex items-center justify-center">
-                              <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
-                                {group.dateFormatted}
-                              </div>
-                            </div>
-                            
-                            {/* Messages for this date */}
-                            <div className="space-y-3">
-                              {group.messages.map((message) => (
-                                <div
-                                  key={message.id}
-                                  data-message-id={message.id}
-                                  className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                                >
-                                  <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                                      message.senderId === user?.id
-                                        ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                        : 'bg-white dark:bg-gray-800 text-foreground border border-gray-200 dark:border-gray-700 shadow-sm'
-                                    }`}
-                                  >
-                                    <p className="text-sm">{message.content}</p>
-                                    <div className="flex items-center justify-between mt-1">
-                                      <p className={`text-xs ${
-                                        message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
-                                      }`}>
-                                        {format(new Date(message.createdAt), 'HH:mm')}
-                                      </p>
-                                      {message.senderId === user?.id && (
-                                        <div className="ml-2">
-                                          {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                            message.isRead ? (
-                                              <div className="flex items-center text-green-400">
-                                                <Check className="h-3 w-3" />
-                                                <Check className="h-3 w-3 -ml-1" />
-                                              </div>
-                                            ) : (
-                                              <Check className="h-3 w-3 text-green-400" />
-                                            )
-                                          ) : (
-                                            <Check className="h-3 w-3 text-green-400" />
-                                          )}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-muted-foreground py-8">
-                          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No hay mensajes aún</p>
-                          <p className="text-sm">Envía el primer mensaje para comenzar la conversación</p>
-                        </div>
-                      )}
-                    </div>
-                    <div ref={messagesEndRef} style={{ height: '20px' }} />
-                  </div>
-
-                  {/* Message Input - Fixed at bottom */}
-                  <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
-                    <div className="flex space-x-2">
-                      <Input
-                        ref={messageInputRef}
-                        placeholder="Escribe tu mensaje..."
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        className="input-oficaz flex-1"
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!newMessage.trim()}
-                        className="btn-oficaz-primary"
-                      >
-                        <Send className="icon-sm" />
-                      </Button>
-                    </div>
-                  </div>
-                </>
+  // ⚠️ UNIFIED CHAT VIEW - Works for both admin and employee
+  // Uses dark theme, only differentiates read status ticks
+  return (
+    <div className="h-full">
+      {!selectedChat ? (
+        <>
+        {/* Contact List View - Unified Dark Theme */}
+        <div 
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ 
+            touchAction: 'manipulation',
+            overscrollBehavior: 'none',
+            position: 'fixed',
+            background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+            height: '100vh',
+            height: '100dvh',
+            minHeight: '-webkit-fill-available'
+          }}
+        >
+          {/* Header */}
+          <div 
+            className="flex items-center justify-between p-4 border-b border-gray-200/20 flex-shrink-0"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
+            }}
+          >
+            <div className="flex items-center space-x-3">
+              <UserAvatar 
+                fullName={user?.fullName || 'Usuario'} 
+                size="sm" 
+                userId={user?.id || 0}
+              />
+              {isAdmin ? (
+                <div className="text-white text-sm font-medium mb-1">
+                  Panel de Administración
+                </div>
               ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center text-muted-foreground">
-                    <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Selecciona un empleado</h3>
-                    <p className="text-sm text-muted-foreground">Elige un empleado de la lista para comenzar a chatear</p>
-                  </div>
+                <div className="text-white text-sm font-medium mb-1">
+                  {company?.name || 'Mi Empresa'}
                 </div>
               )}
             </div>
-        </div>
-        {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden h-[calc(100vh-200px)] flex flex-col">
-          {!selectedChat ? (
-            /* Employee List View */
-            (<div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-shrink-0 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-foreground">Conversaciones</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openAddChatModal}
-                    className="btn-oficaz-primary"
-                  >
-                    <Plus className="icon-sm mr-1" />
-                    Nuevo
-                  </Button>
-                </div>
-                
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
-                  <Input
-                    placeholder="Buscar conversación..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input-oficaz bg-muted pr-4"
-                    style={{ paddingLeft: '2.75rem' }}
-                  />
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <div className="space-y-2 py-4">
-                  {filteredEmployees.map((employee) => (
-                    <div
-                      key={employee.id}
-                      className="p-4 bg-card rounded-lg border border-border cursor-pointer hover:bg-muted"
-                      onClick={() => setSelectedChat(employee.id)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <UserAvatar 
-                          fullName={employee.fullName || ''} 
-                          size="md" 
-                          userId={employee.id}
-                          profilePicture={employee.profilePicture}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {employee.fullName}
-                          </p>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {getRoleDisplay(employee)}
+            
+            {isAdmin && (
+              <Button
+                onClick={openAddChatModal}
+                size="sm"
+                className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Nuevo
+              </Button>
+            )}
+          </div>
+          
+          {/* Page title */}
+          <div className="px-6 pb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
+            <p className="text-white/70 text-sm">
+              {isAdmin ? 'Gestiona la comunicación con tu equipo' : 'Comunícate con tus responsables y mantente al día'}
+            </p>
+          </div>
+          
+          <div className="px-4 py-6 space-y-6">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+              <Input
+                placeholder={isAdmin ? "Buscar empleados..." : "Buscar responsables..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+              />
+            </div>
+
+            {/* Contact list */}
+            <div className="space-y-3">
+              <h2 className="text-white/90 text-sm font-medium px-2">Conversaciones</h2>
+              
+              {filteredContactList.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredContactList.map((contact) => {
+                    const unreadCount = (messages as Message[] || []).filter(msg => 
+                      !msg.isRead && msg.senderId === contact.id && msg.receiverId === user?.id
+                    ).length;
+                    
+                    return (
+                      <div
+                        key={contact.id}
+                        className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
+                        onClick={() => setSelectedChat(contact.id)}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <UserAvatar 
+                            fullName={contact.fullName || ''} 
+                            size="md" 
+                            userId={contact.id}
+                            profilePicture={contact.profilePicture}
+                          />
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-white font-medium truncate">
+                                {contact.fullName}
+                              </p>
+                              {unreadCount > 0 && (
+                                <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
+                                  {unreadCount}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-white/70 text-xs mt-1">
+                              {contact.position || (() => {
+                                const role = contact.role || 'employee';
+                                const roleDescriptions = {
+                                  admin: 'Director General',
+                                  manager: 'Responsable', 
+                                  employee: 'Empleado'
+                                };
+                                return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
+                              })()}
+                            </div>
                           </div>
+                          
+                          <ChevronRight className="w-5 h-5 text-white/50" />
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
-              </div>
-            </div>)
-          ) : (
-            /* Chat View - Full screen overlay */
-            (<div 
-              className="fixed inset-0 bg-background z-[60] flex flex-col lg:hidden"
-              style={{ 
-                touchAction: 'manipulation',
-                overscrollBehavior: 'none',
-                position: 'fixed',
-                height: '100vh',
-                height: '100dvh',
-                minHeight: '-webkit-fill-available'
-              }}
-            >
-              {/* Chat Header with Back Button - Fixed at top */}
-              <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
-                style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedChat(null)}
-                  className="p-2"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <UserAvatar 
-                  fullName={selectedChatUser?.fullName || ''} 
-                  size="sm" 
-                  userId={selectedChatUser?.id}
-                  profilePicture={selectedChatUser?.profilePicture}
-                />
-                <div>
-                  <h3 className="font-semibold text-foreground">
-                    {selectedChatUser?.fullName}
-                  </h3>
-                  <div className="text-sm text-muted-foreground">
-                    {getRoleDisplay(selectedChatUser)}
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-white/10 rounded-full mx-auto flex items-center justify-center mb-4">
+                    <Users className="w-8 h-8 text-white/50" />
                   </div>
+                  <p className="text-white/70">
+                    {isAdmin ? 'No hay empleados disponibles' : 'No hay responsables disponibles'}
+                  </p>
                 </div>
-              </div>
-              {/* Messages - Scrollable area with bounce prevention */}
-              <div 
-                ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
-                style={{ 
-                  paddingBottom: '20px',
-                  paddingTop: '8px',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  position: 'relative'
-                }}
-              >
-                <div className="flex-1"></div>
-                <div className="space-y-6">
-                  {messagesGroupedByDate.length > 0 ? (
-                    messagesGroupedByDate.map((group) => (
-                      <div key={group.date} className="space-y-4">
-                        {/* Date separator */}
-                        <div className="flex items-center justify-center">
-                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
-                            {group.dateFormatted}
-                          </div>
-                        </div>
-                        
-                        {/* Messages for this date */}
-                        <div className="space-y-3">
-                          {group.messages.map((message) => (
-                            <div
-                              key={message.id}
-                              data-message-id={message.id}
-                              className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
-                            >
-                              <div
-                                className={`max-w-xs px-4 py-2 rounded-lg ${
-                                  message.senderId === user?.id
-                                    ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
-                                    : 'bg-white dark:bg-gray-800 text-foreground border border-gray-200 dark:border-gray-700 shadow-sm'
-                                }`}
-                              >
-                                <p className="text-sm">{message.content}</p>
-                                <div className="flex items-center justify-between mt-1">
-                                  <p className={`text-xs ${
-                                    message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
-                                  }`}>
-                                    {format(new Date(message.createdAt), 'HH:mm')}
-                                  </p>
-                                  {message.senderId === user?.id && (
-                                    <div className="ml-2">
-                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                        message.isRead ? (
-                                          <div className="flex items-center text-green-400">
-                                            <Check className="h-3 w-3" />
-                                            <Check className="h-3 w-3 -ml-1" />
-                                          </div>
-                                        ) : (
-                                          <Check className="h-3 w-3 text-green-400" />
-                                        )
-                                      ) : (
-                                        <Check className="h-3 w-3 text-green-400" />
-                                      )}
-                                    </div>
+              )}
+            </div>
+          </div>
+        </div>
+        </>
+      ) : (
+        /* ⚠️ UNIFIED CHAT VIEW - Works for both admin and employee */
+        <div 
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ 
+            touchAction: 'manipulation',
+            overscrollBehavior: 'none',
+            position: 'fixed',
+            background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+            height: `${viewportHeight}px`,
+            minHeight: '-webkit-fill-available'
+          }}
+        >
+          {/* Chat Header - DARK THEME */}
+          <div 
+            className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`
+            }}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedChat(null)}
+              className="text-white hover:bg-white/10 p-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            
+            {selectedChatUser && (
+              <>
+                <UserAvatar 
+                  fullName={selectedChatUser.fullName || ''} 
+                  size="sm" 
+                  userId={selectedChatUser.id}
+                  profilePicture={selectedChatUser.profilePicture}
+                />
+                <div className="flex-1">
+                  <h3 className="text-white font-medium text-sm">
+                    {selectedChatUser.fullName}
+                  </h3>
+                  <p className="text-white/60 text-xs">
+                    {selectedChatUser.position || 'Empleado'}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Messages Container - DARK THEME */}
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto px-4 py-6"
+            style={{
+              overscrollBehavior: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="space-y-6">
+              {messagesGroupedByDate.length > 0 ? (
+                messagesGroupedByDate.map((group) => (
+                  <div key={group.date} className="space-y-4">
+                    {/* Date separator */}
+                    <div className="flex items-center justify-center">
+                      <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
+                        {group.dateFormatted}
+                      </div>
+                    </div>
+                    
+                    {/* Messages for this date */}
+                    <div className="space-y-3">
+                      {group.messages.map((message: Message) => (
+                        <div key={message.id} data-message-id={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
+                            <p className="text-sm">{message.content}</p>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
+                                {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                              </p>
+                              {message.senderId === user?.id && (
+                                <div className="ml-2">
+                                  {canShowReadStatus ? (
+                                    message.isRead ? (
+                                      <div className="flex items-center text-green-400">
+                                        <Check className="h-3 w-3" />
+                                        <Check className="h-3 w-3 -ml-1" />
+                                      </div>
+                                    ) : (
+                                      <Check className="h-3 w-3 text-green-400" />
+                                    )
+                                  ) : (
+                                    <Check className="h-3 w-3 text-green-400" />
                                   )}
                                 </div>
-                              </div>
+                              )}
                             </div>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-muted-foreground py-8">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No hay mensajes aún</p>
-                      <p className="text-sm">Envía el primer mensaje para comenzar</p>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-white/70 py-8">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No hay mensajes aún</p>
+                  <p className="text-sm">Envía tu primer mensaje</p>
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
-              </div>
-              {/* Message Input - Fixed at bottom */}
-              <div 
-                className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
+              )}
+            </div>
+            <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
+          </div>
+          
+          {/* Message Input - Fixed at bottom - DARK THEME */}
+          <div 
+            className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
+            style={{
+              background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
+              paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 10
+            }}
+          >
+            <div className="flex space-x-2">
+              <Input
+                ref={messageInputRef}
+                placeholder="Escribe tu mensaje..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                className="input-oficaz flex-1"
                 style={{
-                  paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
-                  position: 'sticky',
-                  bottom: 0,
-                  zIndex: 10
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white'
                 }}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={!newMessage.trim()}
+                className="bg-blue-500 hover:bg-blue-600 text-white border-0"
               >
-                <Input
-                  ref={messageInputRef}
-                  placeholder="Escribe tu mensaje..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  className="input-oficaz flex-1"
-                />
-                <Button
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim()}
-                  className="btn-oficaz-primary"
-                >
-                  <Send className="icon-sm" />
-                </Button>
-              </div>
-            </div>)
-          )}
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-        {/* Modal for new chat - Group message functionality */}
+      )}
+      
+      {/* Modal for new chat - Group message functionality - Only for admin */}
+      {isAdmin && (
         <Dialog open={showAddChatModal} onOpenChange={setShowAddChatModal}>
           <DialogContent className="max-w-md lg:max-w-4xl mx-auto">
             <DialogHeader>
@@ -990,7 +759,7 @@ export default function Messages() {
                       size="sm"
                       variant="outline"
                       onClick={() => setModalSelectedEmployees(
-                        filteredEmployees
+                        (employees as Employee[] || [])
                           .filter(employee => 
                             employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
                           )
@@ -1024,394 +793,100 @@ export default function Messages() {
                       value={modalMessage}
                       onChange={(e) => setModalMessage(e.target.value)}
                       rows={8}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-oficaz-primary focus:border-oficaz-primary resize-none transition-colors"
+                      maxLength={1000}
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {modalMessage.length}/1000 caracteres
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Shift + Enter para nueva línea
-                      </span>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
+                      {modalMessage.length}/1000 caracteres
                     </div>
                   </div>
                   
-                  {/* Send button for desktop (hidden on mobile) */}
-                  <div className="hidden lg:block">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    <strong>Empleados seleccionados:</strong> {modalSelectedEmployees.length}
+                  </div>
+                  
+                  <div className="flex space-x-2">
                     <Button
                       onClick={sendModalGroupMessage}
-                      disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim() || modalMessage.length > 1000}
-                      className="btn-oficaz-primary w-full"
-                      size="lg"
+                      disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim()}
+                      className="btn-oficaz-primary flex-1"
                     >
                       <Send className="w-4 h-4 mr-2" />
-                      Enviar a {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''}
+                      Enviar a {modalSelectedEmployees.length} empleados
                     </Button>
-                    <div className="text-center mt-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
-                      </span>
-                    </div>
+                    <Button variant="outline" onClick={closeAddChatModal}>
+                      Cancelar
+                    </Button>
                   </div>
                 </div>
-
+                
                 {/* Right Column: Employee selection */}
                 <div className="space-y-4">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
-                      placeholder="Buscar empleado..."
+                      placeholder="Buscar empleados..."
                       value={modalSearchTerm}
                       onChange={(e) => setModalSearchTerm(e.target.value)}
-                      className="input-oficaz bg-muted pr-4"
-                      style={{ paddingLeft: '2.75rem' }}
+                      className="pl-10"
                     />
                   </div>
-
-                  <div className="max-h-60 lg:max-h-80 overflow-y-auto space-y-2">
-                    {filteredEmployees
+                  
+                  <div className="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
+                    {(employees as Employee[] || [])
                       .filter(employee => 
-                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && employee.id !== user?.id
+                        employee.fullName?.toLowerCase().includes(modalSearchTerm.toLowerCase()) && 
+                        employee.id !== user?.id
                       )
                       .map((employee) => (
                         <div
                           key={employee.id}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            modalGroupMode && modalSelectedEmployees.includes(employee.id)
-                              ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                              : 'bg-muted hover:bg-muted/80 border-border'
+                          className={`p-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0 cursor-pointer transition-colors ${
+                            modalSelectedEmployees.includes(employee.id) 
+                              ? 'bg-blue-50 dark:bg-blue-900/20' 
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                           }`}
-                          onClick={() => modalGroupMode ? toggleModalEmployeeSelection(employee.id) : startIndividualChat(employee.id)}
+                          onClick={() => 
+                            modalGroupMode 
+                              ? toggleModalEmployeeSelection(employee.id)
+                              : startIndividualChat(employee.id)
+                          }
                         >
                           <div className="flex items-center space-x-3">
                             {modalGroupMode && (
-                              <div className={`w-4 h-4 border-2 rounded ${
-                                modalSelectedEmployees.includes(employee.id)
-                                  ? 'bg-card border-background'
-                                  : 'border-gray-300'
-                              } flex items-center justify-center`}>
-                                {modalSelectedEmployees.includes(employee.id) && (
-                                  <Check className="w-3 h-3 text-oficaz-primary" />
-                                )}
-                              </div>
+                              <input
+                                type="checkbox"
+                                checked={modalSelectedEmployees.includes(employee.id)}
+                                onChange={() => toggleModalEmployeeSelection(employee.id)}
+                                className="rounded border-gray-300 dark:border-gray-600"
+                              />
                             )}
                             
                             <UserAvatar 
                               fullName={employee.fullName || ''} 
-                              size="md" 
+                              size="sm" 
                               userId={employee.id}
-                              profilePicture={employee.profilePicture}
                             />
                             
                             <div className="flex-1 min-w-0">
-                              <p className={`font-medium text-sm truncate ${
-                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white' : 'text-foreground'
-                              }`}>
+                              <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                                 {employee.fullName}
                               </p>
-                              <div className={`text-xs truncate ${
-                                modalGroupMode && modalSelectedEmployees.includes(employee.id) ? 'text-white/90' : 'text-gray-500'
-                              }`}>
-                                {getRoleDisplay(employee)}
-                              </div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                {employee.email}
+                              </p>
                             </div>
+                            
+                            {!modalGroupMode && <ChevronRight className="w-4 h-4 text-gray-400" />}
                           </div>
                         </div>
                       ))}
                   </div>
                 </div>
               </div>
-
-              {/* Mobile send button (shown only on mobile when in group mode) */}
-              {modalGroupMode && (
-                <div className="lg:hidden flex items-center justify-between pt-2 border-t">
-                  <span className="text-sm text-muted-foreground">
-                    {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''} seleccionado{modalSelectedEmployees.length !== 1 ? 's' : ''}
-                  </span>
-                  <Button
-                    onClick={sendModalGroupMessage}
-                    disabled={modalSelectedEmployees.length === 0 || !modalMessage.trim() || modalMessage.length > 1000}
-                    className="btn-oficaz-primary"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Enviar a {modalSelectedEmployees.length} empleado{modalSelectedEmployees.length !== 1 ? 's' : ''}
-                  </Button>
-                </div>
-              )}
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    );
-  }
-
-  // Employee view - Responsive design for desktop and mobile
-  return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
-      {!selectedChat ? (
-        /* Employee Dashboard - List of managers - RESPONSIVE VERSION */
-        (<>
-          {/* Header - Standard employee pattern */}
-          <div className="flex items-center justify-between p-6 pb-8 h-20">
-            <Link href={`/${companyAlias}/inicio`}>
-              <Button
-                variant="ghost"
-                size="lg"
-                className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                <span className="font-medium">Atrás</span>
-              </Button>
-            </Link>
-            
-            <div className="flex-1 flex flex-col items-end text-right">
-              {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-              {company?.logoUrl && hasAccess('logoUpload') ? (
-                <img 
-                  src={company.logoUrl} 
-                  alt={company.name} 
-                  className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
-                />
-              ) : (
-                <div className="text-white text-sm font-medium mb-1">
-                  {company?.name || 'Mi Empresa'}
-                </div>
-              )}
-              <div className="text-white/70 text-xs">
-                {user?.fullName}
-              </div>
-            </div>
-          </div>
-          
-          {/* Page title */}
-          <div className="px-6 pb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Mensajes</h1>
-            <p className="text-white/70 text-sm">Comunícate con tus responsables y mantente al día</p>
-          </div>
-          
-          <div className="px-4 py-6 space-y-6">
-
-          {/* Managers list */}
-          <div className="space-y-3">
-            <h2 className="text-white/90 text-sm font-medium px-2">Conversaciones</h2>
-            
-            {filteredEmployees.length > 0 ? (
-              <div className="space-y-2">
-                {filteredEmployees.map((manager) => {
-                  const unreadCount = (messages as Message[] || []).filter(msg => 
-                    !msg.isRead && msg.senderId === manager.id && msg.receiverId === user?.id
-                  ).length;
-                  
-                  return (
-                    <div
-                      key={manager.id}
-                      className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 cursor-pointer hover:bg-white/15 transition-all duration-200 border border-white/10"
-                      onClick={() => setSelectedChat(manager.id)}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <UserAvatar 
-                          fullName={manager.fullName || ''} 
-                          size="md" 
-                          userId={manager.id}
-                          profilePicture={manager.profilePicture}
-                        />
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-white font-medium truncate">
-                              {manager.fullName}
-                            </p>
-                            {unreadCount > 0 && (
-                              <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full min-w-[20px] text-center">
-                                {unreadCount}
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-white/70 text-xs mt-1">
-                            {manager.position || (() => {
-                              const role = manager.role || 'employee';
-                              const roleDescriptions = {
-                                admin: 'Director General',
-                                manager: 'Responsable', 
-                                employee: 'Empleado'
-                              };
-                              return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-                            })()}
-                          </div>
-                        </div>
-                        
-                        <ChevronRight className="w-5 h-5 text-white/50" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-white/10 rounded-full mx-auto flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-white/50" />
-                </div>
-                <p className="text-white/70">No hay responsables disponibles</p>
-              </div>
-            )}
-          </div>
-        </div>
-        </>)
-      ) : (
-            /* Chat View - Employee Responsive Version - ⚠️ PROTECTED DO NOT MODIFY */
-            /* Desktop & Mobile visibility REQUIRED - DO NOT add lg:hidden class */
-            (<div 
-              className="fixed inset-0 z-[60] flex flex-col"
-              style={{ 
-                touchAction: 'manipulation',
-                overscrollBehavior: 'none',
-                position: 'fixed',
-                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
-                height: '100vh',
-                height: '100dvh',
-                minHeight: '-webkit-fill-available'
-              }}
-            >
-              {/* Chat Header - EMPLOYEE DARK VERSION */}
-              <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
-                style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Safe area para notch iOS
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedChat(null)}
-                  className="p-2 text-white hover:bg-white/10"
-                >
-                  <ArrowLeft className="w-5 h-5 text-white" />
-                </Button>
-                <UserAvatar 
-                  fullName={selectedChatUser?.fullName || ''} 
-                  size="sm" 
-                  userId={selectedChatUser?.id}
-                  profilePicture={selectedChatUser?.profilePicture}
-                />
-                <div>
-                  <h3 className="font-semibold text-white">
-                    {selectedChatUser?.fullName}
-                  </h3>
-                  <div className="text-sm text-white/70">
-                    {selectedChatUser?.position || (() => {
-                      const role = selectedChatUser?.role || 'employee';
-                      const roleDescriptions = {
-                        admin: 'Director General',
-                        manager: 'Responsable', 
-                        employee: 'Empleado'
-                      };
-                      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-                    })()}
-                  </div>
-                </div>
-              </div>
-              {/* Messages Area - Scrollable */}
-              <div 
-                ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 py-4"
-                style={{
-                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  position: 'relative'
-                }}
-              >
-                <div className="space-y-6">
-                  {messagesGroupedByDate.length > 0 ? (
-                    messagesGroupedByDate.map((group) => (
-                      <div key={group.date} className="space-y-4">
-                        {/* Date separator */}
-                        <div className="flex items-center justify-center">
-                          <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
-                            {group.dateFormatted}
-                          </div>
-                        </div>
-                        
-                        {/* Messages for this date */}
-                        <div className="space-y-3">
-                          {group.messages.map((message) => (
-                            <div key={message.id} data-message-id={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
-                                <p className="text-sm">{message.content}</p>
-                                <div className="flex items-center justify-between mt-1">
-                                  <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
-                                  </p>
-                                  {message.senderId === user?.id && (
-                                    <div className="ml-2">
-                                      {(user?.role === 'admin' || user?.role === 'manager') ? (
-                                        message.isRead ? (
-                                          <div className="flex items-center text-green-400">
-                                            <Check className="h-3 w-3" />
-                                            <Check className="h-3 w-3 -ml-1" />
-                                          </div>
-                                        ) : (
-                                          <Check className="h-3 w-3 text-green-400" />
-                                        )
-                                      ) : (
-                                        <Check className="h-3 w-3 text-green-400" />
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center text-white/70 py-8">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No hay mensajes aún</p>
-                      <p className="text-sm">Envía tu primer mensaje</p>
-                    </div>
-                  )}
-                </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
-              </div>
-              {/* Message Input - Fixed at bottom - DARK THEME */}
-              <div 
-                className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
-                style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
-                  position: 'sticky',
-                  bottom: 0,
-                  zIndex: 10
-                }}
-              >
-                <div className="flex space-x-2">
-                  <Input
-                    ref={messageInputRef}
-                    placeholder="Escribe tu mensaje..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
-                    className="input-oficaz flex-1"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white'
-                    }}
-                  />
-                  <Button
-                    onClick={handleSendEmployeeMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-blue-500 hover:bg-blue-600 text-white border-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>)
       )}
     </div>
   );
