@@ -392,11 +392,12 @@ export default function Messages() {
           </div>
           
           {/* Desktop Layout */}
-          <div className="hidden lg:flex w-full h-[calc(100vh-160px)]">
-            {/* Sidebar */}
-            <div className="w-1/3 bg-card border-r border-border flex flex-col h-full">
+          <div className="hidden lg:flex w-full h-[calc(100vh-200px)]">
+            <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden flex w-full">
+              {/* Sidebar */}
+              <div className="w-1/3 border-r border-border flex flex-col h-full">
               {/* Header sin línea - búsqueda y botón en la misma línea */}
-              <div className="p-6 bg-background">
+              <div className="p-6">
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -464,14 +465,14 @@ export default function Messages() {
               })}
             </div>
           </div>
-        </div>
+            </div>
 
-        {/* Chat Area - Solo para escritorio */}
-        <div className="flex-1 flex flex-col h-full">
-          {selectedChat && selectedChatUser ? (
-            <div className="flex flex-col h-full">
-              {/* Desktop header */}
-              <div className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0">
+            {/* Chat Area - Solo para escritorio */}
+            <div className="flex-1 flex flex-col h-full">
+              {selectedChat && selectedChatUser ? (
+                <div className="flex flex-col h-full">
+                  {/* Desktop header */}
+                  <div className="flex items-center space-x-3 p-4 border-b border-border flex-shrink-0">
                 <UserAvatar 
                   fullName={selectedChatUser.fullName || ''} 
                   size="sm" 
@@ -537,50 +538,51 @@ export default function Messages() {
                 {/* Elemento para scroll automático */}
                 <div ref={messagesEndRef} />
               </div>
-              
-              {/* Input area */}
-              <div className="p-4 border-t border-border bg-background flex-shrink-0">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    placeholder="Escribe tu mensaje..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                      }
-                    }}
-                    disabled={sendMessageMutation.isPending}
-                    className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <Button
-                    onClick={() => sendMessage()}
-                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground p-2"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
+                  
+                  {/* Input area */}
+                  <div className="p-4 border-t border-border flex-shrink-0">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Escribe tu mensaje..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                          }
+                        }}
+                        disabled={sendMessageMutation.isPending}
+                        className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <Button
+                        onClick={() => sendMessage()}
+                        disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                        size="sm"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground p-2"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center bg-muted/30">
+                  <div className="text-center">
+                    <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      Selecciona una conversación
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Elige un contacto para comenzar a chatear
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-muted/30">
-              <div className="text-center">
-                <MessageCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  Selecciona una conversación
-                </h3>
-                <p className="text-muted-foreground">
-                  Elige un contacto para comenzar a chatear
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
 
           {/* Mobile Layout */}
           <div className="lg:hidden w-full h-full">
