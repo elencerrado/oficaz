@@ -1238,35 +1238,32 @@ export default function Messages() {
         </div>
         </>)
       ) : (
-            /* Chat View - Employee Responsive Version - ⚠️ PROTECTED DO NOT MODIFY */
-            /* Desktop & Mobile visibility REQUIRED - DO NOT add lg:hidden class */
+            /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed inset-0 z-[60] flex flex-col"
+              className="fixed inset-0 bg-background z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
                 height: '100vh',
                 height: '100dvh',
                 minHeight: '-webkit-fill-available'
               }}
             >
-              {/* Chat Header - EMPLOYEE DARK VERSION */}
+              {/* Chat Header with Back Button - Fixed at top */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-gray-200/20 flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Safe area para notch iOS
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
                 }}
               >
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectedChat(null)}
-                  className="p-2 text-white hover:bg-white/10"
+                  className="p-2"
                 >
-                  <ArrowLeft className="w-5 h-5 text-white" />
+                  <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <UserAvatar 
                   fullName={selectedChatUser?.fullName || ''} 
@@ -1275,41 +1272,35 @@ export default function Messages() {
                   profilePicture={selectedChatUser?.profilePicture}
                 />
                 <div>
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-foreground">
                     {selectedChatUser?.fullName}
                   </h3>
-                  <div className="text-sm text-white/70">
-                    {selectedChatUser?.position || (() => {
-                      const role = selectedChatUser?.role || 'employee';
-                      const roleDescriptions = {
-                        admin: 'Director General',
-                        manager: 'Responsable', 
-                        employee: 'Empleado'
-                      };
-                      return roleDescriptions[role as keyof typeof roleDescriptions] || 'Empleado';
-                    })()}
+                  <div className="text-sm text-muted-foreground">
+                    {getRoleDisplay(selectedChatUser)}
                   </div>
                 </div>
               </div>
-              {/* Messages Area - Scrollable */}
+              {/* Messages - Scrollable area with bounce prevention */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 py-4"
-                style={{
-                  background: 'radial-gradient(circle at center, #1A2332 0%, #0F1419 100%)',
+                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                style={{ 
+                  paddingBottom: '20px',
+                  paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
                   WebkitOverflowScrolling: 'touch',
                   position: 'relative'
                 }}
               >
+                <div className="flex-1"></div>
                 <div className="space-y-6">
                   {messagesGroupedByDate.length > 0 ? (
                     messagesGroupedByDate.map((group) => (
                       <div key={group.date} className="space-y-4">
                         {/* Date separator */}
                         <div className="flex items-center justify-center">
-                          <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-3 py-1 rounded-full font-medium">
                             {group.dateFormatted}
                           </div>
                         </div>
@@ -1317,12 +1308,24 @@ export default function Messages() {
                         {/* Messages for this date */}
                         <div className="space-y-3">
                           {group.messages.map((message) => (
-                            <div key={message.id} data-message-id={message.id} className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[80%] p-3 rounded-lg ${message.senderId === user?.id ? 'bg-blue-500 text-white shadow-oficaz-blue' : 'bg-white/10 text-white shadow-oficaz'}`}>
+                            <div
+                              key={message.id}
+                              data-message-id={message.id}
+                              className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-xs px-4 py-2 rounded-lg ${
+                                  message.senderId === user?.id
+                                    ? 'bg-oficaz-primary text-white shadow-oficaz-blue'
+                                    : 'bg-white dark:bg-gray-800 text-foreground border border-gray-200 dark:border-gray-700 shadow-sm'
+                                }`}
+                              >
                                 <p className="text-sm">{message.content}</p>
                                 <div className="flex items-center justify-between mt-1">
-                                  <p className={`text-xs ${message.senderId === user?.id ? 'text-blue-100' : 'text-white/50'}`}>
-                                    {format(new Date(message.createdAt), 'HH:mm', { locale: es })}
+                                  <p className={`text-xs ${
+                                    message.senderId === user?.id ? 'text-white/70' : 'text-muted-foreground'
+                                  }`}>
+                                    {format(new Date(message.createdAt), 'HH:mm')}
                                   </p>
                                   {message.senderId === user?.id && (
                                     <div className="ml-2">
@@ -1348,48 +1351,40 @@ export default function Messages() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-white/70 py-8">
+                    <div className="text-center text-muted-foreground py-8">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No hay mensajes aún</p>
-                      <p className="text-sm">Envía tu primer mensaje</p>
+                      <p className="text-sm">Envía el primer mensaje para comenzar</p>
                     </div>
                   )}
                 </div>
                 <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '30px' : '10px' }} />
               </div>
-              {/* Message Input - Fixed at bottom - DARK THEME */}
+              {/* Message Input - Fixed at bottom */}
               <div 
-                className="px-4 py-3 border-t border-gray-200/20 flex-shrink-0"
+                className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  background: 'radial-gradient(circle at center, #323A46 0%, #232B36 100%)',
                   paddingBottom: isKeyboardOpen ? '0px' : 'max(16px, env(safe-area-inset-bottom))',
                   position: 'sticky',
                   bottom: 0,
                   zIndex: 10
                 }}
               >
-                <div className="flex space-x-2">
-                  <Input
-                    ref={messageInputRef}
-                    placeholder="Escribe tu mensaje..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendEmployeeMessage()}
-                    className="input-oficaz flex-1"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderColor: 'rgba(255, 255, 255, 0.2)',
-                      color: 'white'
-                    }}
-                  />
-                  <Button
-                    onClick={handleSendEmployeeMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-blue-500 hover:bg-blue-600 text-white border-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Input
+                  ref={messageInputRef}
+                  placeholder="Escribe tu mensaje..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  className="input-oficaz flex-1"
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim()}
+                  className="btn-oficaz-primary"
+                >
+                  <Send className="icon-sm" />
+                </Button>
               </div>
             </div>)
       )}
