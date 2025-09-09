@@ -529,7 +529,7 @@ export default function Messages() {
           {/* Left Column: Employee List (1/3 width) */}
           <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-semibold text-foreground">Conversaciones ({filteredEmployees.length})</h2>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -546,7 +546,9 @@ export default function Messages() {
                     Nuevo
                   </Button>
                 </div>
-                
+              </div>
+              
+              <div className="p-4 space-y-4 overflow-y-auto flex-1">
                 {/* Search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10 pointer-events-none" />
@@ -558,42 +560,42 @@ export default function Messages() {
                     style={{ paddingLeft: '3rem', paddingRight: '1rem' }}
                   />
                 </div>
-              </div>
-              
-              <div className="p-4 space-y-2 overflow-y-auto flex-1">
-                {filteredEmployees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
-                      selectedChat === employee.id
-                        ? 'bg-oficaz-primary text-white border-oficaz-primary'
-                        : 'bg-muted hover:bg-muted/80 border-border'
-                    }`}
-                    onClick={() => setSelectedChat(employee.id)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <UserAvatar 
-                        fullName={employee.fullName || ''} 
-                        size="md" 
-                        userId={employee.id}
-                        profilePicture={employee.profilePicture}
-                      />
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className={`truncate font-medium text-sm ${
-                          selectedChat === employee.id ? 'text-white' : 'text-foreground'
-                        }`}>
-                          {employee.fullName}
-                        </p>
-                        <div className={`truncate text-xs ${
-                          selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
-                        }`}>
-                          {getRoleDisplay(employee)}
+                
+                <div className="space-y-2">
+                  {filteredEmployees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className={`p-3 rounded-lg cursor-pointer border transition-all duration-200 hover-lift ${
+                        selectedChat === employee.id
+                          ? 'bg-oficaz-primary text-white border-oficaz-primary'
+                          : 'bg-muted hover:bg-muted/80 border-border'
+                      }`}
+                      onClick={() => setSelectedChat(employee.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <UserAvatar 
+                          fullName={employee.fullName || ''} 
+                          size="md" 
+                          userId={employee.id}
+                          profilePicture={employee.profilePicture}
+                        />
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className={`truncate font-medium text-sm ${
+                            selectedChat === employee.id ? 'text-white' : 'text-foreground'
+                          }`}>
+                            {employee.fullName}
+                          </p>
+                          <div className={`truncate text-xs ${
+                            selectedChat === employee.id ? 'text-white/90' : 'text-muted-foreground'
+                          }`}>
+                            {getRoleDisplay(employee)}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
 
