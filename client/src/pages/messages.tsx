@@ -383,8 +383,8 @@ export default function Messages() {
     <>
       {/* Admin Layout - Patrón consistente */}
       {!isEmployee && (
-        <div className="h-screen bg-background flex flex-col overflow-hidden" style={{ overflowX: 'clip' }}>
-          <div className="px-6 py-4 flex-shrink-0">
+        <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
+          <div className="mb-6">
             <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
             <p className="text-muted-foreground mt-1">
               Comunícate con tu equipo y gestiona conversaciones.
@@ -392,7 +392,7 @@ export default function Messages() {
           </div>
           
           {/* Desktop Layout */}
-          <div className="hidden lg:flex w-full flex-1 px-6 pb-4">
+          <div className="hidden lg:flex w-full h-[calc(100vh-160px)]">
             {/* Sidebar */}
             <div className="w-1/3 bg-card border-r border-border flex flex-col h-full">
               {/* Header sin línea - búsqueda y botón en la misma línea */}
@@ -583,7 +583,7 @@ export default function Messages() {
       </div>
 
           {/* Mobile Layout */}
-          <div className="lg:hidden w-full flex-1">
+          <div className="lg:hidden w-full h-full">
             {!selectedChat ? (
               /* Contact List View */
               <div className={`w-full h-full flex flex-col ${
