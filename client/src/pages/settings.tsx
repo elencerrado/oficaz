@@ -115,7 +115,7 @@ const AccountManagement = () => {
   const [selectedPlan, setSelectedPlan] = useState('basic');
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [planPreview, setPlanPreview] = useState(null);
+  const [planPreview, setPlanPreview] = useState<any>(null);
   
   // Contact form modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -419,43 +419,43 @@ const AccountManagement = () => {
     }
   }, [subscription?.plan]);
 
-  const { data: accountInfo } = useQuery({
+  const { data: accountInfo } = useQuery<any>({
     queryKey: ['/api/account/info'],
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData } = useQuery<any>({
     queryKey: ['/api/account/subscription'],
     retry: false,
     staleTime: 30000, // 30 seconds
   });
 
-  const { data: paymentMethods } = useQuery({
+  const { data: paymentMethods } = useQuery<any[]>({
     queryKey: ['/api/account/payment-methods'],
     retry: false,
     staleTime: 60000, // 1 minute
   });
 
-  const { data: invoices } = useQuery({
+  const { data: invoices } = useQuery<any[]>({
     queryKey: ['/api/account/invoices'],
     retry: false,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  const { data: usageData } = useQuery({
+  const { data: usageData } = useQuery<any>({
     queryKey: ['/api/account/usage-stats'],
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: cancellationStatus } = useQuery({
+  const { data: cancellationStatus } = useQuery<any>({
     queryKey: ['/api/account/cancellation-status'],
     retry: false,
     staleTime: 30000, // 30 seconds
   });
 
-  const { data: trialStatus } = useQuery({
+  const { data: trialStatus } = useQuery<any>({
     queryKey: ['/api/account/trial-status'],
     retry: false,
     staleTime: 30000, // 30 seconds
@@ -464,7 +464,7 @@ const AccountManagement = () => {
     }
   });
 
-  const { data: subscriptionPlans } = useQuery({
+  const { data: subscriptionPlans } = useQuery<any[]>({
     queryKey: ['/api/subscription-plans'],
     retry: false,
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -1444,7 +1444,6 @@ const AccountManagement = () => {
                     </div>
                   </div>
                 </div>
-              </form>
               
               {/* Form buttons at the end */}
               <div className="flex justify-center sm:justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -1768,7 +1767,7 @@ export default function Settings() {
   const [selectedPlan, setSelectedPlan] = useState(subscription?.plan || 'basic');
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [planPreview, setPlanPreview] = useState(null);
+  const [planPreview, setPlanPreview] = useState<any>(null);
 
   // User profile data
   const [profileData, setProfileData] = useState({
@@ -1802,7 +1801,7 @@ export default function Settings() {
   });
 
   // Query para cargar configuración de la empresa
-  const { data: companySettings } = useQuery({
+  const { data: companySettings } = useQuery<any>({
     queryKey: ['/api/settings/work-hours'],
     staleTime: 60000, // Cache for 1 minute
   });
