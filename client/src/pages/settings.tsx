@@ -2849,7 +2849,7 @@ export default function Settings() {
                               }
                             }}
                             placeholder="Selecciona fecha de incorporación"
-                            className="mt-1"
+                            className="mt-1 h-12"
                           />
                         ) : (
                           <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
