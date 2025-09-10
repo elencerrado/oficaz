@@ -589,6 +589,7 @@ export default function EmployeesSimple() {
                   {/* Swipeable Content */}
                   <div 
                     className="employee-card bg-card border rounded-lg relative z-10 p-4"
+                    onDoubleClick={() => handleEditEmployee(employee)}
                     onTouchStart={(e) => {
                       const touch = e.touches[0];
                       e.currentTarget.setAttribute('data-start-x', touch.clientX.toString());
