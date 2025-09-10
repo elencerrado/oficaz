@@ -189,10 +189,6 @@ export default function EmployeeReminders() {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
-      toast({
-        title: "Recordatorio completado",
-        description: "Has marcado el recordatorio como completado",
-      });
     },
     onError: (error: any) => {
       toast({
