@@ -5077,9 +5077,21 @@ Responde directamente a este email para contactar con la persona.
         dashboardReminders = await storage.getRemindersByUserWithAssignments(userId);
       }
       
-      // Filter to show only active reminders (not completed, not archived) and limit to first 3
+      // Filter to show only active reminders (not completed, not archived) and upcoming/recent dates
+      const now = new Date();
+      const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+      const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 1 week from now
+      
       const activeReminders = dashboardReminders
-        .filter(reminder => !reminder.isCompleted && !reminder.isArchived)
+        .filter(reminder => {
+          // Must not be completed or archived
+          if (reminder.isCompleted || reminder.isArchived) return false;
+          
+          // Must have a date within our range (2 days ago to 1 week in future)
+          const reminderDate = new Date(reminder.reminderDate);
+          return reminderDate >= twoDaysAgo && reminderDate <= oneWeekFromNow;
+        })
+        .sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime()) // Sort by date
         .slice(0, 3);
       
       // Add anti-cache headers for real-time updates
