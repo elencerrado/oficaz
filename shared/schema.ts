@@ -595,6 +595,29 @@ export const passwordResetSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Contact form schema for security validation
+export const contactFormSchema = z.object({
+  name: z.string()
+    .min(1, "El nombre es obligatorio")
+    .max(100, "El nombre no puede exceder 100 caracteres")
+    .regex(/^[a-zA-ZÀ-ÿ\u00f1\u00d1\s'-]+$/, "Solo se permiten letras, espacios, acentos y guiones"),
+  email: z.string()
+    .email("Email inválido")
+    .min(5, "Email demasiado corto")
+    .max(254, "Email demasiado largo"),
+  phone: z.string()
+    .optional()
+    .refine((val) => !val || /^[+]?[0-9\s-()]+$/.test(val), {
+      message: "Formato de teléfono inválido"
+    }),
+  subject: z.string()
+    .min(5, "El asunto debe tener al menos 5 caracteres")
+    .max(200, "El asunto no puede exceder 200 caracteres"),
+  message: z.string()
+    .min(10, "El mensaje debe tener al menos 10 caracteres")
+    .max(2000, "El mensaje no puede exceder 2000 caracteres"),
+});
+
 // Types
 export type Company = typeof companies.$inferSelect;
 export type User = typeof users.$inferSelect;

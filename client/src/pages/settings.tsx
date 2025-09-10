@@ -31,7 +31,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette, MessageSquare, Send } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette, MessageSquare, Send, Paperclip } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -74,7 +74,8 @@ type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 // Contact form schema
 const contactFormSchema = z.object({
   subject: z.string().min(1, "El asunto es obligatorio").max(200, "El asunto no puede exceder 200 caracteres"),
-  message: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(2000, "El mensaje no puede exceder 2000 caracteres")
+  message: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(2000, "El mensaje no puede exceder 2000 caracteres"),
+  attachments: z.any().optional() // For file attachments
 });
 
 type ContactFormData = z.infer<typeof contactFormSchema>;
@@ -118,6 +119,7 @@ const AccountManagement = () => {
   
   // Contact form modal states
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<FileList | null>(null);
   
   // Contact form setup
   const contactForm = useForm<ContactFormData>({
@@ -127,22 +129,80 @@ const AccountManagement = () => {
       message: ''
     }
   });
+
+  // Frontend file validation function for security
+  const validateFiles = (files: FileList) => {
+    const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+    const maxTotalSize = 20 * 1024 * 1024; // 20MB total
+    const maxFiles = 5;
+
+    if (files.length > maxFiles) {
+      return {
+        isValid: false,
+        error: `Máximo ${maxFiles} archivos permitidos. Has seleccionado ${files.length}.`
+      };
+    }
+
+    let totalSize = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+      
+      // Check file type
+      if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext)) {
+        return {
+          isValid: false,
+          error: `Tipo de archivo no permitido: ${file.name}. Solo se permiten: PDF, PNG, JPG, JPEG, WEBP.`
+        };
+      }
+      
+      // Check file size
+      if (file.size > maxFileSize) {
+        return {
+          isValid: false,
+          error: `Archivo demasiado grande: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB). Máximo 10MB por archivo.`
+        };
+      }
+      
+      totalSize += file.size;
+    }
+    
+    // Check total size
+    if (totalSize > maxTotalSize) {
+      return {
+        isValid: false,
+        error: `Tamaño total de archivos demasiado grande: ${(totalSize / 1024 / 1024).toFixed(2)}MB. Máximo 20MB total.`
+      };
+    }
+
+    return { isValid: true, error: null };
+  };
   
   // Contact form mutation
   const contactMutation = useMutation({
     mutationFn: async (data: ContactFormData) => {
+      const formData = new FormData();
+      formData.append('name', user?.fullName || '');
+      formData.append('email', company?.email || user?.dni || '');
+      formData.append('subject', data.subject);
+      formData.append('message', data.message);
+      
+      // Add attached files
+      if (attachedFiles) {
+        Array.from(attachedFiles).forEach((file, index) => {
+          formData.append(`attachments`, file);
+        });
+      }
+      
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({
-          name: user?.fullName,
-          email: company?.email || user?.dni,
-          subject: data.subject,
-          message: data.message
-        }),
+        body: formData,
       });
       
       if (!response.ok) {
@@ -158,6 +218,7 @@ const AccountManagement = () => {
         description: "Tu mensaje se ha enviado correctamente al equipo de Oficaz. Te responderemos lo antes posible.",
       });
       contactForm.reset();
+      setAttachedFiles(null);
       setIsContactModalOpen(false);
     },
     onError: (error: any) => {
@@ -1282,6 +1343,94 @@ const AccountManagement = () => {
                   </FormItem>
                 )}
               />
+              
+              {/* File attachment field */}
+              <div>
+                <Label className="text-sm font-medium">Adjuntar archivos (opcional)</Label>
+                <div className="mt-2">
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
+                        <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">Haz clic para subir</span> o arrastra archivos aquí
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          PDF, PNG, JPG, JPEG, WEBP (Max. 10MB por archivo, 20MB total)
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        multiple
+                        accept=".pdf,.png,.jpg,.jpeg,.webp"
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files) {
+                            // FRONTEND SECURITY: Validate files before setting state
+                            const validatedFiles = validateFiles(files);
+                            if (validatedFiles.isValid) {
+                              setAttachedFiles(files);
+                            } else {
+                              toast({
+                                title: "Archivos inválidos",
+                                description: validatedFiles.error,
+                                variant: "destructive",
+                              });
+                              // Clear the input
+                              e.target.value = '';
+                              setAttachedFiles(null);
+                            }
+                          }
+                        }}
+                        disabled={contactMutation.isPending}
+                      />
+                    </label>
+                  </div>
+                  
+                  {/* Show selected files */}
+                  {attachedFiles && attachedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Archivos seleccionados:
+                      </p>
+                      {Array.from(attachedFiles).map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <Paperclip className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm text-blue-700 dark:text-blue-300 truncate">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-blue-500 dark:text-blue-400">
+                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+                              if (input) {
+                                const dt = new DataTransfer();
+                                Array.from(attachedFiles).forEach((f, i) => {
+                                  if (i !== index) dt.items.add(f);
+                                });
+                                input.files = dt.files;
+                                setAttachedFiles(dt.files);
+                              }
+                            }}
+                            disabled={contactMutation.isPending}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
               
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3">
                 <div className="flex items-start space-x-2">

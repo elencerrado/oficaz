@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
-import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema } from '@shared/schema';
+import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -44,6 +44,51 @@ if (!fs.existsSync(uploadDir)) {
 const upload = multer({
   dest: uploadDir,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+
+// SECURE multer configuration for contact form with strict validation
+const contactUpload = multer({
+  dest: uploadDir,
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB per file
+    files: 5, // Maximum 5 files
+  },
+  fileFilter: (req, file, cb) => {
+    // Allowed file types - only secure formats
+    const allowedTypes = [
+      'application/pdf',
+      'image/png', 
+      'image/jpeg',
+      'image/jpg',
+      'image/webp'
+    ];
+    
+    // Allowed extensions as backup check
+    const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
+    
+    // Check both mimetype and extension for security
+    const ext = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedTypes.includes(file.mimetype) && allowedExts.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no permitido. Solo se permiten: PDF, PNG, JPG, JPEG, WEBP. Recibido: ${file.mimetype} con extensión ${ext}`));
+    }
+  }
+});
+
+// Contact form rate limiter - strict limits to prevent abuse
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // Maximum 3 contact form submissions per 15 minutes per IP
+  skipSuccessfulRequests: false, // Count successful requests
+  skipFailedRequests: false, // Count failed requests
+  message: {
+    success: false,
+    message: 'Demasiados envíos de formularios de contacto. Intenta de nuevo en 15 minutos.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // ⚠️ PROTECTED - DO NOT MODIFY
@@ -929,26 +974,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Contact form endpoint (public)
-  app.post('/api/contact', async (req, res) => {
+  // Contact form endpoint (public) - SECURITY ENHANCED with file upload support
+  app.post('/api/contact', contactLimiter, contactUpload.array('attachments', 5), async (req, res) => {
+    let uploadedFiles: any[] = [];
+    
     try {
       const { name, email, phone, subject, message } = req.body;
+      
+      // Store uploaded files for cleanup
+      if (req.files && Array.isArray(req.files)) {
+        uploadedFiles = req.files;
+      }
 
-      // Validación básica
-      if (!name || !email || !subject || !message) {
+      // SECURITY: Validate all fields using Zod schema
+      const validationResult = contactFormSchema.safeParse({
+        name: name?.trim(),
+        email: email?.trim(),
+        phone: phone?.trim(),
+        subject: subject?.trim(),
+        message: message?.trim(),
+      });
+
+      if (!validationResult.success) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Todos los campos obligatorios deben estar completos' 
+          message: 'Datos inválidos',
+          errors: validationResult.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
         });
       }
 
-      // Validación de email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Email no válido' 
-        });
+      const validatedData = validationResult.data;
+
+      // SECURITY: Validate total file size (20MB limit for all files combined)
+      let totalFileSize = 0;
+      if (uploadedFiles.length > 0) {
+        totalFileSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
+        const maxTotalSize = 20 * 1024 * 1024; // 20MB
+        
+        if (totalFileSize > maxTotalSize) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `El tamaño total de archivos excede el límite de 20MB. Total: ${(totalFileSize / 1024 / 1024).toFixed(2)}MB` 
+          });
+        }
+
+        // Log security information
+        console.log(`📁 Contact form files: ${uploadedFiles.length} files, ${(totalFileSize / 1024 / 1024).toFixed(2)}MB total`);
       }
 
       // Configurar Nodemailer con Hostinger SMTP
@@ -968,8 +1042,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use static logo URL for email compatibility
       const logoUrl = 'https://oficaz.es/email-logo.png';
 
-      // Crear contenido del email
-      const emailSubject = `[CONTACTO] ${subject}`;
+      // Prepare secure attachments using validated data
+      const attachments: any[] = [];
+      if (uploadedFiles.length > 0) {
+        uploadedFiles.forEach((file: any) => {
+          attachments.push({
+            filename: file.originalname,
+            path: file.path,
+            contentType: file.mimetype
+          });
+        });
+      }
+
+      // SECURITY: Use validated data for email content
+      const emailSubject = `[CONTACTO] ${validatedData.subject}`;
       
       const htmlContent = `
         <!DOCTYPE html>
@@ -995,10 +1081,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
                 <h2 style="color: #374151; font-size: 18px; margin: 0 0 15px 0;">
-                  ${subject}
+                  ${validatedData.subject}
                 </h2>
                 <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
-                  ${message}
+                  ${validatedData.message}
                 </p>
               </div>
 
@@ -1008,11 +1094,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   📞 Datos de contacto
                 </p>
                 <div style="color: #374151; line-height: 1.8; font-size: 14px;">
-                  <p style="margin: 5px 0;"><strong>Nombre:</strong> ${name}</p>
-                  <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                  ${phone ? `<p style="margin: 5px 0;"><strong>Teléfono:</strong> ${phone}</p>` : ''}
+                  <p style="margin: 5px 0;"><strong>Nombre:</strong> ${validatedData.name}</p>
+                  <p style="margin: 5px 0;"><strong>Email:</strong> ${validatedData.email}</p>
+                  ${validatedData.phone ? `<p style="margin: 5px 0;"><strong>Teléfono:</strong> ${validatedData.phone}</p>` : ''}
                 </div>
               </div>
+
+              ${attachments.length > 0 ? `
+              <!-- Archivos adjuntos -->
+              <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                <p style="color: #0369a1; font-weight: 600; margin: 0 0 15px 0; font-size: 16px;">
+                  📎 Archivos adjuntos (${attachments.length})
+                </p>
+                <div style="color: #374151; line-height: 1.8; font-size: 14px;">
+                  ${attachments.map(att => `<p style="margin: 5px 0;">• ${att.filename}</p>`).join('')}
+                </div>
+              </div>
+              ` : ''}
 
               <!-- Instrucciones -->
               <div style="margin: 25px 0; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
@@ -1039,15 +1137,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const textContent = `
 Nuevo mensaje de contacto desde oficaz.es
 
-ASUNTO: ${subject}
+ASUNTO: ${validatedData.subject}
 
 MENSAJE:
-${message}
+${validatedData.message}
 
 DATOS DE CONTACTO:
-- Nombre: ${name}
-- Email: ${email}
-${phone ? `- Teléfono: ${phone}` : ''}
+- Nombre: ${validatedData.name}
+- Email: ${validatedData.email}
+${validatedData.phone ? `- Teléfono: ${validatedData.phone}` : ''}
+
+${attachments.length > 0 ? `
+ARCHIVOS ADJUNTOS (${attachments.length}):
+${attachments.map(att => `- ${att.filename}`).join('\n')}
+` : ''}
 
 ---
 Responde directamente a este email para contactar con la persona.
@@ -1056,13 +1159,20 @@ Responde directamente a este email para contactar con la persona.
       const mailOptions = {
         from: '"Contacto Oficaz" <soy@oficaz.es>',
         to: 'soy@oficaz.es',
-        replyTo: email, // Para poder responder directamente
+        replyTo: validatedData.email, // Para poder responder directamente
         subject: emailSubject,
         text: textContent,
         html: htmlContent,
+        attachments: attachments
       };
 
-      console.log(`📧 Enviando formulario de contacto desde: ${email}`);
+      console.log(`📧 Enviando formulario de contacto desde: ${validatedData.email}`);
+      console.log(`🔒 SECURITY: Formulario validado - ${validatedData.name}, archivos: ${attachments.length}`);
+      
+      if (attachments.length > 0) {
+        console.log(`📎 Con ${attachments.length} archivo(s) adjunto(s) - Total: ${(totalFileSize / 1024 / 1024).toFixed(2)}MB`);
+      }
+      
       await transporter.sendMail(mailOptions);
       console.log(`✅ Formulario de contacto enviado exitosamente`);
 
@@ -1073,10 +1183,37 @@ Responde directamente a este email para contactar con la persona.
 
     } catch (error) {
       console.error('❌ Error enviando formulario de contacto:', error);
+      
+      // Handle multer file filter errors specifically
+      if (error instanceof Error && error.message.includes('Tipo de archivo no permitido')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: error.message
+        });
+      }
+      
       res.status(500).json({ 
         success: false, 
-        message: 'Error interno del servidor' 
+        message: 'Error interno del servidor al enviar el mensaje' 
       });
+    } finally {
+      // SECURITY CRITICAL: Always clean up uploaded files, regardless of success or failure
+      if (uploadedFiles.length > 0) {
+        console.log(`🧹 Limpiando ${uploadedFiles.length} archivos temporales...`);
+        
+        uploadedFiles.forEach((file: any) => {
+          try {
+            if (fs.existsSync(file.path)) {
+              fs.unlinkSync(file.path);
+              console.log(`🗑️ Archivo eliminado: ${file.originalname}`);
+            }
+          } catch (cleanupError) {
+            console.error(`❌ Error eliminando archivo temporal: ${file.path}`, cleanupError);
+          }
+        });
+        
+        console.log(`✅ Limpieza de archivos completada`);
+      }
     }
   });
 
