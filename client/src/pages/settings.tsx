@@ -1294,8 +1294,9 @@ const AccountManagement = () => {
       
       {/* Contact Form Modal */}
       <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[85svh] md:max-h-[85vh] flex flex-col">
+          {/* Fixed Header */}
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center space-x-2">
               <MessageSquare className="h-5 w-5 text-blue-500" />
               <span>Contactar con Oficaz</span>
@@ -1305,175 +1306,181 @@ const AccountManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <Form {...contactForm}>
-            <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4">
-              <FormField
-                control={contactForm.control}
-                name="subject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Asunto</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ej: Error en el sistema de fichajes"
-                        {...field}
-                        disabled={contactMutation.isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={contactForm.control}
-                name="message"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción del problema</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe detalladamente el problema que estás experimentando, pasos para reproducirlo, mensajes de error, etc."
-                        className="min-h-[120px] resize-none"
-                        {...field}
-                        disabled={contactMutation.isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {/* File attachment field */}
-              <div>
-                <Label className="text-sm font-medium">Adjuntar archivos (opcional)</Label>
-                <div className="mt-2">
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
-                        <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                          <span className="font-semibold">Haz clic para subir</span> o arrastra archivos aquí
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          PDF, PNG, JPG, JPEG, WEBP (Max. 10MB por archivo, 20MB total)
-                        </p>
-                      </div>
-                      <input
-                        type="file"
-                        className="hidden"
-                        multiple
-                        accept=".pdf,.png,.jpg,.jpeg,.webp"
-                        onChange={(e) => {
-                          const files = e.target.files;
-                          if (files) {
-                            // FRONTEND SECURITY: Validate files before setting state
-                            const validatedFiles = validateFiles(files);
-                            if (validatedFiles.isValid) {
-                              setAttachedFiles(files);
-                            } else {
-                              toast({
-                                title: "Archivos inválidos",
-                                description: validatedFiles.error,
-                                variant: "destructive",
-                              });
-                              // Clear the input
-                              e.target.value = '';
-                              setAttachedFiles(null);
-                            }
-                          }
-                        }}
-                        disabled={contactMutation.isPending}
-                      />
-                    </label>
-                  </div>
-                  
-                  {/* Show selected files */}
-                  {attachedFiles && attachedFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Archivos seleccionados:
-                      </p>
-                      {Array.from(attachedFiles).map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <Paperclip className="h-4 w-4 text-blue-500" />
-                            <span className="text-sm text-blue-700 dark:text-blue-300 truncate">
-                              {file.name}
-                            </span>
-                            <span className="text-xs text-blue-500 dark:text-blue-400">
-                              ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                            </span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-                              if (input) {
-                                const dt = new DataTransfer();
-                                Array.from(attachedFiles).forEach((f, i) => {
-                                  if (i !== index) dt.items.add(f);
-                                });
-                                input.files = dt.files;
-                                setAttachedFiles(dt.files);
-                              }
-                            }}
-                            disabled={contactMutation.isPending}
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+          {/* Scrollable Content Container */}
+          <div className="flex-1 overflow-y-auto overscroll-contain pr-2 -mr-2 pb-20">
+            <Form {...contactForm}>
+              <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4">
+                <FormField
+                  control={contactForm.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Asunto</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ej: Error en el sistema de fichajes"
+                          {...field}
+                          disabled={contactMutation.isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={contactForm.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descripción del problema</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe detalladamente el problema que estás experimentando, pasos para reproducirlo, mensajes de error, etc."
+                          className="min-h-[120px] resize-none"
+                          {...field}
+                          disabled={contactMutation.isPending}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* File attachment field */}
+                <div>
+                  <Label className="text-sm font-medium">Adjuntar archivos (opcional)</Label>
+                  <div className="mt-2">
+                    <div className="flex items-center justify-center w-full">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-2 text-gray-500 dark:text-gray-400" />
+                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold">Haz clic para subir</span> o arrastra archivos aquí
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            PDF, PNG, JPG, JPEG, WEBP (Max. 10MB por archivo, 20MB total)
+                          </p>
                         </div>
-                      ))}
+                        <input
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.png,.jpg,.jpeg,.webp"
+                          onChange={(e) => {
+                            const files = e.target.files;
+                            if (files) {
+                              // FRONTEND SECURITY: Validate files before setting state
+                              const validatedFiles = validateFiles(files);
+                              if (validatedFiles.isValid) {
+                                setAttachedFiles(files);
+                              } else {
+                                toast({
+                                  title: "Archivos inválidos",
+                                  description: validatedFiles.error,
+                                  variant: "destructive",
+                                });
+                                // Clear the input
+                                e.target.value = '';
+                                setAttachedFiles(null);
+                              }
+                            }
+                          }}
+                          disabled={contactMutation.isPending}
+                        />
+                      </label>
                     </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3">
-                <div className="flex items-start space-x-2">
-                  <Info className="h-4 w-4 text-blue-500 mt-0.5" />
-                  <div className="text-sm text-blue-700 dark:text-blue-300">
-                    <p className="font-medium mb-1">Tu información de contacto:</p>
-                    <p className="text-xs">• <strong>Nombre:</strong> {user?.fullName}</p>
-                    <p className="text-xs">• <strong>Email:</strong> {company?.email || user?.dni}</p>
-                    <p className="text-xs mt-2">Te responderemos a tu email corporativo lo antes posible.</p>
+                    
+                    {/* Show selected files */}
+                    {attachedFiles && attachedFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Archivos seleccionados:
+                        </p>
+                        {Array.from(attachedFiles).map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Paperclip className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm text-blue-700 dark:text-blue-300 truncate">
+                                {file.name}
+                              </span>
+                              <span className="text-xs text-blue-500 dark:text-blue-400">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+                                if (input) {
+                                  const dt = new DataTransfer();
+                                  Array.from(attachedFiles).forEach((f, i) => {
+                                    if (i !== index) dt.items.add(f);
+                                  });
+                                  input.files = dt.files;
+                                  setAttachedFiles(dt.files);
+                                }
+                              }}
+                              disabled={contactMutation.isPending}
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-              
-              <div className="flex justify-center sm:justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsContactModalOpen(false)}
-                  disabled={contactMutation.isPending}
-                  className="flex-1 sm:w-auto"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={contactMutation.isPending}
-                  className="flex-1 sm:w-auto bg-blue-600 hover:bg-blue-700"
-                >
-                  {contactMutation.isPending ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Enviar mensaje
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
+                
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-4 w-4 text-blue-500 mt-0.5" />
+                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                      <p className="font-medium mb-1">Tu información de contacto:</p>
+                      <p className="text-xs">• <strong>Nombre:</strong> {user?.fullName}</p>
+                      <p className="text-xs">• <strong>Email:</strong> {company?.email || user?.dni}</p>
+                      <p className="text-xs mt-2">Te responderemos a tu email corporativo lo antes posible.</p>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </div>
+          
+          {/* Fixed Footer with Action Buttons */}
+          <div className="flex-shrink-0 sticky bottom-0 bg-background pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-center sm:justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsContactModalOpen(false)}
+              disabled={contactMutation.isPending}
+              className="flex-1 sm:w-auto"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              form="contact-form"
+              onClick={() => contactForm.handleSubmit(handleContactSubmit)()}
+              disabled={contactMutation.isPending}
+              className="flex-1 sm:w-auto bg-blue-600 hover:bg-blue-700"
+            >
+              {contactMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar mensaje
+                </>
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
