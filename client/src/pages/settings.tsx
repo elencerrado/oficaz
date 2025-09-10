@@ -186,7 +186,7 @@ const AccountManagement = () => {
     mutationFn: async (data: ContactFormData) => {
       const formData = new FormData();
       formData.append('name', user?.fullName || '');
-      formData.append('email', company?.email || user?.dni || '');
+      formData.append('email', user?.companyEmail || company?.email || '');
       formData.append('subject', data.subject);
       formData.append('message', data.message);
       
