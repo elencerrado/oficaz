@@ -1851,7 +1851,7 @@ export default function VacationManagement() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-center sm:justify-end gap-2 pt-4">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1859,13 +1859,14 @@ export default function VacationManagement() {
                   setNewRequestDates({ startDate: null, endDate: null });
                   setNewRequestReason("");
                 }}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleCreateRequest}
                 disabled={createRequestMutation.isPending || !newRequestDates.startDate || !newRequestDates.endDate}
-                className="bg-[#007AFF] hover:bg-[#0056CC]"
+                className="bg-[#007AFF] hover:bg-[#0056CC] w-full sm:w-auto"
               >
                 {createRequestMutation.isPending ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
