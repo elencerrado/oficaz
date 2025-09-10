@@ -1148,6 +1148,7 @@ Responde directamente a este email para contactar con la persona.
       console.log(`🔒 SECURITY: Formulario validado - ${validatedData.name}, archivos: ${attachments.length}`);
       
       if (attachments.length > 0) {
+        const totalFileSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
         console.log(`📎 Con ${attachments.length} archivo(s) adjunto(s) - Total: ${(totalFileSize / 1024 / 1024).toFixed(2)}MB`);
       }
       
