@@ -120,8 +120,6 @@ export default function EmployeeDashboard() {
     staleTime: 25000, // Cache for 25 seconds
   });
 
-  // FIXED: Only show notification for truly incomplete sessions, not old notifications
-  const hasIncompleteSessionNotifications = false; // Temporarily disabled until we fix the logic
 
   // Get document notifications with reduced frequency
   const { data: documents } = useQuery({
@@ -687,7 +685,7 @@ export default function EmployeeDashboard() {
       icon: Clock, 
       title: 'Fichajes', 
       route: `/${companyAlias}/misfichajes`,
-      notification: hasIncompleteSessionNotifications,
+      notification: sessionStatus.isIncomplete,
       notificationType: 'red',
       feature: 'timeTracking'
     },
