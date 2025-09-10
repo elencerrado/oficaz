@@ -2772,8 +2772,8 @@ export default function Settings() {
                   />
                   <div>
                     <h3 className="font-medium text-[#0ea5e9]">{user?.fullName}</h3>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">
+                    <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+                      <Badge variant="secondary" className="self-start">
                         {translateRole(user?.role)}
                       </Badge>
                       <span className="text-sm text-gray-500">DNI: {user?.dni}</span>
