@@ -1797,7 +1797,7 @@ export default function VacationManagement() {
             <div className="p-3 bg-muted/20 rounded-lg">
               <h3 className="font-medium text-foreground mb-1">{user?.fullName}</h3>
               <p className="text-sm text-muted-foreground">
-                {user?.role === 'admin' ? 'Administrador' : 'Manager'}
+                {user?.role === 'admin' ? 'Administrador' : user?.role === 'manager' ? 'Manager' : 'Empleado'}
               </p>
               {user?.role === 'admin' && (
                 <p className="text-xs text-green-600 mt-1">

@@ -39,6 +39,22 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 
+// Función para traducir roles al español
+const translateRole = (role: string | undefined) => {
+  if (!role) return 'Empleado';
+  switch (role.toLowerCase()) {
+    case 'admin':
+    case 'administrator':
+      return 'Administrador';
+    case 'manager':
+      return 'Manager';
+    case 'employee':
+      return 'Empleado';
+    default:
+      return 'Empleado';
+  }
+};
+
 export default function Employees() {
   const [, navigate] = useLocation();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -408,8 +424,7 @@ export default function Employees() {
                       <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
                         <span className="flex items-center gap-1">
                           {getRoleIcon(employee.role)}
-                          {employee.role === 'admin' ? 'Admin' : 
-                           employee.role === 'manager' ? 'Manager' : 'Empleado'}
+                          {translateRole(employee.role)}
                         </span>
                       </Badge>
                       <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
@@ -636,8 +651,7 @@ export default function Employees() {
                               <p className="font-medium text-gray-900 truncate">{employee.fullName}</p>
                               <div className="flex items-center gap-1">
                                 <Badge className={`text-xs ${getRoleBadgeColor(employee.role)}`}>
-                                  {employee.role === 'admin' ? 'A' : 
-                                   employee.role === 'manager' ? 'M' : 'E'}
+                                  {translateRole(employee.role)?.charAt(0)}
                                 </Badge>
                                 <Badge className={`text-xs ${getStatusBadgeColor(employee.status || 'active')}`}>
                                   {getStatusIcon(employee.status || 'active')}

@@ -22,6 +22,22 @@ interface WorkSession {
   createdAt: string;
 }
 
+// Función para traducir roles al español
+const translateRole = (role: string | undefined) => {
+  if (!role) return 'Empleado';
+  switch (role.toLowerCase()) {
+    case 'admin':
+    case 'administrator':
+      return 'Administrador';
+    case 'manager':
+      return 'Manager';
+    case 'employee':
+      return 'Empleado';
+    default:
+      return 'Empleado';
+  }
+};
+
 export default function EmployeeDashboard() {
   const { user, logout, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
@@ -794,7 +810,7 @@ export default function EmployeeDashboard() {
                 <div className="flex flex-col space-y-1 p-2">
                   <p className="text-sm font-medium text-foreground">{user?.fullName}</p>
                   <p className="text-xs text-muted-foreground">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-muted-foreground opacity-75 capitalize">{user?.role || 'Empleado'}</p>
+                  <p className="text-xs text-muted-foreground opacity-75 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
                 <DropdownMenuItem onClick={logout} className="text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />

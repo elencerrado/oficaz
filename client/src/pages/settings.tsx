@@ -1389,6 +1389,22 @@ const ChangePasswordModalComponent = () => {
   );
 };
 
+// Función para traducir roles al español
+const translateRole = (role: string | undefined) => {
+  if (!role) return 'Empleado';
+  switch (role.toLowerCase()) {
+    case 'admin':
+    case 'administrator':
+      return 'Administrador';
+    case 'manager':
+      return 'Manager';
+    case 'employee':
+      return 'Empleado';
+    default:
+      return 'Empleado';
+  }
+};
+
 export default function Settings() {
   const { user, company, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
@@ -2740,7 +2756,7 @@ export default function Settings() {
                     <h3 className="font-medium text-[#0ea5e9]">{user?.fullName}</h3>
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary">
-                        {user?.role === 'admin' ? 'Administrador' : 'Manager'}
+                        {translateRole(user?.role)}
                       </Badge>
                       <span className="text-sm text-gray-500">DNI: {user?.dni}</span>
                     </div>
