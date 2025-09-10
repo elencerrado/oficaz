@@ -975,7 +975,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contact form endpoint (public) - SECURITY ENHANCED with file upload support
-  app.post('/api/contact', contactLimiter, contactUpload.array('attachments', 5), async (req, res) => {
+  app.post('/api/contact', contactUpload.array('attachments', 5), async (req, res) => {
     let uploadedFiles: any[] = [];
     
     try {
