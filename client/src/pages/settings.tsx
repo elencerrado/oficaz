@@ -540,7 +540,7 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">ID de cuenta</Label>
               <p className="text-sm text-gray-600">{accountInfo?.account_id}</p>
@@ -555,7 +555,7 @@ const AccountManagement = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Email corporativo / facturación</Label>
-              <p className="text-sm text-gray-600">{company?.email}</p>
+              <p className="text-sm text-gray-600 break-words">{company?.email}</p>
             </div>
           </div>
         </CardContent>
