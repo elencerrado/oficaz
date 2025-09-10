@@ -995,28 +995,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: message?.trim(),
       });
 
-      // SECURITY: Validate all fields using Zod schema
-      const validationResult = contactFormSchema.safeParse({
-        name: name?.trim(),
-        email: email?.trim(),
-        phone: phone?.trim(),
-        subject: subject?.trim(),
-        message: message?.trim(),
-      });
-
-      if (!validationResult.success) {
-        console.log('❌ Contact form validation failed:', validationResult.error.errors);
+      // Simplified validation - just ensure required fields exist
+      if (!name?.trim() || !subject?.trim() || !message?.trim()) {
         return res.status(400).json({ 
           success: false, 
-          message: 'Datos inválidos',
-          errors: validationResult.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
+          message: 'Faltan campos obligatorios: nombre, asunto y mensaje'
         });
       }
 
-      const validatedData = validationResult.data;
+      if (!email?.trim() || !email.includes('@')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email válido requerido'
+        });
+      }
+
+      const validatedData = {
+        name: name.trim(),
+        email: email.trim(), 
+        phone: phone?.trim() || '',
+        subject: subject.trim(),
+        message: message.trim()
+      };
 
       // SECURITY: Validate total file size (20MB limit for all files combined)
       let totalFileSize = 0;
