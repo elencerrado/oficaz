@@ -185,8 +185,12 @@ const AccountManagement = () => {
   const contactMutation = useMutation({
     mutationFn: async (data: ContactFormData) => {
       const formData = new FormData();
-      formData.append('name', user?.fullName || '');
-      formData.append('email', user?.companyEmail || company?.email || '');
+      // Ensure we have valid data before sending
+      const userName = user?.fullName || 'Usuario';
+      const userEmail = user?.companyEmail || company?.email || 'contacto@empresa.com';
+      
+      formData.append('name', userName);
+      formData.append('email', userEmail);
       formData.append('subject', data.subject);
       formData.append('message', data.message);
       

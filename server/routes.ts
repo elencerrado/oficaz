@@ -1005,6 +1005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       if (!validationResult.success) {
+        console.log('❌ Contact form validation failed:', validationResult.error.errors);
         return res.status(400).json({ 
           success: false, 
           message: 'Datos inválidos',
