@@ -528,7 +528,22 @@ export default function EmployeeReminders() {
                         
                         <Badge 
                           variant="outline" 
-                          className="text-xs border-white/30 text-white/70"
+                          className={`text-xs cursor-pointer transition-colors ${
+                            reminder.isArchived 
+                              ? 'border-gray-400/30 text-gray-400/70' 
+                              : isCompletedByCurrentUser(reminder)
+                                ? 'border-green-400/50 text-green-400 hover:border-green-400 hover:bg-green-400/10'
+                                : 'border-white/30 text-white/70'
+                          }`}
+                          onClick={() => {
+                            if (!reminder.isArchived && isCompletedByCurrentUser(reminder)) {
+                              // Reactivar recordatorio completado
+                              updateStatusMutation.mutate({ 
+                                id: reminder.id, 
+                                updates: { isCompleted: false } 
+                              });
+                            }
+                          }}
                         >
                           {reminder.isArchived ? 'Archivado' : 
                            isCompletedByCurrentUser(reminder) ? 'Completado' : 'Activo'}
