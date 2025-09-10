@@ -956,55 +956,62 @@ export default function AdminDocuments() {
                       return (
                         <div
                           key={document.id}
-                          className="flex items-center p-4 border border-border rounded-lg hover:bg-muted bg-card"
+                          className="flex flex-col sm:flex-row p-4 border border-border rounded-lg hover:bg-muted bg-card gap-3"
                         >
-                          <div className="p-2 rounded-lg bg-muted mr-4">
-                            <FileIcon className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-foreground truncate">
-                              {document.originalName || document.fileName || 'Documento sin nombre'}
-                            </h3>
-                            <div className="flex items-center gap-4 mt-1">
-                              <span className="text-sm text-muted-foreground">
+                          {/* Header section - icon and title */}
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="p-2 rounded-lg bg-muted flex-shrink-0">
+                              <FileIcon className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-foreground truncate">
+                                {document.originalName || document.fileName || 'Documento sin nombre'}
+                              </h3>
+                              <div className="text-sm text-muted-foreground">
                                 {document.user?.fullName || 'Empleado desconocido'}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                {formatFileSize(document.fileSize)}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                {(() => {
-                                  // La fecha del servidor está en UTC, convertir a hora local española
-                                  const utcDate = new Date(document.createdAt);
-                                  // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
-                                  const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-                                  return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
-                                })()}
-                              </span>
-                              {/* Signature status for nóminas */}
-                              {(() => {
-                                const fileName = document.originalName || document.fileName || '';
-                                const analysis = analyzeFileName(fileName, employees);
-                                return analysis.documentType === 'Nómina' && (
-                                  <Badge 
-                                    variant={document.isAccepted ? 'default' : 'outline'}
-                                    className={`text-xs ${
-                                      document.isAccepted 
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
-                                        : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                    }`}
-                                  >
-                                    {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
-                                  </Badge>
-                                );
-                              })()}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+
+                          {/* Metadata section - organized for mobile */}
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                            <span>{formatFileSize(document.fileSize)}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span>
+                              {(() => {
+                                // La fecha del servidor está en UTC, convertir a hora local española
+                                const utcDate = new Date(document.createdAt);
+                                // Agregar 2 horas para convertir de UTC a hora española (GMT+2)
+                                const localDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+                                return format(localDate, 'd MMM yyyy HH:mm', { locale: es });
+                              })()}
+                            </span>
+                            {/* Signature status for nóminas */}
+                            {(() => {
+                              const fileName = document.originalName || document.fileName || '';
+                              const analysis = analyzeFileName(fileName, employees);
+                              return analysis.documentType === 'Nómina' && (
+                                <Badge 
+                                  variant={document.isAccepted ? 'default' : 'outline'}
+                                  className={`text-xs ${
+                                    document.isAccepted 
+                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' 
+                                      : 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                  }`}
+                                >
+                                  {document.isAccepted ? '✓ Firmada' : 'Pendiente firma'}
+                                </Badge>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Actions section - responsive button layout */}
+                          <div className="flex items-center justify-end gap-1 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleViewDocument(document.id)}
+                              className="h-8 w-8 p-0"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -1012,6 +1019,7 @@ export default function AdminDocuments() {
                               variant="outline"
                               size="sm"
                               onClick={() => handleDownload(document.id, document.originalName)}
+                              className="h-8 w-8 p-0"
                             >
                               <Download className="h-4 w-4" />
                             </Button>
@@ -1027,7 +1035,7 @@ export default function AdminDocuments() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSignDocument(document.id, document.originalName || document.fileName)}
-                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                 >
                                   <FileSignature className="h-4 w-4" />
                                 </Button>
@@ -1037,7 +1045,7 @@ export default function AdminDocuments() {
                               variant="outline"
                               size="sm"
                               onClick={() => confirmDelete(document.id, document.originalName)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
