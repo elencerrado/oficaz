@@ -513,7 +513,7 @@ const AccountManagement = () => {
           
           {/* Usage Statistics */}
           {usageData?.current && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">
                   {usageData.current.employee_count}/{subscription?.maxUsers || '∞'}
@@ -540,7 +540,7 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-sm font-medium">ID de cuenta</Label>
               <p className="text-sm text-gray-600">{accountInfo?.account_id}</p>
