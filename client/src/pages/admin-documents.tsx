@@ -1383,9 +1383,10 @@ export default function AdminDocuments() {
                   <div className="space-y-3">
                     {sentRequests.map((request: any) => (
                       <div key={request.id} className="border rounded-lg p-4 bg-card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <div className="flex-1 space-y-3">
+                            {/* Header with status and type */}
+                            <div className="flex flex-wrap items-center gap-2">
                               <Badge variant={request.isCompleted ? 'default' : 'secondary'}>
                                 {request.isCompleted ? 'Completada' : 'Pendiente'}
                               </Badge>
@@ -1393,15 +1394,21 @@ export default function AdminDocuments() {
                                 {request.documentType}
                               </span>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Para: <span className="font-medium">{request.user?.fullName || 'Empleado'}</span>
-                            </p>
-                            {request.message && (
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Mensaje: "{request.message}"
+
+                            {/* Employee and message info */}
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">
+                                Para: <span className="font-medium">{request.user?.fullName || 'Empleado'}</span>
                               </p>
-                            )}
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              {request.message && (
+                                <p className="text-sm text-muted-foreground">
+                                  Mensaje: "{request.message}"
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Dates section */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
                               <span>
                                 Enviada: {(() => {
                                   const utcDate = new Date(request.createdAt);
@@ -1416,17 +1423,17 @@ export default function AdminDocuments() {
                               )}
                             </div>
                             
-                            {/* Estado del documento */}
-                            <div className="mt-3">
+                            {/* Document status */}
+                            <div>
                               {request.document ? (
-                                <div className="p-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded space-y-2">
-                                  <div className="flex items-center">
-                                    <FileCheck className="h-4 w-4 mr-2 text-green-600" />
-                                    <span className="text-green-700 dark:text-green-300 text-sm">
+                                <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded space-y-2">
+                                  <div className="flex items-center flex-wrap">
+                                    <FileCheck className="h-4 w-4 mr-2 text-green-600 flex-shrink-0" />
+                                    <span className="text-green-700 dark:text-green-300 text-sm break-all">
                                       Documento recibido: {request.document.originalName}
                                     </span>
                                   </div>
-                                  <div className="flex gap-2">
+                                  <div className="flex flex-wrap gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -1449,14 +1456,14 @@ export default function AdminDocuments() {
                                 </div>
                               ) : request.isCompleted ? (
                                 <div className="flex items-center p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded">
-                                  <X className="h-4 w-4 mr-2 text-red-600" />
+                                  <X className="h-4 w-4 mr-2 text-red-600 flex-shrink-0" />
                                   <span className="text-red-700 dark:text-red-300 text-sm">
                                     Archivo eliminado o no encontrado
                                   </span>
                                 </div>
                               ) : (
                                 <div className="flex items-center p-2 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded">
-                                  <AlertTriangle className="h-4 w-4 mr-2 text-yellow-600" />
+                                  <AlertTriangle className="h-4 w-4 mr-2 text-yellow-600 flex-shrink-0" />
                                   <span className="text-yellow-700 dark:text-yellow-300 text-sm">
                                     Esperando respuesta del empleado
                                   </span>
@@ -1464,7 +1471,9 @@ export default function AdminDocuments() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+
+                          {/* Action button - separated for mobile */}
+                          <div className="flex justify-end sm:items-start pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                             {!request.isCompleted ? (
                               <Button
                                 variant="outline"
