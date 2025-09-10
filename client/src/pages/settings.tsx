@@ -2789,9 +2789,10 @@ export default function Settings() {
                             value={profileData.companyEmail}
                             onChange={(e) => setProfileData(prev => ({ ...prev, companyEmail: e.target.value }))}
                             placeholder="admin@empresa.com"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.companyEmail || 'No especificado'}
                           </div>
                         )}
@@ -2805,9 +2806,10 @@ export default function Settings() {
                             value={profileData.companyPhone}
                             onChange={(e) => setProfileData(prev => ({ ...prev, companyPhone: e.target.value }))}
                             placeholder="+34 900 000 000"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.companyPhone || 'No especificado'}
                           </div>
                         )}
@@ -2821,9 +2823,10 @@ export default function Settings() {
                             value={profileData.position}
                             onChange={(e) => setProfileData(prev => ({ ...prev, position: e.target.value }))}
                             placeholder="Director General, Administrador, etc."
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.position || 'No especificado'}
                           </div>
                         )}
@@ -2843,7 +2846,7 @@ export default function Settings() {
                             className="mt-1"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.startDate ? 
                               format(new Date(profileData.startDate), 'PPP', { locale: es }) : 
                               'No especificada'
@@ -2869,9 +2872,10 @@ export default function Settings() {
                             value={profileData.personalEmail}
                             onChange={(e) => setProfileData(prev => ({ ...prev, personalEmail: e.target.value }))}
                             placeholder="tu@email.com"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.personalEmail || 'No especificado'}
                           </div>
                         )}
@@ -2885,9 +2889,10 @@ export default function Settings() {
                             value={profileData.personalPhone}
                             onChange={(e) => setProfileData(prev => ({ ...prev, personalPhone: e.target.value }))}
                             placeholder="+34 600 000 000"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.personalPhone || 'No especificado'}
                           </div>
                         )}
@@ -2902,9 +2907,10 @@ export default function Settings() {
                             onChange={(e) => setProfileData(prev => ({ ...prev, postalAddress: e.target.value }))}
                             placeholder="Calle, número, piso, código postal, ciudad"
                             rows={3}
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground min-h-[80px]">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 min-h-[80px]">
                             {profileData.postalAddress || 'No especificada'}
                           </div>
                         )}
@@ -2924,9 +2930,10 @@ export default function Settings() {
                             value={profileData.emergencyContactName}
                             onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactName: e.target.value }))}
                             placeholder="Nombre completo"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.emergencyContactName || 'No especificado'}
                           </div>
                         )}
@@ -2940,9 +2947,10 @@ export default function Settings() {
                             value={profileData.emergencyContactPhone}
                             onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContactPhone: e.target.value }))}
                             placeholder="+34 600 000 000"
+                            className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                           />
                         ) : (
-                          <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                          <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                             {profileData.emergencyContactPhone || 'No especificado'}
                           </div>
                         )}
