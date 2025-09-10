@@ -1184,8 +1184,10 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getRemindersByUser(userId: number): Promise<any[]> {
-    // Use the new function that includes assignments
-    return await this.getRemindersByUserWithAssignments(userId);
+    // Get ONLY reminders created by this user (not assigned ones)
+    return await db.select().from(schema.reminders)
+      .where(eq(schema.reminders.userId, userId))
+      .orderBy(schema.reminders.isPinned, schema.reminders.reminderDate, schema.reminders.createdAt);
   }
 
   // FIXED: Admin version that respects privacy - only shows admin's own reminders + ones shared with admin
