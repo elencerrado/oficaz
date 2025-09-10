@@ -138,10 +138,10 @@ const AccountManagement = () => {
           ...getAuthHeaders(),
         },
         body: JSON.stringify({
+          name: user?.fullName,
+          email: company?.email || user?.dni,
           subject: data.subject,
-          message: data.message,
-          senderName: user?.fullName,
-          senderEmail: company?.email || user?.username
+          message: data.message
         }),
       });
       
@@ -1250,6 +1250,103 @@ const AccountManagement = () => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Contact Form Modal */}
+      <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <MessageSquare className="h-5 w-5 text-blue-500" />
+              <span>Contactar con Oficaz</span>
+            </DialogTitle>
+            <DialogDescription>
+              Describe tu problema o consulta. Incluye todos los detalles que puedan ayudarnos.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...contactForm}>
+            <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4">
+              <FormField
+                control={contactForm.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asunto</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Ej: Error en el sistema de fichajes"
+                        {...field}
+                        disabled={contactMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={contactForm.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descripción del problema</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe detalladamente el problema que estás experimentando, pasos para reproducirlo, mensajes de error, etc."
+                        className="min-h-[120px] resize-none"
+                        {...field}
+                        disabled={contactMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <Info className="h-4 w-4 text-blue-500 mt-0.5" />
+                  <div className="text-sm text-blue-700 dark:text-blue-300">
+                    <p className="font-medium mb-1">Tu información de contacto:</p>
+                    <p className="text-xs">• <strong>Nombre:</strong> {user?.fullName}</p>
+                    <p className="text-xs">• <strong>Email:</strong> {company?.email || user?.dni}</p>
+                    <p className="text-xs mt-2">Te responderemos a tu email corporativo lo antes posible.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center sm:justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsContactModalOpen(false)}
+                  disabled={contactMutation.isPending}
+                  className="flex-1 sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={contactMutation.isPending}
+                  className="flex-1 sm:w-auto bg-blue-600 hover:bg-blue-700"
+                >
+                  {contactMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar mensaje
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
