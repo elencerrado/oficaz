@@ -5061,11 +5061,26 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Get dashboard reminders (for admin dashboard) - all active reminders
+  // Get dashboard reminders (for admin dashboard) - follows same logic as main reminders endpoint
   app.get('/api/reminders/dashboard', authenticateToken, async (req: AuthRequest, res) => {
     try {
       const userId = req.user!.id;
-      const dashboardReminders = await storage.getDashboardReminders(userId);
+      const userRole = req.user!.role;
+      const companyId = req.user!.companyId;
+      
+      let dashboardReminders;
+      
+      // If admin/manager, show only their own reminders + assigned ones; otherwise show user's reminders + assigned ones
+      if (userRole === 'admin' || userRole === 'manager') {
+        dashboardReminders = await storage.getRemindersByCompany(companyId, userId);
+      } else {
+        dashboardReminders = await storage.getRemindersByUserWithAssignments(userId);
+      }
+      
+      // Filter to show only active reminders (not completed, not archived) and limit to first 3
+      const activeReminders = dashboardReminders
+        .filter(reminder => !reminder.isCompleted && !reminder.isArchived)
+        .slice(0, 3);
       
       // Add anti-cache headers for real-time updates
       res.set({
@@ -5075,7 +5090,7 @@ Responde directamente a este email para contactar con la persona.
         'Last-Modified': new Date().toUTCString()
       });
       
-      res.json(dashboardReminders);
+      res.json(activeReminders);
     } catch (error) {
       console.error("Error fetching dashboard reminders:", error);
       res.status(500).json({ message: "Failed to fetch dashboard reminders" });
