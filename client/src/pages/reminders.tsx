@@ -413,20 +413,29 @@ export default function Reminders() {
     let localDateTimeString = '';
     if (reminder.reminderDate) {
       const reminderDate = new Date(reminder.reminderDate);
-      // FIXED: Use consistent Madrid timezone for all users
-      const madridDate = new Date(reminderDate.toLocaleString('en-CA', { timeZone: 'Europe/Madrid' }));
-      const year = madridDate.getFullYear();
-      const month = String(madridDate.getMonth() + 1).padStart(2, '0');
-      const day = String(madridDate.getDate()).padStart(2, '0');
-      const hour = String(madridDate.getHours()).padStart(2, '0');
-      const minute = String(madridDate.getMinutes()).padStart(2, '0');
       
-      localDateTimeString = `${year}-${month}-${day}T${hour}:${minute}`;
+      // Get Madrid time components directly using date methods with timezone offset
+      const madridOffset = 1; // Madrid is UTC+1 (UTC+2 in summer, but let's use built-in browser handling)
       
-      console.log('Edit date conversion (manual):', {
+      // Use Intl.DateTimeFormat to get parts in Madrid timezone
+      const madridFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Madrid',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      const parts = madridFormatter.formatToParts(reminderDate);
+      const partsMap = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      
+      localDateTimeString = `${partsMap.year}-${partsMap.month}-${partsMap.day}T${partsMap.hour}:${partsMap.minute}`;
+      
+      console.log('Edit date conversion (fixed):', {
         originalUTC: reminder.reminderDate,
-        reminderDate: reminderDate.toString(),
-        extractedParts: { year, month, day, hour, minute },
+        madridParts: partsMap,
         inputValue: localDateTimeString
       });
     }
