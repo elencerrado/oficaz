@@ -57,7 +57,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
                    tab.label === 'Explorador' ? 'Archivos' :
                    tab.label === 'Subir Documentos' ? 'Subir' :
                    tab.label === 'Solicitudes' ? 'Solicitudes' :
-                   tab.label === 'Políticas' ? 'Políticas' :
+                   tab.label === 'Configuración' ? 'Config' :
                    tab.label}
                 </span>
               </span>

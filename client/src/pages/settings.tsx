@@ -2127,7 +2127,7 @@ export default function Settings() {
       <TabNavigation
           tabs={[
             { id: 'company', label: 'Empresa', icon: Building2 },
-            { id: 'policies', label: 'Políticas', icon: SettingsIcon },
+            { id: 'policies', label: 'Configuración', icon: SettingsIcon },
             { id: 'profile', label: 'Mi Perfil', icon: Users },
             ...(user?.role === 'admin' ? [{ id: 'account', label: 'Mi Cuenta', icon: CreditCard }] : [])
           ]}
