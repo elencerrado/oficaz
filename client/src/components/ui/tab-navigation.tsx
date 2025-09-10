@@ -25,11 +25,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className = "" }: 
           className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
           style={{
             left: `${(activeIndex * 100) / tabs.length}%`,
-            width: `${100 / tabs.length}%`,
-            transform: 'translateX(0.25rem)',
-            right: 'auto',
-            marginLeft: '0',
-            marginRight: '0.25rem'
+            width: `${100 / tabs.length}%`
           }}
         />
         
