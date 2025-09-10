@@ -2150,14 +2150,31 @@ export default function Settings() {
                     </CardDescription>
                   </div>
                   {user?.role === 'admin' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingCompany(!isEditingCompany)}
-                    >
-                      {isEditingCompany ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-                      {isEditingCompany ? 'Cancelar' : 'Editar'}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {isEditingCompany ? (
+                        <>
+                          <Button onClick={() => setIsEditingCompany(false)} variant="outline" size="sm">
+                            <X className="h-4 w-4 md:mr-2" />
+                            <span className="hidden md:inline">Cancelar</span>
+                          </Button>
+                          <Button
+                            onClick={() => updateCompanyMutation.mutate(companyData)}
+                            disabled={updateCompanyMutation.isPending}
+                            size="sm"
+                          >
+                            <Save className="h-4 w-4 md:mr-2" />
+                            <span className="hidden md:inline">
+                              {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar'}
+                            </span>
+                          </Button>
+                        </>
+                      ) : (
+                        <Button onClick={() => setIsEditingCompany(true)} size="sm">
+                          <Edit className="h-4 w-4 md:mr-2" />
+                          <span className="hidden md:inline">Editar</span>
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </CardHeader>
@@ -2349,9 +2366,10 @@ export default function Settings() {
                         value={companyData.name}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Mi Empresa S.L."
+                        className="mt-1 h-12 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground font-medium">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400 font-medium">
                         {companyData.name || 'No especificado'}
                       </div>
                     )}
@@ -2359,7 +2377,7 @@ export default function Settings() {
                   
                   <div>
                     <Label htmlFor="companyAlias">Alias de la empresa</Label>
-                    <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                    <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                       {companyData.companyAlias || 'No especificado'}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -2375,9 +2393,10 @@ export default function Settings() {
                         value={companyData.cif}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, cif: e.target.value }))}
                         placeholder="B12345678"
+                        className="mt-1 h-12 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.cif || 'No especificado'}
                       </div>
                     )}
@@ -2391,9 +2410,10 @@ export default function Settings() {
                         value={companyData.contactName}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, contactName: e.target.value }))}
                         placeholder="Juan Pérez"
+                        className="mt-1 h-12 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border border-border rounded-lg text-foreground">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.contactName || 'No especificado'}
                       </div>
                     )}
@@ -2408,9 +2428,10 @@ export default function Settings() {
                         value={companyData.email}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, email: e.target.value }))}
                         placeholder="info@miempresa.com"
+                        className="mt-1 h-12 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.email || 'No especificado'}
                       </div>
                     )}
@@ -2427,9 +2448,10 @@ export default function Settings() {
                         value={companyData.phone}
                         onChange={(e) => setCompanyData(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="+34 900 000 000"
+                        className="mt-1 h-12 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.phone || 'No especificado'}
                       </div>
                     )}
@@ -2444,9 +2466,10 @@ export default function Settings() {
                         onChange={(e) => setCompanyData(prev => ({ ...prev, address: e.target.value }))}
                         placeholder="Calle, número, código postal, ciudad"
                         rows={3}
+                        className="mt-1 bg-white dark:bg-gray-900 border-2 border-blue-200 dark:border-blue-800 focus:border-blue-400 dark:focus:border-blue-600"
                       />
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground min-h-[80px]">
+                      <div className="mt-1 min-h-[80px] flex items-start pt-3 px-3 pb-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.address || 'No especificada'}
                       </div>
                     )}
@@ -2518,30 +2541,13 @@ export default function Settings() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="mt-1 p-3 bg-muted border rounded-lg text-foreground">
+                      <div className="mt-1 h-12 flex items-center px-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-600 dark:text-gray-400">
                         {companyData.province ? companyData.province.charAt(0).toUpperCase() + companyData.province.slice(1).replace('_', ' ') : 'No especificada'}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {isEditingCompany && (
-                  <div className="flex justify-end space-x-2 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsEditingCompany(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={() => updateCompanyMutation.mutate(companyData)}
-                      disabled={updateCompanyMutation.isPending}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {updateCompanyMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
