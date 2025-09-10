@@ -2236,24 +2236,6 @@ export default function Settings() {
     },
   });
 
-  const handleDeleteAccount = () => {
-    if (confirmationText !== 'ELIMINAR PERMANENTEMENTE') {
-      toast({
-        title: "Error de confirmación",
-        description: 'Debes escribir exactamente "ELIMINAR PERMANENTEMENTE"',
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsDeleting(true);
-    deleteAccountMutation.mutate(confirmationText);
-  };
-
-  const handleCancelDeletion = () => {
-    cancelDeletionMutation.mutate();
-  };
-
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
@@ -3100,8 +3082,8 @@ export default function Settings() {
                 {/* User info header */}
                 <div className="flex items-center space-x-4 p-4 bg-muted rounded-lg">
                   <UserAvatar
-                    userId={user?.id}
-                    fullName={user?.fullName}
+                    userId={user?.id || 0}
+                    fullName={user?.fullName || ''}
                     profilePicture={user?.profilePicture}
                     size="lg"
                     showUpload={true}
