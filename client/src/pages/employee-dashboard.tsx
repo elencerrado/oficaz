@@ -806,13 +806,13 @@ export default function EmployeeDashboard() {
                   />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-56 bg-white/10 backdrop-blur-xl border border-white/20 text-white" align="end" forceMount>
                 <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium text-foreground">{user?.fullName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
-                  <p className="text-xs text-muted-foreground opacity-75 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
+                  <p className="text-sm font-medium text-white">{user?.fullName}</p>
+                  <p className="text-xs text-white/70">{user?.companyEmail || user?.personalEmail || 'Sin email'}</p>
+                  <p className="text-xs text-white/60 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
-                <DropdownMenuItem onClick={logout} className="text-red-600">
+                <DropdownMenuItem onClick={logout} className="text-red-400 hover:text-red-300 hover:bg-red-500/20">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
