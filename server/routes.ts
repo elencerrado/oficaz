@@ -986,6 +986,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedFiles = req.files;
       }
 
+      // DEBUG: Log received data
+      console.log('🐛 Contact form data received:', {
+        name: name?.trim(),
+        email: email?.trim(),
+        phone: phone?.trim(),
+        subject: subject?.trim(),
+        message: message?.trim(),
+      });
+
       // SECURITY: Validate all fields using Zod schema
       const validationResult = contactFormSchema.safeParse({
         name: name?.trim(),
