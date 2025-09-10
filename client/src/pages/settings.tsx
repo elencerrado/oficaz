@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -30,7 +31,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette, MessageSquare, Send } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -70,6 +71,14 @@ const changePasswordSchema = z.object({
 
 type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
+// Contact form schema
+const contactFormSchema = z.object({
+  subject: z.string().min(1, "El asunto es obligatorio").max(200, "El asunto no puede exceder 200 caracteres"),
+  message: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(2000, "El mensaje no puede exceder 2000 caracteres")
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
+
 // Function to get plan icon color
 const getPlanIconColor = (plan: string) => {
   switch(plan?.toLowerCase()) {
@@ -106,6 +115,63 @@ const AccountManagement = () => {
   const [isChangingPlan, setIsChangingPlan] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [planPreview, setPlanPreview] = useState(null);
+  
+  // Contact form modal states
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  
+  // Contact form setup
+  const contactForm = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      subject: '',
+      message: ''
+    }
+  });
+  
+  // Contact form mutation
+  const contactMutation = useMutation({
+    mutationFn: async (data: ContactFormData) => {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          subject: data.subject,
+          message: data.message,
+          senderName: user?.fullName,
+          senderEmail: company?.email || user?.username
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar el mensaje');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Mensaje enviado",
+        description: "Tu mensaje se ha enviado correctamente al equipo de Oficaz. Te responderemos lo antes posible.",
+      });
+      contactForm.reset();
+      setIsContactModalOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar el mensaje. Por favor, inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleContactSubmit = (data: ContactFormData) => {
+    contactMutation.mutate(data);
+  };
   
   // Add missing functions and mutations that were in the main component
   
@@ -528,6 +594,52 @@ const AccountManagement = () => {
           )}
         </CardContent>
       </Card>
+      
+      {/* Contact Oficaz */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5 text-blue-500" />
+            <span>Contactar con Oficaz</span>
+          </CardTitle>
+          <CardDescription>
+            ¿Tienes algún problema con la aplicación o necesitas ayuda? Contacta con nuestro equipo de soporte.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <img 
+                  src={oficazLogo} 
+                  alt="Oficaz Logo" 
+                  className="h-10 w-10 object-contain rounded-lg dark:brightness-0 dark:invert"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-foreground">¿Necesitas ayuda?</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Reporta errores, problemas técnicos o solicita ayuda con cualquier funcionalidad de Oficaz.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Nuestro equipo técnico revisará tu consulta y te responderá lo antes posible.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-start">
+              <Button 
+                onClick={() => setIsContactModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Enviar mensaje
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* Company Registration Info */}
       <Card>
         <CardHeader>
