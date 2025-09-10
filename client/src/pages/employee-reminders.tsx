@@ -125,6 +125,7 @@ export default function EmployeeReminders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       setIsDialogOpen(false);
       setEditingReminder(null);
       setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
@@ -150,6 +151,7 @@ export default function EmployeeReminders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       toast({
         title: "Recordatorio eliminado",
         description: "El recordatorio se ha eliminado correctamente",
@@ -172,6 +174,7 @@ export default function EmployeeReminders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
     },
   });
 
@@ -183,6 +186,7 @@ export default function EmployeeReminders() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       toast({
         title: "Recordatorio completado",
         description: "Has marcado el recordatorio como completado",
@@ -204,6 +208,7 @@ export default function EmployeeReminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
     },
   });
 

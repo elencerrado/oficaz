@@ -221,6 +221,7 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       setIsDialogOpen(false);
       resetForm();
       toast({
@@ -244,6 +245,7 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       setEditingReminder(null);
       setIsDialogOpen(false);
       resetForm();
@@ -264,6 +266,7 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       toast({
         title: "Recordatorio eliminado",
         description: "El recordatorio se ha eliminado correctamente",
@@ -285,6 +288,7 @@ export default function Reminders() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/reminders/check-notifications'] });
       setIsAssignDialogOpen(false);
       setSelectedReminderForAssignment(null);
       setSelectedEmployees([]);
