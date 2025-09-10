@@ -981,11 +981,20 @@ export default function EmployeesSimple() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
-              <Button variant="outline" onClick={() => setShowCreateModal(false)} disabled={createEmployeeMutation.isPending}>
+            <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateModal(false)} 
+                disabled={createEmployeeMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleCreateEmployee} disabled={createEmployeeMutation.isPending}>
+              <Button 
+                onClick={handleCreateEmployee} 
+                disabled={createEmployeeMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 {createEmployeeMutation.isPending ? 'Creando...' : 'Crear Empleado'}
               </Button>
             </div>
