@@ -530,8 +530,8 @@ export default function EmployeeDashboard() {
     const currentTime = new Date();
     const isToday = clockIn.toDateString() === currentTime.toDateString();
     
-    // If session is from previous day and no clock out, it's incomplete
-    if (!isToday && activeSession.status === 'incomplete') {
+    // If session is from previous day and has no clock out, it's incomplete
+    if (!isToday && !activeSession.clockOut) {
       return { isActive: false, isIncomplete: true, isToday: false };
     }
     
