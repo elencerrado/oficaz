@@ -1451,7 +1451,8 @@ const AccountManagement = () => {
           </div>
           
           {/* Fixed Footer with Action Buttons */}
-          <div className="flex-shrink-0 sticky bottom-0 bg-background pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-center sm:justify-end gap-2">
+          <div className="flex-shrink-0 bg-background pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-center sm:justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -1480,6 +1481,7 @@ const AccountManagement = () => {
                 </>
               )}
             </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
