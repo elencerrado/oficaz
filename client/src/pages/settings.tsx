@@ -2723,7 +2723,7 @@ export default function Settings() {
                       <Users className="h-5 w-5" />
                       <span>Mi perfil personal</span>
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="hidden md:block">
                       Tu información personal como administrador
                     </CardDescription>
                   </div>
