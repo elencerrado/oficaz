@@ -377,18 +377,36 @@ export default function Reminders() {
 
     let processedDate = null;
     if (reminderData.reminderDate && reminderData.reminderDate !== '') {
+      // Validate date format first
+      const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+      if (!dateRegex.test(reminderData.reminderDate)) {
+        toast({
+          title: "Error",
+          description: "Formato de fecha inválido. Por favor, selecciona una fecha válida.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Create date from datetime-local input string
-      // This should preserve the time as intended by the user
-      const inputParts = reminderData.reminderDate.split('T');
-      const datePart = inputParts[0];
-      const timePart = inputParts[1];
+      const testDate = new Date(reminderData.reminderDate);
+      
+      // Validate the date is actually valid
+      if (isNaN(testDate.getTime())) {
+        toast({
+          title: "Error",
+          description: "Fecha inválida. Por favor, selecciona una fecha válida.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // User input is in local timezone (Madrid), convert to UTC for storage
-      // Use the browser's built-in timezone handling
-      processedDate = new Date(reminderData.reminderDate).toISOString();
+      processedDate = testDate.toISOString();
       
-      console.log('Date processing (automatic timezone):', {
+      console.log('Date processing (validated):', {
         input: reminderData.reminderDate,
+        testDate: testDate.toString(),
         finalISO: processedDate
       });
     }
