@@ -730,19 +730,22 @@ export default function Reminders() {
                   )}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-end sm:space-x-2">
                   <Button
                     variant="outline"
                     onClick={() => {
                       setIsDialogOpen(false);
+                      setEditingReminder(null);
                       resetForm();
                     }}
+                    className="order-2 sm:order-1"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={createReminderMutation.isPending || updateReminderMutation.isPending}
+                    className="order-1 sm:order-2"
                   >
                     {editingReminder ? 'Actualizar' : 'Crear'}
                   </Button>
