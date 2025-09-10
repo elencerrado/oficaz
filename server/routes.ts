@@ -986,53 +986,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedFiles = req.files;
       }
 
-      // DEBUG: Log received data
-      console.log('🐛 Contact form data received:', {
-        name: name?.trim(),
-        email: email?.trim(),
-        phone: phone?.trim(),
-        subject: subject?.trim(),
-        message: message?.trim(),
-      });
+      console.log('✉️ CONTACT ATTEMPT:', { name, email, phone, subject, message });
 
-      // Simplified validation - just ensure required fields exist
-      if (!name?.trim() || !subject?.trim() || !message?.trim()) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Faltan campos obligatorios: nombre, asunto y mensaje'
-        });
-      }
-
-      if (!email?.trim() || !email.includes('@')) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Email válido requerido'
-        });
-      }
-
+      // MINIMAL validation - accept anything
       const validatedData = {
-        name: name.trim(),
-        email: email.trim(), 
-        phone: phone?.trim() || '',
-        subject: subject.trim(),
-        message: message.trim()
+        name: name || 'Anónimo',
+        email: email || 'contacto@oficaz.es', 
+        phone: phone || '',
+        subject: subject || 'Consulta web',
+        message: message || 'Mensaje desde formulario web'
       };
 
-      // SECURITY: Validate total file size (20MB limit for all files combined)
-      let totalFileSize = 0;
+      // File info logging only - no validation
       if (uploadedFiles.length > 0) {
-        totalFileSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
-        const maxTotalSize = 20 * 1024 * 1024; // 20MB
-        
-        if (totalFileSize > maxTotalSize) {
-          return res.status(400).json({ 
-            success: false, 
-            message: `El tamaño total de archivos excede el límite de 20MB. Total: ${(totalFileSize / 1024 / 1024).toFixed(2)}MB` 
-          });
-        }
-
-        // Log security information
-        console.log(`📁 Contact form files: ${uploadedFiles.length} files, ${(totalFileSize / 1024 / 1024).toFixed(2)}MB total`);
+        const totalFileSize = uploadedFiles.reduce((sum, file) => sum + file.size, 0);
+        console.log(`📁 Contact files: ${uploadedFiles.length} files, ${(totalFileSize / 1024 / 1024).toFixed(2)}MB total`);
       }
 
       // Configurar Nodemailer con Hostinger SMTP
