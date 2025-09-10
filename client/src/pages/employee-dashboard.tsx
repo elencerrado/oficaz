@@ -524,32 +524,33 @@ export default function EmployeeDashboard() {
 
   // Determine session state and status 
   const getSessionStatus = () => {
-    if (!activeSession) return { isActive: false, isIncomplete: false, isToday: false };
+    if (!activeSession) return { isActive: false, isIncomplete: false, isToday: false, canStartNew: true };
     
     const clockIn = new Date(activeSession.clockIn);
     const currentTime = new Date();
     const isToday = clockIn.toDateString() === currentTime.toDateString();
+    const hoursFromClockIn = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+    const maxDailyHours = companySettings?.workingHoursPerDay || 8;
+    const maxHoursWithOvertime = maxDailyHours + 4;
     
     // If session is from previous day and has no clock out, it's incomplete
     if (!isToday && !activeSession.clockOut) {
-      return { isActive: false, isIncomplete: true, isToday: false };
+      // If enough time has passed since the incomplete session, allow new session
+      const canStartNew = hoursFromClockIn > maxHoursWithOvertime;
+      return { isActive: false, isIncomplete: true, isToday: false, canStartNew };
     }
     
     // If session is from today, check if it's still within working hours
     if (isToday) {
-      const hoursWorked = (currentTime.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
-      const maxDailyHours = companySettings?.workingHoursPerDay || 8;
-      const maxHoursWithOvertime = maxDailyHours + 4;
-      
       // If exceeded max hours + overtime, treat as finished
-      if (hoursWorked > maxHoursWithOvertime) {
-        return { isActive: false, isIncomplete: false, isToday: true };
+      if (hoursFromClockIn > maxHoursWithOvertime) {
+        return { isActive: false, isIncomplete: false, isToday: true, canStartNew: true };
       } else {
-        return { isActive: true, isIncomplete: false, isToday: true };
+        return { isActive: true, isIncomplete: false, isToday: true, canStartNew: false };
       }
     }
     
-    return { isActive: false, isIncomplete: false, isToday: false };
+    return { isActive: false, isIncomplete: false, isToday: false, canStartNew: true };
   };
 
   const sessionStatus = getSessionStatus();
@@ -1087,7 +1088,7 @@ export default function EmployeeDashboard() {
                       <LoadingSpinner size="lg" className="text-white w-12 h-12" />
                     ) : (
                       <span className="relative z-10">
-                        {(sessionStatus.isActive || sessionStatus.isIncomplete) ? 'SALIR' : 'FICHAR'}
+                        {sessionStatus.canStartNew ? 'FICHAR' : 'SALIR'}
                       </span>
                     )}
                     {/* Anillo exterior pulsante cuando está activo */}
