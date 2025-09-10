@@ -1294,9 +1294,9 @@ const AccountManagement = () => {
       
       {/* Contact Form Modal */}
       <Dialog open={isContactModalOpen} onOpenChange={setIsContactModalOpen}>
-        <DialogContent className="max-w-md max-h-[85svh] md:max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-md max-h-[85svh] md:max-h-[85vh] overflow-y-auto">
           {/* Fixed Header */}
-          <DialogHeader className="flex-shrink-0">
+          <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <MessageSquare className="h-5 w-5 text-blue-500" />
               <span>Contactar con Oficaz</span>
@@ -1306,9 +1306,7 @@ const AccountManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {/* Scrollable Content Container */}
-          <div className="flex-1 overflow-y-auto overscroll-contain pr-2 -mr-2 pb-20">
-            <Form {...contactForm}>
+          <Form {...contactForm}>
               <form onSubmit={contactForm.handleSubmit(handleContactSubmit)} className="space-y-4">
                 <FormField
                   control={contactForm.control}
@@ -1447,42 +1445,38 @@ const AccountManagement = () => {
                   </div>
                 </div>
               </form>
-            </Form>
-          </div>
-          
-          {/* Fixed Footer with Action Buttons */}
-          <div className="flex-shrink-0 bg-background pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex justify-center sm:justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsContactModalOpen(false)}
-              disabled={contactMutation.isPending}
-              className="flex-1 sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              form="contact-form"
-              onClick={() => contactForm.handleSubmit(handleContactSubmit)()}
-              disabled={contactMutation.isPending}
-              className="flex-1 sm:w-auto bg-blue-600 hover:bg-blue-700"
-            >
-              {contactMutation.isPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Enviar mensaje
-                </>
-              )}
-            </Button>
-            </div>
-          </div>
+              
+              {/* Form buttons at the end */}
+              <div className="flex justify-center sm:justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsContactModalOpen(false)}
+                  disabled={contactMutation.isPending}
+                  className="flex-1 sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={contactMutation.isPending}
+                  className="flex-1 sm:w-auto bg-blue-600 hover:bg-blue-700"
+                >
+                  {contactMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar mensaje
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
