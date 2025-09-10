@@ -5070,9 +5070,9 @@ Responde directamente a este email para contactar con la persona.
       
       let dashboardReminders;
       
-      // If admin/manager, show only their own reminders + assigned ones; otherwise show user's reminders + assigned ones
+      // If admin/manager, show ONLY their own created reminders; otherwise show user's reminders + assigned ones
       if (userRole === 'admin' || userRole === 'manager') {
-        dashboardReminders = await storage.getRemindersByCompany(companyId, userId);
+        dashboardReminders = await storage.getRemindersByUser(userId);
       } else {
         dashboardReminders = await storage.getRemindersByUserWithAssignments(userId);
       }
