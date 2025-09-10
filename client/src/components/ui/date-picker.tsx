@@ -31,7 +31,7 @@ export function DatePickerDay({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={cn("bg-background hover:bg-accent hover:text-accent-foreground text-left", className)}
+          className={cn("text-left", className)}
         >
           <span className="truncate text-xs">
             {buttonText || (date 
@@ -279,7 +279,7 @@ export function DatePickerPeriod({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className={cn("bg-background hover:bg-accent hover:text-accent-foreground text-left", className)}
+          className={cn("text-left", className)}
         >
           <span className="truncate text-xs"> {/* ⚠️ NO MODIFICAR: tipografía uniforme con otros filtros */}
             {buttonText || (startDate && endDate
