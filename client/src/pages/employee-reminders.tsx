@@ -129,10 +129,12 @@ export default function EmployeeReminders() {
       setIsDialogOpen(false);
       setEditingReminder(null);
       setFormData({ title: '', content: '', reminderDate: '', priority: 'medium', color: '#ffffff', enableNotifications: false });
-      toast({
-        title: editingReminder ? "Recordatorio actualizado" : "Recordatorio creado",
-        description: editingReminder ? "El recordatorio se ha actualizado correctamente" : "Se ha creado un nuevo recordatorio",
-      });
+      if (!editingReminder) {
+        toast({
+          title: "Recordatorio creado",
+          description: "Se ha creado un nuevo recordatorio",
+        });
+      }
     },
     onError: (error: any) => {
       toast({
