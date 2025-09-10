@@ -607,36 +607,14 @@ const AccountManagement = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <img 
-                  src={oficazLogo} 
-                  alt="Oficaz Logo" 
-                  className="h-10 w-10 object-contain rounded-lg dark:brightness-0 dark:invert"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-foreground">¿Necesitas ayuda?</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Reporta errores, problemas técnicos o solicita ayuda con cualquier funcionalidad de Oficaz.
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Nuestro equipo técnico revisará tu consulta y te responderá lo antes posible.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex justify-start">
-              <Button 
-                onClick={() => setIsContactModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <Send className="mr-2 h-4 w-4" />
-                Enviar mensaje
-              </Button>
-            </div>
-          </div>
+          <Button 
+            onClick={() => setIsContactModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            size="sm"
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Enviar mensaje
+          </Button>
         </CardContent>
       </Card>
       
