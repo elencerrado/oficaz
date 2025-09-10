@@ -1576,7 +1576,7 @@ export default function VacationManagement() {
                             setShowAddHoliday(false);
                             setNewHoliday({ name: "", startDate: null, endDate: null, type: "regional" });
                           }}
-                          className="w-full sm:w-auto"
+                          className="flex-1 sm:w-auto"
                         >
                           Cancelar
                         </Button>
@@ -1859,7 +1859,7 @@ export default function VacationManagement() {
                   setNewRequestDates({ startDate: null, endDate: null });
                   setNewRequestReason("");
                 }}
-                className="w-full sm:w-auto"
+                className="flex-1 sm:w-auto"
               >
                 Cancelar
               </Button>
