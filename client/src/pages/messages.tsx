@@ -1277,7 +1277,8 @@ export default function Messages() {
                 overscrollBehavior: 'none',
                 position: 'fixed',
                 height: '100dvh',
-                minHeight: '-webkit-fill-available'
+                minHeight: '-webkit-fill-available',
+                overflow: 'hidden' // Prevent scrolling on main container
               }}
             >
               {/* Chat Header with Back Button - Fixed at top */}
@@ -1310,10 +1311,10 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - Scrollable area that adjusts to keyboard */}
+              {/* Messages - Flexible area that adjusts to available space */}
               <div 
                 ref={messagesContainerRef}
-                className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
                   paddingBottom: '16px',
                   paddingTop: '8px',
@@ -1321,15 +1322,7 @@ export default function Messages() {
                   overscrollBehavior: 'none',
                   WebkitOverflowScrolling: 'touch',
                   position: 'relative',
-                  // Dynamic height calculation for keyboard handling
-                  height: isKeyboardOpen && keyboardOffset > 0
-                    ? `calc(100dvh - ${keyboardOffset + 140}px)` // 140px = header + input approx
-                    : 'calc(100dvh - 140px)', // Normal height without keyboard
-                  maxHeight: isKeyboardOpen && keyboardOffset > 0
-                    ? `calc(100dvh - ${keyboardOffset + 140}px)`
-                    : 'calc(100dvh - 140px)',
-                  minHeight: '200px', // Minimum height to prevent collapse
-                  flex: 'none' // Remove flex-1 for precise height control
+                  minHeight: 0 // Allow flex shrinking
                 }}
               >
                 <div className="flex-1"></div>
