@@ -874,7 +874,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '80px' : '90px',
+                  paddingBottom: isKeyboardOpen ? '70px' : '80px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -947,7 +947,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '20px' : '8px' }} />
+                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '16px' : '4px' }} />
               </div>
               {/* Message Input - Fixed at bottom */}
               <div 
@@ -957,9 +957,9 @@ export default function Messages() {
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? '0px' : '8px',
+                    : isPWA ? '0px' : '16px',
                   paddingBottom: isPWA && !isKeyboardOpen 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` 
                     : (isKeyboardOpen ? '8px' : '0px'),
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
@@ -1328,7 +1328,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '80px' : '90px',
+                  paddingBottom: isKeyboardOpen ? '70px' : '80px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -1401,7 +1401,7 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '20px' : '8px' }} />
+                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '16px' : '4px' }} />
               </div>
               {/* Message Input - Fixed at bottom */}
               <div 
@@ -1411,9 +1411,9 @@ export default function Messages() {
                   position: 'fixed',
                   bottom: isKeyboardOpen 
                     ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? '0px' : '8px',
+                    : isPWA ? '0px' : '16px',
                   paddingBottom: isPWA && !isKeyboardOpen 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` 
                     : (isKeyboardOpen ? '8px' : '0px'),
                   transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
                     ? `translateY(-${keyboardOffset}px)` 
