@@ -735,7 +735,7 @@ export default function Messages() {
                     <div ref={messagesEndRef} style={{ height: '20px' }} />
                   </div>
 
-                  {/* Message Input - In document flow */}
+                  {/* Message Input - Fixed at bottom */}
                   <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
                     <div className="flex space-x-2">
                       <Input
@@ -948,10 +948,18 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
-              {/* Message Input - In document flow */}
+              {/* Message Input - Fixed at bottom */}
               <div 
-                className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
+                className="flex space-x-2 p-4 border-t border-border bg-background"
                 style={{
+                  position: 'fixed',
+                  bottom: isKeyboardOpen && keyboardOffset > 0 
+                    ? `${keyboardOffset}px` // Above keyboard
+                    : isPWA ? '0px' : '0px',
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  height: '80px',
                   paddingBottom: isPWA 
                     ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
                     : '16px'
@@ -1271,7 +1279,7 @@ export default function Messages() {
       ) : (
             /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed inset-0 bg-background z-[60] flex flex-col"
+              className="fixed inset-0 bg-background z-[60]"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -1281,11 +1289,17 @@ export default function Messages() {
                 overflow: 'hidden' // Prevent scrolling on main container
               }}
             >
-              {/* Chat Header with Back Button - Fixed at top */}
+              {/* Chat Header with Back Button - Position fixed within container */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background"
                 style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
+                  height: '72px' // Fixed header height
                 }}
               >
                 <Button
@@ -1311,18 +1325,23 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - Flexible area that adjusts to available space */}
+              {/* Messages - Fixed positioning with exact dimensions */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
+                  position: 'fixed',
+                  top: '72px', // Below header
+                  left: 0,
+                  right: 0,
+                  bottom: isKeyboardOpen && keyboardOffset > 0 
+                    ? `${keyboardOffset + 80}px` // Above keyboard + input height
+                    : '80px', // Above input (80px = input height)
                   paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
-                  WebkitOverflowScrolling: 'touch',
-                  position: 'relative',
-                  minHeight: 0 // Allow flex shrinking
+                  WebkitOverflowScrolling: 'touch'
                 }}
               >
                 <div className="flex-1"></div>
@@ -1392,10 +1411,18 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
-              {/* Message Input - In document flow */}
+              {/* Message Input - Fixed at bottom */}
               <div 
-                className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
+                className="flex space-x-2 p-4 border-t border-border bg-background"
                 style={{
+                  position: 'fixed',
+                  bottom: isKeyboardOpen && keyboardOffset > 0 
+                    ? `${keyboardOffset}px` // Above keyboard
+                    : isPWA ? '0px' : '0px',
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  height: '80px',
                   paddingBottom: isPWA 
                     ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
                     : '16px'
