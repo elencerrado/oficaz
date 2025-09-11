@@ -2663,7 +2663,7 @@ Responde directamente a este email para contactar con la persona.
         await sendNewCompanyRegistrationNotification(
           company.name,
           company.email,
-          data.contactName,
+          data.contactName || data.adminFullName || 'Administrador',
           company.cif,
           new Date()
         );
