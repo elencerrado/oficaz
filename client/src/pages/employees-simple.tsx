@@ -28,7 +28,8 @@ import {
   Minus,
   AlertCircle,
   AlertTriangle,
-  Trash2
+  Trash2,
+  Lock
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { DatePickerDayEmployee } from '@/components/ui/date-picker';
@@ -359,8 +360,51 @@ export default function EmployeesSimple() {
 
   const totalUsers = (employeeList || []).length;
 
+  // 🔒 Function to check if current user can edit target employee
+  const canEditEmployee = (employee: any) => {
+    // Admins can edit anyone
+    if (user?.role === 'admin') {
+      return true;
+    }
+    
+    // Managers have restrictions
+    if (user?.role === 'manager') {
+      // Managers cannot edit other managers
+      if (employee.role === 'manager') {
+        return false;
+      }
+      // Managers cannot edit their own profile
+      if (employee.id === user.id) {
+        return false;
+      }
+      // Managers cannot edit admins
+      if (employee.role === 'admin') {
+        return false;
+      }
+      // Managers can only edit employees
+      return employee.role === 'employee';
+    }
+    
+    // Employees cannot edit anyone
+    return false;
+  };
+
   // Function to handle opening edit modal
   const handleEditEmployee = (employee: any) => {
+    // 🔒 Check permissions before opening modal
+    if (!canEditEmployee(employee)) {
+      toast({
+        title: "Sin permisos",
+        description: employee.id === user?.id 
+          ? "No puedes editar tu propio perfil. Solo un administrador puede hacerlo."
+          : employee.role === 'manager' 
+          ? "No puedes editar perfiles de otros managers. Solo un administrador puede hacerlo."
+          : "No tienes permisos para editar este perfil.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSelectedEmployee(employee);
     setEditEmployee({
       companyEmail: employee.companyEmail || '',
@@ -740,14 +784,30 @@ export default function EmployeesSimple() {
 
                 {/* Desktop View */}
                 <div 
-                  className="hidden sm:block bg-card border rounded-lg p-4 hover:bg-muted cursor-pointer"
+                  className={`hidden sm:block bg-card border rounded-lg p-4 ${
+                    canEditEmployee(employee) 
+                      ? "hover:bg-muted cursor-pointer" 
+                      : "cursor-not-allowed opacity-75"
+                  }`}
                   onClick={() => handleEditEmployee(employee)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
                       <div>
-                        <p className="font-medium text-foreground">{employee.fullName}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">{employee.fullName}</p>
+                          {!canEditEmployee(employee) && employee.id === user?.id && (
+                            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                              Tu perfil
+                            </Badge>
+                          )}
+                          {!canEditEmployee(employee) && employee.role === 'manager' && employee.id !== user?.id && (
+                            <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                              Solo admin
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{employee.position || 'Sin cargo especificado'}</span>
                           {(employee.companyEmail || employee.personalEmail) && (
@@ -775,7 +835,11 @@ export default function EmployeesSimple() {
                       <Badge className={`${getStatusColor(employee.status)} capitalize border-0`}>
                         {translateStatus(employee.status)}
                       </Badge>
-                      <Edit className="h-4 w-4 text-gray-400" />
+                      {canEditEmployee(employee) ? (
+                        <Edit className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <Lock className="h-4 w-4 text-gray-400" />
+                      )}
                     </div>
                   </div>
                 </div>

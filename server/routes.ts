@@ -4480,6 +4480,33 @@ Responde directamente a este email para contactar con la persona.
         return res.status(403).json({ error: 'No tienes permiso para editar este usuario' });
       }
 
+      // 🔒 MANAGER ROLE RESTRICTIONS: Managers cannot edit other managers or their own profile
+      if (req.user!.role === 'manager') {
+        // Check if the target user is a manager (including themselves)
+        if (user.role === 'manager') {
+          console.log(`🚨 SECURITY BLOCK: Manager ${req.user!.id} attempted to edit manager profile ${userId}`);
+          return res.status(403).json({ 
+            error: 'Los managers no pueden editar perfiles de otros managers. Solo un administrador puede realizar esta acción.' 
+          });
+        }
+        
+        // Check if manager is trying to edit their own profile
+        if (userId === req.user!.id) {
+          console.log(`🚨 SECURITY BLOCK: Manager ${req.user!.id} attempted to edit their own profile`);
+          return res.status(403).json({ 
+            error: 'Los managers no pueden editar su propio perfil. Solo un administrador puede realizar esta acción.' 
+          });
+        }
+
+        // Check if the target user is an admin
+        if (user.role === 'admin') {
+          console.log(`🚨 SECURITY BLOCK: Manager ${req.user!.id} attempted to edit admin profile ${userId}`);
+          return res.status(403).json({ 
+            error: 'Los managers no pueden editar perfiles de administradores.' 
+          });
+        }
+      }
+
       // Debug logging
       console.log('📝 Employee update request:', {
         userId,
