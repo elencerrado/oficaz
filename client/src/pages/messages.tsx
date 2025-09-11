@@ -1310,17 +1310,26 @@ export default function Messages() {
                   </div>
                 </div>
               </div>
-              {/* Messages - Scrollable area with bounce prevention */}
+              {/* Messages - Scrollable area that adjusts to keyboard */}
               <div 
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
+                className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
                   paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
                   WebkitOverflowScrolling: 'touch',
-                  position: 'relative'
+                  position: 'relative',
+                  // Dynamic height calculation for keyboard handling
+                  height: isKeyboardOpen && keyboardOffset > 0
+                    ? `calc(100dvh - ${keyboardOffset + 140}px)` // 140px = header + input approx
+                    : 'calc(100dvh - 140px)', // Normal height without keyboard
+                  maxHeight: isKeyboardOpen && keyboardOffset > 0
+                    ? `calc(100dvh - ${keyboardOffset + 140}px)`
+                    : 'calc(100dvh - 140px)',
+                  minHeight: '200px', // Minimum height to prevent collapse
+                  flex: 'none' // Remove flex-1 for precise height control
                 }}
               >
                 <div className="flex-1"></div>
