@@ -834,7 +834,6 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                height: '100vh',
                 height: '100dvh',
                 minHeight: '-webkit-fill-available'
               }}
@@ -874,7 +873,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '70px' : '80px',
+                  paddingBottom: isKeyboardOpen ? '60px' : '70px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -1288,7 +1287,6 @@ export default function Messages() {
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                height: '100vh',
                 height: '100dvh',
                 minHeight: '-webkit-fill-available'
               }}
@@ -1328,7 +1326,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '70px' : '80px',
+                  paddingBottom: isKeyboardOpen ? '60px' : '70px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
