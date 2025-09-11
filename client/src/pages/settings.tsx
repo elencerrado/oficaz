@@ -191,7 +191,7 @@ const AccountManagement = () => {
       
       formData.append('name', userName);
       formData.append('email', userEmail);
-      formData.append('subject', data.subject);
+      formData.append('subject', 'Incidencia: ' + data.subject);
       formData.append('message', data.message);
       
       // Add attached files
