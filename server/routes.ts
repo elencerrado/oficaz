@@ -1039,6 +1039,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const emailSubject = isIncident ? `[INCIDENCIA] ${cleanSubject}` : `[CONTACTO] ${validatedData.subject}`;
       const messageType = isIncident ? 'incidencia' : 'contacto';
       
+      console.log(`🔍 EMAIL DEBUG: isIncident=${isIncident}, originalSubject="${validatedData.subject}", cleanSubject="${cleanSubject}", emailSubject="${emailSubject}", messageType="${messageType}"`);
+      
       const htmlContent = `
         <!DOCTYPE html>
         <html lang="es">
