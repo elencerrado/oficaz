@@ -6338,15 +6338,15 @@ Responde directamente a este email para contactar con la persona.
       }
 
       // 🔒 SECURITY VALIDATION: Check if upgrade requires payment
-      const currentPlanData = await db.execute(sql`
+      const currentPlanDataForSecurity = await db.execute(sql`
         SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
       `);
       const newPlanDataForValidation = await db.execute(sql`
         SELECT price_per_user FROM subscription_plans WHERE name = ${plan}
       `);
 
-      if (currentPlanData.rows.length > 0 && newPlanDataForValidation.rows.length > 0) {
-        const currentPrice = Number(currentPlanData.rows[0].price_per_user) || 0;
+      if (currentPlanDataForSecurity.rows.length > 0 && newPlanDataForValidation.rows.length > 0) {
+        const currentPrice = Number(currentPlanDataForSecurity.rows[0].price_per_user) || 0;
         const newPrice = Number(newPlanDataForValidation.rows[0].price_per_user) || 0;
         
         // 🚨 CRITICAL SECURITY: Prevent unauthorized upgrades to more expensive plans
@@ -6449,6 +6449,28 @@ Responde directamente a este email para contactar con la persona.
         
         responseMessage = `Plan cambiado exitosamente a ${plan.charAt(0).toUpperCase() + plan.slice(1)}. `;
         responseMessage += `Las nuevas características están disponibles inmediatamente.`;
+      }
+
+      // 🔒 ADDITIONAL SECURITY: Cross-validate with Stripe using existing configuration
+      try {
+        if (company.subscription?.stripeSubscriptionId && stripeSecretKey) {
+          const stripe = require('stripe')(stripeSecretKey);
+          const stripeSubscription = await stripe.subscriptions.retrieve(company.subscription.stripeSubscriptionId);
+          
+          // 🚨 CRITICAL SECURITY: Block plan changes if Stripe subscription is not active/trialing
+          if (stripeSubscription.status !== 'active' && stripeSubscription.status !== 'trialing') {
+            console.log(`🚨 STRIPE SECURITY BLOCK: Plan change rejected due to inactive Stripe status - Company: ${company.id}, Plan: ${plan}, Stripe Status: ${stripeSubscription.status}`);
+            return res.status(403).json({ 
+              message: `No se puede cambiar el plan. Tu suscripción está en estado: ${stripeSubscription.status}. Contacta con soporte para resolverlo.`,
+              stripeStatus: stripeSubscription.status
+            });
+          }
+          
+          console.log(`✅ STRIPE VALIDATION: Plan change authorized - Company: ${company.id}, Stripe Status: ${stripeSubscription.status}`);
+        }
+      } catch (stripeError) {
+        // Log error but don't fail the operation - this is an additional audit step
+        console.log(`⚠️ STRIPE VALIDATION ERROR: Could not verify subscription status - Company: ${company.id}, Error: ${stripeError.message}`);
       }
 
       res.json({
