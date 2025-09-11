@@ -735,7 +735,7 @@ export default function Messages() {
                     <div ref={messagesEndRef} style={{ height: '20px' }} />
                   </div>
 
-                  {/* Message Input - Fixed at bottom */}
+                  {/* Message Input - In document flow */}
                   <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
                     <div className="flex space-x-2">
                       <Input
@@ -873,7 +873,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '60px' : '70px',
+                  paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -946,26 +946,15 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '16px' : '4px' }} />
+                <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
-              {/* Message Input - Fixed at bottom */}
+              {/* Message Input - In document flow */}
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  minHeight: isPWA ? '60px' : 'auto',
-                  position: 'fixed',
-                  bottom: isKeyboardOpen 
-                    ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? '0px' : '16px',
-                  paddingBottom: isPWA && !isKeyboardOpen 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` 
-                    : (isKeyboardOpen ? '8px' : '0px'),
-                  transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
-                    ? `translateY(-${keyboardOffset}px)` 
-                    : 'none',
-                  left: 0,
-                  right: 0,
-                  zIndex: 50
+                  paddingBottom: isPWA 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    : '16px'
                 }}
               >
                 <Input
@@ -1326,7 +1315,7 @@ export default function Messages() {
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
-                  paddingBottom: isKeyboardOpen ? '60px' : '70px',
+                  paddingBottom: '16px',
                   paddingTop: '8px',
                   touchAction: 'pan-y',
                   overscrollBehavior: 'none',
@@ -1399,26 +1388,15 @@ export default function Messages() {
                     </div>
                   )}
                 </div>
-                <div ref={messagesEndRef} style={{ height: isKeyboardOpen ? '16px' : '4px' }} />
+                <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
-              {/* Message Input - Fixed at bottom */}
+              {/* Message Input - In document flow */}
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background flex-shrink-0"
                 style={{
-                  minHeight: isPWA ? '60px' : 'auto',
-                  position: 'fixed',
-                  bottom: isKeyboardOpen 
-                    ? (isPWA && keyboardOffset > 0 ? '0px' : '0px')
-                    : isPWA ? '0px' : '16px',
-                  paddingBottom: isPWA && !isKeyboardOpen 
-                    ? `calc(env(safe-area-inset-bottom, 0px) + 8px)` 
-                    : (isKeyboardOpen ? '8px' : '0px'),
-                  transform: isPWA && isKeyboardOpen && keyboardOffset > 0 
-                    ? `translateY(-${keyboardOffset}px)` 
-                    : 'none',
-                  left: 0,
-                  right: 0,
-                  zIndex: 50
+                  paddingBottom: isPWA 
+                    ? `calc(env(safe-area-inset-bottom, 0px) + 16px)` 
+                    : '16px'
                 }}
               >
                 <Input
