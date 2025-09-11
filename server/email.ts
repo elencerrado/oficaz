@@ -500,6 +500,54 @@ Si no solicitaste este cambio de contraseña, puedes ignorar este email de forma
   }
 }
 
+export async function sendEmail(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  textContent: string
+): Promise<boolean> {
+  try {
+    console.log(`📧 Starting sendEmail to: ${to}`);
+    
+    // Configure Nodemailer with Hostinger SMTP
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.hostinger.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: 'soy@oficaz.es',
+        pass: 'Sanisidro@2025',
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const mailOptions = {
+      from: '"Oficaz" <soy@oficaz.es>',
+      to: to,
+      subject: subject,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    console.log(`📧 Attempting to send email with options:`, {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${to}`);
+    console.log(`📧 SMTP Response:`, result);
+    return true;
+
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    return false;
+  }
+}
+
 export async function sendNewCompanyRegistrationNotification(
   companyName: string,
   companyEmail: string,
