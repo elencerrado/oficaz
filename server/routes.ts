@@ -4802,7 +4802,14 @@ Responde directamente a este email para contactar con la persona.
 
 
   // Super Admin Access Code Verification
-  const SUPER_ADMIN_ACCESS_CODE = 'SA!9x7$Kz2&mQ5'; // ⚠️ PROTECTED - DO NOT MODIFY
+  // 🔒 SECURITY: Code moved to environment variable for better security
+  const SUPER_ADMIN_ACCESS_CODE = process.env.SUPER_ADMIN_ACCESS_CODE;
+  
+  // Validate that Super Admin code is configured
+  if (!SUPER_ADMIN_ACCESS_CODE) {
+    console.error('🚨 SECURITY WARNING: SUPER_ADMIN_ACCESS_CODE environment variable not set. Super Admin access will be disabled.');
+  }
+  
   const tempTokens = new Map(); // In-memory storage for temporary tokens
 
   // Endpoint to clear corrupted SuperAdmin token
@@ -4817,8 +4824,16 @@ Responde directamente a este email para contactar con la persona.
     try {
       const { accessCode } = req.body;
       
+      // 🔒 SECURITY: Check if Super Admin code is configured
+      if (!SUPER_ADMIN_ACCESS_CODE) {
+        console.log('🚨 SECURITY: Super Admin access attempt blocked - no access code configured');
+        return res.status(503).json({ message: "Acceso Super Admin deshabilitado por configuración de seguridad" });
+      }
+      
       if (accessCode !== SUPER_ADMIN_ACCESS_CODE) {
         console.log('🚨 SuperAdmin access denied: Invalid access code');
+        // 🔒 AUDIT: Log failed access attempts for security monitoring
+        console.log(`🚨 SECURITY AUDIT: Failed Super Admin access attempt - IP: ${req.ip}, Time: ${new Date().toISOString()}, Code: ${accessCode?.slice(0, 3)}***`);
         return res.status(401).json({ message: "Código de acceso incorrecto" });
       }
 
@@ -6322,6 +6337,37 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
+      // 🔒 SECURITY VALIDATION: Check if upgrade requires payment
+      const currentPlanData = await db.execute(sql`
+        SELECT price_per_user FROM subscription_plans WHERE name = ${company.subscription.plan}
+      `);
+      const newPlanDataForValidation = await db.execute(sql`
+        SELECT price_per_user FROM subscription_plans WHERE name = ${plan}
+      `);
+
+      if (currentPlanData.rows.length > 0 && newPlanDataForValidation.rows.length > 0) {
+        const currentPrice = Number(currentPlanData.rows[0].price_per_user) || 0;
+        const newPrice = Number(newPlanDataForValidation.rows[0].price_per_user) || 0;
+        
+        // 🚨 CRITICAL SECURITY: Prevent unauthorized upgrades to more expensive plans
+        if (newPrice > currentPrice) {
+          console.log(`🔒 SECURITY BLOCK: User ${userId} attempted to upgrade from ${company.subscription.plan} (€${currentPrice}) to ${plan} (€${newPrice}) without payment`);
+          
+          // Log security event for audit trail
+          console.log(`🚨 SECURITY AUDIT: Unauthorized plan upgrade attempt blocked - Company: ${company.id}, User: ${userId}, Current: ${company.subscription.plan} (€${currentPrice}), Attempted: ${plan} (€${newPrice}), IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+          
+          return res.status(403).json({ 
+            message: `No puedes cambiar a un plan más caro (€${newPrice}) sin procesar el pago correspondiente. Contacta con soporte para realizar esta actualización.`,
+            currentPrice,
+            requestedPrice: newPrice,
+            priceDifference: newPrice - currentPrice
+          });
+        }
+        
+        // Log all plan changes for audit trail
+        console.log(`💰 AUDIT: Plan change request - Company: ${company.id}, User: ${userId}, From: ${company.subscription.plan} (€${currentPrice}) to ${plan} (€${newPrice}), Difference: €${newPrice - currentPrice}, IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+      }
+
       // 1. Get features from features table (PRIMARY SOURCE for functionality)
       const featuresResult = await db.execute(sql`
         SELECT key, basic_enabled, pro_enabled, master_enabled
@@ -6608,7 +6654,37 @@ Responde directamente a este email para contactar con la persona.
         if (updates.plan) updateData.plan = updates.plan;
         // features are now managed dynamically from features table - no longer stored in subscriptions
         if (updates.maxUsers !== undefined) updateData.maxUsers = updates.maxUsers;
-        if (updates.customMonthlyPrice !== undefined) updateData.customMonthlyPrice = updates.customMonthlyPrice;
+        if (updates.customMonthlyPrice !== undefined) {
+          // 🔒 CRITICAL SECURITY: Log all custom price changes for audit trail
+          const previousPrice = subscription.customMonthlyPrice || 0;
+          const newPrice = updates.customMonthlyPrice || 0;
+          
+          console.log(`🚨 CRITICAL AUDIT: Custom price change - Company: ${companyId}, Super Admin: ${req.superAdmin?.email}, Previous: €${previousPrice}, New: €${newPrice}, IP: ${req.ip}, Time: ${new Date().toISOString()}`);
+          
+          // 🚨 SECURITY WARNING: Alert on suspicious pricing (0 or very low amounts)
+          if (newPrice === 0) {
+            console.log(`⚠️ SECURITY WARNING: ZERO PRICE SET - Company: ${companyId} set to €0/month by Super Admin: ${req.superAdmin?.email}. This requires immediate review.`);
+          } else if (newPrice > 0 && newPrice < 5) {
+            console.log(`⚠️ SECURITY WARNING: VERY LOW PRICE - Company: ${companyId} set to €${newPrice}/month by Super Admin: ${req.superAdmin?.email}. This may require review.`);
+          }
+          
+          // 🔒 VALIDATE: Check for reasonable price bounds (optional - can be adjusted)
+          if (newPrice < 0) {
+            console.log(`🚨 SECURITY BLOCK: Negative price rejected - Company: ${companyId}, Attempted: €${newPrice}`);
+            return res.status(400).json({ 
+              message: "El precio personalizado no puede ser negativo" 
+            });
+          }
+          
+          if (newPrice > 10000) {
+            console.log(`🚨 SECURITY BLOCK: Excessive price rejected - Company: ${companyId}, Attempted: €${newPrice}`);
+            return res.status(400).json({ 
+              message: "El precio personalizado no puede exceder €10,000/mes. Contacta soporte técnico para precios especiales." 
+            });
+          }
+          
+          updateData.customMonthlyPrice = updates.customMonthlyPrice;
+        }
         
         subscription = await storage.updateCompanySubscription(companyId, updateData);
       }
