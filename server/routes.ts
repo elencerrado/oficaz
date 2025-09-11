@@ -1033,7 +1033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // SECURITY: Use validated data for email content
-      const emailSubject = `[CONTACTO] ${validatedData.subject}`;
+      // Detect if this is an incident (from support) or regular contact
+      const isIncident = validatedData.subject.startsWith('Incidencia: ');
+      const cleanSubject = isIncident ? validatedData.subject.replace('Incidencia: ', '') : validatedData.subject;
+      const emailSubject = isIncident ? `[INCIDENCIA] ${cleanSubject}` : `[CONTACTO] ${validatedData.subject}`;
+      const messageType = isIncident ? 'incidencia' : 'contacto';
       
       const htmlContent = `
         <!DOCTYPE html>
@@ -1041,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Nuevo contacto desde la web</title>
+          <title>Nuevo ${messageType} desde la web</title>
         </head>
         <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
           <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
@@ -1054,12 +1058,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             <!-- Contenido -->
             <div style="padding: 30px 20px;">
               <h1 style="color: #1f2937; font-size: 24px; font-weight: 700; margin: 0 0 20px 0;">
-                🔔 Nuevo mensaje de contacto
+                🔔 Nuevo mensaje de ${messageType}
               </h1>
               
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
                 <h2 style="color: #374151; font-size: 18px; margin: 0 0 15px 0;">
-                  ${validatedData.subject}
+                  ${cleanSubject}
                 </h2>
                 <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0;">
                   ${validatedData.message}
@@ -1113,9 +1117,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
 
       const textContent = `
-Nuevo mensaje de contacto desde oficaz.es
+Nuevo mensaje de ${messageType} desde oficaz.es
 
-ASUNTO: ${validatedData.subject}
+ASUNTO: ${cleanSubject}
 
 MENSAJE:
 ${validatedData.message}
