@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Building, User, Eye, EyeOff, Users, CheckCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield, Star, Crown } from 'lucide-react';
+import { Building, User, Eye, EyeOff, Users, CheckCircle, XCircle, ArrowRight, ArrowLeft, Calendar, FileText, MessageSquare, Shield, Star, Crown } from 'lucide-react';
 
 import { apiRequest } from '@/lib/queryClient';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
@@ -91,6 +91,7 @@ const step3Schema = z.object({
 
 const step4Schema = z.object({
   selectedPlan: z.string().min(1, 'Selecciona un plan de suscripción'),
+  promotionalCode: z.string().optional(), // Código promocional opcional
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'Debes aceptar los términos y condiciones para continuar',
   }),
@@ -126,6 +127,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showDemoLoading, setShowDemoLoading] = useState(false);
+  const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
 
   // Check for verification token (only if not by invitation)
   const params = new URLSearchParams(search);
@@ -203,6 +205,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     resolver: zodResolver(step4Schema),
     defaultValues: {
       selectedPlan: '',
+      promotionalCode: '',
       acceptTerms: false,
     },
   });
@@ -222,6 +225,37 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     { value: '16-50', label: '16-50 personas', description: 'Empresa mediana' },
     { value: '51+', label: '51+ personas', description: 'Gran empresa' },
   ];
+
+  // Validation function for promotional codes
+  const validatePromotionalCode = async (code: string) => {
+    if (!code || code.trim() === '') {
+      setPromoCodeValidation({ status: 'idle' });
+      return;
+    }
+    
+    try {
+      setPromoCodeValidation({ status: 'checking' });
+      const response = await apiRequest('POST', '/api/validate-promotional-code', { code: code.trim() });
+      
+      if (response.valid) {
+        setPromoCodeValidation({ 
+          status: 'valid', 
+          message: response.message || `Código válido! Tendrás ${response.trialDays} días de prueba gratuitos`,
+          trialDays: response.trialDays 
+        });
+      } else {
+        setPromoCodeValidation({ 
+          status: 'invalid', 
+          message: response.message || 'Código promocional no válido' 
+        });
+      }
+    } catch (error) {
+      setPromoCodeValidation({ 
+        status: 'invalid', 
+        message: 'Error al verificar el código. Inténtalo de nuevo.' 
+      });
+    }
+  };
 
   const handleStep1Submit = (data: Step1Data) => {
     setFormData(prev => ({ ...prev, ...data }));
@@ -1064,14 +1098,65 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                 </p>
               )}
 
+              {/* Promotional Code Input */}
+              <div className="space-y-3">
+                <Label htmlFor="promotionalCode" className="text-sm font-medium text-gray-700">
+                  Código promocional (opcional)
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="promotionalCode"
+                    type="text"
+                    placeholder="Ingresa tu código promocional"
+                    className="pr-12"
+                    {...step4Form.register('promotionalCode')}
+                    onBlur={(e) => validatePromotionalCode(e.target.value)}
+                    data-testid="input-promotional-code"
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {promoCodeValidation.status === 'checking' && (
+                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
+                    )}
+                    {promoCodeValidation.status === 'valid' && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                    {promoCodeValidation.status === 'invalid' && (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Validation message */}
+                {promoCodeValidation.message && (
+                  <p className={`text-xs flex items-center gap-1 ${
+                    promoCodeValidation.status === 'valid' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {promoCodeValidation.status === 'valid' ? (
+                      <CheckCircle className="h-3 w-3" />
+                    ) : (
+                      <XCircle className="h-3 w-3" />
+                    )}
+                    {promoCodeValidation.message}
+                  </p>
+                )}
+              </div>
+
               {/* Free trial notice */}
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
                 <div className="flex items-center mb-2">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                  <h4 className="font-medium text-green-900">14 días de prueba gratuitos</h4>
+                  <h4 className="font-medium text-green-900">
+                    {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
+                      ? `${promoCodeValidation.trialDays} días de prueba gratuitos` 
+                      : '14 días de prueba gratuitos'
+                    }
+                  </h4>
                 </div>
                 <p className="text-sm text-green-700">
-                  Podrás usar Oficaz completamente gratis durante 14 días. No se cobrará nada hasta que termine tu período de prueba.
+                  {promoCodeValidation.status === 'valid' && promoCodeValidation.trialDays 
+                    ? `Podrás usar Oficaz completamente gratis durante ${promoCodeValidation.trialDays} días. No se cobrará nada hasta que termine tu período de prueba extendido.`
+                    : 'Podrás usar Oficaz completamente gratis durante 14 días. No se cobrará nada hasta que termine tu período de prueba.'
+                  }
                 </p>
               </div>
 
