@@ -41,6 +41,7 @@ export const companies = pgTable("companies", {
   // Datos de prueba
   hasDemoData: boolean("has_demo_data").default(false).notNull(),
   trialDurationDays: integer("trial_duration_days").default(14).notNull(), // Días de período de prueba (por defecto 14)
+  usedPromotionalCode: varchar("used_promotional_code", { length: 50 }), // Código promocional utilizado durante el registro
   
   // Account deletion fields - 30 day grace period
   scheduledForDeletion: boolean("scheduled_for_deletion").default(false).notNull(),
@@ -713,3 +714,29 @@ export const insertWorkAlarmSchema = createInsertSchema(workAlarms).omit({
 
 export type WorkAlarm = typeof workAlarms.$inferSelect;
 export type InsertWorkAlarm = z.infer<typeof insertWorkAlarmSchema>;
+
+// Promotional codes table - códigos promocionales para extender período de prueba
+export const promotionalCodes = pgTable("promotional_codes", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(), // Código único (ej: "PROMO2024")
+  description: text("description").notNull(), // Descripción del código
+  trialDurationDays: integer("trial_duration_days").notNull().default(60), // Días de prueba que otorga (por defecto 2 meses)
+  isActive: boolean("is_active").notNull().default(true), // Si el código está activo
+  maxUses: integer("max_uses"), // Límite de usos (null = ilimitado)
+  currentUses: integer("current_uses").notNull().default(0), // Usos actuales
+  validFrom: timestamp("valid_from"), // Fecha desde cuando es válido (null = siempre)
+  validUntil: timestamp("valid_until"), // Fecha hasta cuando es válido (null = siempre)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Schema for promotional codes
+export const insertPromotionalCodeSchema = createInsertSchema(promotionalCodes).omit({
+  id: true,
+  currentUses: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PromotionalCode = typeof promotionalCodes.$inferSelect;
+export type InsertPromotionalCode = z.infer<typeof insertPromotionalCodeSchema>;
