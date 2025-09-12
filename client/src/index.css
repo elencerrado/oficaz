@@ -732,7 +732,7 @@ body::after {
 
   /* Employee dashboard solid background */
   .bg-employee-gradient {
-    background: radial-gradient(circle at center, #323A46 0%, #232B36 100%);
+    background: #2A3441;
   }
 
   /* iOS Safe Area Support */
