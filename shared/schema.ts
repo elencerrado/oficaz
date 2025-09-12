@@ -537,6 +537,7 @@ export const companyRegistrationSchema = z.object({
   address: z.string().optional(),
   province: z.string().min(1, "Provincia requerida"),
   logoUrl: z.string().optional(),
+  promotionalCode: z.string().optional(),
   
   // Admin user fields
   adminFullName: z.string().min(1, "Nombre completo requerido"),

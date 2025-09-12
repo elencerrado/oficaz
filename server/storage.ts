@@ -9,7 +9,8 @@ import type {
   Subscription, InsertSubscription, SubscriptionPlan, InsertSubscriptionPlan,
   EmployeeActivationToken, InsertEmployeeActivationToken,
   CustomHoliday, InsertCustomHoliday,
-  WorkAlarm, InsertWorkAlarm
+  WorkAlarm, InsertWorkAlarm,
+  PromotionalCode, InsertPromotionalCode
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -171,6 +172,10 @@ export interface IStorage {
   scheduleCompanyDeletion(companyId: number): Promise<boolean>;
   cancelAccountDeletion(companyId: number): Promise<boolean>;
   
+  // Company subscription operations
+  getCompanySubscription(companyId: number): Promise<any | undefined>;
+  cancelCompanyDeletion(companyId: number): Promise<boolean>;
+  
   // Work Alarms operations
   createWorkAlarm(alarm: InsertWorkAlarm): Promise<WorkAlarm>;
   getWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]>;
@@ -178,6 +183,16 @@ export interface IStorage {
   updateWorkAlarm(id: number, updates: Partial<InsertWorkAlarm>): Promise<WorkAlarm | undefined>;
   deleteWorkAlarm(id: number): Promise<boolean>;
   getActiveWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]>;
+
+  // Promotional Codes
+  createPromotionalCode(code: InsertPromotionalCode): Promise<PromotionalCode>;
+  getPromotionalCode(id: number): Promise<PromotionalCode | undefined>;
+  getPromotionalCodeByCode(code: string): Promise<PromotionalCode | undefined>;
+  getAllPromotionalCodes(): Promise<PromotionalCode[]>;
+  updatePromotionalCode(id: number, updates: Partial<InsertPromotionalCode>): Promise<PromotionalCode | undefined>;
+  deletePromotionalCode(id: number): Promise<boolean>;
+  validatePromotionalCode(code: string): Promise<{ valid: boolean; message?: string; trialDays?: number }>;
+  redeemPromotionalCode(code: string): Promise<{ success: boolean; message?: string; trialDays?: number }>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -1537,21 +1552,6 @@ export class DrizzleStorage implements IStorage {
     return result;
   }
 
-  // Custom Holidays operations - stub implementations since holidays schema not fully defined
-  async getCustomHolidaysByCompany(companyId: number): Promise<any[]> {
-    // Return empty array since custom holidays table doesn't exist yet
-    return [];
-  }
-
-  async createCustomHoliday(holiday: any): Promise<any> {
-    // Stub implementation - would create custom holiday in a holidays table
-    return { id: Date.now(), ...holiday };
-  }
-
-  async deleteCustomHoliday(id: number): Promise<boolean> {
-    // Stub implementation - would delete from holidays table
-    return true;
-  }
 
   // Employee Activation Tokens operations
   async createActivationToken(token: InsertEmployeeActivationToken): Promise<EmployeeActivationToken> {
@@ -1932,7 +1932,7 @@ export class DrizzleStorage implements IStorage {
     }
   }
 
-  async cancelCompanyDeletion(companyId: number): Promise<boolean> {
+  async cancelAccountDeletion(companyId: number): Promise<boolean> {
     try {
       await db.update(schema.companies)
         .set({
@@ -2114,7 +2114,7 @@ export class DrizzleStorage implements IStorage {
         if (reminder.assignedUserIds && reminder.assignedUserIds.length > 0) {
           // This is an assigned reminder - check if all assigned users + creator have completed
           const allRequiredUsers = [...reminder.assignedUserIds, reminder.createdBy];
-          const uniqueRequiredUsers = [...new Set(allRequiredUsers)];
+          const uniqueRequiredUsers = Array.from(new Set(allRequiredUsers));
           shouldBeGloballyCompleted = uniqueRequiredUsers.every(reqUserId => currentCompletedBy.includes(reqUserId));
         } else {
           // This is a personal reminder - only creator needs to complete
@@ -2258,6 +2258,156 @@ export class DrizzleStorage implements IStorage {
       console.error('Error fetching active work alarms:', error);
       return [];
     }
+  }
+
+  // Promotional Codes
+  async createPromotionalCode(code: InsertPromotionalCode): Promise<PromotionalCode> {
+    const [result] = await db.insert(schema.promotionalCodes).values(code).returning();
+    return result;
+  }
+
+  async getPromotionalCode(id: number): Promise<PromotionalCode | undefined> {
+    const [code] = await db.select().from(schema.promotionalCodes).where(eq(schema.promotionalCodes.id, id));
+    return code;
+  }
+
+  async getPromotionalCodeByCode(code: string): Promise<PromotionalCode | undefined> {
+    const [result] = await db.select().from(schema.promotionalCodes).where(eq(schema.promotionalCodes.code, code));
+    return result;
+  }
+
+  async getAllPromotionalCodes(): Promise<PromotionalCode[]> {
+    return await db.select().from(schema.promotionalCodes).orderBy(desc(schema.promotionalCodes.createdAt));
+  }
+
+  async updatePromotionalCode(id: number, updates: Partial<InsertPromotionalCode>): Promise<PromotionalCode | undefined> {
+    const [result] = await db.update(schema.promotionalCodes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(schema.promotionalCodes.id, id))
+      .returning();
+    return result;
+  }
+
+  async deletePromotionalCode(id: number): Promise<boolean> {
+    const result = await db.delete(schema.promotionalCodes)
+      .where(eq(schema.promotionalCodes.id, id))
+      .returning();
+    return result.length > 0;
+  }
+
+  async validatePromotionalCode(code: string): Promise<{ valid: boolean; message?: string; trialDays?: number }> {
+    try {
+      const promoCode = await this.getPromotionalCodeByCode(code);
+      
+      if (!promoCode) {
+        return { valid: false, message: 'Código promocional no encontrado' };
+      }
+
+      if (!promoCode.isActive) {
+        return { valid: false, message: 'Código promocional desactivado' };
+      }
+
+      // Check validity dates
+      const now = new Date();
+      if (promoCode.validFrom && promoCode.validFrom > now) {
+        return { valid: false, message: 'Código promocional aún no válido' };
+      }
+
+      if (promoCode.validUntil && promoCode.validUntil < now) {
+        return { valid: false, message: 'Código promocional expirado' };
+      }
+
+      // Check usage limits
+      if (promoCode.maxUses && promoCode.currentUses >= promoCode.maxUses) {
+        return { valid: false, message: 'Código promocional agotado' };
+      }
+
+      return { 
+        valid: true, 
+        message: `¡Código válido! Obtienes ${promoCode.trialDurationDays} días de prueba gratuitos`,
+        trialDays: promoCode.trialDurationDays 
+      };
+    } catch (error) {
+      console.error('Error validating promotional code:', error);
+      return { valid: false, message: 'Error al validar el código' };
+    }
+  }
+
+  async redeemPromotionalCode(code: string): Promise<{ success: boolean; message?: string; trialDays?: number }> {
+    try {
+      // Start transaction for atomic operation
+      return await db.transaction(async (tx) => {
+        // First validate the code
+        const promoCode = await tx.select().from(schema.promotionalCodes)
+          .where(eq(schema.promotionalCodes.code, code))
+          .limit(1);
+        
+        if (!promoCode[0]) {
+          return { success: false, message: 'Código promocional no encontrado' };
+        }
+
+        const promo = promoCode[0];
+
+        if (!promo.isActive) {
+          return { success: false, message: 'Código promocional desactivado' };
+        }
+
+        // Check validity dates
+        const now = new Date();
+        if (promo.validFrom && promo.validFrom > now) {
+          return { success: false, message: 'Código promocional aún no válido' };
+        }
+
+        if (promo.validUntil && promo.validUntil < now) {
+          return { success: false, message: 'Código promocional expirado' };
+        }
+
+        // Check usage limits BEFORE incrementing
+        if (promo.maxUses && promo.currentUses >= promo.maxUses) {
+          return { success: false, message: 'Código promocional agotado' };
+        }
+
+        // Increment usage count atomically
+        const [updatedPromo] = await tx.update(schema.promotionalCodes)
+          .set({ 
+            currentUses: promo.currentUses + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.promotionalCodes.id, promo.id))
+          .returning();
+
+        if (!updatedPromo) {
+          return { success: false, message: 'Error al procesar código promocional' };
+        }
+
+        console.log(`✅ Promotional code '${code}' redeemed successfully. Uses: ${updatedPromo.currentUses}/${promo.maxUses || 'unlimited'}`);
+
+        return {
+          success: true,
+          message: `¡Código promocional aplicado! Obtienes ${promo.trialDurationDays} días de prueba gratuitos`,
+          trialDays: promo.trialDurationDays
+        };
+      });
+    } catch (error) {
+      console.error('Error redeeming promotional code:', error);
+      return { success: false, message: 'Error interno al procesar el código promocional' };
+    }
+  }
+
+  // Company subscription operations
+  async getCompanySubscription(companyId: number): Promise<any | undefined> {
+    try {
+      const [subscription] = await db.select().from(schema.subscriptions).where(eq(schema.subscriptions.companyId, companyId));
+      return subscription;
+    } catch (error) {
+      console.error('Error getting company subscription:', error);
+      return undefined;
+    }
+  }
+
+  async cancelCompanyDeletion(companyId: number): Promise<boolean> {
+    // This is the same as cancelAccountDeletion - aliasing for compatibility
+    return this.cancelAccountDeletion(companyId);
   }
 }
 

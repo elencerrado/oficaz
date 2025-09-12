@@ -317,7 +317,7 @@ async function generateMonthlyWorkSessions(employee: any, monthStart: Date, isCo
       userId: employee.id,
       clockIn: clockInTime,
       clockOut: clockOutTime,
-      totalHours: Number(workHours.toFixed(1)),
+      totalHours: workHours.toFixed(1),
       status: 'completed',
     });
     
@@ -392,7 +392,7 @@ async function generateRegistrationDayActivity(employees: any[], registrationDat
         userId: employee.id,
         clockIn: clockInTime,
         clockOut: clockOutTime,
-        totalHours: Number(workHours.toFixed(1)),
+        totalHours: workHours.toFixed(1),
         status: "completed",
       });
       
@@ -471,7 +471,7 @@ async function generateCurrentDayActivity(employees: any[], currentDate: Date) {
         userId: employee.id,
         clockIn: clockInTime,
         clockOut: clockOutTime,
-        totalHours: Number(workHours.toFixed(1)),
+        totalHours: workHours.toFixed(1),
         status: "completed",
       });
       
@@ -1230,6 +1230,29 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Promotional code validation endpoint
+  app.post('/api/validate-promotional-code', async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ 
+          valid: false, 
+          message: 'Código promocional requerido' 
+        });
+      }
+
+      const validation = await storage.validatePromotionalCode(code.trim());
+      res.json(validation);
+    } catch (error: any) {
+      console.error('Error validating promotional code:', error);
+      res.status(500).json({ 
+        valid: false, 
+        message: 'Error interno del servidor al validar el código' 
+      });
+    }
+  });
+
   // Secure verification system
   const generateSecureToken = (): string => crypto.randomBytes(32).toString('hex');
   
@@ -1371,6 +1394,9 @@ Responde directamente a este email para contactar con la persona.
     verified: boolean;
     attempts: number;
     lastResent?: number;
+    isRecovery?: boolean;
+    companyId?: number;
+    userId?: number;
   }>();
   
   const verificationTokens = new Map<string, { 
@@ -1521,7 +1547,7 @@ Responde directamente a este email para contactar con la persona.
         // Check if the company is scheduled for deletion (grace period)
         const company = await storage.getCompany(existingUser.companyId);
         
-        if (company?.scheduledForDeletion && existingUser.role === 'admin') {
+        if (company?.scheduledForDeletion && existingUser.role === 'admin' && company.deletionWillOccurAt) {
           const deletionDate = new Date(company.deletionWillOccurAt);
           const now = new Date();
           
@@ -1573,7 +1599,7 @@ Responde directamente a este email para contactar con la persona.
       const now = Date.now();
       
       // Clean up expired sessions
-      for (const [sessionId, session] of verificationSessions.entries()) {
+      for (const [sessionId, session] of Array.from(verificationSessions.entries())) {
         if (session.expires < now) {
           verificationSessions.delete(sessionId);
         }
@@ -1583,7 +1609,7 @@ Responde directamente a este email para contactar con la persona.
       let recentAttempts = 0;
       const oneHourAgo = now - 60 * 60 * 1000;
       
-      for (const session of verificationSessions.values()) {
+      for (const session of Array.from(verificationSessions.values())) {
         if (session.emailHash === emailHash && session.expires > oneHourAgo) {
           recentAttempts++;
         }
@@ -1747,7 +1773,7 @@ Responde directamente a este email para contactar con la persona.
       session.verified = true;
       
       // Check if this is a recovery session
-      if (session.isRecovery) {
+      if (session.isRecovery && session.companyId && session.userId) {
         // This is account recovery - restore the company
         const companyId = session.companyId;
         const userId = session.userId;
@@ -1855,7 +1881,7 @@ Responde directamente a este email para contactar con la persona.
         // Check if the company is scheduled for deletion (grace period)
         const company = await storage.getCompany(existingUser.companyId);
         
-        if (company?.scheduledForDeletion) {
+        if (company?.scheduledForDeletion && company.deletionWillOccurAt) {
           // Company is in 30-day grace period - check if we can restore or if it's truly conflicting
           const deletionDate = new Date(company.deletionWillOccurAt);
           const now = new Date();
@@ -1891,7 +1917,7 @@ Responde directamente a este email para contactar con la persona.
         // Check if this company is scheduled for deletion (grace period)
         const companyCancellation = await storage.getCompany(existingCompany.id);
         
-        if (companyCancellation?.scheduledForDeletion) {
+        if (companyCancellation?.scheduledForDeletion && companyCancellation.deletionWillOccurAt) {
           const deletionDate = new Date(companyCancellation.deletionWillOccurAt);
           const now = new Date();
           
@@ -1967,7 +1993,7 @@ Responde directamente a este email para contactar con la persona.
 
       const token = generateToken({
         id: user.id,
-        username: user.companyEmail, // Use company email for token compatibility
+        username: user.companyEmail || user.personalEmail || `user_${user.id}`, // Use company email for token compatibility
         role: user.role,
         companyId: user.companyId,
       });
@@ -2137,7 +2163,7 @@ Responde directamente a este email para contactar con la persona.
 
       const token = generateToken({
         id: user.id,
-        username: user.companyEmail,
+        username: user.companyEmail || user.personalEmail || `user_${user.id}`,
         role: user.role,
         companyId: user.companyId,
       });
@@ -2218,7 +2244,7 @@ Responde directamente a este email para contactar con la persona.
       // Save reset token to database
       try {
         await db.insert(passwordResetTokens).values({
-          email: user.companyEmail.toLowerCase(),
+          email: (user.companyEmail || user.personalEmail || '').toLowerCase(),
           companyId: company.id,
           token: resetToken,
           expiresAt,
@@ -2233,7 +2259,7 @@ Responde directamente a este email para contactar con la persona.
       const resetLink = `${process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : 'https://oficaz.es'}/reset-password?token=${resetToken}`;
       
       const emailSent = await sendPasswordResetEmail(
-        user.companyEmail,
+        user.companyEmail || user.personalEmail || '',
         user.fullName,
         company.name,
         resetToken,
@@ -2605,16 +2631,44 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ message: 'Email ya está registrado' });
       }
 
-      // Create company
+      // 🎁 PROMOTIONAL CODE REDEMPTION LOGIC
+      let promotionalCodeResult = null;
+      let appliedTrialDays = 14; // Default trial duration
+      
+      if (data.promotionalCode && data.promotionalCode.trim()) {
+        console.log(`🎁 Processing promotional code: ${data.promotionalCode}`);
+        
+        try {
+          promotionalCodeResult = await storage.redeemPromotionalCode(data.promotionalCode.trim());
+          
+          if (promotionalCodeResult.success && promotionalCodeResult.trialDays) {
+            appliedTrialDays = promotionalCodeResult.trialDays;
+            console.log(`✅ Promotional code redeemed successfully! Extended trial to ${appliedTrialDays} days`);
+          } else {
+            console.log(`❌ Promotional code redemption failed: ${promotionalCodeResult.message}`);
+            return res.status(400).json({ 
+              message: promotionalCodeResult.message || 'Código promocional inválido' 
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error processing promotional code:', error);
+          return res.status(400).json({ message: 'Error al procesar código promocional' });
+        }
+      }
+
+      // Create company with promotional code data
       const company = await storage.createCompany({
         name: data.companyName,
         cif: data.cif,
         email: data.companyEmail,
-        contactName: data.contactName,
+        contactName: data.contactName || data.adminFullName || 'Administrator',
         companyAlias: data.companyAlias,
         phone: data.phone || null,
         address: data.address || null,
         logoUrl: data.logoUrl || null,
+        // 🎁 Apply promotional code benefits
+        trialDurationDays: appliedTrialDays,
+        usedPromotionalCode: data.promotionalCode?.trim() || null,
       });
 
       // Hash password
@@ -2642,7 +2696,7 @@ Responde directamente a este email para contactar con la persona.
       // Generate token for immediate login
       const token = generateToken({
         id: user.id,
-        username: user.companyEmail, // Use company email as username in JWT
+        username: user.companyEmail || user.personalEmail || `user_${user.id}`, // Use company email as username in JWT
         role: user.role,
         companyId: user.companyId,
       });
@@ -5015,7 +5069,7 @@ Responde directamente a este email para contactar con la persona.
         // FIXED: Only include creator if no other users assigned, or if creator is admin/manager
         assignedUserIds: assignedUserIds && assignedUserIds.length > 0 ? 
           (req.user!.role === 'admin' || req.user!.role === 'manager' ? 
-            [...new Set([userId, ...assignedUserIds])] : // Admin creates shared reminders
+            Array.from(new Set([userId, ...assignedUserIds])) : // Admin creates shared reminders
             assignedUserIds) : // Employee assigns to others only
           [userId], // No assignments = private to creator
         assignedBy: userId,
@@ -5098,7 +5152,7 @@ Responde directamente a este email para contactar con la persona.
       
       // Handle assignments - always include creator + any additional assigned users
       if (updateData.assignedUserIds && Array.isArray(updateData.assignedUserIds)) {
-        updateData.assignedUserIds = [...new Set([userId, ...updateData.assignedUserIds])];
+        updateData.assignedUserIds = Array.from(new Set([userId, ...updateData.assignedUserIds]));
         updateData.assignedBy = userId;
         updateData.assignedAt = new Date();
       }
@@ -5114,7 +5168,7 @@ Responde directamente a este email para contactar con la persona.
           }
         } else {
           // Remove user from completed list
-          updateData.completedByUserIds = currentCompletedByUserIds.filter(id => id !== userId);
+          updateData.completedByUserIds = currentCompletedByUserIds.filter((id: number) => id !== userId);
         }
         
         // Update overall completion status based on ALL assigned users (including the creator)
@@ -5124,7 +5178,7 @@ Responde directamente a este email para contactar con la persona.
         
         // If there are assigned users, check if ALL assigned users have completed
         if (assignedUserIds.length > 0) {
-          updateData.isCompleted = assignedUserIds.every(id => newCompletedByUserIds.includes(id));
+          updateData.isCompleted = assignedUserIds.every((id: number) => newCompletedByUserIds.includes(id));
         } else {
           // If no users assigned, use individual completion status of creator
           updateData.isCompleted = newCompletedByUserIds.includes(creatorId);
@@ -5669,7 +5723,7 @@ Responde directamente a este email para contactar con la persona.
         },
         product: product.id,
       });
-      console.log(`💰 STRIPE PRICE CREATED: ID=${price.id}, unit_amount=${price.unit_amount} cents (€${price.unit_amount/100})`);
+      console.log(`💰 STRIPE PRICE CREATED: ID=${price.id}, unit_amount=${price.unit_amount || 0} cents (€${(price.unit_amount || 0)/100})`);
 
       // For trial period: Save authorization details, don't create subscription yet
       const trialEndDate = new Date(company.subscription.trialEndDate);
@@ -6088,11 +6142,11 @@ Responde directamente a este email para contactar con la persona.
 
       // Calculate trial dates from companies.created_at (single source of truth)
       const now = new Date();
-      const registrationDate = new Date(data.company_created_at);
+      const registrationDate = new Date(data.company_created_at as string);
       const trialEndDate = new Date(registrationDate);
       // Use custom trial duration from company settings (default 14 days)
       const trialDuration = data.trial_duration_days || 14;
-      trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
+      trialEndDate.setDate(trialEndDate.getDate() + Number(trialDuration));
       
       // Fix timezone issues by comparing dates at end of day
       const nowEndOfDay = new Date(now);
