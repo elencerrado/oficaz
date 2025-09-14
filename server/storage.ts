@@ -837,7 +837,7 @@ export class DrizzleStorage implements IStorage {
       .from(schema.companies)
       .leftJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
       .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-      .leftJoin(schema.promotionalCodes, eq(schema.companies.usedPromotionalCode, schema.promotionalCodes.id))
+      .leftJoin(schema.promotionalCodes, eq(schema.companies.usedPromotionalCode, schema.promotionalCodes.code))
       .groupBy(schema.companies.id, schema.subscriptions.id, schema.promotionalCodes.id);
 
     return result.map(row => ({

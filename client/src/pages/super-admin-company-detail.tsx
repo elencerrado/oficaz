@@ -30,14 +30,12 @@ const featureLabels = {
 };
 
 const planColors = {
-  free: 'bg-gray-500',
   basic: 'bg-blue-500',
   pro: 'bg-purple-500',
   master: 'bg-yellow-500'
 };
 
 const planLabels = {
-  free: 'Free',
   basic: 'Basic',
   pro: 'Pro',
   master: 'Master'

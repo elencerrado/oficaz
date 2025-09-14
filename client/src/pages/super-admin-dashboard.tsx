@@ -53,7 +53,6 @@ interface SuperAdminStats {
   monthlyRevenue: number;
   yearlyRevenue: number;
   planDistribution: {
-    free: number;
     basic: number;
     pro: number;
     master: number;
@@ -61,14 +60,12 @@ interface SuperAdminStats {
 }
 
 const planColors = {
-  free: "bg-gray-500",
   basic: "bg-blue-500", 
   pro: "bg-purple-500",
   master: "bg-gradient-to-r from-yellow-400 to-yellow-600"
 };
 
 const planLabels = {
-  free: "Free",
   basic: "Basic", 
   pro: "Pro",
   master: "Master"
@@ -447,7 +444,6 @@ export default function SuperAdminDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los planes</SelectItem>
-                  <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="basic">Basic</SelectItem>
                   <SelectItem value="pro">Pro</SelectItem>
                   <SelectItem value="master">Master</SelectItem>
@@ -508,7 +504,6 @@ export default function SuperAdminDashboard() {
                             <SelectValue placeholder="Seleccionar plan" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="free">Free</SelectItem>
                             <SelectItem value="basic">Basic</SelectItem>
                             <SelectItem value="pro">Pro</SelectItem>
                             <SelectItem value="master">Master</SelectItem>
