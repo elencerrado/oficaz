@@ -411,6 +411,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const getRecommendedPlan = () => {
     const { teamSize, interestedFeatures } = formData;
     
+    // ⚠️ PROTECTED: Critical business logic - DO NOT MODIFY
+    // Direct PRO recommendation for premium features
+    if (interestedFeatures?.includes('documents') || interestedFeatures?.includes('messages')) {
+      return 'pro'; // Documents or messages = PRO plan automatically
+    }
+    
     // Advanced scoring system that considers functionality needs
     let score = 0;
     
@@ -430,8 +436,6 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     // Advanced features boost (premium functionality indicators)
     if (interestedFeatures?.includes('reports')) score += 2;
     if (interestedFeatures?.includes('notifications')) score += 1;
-    if (interestedFeatures?.includes('documents')) score += 1;
-    if (interestedFeatures?.includes('messaging')) score += 1;
     
     // Intelligent recommendation logic
     // Consider both team size and feature complexity
