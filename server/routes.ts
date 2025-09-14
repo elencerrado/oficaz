@@ -7034,6 +7034,100 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Super Admin - Promotional Codes Management
+  app.get('/api/super-admin/promotional-codes', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const promoCodes = await storage.getAllPromotionalCodes();
+      res.json(promoCodes);
+    } catch (error: any) {
+      console.error('Error fetching promotional codes:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor al obtener los códigos promocionales' 
+      });
+    }
+  });
+
+  app.post('/api/super-admin/promotional-codes', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { code, description, trialDurationDays, isActive, maxUses, validFrom, validUntil } = req.body;
+      
+      if (!code || !description || !trialDurationDays) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Código, descripción y días de prueba son requeridos' 
+        });
+      }
+
+      const promoCode = await storage.createPromotionalCode({
+        code: code.toUpperCase().trim(),
+        description: description.trim(),
+        trialDurationDays,
+        isActive: isActive ?? true,
+        maxUses: maxUses || null,
+        validFrom: validFrom || null,
+        validUntil: validUntil || null
+      });
+
+      res.json(promoCode);
+    } catch (error: any) {
+      console.error('Error creating promotional code:', error);
+      if (error.message?.includes('unique constraint')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Ya existe un código promocional con ese nombre' 
+        });
+      }
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor al crear el código promocional' 
+      });
+    }
+  });
+
+  app.patch('/api/super-admin/promotional-codes/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      if (updates.code) {
+        updates.code = updates.code.toUpperCase().trim();
+      }
+      if (updates.description) {
+        updates.description = updates.description.trim();
+      }
+
+      const updatedCode = await storage.updatePromotionalCode(parseInt(id), updates);
+      res.json(updatedCode);
+    } catch (error: any) {
+      console.error('Error updating promotional code:', error);
+      if (error.message?.includes('unique constraint')) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Ya existe un código promocional con ese nombre' 
+        });
+      }
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor al actualizar el código promocional' 
+      });
+    }
+  });
+
+  app.delete('/api/super-admin/promotional-codes/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deletePromotionalCode(parseInt(id));
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting promotional code:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor al eliminar el código promocional' 
+      });
+    }
+  });
+
   // Endpoint to manage company custom features
   app.patch('/api/companies/custom-features', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {

@@ -277,13 +277,14 @@ export default function SuperAdminDashboard() {
               <Button 
                 variant="ghost" 
                 className="h-auto p-4 bg-white/5 hover:bg-white/10 border border-white/20 text-white flex flex-col items-center gap-3"
+                onClick={() => setLocation('/super-admin/promo-codes')}
               >
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-blue-400" />
+                <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                  <Crown className="h-6 w-6 text-yellow-400" />
                 </div>
                 <div className="text-center">
-                  <p className="font-medium">Nueva empresa</p>
-                  <p className="text-xs text-white/60">Registrar nueva empresa</p>
+                  <p className="font-medium">Códigos Promocionales</p>
+                  <p className="text-xs text-white/60">Gestionar promociones</p>
                 </div>
               </Button>
             </div>

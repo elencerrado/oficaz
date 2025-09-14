@@ -63,6 +63,7 @@ const SuperAdminPlans = lazy(() => import("@/pages/super-admin-plans"));
 const SuperAdminCompanyDetail = lazy(() => import("@/pages/super-admin-company-detail"));
 const SuperAdminCompanies = lazy(() => import("@/pages/super-admin-companies"));
 const SuperAdminInvitations = lazy(() => import("@/pages/super-admin-invitations"));
+const SuperAdminPromoCodes = lazy(() => import("@/pages/super-admin-promo-codes"));
 
 // Utility pages - lazy loaded
 const InvitationRegister = lazy(() => import("@/pages/invitation-register"));
@@ -230,6 +231,11 @@ function Router() {
         <Route path="/super-admin/invitations">
           <Suspense fallback={<PageLoading />}>
             <SuperAdminInvitations />
+          </Suspense>
+        </Route>
+        <Route path="/super-admin/promo-codes">
+          <Suspense fallback={<PageLoading />}>
+            <SuperAdminPromoCodes />
           </Suspense>
         </Route>
         <Route path="/super-admin">
