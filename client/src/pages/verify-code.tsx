@@ -56,7 +56,7 @@ export default function VerifyCode() {
     if (!sessionId) {
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
-        window.location.href = '/request-code';
+        setLocation('/request-code');
       }, 100);
       return () => clearTimeout(timer);
     } else {
@@ -152,7 +152,7 @@ export default function VerifyCode() {
         } else {
           // Normal registration flow - redirect to registration with verification token
           setAllowNavigation(true); // Allow the navigation
-          window.location.href = `/register?token=${result.verificationToken}`;
+          setLocation(`/register?token=${result.verificationToken}`);
         }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');
