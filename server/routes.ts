@@ -7059,15 +7059,18 @@ Responde directamente a este email para contactar con la persona.
         });
       }
 
-      const promoCode = await storage.createPromotionalCode({
+      // Convert types before passing to storage
+      const processedData = {
         code: code.toUpperCase().trim(),
         description: description.trim(),
-        trialDurationDays,
+        trialDurationDays: Number(trialDurationDays),
         isActive: isActive ?? true,
-        maxUses: maxUses || null,
-        validFrom: validFrom || null,
-        validUntil: validUntil || null
-      });
+        maxUses: (maxUses === '' || maxUses == null) ? null : Number(maxUses),
+        validFrom: validFrom ? new Date(validFrom) : null,
+        validUntil: validUntil ? new Date(validUntil) : null
+      };
+
+      const promoCode = await storage.createPromotionalCode(processedData);
 
       res.json(promoCode);
     } catch (error: any) {
@@ -7090,14 +7093,32 @@ Responde directamente a este email para contactar con la persona.
       const { id } = req.params;
       const updates = req.body;
       
+      // Convert types before passing to storage
+      const processedUpdates: any = {};
+      
       if (updates.code) {
-        updates.code = updates.code.toUpperCase().trim();
+        processedUpdates.code = updates.code.toUpperCase().trim();
       }
       if (updates.description) {
-        updates.description = updates.description.trim();
+        processedUpdates.description = updates.description.trim();
+      }
+      if (updates.trialDurationDays !== undefined) {
+        processedUpdates.trialDurationDays = Number(updates.trialDurationDays);
+      }
+      if (updates.isActive !== undefined) {
+        processedUpdates.isActive = updates.isActive;
+      }
+      if (updates.maxUses !== undefined) {
+        processedUpdates.maxUses = (updates.maxUses === '' || updates.maxUses == null) ? null : Number(updates.maxUses);
+      }
+      if (updates.validFrom !== undefined) {
+        processedUpdates.validFrom = updates.validFrom ? new Date(updates.validFrom) : null;
+      }
+      if (updates.validUntil !== undefined) {
+        processedUpdates.validUntil = updates.validUntil ? new Date(updates.validUntil) : null;
       }
 
-      const updatedCode = await storage.updatePromotionalCode(parseInt(id), updates);
+      const updatedCode = await storage.updatePromotionalCode(parseInt(id), processedUpdates);
       res.json(updatedCode);
     } catch (error: any) {
       console.error('Error updating promotional code:', error);

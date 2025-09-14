@@ -240,7 +240,7 @@ const SuperAdminPromoCodes = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => window.history.back()}
+            onClick={() => setLocation('/super-admin/dashboard')}
             className="p-2"
             data-testid="button-back"
           >
