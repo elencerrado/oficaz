@@ -198,22 +198,7 @@ export interface IStorage {
 export class DrizzleStorage implements IStorage {
   // Companies
   async createCompany(company: InsertCompany): Promise<Company> {
-    console.log('🏢 STORAGE createCompany called with:', {
-      name: company.name,
-      trialDurationDays: company.trialDurationDays,
-      usedPromotionalCode: company.usedPromotionalCode,
-      hasAllFields: 'trialDurationDays' in company && 'usedPromotionalCode' in company
-    });
-    
     const [result] = await db.insert(schema.companies).values(company).returning();
-    
-    console.log('🏢 STORAGE createCompany result:', {
-      id: result.id,
-      name: result.name,
-      trialDurationDays: result.trialDurationDays,
-      usedPromotionalCode: result.usedPromotionalCode
-    });
-    
     return result;
   }
 
