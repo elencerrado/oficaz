@@ -193,6 +193,9 @@ export interface IStorage {
   deletePromotionalCode(id: number): Promise<boolean>;
   validatePromotionalCode(code: string): Promise<{ valid: boolean; message?: string; trialDays?: number }>;
   redeemPromotionalCode(code: string): Promise<{ success: boolean; message?: string; trialDays?: number }>;
+  
+  // Atomic promotional code application after company creation
+  redeemAndApplyPromotionalCode(companyId: number, code: string): Promise<{ success: boolean; message?: string; trialDays?: number; updatedCompany?: Company }>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -2399,6 +2402,88 @@ export class DrizzleStorage implements IStorage {
       });
     } catch (error) {
       console.error('Error redeeming promotional code:', error);
+      return { success: false, message: 'Error interno al procesar el código promocional' };
+    }
+  }
+
+  // 🔄 ATOMIC PROMOTIONAL CODE APPLICATION - Prevents transactional inconsistency and race conditions
+  async redeemAndApplyPromotionalCode(companyId: number, code: string): Promise<{ success: boolean; message?: string; trialDays?: number; updatedCompany?: Company }> {
+    try {
+      console.log(`🎁 Starting atomic promotional code redemption and application for company ${companyId} with code: ${code}`);
+      
+      // Start a database transaction for complete atomicity
+      return await db.transaction(async (tx) => {
+        // 1. First, atomically redeem the promotional code within the transaction
+        const promoCode = await tx.select().from(schema.promotionalCodes)
+          .where(eq(schema.promotionalCodes.code, code))
+          .limit(1);
+        
+        if (!promoCode[0]) {
+          return { success: false, message: 'Código promocional no encontrado' };
+        }
+
+        const promo = promoCode[0];
+
+        if (!promo.isActive) {
+          return { success: false, message: 'Código promocional desactivado' };
+        }
+
+        // Check validity dates
+        const now = new Date();
+        if (promo.validFrom && promo.validFrom > now) {
+          return { success: false, message: 'Código promocional aún no válido' };
+        }
+
+        if (promo.validUntil && promo.validUntil < now) {
+          return { success: false, message: 'Código promocional expirado' };
+        }
+
+        // Check usage limits BEFORE incrementing - prevents race conditions
+        if (promo.maxUses && promo.currentUses >= promo.maxUses) {
+          return { success: false, message: 'Código promocional agotado' };
+        }
+
+        // 2. Atomically increment usage count (this prevents race conditions)
+        const [updatedPromo] = await tx.update(schema.promotionalCodes)
+          .set({ 
+            currentUses: promo.currentUses + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.promotionalCodes.id, promo.id))
+          .returning();
+
+        if (!updatedPromo) {
+          return { success: false, message: 'Error al procesar código promocional' };
+        }
+
+        // 3. Apply benefits to company ONLY after successful redemption
+        const [updatedCompany] = await tx.update(schema.companies)
+          .set({
+            trialDurationDays: promo.trialDurationDays,
+            usedPromotionalCode: code,
+            updatedAt: new Date()
+          })
+          .where(eq(schema.companies.id, companyId))
+          .returning();
+
+        if (!updatedCompany) {
+          // This should cause transaction rollback
+          throw new Error('Failed to update company with promotional code benefits');
+        }
+
+        console.log(`✅ Atomic promotional code application completed successfully:`);
+        console.log(`   - Code '${code}' redeemed (${updatedPromo.currentUses}/${promo.maxUses || 'unlimited'} uses)`);
+        console.log(`   - Company ${companyId} trial extended to ${promo.trialDurationDays} days`);
+
+        return {
+          success: true,
+          message: `¡Código promocional aplicado! Obtienes ${promo.trialDurationDays} días de prueba gratuitos`,
+          trialDays: promo.trialDurationDays,
+          updatedCompany
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error in atomic promotional code application:', error);
       return { success: false, message: 'Error interno al procesar el código promocional' };
     }
   }

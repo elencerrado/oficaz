@@ -1948,35 +1948,35 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
-      // 🎁 PROMOTIONAL CODE REDEMPTION LOGIC
-      let promotionalCodeResult = null;
-      let appliedTrialDays = 14; // Default trial duration
+      // 🔒 SECURE PROMOTIONAL CODE HANDLING - Validation only, no premature benefit application
+      let pendingPromotionalCode = null;
       
       if (data.promotionalCode && data.promotionalCode.trim()) {
-        console.log(`🎁 Processing promotional code: ${data.promotionalCode}`);
+        console.log(`🎁 Validating promotional code: ${data.promotionalCode}`);
         
         try {
-          promotionalCodeResult = await storage.redeemPromotionalCode(data.promotionalCode.trim());
+          // Only VALIDATE first (don't redeem yet, don't apply benefits yet)
+          const promotionalCodeResult = await storage.validatePromotionalCode(data.promotionalCode.trim());
           
-          if (promotionalCodeResult.success && promotionalCodeResult.trialDays) {
-            appliedTrialDays = promotionalCodeResult.trialDays;
-            console.log(`✅ Promotional code redeemed successfully! Extended trial to ${appliedTrialDays} days`);
+          if (promotionalCodeResult.valid && promotionalCodeResult.trialDays) {
+            pendingPromotionalCode = data.promotionalCode.trim();
+            console.log(`✅ Promotional code valid! Will be applied AFTER company creation: ${promotionalCodeResult.trialDays} days`);
           } else {
-            console.log(`❌ Promotional code redemption failed: ${promotionalCodeResult.message}`);
+            console.log(`❌ Promotional code validation failed: ${promotionalCodeResult.message}`);
             return res.status(400).json({ 
               message: promotionalCodeResult.message || 'Código promocional inválido' 
             });
           }
         } catch (error) {
-          console.error('❌ Error processing promotional code:', error);
-          return res.status(400).json({ message: 'Error al procesar código promocional' });
+          console.error('❌ Error validating promotional code:', error);
+          return res.status(400).json({ message: 'Error al validar código promocional' });
         }
       }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      // Create company first with promotional code data
+      // 🏢 Create company with DEFAULT VALUES (prevents transactional inconsistency)
       const company = await storage.createCompany({
         name: data.companyName,
         email: data.companyEmail,
@@ -1986,9 +1986,9 @@ Responde directamente a este email para contactar con la persona.
         phone: data.contactPhone || '',
         address: data.address || '',
         province: data.province,
-        // 🎁 Apply promotional code benefits
-        trialDurationDays: appliedTrialDays,
-        usedPromotionalCode: data.promotionalCode?.trim() || null,
+        // 🔒 DEFAULT VALUES - Benefits applied only AFTER successful redemption
+        trialDurationDays: 14, // Default trial duration
+        usedPromotionalCode: null, // No code until successfully redeemed
       });
 
       // Create admin user
@@ -2041,10 +2041,30 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // 🎁 ATOMIC PROMOTIONAL CODE REDEMPTION AND APPLICATION (prevents race conditions)
+      let finalCompany = company; // Default to created company
+      if (pendingPromotionalCode) {
+        try {
+          console.log(`🔄 Applying promotional code atomically for company ${company.id}`);
+          const atomicResult = await storage.redeemAndApplyPromotionalCode(company.id, pendingPromotionalCode);
+          
+          if (atomicResult.success && atomicResult.updatedCompany) {
+            finalCompany = atomicResult.updatedCompany;
+            console.log(`✅ Promotional code '${pendingPromotionalCode}' applied successfully: ${atomicResult.trialDays} days trial`);
+          } else {
+            console.warn(`⚠️ Could not apply promotional code after successful registration: ${atomicResult.message}`);
+            // Registration continues with default trial duration - this is non-critical
+          }
+        } catch (error) {
+          console.warn('⚠️ Non-critical error applying promotional code after registration:', error);
+          // Don't fail the registration for this - company was already created successfully
+        }
+      }
+
       res.status(201).json({
         user: { ...user, password: undefined },
         token,
-        company: { ...company, subscription },
+        company: { ...finalCompany, subscription }, // Use finalCompany which includes promotional code benefits if applied
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
