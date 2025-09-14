@@ -132,7 +132,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   // Check for verification token (only if not by invitation)
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
-  const emailFromUrl = params.get('email'); // Get email from URL parameters
+  const emailFromUrl = params.get('email') || ''; // Get email from URL parameters, fallback to empty string
   
   useEffect(() => {
     if (!byInvitation && !verificationToken) {
