@@ -29,6 +29,7 @@ export default function VerifyCode() {
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(false);
   const [showRecoverySuccessModal, setShowRecoverySuccessModal] = useState(false);
+  const [allowNavigation, setAllowNavigation] = useState(false);
   
   // Get sessionId from URL params
   const params = new URLSearchParams(search);
@@ -93,9 +94,12 @@ export default function VerifyCode() {
     };
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Prevent accidental page reload
-      e.preventDefault();
-      e.returnValue = '';
+      // Only prevent navigation if it's not an allowed programmatic navigation
+      if (!allowNavigation) {
+        // Prevent accidental page reload
+        e.preventDefault();
+        e.returnValue = '';
+      }
     };
 
     const handlePageShow = (e: PageTransitionEvent) => {
@@ -114,7 +118,7 @@ export default function VerifyCode() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('pageshow', handlePageShow);
     };
-  }, []);
+  }, [allowNavigation]);
 
   const handleSubmit = async (data: CodeData) => {
     if (!sessionId) return;
@@ -147,6 +151,7 @@ export default function VerifyCode() {
           setShowRecoverySuccessModal(true);
         } else {
           // Normal registration flow - redirect to registration with verification token
+          setAllowNavigation(true); // Allow the navigation
           window.location.href = `/register?token=${result.verificationToken}`;
         }
       } else {
