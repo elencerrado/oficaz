@@ -1003,10 +1003,10 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="text-center mb-6">
                 <Crown className="h-12 w-12 text-oficaz-primary mx-auto mb-3" />
                 <h3 className="text-lg font-semibold mb-1">Elige tu plan</h3>
-                <p className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600">
                   Basado en tus respuestas, te recomendamos el plan{' '}
                   <Badge variant="secondary" className="mx-1 capitalize">{recommendedPlan}</Badge>
-                </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
