@@ -1745,35 +1745,18 @@ Responde directamente a este email para contactar con la persona.
 
       const session = verificationSessions.get(sessionId);
       
-      console.log(`🔍 Session lookup for ${sessionId.substring(0, 8)}...`, {
-        sessionExists: !!session,
-        totalSessions: verificationSessions.size,
-        currentTime: new Date().toISOString()
-      });
-      
       if (!session) {
-        console.log(`❌ Session not found: ${sessionId.substring(0, 8)}...`);
-        console.log('Available sessions:', Array.from(verificationSessions.keys()).map(id => id.substring(0, 8) + '...'));
         return res.status(400).json({ error: 'Sesión no encontrada o expirada' });
       }
 
-      console.log(`📋 Session found:`, {
-        email: session.email,
-        expires: new Date(session.expires).toISOString(),
-        attempts: session.attempts,
-        isExpired: Date.now() > session.expires
-      });
-
       if (Date.now() > session.expires) {
         verificationSessions.delete(sessionId);
-        console.log(`⏰ Session expired for ${sessionId.substring(0, 8)}...`);
         return res.status(400).json({ error: 'Código expirado' });
       }
 
       // Rate limiting: max 5 attempts per session
       if (session.attempts >= 5) {
         verificationSessions.delete(sessionId);
-        console.log(`🚫 Too many attempts for ${sessionId.substring(0, 8)}...`);
         return res.status(429).json({ error: 'Demasiados intentos. Solicita un nuevo código.' });
       }
 
@@ -1782,18 +1765,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Verify code (compare hashes)
       const codeHash = crypto.createHash('sha256').update(code).digest('hex');
-      console.log(`🔍 DEBUG - Verification attempt:`, {
-        sessionId: sessionId.substring(0, 8) + '...',
-        providedCode: code,
-        providedCodeHash: codeHash.substring(0, 16) + '...',
-        storedCodeHash: session.code.substring(0, 16) + '...',
-        email: session.email,
-        attempts: session.attempts,
-        expires: new Date(session.expires).toISOString()
-      });
-      
       if (session.code !== codeHash) {
-        console.log(`❌ Code mismatch for session ${sessionId.substring(0, 8)}...`);
         return res.status(400).json({ error: 'Código incorrecto' });
       }
 

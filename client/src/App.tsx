@@ -484,12 +484,6 @@ function Router() {
         </PublicRoute>
       </Route>
 
-      <Route path="/register">
-        <PublicRoute>
-          <Register />
-        </PublicRoute>
-      </Route>
-
       {/* Landing page - main entry point (must be last to avoid conflicts) */}
       <Route path="/">
         <PublicRoute>
