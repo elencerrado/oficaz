@@ -150,9 +150,9 @@ export default function VerifyCode() {
           // Show success modal for account recovery
           setShowRecoverySuccessModal(true);
         } else {
-          // Normal registration flow - redirect to registration with verification token
+          // Normal registration flow - redirect to registration with verification token and email
           setAllowNavigation(true); // Allow the navigation
-          setLocation(`/register?token=${result.verificationToken}`);
+          setLocation(`/register?token=${result.verificationToken}&email=${encodeURIComponent(result.email)}`);
         }
       } else {
         setErrorMessage(result.message || 'El código no es válido o ha expirado.');

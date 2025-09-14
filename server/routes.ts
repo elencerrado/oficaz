@@ -1809,7 +1809,8 @@ Responde directamente a este email para contactar con la persona.
         res.json({ 
           success: true, 
           message: 'Código verificado correctamente',
-          verificationToken 
+          verificationToken,
+          email: session.email
         });
       }
     } catch (error) {

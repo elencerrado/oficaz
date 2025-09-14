@@ -132,6 +132,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   // Check for verification token (only if not by invitation)
   const params = new URLSearchParams(search);
   const verificationToken = params.get('token');
+  const emailFromUrl = params.get('email'); // Get email from URL parameters
   
   useEffect(() => {
     if (!byInvitation && !verificationToken) {
@@ -188,7 +189,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     resolver: zodResolver(step3Schema),
     defaultValues: {
       adminFullName: '',
-      adminEmail: '',
+      adminEmail: emailFromUrl || '', // Pre-fill with email from URL
       adminDni: '',
       adminPhone: '',
       password: '',
