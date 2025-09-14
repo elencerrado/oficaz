@@ -1948,10 +1948,35 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
+      // 🎁 PROMOTIONAL CODE REDEMPTION LOGIC
+      let promotionalCodeResult = null;
+      let appliedTrialDays = 14; // Default trial duration
+      
+      if (data.promotionalCode && data.promotionalCode.trim()) {
+        console.log(`🎁 Processing promotional code: ${data.promotionalCode}`);
+        
+        try {
+          promotionalCodeResult = await storage.redeemPromotionalCode(data.promotionalCode.trim());
+          
+          if (promotionalCodeResult.success && promotionalCodeResult.trialDays) {
+            appliedTrialDays = promotionalCodeResult.trialDays;
+            console.log(`✅ Promotional code redeemed successfully! Extended trial to ${appliedTrialDays} days`);
+          } else {
+            console.log(`❌ Promotional code redemption failed: ${promotionalCodeResult.message}`);
+            return res.status(400).json({ 
+              message: promotionalCodeResult.message || 'Código promocional inválido' 
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error processing promotional code:', error);
+          return res.status(400).json({ message: 'Error al procesar código promocional' });
+        }
+      }
+
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      // Create company first
+      // Create company first with promotional code data
       const company = await storage.createCompany({
         name: data.companyName,
         email: data.companyEmail,
@@ -1961,6 +1986,9 @@ Responde directamente a este email para contactar con la persona.
         phone: data.contactPhone || '',
         address: data.address || '',
         province: data.province,
+        // 🎁 Apply promotional code benefits
+        trialDurationDays: appliedTrialDays,
+        usedPromotionalCode: data.promotionalCode?.trim() || null,
       });
 
       // Create admin user
