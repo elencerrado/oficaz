@@ -947,9 +947,10 @@ export class DrizzleStorage implements IStorage {
       return subscription;
     }
 
-    // Get company created_at date and custom_features to override plan features
+    // Get company created_at date, trial duration, and custom_features to override plan features
     const [company] = await db.select({
       createdAt: schema.companies.createdAt,
+      trialDurationDays: schema.companies.trialDurationDays,
       customFeatures: schema.companies.customFeatures
     }).from(schema.companies).where(eq(schema.companies.id, companyId));
 
@@ -961,8 +962,8 @@ export class DrizzleStorage implements IStorage {
     // Calculate trial dates from companies.created_at (single source of truth)
     const registrationDate = new Date(company.createdAt);
     const trialEndDate = new Date(registrationDate);
-    // Use default trial duration of 14 days
-    const trialDuration = 14;
+    // Use trial duration from company settings (includes promotional code extensions)
+    const trialDuration = company.trialDurationDays || 14; // Fallback to 14 if not set
     trialEndDate.setDate(trialEndDate.getDate() + trialDuration);
 
     // Determine effective plan for features
