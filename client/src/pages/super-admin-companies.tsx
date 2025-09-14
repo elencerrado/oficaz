@@ -11,7 +11,8 @@ import {
   X,
   ArrowLeft,
   Eye,
-  Users
+  Users,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,10 @@ interface Company {
     plan: string;
     status: string;
   };
+  promotionalCode?: {
+    code: string;
+    description: string;
+  } | null;
 }
 
 const planColors = {
@@ -233,10 +238,25 @@ export default function SuperAdminCompanies() {
                           <Users className="w-3 h-3" />
                           {company.userCount} usuarios
                         </span>
+                        {company.promotionalCode && (
+                          <span className="flex items-center gap-1 text-sm">
+                            <Tag className="w-3 h-3 text-yellow-400" />
+                            <span className="text-yellow-400">{company.promotionalCode.code}</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {company.promotionalCode && (
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 flex items-center gap-1"
+                      >
+                        <Tag className="w-3 h-3" />
+                        {company.promotionalCode.code}
+                      </Badge>
+                    )}
                     {editingCompany === company.id ? (
                       <div className="flex items-center gap-2">
                         <Select value={newPlan} onValueChange={setNewPlan}>

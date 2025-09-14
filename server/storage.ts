@@ -830,11 +830,15 @@ export class DrizzleStorage implements IStorage {
         subscriptionStatus: schema.subscriptions.status,
         subscriptionMaxUsers: schema.subscriptions.maxUsers,
         subscriptionEndDate: schema.subscriptions.endDate,
+        promoCodeId: schema.companies.usedPromotionalCode,
+        promoCodeText: schema.promotionalCodes.code,
+        promoCodeDescription: schema.promotionalCodes.description,
       })
       .from(schema.companies)
       .leftJoin(schema.users, eq(schema.companies.id, schema.users.companyId))
       .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
-      .groupBy(schema.companies.id, schema.subscriptions.id);
+      .leftJoin(schema.promotionalCodes, eq(schema.companies.usedPromotionalCode, schema.promotionalCodes.id))
+      .groupBy(schema.companies.id, schema.subscriptions.id, schema.promotionalCodes.id);
 
     return result.map(row => ({
       id: row.id,
@@ -849,6 +853,10 @@ export class DrizzleStorage implements IStorage {
         maxUsers: row.subscriptionMaxUsers || 5,
         endDate: row.subscriptionEndDate?.toISOString(),
       },
+      promotionalCode: row.promoCodeId ? {
+        code: row.promoCodeText,
+        description: row.promoCodeDescription,
+      } : null,
       createdAt: row.createdAt?.toISOString() || new Date().toISOString(),
     }));
   }
