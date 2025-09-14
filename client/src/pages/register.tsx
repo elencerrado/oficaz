@@ -141,11 +141,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       setValidatingStep3(false);
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
-        window.location.href = '/request-code';
+        setLocation('/request-code', { replace: true });
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [verificationToken, byInvitation]);
+  }, [verificationToken, byInvitation, setLocation]);
 
   // Set dark notch for dark background
   useEffect(() => {
