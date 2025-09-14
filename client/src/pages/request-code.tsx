@@ -37,7 +37,7 @@ export default function RequestCode() {
     if (!isLoadingSettings && registrationSettings && !registrationSettings?.publicRegistrationEnabled) {
       // Use setTimeout to avoid immediate redirect during render
       const timer = setTimeout(() => {
-        window.location.href = '/';
+        setLocation('/');
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -141,7 +141,7 @@ export default function RequestCode() {
         const sessionId = result.sessionId;
         // Use setTimeout to ensure proper navigation
         setTimeout(() => {
-          window.location.href = `/verify-code?session=${sessionId}`;
+          setLocation(`/verify-code?session=${sessionId}`);
         }, 100);
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
