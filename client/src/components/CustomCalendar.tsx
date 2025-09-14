@@ -456,7 +456,7 @@ export function CustomCalendar({
                      isSameDay(calendarDays[nextGlobalIndex], nextDate);
             });
             
-            if (dayIndex < 6 || (isLastDayOfWeek && needsCrossWeekConnection)) {
+            if (dayIndex < 6) {
               // Check if this day should have a connection line to the next day
               const shouldShowConnection = consecutiveDayRanges.some(range => {
                 // Use eachDayOfInterval for reliable date iteration
