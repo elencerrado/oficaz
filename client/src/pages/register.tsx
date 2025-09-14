@@ -1174,7 +1174,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
               <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
                 <Checkbox
                   id="acceptTerms"
-                  checked={step4Form.getValues('acceptTerms') || false}
+                  checked={step4Form.watch('acceptTerms') || false}
                   onCheckedChange={(checked) => step4Form.setValue('acceptTerms', checked as boolean)}
                   className="mt-0.5"
                 />
