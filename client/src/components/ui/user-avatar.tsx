@@ -483,7 +483,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         />
         {/* Imagen encima del fondo */}
         <img 
-          src={localProfilePicture || profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
+          src={(localProfilePicture || profilePicture) 
+            ? `${localProfilePicture || profilePicture}?v=${Date.now()}` 
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(getInitials(fullName))}&size=${sizeConfig.size}&background=${colors.bg.replace('#', '')}&color=${colors.text.replace('#', '')}&font-size=0.4&bold=true`} 
           alt={fullName}
           style={{
             position: 'absolute',
