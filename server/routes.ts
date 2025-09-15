@@ -8482,6 +8482,44 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // 🧪 TEMPORARY TEST ENDPOINT - Apply promotional code to a company
+  app.post('/api/test/apply-promotional-code', async (req, res) => {
+    try {
+      const { companyId, code } = req.body;
+      
+      if (!companyId || !code) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Company ID and code are required' 
+        });
+      }
+      
+      console.log(`🧪 TEST: Applying promotional code ${code} to company ${companyId}`);
+      
+      const result = await storage.redeemAndApplyPromotionalCode(companyId, code);
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          message: result.message,
+          trialDays: result.trialDays,
+          company: result.updatedCompany
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          message: result.message
+        });
+      }
+    } catch (error: any) {
+      console.error('🧪 TEST: Error applying promotional code:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error interno del servidor' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

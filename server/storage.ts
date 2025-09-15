@@ -2345,66 +2345,6 @@ export class DrizzleStorage implements IStorage {
     }
   }
 
-  async redeemPromotionalCode(code: string): Promise<{ success: boolean; message?: string; trialDays?: number }> {
-    try {
-      // Start transaction for atomic operation
-      return await db.transaction(async (tx) => {
-        // First validate the code
-        const promoCode = await tx.select().from(schema.promotionalCodes)
-          .where(eq(schema.promotionalCodes.code, code))
-          .limit(1);
-        
-        if (!promoCode[0]) {
-          return { success: false, message: 'Código promocional no encontrado' };
-        }
-
-        const promo = promoCode[0];
-
-        if (!promo.isActive) {
-          return { success: false, message: 'Código promocional desactivado' };
-        }
-
-        // Check validity dates
-        const now = new Date();
-        if (promo.validFrom && promo.validFrom > now) {
-          return { success: false, message: 'Código promocional aún no válido' };
-        }
-
-        if (promo.validUntil && promo.validUntil < now) {
-          return { success: false, message: 'Código promocional expirado' };
-        }
-
-        // Check usage limits BEFORE incrementing
-        if (promo.maxUses && promo.currentUses >= promo.maxUses) {
-          return { success: false, message: 'Código promocional agotado' };
-        }
-
-        // Increment usage count atomically
-        const [updatedPromo] = await tx.update(schema.promotionalCodes)
-          .set({ 
-            currentUses: promo.currentUses + 1,
-            updatedAt: new Date()
-          })
-          .where(eq(schema.promotionalCodes.id, promo.id))
-          .returning();
-
-        if (!updatedPromo) {
-          return { success: false, message: 'Error al procesar código promocional' };
-        }
-
-        console.log(`✅ Promotional code '${code}' redeemed successfully. Uses: ${updatedPromo.currentUses}/${promo.maxUses || 'unlimited'}`);
-
-        return {
-          success: true,
-          message: `¡Código promocional aplicado! Obtienes ${promo.trialDurationDays} días de prueba gratuitos`,
-          trialDays: promo.trialDurationDays
-        };
-      });
-    } catch (error) {
-      console.error('Error redeeming promotional code:', error);
-      return { success: false, message: 'Error interno al procesar el código promocional' };
-    }
-  }
 
   // 🔄 ATOMIC PROMOTIONAL CODE APPLICATION - Race-condition safe (Neon HTTP compatible)
   async redeemAndApplyPromotionalCode(companyId: number, code: string): Promise<{ success: boolean; message?: string; trialDays?: number; updatedCompany?: Company }> {
