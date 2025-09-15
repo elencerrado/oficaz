@@ -7,6 +7,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { backgroundImageProcessor } from "./backgroundWorker.js";
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -216,6 +217,14 @@ app.get('/sitemap.xml', (req, res) => {
     },
     async () => {
       log(`serving on port ${port}`);
+      
+      // Initialize background image processor
+      try {
+        await backgroundImageProcessor.start();
+        log('🚀 Background image processor started successfully');
+      } catch (error) {
+        console.error('❌ Failed to start background image processor:', error);
+      }
       
       // Emergency refund completed successfully - code removed
     },
