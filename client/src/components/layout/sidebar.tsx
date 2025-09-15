@@ -122,35 +122,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           paddingLeft: 'env(safe-area-inset-left, 0px)' // Para orientación horizontal
         }}
       >
-        {/* Fixed Company header */}
-        <div 
-          className="p-4 bg-sidebar flex-shrink-0"
-          style={{
-            backgroundColor: 'hsl(var(--sidebar-background))'
-          }}
-        >
-          <div className="flex items-center space-x-3">
-            {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
-            {shouldShowLogo ? (
-              <img 
-                src={company.logoUrl || ''} 
-                alt={company.name} 
-                className="h-6 w-auto object-contain flex-shrink-0"
-              />
-            ) : (
-              <img 
-                src={oficazLogo} 
-                alt="Oficaz" 
-                className="h-6 w-auto flex-shrink-0 dark:brightness-0 dark:invert"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-medium text-foreground truncate">
-                {shouldShowLogo ? company.name : (company?.name || 'Oficaz')}
-              </h2>
-            </div>
-          </div>
-        </div>
+        {/* Spacer for header alignment */}
+        <div className="h-4 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
         
         {/* Scrollable Navigation */}
         <div 
