@@ -30,7 +30,7 @@ if (!stripeSecretKey) {
 }
 
 console.log('Stripe Environment:', isProduction ? 'Production (Live)' : 'Development (Test)');
-console.log('Stripe key type:', stripeSecretKey.substring(0, 7));
+console.log('Stripe key type:', stripeSecretKey.startsWith('sk_live') ? 'sk_live' : 'sk_test');
 
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-05-28.basil',
@@ -8045,21 +8045,18 @@ Responde directamente a este email para contactar con la persona.
   // Demo data management endpoints  
   app.get('/api/demo-data/status', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      console.log('🔍 demo-data/status - Checking for user:', req.user?.id);
       const userId = req.user!.id;
       const company = await storage.getCompanyByUserId(userId);
       
       if (!company) {
-        console.log('❌ demo-data/status - Company not found for user:', userId);
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
       
       // Fix field mapping: Drizzle converts has_demo_data to hasDemoData automatically
       const hasDemoData = company.hasDemoData || false;
-      console.log('✅ demo-data/status - Company found:', company.name, 'hasDemoData:', hasDemoData);
       res.json({ hasDemoData });
     } catch (error) {
-      console.error('❌ demo-data/status - Error:', error);
+      console.error('Error checking demo data status:', error);
       res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
     }
   });

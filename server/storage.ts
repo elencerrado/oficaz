@@ -2017,9 +2017,7 @@ export class DrizzleStorage implements IStorage {
   // Reminder Notifications
   async getReminderNotificationsDue(userId: number, companyId: number, currentTime: Date): Promise<Reminder[]> {
     try {
-      console.log(`🔔 CHECKING reminder notifications for user ${userId} at ${currentTime.toISOString()}`);
-      
-      // First, get all reminders for this user to debug
+      // Get all reminders for this user
       const allUserReminders = await db.select()
         .from(schema.reminders)
         .where(
@@ -2031,19 +2029,6 @@ export class DrizzleStorage implements IStorage {
             )
           )
         );
-
-      console.log(`🔔 User ${userId} has ${allUserReminders.length} reminders:`, 
-        allUserReminders.map(r => ({
-          id: r.id,
-          title: r.title,
-          enableNotifications: r.enableNotifications,
-          reminderDate: r.reminderDate,
-          isCompleted: r.isCompleted,
-          isArchived: r.isArchived,
-          notificationShown: r.notificationShown,
-          completedByUserIds: r.completedByUserIds
-        }))
-      );
 
 
       // Get reminders that:
@@ -2073,14 +2058,6 @@ export class DrizzleStorage implements IStorage {
             )
           )
         );
-
-      console.log(`🔔 Found ${remindersDue.length} reminders due for notifications:`, 
-        remindersDue.map(r => ({
-          id: r.id,
-          title: r.title,
-          reminderDate: r.reminderDate
-        }))
-      );
 
       return remindersDue;
     } catch (error) {

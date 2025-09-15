@@ -113,3 +113,4 @@ export const checkUserLimit = (subscription: Subscription | null, currentUsers: 
   if (!subscription.maxUsers) return true; // Unlimited
   return currentUsers <= subscription.maxUsers;
 };
+
