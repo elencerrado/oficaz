@@ -473,7 +473,7 @@ export default function EmployeesSimple() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
+    <div className="min-h-screen bg-background" style={{ overflowX: 'clip' }}>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">

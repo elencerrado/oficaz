@@ -580,7 +580,7 @@ export default function Reminders() {
   });
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
+    <div className="min-h-screen bg-background" style={{ overflowX: 'clip' }}>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
