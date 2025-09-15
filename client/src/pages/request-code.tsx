@@ -99,17 +99,24 @@ export default function RequestCode() {
     }
   }, []);
 
+  // Watch email changes for verification
+  const watchedEmail = form.watch('email');
+  
   // Debounce para la verificación del email
   useEffect(() => {
-    const email = form.getValues('email');
     const timeoutId = setTimeout(() => {
-      if (email) {
-        checkEmailAvailability(email);
+      if (watchedEmail && watchedEmail.trim()) {
+        checkEmailAvailability(watchedEmail.trim());
+      } else {
+        // ✅ Reset state when email is empty or invalid
+        setEmailStatus('idle');
+        setEmailMessage('');
+        setCanRecover(false);
       }
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [checkEmailAvailability, form]);
+  }, [watchedEmail, checkEmailAvailability]);
 
   const handleSubmit = async (data: EmailData) => {
     setIsLoading(true);
