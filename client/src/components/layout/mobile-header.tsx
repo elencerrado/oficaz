@@ -64,7 +64,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
 
   return (
     <header 
-      className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background shadow-sm border-b border-border px-4 py-3 grid grid-cols-3 items-center`}
+      className={`fixed ${headerTopClass} left-0 right-0 z-40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 shadow-sm border-b border-border/50 px-4 py-3 grid grid-cols-3 items-center`}
       style={headerStyle || { marginTop: 'env(safe-area-inset-top, 0px)' }}
       >
       {/* Left Section */}
