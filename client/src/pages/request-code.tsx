@@ -145,6 +145,10 @@ export default function RequestCode() {
         }, 100);
       } else {
         console.error('Request error:', result.message || 'No se pudo enviar el código.');
+        // ✅ Update visual state to show error with icons
+        setEmailStatus('unavailable');
+        setEmailMessage(result.error || result.message || 'No se pudo enviar el código');
+        setCanRecover(false);
       }
     } catch (error: any) {
       console.error('Request error:', error);
