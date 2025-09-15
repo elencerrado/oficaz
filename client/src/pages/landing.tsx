@@ -316,8 +316,9 @@ export default function Landing() {
           : 'bg-white backdrop-blur-md shadow-xl shadow-black/30 border-gray-300'
       }`}
       style={{
-        paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`,
-        paddingBottom: '16px'
+        paddingTop: '16px',
+        paddingBottom: '16px',
+        marginTop: 'env(safe-area-inset-top, 0px)'
       }}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
