@@ -2688,7 +2688,7 @@ Responde directamente a este email para contactar con la persona.
         console.log(`🎁 Processing promotional code: ${data.promotionalCode}`);
         
         try {
-          promotionalCodeResult = await storage.redeemPromotionalCode(data.promotionalCode.trim());
+          promotionalCodeResult = await storage.redeemAndApplyPromotionalCode(data.promotionalCode.trim(), 0); // temp companyId
           
           if (promotionalCodeResult.success && promotionalCodeResult.trialDays) {
             appliedTrialDays = promotionalCodeResult.trialDays;
@@ -4400,7 +4400,7 @@ Responde directamente a este email para contactar con la persona.
       // Solución robusta para orientación EXIF en fotos de móviles
       await sharp(req.file.path)
         .rotate() // Auto-rotar basado en metadatos EXIF
-        .withMetadata(false) // Eliminar metadatos EXIF después de aplicar rotación
+        .withMetadata() // Eliminar metadatos EXIF después de aplicar rotación
         .resize(200, 200, {
           fit: 'inside', // Mantiene aspect ratio, no distorsiona
           withoutEnlargement: true // No agranda imágenes pequeñas
@@ -5907,7 +5907,7 @@ Responde directamente a este email para contactar con la persona.
         company_id: companyId,
         account_id: company.accountId || `OFZ-${registrationDate.getFullYear()}-${String(companyId).padStart(6, '0')}`,
         registration_date: registrationDate.toISOString(),
-        billing_name: company.name || admin?.fullName || req.user!.fullName,
+        billing_name: company.name || req.user!.fullName,
         billing_email: company.email, // Email de empresa unificado con facturación
         billing_address: company.address || `Calle Principal ${companyId}, 1º A`,
         billing_city: company.province || 'Madrid',

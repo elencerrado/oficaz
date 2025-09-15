@@ -10,7 +10,8 @@ import type {
   EmployeeActivationToken, InsertEmployeeActivationToken,
   CustomHoliday, InsertCustomHoliday,
   WorkAlarm, InsertWorkAlarm,
-  PromotionalCode, InsertPromotionalCode
+  PromotionalCode, InsertPromotionalCode,
+  ImageProcessingJob, InsertImageProcessingJob
 } from '@shared/schema';
 
 if (!process.env.DATABASE_URL) {
@@ -196,6 +197,13 @@ export interface IStorage {
   
   // Atomic promotional code application after company creation
   redeemAndApplyPromotionalCode(companyId: number, code: string): Promise<{ success: boolean; message?: string; trialDays?: number; updatedCompany?: Company }>;
+
+  // Image Processing Jobs
+  createImageProcessingJob(job: InsertImageProcessingJob): Promise<ImageProcessingJob>;
+  getImageProcessingJob(id: number): Promise<ImageProcessingJob | undefined>;
+  updateImageProcessingJob(id: number, updates: Partial<InsertImageProcessingJob & Pick<ImageProcessingJob, 'status' | 'errorMessage' | 'startedAt' | 'completedAt'>>): Promise<ImageProcessingJob | undefined>;
+  getPendingImageProcessingJobs(): Promise<ImageProcessingJob[]>;
+  getImageProcessingJobsByUser(userId: number): Promise<ImageProcessingJob[]>;
 }
 
 export class DrizzleStorage implements IStorage {
@@ -2515,6 +2523,44 @@ export class DrizzleStorage implements IStorage {
   async cancelCompanyDeletion(companyId: number): Promise<boolean> {
     // This is the same as cancelAccountDeletion - aliasing for compatibility
     return this.cancelAccountDeletion(companyId);
+  }
+
+  // ===== IMAGE PROCESSING JOBS =====
+  
+  async createImageProcessingJob(job: InsertImageProcessingJob): Promise<ImageProcessingJob> {
+    const [created] = await db.insert(schema.imageProcessingJobs).values(job).returning();
+    return created;
+  }
+
+  async getImageProcessingJob(id: number): Promise<ImageProcessingJob | undefined> {
+    const result = await db.select().from(schema.imageProcessingJobs).where(eq(schema.imageProcessingJobs.id, id)).limit(1);
+    return result[0];
+  }
+
+  async updateImageProcessingJob(
+    id: number, 
+    updates: Partial<InsertImageProcessingJob & Pick<ImageProcessingJob, 'status' | 'errorMessage' | 'startedAt' | 'completedAt'>>
+  ): Promise<ImageProcessingJob | undefined> {
+    const updateData: any = { ...updates, updatedAt: new Date() };
+    const [updated] = await db.update(schema.imageProcessingJobs)
+      .set(updateData)
+      .where(eq(schema.imageProcessingJobs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getPendingImageProcessingJobs(): Promise<ImageProcessingJob[]> {
+    return await db.select()
+      .from(schema.imageProcessingJobs)
+      .where(eq(schema.imageProcessingJobs.status, 'pending'))
+      .orderBy(asc(schema.imageProcessingJobs.createdAt));
+  }
+
+  async getImageProcessingJobsByUser(userId: number): Promise<ImageProcessingJob[]> {
+    return await db.select()
+      .from(schema.imageProcessingJobs)
+      .where(eq(schema.imageProcessingJobs.userId, userId))
+      .orderBy(desc(schema.imageProcessingJobs.createdAt));
   }
 }
 

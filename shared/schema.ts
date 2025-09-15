@@ -199,6 +199,23 @@ export const invitationLinks = pgTable("invitation_links", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Background Image Processing table - para trackear el procesamiento asíncrono de imágenes
+export const imageProcessingJobs = pgTable("image_processing_jobs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  originalFilePath: text("original_file_path").notNull(), // Ruta del archivo original subido
+  processedFilePath: text("processed_file_path"), // Ruta del archivo procesado final
+  processingType: varchar("processing_type", { length: 50 }).notNull(), // 'profile_picture', 'company_logo', 'document'
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending', 'processing', 'completed', 'failed'
+  errorMessage: text("error_message"), // Mensaje de error si falla
+  targetUserId: integer("target_user_id").references(() => users.id, { onDelete: "cascade" }), // Para admins subiendo fotos de otros usuarios
+  metadata: jsonb("metadata").default('{}'), // Información adicional (dimensiones, tamaño, etc.)
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Users table
 export const users = pgTable("users", { 
   // Identificación y acceso
@@ -452,6 +469,14 @@ export const insertEmployeeActivationTokenSchema = createInsertSchema(employeeAc
   createdAt: true,
 });
 
+export const insertImageProcessingJobSchema = createInsertSchema(imageProcessingJobs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  startedAt: true,
+  completedAt: true,
+});
+
 export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
   id: true,
   createdAt: true,
@@ -653,6 +678,8 @@ export type InsertReminder = z.infer<typeof insertReminderSchema>;
 // ReminderAssignment types temporarily removed
 export type EmployeeActivationToken = typeof employeeActivationTokens.$inferSelect;
 export type InsertEmployeeActivationToken = z.infer<typeof insertEmployeeActivationTokenSchema>;
+export type ImageProcessingJob = typeof imageProcessingJobs.$inferSelect;
+export type InsertImageProcessingJob = z.infer<typeof insertImageProcessingJobSchema>;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
 
