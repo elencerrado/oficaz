@@ -9,9 +9,9 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <PageHeaderProvider>
-      <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 h-screen bg-background overflow-hidden flex flex-col" style={{ overflowX: 'clip' }}>
         <ConditionalHeader />
-        <div className="admin-content">
+        <div className="admin-content flex-1 min-h-0 overflow-hidden">
           {children}
         </div>
       </div>
