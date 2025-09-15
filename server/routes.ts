@@ -1993,7 +1993,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Create admin user
       const user = await storage.createUser({
-        companyEmail: data.companyEmail,
+        companyEmail: data.adminEmail, // ✅ CORRECTED: Use admin email (verified), not company billing email
         password: hashedPassword,
         fullName: data.adminFullName,
         dni: data.adminDni || 'TEMP-' + Date.now(),
@@ -2730,7 +2730,7 @@ Responde directamente a este email para contactar con la persona.
 
       // Create admin user
       const user = await storage.createUser({
-        companyEmail: data.companyEmail,
+        companyEmail: data.adminEmail, // ✅ CORRECTED: Use admin email (verified), not company billing email
         password: hashedPassword,
         fullName: data.adminFullName,
         dni: data.adminDni || 'PENDING-DNI',
