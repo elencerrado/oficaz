@@ -46,6 +46,36 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
+// SECURE multer configuration for profile pictures with strict validation
+const profilePictureUpload = multer({
+  dest: uploadDir,
+  limits: { 
+    fileSize: 5 * 1024 * 1024, // 5MB per file
+    files: 1, // Only 1 file allowed
+  },
+  fileFilter: (req, file, cb) => {
+    // Allowed file types - only images
+    const allowedTypes = [
+      'image/png', 
+      'image/jpeg',
+      'image/jpg',
+      'image/webp'
+    ];
+    
+    // Allowed extensions as backup check
+    const allowedExts = ['.png', '.jpg', '.jpeg', '.webp'];
+    
+    // Check both mimetype and extension for security
+    const ext = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedTypes.includes(file.mimetype) && allowedExts.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no permitido para foto de perfil. Solo se permiten: PNG, JPG, JPEG, WEBP. Recibido: ${file.mimetype} con extensión ${ext}`));
+    }
+  }
+});
+
 // SECURE multer configuration for contact form with strict validation
 const contactUpload = multer({
   dest: uploadDir,
@@ -4343,8 +4373,8 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Upload profile picture
-  app.post('/api/users/profile-picture', authenticateToken, upload.single('profilePicture'), async (req: AuthRequest, res) => {
+  // Upload profile picture (with background processing)
+  app.post('/api/users/profile-picture', authenticateToken, profilePictureUpload.single('profilePicture'), async (req: AuthRequest, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No se ha proporcionado ningún archivo' });
@@ -4394,45 +4424,90 @@ Responde directamente a este email para contactar con la persona.
 
       // Generate unique filename for processed image (always JPEG for consistency)
       const filename = `profile_${targetUserId}_${Date.now()}.jpg`;
-      const newPath = path.join(uploadDir, filename);
+      const outputPath = path.join(uploadDir, filename);
 
-      // Process and compress image to 200x200 max using Sharp
-      // Solución robusta para orientación EXIF en fotos de móviles
-      await sharp(req.file.path)
-        .rotate() // Auto-rotar basado en metadatos EXIF
-        .withMetadata() // Eliminar metadatos EXIF después de aplicar rotación
-        .resize(200, 200, {
-          fit: 'inside', // Mantiene aspect ratio, no distorsiona
-          withoutEnlargement: true // No agranda imágenes pequeñas
+      // Create background processing job instead of synchronous processing
+      const processingConfig = {
+        resize: { width: 200, height: 200, fit: 'inside' },
+        quality: 85,
+        outputPath: outputPath
+      };
+
+      const job = await storage.createImageProcessingJob({
+        userId: targetUserId,
+        originalFilePath: req.file.path,
+        processingType: 'profile_picture',
+        metadata: JSON.stringify({ 
+          targetUserId,
+          isAdminUpload,
+          uploadedBy: req.user!.id,
+          processingConfig: processingConfig
         })
-        .jpeg({ 
-          quality: 85, // Buena calidad con tamaño optimizado
-          progressive: true 
-        })
-        .toFile(newPath);
-
-      // Remove original uploaded file after processing
-      fs.unlinkSync(req.file.path);
-
-      // Update target user's profile picture in database
-      const profilePictureUrl = `/uploads/${filename}`;
-      const updatedUser = await storage.updateUser(targetUserId, { 
-        profilePicture: profilePictureUrl 
       });
 
-      if (!updatedUser) {
-        // Clean up file if database update fails
-        fs.unlinkSync(newPath);
-        return res.status(500).json({ error: 'Error al actualizar la foto de perfil en la base de datos' });
-      }
+      console.log(`🎯 Created background processing job ${job.id} for user ${targetUserId}`);
 
+      // Return job ID for frontend polling
       res.json({ 
-        message: 'Foto de perfil actualizada correctamente',
-        profilePicture: profilePictureUrl 
+        message: 'Subida iniciada correctamente. Procesando imagen en segundo plano...',
+        jobId: job.id,
+        status: 'pending'
       });
     } catch (error: any) {
       console.error('Error uploading profile picture:', error);
+      // Clean up uploaded file on error
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
       res.status(500).json({ error: 'Error al subir la foto de perfil' });
+    }
+  });
+
+  // Get image processing job status
+  app.get('/api/image-processing/status/:jobId', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const jobId = parseInt(req.params.jobId);
+      const userId = req.user!.id;
+      
+      if (isNaN(jobId)) {
+        return res.status(400).json({ error: 'ID de job inválido' });
+      }
+      
+      const job = await storage.getImageProcessingJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: 'Job no encontrado' });
+      }
+      
+      // Security check: Only allow users to check their own jobs or admins to check any job
+      const user = req.user!;
+      const metadata = JSON.parse(job.metadata || '{}');
+      const targetUserId = metadata.targetUserId || job.userId;
+      
+      if (job.userId !== userId && targetUserId !== userId && !['admin', 'manager'].includes(user.role)) {
+        return res.status(403).json({ error: 'No autorizado para consultar este job' });
+      }
+      
+      // Return job status with additional info for completed jobs
+      const response: any = {
+        jobId: job.id,
+        status: job.status,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        completedAt: job.completedAt
+      };
+      
+      if (job.status === 'completed' && job.processedFilePath) {
+        response.profilePicture = `/uploads/${path.basename(job.processedFilePath)}`;
+      }
+      
+      if (job.status === 'failed' && job.errorMessage) {
+        response.errorMessage = job.errorMessage;
+      }
+      
+      res.json(response);
+    } catch (error: any) {
+      console.error('Error getting job status:', error);
+      res.status(500).json({ error: 'Error al consultar el estado del procesamiento' });
     }
   });
 

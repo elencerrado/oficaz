@@ -88,6 +88,18 @@ class BackgroundImageProcessor {
 
       const result = await this.processImage(job);
       
+      // Update user's profile picture if this is a profile picture job
+      if (job.processingType === 'profile_picture') {
+        const metadata = (job.metadata || {}) as any;
+        const targetUserId = metadata.targetUserId || job.userId;
+        const profilePictureUrl = `/uploads/${path.basename(result.outputPath)}`;
+        
+        await storage.updateUser(targetUserId, { 
+          profilePicture: profilePictureUrl 
+        });
+        console.log(`👤 Updated user ${targetUserId} profile picture: ${profilePictureUrl}`);
+      }
+      
       // Mark job as completed
       await storage.updateImageProcessingJob(job.id, {
         status: 'completed',
@@ -96,6 +108,14 @@ class BackgroundImageProcessor {
       });
 
       console.log(`✅ Completed processing job ${job.id} -> ${result.outputPath}`);
+      
+      // Cleanup original file after successful processing
+      try {
+        await fs.unlink(job.originalFilePath);
+        console.log(`🗑️ Cleaned up original file: ${job.originalFilePath}`);
+      } catch (cleanupError) {
+        console.warn(`⚠️ Warning: Could not delete original file ${job.originalFilePath}:`, cleanupError);
+      }
       
     } catch (error) {
       console.error(`❌ Error processing job ${job.id}:`, error);
@@ -110,7 +130,7 @@ class BackgroundImageProcessor {
   }
 
   private async processImage(job: ImageProcessingJob): Promise<{ outputPath: string }> {
-    const { originalFilePath: inputPath, metadata: processingConfig } = job;
+    const { originalFilePath: inputPath, metadata } = job;
     
     // Security: Validate input path is within uploads directory
     const uploadsDir = path.resolve('uploads');
@@ -126,14 +146,16 @@ class BackgroundImageProcessor {
       throw new Error(`Input file not found: ${inputPath}`);
     }
 
-    // Parse and validate processing configuration
-    let config: any;
+    // Parse metadata and extract processing configuration
+    let parsedMetadata: any = {};
+    let config: any = {};
     try {
-      config = typeof processingConfig === 'string' 
-        ? JSON.parse(processingConfig) 
-        : processingConfig || {};
+      parsedMetadata = typeof metadata === 'string' 
+        ? JSON.parse(metadata) 
+        : metadata || {};
+      config = parsedMetadata.processingConfig || {};
     } catch (error) {
-      throw new Error(`Invalid processing configuration: ${error}`);
+      throw new Error(`Invalid metadata or processing configuration: ${error}`);
     }
 
     // Generate output path - use metadata.outputPath if provided, otherwise generate deterministic name
@@ -165,6 +187,9 @@ class BackgroundImageProcessor {
     // Process image with Sharp
     let sharpInstance = sharp(resolvedInputPath);
 
+    // Auto-rotate based on EXIF orientation
+    sharpInstance = sharpInstance.rotate();
+
     // Apply transformations based on config
     if (config.resize) {
       const { width, height, fit } = config.resize;
@@ -174,16 +199,11 @@ class BackgroundImageProcessor {
       });
     }
 
-    if (config.quality) {
-      const ext = inputExt.toLowerCase();
-      if (ext === '.jpg' || ext === '.jpeg') {
-        sharpInstance = sharpInstance.jpeg({ quality: config.quality });
-      } else if (ext === '.png') {
-        sharpInstance = sharpInstance.png({ quality: config.quality });
-      } else if (ext === '.webp') {
-        sharpInstance = sharpInstance.webp({ quality: config.quality });
-      }
-    }
+    // Convert to JPEG for consistency and apply quality settings
+    sharpInstance = sharpInstance.jpeg({ 
+      quality: config.quality || 85,
+      progressive: true
+    });
 
     // Save the processed image
     await sharpInstance.toFile(outputPath);
