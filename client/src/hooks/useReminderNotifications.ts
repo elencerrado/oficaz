@@ -16,11 +16,11 @@ export function useReminderNotifications() {
   const shownNotifications = useRef(new Set<number>());
   const { toast } = useToast();
   
-  // Check for due notifications every minute
+  // Check for due notifications every 5 minutes (optimized for performance)
   const { data: remindersDue = [] } = useQuery<ReminderNotification[]>({
     queryKey: ['/api/reminders/check-notifications'],
-    refetchInterval: 60000, // Check every minute
-    refetchIntervalInBackground: true, // Keep checking even when tab is not active
+    refetchInterval: 300000, // Check every 5 minutes (was 60 seconds)
+    refetchIntervalInBackground: false, // Save resources when tab is not active
     refetchOnWindowFocus: true, // Check when window gets focus
   });
 
