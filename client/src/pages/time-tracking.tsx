@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useSidebarState } from '@/hooks/use-sidebar-state';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatsCard from '@/components/StatsCard';
@@ -42,6 +43,7 @@ import jsPDF from 'jspdf';
 export default function TimeTracking() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { shouldShowHeader } = useSidebarState();
   
   // Check if user has access to time tracking feature
   if (!hasAccess('timeTracking')) {
@@ -1754,18 +1756,20 @@ export default function TimeTracking() {
 
   return (
     <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Gestión de Fichajes</h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-              Administra todos los fichajes de empleados y genera reportes.
-            </p>
-          </div>
+      {/* Header - Hidden when sidebar is visible */}
+      {shouldShowHeader && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">Gestión de Fichajes</h1>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+                Administra todos los fichajes de empleados y genera reportes.
+              </p>
+            </div>
 
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">

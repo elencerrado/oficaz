@@ -16,9 +16,11 @@ import CookieBanner from "@/components/CookieBanner";
 import { PageLoading } from "@/components/ui/page-loading";
 import { PageWrapper } from "@/components/ui/page-wrapper";
 import { useState } from "react";
+import * as React from "react";
 import { useDemoBanner } from "@/hooks/use-demo-banner";
 import { useScrollReset } from "@/hooks/use-scroll-reset";
 import { useReminderNotifications } from "@/hooks/useReminderNotifications";
+import { SidebarProvider, useSidebarState } from "@/hooks/use-sidebar-state";
 
 import { lazy, Suspense } from "react";
 
@@ -150,6 +152,37 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   // Admin/Manager gets full layout with sidebar
+  return (
+    <SidebarProvider>
+      <AppLayoutContent 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen}
+        paddingTop={paddingTop}
+      >
+        {children}
+      </AppLayoutContent>
+    </SidebarProvider>
+  );
+}
+
+function AppLayoutContent({ 
+  children, 
+  isSidebarOpen, 
+  setIsSidebarOpen, 
+  paddingTop 
+}: { 
+  children: React.ReactNode;
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
+  paddingTop: string;
+}) {
+  const { setIsSidebarOpen: setSidebarContextOpen } = useSidebarState();
+
+  // Sync local state with context
+  React.useEffect(() => {
+    setSidebarContextOpen(isSidebarOpen);
+  }, [isSidebarOpen, setSidebarContextOpen]);
+
   return (
     <div className="min-h-screen bg-background">
       <ReminderBanner />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useSidebarState } from '@/hooks/use-sidebar-state';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ import { WelcomeModal } from '@/components/welcome-modal';
 export default function AdminDashboard() {
   const { user, company } = useAuth();
   const { hasAccess } = useFeatureCheck();
+  const { shouldShowHeader } = useSidebarState();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentLocation, setLocation] = useLocation() || ['', () => {}];
@@ -542,13 +544,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="px-6 py-4 min-h-screen bg-background">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Panel Principal</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Gestión rápida y vista general de la empresa
-        </p>
-      </div>
+      {/* Header - Hidden when sidebar is visible */}
+      {shouldShowHeader && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">Panel Principal</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            Gestión rápida y vista general de la empresa
+          </p>
+        </div>
+      )}
 
       {/* Trial Status Management */}
       <div className="mb-6">
