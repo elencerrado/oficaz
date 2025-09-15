@@ -123,7 +123,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }}
       >
         {/* Spacer for header alignment */}
-        <div className="h-4 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
+        <div className="h-16 bg-sidebar flex-shrink-0" style={{ backgroundColor: 'hsl(var(--sidebar-background))' }} />
         
         {/* Scrollable Navigation */}
         <div 
