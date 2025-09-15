@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -21,11 +21,74 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [localProfilePicture, setLocalProfilePicture] = useState<string | null>(profilePicture || null);
+  const [processingJobId, setProcessingJobId] = useState<number | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
+  const [pollingTimeoutId, setPollingTimeoutId] = useState<NodeJS.Timeout | null>(null);
   
   // Sincronizar estado local con props cuando cambian
   useEffect(() => {
     setLocalProfilePicture(profilePicture || null);
   }, [profilePicture]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingTimeoutId) {
+        clearTimeout(pollingTimeoutId);
+      }
+    };
+  }, [pollingTimeoutId]);
+
+  // Polling function for background processing status
+  const pollJobStatus = useCallback(async (jobId: number) => {
+    try {
+      const response = await apiRequest('GET', `/api/image-processing/status/${jobId}`);
+      setProcessingStatus(response.status);
+      
+      if (response.status === 'completed') {
+        // Job completed successfully
+        if (response.profilePicture) {
+          setLocalProfilePicture(response.profilePicture);
+          // Force re-render with small delay
+          setTimeout(() => {
+            setLocalProfilePicture(response.profilePicture);
+          }, 100);
+        }
+        
+        // Update auth context and invalidate queries
+        refreshUser();
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+        
+        toast({ title: "Foto actualizada", description: "La foto se ha procesado y actualizado correctamente" });
+        setIsUploading(false);
+        setProcessingJobId(null);
+        setProcessingStatus(null);
+        
+      } else if (response.status === 'failed') {
+        // Job failed
+        toast({ 
+          title: "Error", 
+          description: response.errorMessage || "Error al procesar la imagen", 
+          variant: "destructive" 
+        });
+        setIsUploading(false);
+        setProcessingJobId(null);
+        setProcessingStatus(null);
+        
+      } else {
+        // Job still processing, continue polling
+        const timeoutId = setTimeout(() => pollJobStatus(jobId), 3000); // Poll every 3 seconds
+        setPollingTimeoutId(timeoutId);
+      }
+    } catch (error) {
+      console.error('Error polling job status:', error);
+      toast({ title: "Error", description: "Error al consultar el estado del procesamiento", variant: "destructive" });
+      setIsUploading(false);
+      setProcessingJobId(null);
+      setProcessingStatus(null);
+    }
+  }, [refreshUser, queryClient, toast]);
 
   // Mutations para subir y eliminar fotos
   const uploadPhotoMutation = useMutation({
@@ -41,37 +104,35 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       return await apiRequest('POST', '/api/users/profile-picture', formData);
     },
     onSuccess: (data) => {
-      // Actualizar estado local inmediatamente
-      if (data?.profilePicture) {
-        setLocalProfilePicture(data.profilePicture);
+      if (data?.jobId) {
+        // New background processing workflow
+        setProcessingJobId(data.jobId);
+        setProcessingStatus('pending');
+        toast({ title: "Procesando imagen", description: "La imagen se está procesando en segundo plano..." });
         
-        // Forzar re-render adicional
+        // Start polling for job status
+        setTimeout(() => pollJobStatus(data.jobId), 1000); // Start polling after 1 second
+        
+      } else if (data?.profilePicture) {
+        // Legacy direct response (fallback)
+        setLocalProfilePicture(data.profilePicture);
         setTimeout(() => {
           setLocalProfilePicture(data.profilePicture);
         }, 100);
+        
+        refreshUser();
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+        
+        toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
+        setIsUploading(false);
       }
-      
-      // CRÍTICO: Actualizar contexto de autenticación para el dashboard
-      refreshUser();
-      
-      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      
-      // Forzar recarga completa del cache de React Query
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
-      
-      toast({ title: "Foto actualizada", description: "La foto se ha actualizado correctamente" });
     },
     onError: () => {
       toast({ title: "Error", description: "No se pudo actualizar la foto", variant: "destructive" });
-    },
-    onSettled: () => {
       setIsUploading(false);
+      setProcessingJobId(null);
+      setProcessingStatus(null);
     },
   });
 
@@ -465,8 +526,14 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
         
         {/* Overlay con icono de cámara cuando está uploading */}
         {isUploading && (
-          <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 flex items-center justify-center flex-col">
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            {processingStatus && (
+              <div className="text-white text-xs mt-1 font-medium">
+                {processingStatus === 'pending' ? 'Subiendo...' : 
+                 processingStatus === 'processing' ? 'Procesando...' : 'Subiendo...'}
+              </div>
+            )}
           </div>
         )}
       </div>

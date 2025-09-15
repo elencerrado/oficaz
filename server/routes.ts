@@ -4422,6 +4422,39 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ error: 'El archivo es demasiado grande. Tamaño máximo: 5MB.' });
       }
 
+      // CRITICAL FIX: Comprehensive file validation and debugging
+      console.log('🔍 DEBUGGING: Full req.file object:', JSON.stringify(req.file, null, 2));
+      console.log('🔍 DEBUGGING: req.file.path type:', typeof req.file.path);
+      console.log('🔍 DEBUGGING: req.file.path value:', req.file.path);
+
+      // Validate that file path exists and is not null/undefined
+      if (!req.file.path || req.file.path === 'undefined' || req.file.path === 'null' || req.file.path.trim() === '') {
+        console.error('❌ CRITICAL ERROR: req.file.path is null/undefined/empty');
+        console.error('Full req.file object:', JSON.stringify(req.file, null, 2));
+        console.error('Multer configuration might be corrupted or file upload failed');
+        return res.status(500).json({ error: 'Error interno: ruta de archivo no válida. El archivo no se subió correctamente.' });
+      }
+
+      // Additional debug logging
+      console.log(`📁 File upload details: path=${req.file.path}, originalname=${req.file.originalname}, size=${req.file.size}, mimetype=${req.file.mimetype}`);
+      console.log(`📁 Upload directory: ${uploadDir}`);
+
+      // Verify file actually exists on disk
+      if (!fs.existsSync(req.file.path)) {
+        console.error(`❌ CRITICAL ERROR: File does not exist on disk: ${req.file.path}`);
+        console.error('This suggests multer failed to save the file or path is incorrect');
+        return res.status(500).json({ error: 'Error interno: archivo no encontrado en disco' });
+      }
+
+      // Check file permissions and readability
+      try {
+        const stats = fs.statSync(req.file.path);
+        console.log(`📊 File stats: size=${stats.size}, isFile=${stats.isFile()}, mode=${stats.mode.toString(8)}`);
+      } catch (statsError) {
+        console.error('❌ Error getting file stats:', statsError);
+        return res.status(500).json({ error: 'Error interno: no se puede acceder al archivo' });
+      }
+
       // Generate unique filename for processed image (always JPEG for consistency)
       const filename = `profile_${targetUserId}_${Date.now()}.jpg`;
       const outputPath = path.join(uploadDir, filename);
@@ -4432,6 +4465,8 @@ Responde directamente a este email para contactar con la persona.
         quality: 85,
         outputPath: outputPath
       };
+
+      console.log(`🎯 Creating image processing job with originalFilePath: ${req.file.path}`);
 
       const job = await storage.createImageProcessingJob({
         userId: targetUserId,
@@ -4480,7 +4515,9 @@ Responde directamente a este email para contactar con la persona.
       
       // Security check: Only allow users to check their own jobs or admins to check any job
       const user = req.user!;
-      const metadata = JSON.parse(job.metadata || '{}');
+      const metadata = typeof job.metadata === 'string' 
+        ? JSON.parse(job.metadata) 
+        : job.metadata || {};
       const targetUserId = metadata.targetUserId || job.userId;
       
       if (job.userId !== userId && targetUserId !== userId && !['admin', 'manager'].includes(user.role)) {
