@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
-import { useSidebarState } from '@/hooks/use-sidebar-state';
+import { usePageHeader } from '@/components/layout/page-header';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { PageWrapper } from '@/components/ui/page-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,7 +96,16 @@ const getTypeBadgeColor = (type: string) => {
 export default function AdminDocuments() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
-  const { shouldShowHeader } = useSidebarState();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Gestión de Documentos',
+      subtitle: 'Gestiona documentos de empleados y envía solicitudes'
+    });
+    return resetHeader;
+  }, []);
   
   console.log('Admin Documents page: checking access...');
   
@@ -761,16 +770,7 @@ export default function AdminDocuments() {
 
   return (
     <PageWrapper>
-      <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-        {/* Header - Hidden when sidebar is visible */}
-        {shouldShowHeader && (
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">Gestión de Documentos</h1>
-            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-              Gestiona documentos de empleados y envía solicitudes
-            </p>
-          </div>
-        )}
+      <div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">

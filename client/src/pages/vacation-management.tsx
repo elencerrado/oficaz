@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import StatsCard from "@/components/StatsCard";
 import { useAuth } from "@/hooks/use-auth";
-import { useSidebarState } from '@/hooks/use-sidebar-state';
+import { usePageHeader } from '@/components/layout/page-header';
 import { TabNavigation } from "@/components/ui/tab-navigation";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -75,7 +75,16 @@ const regions = [
 
 export default function VacationManagement() {
   const { company, user } = useAuth();
-  const { shouldShowHeader } = useSidebarState();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Gestión de Vacaciones',
+      subtitle: 'Gestiona solicitudes de vacaciones y empleados'
+    });
+    return resetHeader;
+  }, []);
   const [activeTab, setActiveTab] = useState("employees");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -766,16 +775,7 @@ export default function VacationManagement() {
   }, [search, vacationRequests]);
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-      {/* Header - Hidden when sidebar is visible */}
-      {shouldShowHeader && (
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Gestión de Vacaciones</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Gestiona solicitudes de vacaciones y empleados
-          </p>
-        </div>
-      )}
+    <div>
       {/* Stats Cards with Navigation - Unified Component */}
       <div className="mb-3">
         <div className="grid grid-cols-4 gap-2 md:gap-6">

@@ -21,6 +21,7 @@ import { useDemoBanner } from "@/hooks/use-demo-banner";
 import { useScrollReset } from "@/hooks/use-scroll-reset";
 import { useReminderNotifications } from "@/hooks/useReminderNotifications";
 import { SidebarProvider, useSidebarState } from "@/hooks/use-sidebar-state";
+import { AdminLayout } from "@/components/layout/admin-layout";
 
 import { lazy, Suspense } from "react";
 
@@ -198,7 +199,9 @@ function AppLayoutContent({
           backgroundColor: 'hsl(var(--background))'
         }}
       >
-        {children}
+        <AdminLayout>
+          {children}
+        </AdminLayout>
       </main>
     </div>
   );
