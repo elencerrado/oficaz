@@ -284,7 +284,16 @@ export default function RequestCode() {
                       <CheckCircle className="h-4 w-4 text-green-500" />
                     )}
                     {emailStatus === 'unavailable' && (
-                      <XCircle className="h-4 w-4 text-red-500" />
+                      <XCircle 
+                        className="h-4 w-4 text-red-500 cursor-pointer hover:text-red-600 transition-colors" 
+                        onClick={() => {
+                          form.setValue('email', '');
+                          setEmailStatus('idle');
+                          setEmailMessage('');
+                          setCanRecover(false);
+                        }}
+                        title="Limpiar email"
+                      />
                     )}
                     {emailStatus === 'cancelled' && (
                       <AlertTriangle className="h-4 w-4 text-orange-500" />
