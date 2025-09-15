@@ -26,15 +26,12 @@ export interface Subscription {
 // Features are determined by the subscription plan configuration in the database
 
 export const checkFeatureAccess = (subscription: Subscription | null, feature: keyof SubscriptionFeatures): boolean => {
-  console.log('checkFeatureAccess called with:', { subscription, feature });
   if (!subscription) {
-    console.log('No subscription found');
     return false;
   }
   
   // Allow access for both active subscriptions and trial periods
   if (subscription.status !== 'active' && subscription.status !== 'trial') {
-    console.log('Subscription not active or trial:', subscription.status);
     return false;
   }
   
@@ -45,7 +42,6 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
   ];
   
   if (alwaysAvailableFeatures.includes(feature)) {
-    console.log('Feature always available:', { feature });
     return true;
   }
   
@@ -71,14 +67,6 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
   // For both trial and active subscriptions, use the features configured in the database
   // Trial periods should have same features as the chosen plan, just time-limited
   const hasFeature = (subscription.features as any)[dbFeatureName] || false;
-  console.log('Feature access:', { 
-    status: subscription.status, 
-    plan: subscription.plan, 
-    feature, 
-    dbFeatureName,
-    hasFeature, 
-    features: subscription.features 
-  });
   return hasFeature;
 };
 
