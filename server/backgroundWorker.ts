@@ -7,7 +7,7 @@ import type { ImageProcessingJob } from '@shared/schema';
 class BackgroundImageProcessor {
   private isRunning = false;
   private processingInterval: NodeJS.Timeout | null = null;
-  private readonly PROCESSING_INTERVAL = 1000; // Check every 1 second
+  private readonly PROCESSING_INTERVAL = 5000; // Check every 5 seconds
   private readonly MAX_CONCURRENT_JOBS = 2; // Limit concurrent processing
   private currentlyProcessing = new Set<number>();
 
