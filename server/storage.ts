@@ -2424,9 +2424,26 @@ export class DrizzleStorage implements IStorage {
           throw new Error('Company not found or could not be updated');
         }
 
+        // 🎯 CRITICAL: Update subscription trial_end_date with promotional code days
+        const newTrialEndDate = new Date();
+        newTrialEndDate.setDate(newTrialEndDate.getDate() + updatedPromo.trialDurationDays);
+
+        const [updatedSubscription] = await db.update(schema.subscriptions)
+          .set({
+            trialEndDate: newTrialEndDate,
+            updatedAt: now
+          })
+          .where(eq(schema.subscriptions.companyId, companyId))
+          .returning();
+
+        if (!updatedSubscription) {
+          throw new Error('Subscription not found or could not be updated');
+        }
+
         console.log(`✅ Atomic promotional code application completed successfully:`);
         console.log(`   - Code '${code}' redeemed (${updatedPromo.currentUses}/${updatedPromo.maxUses || 'unlimited'} uses)`);
         console.log(`   - Company ${companyId} trial extended to ${updatedPromo.trialDurationDays} days`);
+        console.log(`   - Subscription trial_end_date updated to: ${newTrialEndDate.toISOString()}`);
 
         return {
           success: true,
