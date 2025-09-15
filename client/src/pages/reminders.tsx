@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { format, isToday, isTomorrow, isPast, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { usePageHeader } from '@/components/layout/page-header';
 
 interface Reminder {
   id: number;
@@ -153,6 +154,16 @@ const AssignedUsersAvatars = ({ assignedUserIds, employees, maxDisplay = 3, curr
 export default function Reminders() {
   const { user } = useAuth();
   const { hasAccess } = useFeatureCheck();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Gestión de Recordatorios',
+      subtitle: 'Organiza tus tareas y recordatorios para mantenerte al día.'
+    });
+    return resetHeader;
+  }, []);
   
   const canAccessReminders = hasAccess('reminders');
 
@@ -570,13 +581,6 @@ export default function Reminders() {
 
   return (
     <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Gestión de Recordatorios</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Organiza tus tareas y recordatorios para mantenerte al día.
-        </p>
-      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

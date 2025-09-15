@@ -35,9 +35,20 @@ import { Label } from '@/components/ui/label';
 import { DatePickerDayEmployee } from '@/components/ui/date-picker';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { usePageHeader } from '@/components/layout/page-header';
 
 export default function EmployeesSimple() {
   const { user, token } = useAuth();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Gestión de Empleados',
+      subtitle: 'Administra usuarios y gestiona información de empleados'
+    });
+    return resetHeader;
+  }, []);
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -463,13 +474,6 @@ export default function EmployeesSimple() {
 
   return (
     <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Gestión de Empleados</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Administra usuarios y gestiona información de empleados
-        </p>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-2 md:gap-6 mb-3">

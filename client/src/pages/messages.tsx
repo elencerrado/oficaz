@@ -32,6 +32,7 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
+import { usePageHeader } from '@/components/layout/page-header';
 
 interface Message {
   id: number;
@@ -64,6 +65,16 @@ interface Manager {
 export default function Messages() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Mensajes',
+      subtitle: 'Comunícate con empleados y gestiona mensajes'
+    });
+    return resetHeader;
+  }, []);
   
   // Check if user has access to messages feature
   if (!hasAccess('messages')) {
@@ -554,13 +565,6 @@ export default function Messages() {
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
       <div className="px-6 py-4 h-[calc(100vh-100px)] bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">Mensajes</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-            Comunícate con empleados y gestiona mensajes
-          </p>
-        </div>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex h-[calc(100vh-200px)]">
           {/* Left Column: Employee List (1/3 width) */}

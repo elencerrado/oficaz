@@ -54,6 +54,7 @@ import { es } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
 import flameIcon from '@assets/icon flam_1751450814463.png';
+import { usePageHeader } from '@/components/layout/page-header';
 
 // Password change schema
 const changePasswordSchema = z.object({
@@ -1751,6 +1752,16 @@ export default function Settings() {
   const { user, company, subscription, refreshUser } = useAuth();
   const { toast } = useToast();
   const { hasAccess } = useFeatureCheck();
+  const { setHeader, resetHeader } = usePageHeader();
+
+  // Set page header
+  useEffect(() => {
+    setHeader({
+      title: 'Configuración',
+      subtitle: 'Gestiona la configuración de tu empresa y perfil'
+    });
+    return resetHeader;
+  }, []);
   const queryClient = useQueryClient();
 
   // Query for subscription plans
@@ -2436,10 +2447,6 @@ export default function Settings() {
   // Admin/Manager configuration view
   return (
     <div className="px-6 py-4 min-h-screen bg-background" style={{ overflowX: 'clip' }}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
-        <p className="text-muted-foreground mt-1 text-sm sm:text-base">Gestiona la configuración de tu empresa y perfil</p>
-      </div>
       {/* Trial Manager - shown for companies in trial or active accounts (but not blocked) */}
       {((subscription?.status === 'trial' && subscription?.isTrialActive) || 
         (subscription?.status === 'active')) && 
