@@ -85,17 +85,7 @@ export default function Messages() {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const [isPWA, setIsPWA] = useState(false);
-  const [selectedChat, setSelectedChat] = useState<number | null>(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const chatParam = urlParams.get('chat');
-    if (chatParam) {
-      const chatId = parseInt(chatParam);
-      console.log('Found chat parameter in URL:', chatId);
-      window.history.replaceState({}, '', window.location.pathname);
-      return chatId;
-    }
-    return null;
-  });
+  const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
@@ -130,6 +120,20 @@ export default function Messages() {
     enabled: !!user && (user.role === 'admin' || user.role === 'manager'),
     staleTime: 60000,
   });
+
+  // Handle URL chat parameter - moved from state initialization to prevent navigation interference
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatParam = urlParams.get('chat');
+    if (chatParam && !selectedChat) {
+      const chatId = parseInt(chatParam);
+      console.log('Found chat parameter in URL:', chatId);
+      setSelectedChat(chatId);
+      // Clean URL after setting chat to prevent reload issues
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [selectedChat]); // Only runs when selectedChat changes or is null
 
   // Register page visit for notifications clearing
   useEffect(() => {
