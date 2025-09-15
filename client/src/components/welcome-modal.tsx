@@ -7,9 +7,10 @@ interface WelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
   companyName: string;
+  trialDays?: number; // Optional, defaults to 14
 }
 
-export function WelcomeModal({ isOpen, onClose, companyName }: WelcomeModalProps) {
+export function WelcomeModal({ isOpen, onClose, companyName, trialDays = 14 }: WelcomeModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 dark:border dark:border-gray-700">
@@ -37,7 +38,7 @@ export function WelcomeModal({ isOpen, onClose, companyName }: WelcomeModalProps
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-center mb-1">
               <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-              <span className="font-semibold text-green-800 dark:text-green-300 text-sm">14 días de prueba gratuitos</span>
+              <span className="font-semibold text-green-800 dark:text-green-300 text-sm">{trialDays} días de prueba gratuitos</span>
             </div>
             <p className="text-xs text-green-700 dark:text-green-400 text-center">
               Disfruta de todas las funcionalidades premium sin costo
