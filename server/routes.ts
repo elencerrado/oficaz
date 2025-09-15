@@ -18,6 +18,7 @@ import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-or
 import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
+import { backgroundImageProcessor } from './backgroundWorker.js';
 
 // Initialize Stripe with intelligent key detection
 // Priority: Use production keys if available, otherwise fall back to test keys
@@ -4481,6 +4482,9 @@ Responde directamente a este email para contactar con la persona.
       });
 
       console.log(`🎯 Created background processing job ${job.id} for user ${targetUserId}`);
+
+      // Trigger immediate processing instead of waiting for interval
+      backgroundImageProcessor.notifyNewJob();
 
       // Return job ID for frontend polling
       res.json({ 

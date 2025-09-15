@@ -7,7 +7,7 @@ import type { ImageProcessingJob } from '@shared/schema';
 class BackgroundImageProcessor {
   private isRunning = false;
   private processingInterval: NodeJS.Timeout | null = null;
-  private readonly PROCESSING_INTERVAL = 5000; // Check every 5 seconds
+  private readonly PROCESSING_INTERVAL = Number(process.env.IMAGE_PROCESSING_INTERVAL_MS ?? '1000'); // Check every 1 second
   private readonly MAX_CONCURRENT_JOBS = 2; // Limit concurrent processing
   private currentlyProcessing = new Set<number>();
 
@@ -209,6 +209,17 @@ class BackgroundImageProcessor {
     await sharpInstance.toFile(outputPath);
 
     return { outputPath };
+  }
+
+  // Public method to trigger immediate processing when a new job is enqueued
+  public notifyNewJob() {
+    if (!this.isRunning) {
+      void this.start();
+    }
+    // Trigger immediate processing without waiting for the interval
+    setImmediate(() => {
+      void this.processNextJob();
+    });
   }
 
   getStatus() {
