@@ -157,21 +157,9 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
       // CRÍTICO: Actualizar contexto de autenticación para el dashboard
       refreshUser();
       
-      // Forzar re-render inmediato invalidando todas las queries que podrían mostrar avatares
+      // Efficient cache invalidation - only invalidate essential queries
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-sessions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
-      
-      // Forzar recarga completa del cache de React Query
-      queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
-      queryClient.refetchQueries({ queryKey: ['/api/employees'] });
-      
-      // Forzar re-render del componente
-      setTimeout(() => {
-        setLocalProfilePicture(null);
-      }, 100);
       
       toast({ title: "Foto eliminada", description: "Tu foto de perfil se ha eliminado correctamente" });
     },
