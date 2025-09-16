@@ -32,8 +32,6 @@ import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation, Link } from 'wouter';
-import { usePageHeader } from '@/components/layout/page-header';
-
 interface Message {
   id: number;
   senderId: number;
@@ -51,6 +49,7 @@ interface Employee {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 interface Manager {
@@ -60,21 +59,12 @@ interface Manager {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 export default function Messages() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
-  const { setHeader, resetHeader } = usePageHeader();
-
-  // Set page header
-  useEffect(() => {
-    setHeader({
-      title: 'Mensajes',
-      subtitle: 'Comunícate con empleados y gestiona mensajes'
-    });
-    return resetHeader;
-  }, []);
   
   // Check if user has access to messages feature
   if (!hasAccess('messages')) {
@@ -113,14 +103,14 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // All queries together
-  const { data: messages, isLoading: messagesLoading } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ['/api/messages'],
     enabled: !!user,
     staleTime: 30000,
     refetchInterval: 10000,
   });
 
-  const { data: managers } = useQuery({
+  const { data: managers = [] } = useQuery<Manager[]>({
     queryKey: ['/api/managers'],
     enabled: !!user && user.role === 'employee',
     staleTime: 60000,
@@ -558,7 +548,7 @@ export default function Messages() {
 
   // Loading state
   if (messagesLoading) {
-    return <PageLoading message="Cargando mensajes..." />;
+    return <PageLoading />;
   }
 
   // Admin/Manager view
@@ -689,7 +679,7 @@ export default function Messages() {
                             
                             {/* Messages for this date */}
                             <div className="space-y-3">
-                              {group.messages.map((message) => (
+                              {group.messages.map((message: Message) => (
                                 <div
                                   key={message.id}
                                   data-message-id={message.id}
@@ -903,7 +893,7 @@ export default function Messages() {
                         
                         {/* Messages for this date */}
                         <div className="space-y-3">
-                          {group.messages.map((message) => (
+                          {group.messages.map((message: Message) => (
                             <div
                               key={message.id}
                               data-message-id={message.id}
@@ -1366,7 +1356,7 @@ export default function Messages() {
                         
                         {/* Messages for this date */}
                         <div className="space-y-3">
-                          {group.messages.map((message) => (
+                          {group.messages.map((message: Message) => (
                             <div
                               key={message.id}
                               data-message-id={message.id}
