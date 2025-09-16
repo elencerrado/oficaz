@@ -564,7 +564,7 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="h-full bg-background" style={{ overflowX: 'clip' }}>
+      <div className="h-[calc(100vh-160px)] bg-background" style={{ overflowX: 'clip' }}>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex h-full gap-6">
           {/* Left Column: Employee List (1/3 width) */}
