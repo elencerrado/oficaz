@@ -144,7 +144,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 
                 return (
                   <div key={item.name}>
-                    <Link href={item.href}>
+                    <Link to={item.href}>
                       <button
                         className={`
                           w-full flex items-center space-x-3 rounded-lg transition-colors text-left

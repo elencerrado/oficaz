@@ -2,7 +2,16 @@ import { useSidebarState } from '@/hooks/use-sidebar-state';
 import { usePageHeader } from './page-header';
 
 export function ConditionalHeader() {
-  const { shouldShowHeader } = useSidebarState();
+  // Handle case where SidebarProvider might not exist (e.g., employee view)
+  let shouldShowHeader = false;
+  try {
+    const sidebarState = useSidebarState();
+    shouldShowHeader = sidebarState.shouldShowHeader;
+  } catch (error) {
+    // If no SidebarProvider, default to not showing header
+    shouldShowHeader = false;
+  }
+  
   const { header } = usePageHeader();
 
   // Only show header when sidebar state says we should (mobile with closed sidebar)
