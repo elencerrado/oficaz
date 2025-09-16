@@ -376,14 +376,8 @@ export default function Documents() {
     const url = `/api/documents/${id}/download?token=${encodeURIComponent(token)}&view=true`;
     console.log('View URL:', url.replace(token, '[TOKEN_HIDDEN]'));
     
-    // Crear enlace temporal para visualizar sin salir del modo standalone
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_self'; // Mantener en la misma ventana
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Abrir documento en nueva pestaña para visualización
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const getFileIcon = (filename: string) => {
@@ -459,8 +453,8 @@ export default function Documents() {
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
           {shouldShowLogo ? (
             <img 
-              src={company.logoUrl} 
-              alt={company.name} 
+              src={company.logoUrl || ''} 
+              alt={company.name || ''} 
               className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
           ) : (
