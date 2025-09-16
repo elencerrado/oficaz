@@ -305,6 +305,9 @@ export default function AdminDashboard() {
   // Fetch vacation requests for calendar
   const { data: vacationRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
+    staleTime: 0, // Always consider data potentially stale for real-time updates
+    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchIntervalInBackground: true, // Continue refetching when tab is not active
     select: (data: any[]) => data || [],
   });
 

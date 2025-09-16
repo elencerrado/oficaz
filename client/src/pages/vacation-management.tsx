@@ -449,7 +449,9 @@ export default function VacationManagement() {
   // Fetch vacation requests
   const { data: vacationRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['/api/vacation-requests/company'],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always consider data potentially stale for real-time updates
+    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchIntervalInBackground: true, // Continue refetching when tab is not active
     select: (data) => {
       // Ensure data consistency and handle missing fields
       if (!data || !Array.isArray(data)) return [];
