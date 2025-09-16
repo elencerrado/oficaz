@@ -299,7 +299,7 @@ export class DrizzleStorage implements IStorage {
     return user;
   }
 
-  // Calculate vacation days based on start date and company policy
+  // Calculate vacation days based on Spanish labor law and company policy
   async calculateVacationDays(userId: number): Promise<number> {
     const user = await this.getUser(userId);
     if (!user) return 0;
@@ -311,12 +311,31 @@ export class DrizzleStorage implements IStorage {
     const startDate = new Date(user.startDate);
     const currentDate = new Date();
     
-    // Calculate months worked (including partial months)
-    const monthsWorked = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                         (currentDate.getMonth() - startDate.getMonth()) + 
-                         (currentDate.getDate() >= startDate.getDate() ? 1 : 0);
+    // Spanish labor law: vacation period calculation
+    const oneYearFromStart = new Date(startDate);
+    oneYearFromStart.setFullYear(startDate.getFullYear() + 1);
     
-    const calculatedDays = Math.round((monthsWorked * userDaysPerMonth) * 10) / 10;
+    let calculatedDays: number;
+    
+    if (currentDate >= oneYearFromStart) {
+      // Employee has more than 1 year: vacation period is Feb 1 - Jan 31 (12 months max)
+      // Use full year allowance (12 months worth)
+      calculatedDays = Math.round((12 * userDaysPerMonth) * 10) / 10;
+    } else {
+      // Employee has less than 1 year: from start date to Jan 31 of next year
+      const nextJan31 = new Date(startDate.getFullYear() + 1, 0, 31); // Jan 31 of next year
+      const endDate = currentDate > nextJan31 ? nextJan31 : currentDate;
+      
+      // Calculate months from start date to end date (proportional)
+      const monthsWorked = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                           (endDate.getMonth() - startDate.getMonth()) + 
+                           (endDate.getDate() >= startDate.getDate() ? 1 : 0);
+      
+      // Cap at 12 months maximum
+      const cappedMonths = Math.min(12, monthsWorked);
+      calculatedDays = Math.round((cappedMonths * userDaysPerMonth) * 10) / 10;
+    }
+    
     const adjustment = parseFloat(user.vacationDaysAdjustment || '0');
     
     return Math.max(0, calculatedDays + adjustment);
