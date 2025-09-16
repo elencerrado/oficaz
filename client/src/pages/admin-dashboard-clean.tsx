@@ -5,7 +5,7 @@ export default function AdminDashboardClean() {
   const { user, company } = useAuth();
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
+    <div>
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Panel Principal</h1>
         <p className="text-gray-500 mt-1">Gestión empresarial de {company?.name}</p>

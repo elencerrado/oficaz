@@ -441,7 +441,7 @@ export default function Documents() {
   }
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col">
+    <div className="bg-employee-gradient text-white flex flex-col">
       {/* Header - Standard employee pattern */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${companyAlias}/inicio`}>

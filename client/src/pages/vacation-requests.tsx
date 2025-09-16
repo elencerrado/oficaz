@@ -298,7 +298,7 @@ export default function VacationRequests() {
 
   return (
     <div 
-      className="min-h-screen bg-employee-gradient text-white"
+      className="bg-employee-gradient text-white"
       style={{
         overscrollBehavior: 'none'
       }}

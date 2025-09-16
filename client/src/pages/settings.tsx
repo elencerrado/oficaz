@@ -2256,7 +2256,7 @@ export default function Settings() {
   // Employee profile view for non-admin users
   if (user?.role === 'employee') {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="bg-background p-6">
         <div className="max-w-2xl mx-auto">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Mi Perfil</h1>
@@ -2446,7 +2446,7 @@ export default function Settings() {
 
   // Admin/Manager configuration view
   return (
-    <div className="min-h-screen bg-background" style={{ overflowX: 'clip' }}>
+    <div className="bg-background" style={{ overflowX: 'clip' }}>
       {/* Trial Manager - shown for companies in trial or active accounts (but not blocked) */}
       {((subscription?.status === 'trial' && subscription?.isTrialActive) || 
         (subscription?.status === 'active')) && 

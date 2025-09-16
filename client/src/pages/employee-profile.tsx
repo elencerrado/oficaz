@@ -148,7 +148,7 @@ export default function EmployeeProfile() {
 
 
   return (
-    <div className="min-h-screen bg-employee-gradient text-white">
+    <div className="bg-employee-gradient text-white">
       {/* Header - Exactly like other employee pages but without user name */}
       <div className="flex items-center justify-between p-6 pb-8 h-20">
         <Link href={`/${currentCompanyAlias}/inicio`}>
