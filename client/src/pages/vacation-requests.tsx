@@ -74,7 +74,9 @@ export default function VacationRequests() {
     mutationFn: (data: { startDate: string; endDate: string; reason?: string }) =>
       apiRequest('POST', '/api/vacation-requests', data),
     onSuccess: () => {
+      // Invalidate both employee and admin cache keys
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
       setIsModalOpen(false);
       setSelectedStartDate(null);
       setSelectedEndDate(null);

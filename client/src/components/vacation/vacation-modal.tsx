@@ -24,7 +24,9 @@ export function VacationModal({ isOpen, onClose }: VacationModalProps) {
   const createVacationRequest = useMutation({
     mutationFn: (data: any) => apiRequest('POST', '/api/vacation-requests', data),
     onSuccess: () => {
+      // Invalidate both employee and admin cache keys
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
       toast({
         title: 'Request Submitted',
         description: 'Your vacation request has been submitted for review.',

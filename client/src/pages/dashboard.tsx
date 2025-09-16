@@ -60,6 +60,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
       queryClient.invalidateQueries({ queryKey: ['/api/work-sessions/company'] });
       queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/vacation-requests/company'] });
       queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
       queryClient.invalidateQueries({ queryKey: ['/api/reminders/active'] });
       queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
