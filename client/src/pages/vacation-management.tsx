@@ -480,13 +480,22 @@ export default function VacationManagement() {
   
   // Detect new vacation requests and show toast notification
   useEffect(() => {
-    if (!vacationRequests || vacationRequests.length === 0) return;
+    console.log('🔔 Toast effect triggered:', { 
+      vacationRequestsLength: vacationRequests?.length,
+      previousLength: previousRequestsRef.current.length 
+    });
+    
+    if (!vacationRequests || vacationRequests.length === 0) {
+      console.log('🔔 No vacation requests, skipping...');
+      return;
+    }
     
     const previousRequests = previousRequestsRef.current;
     const currentRequests = vacationRequests;
     
     // On first load, just store current requests without showing notifications
     if (previousRequests.length === 0) {
+      console.log('🔔 First load, storing current requests:', currentRequests.length);
       previousRequestsRef.current = [...currentRequests];
       return;
     }
@@ -497,11 +506,15 @@ export default function VacationManagement() {
       !previousRequests.some((prev: VacationRequest) => prev.id === current.id)
     );
     
+    console.log('🔔 New pending requests found:', newPendingRequests.length, newPendingRequests);
+    
     // Show notification for each new pending request
     newPendingRequests.forEach((request: VacationRequest) => {
       const employeeName = request.user?.fullName || 'Un empleado';
       const startDate = format(parseISO(request.startDate), 'd \'de\' MMMM', { locale: es });
       const endDate = format(parseISO(request.endDate), 'd \'de\' MMMM', { locale: es });
+      
+      console.log('🔔 Showing toast for request:', request.id, employeeName);
       
       toast({
         title: "📋 Nueva solicitud de vacaciones",

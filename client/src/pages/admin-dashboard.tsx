@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { usePageHeader } from '@/components/layout/page-header';
@@ -313,6 +313,58 @@ export default function AdminDashboard() {
 
   const approvedVacations = vacationRequests?.filter((req: any) => req.status === 'approved') || [];
   const pendingVacations = vacationRequests?.filter((req: any) => req.status === 'pending') || [];
+
+  // Track previous vacation requests to detect new ones for toast notifications
+  const previousVacationRequestsRef = useRef<any[]>([]);
+  
+  // Detect new vacation requests and show toast notification
+  useEffect(() => {
+    console.log('🔔 [AdminDashboard] Toast effect triggered:', { 
+      vacationRequestsLength: vacationRequests?.length,
+      previousLength: previousVacationRequestsRef.current.length 
+    });
+    
+    if (!vacationRequests || vacationRequests.length === 0) {
+      console.log('🔔 [AdminDashboard] No vacation requests, skipping...');
+      return;
+    }
+    
+    const previousRequests = previousVacationRequestsRef.current;
+    const currentRequests = vacationRequests;
+    
+    // On first load, just store current requests without showing notifications
+    if (previousRequests.length === 0) {
+      console.log('🔔 [AdminDashboard] First load, storing current requests:', currentRequests.length);
+      previousVacationRequestsRef.current = [...currentRequests];
+      return;
+    }
+    
+    // Find new pending requests
+    const newPendingRequests = currentRequests.filter((current: any) => 
+      current.status === 'pending' && 
+      !previousRequests.some((prev: any) => prev.id === current.id)
+    );
+    
+    console.log('🔔 [AdminDashboard] New pending requests found:', newPendingRequests.length, newPendingRequests);
+    
+    // Show notification for each new pending request
+    newPendingRequests.forEach((request: any) => {
+      const employeeName = request.user?.fullName || 'Un empleado';
+      const startDate = format(parseISO(request.startDate), 'd \'de\' MMMM', { locale: es });
+      const endDate = format(parseISO(request.endDate), 'd \'de\' MMMM', { locale: es });
+      
+      console.log('🔔 [AdminDashboard] Showing toast for request:', request.id, employeeName);
+      
+      toast({
+        title: "📋 Nueva solicitud de vacaciones",
+        description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${request.days || 0} días)`,
+        duration: 8000, // Show for 8 seconds
+      });
+    });
+    
+    // Update the reference with current requests
+    previousVacationRequestsRef.current = [...currentRequests];
+  }, [vacationRequests, toast]);
 
   // ⚠️ PROTECTED - DO NOT MODIFY - Fichaje mutations identical to employee system
   const clockInMutation = useMutation({
