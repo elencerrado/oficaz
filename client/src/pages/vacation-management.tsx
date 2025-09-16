@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -475,6 +475,44 @@ export default function VacationManagement() {
     }
   });
 
+  // Track previous vacation requests to detect new ones
+  const previousRequestsRef = useRef<VacationRequest[]>([]);
+  
+  // Detect new vacation requests and show toast notification
+  useEffect(() => {
+    if (!vacationRequests || vacationRequests.length === 0) return;
+    
+    const previousRequests = previousRequestsRef.current;
+    const currentRequests = vacationRequests;
+    
+    // On first load, just store current requests without showing notifications
+    if (previousRequests.length === 0) {
+      previousRequestsRef.current = [...currentRequests];
+      return;
+    }
+    
+    // Find new pending requests
+    const newPendingRequests = currentRequests.filter((current: VacationRequest) => 
+      current.status === 'pending' && 
+      !previousRequests.some((prev: VacationRequest) => prev.id === current.id)
+    );
+    
+    // Show notification for each new pending request
+    newPendingRequests.forEach((request: VacationRequest) => {
+      const employeeName = request.user?.fullName || 'Un empleado';
+      const startDate = format(parseISO(request.startDate), 'd \'de\' MMMM', { locale: es });
+      const endDate = format(parseISO(request.endDate), 'd \'de\' MMMM', { locale: es });
+      
+      toast({
+        title: "📋 Nueva solicitud de vacaciones",
+        description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${request.days} días)`,
+        duration: 8000, // Show for 8 seconds
+      });
+    });
+    
+    // Update the reference with current requests
+    previousRequestsRef.current = [...currentRequests];
+  }, [vacationRequests, toast]);
 
   // Update vacation request status
   const updateRequestMutation = useMutation({
