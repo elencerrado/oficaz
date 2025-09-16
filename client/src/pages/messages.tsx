@@ -1180,7 +1180,7 @@ export default function Messages() {
         (<>
           {/* Header - Standard employee pattern */}
           <div className="flex items-center justify-between p-6 pb-8 h-20">
-            <Link href={`/${companyAlias}/inicio`}>
+            <Link to={`/${companyAlias}/inicio`}>
               <Button
                 variant="ghost"
                 size="lg"
