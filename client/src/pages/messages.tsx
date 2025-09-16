@@ -51,6 +51,7 @@ interface Employee {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 interface Manager {
@@ -60,6 +61,7 @@ interface Manager {
   email?: string;
   jobTitle?: string;
   position?: string;
+  profilePicture?: string;
 }
 
 export default function Messages() {
@@ -231,8 +233,8 @@ export default function Messages() {
   }, [selectedChat, user?.role, managers, employees]);
 
   useEffect(() => {
-    if (selectedChat && messages && messages.length > 0 && !markAsReadMutation.isPending) {
-      const chatMessages = messages as Message[] || [];
+    if (selectedChat && messages && Array.isArray(messages) && messages.length > 0 && !markAsReadMutation.isPending) {
+      const chatMessages = messages as Message[];
       const unreadMessages = chatMessages.filter(msg => 
         !msg.isRead && 
         msg.receiverId === user?.id && 
@@ -245,7 +247,7 @@ export default function Messages() {
         });
       }
     }
-  }, [selectedChat, messages?.length, user?.id]); // Removed markAsReadMutation from deps
+  }, [selectedChat, messages, user?.id]); // Fixed array check and dependencies
 
   useEffect(() => {
     // Detectar PWA específicamente
@@ -334,7 +336,7 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    if (selectedChat && messages && messages.length > 0) {
+    if (selectedChat && messages && Array.isArray(messages) && messages.length > 0) {
       // Scroll inmediato
       scrollToBottom();
       
@@ -347,7 +349,7 @@ export default function Messages() {
 
       return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [selectedChat, messages?.length, scrollToBottom]);
+  }, [selectedChat, Array.isArray(messages) ? messages.length : 0, scrollToBottom]);
 
 
 
@@ -558,13 +560,13 @@ export default function Messages() {
 
   // Loading state
   if (messagesLoading) {
-    return <PageLoading message="Cargando mensajes..." />;
+    return <PageLoading />;
   }
 
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="h-[calc(100vh-100px)] w-full bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
+      <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex h-full w-full gap-6 min-h-0">
           {/* Left Column: Employee List (1/3 width) */}
@@ -576,7 +578,7 @@ export default function Messages() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground truncate">
-                      {(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length} mensaje{(messages as Message[] || []).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
+                      {Array.isArray(messages) ? (messages as Message[]).filter(m => !m.isRead && m.senderId !== user?.id).length : 0} mensaje{Array.isArray(messages) && (messages as Message[]).filter(m => !m.isRead && m.senderId !== user?.id).length !== 1 ? 's' : ''} sin leer
                     </h3>
                     <div className="text-sm text-muted-foreground truncate">
                       Conversaciones
@@ -689,7 +691,7 @@ export default function Messages() {
                             
                             {/* Messages for this date */}
                             <div className="space-y-3">
-                              {group.messages.map((message) => (
+                              {group.messages.map((message: Message) => (
                                 <div
                                   key={message.id}
                                   data-message-id={message.id}
@@ -903,7 +905,7 @@ export default function Messages() {
                         
                         {/* Messages for this date */}
                         <div className="space-y-3">
-                          {group.messages.map((message) => (
+                          {group.messages.map((message: Message) => (
                             <div
                               key={message.id}
                               data-message-id={message.id}
@@ -1366,7 +1368,7 @@ export default function Messages() {
                         
                         {/* Messages for this date */}
                         <div className="space-y-3">
-                          {group.messages.map((message) => (
+                          {group.messages.map((message: Message) => (
                             <div
                               key={message.id}
                               data-message-id={message.id}
