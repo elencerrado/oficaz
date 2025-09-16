@@ -28,7 +28,7 @@ import {
   Edit,
   X
 } from 'lucide-react';
-import { format, addDays, isSameDay, parseISO, startOfDay } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -350,14 +350,18 @@ export default function AdminDashboard() {
     // Show notification for each new pending request
     newPendingRequests.forEach((request: any) => {
       const employeeName = request.user?.fullName || 'Un empleado';
-      const startDate = format(parseISO(request.startDate), 'd \'de\' MMMM', { locale: es });
-      const endDate = format(parseISO(request.endDate), 'd \'de\' MMMM', { locale: es });
+      const startDateObj = startOfDay(parseISO(request.startDate));
+      const endDateObj = startOfDay(parseISO(request.endDate));
+      const days = differenceInCalendarDays(endDateObj, startDateObj) + 1;
       
-      console.log('🔔 [AdminDashboard] Showing toast for request:', request.id, employeeName);
+      const startDate = format(startDateObj, 'd \'de\' MMMM', { locale: es });
+      const endDate = format(endDateObj, 'd \'de\' MMMM', { locale: es });
+      
+      console.log('🔔 [AdminDashboard] Showing toast for request:', request.id, employeeName, 'Days:', days);
       
       toast({
         title: "📋 Nueva solicitud de vacaciones",
-        description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${request.days || 0} días)`,
+        description: `${employeeName} ha solicitado vacaciones del ${startDate} al ${endDate} (${days} ${days === 1 ? 'día' : 'días'})`,
         duration: 8000, // Show for 8 seconds
       });
     });
