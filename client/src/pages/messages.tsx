@@ -564,11 +564,11 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="min-h-[calc(100vh-160px)] bg-background flex items-center" style={{ overflowX: 'clip' }}>
+      <div className="h-[calc(100vh-160px)] w-full bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Desktop Layout: Two columns side by side */}
-        <div className="hidden lg:flex h-full gap-6 w-full">
+        <div className="hidden lg:flex h-full w-full gap-6 min-h-0">
           {/* Left Column: Employee List (1/3 width) */}
-          <div className="w-1/3 bg-card rounded-lg border border-border flex flex-col">
+          <div className="w-1/3 h-full min-h-0 bg-card rounded-lg border border-border flex flex-col">
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-transparent flex items-center justify-center flex-shrink-0">
@@ -648,7 +648,7 @@ export default function Messages() {
             </div>
 
             {/* Right Column: Chat Area (2/3 width) */}
-            <div className="flex-1 bg-card rounded-lg border border-border flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 bg-card rounded-lg border border-border flex flex-col overflow-hidden">
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
@@ -765,7 +765,7 @@ export default function Messages() {
                   </div>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex-1 grid place-items-center p-6">
                   <div className="text-center text-muted-foreground">
                     <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">Selecciona un empleado</h3>
@@ -776,7 +776,7 @@ export default function Messages() {
             </div>
         </div>
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden h-[calc(100vh-200px)] flex flex-col">
+        <div className="lg:hidden h-[calc(100vh-160px)] flex flex-col min-h-0">
           {!selectedChat ? (
             /* Employee List View */
             (<div className="flex-1 flex flex-col min-h-0">
