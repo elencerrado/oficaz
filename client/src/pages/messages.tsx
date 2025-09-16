@@ -564,7 +564,7 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="h-[calc(100vh-120px)] w-full bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
+      <div className="h-[calc(100vh-100px)] w-full bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex h-full w-full gap-6 min-h-0">
           {/* Left Column: Employee List (1/3 width) */}
@@ -776,7 +776,7 @@ export default function Messages() {
             </div>
         </div>
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden h-[calc(100vh-120px)] flex flex-col min-h-0">
+        <div className="lg:hidden h-[calc(100vh-100px)] flex flex-col min-h-0">
           {!selectedChat ? (
             /* Employee List View */
             (<div className="flex-1 flex flex-col min-h-0">
