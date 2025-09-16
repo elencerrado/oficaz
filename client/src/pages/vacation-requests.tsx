@@ -169,17 +169,33 @@ export default function VacationRequests() {
   const startDate = user?.startDate ? new Date(user.startDate) : new Date();
   const currentDate = new Date();
   
-  // Calculate months more accurately
-  let monthsWorked = (currentDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                     (currentDate.getMonth() - startDate.getMonth());
+  // Calculate months according to Spanish vacation law
+  const oneYearFromStart = new Date(startDate);
+  oneYearFromStart.setFullYear(startDate.getFullYear() + 1);
   
-  // Add partial month if current day >= start day
-  if (currentDate.getDate() >= startDate.getDate()) {
-    monthsWorked += 1;
+  let monthsWorked: number;
+  
+  if (currentDate >= oneYearFromStart) {
+    // Employee has worked more than one year - gets full annual entitlement
+    monthsWorked = 12; // Maximum 12 months per Spanish labor law
+  } else {
+    // Employee has worked less than one year - proportional calculation
+    // Calculate from start date to Jan 31 of next year (capped at current date)
+    const nextJan31 = new Date(startDate.getFullYear() + 1, 0, 31); // Jan 31 next year
+    const endCalcDate = currentDate < nextJan31 ? currentDate : nextJan31;
+    
+    // Calculate months worked
+    monthsWorked = (endCalcDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                   (endCalcDate.getMonth() - startDate.getMonth());
+    
+    // Add partial month if end day >= start day
+    if (endCalcDate.getDate() >= startDate.getDate()) {
+      monthsWorked += 1;
+    }
+    
+    // Cap at 12 months maximum and ensure minimum of 1
+    monthsWorked = Math.min(12, Math.max(1, monthsWorked));
   }
-  
-  // Ensure minimum of 1 month
-  monthsWorked = Math.max(1, monthsWorked);
   
   const calculatedBaseDays = Math.round(monthsWorked * daysPerMonth * 10) / 10;
 
