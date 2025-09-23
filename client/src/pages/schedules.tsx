@@ -546,7 +546,7 @@ export default function Schedules() {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
     
-    let baseStyle = "relative h-12 rounded border";
+    let baseStyle = "relative h-full rounded border";
     
     if (holiday) {
       // Día festivo - fondo rojo suave
