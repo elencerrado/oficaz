@@ -411,6 +411,19 @@ export default function Schedules() {
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
   
+  // Forzar vista día en móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.innerWidth < 768) { // md breakpoint
+        setViewMode('day');
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
   // Estado para el formulario de edición
   const [editShift, setEditShift] = useState({
     startTime: '09:00',
@@ -740,7 +753,7 @@ export default function Schedules() {
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
               {/* Header con mes y navegación */}
-              <div className="bg-muted/10 p-4">
+              <div className="bg-muted/10 p-2 md:p-4">
                 <div className="flex items-center justify-between mb-4">
                   <Button
                     variant="ghost"
@@ -752,7 +765,7 @@ export default function Schedules() {
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   
-                  <h2 className="text-lg font-semibold text-foreground">
+                  <h2 className="text-base md:text-lg font-semibold text-foreground">
                     {format(weekRange.start, "MMMM yyyy", { locale: es })}
                   </h2>
                   
@@ -768,11 +781,11 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
-                    {/* Slider con estética de TabNavigation */}
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75">
+                    {/* Slider con estética de TabNavigation - Oculto en móvil */}
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden md:block">
                       {/* Sliding indicator */}
                       <div 
                         className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
@@ -814,7 +827,7 @@ export default function Schedules() {
                       <div key={index} className={`flex flex-col items-center justify-center h-10 ${
                         viewMode === 'day' ? 'justify-center' : 'items-center'
                       }`}>
-                        <div className={`text-xs font-medium uppercase tracking-wide leading-none ${
+                        <div className={`text-[10px] md:text-xs font-medium uppercase tracking-wide leading-none ${
                           isToday 
                             ? 'text-blue-600 dark:text-blue-400' 
                             : isWeekend 
@@ -847,8 +860,8 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className="p-4">
-                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                  <div key={employee.id} className="p-2 md:p-4">
+                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
@@ -857,7 +870,7 @@ export default function Schedules() {
                           userId={employee.id}
                           profilePicture={employee.profilePicture}
                         />
-                        <div className="text-xs font-medium text-foreground text-center truncate max-w-full">
+                        <div className="text-[10px] md:text-xs font-medium text-foreground text-center truncate max-w-full">
                           {employee.fullName}
                         </div>
                       </div>
