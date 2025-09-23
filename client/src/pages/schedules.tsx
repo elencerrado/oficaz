@@ -138,7 +138,7 @@ export default function Schedules() {
       return (
         <div
           key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 flex items-center justify-center text-white text-xs font-medium"
+          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex items-center justify-center text-white dark:text-gray-100 text-xs font-medium shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20"
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
@@ -233,7 +233,7 @@ export default function Schedules() {
                       <div className="text-xs text-muted-foreground">
                         {format(day, 'EEE', { locale: es })}
                       </div>
-                      <div className="text-sm font-medium">
+                      <div className="text-sm font-medium text-foreground">
                         {format(day, 'dd')}
                       </div>
                     </div>
@@ -257,7 +257,7 @@ export default function Schedules() {
                           profilePicture={employee.profilePicture}
                         />
                         <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">
+                          <div className="text-sm font-medium text-foreground truncate">
                             {employee.fullName}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -268,7 +268,7 @@ export default function Schedules() {
 
                       {/* Columnas de días */}
                       {weekRange.days.map((day, dayIndex) => (
-                        <div key={dayIndex} className="relative h-12 bg-muted/20 rounded border">
+                        <div key={dayIndex} className="relative h-12 bg-muted/20 dark:bg-muted/30 rounded border border-border">
                           {/* Timeline bars serán renderizadas aquí */}
                           {renderShiftBar(employee)}
                         </div>
