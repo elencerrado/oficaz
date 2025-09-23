@@ -690,44 +690,18 @@ export default function Schedules() {
       return timeA - timeB;
     });
     
-    const lanes: { endTime: number; shifts: WorkShift[] }[] = [];
-    const shiftLaneMap = new Map<number, number>();
-    
-    for (const shift of sortedShifts) {
-      const startTime = parseISO(shift.startAt).getTime();
-      const endTime = parseISO(shift.endAt).getTime();
-      
-      // Find the first lane where this shift can fit (no overlap)
-      // A shift can fit in a lane if the lane's last shift ends before or exactly when this shift starts
-      let assignedLane = -1;
-      for (let i = 0; i < lanes.length; i++) {
-        if (lanes[i].endTime <= startTime) { // No overlap if previous ends before/when current starts
-          assignedLane = i;
-          lanes[i].endTime = Math.max(lanes[i].endTime, endTime); // Update lane end time
-          break;
-        }
-      }
-      
-      // If no existing lane works, create a new one
-      if (assignedLane === -1) {
-        assignedLane = lanes.length;
-        lanes.push({ endTime, shifts: [] });
-      }
-      
-      lanes[assignedLane].shifts.push(shift);
-      shiftLaneMap.set(shift.id, assignedLane);
-      
-      // Debug log the assignment
-      console.log(`Shift "${shift.title}" (${format(parseISO(shift.startAt), 'HH:mm')}-${format(parseISO(shift.endAt), 'HH:mm')}) assigned to lane ${assignedLane}`);
-    }
-    
-    const result = sortedShifts.map(shift => ({
+    // OPCIÓN: Cada turno en su propio carril (siempre separados)
+    const result = sortedShifts.map((shift, index) => ({
       shift,
-      lane: shiftLaneMap.get(shift.id)!,
-      totalLanes: lanes.length
+      lane: index, // Cada turno va a su propio carril
+      totalLanes: sortedShifts.length
     }));
     
-    console.log(`Final lane assignment: ${lanes.length} total lanes`);
+    console.log(`Lane assignment: ${sortedShifts.length} shifts assigned to ${sortedShifts.length} separate lanes`);
+    sortedShifts.forEach((shift, index) => {
+      console.log(`Shift "${shift.title}" (${format(parseISO(shift.startAt), 'HH:mm')}-${format(parseISO(shift.endAt), 'HH:mm')}) assigned to lane ${index}`);
+    });
+    
     return result;
   };
 
