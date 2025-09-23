@@ -978,7 +978,10 @@ export default function Schedules() {
                             }
                           >
                             {/* Área principal de la celda (badges y contenido especial) */}
-                            <div className="flex-1 relative" style={{ paddingBottom: '24px' }}>
+                            <div className="flex-1 relative overflow-hidden" style={{ 
+                              paddingBottom: '24px',
+                              maxHeight: 'calc(100% - 24px)'
+                            }}>
                               {/* Contenido especial para festivos/vacaciones */}
                               {getCellContent(employee.id, day)}
                               {/* Timeline bars serán renderizadas aquí */}
