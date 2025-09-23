@@ -559,7 +559,21 @@ export default function Schedules() {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
     
-    let baseStyle = "relative h-full rounded border overflow-hidden";
+    // Calcular altura mínima basada en el número de turnos para este día
+    const dayShifts = getShiftsForEmployee(employeeId).filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
+      return shiftStartDay === format(date, 'yyyy-MM-dd');
+    });
+    
+    const shiftLanes = assignShiftLanes(dayShifts);
+    const totalLanes = shiftLanes.length > 0 ? shiftLanes[0].totalLanes : 0;
+    const laneHeight = viewMode === 'week' ? 14 : 20;
+    const laneGap = 2;
+    const minCellHeight = Math.max(40, totalLanes * (laneHeight + laneGap) + 8); // 8px padding
+    
+    let baseStyle = "relative rounded border overflow-hidden";
+    baseStyle += ` min-h-[${minCellHeight}px]`;
     
     if (holiday) {
       // Día festivo - fondo rojo suave
@@ -684,10 +698,12 @@ export default function Schedules() {
       const endTime = parseISO(shift.endAt).getTime();
       
       // Find the first lane where this shift can fit (no overlap)
+      // A shift can fit in a lane if the lane's last shift ends before or exactly when this shift starts
       let assignedLane = -1;
       for (let i = 0; i < lanes.length; i++) {
-        if (lanes[i].endTime <= startTime) {
+        if (lanes[i].endTime <= startTime) { // No overlap if previous ends before/when current starts
           assignedLane = i;
+          lanes[i].endTime = Math.max(lanes[i].endTime, endTime); // Update lane end time
           break;
         }
       }
@@ -696,19 +712,23 @@ export default function Schedules() {
       if (assignedLane === -1) {
         assignedLane = lanes.length;
         lanes.push({ endTime, shifts: [] });
-      } else {
-        lanes[assignedLane].endTime = endTime;
       }
       
       lanes[assignedLane].shifts.push(shift);
       shiftLaneMap.set(shift.id, assignedLane);
+      
+      // Debug log the assignment
+      console.log(`Shift "${shift.title}" (${format(parseISO(shift.startAt), 'HH:mm')}-${format(parseISO(shift.endAt), 'HH:mm')}) assigned to lane ${assignedLane}`);
     }
     
-    return sortedShifts.map(shift => ({
+    const result = sortedShifts.map(shift => ({
       shift,
       lane: shiftLaneMap.get(shift.id)!,
       totalLanes: lanes.length
     }));
+    
+    console.log(`Final lane assignment: ${lanes.length} total lanes`);
+    return result;
   };
 
   // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
@@ -729,8 +749,16 @@ export default function Schedules() {
     const shiftLanes = assignShiftLanes(dayShifts);
     const maxVisibleLanes = 2; // Show maximum 2 lanes, rest in overflow
     const hasOverflow = shiftLanes.length > 0 && shiftLanes[0].totalLanes > maxVisibleLanes;
-    const laneHeight = viewMode === 'week' ? 14 : 20; // Smaller lanes in week mode
+    const laneHeight = viewMode === 'week' ? 16 : 22; // Slightly larger lanes for better visibility
     const laneGap = 2;
+    
+    // Debug: Log shift lanes assignment
+    if (dayShifts.length > 1) {
+      console.log('Multiple shifts detected:', dayShifts.length, 'Total lanes:', shiftLanes[0]?.totalLanes);
+      shiftLanes.forEach(({ shift, lane }, i) => {
+        console.log(`Shift ${i + 1}: ${shift.title} -> Lane ${lane}`);
+      });
+    }
     
     // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
     const TIMELINE_START_HOUR = 6; // 6:00 AM
