@@ -83,6 +83,7 @@ export default function Schedules() {
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [showNewShiftModal, setShowNewShiftModal] = useState(false);
+  const [selectedCell, setSelectedCell] = useState<{employeeId: number, date: Date, employeeName: string} | null>(null);
   
   // Estados para nueva creación/edición de turnos
   const [newShift, setNewShift] = useState({
@@ -371,14 +372,34 @@ export default function Schedules() {
                       </div>
 
                       {/* Columnas de días */}
-                      {weekRange.days.map((day, dayIndex) => (
-                        <div key={dayIndex} className={getCellStyle(employee.id, day)}>
-                          {/* Contenido especial para festivos/vacaciones */}
-                          {getCellContent(employee.id, day)}
-                          {/* Timeline bars serán renderizadas aquí */}
-                          {renderShiftBar(employee)}
-                        </div>
-                      ))}
+                      {weekRange.days.map((day, dayIndex) => {
+                        const holiday = isHoliday(day);
+                        const vacation = isEmployeeOnVacation(employee.id, day);
+                        const isDisabled = holiday || vacation;
+                        
+                        return (
+                          <div 
+                            key={dayIndex} 
+                            className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'}`}
+                            onClick={() => {
+                              if (!isDisabled) {
+                                setSelectedCell({
+                                  employeeId: employee.id,
+                                  date: day,
+                                  employeeName: employee.fullName
+                                });
+                                setShowNewShiftModal(true);
+                              }
+                            }}
+                            title={isDisabled ? (holiday ? `Día festivo: ${holiday.name}` : 'Empleado de vacaciones') : 'Click para añadir turno'}
+                          >
+                            {/* Contenido especial para festivos/vacaciones */}
+                            {getCellContent(employee.id, day)}
+                            {/* Timeline bars serán renderizadas aquí */}
+                            {renderShiftBar(employee)}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -387,8 +408,131 @@ export default function Schedules() {
           </div>
         )}
 
-      {/* Modal para nuevo turno - TO DO */}
-      {/* Modal para ver/editar turno - TO DO */}
+      {/* Modal para nuevo turno */}
+      <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Nuevo Turno - {selectedCell?.employeeName}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {selectedCell && format(selectedCell.date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+            </p>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Hora de inicio</label>
+                <input
+                  type="time"
+                  value={newShift.startTime}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Hora de fin</label>
+                <input
+                  type="time"
+                  value={newShift.endTime}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Título del turno</label>
+              <input
+                type="text"
+                value={newShift.title}
+                onChange={(e) => setNewShift(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ej: Turno de mañana, Guardia, etc."
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Ubicación (opcional)</label>
+              <input
+                type="text"
+                value={newShift.location}
+                onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Ej: Oficina central, Sucursal norte, etc."
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Notas (opcional)</label>
+              <textarea
+                value={newShift.notes}
+                onChange={(e) => setNewShift(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Instrucciones especiales, tareas específicas, etc."
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Color del turno</label>
+              <div className="flex gap-2 flex-wrap">
+                {SHIFT_COLORS.map((color, index) => (
+                  <button
+                    key={color}
+                    onClick={() => setNewShift(prev => ({ ...prev, color }))}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      newShift.color === color 
+                        ? 'border-gray-800 dark:border-gray-200 scale-110' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={`Color ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowNewShiftModal(false);
+                setSelectedCell(null);
+                // Reset form
+                setNewShift({
+                  employeeId: '',
+                  startDate: '',
+                  endDate: '',
+                  startTime: '09:00',
+                  endTime: '17:00',
+                  title: '',
+                  location: '',
+                  notes: '',
+                  color: SHIFT_COLORS[0]
+                });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                // TODO: Implementar creación de turno
+                console.log('Crear turno:', { ...newShift, employeeId: selectedCell?.employeeId, date: selectedCell?.date });
+                toast({ title: "Funcionalidad en desarrollo", description: "Próximamente podrás crear turnos" });
+                setShowNewShiftModal(false);
+                setSelectedCell(null);
+              }}
+              disabled={!newShift.title || !newShift.startTime || !newShift.endTime}
+            >
+              Crear Turno
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
