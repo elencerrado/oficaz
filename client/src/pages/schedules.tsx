@@ -785,7 +785,7 @@ export default function Schedules() {
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden md:block">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden lg:block">
                       {/* Sliding indicator */}
                       <div 
                         className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
