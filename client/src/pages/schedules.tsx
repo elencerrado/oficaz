@@ -709,15 +709,14 @@ export default function Schedules() {
       return (
         <div
           key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20"
+          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 min-w-[44px] sm:min-w-[60px]"
           style={{
             left: `${startPosition}%`,
             width: `${Math.max(width, 15)}%`, // Ancho mínimo del 15%
             top: '2px',
             bottom: '2px',
             backgroundColor: shift.color || '#007AFF',
-            zIndex: 10,
-            minWidth: '60px' // Ancho mínimo en píxeles
+            zIndex: 10
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -726,10 +725,17 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          <div className="text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
+          {/* Horas en dos líneas para móvil */}
+          <div className="sm:hidden text-[7px] font-semibold leading-tight text-center px-0.5">
+            <span className="block">{startTime}</span>
+            <span className="block">{endTime}</span>
+          </div>
+          
+          {/* Horas en una línea para desktop */}
+          <div className="hidden sm:block text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
             {shiftHours}
           </div>
-          <div className="text-[7px] lg:text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden max-w-full">
+          <div className="text-[6px] sm:text-[7px] lg:text-[9px] opacity-90 leading-tight sm:leading-none truncate px-0.5 overflow-hidden max-w-full">
             {shift.title}
           </div>
         </div>
