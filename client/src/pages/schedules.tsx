@@ -769,12 +769,8 @@ export default function Schedules() {
                 
                 {/* Header de días súper compacto */}
                 <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-[260px_repeat(7,minmax(0,1fr))]'}`}>
-                  {/* Columna con selector de vista */}
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Equipo
-                    </div>
-                    
+                  {/* Selector de vista */}
+                  <div className="flex items-center justify-center">
                     {/* Slider minimal para vista */}
                     <div className="flex bg-muted/20 dark:bg-muted/40 rounded-full p-1 scale-75">
                       {(['day', 'week'] as const).map((mode) => {
