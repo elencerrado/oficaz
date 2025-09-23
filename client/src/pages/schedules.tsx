@@ -570,7 +570,7 @@ export default function Schedules() {
     const totalLanes = shiftLanes.length > 0 ? shiftLanes[0].totalLanes : 0;
     const laneHeight = viewMode === 'week' ? 14 : 20;
     const laneGap = 2;
-    const minCellHeight = Math.max(40, totalLanes * (laneHeight + laneGap) + 8); // 8px padding
+    const minCellHeight = Math.max(60, totalLanes * 28 + 12); // Altura base más generosa para que respiren los badges
     
     let baseStyle = "relative rounded border overflow-hidden";
     baseStyle += ` min-h-[${minCellHeight}px]`;
