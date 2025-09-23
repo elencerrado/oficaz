@@ -725,17 +725,17 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          {/* Horas en dos líneas para móvil */}
-          <div className="sm:hidden text-[7px] font-semibold leading-tight text-center px-0.5">
+          {/* Horas en dos líneas para móvil y tablet */}
+          <div className="md:hidden text-[7px] font-semibold leading-tight text-center px-0.5">
             <span className="block">{startTime}</span>
             <span className="block">{endTime}</span>
           </div>
           
           {/* Horas en una línea para desktop */}
-          <div className="hidden sm:block text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
+          <div className="hidden md:block text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
             {shiftHours}
           </div>
-          <div className="text-[6px] sm:text-[7px] lg:text-[9px] opacity-90 leading-tight sm:leading-none truncate px-0.5 overflow-hidden max-w-full">
+          <div className="text-[6px] md:text-[7px] lg:text-[9px] opacity-90 leading-tight md:leading-none truncate px-0.5 overflow-hidden max-w-full">
             {shift.title}
           </div>
         </div>
