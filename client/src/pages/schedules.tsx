@@ -151,7 +151,14 @@ export default function Schedules() {
     },
   });
 
-  // Mutation para crear turno
+  // Helper para calcular fecha de un día específico en la semana actual
+  const getDateForWeekday = (baseDate: Date, targetWeekday: number): Date => {
+    const currentWeekday = getWeekdayNumber(baseDate);
+    const daysToAdd = targetWeekday - currentWeekday;
+    return addDays(baseDate, daysToAdd);
+  };
+
+  // Mutation para crear turno(s) en múltiples días
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: {
       employeeId: number;
@@ -163,61 +170,118 @@ export default function Schedules() {
       notes?: string;
       color: string;
     }) => {
-      // Combinar fecha con horas para crear timestamps
-      const startAt = new Date(shiftData.date);
-      const endAt = new Date(shiftData.date);
+      if (!selectedCell) throw new Error('No hay celda seleccionada');
       
-      const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
-      const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
-      
-      startAt.setHours(startHour, startMinute, 0, 0);
-      endAt.setHours(endHour, endMinute, 0, 0);
-      
-      // Si el turno termina al día siguiente (ej: 22:00 - 06:00)
-      if (endAt <= startAt) {
-        endAt.setDate(endAt.getDate() + 1);
+      const selectedDaysArray = Array.from(selectedDays);
+      if (selectedDaysArray.length === 0) {
+        throw new Error('Debe seleccionar al menos un día');
       }
       
-      const payload = {
-        employeeId: shiftData.employeeId,
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-        title: shiftData.title,
-        location: shiftData.location || null,
-        notes: shiftData.notes || null,
-        color: shiftData.color
-      };
-      
-      return apiRequest('POST', '/api/work-shifts', payload);
-    },
-    onSuccess: (data) => {
-      toast({ 
-        title: "Turno creado exitosamente", 
-        description: `El turno "${data.title}" ha sido asignado correctamente` 
+      // Crear array de promesas para múltiples POSTs
+      const shiftPromises = selectedDaysArray.map(async (dayNumber) => {
+        const targetDate = getDateForWeekday(selectedCell.date, dayNumber);
+        
+        // Verificar conflictos antes de crear
+        if (hasTimeConflict(selectedCell.employeeId, targetDate, shiftData.startTime, shiftData.endTime)) {
+          throw new Error(`Conflicto de horario en ${format(targetDate, 'EEEE dd/MM', { locale: es })}`);
+        }
+        
+        // Combinar fecha con horas para crear timestamps
+        const startAt = new Date(targetDate);
+        const endAt = new Date(targetDate);
+        
+        const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
+        const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
+        
+        startAt.setHours(startHour, startMinute, 0, 0);
+        endAt.setHours(endHour, endMinute, 0, 0);
+        
+        // Si el turno termina al día siguiente (ej: 22:00 - 06:00)
+        if (endAt <= startAt) {
+          endAt.setDate(endAt.getDate() + 1);
+        }
+        
+        const payload = {
+          employeeId: selectedCell.employeeId,
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          title: shiftData.title,
+          location: shiftData.location || null,
+          notes: shiftData.notes || null,
+          color: shiftData.color
+        };
+        
+        try {
+          const response = await apiRequest('POST', '/api/work-shifts', payload);
+          return { success: true, date: targetDate, response };
+        } catch (error: any) {
+          return { 
+            success: false, 
+            date: targetDate, 
+            error: error?.response?.data?.error || error.message || 'Error desconocido'
+          };
+        }
       });
-      // Invalidar las queries para actualizar la vista
+      
+      // Ejecutar todas las promesas y recopilar resultados
+      const results = await Promise.allSettled(shiftPromises);
+      return results.map(result => result.status === 'fulfilled' ? result.value : { success: false, error: 'Error interno' });
+    },
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
       refetchShifts();
-      setShowNewShiftModal(false);
-      setSelectedCell(null);
-      // Reset form
-      setNewShift({
-        employeeId: '',
-        startDate: '',
-        endDate: '',
-        startTime: '09:00',
-        endTime: '17:00',
-        title: '',
-        location: '',
-        notes: '',
-        color: SHIFT_COLORS[0]
-      });
+      
+      const successes = results.filter(r => r.success).length;
+      const failures = results.filter(r => !r.success);
+      
+      if (failures.length === 0) {
+        // Todos exitosos
+        toast({
+          title: "✅ Turnos creados",
+          description: `Se ${successes === 1 ? 'ha creado 1 turno' : `han creado ${successes} turnos`} correctamente`
+        });
+      } else if (successes === 0) {
+        // Todos fallaron
+        const errorMsg = failures[0]?.error || 'Error desconocido';
+        toast({
+          title: "❌ Error al crear turnos",
+          description: errorMsg,
+          variant: "destructive"
+        });
+      } else {
+        // Parcialmente exitoso
+        toast({
+          title: "⚠️ Creación parcial",
+          description: `${successes} turnos creados, ${failures.length} fallaron`,
+          variant: "destructive"
+        });
+      }
+      
+      // Reset form si al menos uno fue exitoso
+      if (successes > 0) {
+        setShowNewShiftModal(false);
+        setSelectedCell(null);
+        setSelectedDays(new Set());
+        setNewShift({
+          employeeId: '',
+          startDate: '',
+          endDate: '',
+          startTime: '09:00',
+          endTime: '17:00',
+          title: '',
+          location: '',
+          notes: '',
+          color: SHIFT_COLORS[0]
+        });
+      }
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error al crear el turno", 
-        description: error.message || "Ha ocurrido un error inesperado",
-        variant: "destructive" 
+      console.error('Error creating shifts:', error);
+      const message = error?.message || 'Error desconocido';
+      toast({
+        title: "❌ Error al crear turnos",
+        description: message,
+        variant: "destructive"
       });
     },
   });
