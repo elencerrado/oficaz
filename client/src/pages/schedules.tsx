@@ -409,6 +409,7 @@ export default function Schedules() {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   
   // Estado para el formulario de edición
   const [editShift, setEditShift] = useState({
@@ -738,7 +739,9 @@ export default function Schedules() {
                   </Button>
                   
                   <h2 className="text-lg font-semibold text-foreground">
-                    {format(weekRange.start, "MMMM yyyy", { locale: es })}
+                    {viewMode === 'day' ? 'Vista Diaria' : 
+                     viewMode === 'week' ? format(weekRange.start, "MMMM yyyy", { locale: es }) :
+                     'Vista Mensual'}
                   </h2>
                   
                   <Button
@@ -754,10 +757,31 @@ export default function Schedules() {
                 
                 {/* Header de días súper compacto */}
                 <div className="grid grid-cols-8 gap-1 py-1">
-                  {/* Columna vacía para empleados */}
-                  <div className="flex items-center justify-center">
+                  {/* Columna con selector de vista */}
+                  <div className="flex flex-col items-center justify-center gap-2">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Equipo
+                    </div>
+                    
+                    {/* Slider minimal para vista */}
+                    <div className="flex bg-muted/20 dark:bg-muted/40 rounded-full p-1 scale-75">
+                      {(['day', 'week', 'month'] as const).map((mode) => {
+                        const labels = { day: 'Día', week: 'Sem', month: 'Mes' };
+                        return (
+                          <button
+                            key={mode}
+                            onClick={() => setViewMode(mode)}
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${
+                              viewMode === mode
+                                ? 'bg-blue-500 text-white shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                            }`}
+                            data-testid={`view-mode-${mode}`}
+                          >
+                            {labels[mode]}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   
