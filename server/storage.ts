@@ -1107,17 +1107,7 @@ export class DrizzleStorage implements IStorage {
       return {};
     }
 
-    // Check if company has custom features configured
-    if (company.customFeatures && Object.keys(company.customFeatures).length > 0) {
-      // Return custom features configured for this company
-      return company.customFeatures;
-    }
-
-    // For companies without custom features, get default plan features from columns
-    const planColumn = planName === 'basic' ? 'basicEnabled' : 
-                      planName === 'pro' ? 'proEnabled' : 
-                      planName === 'master' ? 'masterEnabled' : 'basicEnabled';
-    
+    // Always get default plan features first
     const featuresData = await db
       .select({
         key: schema.features.key,
@@ -1135,6 +1125,15 @@ export class DrizzleStorage implements IStorage {
         features[feature.key] = true;
       }
     });
+
+    // If company has custom features, override/merge with plan defaults
+    if (company.customFeatures && Object.keys(company.customFeatures).length > 0) {
+      // Merge custom features with plan defaults
+      return {
+        ...features,
+        ...company.customFeatures
+      };
+    }
 
     return features;
   }
