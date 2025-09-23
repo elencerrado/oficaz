@@ -105,6 +105,7 @@ export default function Schedules() {
   };
 
   const weekRange = getWeekRange();
+  
 
   // Navegación de semanas
   const navigateWeek = (direction: 'prev' | 'next') => {
