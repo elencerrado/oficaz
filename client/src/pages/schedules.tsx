@@ -771,25 +771,37 @@ export default function Schedules() {
                 <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
-                    {/* Slider minimal para vista */}
-                    <div className="flex bg-muted/20 dark:bg-muted/40 rounded-full p-1 scale-75">
-                      {(['day', 'week'] as const).map((mode) => {
-                        const labels = { day: 'Día', week: 'Sem' };
-                        return (
-                          <button
-                            key={mode}
-                            onClick={() => setViewMode(mode)}
-                            className={`px-2 py-0.5 text-xs font-medium rounded-full transition-all duration-200 ${
-                              viewMode === mode
-                                ? 'bg-blue-500 text-white shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                            }`}
-                            data-testid={`view-mode-${mode}`}
-                          >
-                            {labels[mode]}
-                          </button>
-                        );
-                      })}
+                    {/* Slider con estética de TabNavigation */}
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75">
+                      {/* Sliding indicator */}
+                      <div 
+                        className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
+                        style={{
+                          left: viewMode === 'day' ? '0%' : '50%',
+                          width: '50%'
+                        }}
+                      />
+                      
+                      {/* Tab buttons */}
+                      <div className="relative flex">
+                        {(['day', 'week'] as const).map((mode) => {
+                          const labels = { day: 'Día', week: 'Sem' };
+                          return (
+                            <button
+                              key={mode}
+                              onClick={() => setViewMode(mode)}
+                              className={`flex-1 py-2 px-3 font-medium text-xs transition-colors duration-200 relative z-10 flex items-center justify-center ${
+                                viewMode === mode
+                                  ? 'text-primary'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                              data-testid={`view-mode-${mode}`}
+                            >
+                              {labels[mode]}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                   
