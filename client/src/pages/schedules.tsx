@@ -718,7 +718,71 @@ export default function Schedules() {
     });
     
     if (dayShifts.length === 0) return null;
+
+    // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
+    const TIMELINE_START_HOUR = 6; // 6:00 AM
+    const TIMELINE_END_HOUR = 22; // 10:00 PM
+    const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
     
+    // MODO DÍA: Sistema horizontal cronológico (original)
+    if (viewMode === 'day') {
+      return (
+        <>
+          {dayShifts.map((shift: WorkShift) => {
+            const shiftStart = parseISO(shift.startAt);
+            const shiftEnd = parseISO(shift.endAt);
+            const startTime = format(shiftStart, 'HH:mm');
+            const endTime = format(shiftEnd, 'HH:mm');
+            const shiftHours = `${startTime}-${endTime}`;
+            
+            // Calcular posición y tamaño basado en horas
+            const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
+            const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+            
+            // Asegurar que esté dentro del rango de timeline
+            const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
+            const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
+            
+            // Si el turno está completamente fuera del rango, no mostrarlo
+            if (clampedStart >= clampedEnd || clampedEnd <= TIMELINE_START_HOUR || clampedStart >= TIMELINE_END_HOUR) {
+              return null;
+            }
+            
+            // Calcular posición y ancho en porcentajes
+            const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+            const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+            
+            return (
+              <div
+                key={shift.id}
+                className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+                style={{
+                  left: `${leftPercent}%`,
+                  width: `${widthPercent}%`,
+                  top: '2px',
+                  bottom: '2px',
+                  backgroundColor: shift.color || '#007AFF',
+                  zIndex: 10,
+                  minWidth: '60px' // Ancho mínimo para legibilidad
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedShift(shift);
+                  setShowShiftModal(true);
+                }}
+                title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+              >
+                <div className="text-[10px] md:text-xs font-semibold text-center truncate">
+                  {shift.title} ({shiftHours})
+                </div>
+              </div>
+            );
+          })}
+        </>
+      );
+    }
+    
+    // MODO SEMANA: Sistema de carriles verticales (actual)
     // Assign lanes to prevent overlapping
     const shiftLanes = assignShiftLanes(dayShifts);
     
@@ -728,11 +792,6 @@ export default function Schedules() {
     const visibleShifts = hasOverflow ? shiftLanes.slice(0, maxVisibleShifts - 1) : shiftLanes;
     const totalVisible = hasOverflow ? maxVisibleShifts : dayShifts.length;
     const shiftHeight = `${100 / totalVisible}%`; // Altura dinámica según número de turnos
-    
-    // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
-    const TIMELINE_START_HOUR = 6; // 6:00 AM
-    const TIMELINE_END_HOUR = 22; // 10:00 PM
-    const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
     
     return (
       <>
