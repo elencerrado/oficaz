@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2 } from "lucide-react";
-import { format, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks } from "date-fns";
+import { format, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -245,6 +245,55 @@ export default function Schedules() {
     notes: '',
     color: SHIFT_COLORS[0]
   });
+  
+  // Estado para días seleccionados (1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb, 7=Dom)
+  const [selectedDays, setSelectedDays] = useState<Set<number>>(new Set());
+  
+  // Nombres de días para UI
+  const dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  
+  // Helper para convertir Date a día de semana (1=Lun, 7=Dom)
+  const getWeekdayNumber = (date: Date): number => {
+    const day = getDay(date); // 0=Dom, 1=Lun, 2=Mar, etc.
+    return day === 0 ? 7 : day; // Convertir Dom(0) a 7, mantener otros
+  };
+  
+  // Helper para verificar conflictos de horario
+  const hasTimeConflict = (employeeId: number, targetDate: Date, startTime: string, endTime: string, excludeShiftId?: number): boolean => {
+    const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+    const employeeShifts = workShifts.filter(shift => 
+      shift.employeeId === employeeId && 
+      format(new Date(shift.startAt), 'yyyy-MM-dd') === targetDateStr &&
+      shift.id !== excludeShiftId
+    );
+    
+    // Convertir tiempos a minutos para comparación fácil
+    const [newStartHour, newStartMin] = startTime.split(':').map(Number);
+    const [newEndHour, newEndMin] = endTime.split(':').map(Number);
+    const newStart = newStartHour * 60 + newStartMin;
+    let newEnd = newEndHour * 60 + newEndMin;
+    
+    // Si el turno termina al día siguiente
+    if (newEnd <= newStart) {
+      newEnd += 24 * 60;
+    }
+    
+    return employeeShifts.some(shift => {
+      const shiftStart = new Date(shift.startAt);
+      const shiftEnd = new Date(shift.endAt);
+      
+      const existingStart = shiftStart.getHours() * 60 + shiftStart.getMinutes();
+      let existingEnd = shiftEnd.getHours() * 60 + shiftEnd.getMinutes();
+      
+      // Si el turno existente termina al día siguiente
+      if (format(shiftStart, 'yyyy-MM-dd') !== format(shiftEnd, 'yyyy-MM-dd')) {
+        existingEnd += 24 * 60;
+      }
+      
+      // Verificar solapamiento: (start1 < end2) && (start2 < end1)
+      return (newStart < existingEnd) && (existingStart < newEnd);
+    });
+  };
   const [showNewShiftModal, setShowNewShiftModal] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{employeeId: number, date: Date, employeeName: string} | null>(null);
   
@@ -360,8 +409,10 @@ export default function Schedules() {
   // Efecto para pre-rellenar el formulario de edición
   useEffect(() => {
     if (selectedShift) {
-      const startTime = format(new Date(selectedShift.startAt), 'HH:mm');
+      const shiftDate = new Date(selectedShift.startAt);
+      const startTime = format(shiftDate, 'HH:mm');
       const endTime = format(new Date(selectedShift.endAt), 'HH:mm');
+      const dayNumber = getWeekdayNumber(shiftDate);
       
       setEditShift({
         startTime,
@@ -371,8 +422,19 @@ export default function Schedules() {
         notes: selectedShift.notes || '',
         color: selectedShift.color || SHIFT_COLORS[0]
       });
+      
+      // Inicializar días seleccionados con el día del turno actual
+      setSelectedDays(new Set([dayNumber]));
     }
   }, [selectedShift]);
+  
+  // Efecto para inicializar días seleccionados al crear nuevo turno
+  useEffect(() => {
+    if (selectedCell && showNewShiftModal) {
+      const dayNumber = getWeekdayNumber(selectedCell.date);
+      setSelectedDays(new Set([dayNumber]));
+    }
+  }, [selectedCell, showNewShiftModal]);
 
   // Queries
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
