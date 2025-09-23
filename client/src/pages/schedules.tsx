@@ -69,6 +69,77 @@ export default function Schedules() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Mutation para crear turno
+  const createShiftMutation = useMutation({
+    mutationFn: async (shiftData: {
+      employeeId: number;
+      date: Date;
+      startTime: string;
+      endTime: string;
+      title: string;
+      location?: string;
+      notes?: string;
+      color: string;
+    }) => {
+      // Combinar fecha con horas para crear timestamps
+      const startAt = new Date(shiftData.date);
+      const endAt = new Date(shiftData.date);
+      
+      const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
+      const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
+      
+      startAt.setHours(startHour, startMinute, 0, 0);
+      endAt.setHours(endHour, endMinute, 0, 0);
+      
+      // Si el turno termina al día siguiente (ej: 22:00 - 06:00)
+      if (endAt <= startAt) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+      
+      const payload = {
+        employeeId: shiftData.employeeId,
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+        title: shiftData.title,
+        location: shiftData.location || null,
+        notes: shiftData.notes || null,
+        color: shiftData.color
+      };
+      
+      return apiRequest('POST', '/api/work-shifts', payload);
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Turno creado exitosamente", 
+        description: `El turno "${data.title}" ha sido asignado correctamente` 
+      });
+      // Invalidar las queries para actualizar la vista
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+      setShowNewShiftModal(false);
+      setSelectedCell(null);
+      // Reset form
+      setNewShift({
+        employeeId: '',
+        startDate: '',
+        endDate: '',
+        startTime: '09:00',
+        endTime: '17:00',
+        title: '',
+        location: '',
+        notes: '',
+        color: SHIFT_COLORS[0]
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error al crear el turno", 
+        description: error.message || "Ha ocurrido un error inesperado",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Set page header
   useEffect(() => {
     setHeader({
@@ -520,15 +591,22 @@ export default function Schedules() {
             </Button>
             <Button 
               onClick={() => {
-                // TODO: Implementar creación de turno
-                console.log('Crear turno:', { ...newShift, employeeId: selectedCell?.employeeId, date: selectedCell?.date });
-                toast({ title: "Funcionalidad en desarrollo", description: "Próximamente podrás crear turnos" });
-                setShowNewShiftModal(false);
-                setSelectedCell(null);
+                if (selectedCell && newShift.title && newShift.startTime && newShift.endTime) {
+                  createShiftMutation.mutate({
+                    employeeId: selectedCell.employeeId,
+                    date: selectedCell.date,
+                    startTime: newShift.startTime,
+                    endTime: newShift.endTime,
+                    title: newShift.title,
+                    location: newShift.location,
+                    notes: newShift.notes,
+                    color: newShift.color
+                  });
+                }
               }}
-              disabled={!newShift.title || !newShift.startTime || !newShift.endTime}
+              disabled={!newShift.title || !newShift.startTime || !newShift.endTime || createShiftMutation.isPending}
             >
-              Crear Turno
+              {createShiftMutation.isPending ? 'Creando...' : 'Crear Turno'}
             </Button>
           </div>
         </DialogContent>
