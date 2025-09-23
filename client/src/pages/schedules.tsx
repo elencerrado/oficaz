@@ -726,10 +726,10 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          <div className="text-[10px] font-semibold leading-none truncate px-0.5">
+          <div className="text-[8px] sm:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
             {shiftHours}
           </div>
-          <div className="text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden">
+          <div className="text-[7px] sm:text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden max-w-full">
             {shift.title}
           </div>
         </div>
@@ -781,7 +781,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
@@ -866,7 +866,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-2 md:p-4">
-                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
@@ -874,7 +874,7 @@ export default function Schedules() {
                           size="sm" 
                           userId={employee.id}
                           profilePicture={employee.profilePicture}
-                          className="w-6 h-6 md:w-8 md:h-8"
+                          className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8"
                         />
                         <div className="text-[10px] md:text-xs font-medium text-foreground text-center truncate max-w-full">
                           {employee.fullName}
