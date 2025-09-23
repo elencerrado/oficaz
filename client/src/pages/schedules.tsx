@@ -34,6 +34,24 @@ interface Employee {
   profilePicture?: string;
 }
 
+interface VacationRequest {
+  id: number;
+  userId: number;
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'approved' | 'denied';
+  userName?: string;
+}
+
+interface Holiday {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+  type: 'national' | 'regional' | 'local';
+  region?: string;
+}
+
 const SHIFT_COLORS = [
   '#3B82F6', // blue-500
   '#10B981', // emerald-500
@@ -93,6 +111,82 @@ export default function Schedules() {
     setViewDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
   };
 
+  // Función para verificar si un día es festivo
+  const isHoliday = (date: Date): Holiday | null => {
+    return holidays.find((holiday: Holiday) => {
+      const holidayStart = new Date(holiday.startDate);
+      const holidayEnd = new Date(holiday.endDate);
+      holidayStart.setHours(0, 0, 0, 0);
+      holidayEnd.setHours(23, 59, 59, 999);
+      const checkDate = new Date(date);
+      checkDate.setHours(12, 0, 0, 0);
+      return checkDate >= holidayStart && checkDate <= holidayEnd;
+    }) || null;
+  };
+
+  // Función para verificar si un empleado está de vacaciones en un día específico
+  const isEmployeeOnVacation = (employeeId: number, date: Date): VacationRequest | null => {
+    return vacationRequests.find((vacation: VacationRequest) => {
+      if (vacation.userId !== employeeId) return false;
+      const vacationStart = new Date(vacation.startDate);
+      const vacationEnd = new Date(vacation.endDate);
+      vacationStart.setHours(0, 0, 0, 0);
+      vacationEnd.setHours(23, 59, 59, 999);
+      const checkDate = new Date(date);
+      checkDate.setHours(12, 0, 0, 0);
+      return checkDate >= vacationStart && checkDate <= vacationEnd;
+    }) || null;
+  };
+
+  // Función para obtener el estilo de la celda según el estado
+  const getCellStyle = (employeeId: number, date: Date): string => {
+    const holiday = isHoliday(date);
+    const vacation = isEmployeeOnVacation(employeeId, date);
+    
+    let baseStyle = "relative h-12 rounded border";
+    
+    if (holiday) {
+      // Día festivo - fondo rojo suave
+      baseStyle += " bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800";
+    } else if (vacation) {
+      // Empleado de vacaciones - fondo azul suave
+      baseStyle += " bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
+    } else {
+      // Día normal
+      baseStyle += " bg-muted/20 dark:bg-muted/30 border-border";
+    }
+    
+    return baseStyle;
+  };
+
+  // Función para obtener el contenido adicional de la celda
+  const getCellContent = (employeeId: number, date: Date): JSX.Element | null => {
+    const holiday = isHoliday(date);
+    const vacation = isEmployeeOnVacation(employeeId, date);
+    
+    if (holiday) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-medium text-red-600 dark:text-red-400 text-center px-1" title={holiday.name}>
+            🎉
+          </span>
+        </div>
+      );
+    }
+    
+    if (vacation) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400 text-center px-1" title="Vacaciones">
+            🏖️
+          </span>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   // Queries
   const { data: employees = [], isLoading: loadingEmployees } = useQuery({
     queryKey: ['/api/employees'],
@@ -102,6 +196,17 @@ export default function Schedules() {
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery({
     queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
     enabled: !!weekRange.start && !!weekRange.end,
+  });
+
+  // Query para obtener solicitudes de vacaciones aprobadas
+  const { data: vacationRequests = [] } = useQuery({
+    queryKey: ['/api/vacation-requests/company'],
+    select: (data: VacationRequest[]) => data.filter(req => req.status === 'approved'),
+  });
+
+  // Query para obtener días festivos
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['/api/holidays/custom'],
   });
 
   // Obtener turnos para un empleado específico
@@ -241,7 +346,9 @@ export default function Schedules() {
 
                       {/* Columnas de días */}
                       {weekRange.days.map((day, dayIndex) => (
-                        <div key={dayIndex} className="relative h-12 bg-muted/20 dark:bg-muted/30 rounded border border-border">
+                        <div key={dayIndex} className={getCellStyle(employee.id, day)}>
+                          {/* Contenido especial para festivos/vacaciones */}
+                          {getCellContent(employee.id, day)}
                           {/* Timeline bars serán renderizadas aquí */}
                           {renderShiftBar(employee)}
                         </div>
