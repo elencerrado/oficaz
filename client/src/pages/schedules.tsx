@@ -194,19 +194,19 @@ export default function Schedules() {
     select: (data) => data.filter((emp: Employee) => emp.status === 'active'),
   });
 
-  const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery({
+  const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
     queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
     enabled: !!weekRange.start && !!weekRange.end,
   });
 
   // Query para obtener solicitudes de vacaciones aprobadas
-  const { data: vacationRequests = [] } = useQuery({
+  const { data: vacationRequests = [] } = useQuery<VacationRequest[]>({
     queryKey: ['/api/vacation-requests/company'],
-    select: (data: VacationRequest[]) => data.filter(req => req.status === 'approved'),
+    select: (data: VacationRequest[]) => data?.filter(req => req.status === 'approved') || [],
   });
 
   // Query para obtener días festivos
-  const { data: holidays = [] } = useQuery({
+  const { data: holidays = [] } = useQuery<Holiday[]>({
     queryKey: ['/api/holidays/custom'],
   });
 
@@ -311,19 +311,55 @@ export default function Schedules() {
                   </Button>
                 </div>
                 
-                {/* Header de días */}
-                <div className="grid grid-cols-8 gap-1">
-                  <div></div>
-                  {weekRange.days.map((day, index) => (
-                    <div key={index} className="text-center">
-                      <div className="text-xs text-muted-foreground">
-                        {format(day, 'EEE', { locale: es })}
-                      </div>
-                      <div className="text-sm font-medium text-foreground">
-                        {format(day, 'dd')}
-                      </div>
+                {/* Header de días mejorado */}
+                <div className="grid grid-cols-8 gap-1 py-3">
+                  {/* Columna vacía para empleados */}
+                  <div className="flex items-center justify-center">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Equipo
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Días de la semana */}
+                  {weekRange.days.map((day, index) => {
+                    const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg relative">
+                        {/* Marca de día actual */}
+                        {isToday && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                        )}
+                        
+                        <div className={`text-xs font-medium uppercase tracking-wide ${
+                          isToday 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : isWeekend 
+                              ? 'text-muted-foreground/70' 
+                              : 'text-muted-foreground'
+                        }`}>
+                          {format(day, 'EEE', { locale: es })}
+                        </div>
+                        
+                        <div className={`text-lg font-semibold rounded-full w-8 h-8 flex items-center justify-center transition-colors ${
+                          isToday 
+                            ? 'bg-blue-500 text-white shadow-lg' 
+                            : isWeekend 
+                              ? 'text-muted-foreground/70' 
+                              : 'text-foreground hover:bg-muted/50'
+                        }`}>
+                          {format(day, 'dd')}
+                        </div>
+                        
+                        {isToday && (
+                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                            Hoy
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
