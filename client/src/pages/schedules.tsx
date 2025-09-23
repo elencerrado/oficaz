@@ -864,7 +864,7 @@ export default function Schedules() {
                       {/* Tab buttons */}
                       <div className="relative flex">
                         {(['day', 'week'] as const).map((mode) => {
-                          const labels = { day: 'Día', week: 'Sem' };
+                          const labels = { day: '1', week: '7' };
                           return (
                             <button
                               key={mode}
