@@ -69,6 +69,88 @@ export default function Schedules() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Mutation para actualizar turno
+  const updateShiftMutation = useMutation({
+    mutationFn: async (shiftData: {
+      id: number;
+      startTime: string;
+      endTime: string;
+      title: string;
+      location?: string;
+      notes?: string;
+      color: string;
+    }) => {
+      const shift = selectedShift!;
+      const shiftDate = new Date(shift.startAt);
+      
+      const startAt = new Date(shiftDate);
+      const endAt = new Date(shiftDate);
+      
+      const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
+      const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
+      
+      startAt.setHours(startHour, startMinute, 0, 0);
+      endAt.setHours(endHour, endMinute, 0, 0);
+      
+      // Si el turno termina al día siguiente
+      if (endAt <= startAt) {
+        endAt.setDate(endAt.getDate() + 1);
+      }
+      
+      const payload = {
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+        title: shiftData.title,
+        location: shiftData.location || null,
+        notes: shiftData.notes || null,
+        color: shiftData.color
+      };
+      
+      return apiRequest('PATCH', `/api/work-shifts/${shiftData.id}`, payload);
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Turno actualizado exitosamente", 
+        description: `El turno "${data.title}" ha sido modificado correctamente` 
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+      setShowShiftModal(false);
+      setSelectedShift(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error al actualizar el turno", 
+        description: error.message || "Ha ocurrido un error inesperado",
+        variant: "destructive" 
+      });
+    },
+  });
+  
+  // Mutation para eliminar turno
+  const deleteShiftMutation = useMutation({
+    mutationFn: async (shiftId: number) => {
+      return apiRequest('DELETE', `/api/work-shifts/${shiftId}`);
+    },
+    onSuccess: () => {
+      toast({ 
+        title: "Turno eliminado exitosamente", 
+        description: "El turno ha sido eliminado del calendario" 
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+      setShowShiftModal(false);
+      setSelectedShift(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error al eliminar el turno", 
+        description: error.message || "Ha ocurrido un error inesperado",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Mutation para crear turno
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: {
@@ -153,6 +235,16 @@ export default function Schedules() {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
+  
+  // Estado para el formulario de edición
+  const [editShift, setEditShift] = useState({
+    startTime: '09:00',
+    endTime: '17:00',
+    title: '',
+    location: '',
+    notes: '',
+    color: SHIFT_COLORS[0]
+  });
   const [showNewShiftModal, setShowNewShiftModal] = useState(false);
   const [selectedCell, setSelectedCell] = useState<{employeeId: number, date: Date, employeeName: string} | null>(null);
   
@@ -259,6 +351,28 @@ export default function Schedules() {
     
     return null;
   };
+  
+  // Función helper para obtener empleado por ID
+  const getEmployeeById = (employeeId: number) => {
+    return employees.find(emp => emp.id === employeeId);
+  };
+  
+  // Efecto para pre-rellenar el formulario de edición
+  useEffect(() => {
+    if (selectedShift) {
+      const startTime = format(new Date(selectedShift.startAt), 'HH:mm');
+      const endTime = format(new Date(selectedShift.endAt), 'HH:mm');
+      
+      setEditShift({
+        startTime,
+        endTime,
+        title: selectedShift.title || '',
+        location: selectedShift.location || '',
+        notes: selectedShift.notes || '',
+        color: selectedShift.color || SHIFT_COLORS[0]
+      });
+    }
+  }, [selectedShift]);
 
   // Queries
   const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
@@ -627,6 +741,140 @@ export default function Schedules() {
             >
               {createShiftMutation.isPending ? 'Creando...' : 'Crear Turno'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para editar turno */}
+      <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Editar Turno - {selectedShift && getEmployeeById(selectedShift.employeeId)?.fullName}
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {selectedShift && format(new Date(selectedShift.startAt), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+            </p>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Hora de inicio</label>
+                <input
+                  type="time"
+                  value={editShift.startTime}
+                  onChange={(e) => setEditShift(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Hora de fin</label>
+                <input
+                  type="time"
+                  value={editShift.endTime}
+                  onChange={(e) => setEditShift(prev => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Título del turno</label>
+              <input
+                type="text"
+                value={editShift.title}
+                onChange={(e) => setEditShift(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ej: Turno de mañana, Guardia, etc."
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Ubicación (opcional)</label>
+              <input
+                type="text"
+                value={editShift.location}
+                onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Ej: Oficina central, Sucursal norte, etc."
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Notas (opcional)</label>
+              <textarea
+                value={editShift.notes}
+                onChange={(e) => setEditShift(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Instrucciones especiales, tareas específicas, etc."
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Color del turno</label>
+              <div className="flex gap-2 flex-wrap">
+                {SHIFT_COLORS.map((color, index) => (
+                  <button
+                    key={color}
+                    onClick={() => setEditShift(prev => ({ ...prev, color }))}
+                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
+                      editShift.color === color 
+                        ? 'border-gray-800 dark:border-gray-200 scale-110' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={`Color ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-between pt-4">
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (selectedShift) {
+                  deleteShiftMutation.mutate(selectedShift.id);
+                }
+              }}
+              disabled={deleteShiftMutation.isPending}
+            >
+              {deleteShiftMutation.isPending ? 'Eliminando...' : 'Eliminar Turno'}
+            </Button>
+            
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowShiftModal(false);
+                  setSelectedShift(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (selectedShift && editShift.title && editShift.startTime && editShift.endTime) {
+                    updateShiftMutation.mutate({
+                      id: selectedShift.id,
+                      startTime: editShift.startTime,
+                      endTime: editShift.endTime,
+                      title: editShift.title,
+                      location: editShift.location,
+                      notes: editShift.notes,
+                      color: editShift.color
+                    });
+                  }
+                }}
+                disabled={!editShift.title || !editShift.startTime || !editShift.endTime || updateShiftMutation.isPending}
+              >
+                {updateShiftMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
