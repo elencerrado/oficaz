@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2 } from "lucide-react";
-import { format, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
+import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -409,7 +409,7 @@ export default function Schedules() {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
   
   // Estado para el formulario de edición
   const [editShift, setEditShift] = useState({
@@ -485,19 +485,33 @@ export default function Schedules() {
     color: SHIFT_COLORS[0]
   });
 
-  // Calcular rango de la semana actual
+  // Calcular rango según el modo de vista
   const getWeekRange = () => {
-    const start = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday start
-    const end = endOfWeek(viewDate, { weekStartsOn: 1 });
-    return { start, end, days: eachDayOfInterval({ start, end }) };
+    if (viewMode === 'day') {
+      // Solo mostrar el día actual
+      return {
+        start: viewDate,
+        end: viewDate,
+        days: [viewDate]
+      };
+    } else {
+      // Mostrar toda la semana
+      const start = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday start
+      const end = endOfWeek(viewDate, { weekStartsOn: 1 });
+      return { start, end, days: eachDayOfInterval({ start, end }) };
+    }
   };
 
   const weekRange = getWeekRange();
   
 
-  // Navegación de semanas
+  // Navegación según modo
   const navigateWeek = (direction: 'prev' | 'next') => {
-    setViewDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
+    if (viewMode === 'day') {
+      setViewDate(prev => direction === 'prev' ? subDays(prev, 1) : addDays(prev, 1));
+    } else {
+      setViewDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
+    }
   };
 
   // Función para verificar si un día es festivo
@@ -739,9 +753,7 @@ export default function Schedules() {
                   </Button>
                   
                   <h2 className="text-lg font-semibold text-foreground">
-                    {viewMode === 'day' ? 'Vista Diaria' : 
-                     viewMode === 'week' ? format(weekRange.start, "MMMM yyyy", { locale: es }) :
-                     'Vista Mensual'}
+                    {format(weekRange.start, "MMMM yyyy", { locale: es })}
                   </h2>
                   
                   <Button
@@ -756,7 +768,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className="grid grid-cols-8 gap-1 py-1">
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-2' : 'grid-cols-8'}`}>
                   {/* Columna con selector de vista */}
                   <div className="flex flex-col items-center justify-center gap-2">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -765,8 +777,8 @@ export default function Schedules() {
                     
                     {/* Slider minimal para vista */}
                     <div className="flex bg-muted/20 dark:bg-muted/40 rounded-full p-1 scale-75">
-                      {(['day', 'week', 'month'] as const).map((mode) => {
-                        const labels = { day: 'Día', week: 'Sem', month: 'Mes' };
+                      {(['day', 'week'] as const).map((mode) => {
+                        const labels = { day: 'Día', week: 'Sem' };
                         return (
                           <button
                             key={mode}
@@ -821,7 +833,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-4">
-                    <div className="grid grid-cols-8 gap-1 items-center min-h-[60px]">
+                    <div className={`grid gap-1 items-center min-h-[60px] ${viewMode === 'day' ? 'grid-cols-2' : 'grid-cols-8'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
