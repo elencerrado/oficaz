@@ -713,10 +713,10 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          <div className="text-xs font-semibold leading-tight truncate px-1">
+          <div className="text-[10px] font-semibold leading-none truncate px-0.5">
             {shiftHours}
           </div>
-          <div className="text-xs opacity-90 leading-tight truncate px-1 max-w-full">
+          <div className="text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden">
             {shift.title}
           </div>
         </div>
