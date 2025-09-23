@@ -69,7 +69,7 @@ export default function Schedules() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Mutation para actualizar turno
+  // Mutation para actualizar/expandir turno a múltiples días
   const updateShiftMutation = useMutation({
     mutationFn: async (shiftData: {
       id: number;
@@ -80,49 +80,159 @@ export default function Schedules() {
       notes?: string;
       color: string;
     }) => {
-      const shift = selectedShift!;
-      const shiftDate = new Date(shift.startAt);
+      if (!selectedShift) throw new Error('No hay turno seleccionado');
       
-      const startAt = new Date(shiftDate);
-      const endAt = new Date(shiftDate);
+      const originalShiftDate = new Date(selectedShift.startAt);
+      const originalDayNumber = getWeekdayNumber(originalShiftDate);
+      const selectedDaysArray = Array.from(selectedDays);
       
-      const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
-      const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
-      
-      startAt.setHours(startHour, startMinute, 0, 0);
-      endAt.setHours(endHour, endMinute, 0, 0);
-      
-      // Si el turno termina al día siguiente
-      if (endAt <= startAt) {
-        endAt.setDate(endAt.getDate() + 1);
+      if (selectedDaysArray.length === 0) {
+        throw new Error('Debe seleccionar al menos un día');
       }
       
-      const payload = {
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-        title: shiftData.title,
-        location: shiftData.location || null,
-        notes: shiftData.notes || null,
-        color: shiftData.color
-      };
+      const promises: Promise<any>[] = [];
+      const operations: Array<{type: 'update' | 'create', day: number, date: Date}> = [];
       
-      return apiRequest('PATCH', `/api/work-shifts/${shiftData.id}`, payload);
+      // Para cada día seleccionado, determinar si actualizar o crear
+      for (const dayNumber of selectedDaysArray) {
+        const targetDate = getDateForWeekday(originalShiftDate, dayNumber);
+        
+        if (dayNumber === originalDayNumber) {
+          // Actualizar el turno existente
+          operations.push({type: 'update', day: dayNumber, date: targetDate});
+          
+          // Verificar conflictos excluyendo el turno actual
+          if (hasTimeConflict(selectedShift.employeeId, targetDate, shiftData.startTime, shiftData.endTime, selectedShift.id)) {
+            throw new Error(`Conflicto de horario en ${format(targetDate, 'EEEE dd/MM', { locale: es })}`);
+          }
+          
+          const startAt = new Date(targetDate);
+          const endAt = new Date(targetDate);
+          
+          const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
+          const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
+          
+          startAt.setHours(startHour, startMinute, 0, 0);
+          endAt.setHours(endHour, endMinute, 0, 0);
+          
+          // Si el turno termina al día siguiente
+          if (endAt <= startAt) {
+            endAt.setDate(endAt.getDate() + 1);
+          }
+          
+          const updatePayload = {
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            title: shiftData.title,
+            location: shiftData.location || null,
+            notes: shiftData.notes || null,
+            color: shiftData.color
+          };
+          
+          promises.push(
+            apiRequest('PATCH', `/api/work-shifts/${shiftData.id}`, updatePayload)
+              .then(response => ({ success: true, type: 'update', date: targetDate, response }))
+              .catch(error => ({ 
+                success: false, 
+                type: 'update', 
+                date: targetDate, 
+                error: error?.response?.data?.error || error.message || 'Error desconocido' 
+              }))
+          );
+        } else {
+          // Crear nuevo turno en día diferente
+          operations.push({type: 'create', day: dayNumber, date: targetDate});
+          
+          // Verificar conflictos
+          if (hasTimeConflict(selectedShift.employeeId, targetDate, shiftData.startTime, shiftData.endTime)) {
+            throw new Error(`Conflicto de horario en ${format(targetDate, 'EEEE dd/MM', { locale: es })}`);
+          }
+          
+          const startAt = new Date(targetDate);
+          const endAt = new Date(targetDate);
+          
+          const [startHour, startMinute] = shiftData.startTime.split(':').map(Number);
+          const [endHour, endMinute] = shiftData.endTime.split(':').map(Number);
+          
+          startAt.setHours(startHour, startMinute, 0, 0);
+          endAt.setHours(endHour, endMinute, 0, 0);
+          
+          // Si el turno termina al día siguiente
+          if (endAt <= startAt) {
+            endAt.setDate(endAt.getDate() + 1);
+          }
+          
+          const createPayload = {
+            employeeId: selectedShift.employeeId,
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            title: shiftData.title,
+            location: shiftData.location || null,
+            notes: shiftData.notes || null,
+            color: shiftData.color
+          };
+          
+          promises.push(
+            apiRequest('POST', '/api/work-shifts', createPayload)
+              .then(response => ({ success: true, type: 'create', date: targetDate, response }))
+              .catch(error => ({ 
+                success: false, 
+                type: 'create', 
+                date: targetDate, 
+                error: error?.response?.data?.error || error.message || 'Error desconocido' 
+              }))
+          );
+        }
+      }
+      
+      // Ejecutar todas las operaciones
+      const results = await Promise.allSettled(promises);
+      return results.map(result => result.status === 'fulfilled' ? result.value : { success: false, error: 'Error interno' });
     },
-    onSuccess: (data) => {
-      toast({ 
-        title: "Turno actualizado exitosamente", 
-        description: `El turno "${data.title}" ha sido modificado correctamente` 
-      });
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
       refetchShifts();
-      setShowShiftModal(false);
-      setSelectedShift(null);
+      
+      const successes = results.filter(r => r.success).length;
+      const failures = results.filter(r => !r.success);
+      
+      if (failures.length === 0) {
+        // Todos exitosos
+        toast({
+          title: "✅ Turnos actualizados",
+          description: `Se ${successes === 1 ? 'ha actualizado 1 turno' : `han procesado ${successes} turnos`} correctamente`
+        });
+      } else if (successes === 0) {
+        // Todos fallaron
+        const errorMsg = failures[0]?.error || 'Error desconocido';
+        toast({
+          title: "❌ Error al actualizar turnos",
+          description: errorMsg,
+          variant: "destructive"
+        });
+      } else {
+        // Parcialmente exitoso
+        toast({
+          title: "⚠️ Actualización parcial",
+          description: `${successes} turnos procesados, ${failures.length} fallaron`,
+          variant: "destructive"
+        });
+      }
+      
+      // Reset si al menos uno fue exitoso
+      if (successes > 0) {
+        setShowShiftModal(false);
+        setSelectedShift(null);
+        setSelectedDays(new Set());
+      }
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error al actualizar el turno", 
-        description: error.message || "Ha ocurrido un error inesperado",
-        variant: "destructive" 
+      console.error('Error updating shifts:', error);
+      const message = error?.message || 'Error desconocido';
+      toast({
+        title: "❌ Error al actualizar turnos",
+        description: message,
+        variant: "destructive"
       });
     },
   });
