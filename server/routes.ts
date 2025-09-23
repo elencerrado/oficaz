@@ -12,7 +12,7 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
-import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
+import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -3458,6 +3458,204 @@ Responde directamente a este email para contactar con la persona.
       res.json(request);
     } catch (error: any) {
       console.error('Error updating vacation request:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Work Shifts routes (Cuadrante)
+  app.post('/api/work-shifts', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      console.log('Work shift creation body:', req.body);
+
+      const data = insertWorkShiftSchema.parse({
+        ...req.body,
+        companyId: req.user!.companyId,
+        startAt: new Date(req.body.startAt),
+        endAt: new Date(req.body.endAt),
+        createdByUserId: req.user!.id
+      });
+
+      // Validate shift time overlap for same employee
+      const existingShifts = await storage.getWorkShiftsByEmployee(
+        data.employeeId, 
+        data.startAt.toISOString(),
+        data.endAt.toISOString()
+      );
+
+      const hasOverlap = existingShifts.some(shift => 
+        (data.startAt < shift.endAt && data.endAt > shift.startAt)
+      );
+
+      if (hasOverlap) {
+        return res.status(400).json({ 
+          message: 'El empleado ya tiene un turno asignado en ese horario.' 
+        });
+      }
+      
+      const shift = await storage.createWorkShift(data);
+      console.log(`Work shift created by ${req.user!.role} user ${req.user!.id}: ${shift.id}`);
+      
+      res.status(201).json(shift);
+    } catch (error: any) {
+      console.error('Work shift creation error:', error);
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/work-shifts/company', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const shifts = await storage.getWorkShiftsByCompany(
+        req.user!.companyId, 
+        startDate as string, 
+        endDate as string
+      );
+      
+      // Add employee names to shifts
+      const shiftsWithEmployeeNames = await Promise.all(shifts.map(async (shift: any) => {
+        const employee = await storage.getUser(shift.employeeId);
+        return {
+          ...shift,
+          employeeName: employee?.fullName || 'Empleado desconocido'
+        };
+      }));
+      
+      res.json(shiftsWithEmployeeNames);
+    } catch (error: any) {
+      console.error('Error fetching company work shifts:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.get('/api/work-shifts/employee/:employeeId', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const employeeId = parseInt(req.params.employeeId);
+      const { startDate, endDate } = req.query;
+      
+      // Verify employee belongs to the same company
+      const employee = await storage.getUser(employeeId);
+      if (!employee || employee.companyId !== req.user!.companyId) {
+        return res.status(404).json({ message: 'Empleado no encontrado' });
+      }
+      
+      const shifts = await storage.getWorkShiftsByEmployee(
+        employeeId, 
+        startDate as string, 
+        endDate as string
+      );
+      
+      res.json(shifts);
+    } catch (error: any) {
+      console.error('Error fetching employee work shifts:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { startAt, endAt, title, location, notes, color, employeeId } = req.body;
+
+      console.log('PATCH work-shift:', { id, startAt, endAt, title, location, notes, color, employeeId });
+
+      // Build update data
+      const updateData: any = {};
+      if (startAt) updateData.startAt = new Date(startAt);
+      if (endAt) updateData.endAt = new Date(endAt);
+      if (title !== undefined) updateData.title = title;
+      if (location !== undefined) updateData.location = location;
+      if (notes !== undefined) updateData.notes = notes;
+      if (color !== undefined) updateData.color = color;
+      if (employeeId !== undefined) updateData.employeeId = employeeId;
+
+      // Validate shift overlap if dates or employee are changing
+      if ((startAt || endAt || employeeId) && Object.keys(updateData).length > 0) {
+        // Get current shift to use existing values if not updating
+        const currentShift = await storage.getWorkShiftsByEmployee(
+          employeeId || await storage.getWorkShiftsByCompany(req.user!.companyId)
+            .then(shifts => shifts.find(s => s.id === id)?.employeeId)
+        );
+        
+        const shiftEmployeeId = employeeId || currentShift?.[0]?.employeeId;
+        const shiftStartAt = startAt ? new Date(startAt) : currentShift?.[0]?.startAt;
+        const shiftEndAt = endAt ? new Date(endAt) : currentShift?.[0]?.endAt;
+
+        if (shiftEmployeeId && shiftStartAt && shiftEndAt) {
+          const overlappingShifts = await storage.getWorkShiftsByEmployee(
+            shiftEmployeeId,
+            shiftStartAt.toISOString(),
+            shiftEndAt.toISOString()
+          );
+
+          const hasOverlap = overlappingShifts.some(shift => 
+            shift.id !== id && // Exclude current shift
+            (shiftStartAt < shift.endAt && shiftEndAt > shift.startAt)
+          );
+
+          if (hasOverlap) {
+            return res.status(400).json({ 
+              message: 'El empleado ya tiene otro turno asignado en ese horario.' 
+            });
+          }
+        }
+      }
+
+      const shift = await storage.updateWorkShift(id, updateData);
+
+      if (!shift) {
+        return res.status(404).json({ message: 'Turno no encontrado' });
+      }
+
+      res.json(shift);
+    } catch (error: any) {
+      console.error('Work shift update error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      const success = await storage.deleteWorkShift(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Turno no encontrado' });
+      }
+
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Work shift deletion error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/work-shifts/replicate-week', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
+    try {
+      const { weekStart, offsetWeeks = 1, employeeIds } = req.body;
+
+      console.log('Replicating work shifts:', { weekStart, offsetWeeks, employeeIds });
+
+      if (!weekStart) {
+        return res.status(400).json({ message: 'Se requiere la fecha de inicio de la semana' });
+      }
+
+      const replicatedShifts = await storage.replicateWeekShifts(
+        req.user!.companyId,
+        weekStart,
+        offsetWeeks,
+        employeeIds
+      );
+
+      console.log(`Replicated ${replicatedShifts.length} shifts for company ${req.user!.companyId}`);
+      
+      res.status(201).json({
+        message: `Se crearon ${replicatedShifts.length} turnos replicados`,
+        shifts: replicatedShifts
+      });
+    } catch (error: any) {
+      console.error('Week replication error:', error);
       res.status(500).json({ message: error.message });
     }
   });
