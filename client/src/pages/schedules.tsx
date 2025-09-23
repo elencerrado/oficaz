@@ -1055,7 +1055,7 @@ export default function Schedules() {
                         return (
                           <div 
                             key={dayIndex} 
-                            className={`${getCellStyle(employee.id, day)} flex flex-col ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
+                            className={`${getCellStyle(employee.id, day)} flex flex-row ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
   viewMode === 'day' ? 'p-1 md:p-2' : ''
                             }`}
                             style={getCellHeightStyle(employee.id, day)}
@@ -1076,20 +1076,17 @@ export default function Schedules() {
                             }
                           >
                             {/* Área principal de la celda (badges y contenido especial) */}
-                            <div className="flex-1 relative overflow-hidden" style={{ 
-                              paddingBottom: '24px',
-                              maxHeight: 'calc(100% - 24px)'
-                            }}>
+                            <div className="flex-1 relative overflow-hidden">
                               {/* Contenido especial para festivos/vacaciones */}
                               {getCellContent(employee.id, day)}
                               {/* Timeline bars serán renderizadas aquí */}
                               {renderShiftBar(employee, day)}
                             </div>
                             
-                            {/* Footer con botón "+" para añadir turno */}
-                            <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors">
+                            {/* Barra lateral derecha con botón "+" para añadir turno */}
+                            <div className="w-6 bg-muted/10 dark:bg-muted/20 border-l border-border/30 rounded-r flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors">
                               <button
-                                className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
+                                className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (!isDisabled) {
