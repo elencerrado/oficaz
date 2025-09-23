@@ -176,38 +176,7 @@ export default function Schedules() {
           <div className="bg-card rounded-lg border border-border overflow-hidden">
             {/* Header con controles */}
             <div className="p-4 border-b bg-muted/20">
-              <div className="flex items-center justify-between">
-                {/* Navegación de semana */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigateWeek('prev')}
-                      className="h-8 w-8 p-0"
-                      data-testid="button-prev-week"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    
-                    <div className="text-center min-w-[160px]">
-                      <span className="text-sm font-medium text-foreground">
-                        {format(weekRange.start, "dd MMM", { locale: es })} - {format(weekRange.end, "dd MMM yyyy", { locale: es })}
-                      </span>
-                    </div>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigateWeek('next')}
-                      className="h-8 w-8 p-0"
-                      data-testid="button-next-week"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
+              <div className="flex items-center justify-end">
                 {/* Botones de acción */}
                 <div className="flex items-center gap-2">
                   <Button 
@@ -227,7 +196,34 @@ export default function Schedules() {
               {/* Header de días */}
               <div className="bg-muted/10 p-4">
                 <div className="grid grid-cols-8 gap-1">
-                  <div className="text-sm font-medium text-muted-foreground">Empleado</div>
+                  {/* Navegación de semana compacta */}
+                  <div className="flex flex-col items-center justify-center gap-1">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigateWeek('prev')}
+                        className="h-6 w-6 p-0"
+                        data-testid="button-prev-week"
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigateWeek('next')}
+                        className="h-6 w-6 p-0"
+                        data-testid="button-next-week"
+                      >
+                        <ChevronRight className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-medium text-foreground">
+                        {format(weekRange.start, "dd MMM", { locale: es })} - {format(weekRange.end, "dd MMM yyyy", { locale: es })}
+                      </span>
+                    </div>
+                  </div>
                   {weekRange.days.map((day, index) => (
                     <div key={index} className="text-center">
                       <div className="text-xs text-muted-foreground">
