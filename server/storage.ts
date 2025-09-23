@@ -168,7 +168,6 @@ export interface IStorage {
   markInvitationAsUsed(id: number): Promise<boolean>;
   
   // Features operations
-  getCompanyFeatures(companyId: number, planName: string): Promise<any>;
   
   // Account deletion operations
   scheduleCompanyDeletion(companyId: number): Promise<boolean>;
@@ -1020,57 +1019,19 @@ export class DrizzleStorage implements IStorage {
       }
     }
     
-    // Get features from features table based on effective plan
-    const allFeatures = await db.select().from(schema.features);
+    // Get features from features table dynamically based on effective plan
+    const activeFeatures = await db.select().from(schema.features).where(eq(schema.features.isActive, true));
     let finalFeatures: any = {};
     
-    // Build features object based on effective plan - use column names like basicEnabled, proEnabled, masterEnabled
-    for (const feature of allFeatures) {
+    // Build features object dynamically using the key column (no hardcoded mapping needed)
+    for (const feature of activeFeatures) {
       const planColumnName = `${effectivePlan}Enabled` as keyof typeof feature;
       const isEnabled = feature[planColumnName] as boolean;
       
-      // Map display names to internal names
-      let featureName = '';
-      switch (feature.name) {
-        case 'Control horario':
-          featureName = 'time';
-          break;
-        case 'Gestión de vacaciones':
-          featureName = 'vacation';
-          break;
-        case 'Notificaciones':
-          featureName = 'notifications';
-          break;
-        case 'Mensajería interna':
-          featureName = 'messages';
-          break;
-        case 'Gestión de documentos':
-          featureName = 'documents';
-          break;
-        case 'Recordatorios':
-          featureName = 'reminders';
-          break;
-        case 'Subida de logo empresarial':
-          featureName = 'logoUpload';
-          break;
-        case 'Informes y estadísticas':
-          featureName = 'reports';
-          break;
-        case 'Permisos de edición de tiempo empleados':
-          featureName = 'employee_time_edit_permission';
-          break;
-        case 'employee_time_edit':
-          featureName = 'employee_time_edit';
-          break;
-        case 'Cuadrante de horarios':
-          featureName = 'schedules';
-          break;
-        default:
-          continue; // Skip unknown features
-      }
-      
-      if (featureName) {
-        finalFeatures[featureName] = isEnabled;
+      // Use the feature.key directly (time, vacation, schedules, etc.)
+      // This eliminates the need for hardcoded switch statement
+      if (feature.key) {
+        finalFeatures[feature.key] = isEnabled;
       }
     }
 
@@ -1095,22 +1056,8 @@ export class DrizzleStorage implements IStorage {
     };
   }
 
-  async getCompanyFeatures(companyId: number, planName: string): Promise<any> {
-    // Get the plan ID
-    const [plan] = await db.select().from(schema.subscriptionPlans).where(eq(schema.subscriptionPlans.name, planName));
-    
-    if (!plan) {
-      return {};
-    }
-
-    // Get the company to check for custom features
-    const [company] = await db.select().from(schema.companies).where(eq(schema.companies.id, companyId));
-    
-    if (!company) {
-      return {};
-    }
-
-    // Always get default plan features first
+  // ⚠️ PROTECTED - DO NOT MODIFY - Central features builder helper
+  private async buildPlanFeatures(planName: string): Promise<any> {
     const featuresData = await db
       .select({
         key: schema.features.key,
@@ -1124,19 +1071,8 @@ export class DrizzleStorage implements IStorage {
 
     const features: any = {};
     featuresData.forEach(feature => {
-      if (feature.isEnabled) {
-        features[feature.key] = true;
-      }
+      features[feature.key] = feature.isEnabled;
     });
-
-    // If company has custom features, override/merge with plan defaults
-    if (company.customFeatures && Object.keys(company.customFeatures).length > 0) {
-      // Merge custom features with plan defaults
-      return {
-        ...features,
-        ...company.customFeatures
-      };
-    }
 
     return features;
   }
@@ -1158,25 +1094,10 @@ export class DrizzleStorage implements IStorage {
   async getAllSubscriptionPlans(): Promise<any[]> {
     const plans = await db.select().from(schema.subscriptionPlans).orderBy(schema.subscriptionPlans.monthlyPrice);
     
-    // Add features to each plan from direct columns in features table
+    // Add features to each plan using centralized helper
     const plansWithFeatures = await Promise.all(plans.map(async (plan) => {
       const planName = plan.name.toLowerCase();
-      
-      const featuresData = await db
-        .select({
-          key: schema.features.key,
-          isEnabled: planName === 'basic' ? schema.features.basicEnabled :
-                    planName === 'pro' ? schema.features.proEnabled :
-                    planName === 'master' ? schema.features.masterEnabled :
-                    schema.features.basicEnabled,
-        })
-        .from(schema.features)
-        .where(eq(schema.features.isActive, true));
-
-      const features: any = {};
-      featuresData.forEach(feature => {
-        features[feature.key] = feature.isEnabled;
-      });
+      const features = await this.buildPlanFeatures(planName);
 
       return {
         ...plan,
