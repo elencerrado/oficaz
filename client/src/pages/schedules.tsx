@@ -815,7 +815,7 @@ export default function Schedules() {
                       {weekRange.days.map((day, dayIndex) => {
                         const holiday = isHoliday(day);
                         const vacation = isEmployeeOnVacation(employee.id, day);
-                        const isDisabled = holiday || vacation;
+                        const isDisabled = vacation; // Solo las vacaciones deshabilitan la celda
                         
                         return (
                           <div 
@@ -831,7 +831,11 @@ export default function Schedules() {
                                 setShowNewShiftModal(true);
                               }
                             }}
-                            title={isDisabled ? (holiday ? `Día festivo: ${holiday.name}` : 'Empleado de vacaciones') : 'Click para añadir turno'}
+                            title={
+                              vacation ? 'Empleado de vacaciones' : 
+                              holiday ? `Día festivo: ${holiday.name} - Click para añadir turno` : 
+                              'Click para añadir turno'
+                            }
                           >
                             {/* Contenido especial para festivos/vacaciones */}
                             {getCellContent(employee.id, day)}
