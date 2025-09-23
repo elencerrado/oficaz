@@ -559,7 +559,7 @@ export default function Schedules() {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
     
-    let baseStyle = "relative h-full rounded border";
+    let baseStyle = "relative h-full rounded border overflow-hidden";
     
     if (holiday) {
       // Día festivo - fondo rojo suave
@@ -712,7 +712,7 @@ export default function Schedules() {
           className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 min-w-[44px] sm:min-w-[60px] overflow-hidden"
           style={{
             left: `${startPosition}%`,
-            width: `${Math.max(width, 15)}%`, // Ancho mínimo del 15%
+            width: `${Math.min(Math.max(width, 15), 100 - startPosition)}%`, // Limitar para que no se salga
             top: '2px',
             bottom: '2px',
             backgroundColor: shift.color || '#007AFF',
