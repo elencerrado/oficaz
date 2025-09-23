@@ -752,9 +752,10 @@ export default function Schedules() {
                 left: '2px',
                 right: '2px',
                 top: `${index * (100 / totalVisible)}%`,
-                height: shiftHeight,
+                height: `calc(${shiftHeight} - 6px)`, // Restar 6px del footer
                 backgroundColor: shift.color || '#007AFF',
-                zIndex: 10
+                zIndex: 10,
+                maxHeight: `calc(100% - 30px)` // Limitar altura para no invadir footer
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -977,7 +978,7 @@ export default function Schedules() {
                             }
                           >
                             {/* Área principal de la celda (badges y contenido especial) */}
-                            <div className="flex-1 relative">
+                            <div className="flex-1 relative" style={{ paddingBottom: '24px' }}>
                               {/* Contenido especial para festivos/vacaciones */}
                               {getCellContent(employee.id, day)}
                               {/* Timeline bars serán renderizadas aquí */}
