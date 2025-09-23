@@ -768,9 +768,14 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-8'}`}>
-                  {/* Selector de vista */}
-                  <div className="flex items-center justify-center">
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-[260px_repeat(7,minmax(0,1fr))]'}`}>
+                  {/* Columna con selector de vista */}
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Equipo
+                    </div>
+                    
+                    {/* Slider minimal para vista */}
                     <div className="flex bg-muted/20 dark:bg-muted/40 rounded-full p-1 scale-75">
                       {(['day', 'week'] as const).map((mode) => {
                         const labels = { day: 'Día', week: 'Sem' };
@@ -835,7 +840,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-4">
-                    <div className={`grid gap-1 items-center min-h-[60px] ${viewMode === 'day' ? 'grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-8'}`}>
+                    <div className={`grid gap-1 items-center min-h-[60px] ${viewMode === 'day' ? 'grid-cols-[260px_minmax(0,1fr)]' : 'grid-cols-[260px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
@@ -858,7 +863,9 @@ export default function Schedules() {
                         return (
                           <div 
                             key={dayIndex} 
-                            className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'}`}
+                            className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
+                              viewMode === 'day' ? 'p-2' : ''
+                            }`}
                             onClick={() => {
                               if (!isDisabled) {
                                 setSelectedCell({
