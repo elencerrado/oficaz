@@ -721,23 +721,13 @@ export default function Schedules() {
     
     // Assign lanes to prevent overlapping
     const shiftLanes = assignShiftLanes(dayShifts);
-    const maxVisibleLanes = 2; // Show maximum 2 lanes, rest in overflow
-    const hasOverflow = shiftLanes.length > 0 && shiftLanes[0].totalLanes > maxVisibleLanes;
-    const laneHeight = viewMode === 'week' ? 16 : 22; // Slightly larger lanes for better visibility
-    const laneGap = 2;
     
-    // Debug: Log shift lanes assignment
-    if (dayShifts.length > 1) {
-      console.log('Multiple shifts detected:', dayShifts.length, 'Total lanes:', shiftLanes[0]?.totalLanes);
-      shiftLanes.forEach(({ shift, lane }, i) => {
-        console.log(`Shift ${i + 1}: ${shift.title} -> Lane ${lane}`);
-      });
-    }
-    
-    // No need for timeline calculations - full width blocks
-    // const TIMELINE_START_HOUR = 6;
-    // const TIMELINE_END_HOUR = 22;
-    // const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
+    // Configuración para modo semana: badges de alto completo
+    const maxVisibleShifts = 3; // Máximo 3 turnos visibles
+    const hasOverflow = dayShifts.length > maxVisibleShifts;
+    const visibleShifts = hasOverflow ? shiftLanes.slice(0, maxVisibleShifts - 1) : shiftLanes;
+    const totalVisible = hasOverflow ? maxVisibleShifts : dayShifts.length;
+    const shiftHeight = `${100 / totalVisible}%`; // Altura dinámica según número de turnos
     
     // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
     const TIMELINE_START_HOUR = 6; // 6:00 AM
@@ -746,65 +736,67 @@ export default function Schedules() {
     
     return (
       <>
-        {shiftLanes.slice(0, maxVisibleLanes).map(({ shift, lane }, index: number) => {
-      const shiftStart = parseISO(shift.startAt);
-      const shiftEnd = parseISO(shift.endAt);
-      const startTime = format(shiftStart, 'HH:mm');
-      const endTime = format(shiftEnd, 'HH:mm');
-      const shiftHours = `${startTime}-${endTime}`;
-      
-      return (
-        <div
-          key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-1"
-          style={{
-            left: '2px',
-            right: '2px',
-            top: `${4 + lane * (laneHeight + laneGap)}px`,
-            height: `${laneHeight}px`,
-            backgroundColor: shift.color || '#007AFF',
-            zIndex: 10
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelectedShift(shift);
-            setShowShiftModal(true);
-          }}
-          title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-        >
-          {viewMode === 'week' ? (
-            /* Modo semana: formato compacto */
-            <div className="flex items-center justify-between w-full text-[10px] font-medium">
-              <span className="truncate flex-1">{shift.title}</span>
-              <span className="ml-1 text-[8px] opacity-90 whitespace-nowrap">{shiftHours}</span>
-            </div>
-          ) : (
-            /* Modo día: formato detallado */
-            <>
-              <div className="text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
-                {shiftHours}
-              </div>
-              <div className="text-[8px] opacity-90 leading-tight truncate px-0.5 max-w-full">
+        {/* Renderizar turnos visibles */}
+        {visibleShifts.map(({ shift, lane }, index: number) => {
+          const shiftStart = parseISO(shift.startAt);
+          const shiftEnd = parseISO(shift.endAt);
+          const startTime = format(shiftStart, 'HH:mm');
+          const endTime = format(shiftEnd, 'HH:mm');
+          const shiftHours = `${startTime}-${endTime}`;
+          
+          return (
+            <div
+              key={`${shift.id}-${index}`}
+              className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+              style={{
+                left: '2px',
+                right: '2px',
+                top: `${index * (100 / totalVisible)}%`,
+                height: shiftHeight,
+                backgroundColor: shift.color || '#007AFF',
+                zIndex: 10
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedShift(shift);
+                setShowShiftModal(true);
+              }}
+              title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+            >
+              {/* Diseño de dos líneas: nombre arriba, hora abajo */}
+              <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
                 {shift.title}
               </div>
-            </>
-          )}
-        </div>
-      );
+              <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
+                {shiftHours}
+              </div>
+            </div>
+          );
         })}
         
-        {/* Overflow badge for additional shifts */}
+        {/* Badge "más" si hay turnos adicionales */}
         {hasOverflow && (
-          <div 
-            className="absolute bottom-1 right-1 bg-gray-600 dark:bg-gray-400 text-white dark:text-gray-900 text-[8px] font-semibold rounded px-1 py-0.5 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors z-20"
+          <div
+            className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 bg-gray-600 dark:bg-gray-500"
+            style={{
+              left: '2px',
+              right: '2px',
+              top: `${(totalVisible - 1) * (100 / totalVisible)}%`,
+              height: shiftHeight,
+              zIndex: 10
+            }}
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Show popover with all shifts
-              console.log('Show all shifts for this day:', dayShifts);
+              setViewMode('day'); // Cambiar a vista día
             }}
-            title={`+${shiftLanes[0].totalLanes - maxVisibleLanes} turnos más`}
+            title={`+${dayShifts.length - (maxVisibleShifts - 1)} turnos más - Click para ver todos en vista día`}
           >
-            +{shiftLanes[0].totalLanes - maxVisibleLanes}
+            <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center">
+              más
+            </div>
+            <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center mt-0.5">
+              +{dayShifts.length - (maxVisibleShifts - 1)}
+            </div>
           </div>
         )}
       </>
