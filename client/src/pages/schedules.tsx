@@ -575,18 +575,9 @@ export default function Schedules() {
     return baseStyle;
   };
   
-  // Función para obtener la altura dinámica de la celda
+  // Función para obtener la altura fija de la celda (todas iguales)
   const getCellHeightStyle = (employeeId: number, date: Date) => {
-    const dayShifts = getShiftsForEmployee(employeeId).filter((shift: WorkShift) => {
-      const shiftStart = parseISO(shift.startAt);
-      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
-      return shiftStartDay === format(date, 'yyyy-MM-dd');
-    });
-    
-    const numShifts = dayShifts.length;
-    const minHeight = Math.max(80, numShifts * 32 + 16); // Altura base más generosa
-    
-    return { minHeight: `${minHeight}px` };
+    return { minHeight: '120px' }; // Altura fija para todas las celdas
   };
 
   // Función para obtener el contenido adicional de la celda
@@ -795,7 +786,7 @@ export default function Schedules() {
             return (
               <div
                 key={shift.id}
-                className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+                className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
                 style={{
                   left: `${leftPercent}%`,
                   width: `${widthPercent}%`,
@@ -812,8 +803,12 @@ export default function Schedules() {
                 }}
                 title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
               >
-                <div className="text-[10px] md:text-xs font-semibold text-center truncate">
-                  {shift.title} ({shiftHours})
+                {/* Diseño de dos líneas: nombre arriba, hora abajo */}
+                <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
+                  {shift.title}
+                </div>
+                <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
+                  {shiftHours}
                 </div>
               </div>
             );
