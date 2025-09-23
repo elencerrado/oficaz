@@ -163,9 +163,8 @@ export default function Schedules() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <div className="space-y-6">
-        {loadingEmployees ? (
+    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900 space-y-6" style={{ overflowX: 'clip' }}>
+      {loadingEmployees ? (
           <div className="flex justify-center py-8">
             <LoadingSpinner />
           </div>
@@ -281,7 +280,6 @@ export default function Schedules() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Modal para nuevo turno - TO DO */}
       {/* Modal para ver/editar turno - TO DO */}
