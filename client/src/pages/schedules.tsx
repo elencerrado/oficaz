@@ -414,7 +414,7 @@ export default function Schedules() {
   // Forzar vista día en móvil
   useEffect(() => {
     const checkMobile = () => {
-      if (window.innerWidth < 900) { // Forzar día en pantallas más grandes
+      if (window.innerWidth < 1200) { // Forzar día solo en pantallas medianas y pequeñas
         setViewMode('day');
       }
     };
@@ -785,7 +785,7 @@ export default function Schedules() {
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden lg:block">
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden xl:block">
                       {/* Sliding indicator */}
                       <div 
                         className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
@@ -804,7 +804,7 @@ export default function Schedules() {
                               key={mode}
                               onClick={() => {
                               // Prevenir cambio a week en móvil
-                              if (window.innerWidth >= 900 || mode === 'day') {
+                              if (window.innerWidth >= 1200 || mode === 'day') {
                                 setViewMode(mode);
                               }
                             }}
