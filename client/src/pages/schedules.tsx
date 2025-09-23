@@ -243,26 +243,19 @@ export default function Schedules() {
 
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
-                const shiftsCount = getShiftsForEmployee(employee.id).length;
-                
                 return (
                   <div key={employee.id} className="p-4">
                     <div className="grid grid-cols-8 gap-1 items-center min-h-[60px]">
                       {/* Columna del empleado */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
                           fullName={employee.fullName} 
                           size="sm" 
                           userId={employee.id}
                           profilePicture={employee.profilePicture}
                         />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate">
-                            {employee.fullName}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {shiftsCount} turno{shiftsCount !== 1 ? 's' : ''}
-                          </div>
+                        <div className="text-xs font-medium text-foreground text-center truncate max-w-full">
+                          {employee.fullName}
                         </div>
                       </div>
 
