@@ -193,37 +193,37 @@ export default function Schedules() {
 
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
-              {/* Header de días */}
+              {/* Header con mes y navegación */}
               <div className="bg-muted/10 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigateWeek('prev')}
+                    className="h-8 w-8 p-0"
+                    data-testid="button-prev-week"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  
+                  <h2 className="text-lg font-semibold text-foreground">
+                    {format(weekRange.start, "MMMM yyyy", { locale: es })}
+                  </h2>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigateWeek('next')}
+                    className="h-8 w-8 p-0"
+                    data-testid="button-next-week"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+                
+                {/* Header de días */}
                 <div className="grid grid-cols-8 gap-1">
-                  {/* Navegación de semana compacta */}
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigateWeek('prev')}
-                        className="h-6 w-6 p-0"
-                        data-testid="button-prev-week"
-                      >
-                        <ChevronLeft className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigateWeek('next')}
-                        className="h-6 w-6 p-0"
-                        data-testid="button-next-week"
-                      >
-                        <ChevronRight className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-xs font-medium text-foreground">
-                        {format(weekRange.start, "dd MMM", { locale: es })} - {format(weekRange.end, "dd MMM yyyy", { locale: es })}
-                      </span>
-                    </div>
-                  </div>
+                  <div className="text-sm font-medium text-muted-foreground text-center">Empleado</div>
                   {weekRange.days.map((day, index) => (
                     <div key={index} className="text-center">
                       <div className="text-xs text-muted-foreground">
