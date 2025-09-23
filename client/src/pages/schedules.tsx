@@ -414,7 +414,7 @@ export default function Schedules() {
   // Forzar vista día en móvil
   useEffect(() => {
     const checkMobile = () => {
-      if (window.innerWidth < 768) { // md breakpoint
+      if (window.innerWidth < 900) { // Forzar día en pantallas más grandes
         setViewMode('day');
       }
     };
@@ -726,10 +726,10 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          <div className="text-[8px] sm:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
+          <div className="text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
             {shiftHours}
           </div>
-          <div className="text-[7px] sm:text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden max-w-full">
+          <div className="text-[7px] lg:text-[9px] opacity-90 leading-none truncate px-0.5 overflow-hidden max-w-full">
             {shift.title}
           </div>
         </div>
@@ -781,7 +781,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] lg:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
@@ -804,7 +804,7 @@ export default function Schedules() {
                               key={mode}
                               onClick={() => {
                               // Prevenir cambio a week en móvil
-                              if (window.innerWidth >= 768 || mode === 'day') {
+                              if (window.innerWidth >= 900 || mode === 'day') {
                                 setViewMode(mode);
                               }
                             }}
@@ -866,7 +866,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-2 md:p-4">
-                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] md:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
+                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[80px_minmax(0,1fr)] sm:grid-cols-[100px_minmax(0,1fr)] lg:grid-cols-[150px_minmax(0,1fr)]' : 'grid-cols-[150px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
