@@ -174,22 +174,6 @@ export default function Schedules() {
           </div>
         ) : (
           <div className="bg-card rounded-lg border border-border overflow-hidden">
-            {/* Header con controles */}
-            <div className="p-4 border-b bg-muted/20">
-              <div className="flex items-center justify-end">
-                {/* Botones de acción */}
-                <div className="flex items-center gap-2">
-                  <Button 
-                    onClick={() => setShowNewShiftModal(true)}
-                    size="sm"
-                    data-testid="button-new-shift"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nuevo Turno
-                  </Button>
-                </div>
-              </div>
-            </div>
 
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
