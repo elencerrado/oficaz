@@ -261,9 +261,9 @@ export default function Schedules() {
   };
 
   // Queries
-  const { data: employees = [], isLoading: loadingEmployees } = useQuery({
+  const { data: employees = [], isLoading: loadingEmployees } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
-    select: (data) => data.filter((emp: Employee) => emp.status === 'active'),
+    select: (data: Employee[]) => data?.filter((emp: Employee) => emp.status === 'active') || [],
   });
 
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
@@ -287,43 +287,59 @@ export default function Schedules() {
     return workShifts.filter((shift: WorkShift) => shift.employeeId === employeeId);
   };
 
-  // Renderizar barras de turnos en el timeline
-  const renderShiftBar = (employee: Employee) => {
+  // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
+  const renderShiftBar = (employee: Employee, day: Date) => {
     const shifts = getShiftsForEmployee(employee.id);
+    const dayString = format(day, 'yyyy-MM-dd');
     
-    return shifts.map((shift: WorkShift, index: number) => {
+    // Filtrar turnos que caen en este día específico
+    const dayShifts = shifts.filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
+      return shiftStartDay === dayString;
+    });
+    
+    if (dayShifts.length === 0) return null;
+    
+    // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
+    const TIMELINE_START_HOUR = 6; // 6:00 AM
+    const TIMELINE_END_HOUR = 22; // 10:00 PM
+    const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
+    
+    return dayShifts.map((shift: WorkShift, index: number) => {
       const shiftStart = parseISO(shift.startAt);
       const shiftEnd = parseISO(shift.endAt);
       
-      // Verificar si el turno está en el rango visible
-      if (shiftEnd < weekRange.start || shiftStart > weekRange.end) {
+      // Calcular horas decimales (ej: 9:30 = 9.5)
+      const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
+      const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+      
+      // Calcular posición y ancho relativos al timeline (6AM-10PM)
+      const startPosition = Math.max(0, ((startHour - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100);
+      const endPosition = Math.min(100, ((endHour - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100);
+      const width = endPosition - startPosition;
+      
+      // Solo mostrar si el turno está dentro del rango visible y tiene ancho suficiente
+      if (width <= 0 || startHour >= TIMELINE_END_HOUR || endHour <= TIMELINE_START_HOUR) {
         return null;
       }
       
-      // Calcular posición y duración
-      const visibleStart = shiftStart < weekRange.start ? weekRange.start : shiftStart;
-      const visibleEnd = shiftEnd > weekRange.end ? weekRange.end : shiftEnd;
-      
-      const totalDays = differenceInDays(weekRange.end, weekRange.start) + 1;
-      const startOffset = differenceInDays(visibleStart, weekRange.start);
-      const duration = differenceInDays(visibleEnd, visibleStart) + 1;
-      
-      const leftPercent = (startOffset / totalDays) * 100;
-      const widthPercent = (duration / totalDays) * 100;
-      
-      const shiftHours = `${format(shiftStart, 'HH:mm')} - ${format(shiftEnd, 'HH:mm')}`;
+      const startTime = format(shiftStart, 'HH:mm');
+      const endTime = format(shiftEnd, 'HH:mm');
+      const shiftHours = `${startTime}-${endTime}`;
       
       return (
         <div
           key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex items-center justify-center text-white dark:text-gray-100 text-xs font-medium shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20"
+          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20"
           style={{
-            left: `${leftPercent}%`,
-            width: `${widthPercent}%`,
+            left: `${startPosition}%`,
+            width: `${Math.max(width, 15)}%`, // Ancho mínimo del 15%
             top: '2px',
             bottom: '2px',
-            backgroundColor: shift.color,
-            zIndex: 10
+            backgroundColor: shift.color || '#007AFF',
+            zIndex: 10,
+            minWidth: '60px' // Ancho mínimo en píxeles
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -332,9 +348,12 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          <span className="truncate px-1">
-            {shift.title || shiftHours}
-          </span>
+          <div className="text-xs font-semibold leading-tight truncate px-1">
+            {shiftHours}
+          </div>
+          <div className="text-xs opacity-90 leading-tight truncate px-1 max-w-full">
+            {shift.title}
+          </div>
         </div>
       );
     }).filter(Boolean);
@@ -467,7 +486,7 @@ export default function Schedules() {
                             {/* Contenido especial para festivos/vacaciones */}
                             {getCellContent(employee.id, day)}
                             {/* Timeline bars serán renderizadas aquí */}
-                            {renderShiftBar(employee)}
+                            {renderShiftBar(employee, day)}
                           </div>
                         );
                       })}
