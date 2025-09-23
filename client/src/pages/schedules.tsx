@@ -709,7 +709,7 @@ export default function Schedules() {
       return (
         <div
           key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 min-w-[44px] sm:min-w-[60px]"
+          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 min-w-[44px] sm:min-w-[60px] overflow-hidden"
           style={{
             left: `${startPosition}%`,
             width: `${Math.max(width, 15)}%`, // Ancho mínimo del 15%
@@ -725,12 +725,17 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          {/* PRUEBA: Siempre dos líneas */}
-          <div className="text-[7px] font-semibold leading-tight text-center px-0.5">
-            <span className="block">{startTime}</span>
-            <span className="block">{endTime}</span>
+          {/* Horas en dos líneas para móvil y tablet */}
+          <div className="md:hidden text-[7px] font-semibold leading-tight text-center px-0.5 max-w-full">
+            <div className="truncate">{startTime}</div>
+            <div className="truncate">{endTime}</div>
           </div>
-          <div className="text-[6px] md:text-[7px] lg:text-[9px] opacity-90 leading-tight md:leading-none truncate px-0.5 overflow-hidden max-w-full">
+          
+          {/* Horas en una línea para desktop */}
+          <div className="hidden md:block text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
+            {shiftHours}
+          </div>
+          <div className="text-[6px] md:text-[7px] lg:text-[9px] opacity-90 leading-tight md:leading-none truncate px-0.5 max-w-full">
             {shift.title}
           </div>
         </div>
