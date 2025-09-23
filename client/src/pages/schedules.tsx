@@ -409,6 +409,7 @@ export default function Schedules() {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
   
   // Estado para el formulario de edición
   const [editShift, setEditShift] = useState({
