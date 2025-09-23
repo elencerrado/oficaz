@@ -743,6 +743,46 @@ export default function Schedules() {
             </div>
             
             <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Días de la semana</label>
+              <div className="flex gap-2 flex-wrap">
+                {dayNames.map((dayName, index) => {
+                  const dayNumber = index + 1;
+                  const isSelected = selectedDays.has(dayNumber);
+                  
+                  return (
+                    <label
+                      key={dayNumber}
+                      className="flex flex-col items-center gap-1 cursor-pointer select-none"
+                      data-testid={`checkbox-day-${dayNumber}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const newSelectedDays = new Set(selectedDays);
+                          if (e.target.checked) {
+                            newSelectedDays.add(dayNumber);
+                          } else {
+                            newSelectedDays.delete(dayNumber);
+                          }
+                          setSelectedDays(newSelectedDays);
+                        }}
+                        className="w-4 h-4 rounded border-2 border-border text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className={`text-xs font-medium ${
+                        isSelected 
+                          ? 'text-blue-600 dark:text-blue-400' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {dayName}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Color del turno</label>
               <div className="flex gap-2 flex-wrap">
                 {SHIFT_COLORS.map((color, index) => (
@@ -873,6 +913,46 @@ export default function Schedules() {
                 rows={3}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Días de la semana</label>
+              <div className="flex gap-2 flex-wrap">
+                {dayNames.map((dayName, index) => {
+                  const dayNumber = index + 1;
+                  const isSelected = selectedDays.has(dayNumber);
+                  
+                  return (
+                    <label
+                      key={dayNumber}
+                      className="flex flex-col items-center gap-1 cursor-pointer select-none"
+                      data-testid={`edit-checkbox-day-${dayNumber}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          const newSelectedDays = new Set(selectedDays);
+                          if (e.target.checked) {
+                            newSelectedDays.add(dayNumber);
+                          } else {
+                            newSelectedDays.delete(dayNumber);
+                          }
+                          setSelectedDays(newSelectedDays);
+                        }}
+                        className="w-4 h-4 rounded border-2 border-border text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className={`text-xs font-medium ${
+                        isSelected 
+                          ? 'text-blue-600 dark:text-blue-400' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {dayName}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
             
             <div className="space-y-2">
