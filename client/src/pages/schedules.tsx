@@ -724,11 +724,51 @@ export default function Schedules() {
     const TIMELINE_END_HOUR = 22; // 10:00 PM
     const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
     
-    // MODO DÍA: Sistema horizontal cronológico (original)
+    // MODO DÍA: Sistema horizontal cronológico con carriles verticales para evitar solapamiento
     if (viewMode === 'day') {
+      // Función para detectar si dos turnos se solapan horizontalmente
+      const doShiftsOverlap = (shift1: WorkShift, shift2: WorkShift): boolean => {
+        const start1 = parseISO(shift1.startAt).getTime();
+        const end1 = parseISO(shift1.endAt).getTime();
+        const start2 = parseISO(shift2.startAt).getTime();
+        const end2 = parseISO(shift2.endAt).getTime();
+        
+        // Verificar solapamiento: (start1 < end2) && (start2 < end1)
+        return (start1 < end2) && (start2 < end1);
+      };
+      
+      // Asignar carriles para evitar solapamiento
+      const shiftsWithLanes = dayShifts.map((shift, index) => {
+        // Encontrar el carril más bajo disponible para este turno
+        let lane = 0;
+        const overlappingShifts = dayShifts.slice(0, index).filter(prevShift => 
+          doShiftsOverlap(shift, prevShift)
+        );
+        
+        if (overlappingShifts.length > 0) {
+          // Obtener todos los carriles ocupados por turnos superpuestos
+          const occupiedLanes = new Set(overlappingShifts.map((_, idx) => {
+            // Calcular el carril del turno previo
+            const prevOverlaps = dayShifts.slice(0, dayShifts.indexOf(overlappingShifts[idx]))
+              .filter(earlierShift => doShiftsOverlap(overlappingShifts[idx], earlierShift));
+            return prevOverlaps.length;
+          }));
+          
+          // Encontrar el primer carril libre
+          while (occupiedLanes.has(lane)) {
+            lane++;
+          }
+        }
+        
+        return { shift, lane };
+      });
+      
+      const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
+      const laneHeight = 100 / maxLanes;
+      
       return (
         <>
-          {dayShifts.map((shift: WorkShift) => {
+          {shiftsWithLanes.map(({ shift, lane }) => {
             const shiftStart = parseISO(shift.startAt);
             const shiftEnd = parseISO(shift.endAt);
             const startTime = format(shiftStart, 'HH:mm');
@@ -759,8 +799,8 @@ export default function Schedules() {
                 style={{
                   left: `${leftPercent}%`,
                   width: `${widthPercent}%`,
-                  top: '2px',
-                  bottom: '2px',
+                  top: `${lane * laneHeight}%`,
+                  height: `${laneHeight - 2}%`, // Pequeño margen entre carriles
                   backgroundColor: shift.color || '#007AFF',
                   zIndex: 10,
                   minWidth: '60px' // Ancho mínimo para legibilidad
