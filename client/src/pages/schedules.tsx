@@ -956,12 +956,12 @@ export default function Schedules() {
                         return (
                           <div 
                             key={dayIndex} 
-                            className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
+                            className={`${getCellStyle(employee.id, day)} flex flex-col ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
   viewMode === 'day' ? 'p-1 md:p-2' : ''
                             }`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
-                              if (!isDisabled) {
+                              if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
                                 setSelectedCell({
                                   employeeId: employee.id,
                                   date: day,
@@ -976,10 +976,35 @@ export default function Schedules() {
                               'Click para añadir turno'
                             }
                           >
-                            {/* Contenido especial para festivos/vacaciones */}
-                            {getCellContent(employee.id, day)}
-                            {/* Timeline bars serán renderizadas aquí */}
-                            {renderShiftBar(employee, day)}
+                            {/* Área principal de la celda (badges y contenido especial) */}
+                            <div className="flex-1 relative">
+                              {/* Contenido especial para festivos/vacaciones */}
+                              {getCellContent(employee.id, day)}
+                              {/* Timeline bars serán renderizadas aquí */}
+                              {renderShiftBar(employee, day)}
+                            </div>
+                            
+                            {/* Footer con botón "+" para añadir turno */}
+                            <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors">
+                              <button
+                                className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isDisabled) {
+                                    setSelectedCell({
+                                      employeeId: employee.id,
+                                      date: day,
+                                      employeeName: employee.fullName
+                                    });
+                                    setShowNewShiftModal(true);
+                                  }
+                                }}
+                                title="Añadir turno"
+                                data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
+                              >
+                                <span className="text-[10px]">+</span>
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
