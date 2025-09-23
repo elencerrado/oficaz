@@ -50,6 +50,7 @@ import TimeTracking from "@/pages/time-tracking";
 import EmployeeTimeTracking from "@/pages/employee-time-tracking";
 import VacationRequests from "@/pages/vacation-requests";
 import VacationManagement from "@/pages/vacation-management";
+import Schedules from "@/pages/schedules";
 import Documents from "@/pages/documents";
 import AdminDocuments from "@/pages/admin-documents";
 import Messages from "@/pages/messages";
@@ -448,6 +449,18 @@ function Router() {
               <VacationManagement />
             ) : (
               <VacationRequests />
+            )}
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/cuadrante">
+        <ProtectedRoute>
+          <AppLayout>
+            {user && (user.role === 'admin' || user.role === 'manager') ? (
+              <Schedules />
+            ) : (
+              <Redirect to={`/${company?.companyAlias || 'test'}/inicio`} />
             )}
           </AppLayout>
         </ProtectedRoute>
