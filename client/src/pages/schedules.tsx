@@ -311,8 +311,8 @@ export default function Schedules() {
                   </Button>
                 </div>
                 
-                {/* Header de días mejorado */}
-                <div className="grid grid-cols-8 gap-1 py-3">
+                {/* Header de días compacto */}
+                <div className="grid grid-cols-8 gap-1 py-2">
                   {/* Columna vacía para empleados */}
                   <div className="flex items-center justify-center">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -326,12 +326,7 @@ export default function Schedules() {
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
                     return (
-                      <div key={index} className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg relative">
-                        {/* Marca de día actual */}
-                        {isToday && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                        )}
-                        
+                      <div key={index} className="flex flex-col items-center gap-1 py-1 px-1">
                         <div className={`text-xs font-medium uppercase tracking-wide ${
                           isToday 
                             ? 'text-blue-600 dark:text-blue-400' 
@@ -342,7 +337,7 @@ export default function Schedules() {
                           {format(day, 'EEE', { locale: es })}
                         </div>
                         
-                        <div className={`text-lg font-semibold rounded-full w-8 h-8 flex items-center justify-center transition-colors ${
+                        <div className={`text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center transition-colors ${
                           isToday 
                             ? 'bg-blue-500 text-white shadow-lg' 
                             : isWeekend 
@@ -351,12 +346,6 @@ export default function Schedules() {
                         }`}>
                           {format(day, 'dd')}
                         </div>
-                        
-                        {isToday && (
-                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                            Hoy
-                          </div>
-                        )}
                       </div>
                     );
                   })}
