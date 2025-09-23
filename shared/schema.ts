@@ -743,6 +743,32 @@ export const insertWorkAlarmSchema = createInsertSchema(workAlarms).omit({
 export type WorkAlarm = typeof workAlarms.$inferSelect;
 export type InsertWorkAlarm = z.infer<typeof insertWorkAlarmSchema>;
 
+// Work Shifts table - cuadrante/horarios de trabajadores  
+export const workShifts = pgTable("work_shifts", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }).notNull(),
+  employeeId: integer("employee_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  startAt: timestamp("start_at").notNull(), // Fecha y hora de inicio del turno
+  endAt: timestamp("end_at").notNull(), // Fecha y hora de fin del turno  
+  title: varchar("title", { length: 100 }), // Título opcional del turno (ej: "Turno mañana")
+  location: text("location"), // Ubicación opcional del trabajo
+  notes: text("notes"), // Notas adicionales
+  color: varchar("color", { length: 20 }).default("#007AFF"), // Color para visualización en timeline
+  createdByUserId: integer("created_by_user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Schema for work shifts
+export const insertWorkShiftSchema = createInsertSchema(workShifts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type WorkShift = typeof workShifts.$inferSelect;
+export type InsertWorkShift = z.infer<typeof insertWorkShiftSchema>;
+
 // Promotional codes table - códigos promocionales para extender período de prueba
 export const promotionalCodes = pgTable("promotional_codes", {
   id: serial("id").primaryKey(),
