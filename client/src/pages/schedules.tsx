@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2 } from "lucide-react";
-import { format, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
+import { format, differenceInDays, addDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -267,6 +267,55 @@ export default function Schedules() {
     const daysToAdd = targetWeekday - currentWeekday;
     return addDays(baseDate, daysToAdd);
   };
+  
+  // Generar rango de fechas según viewMode
+  const getDateRange = (date: Date, mode: 'day' | 'week' | 'month') => {
+    switch (mode) {
+      case 'day':
+        return {
+          start: date,
+          end: date,
+          days: [date]
+        };
+      case 'week':
+        const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+        return {
+          start: weekStart,
+          end: weekEnd,
+          days: eachDayOfInterval({ start: weekStart, end: weekEnd })
+        };
+      case 'month':
+        const monthStart = startOfMonth(date);
+        const monthEnd = endOfMonth(date);
+        return {
+          start: monthStart,
+          end: monthEnd,
+          days: eachDayOfInterval({ start: monthStart, end: monthEnd })
+        };
+      default:
+        return {
+          start: date,
+          end: date,
+          days: [date]
+        };
+    }
+  };
+  
+  // Obtener el número de columnas del grid según viewMode
+  const getGridColumns = (mode: 'day' | 'week' | 'month', daysCount: number) => {
+    switch (mode) {
+      case 'day':
+        return 'grid-cols-2'; // 1 columna empleado + 1 día
+      case 'week':
+        return 'grid-cols-8'; // 1 columna empleado + 7 días
+      case 'month':
+        // Para el mes usamos un layout más compacto con scroll horizontal
+        return 'grid-cols-[repeat(auto-fit,minmax(40px,1fr))]';
+      default:
+        return 'grid-cols-8';
+    }
+  };
 
   // Mutation para crear turno(s) en múltiples días
   const createShiftMutation = useMutation({
@@ -485,19 +534,31 @@ export default function Schedules() {
     color: SHIFT_COLORS[0]
   });
 
-  // Calcular rango de la semana actual
-  const getWeekRange = () => {
-    const start = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday start
-    const end = endOfWeek(viewDate, { weekStartsOn: 1 });
-    return { start, end, days: eachDayOfInterval({ start, end }) };
-  };
-
-  const weekRange = getWeekRange();
+  // Calcular rango de fechas según viewMode
+  const dateRange = useMemo(() => {
+    return getDateRange(viewDate, viewMode);
+  }, [viewDate, viewMode]);
+  
+  // Calcular el número de columnas dinámicamente
+  const gridCols = useMemo(() => {
+    return getGridColumns(viewMode, dateRange.days.length);
+  }, [viewMode, dateRange.days.length]);
   
 
-  // Navegación de semanas
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    setViewDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
+  // Navegación de vistas
+  const navigateView = (direction: 'prev' | 'next') => {
+    setViewDate(prev => {
+      switch (viewMode) {
+        case 'day':
+          return direction === 'prev' ? addDays(prev, -1) : addDays(prev, 1);
+        case 'week':
+          return direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1);
+        case 'month':
+          return direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1);
+        default:
+          return prev;
+      }
+    });
   };
 
   // Función para verificar si un día es festivo
@@ -618,8 +679,8 @@ export default function Schedules() {
   });
 
   const { data: workShifts = [], isLoading: loadingShifts, refetch: refetchShifts } = useQuery<WorkShift[]>({
-    queryKey: ['/api/work-shifts/company', format(weekRange.start, 'yyyy-MM-dd'), format(weekRange.end, 'yyyy-MM-dd')],
-    enabled: !!weekRange.start && !!weekRange.end,
+    queryKey: ['/api/work-shifts/company', format(dateRange.start, 'yyyy-MM-dd'), format(dateRange.end, 'yyyy-MM-dd')],
+    enabled: !!dateRange.start && !!dateRange.end,
   });
 
   // Query para obtener solicitudes de vacaciones aprobadas
@@ -731,7 +792,7 @@ export default function Schedules() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigateWeek('prev')}
+                    onClick={() => navigateView('prev')}
                     className="h-8 w-8 p-0"
                     data-testid="button-prev-week"
                   >
@@ -739,15 +800,13 @@ export default function Schedules() {
                   </Button>
                   
                   <h2 className="text-lg font-semibold text-foreground">
-                    {viewMode === 'day' ? 'Vista Diaria' : 
-                     viewMode === 'week' ? format(weekRange.start, "MMMM yyyy", { locale: es }) :
-                     'Vista Mensual'}
+                    {format(dateRange.start, "MMMM yyyy", { locale: es })}
                   </h2>
                   
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigateWeek('next')}
+                    onClick={() => navigateView('next')}
                     className="h-8 w-8 p-0"
                     data-testid="button-next-week"
                   >
@@ -756,7 +815,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className="grid grid-cols-8 gap-1 py-1">
+                <div className={`grid ${gridCols} gap-1 py-1`}>
                   {/* Columna con selector de vista */}
                   <div className="flex flex-col items-center justify-center gap-2">
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -786,7 +845,7 @@ export default function Schedules() {
                   </div>
                   
                   {/* Días de la semana */}
-                  {weekRange.days.map((day, index) => {
+                  {dateRange.days.map((day: Date, index: number) => {
                     const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
@@ -821,7 +880,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-4">
-                    <div className="grid grid-cols-8 gap-1 items-center min-h-[60px]">
+                    <div className={`grid ${gridCols} gap-1 items-center min-h-[60px]`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
@@ -836,7 +895,7 @@ export default function Schedules() {
                       </div>
 
                       {/* Columnas de días */}
-                      {weekRange.days.map((day, dayIndex) => {
+                      {dateRange.days.map((day: Date, dayIndex: number) => {
                         const holiday = isHoliday(day);
                         const vacation = isEmployeeOnVacation(employee.id, day);
                         const isDisabled = vacation; // Solo las vacaciones deshabilitan la celda
