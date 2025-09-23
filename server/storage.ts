@@ -10,6 +10,7 @@ import type {
   EmployeeActivationToken, InsertEmployeeActivationToken,
   CustomHoliday, InsertCustomHoliday,
   WorkAlarm, InsertWorkAlarm,
+  WorkShift, InsertWorkShift,
   PromotionalCode, InsertPromotionalCode,
   ImageProcessingJob, InsertImageProcessingJob
 } from '@shared/schema';
@@ -184,6 +185,14 @@ export interface IStorage {
   updateWorkAlarm(id: number, updates: Partial<InsertWorkAlarm>): Promise<WorkAlarm | undefined>;
   deleteWorkAlarm(id: number): Promise<boolean>;
   getActiveWorkAlarmsByUser(userId: number): Promise<WorkAlarm[]>;
+
+  // Work Shifts (Cuadrante) operations
+  createWorkShift(shift: InsertWorkShift): Promise<WorkShift>;
+  getWorkShiftsByCompany(companyId: number, startDate?: string, endDate?: string): Promise<WorkShift[]>;
+  getWorkShiftsByEmployee(employeeId: number, startDate?: string, endDate?: string): Promise<WorkShift[]>;
+  updateWorkShift(id: number, updates: Partial<InsertWorkShift>): Promise<WorkShift | undefined>;
+  deleteWorkShift(id: number): Promise<boolean>;
+  replicateWeekShifts(companyId: number, weekStart: string, offsetWeeks?: number, employeeIds?: number[]): Promise<WorkShift[]>;
 
   // Promotional Codes
   createPromotionalCode(code: InsertPromotionalCode): Promise<PromotionalCode>;
@@ -2272,6 +2281,152 @@ export class DrizzleStorage implements IStorage {
         .orderBy(asc(schema.workAlarms.time));
     } catch (error) {
       console.error('Error fetching active work alarms:', error);
+      return [];
+    }
+  }
+
+  // Work Shifts methods
+  async createWorkShift(shift: InsertWorkShift): Promise<WorkShift> {
+    const [newShift] = await db.insert(schema.workShifts)
+      .values({
+        ...shift,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return newShift;
+  }
+
+  async getWorkShiftsByCompany(companyId: number, startDate?: string, endDate?: string): Promise<WorkShift[]> {
+    try {
+      let query = db.select()
+        .from(schema.workShifts)
+        .where(eq(schema.workShifts.companyId, companyId));
+
+      // Add date filtering if provided
+      const conditions = [eq(schema.workShifts.companyId, companyId)];
+      
+      if (startDate) {
+        conditions.push(gte(schema.workShifts.startAt, new Date(startDate)));
+      }
+      
+      if (endDate) {
+        conditions.push(lte(schema.workShifts.endAt, new Date(endDate)));
+      }
+
+      return await db.select()
+        .from(schema.workShifts)
+        .where(and(...conditions))
+        .orderBy(asc(schema.workShifts.startAt));
+    } catch (error) {
+      console.error('Error fetching work shifts by company:', error);
+      return [];
+    }
+  }
+
+  async getWorkShiftsByEmployee(employeeId: number, startDate?: string, endDate?: string): Promise<WorkShift[]> {
+    try {
+      const conditions = [eq(schema.workShifts.employeeId, employeeId)];
+      
+      if (startDate) {
+        conditions.push(gte(schema.workShifts.startAt, new Date(startDate)));
+      }
+      
+      if (endDate) {
+        conditions.push(lte(schema.workShifts.endAt, new Date(endDate)));
+      }
+
+      return await db.select()
+        .from(schema.workShifts)
+        .where(and(...conditions))
+        .orderBy(asc(schema.workShifts.startAt));
+    } catch (error) {
+      console.error('Error fetching work shifts by employee:', error);
+      return [];
+    }
+  }
+
+  async updateWorkShift(id: number, updates: Partial<InsertWorkShift>): Promise<WorkShift | undefined> {
+    try {
+      const [result] = await db.update(schema.workShifts)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(schema.workShifts.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error('Error updating work shift:', error);
+      return undefined;
+    }
+  }
+
+  async deleteWorkShift(id: number): Promise<boolean> {
+    try {
+      const result = await db.delete(schema.workShifts)
+        .where(eq(schema.workShifts.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting work shift:', error);
+      return false;
+    }
+  }
+
+  async replicateWeekShifts(companyId: number, weekStart: string, offsetWeeks = 1, employeeIds?: number[]): Promise<WorkShift[]> {
+    try {
+      const weekStartDate = new Date(weekStart);
+      const weekEndDate = new Date(weekStartDate);
+      weekEndDate.setDate(weekStartDate.getDate() + 7);
+
+      // Get shifts from source week
+      let conditions = [
+        eq(schema.workShifts.companyId, companyId),
+        gte(schema.workShifts.startAt, weekStartDate),
+        lt(schema.workShifts.endAt, weekEndDate)
+      ];
+
+      if (employeeIds && employeeIds.length > 0) {
+        conditions.push(inArray(schema.workShifts.employeeId, employeeIds));
+      }
+
+      const sourceShifts = await db.select()
+        .from(schema.workShifts)
+        .where(and(...conditions));
+
+      if (sourceShifts.length === 0) {
+        return [];
+      }
+
+      // Calculate offset in milliseconds
+      const offsetMs = offsetWeeks * 7 * 24 * 60 * 60 * 1000;
+
+      // Create new shifts with date offset
+      const newShifts = sourceShifts.map(shift => {
+        const newStartAt = new Date(shift.startAt.getTime() + offsetMs);
+        const newEndAt = new Date(shift.endAt.getTime() + offsetMs);
+        
+        return {
+          companyId: shift.companyId,
+          employeeId: shift.employeeId,
+          startAt: newStartAt,
+          endAt: newEndAt,
+          title: shift.title,
+          location: shift.location,
+          notes: shift.notes,
+          color: shift.color,
+          createdByUserId: shift.createdByUserId,
+        };
+      });
+
+      // Insert new shifts
+      const insertedShifts = await db.insert(schema.workShifts)
+        .values(newShifts)
+        .returning();
+
+      return insertedShifts;
+    } catch (error) {
+      console.error('Error replicating week shifts:', error);
       return [];
     }
   }
