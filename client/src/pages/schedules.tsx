@@ -752,10 +752,9 @@ export default function Schedules() {
                 left: '2px',
                 right: '2px',
                 top: `${index * (100 / totalVisible)}%`,
-                height: `calc(${shiftHeight} - 6px)`, // Restar 6px del footer
+                height: shiftHeight, // Usar altura completa disponible
                 backgroundColor: shift.color || '#007AFF',
-                zIndex: 10,
-                maxHeight: `calc(100% - 30px)` // Limitar altura para no invadir footer
+                zIndex: 10
               }}
               onClick={(e) => {
                 e.stopPropagation();
