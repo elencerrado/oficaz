@@ -223,7 +223,7 @@ export default function Schedules() {
                 
                 {/* Header de días */}
                 <div className="grid grid-cols-8 gap-1">
-                  <div className="text-sm font-medium text-muted-foreground text-center">Empleado</div>
+                  <div></div>
                   {weekRange.days.map((day, index) => (
                     <div key={index} className="text-center">
                       <div className="text-xs text-muted-foreground">
