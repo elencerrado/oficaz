@@ -738,7 +738,7 @@ export default function Schedules() {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900 space-y-6" style={{ overflowX: 'clip' }}>
+    <div className="px-2 md:px-6 py-2 md:py-4 min-h-screen bg-gray-50 dark:bg-gray-900 space-y-3 md:space-y-6" style={{ overflowX: 'clip' }}>
       {loadingEmployees ? (
           <div className="flex justify-center py-8">
             <LoadingSpinner />
@@ -748,13 +748,13 @@ export default function Schedules() {
             No hay empleados registrados
           </div>
         ) : (
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
+          <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
 
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
               {/* Header con mes y navegación */}
               <div className="bg-muted/10 p-2 md:p-4">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2 md:mb-4">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -802,7 +802,12 @@ export default function Schedules() {
                           return (
                             <button
                               key={mode}
-                              onClick={() => setViewMode(mode)}
+                              onClick={() => {
+                              // Prevenir cambio a week en móvil
+                              if (window.innerWidth >= 768 || mode === 'day') {
+                                setViewMode(mode);
+                              }
+                            }}
                               className={`flex-1 py-2 px-3 font-medium text-xs transition-colors duration-200 relative z-10 flex items-center justify-center ${
                                 viewMode === mode
                                   ? 'text-primary'
@@ -869,6 +874,7 @@ export default function Schedules() {
                           size="sm" 
                           userId={employee.id}
                           profilePicture={employee.profilePicture}
+                          className="w-6 h-6 md:w-8 md:h-8"
                         />
                         <div className="text-[10px] md:text-xs font-medium text-foreground text-center truncate max-w-full">
                           {employee.fullName}
@@ -885,7 +891,7 @@ export default function Schedules() {
                           <div 
                             key={dayIndex} 
                             className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
-                              viewMode === 'day' ? 'p-2' : ''
+  viewMode === 'day' ? 'p-1 md:p-2' : ''
                             }`}
                             onClick={() => {
                               if (!isDisabled) {
