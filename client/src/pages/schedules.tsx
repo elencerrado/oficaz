@@ -836,7 +836,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-4">
-                    <div className={`grid gap-1 items-center min-h-[80px] ${viewMode === 'day' ? 'grid-cols-[200px_minmax(0,1fr)]' : 'grid-cols-[200px_repeat(7,minmax(0,1fr))]'}`}>
+                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[200px_minmax(0,1fr)]' : 'grid-cols-[200px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
