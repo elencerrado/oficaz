@@ -311,11 +311,11 @@ export default function Schedules() {
                   </Button>
                 </div>
                 
-                {/* Header de días compacto */}
-                <div className="grid grid-cols-8 gap-1 py-2">
+                {/* Header de días súper compacto */}
+                <div className="grid grid-cols-8 gap-1 py-1">
                   {/* Columna vacía para empleados */}
                   <div className="flex items-center justify-center">
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                       Equipo
                     </div>
                   </div>
@@ -326,8 +326,8 @@ export default function Schedules() {
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
                     return (
-                      <div key={index} className="flex flex-col items-center gap-1 py-1 px-1">
-                        <div className={`text-xs font-medium uppercase tracking-wide ${
+                      <div key={index} className="flex flex-col items-center justify-center h-10">
+                        <div className={`text-xs font-medium uppercase tracking-wide leading-none ${
                           isToday 
                             ? 'text-blue-600 dark:text-blue-400' 
                             : isWeekend 
@@ -337,9 +337,9 @@ export default function Schedules() {
                           {format(day, 'EEE', { locale: es })}
                         </div>
                         
-                        <div className={`text-sm font-semibold rounded-full w-6 h-6 flex items-center justify-center transition-colors ${
+                        <div className={`text-sm font-semibold rounded w-5 h-5 flex items-center justify-center leading-none mt-0.5 ${
                           isToday 
-                            ? 'bg-blue-500 text-white shadow-lg' 
+                            ? 'bg-blue-500 text-white shadow' 
                             : isWeekend 
                               ? 'text-muted-foreground/70' 
                               : 'text-foreground hover:bg-muted/50'
