@@ -760,6 +760,11 @@ export default function Schedules() {
       });
     }
     
+    // No need for timeline calculations - full width blocks
+    // const TIMELINE_START_HOUR = 6;
+    // const TIMELINE_END_HOUR = 22;
+    // const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
+    
     // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
     const TIMELINE_START_HOUR = 6; // 6:00 AM
     const TIMELINE_END_HOUR = 22; // 10:00 PM
@@ -770,21 +775,6 @@ export default function Schedules() {
         {shiftLanes.slice(0, maxVisibleLanes).map(({ shift, lane }, index: number) => {
       const shiftStart = parseISO(shift.startAt);
       const shiftEnd = parseISO(shift.endAt);
-      
-      // Calcular horas decimales (ej: 9:30 = 9.5)
-      const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
-      const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
-      
-      // Calcular posición y ancho relativos al timeline (6AM-10PM)
-      const startPosition = Math.max(0, ((startHour - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100);
-      const endPosition = Math.min(100, ((endHour - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100);
-      const width = endPosition - startPosition;
-      
-      // Solo mostrar si el turno está dentro del rango visible y tiene ancho suficiente
-      if (width <= 0 || startHour >= TIMELINE_END_HOUR || endHour <= TIMELINE_START_HOUR) {
-        return null;
-      }
-      
       const startTime = format(shiftStart, 'HH:mm');
       const endTime = format(shiftEnd, 'HH:mm');
       const shiftHours = `${startTime}-${endTime}`;
@@ -792,11 +782,11 @@ export default function Schedules() {
       return (
         <div
           key={`${shift.id}-${index}`}
-          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 min-w-[44px] sm:min-w-[60px] overflow-hidden"
+          className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-1"
           style={{
-            left: `${startPosition}%`,
-            width: `${Math.min(Math.max(width, 15), 100 - startPosition)}%`, // Limitar para que no se salga
-            top: `${2 + lane * (laneHeight + laneGap)}px`,
+            left: '2px',
+            right: '2px',
+            top: `${4 + lane * (laneHeight + laneGap)}px`,
             height: `${laneHeight}px`,
             backgroundColor: shift.color || '#007AFF',
             zIndex: 10
@@ -808,19 +798,23 @@ export default function Schedules() {
           }}
           title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
         >
-          {/* Horas en dos líneas para móvil y tablet */}
-          <div className="md:hidden text-[7px] font-semibold leading-tight text-center px-0.5 max-w-full">
-            <div className="truncate">{startTime}</div>
-            <div className="truncate">{endTime}</div>
-          </div>
-          
-          {/* Horas en una línea para desktop */}
-          <div className="hidden md:block text-[8px] lg:text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
-            {shiftHours}
-          </div>
-          <div className="text-[6px] md:text-[7px] lg:text-[9px] opacity-90 leading-tight md:leading-none truncate px-0.5 max-w-full">
-            {shift.title}
-          </div>
+          {viewMode === 'week' ? (
+            /* Modo semana: formato compacto */
+            <div className="flex items-center justify-between w-full text-[10px] font-medium">
+              <span className="truncate flex-1">{shift.title}</span>
+              <span className="ml-1 text-[8px] opacity-90 whitespace-nowrap">{shiftHours}</span>
+            </div>
+          ) : (
+            /* Modo día: formato detallado */
+            <>
+              <div className="text-[10px] font-semibold leading-none truncate px-0.5 max-w-full">
+                {shiftHours}
+              </div>
+              <div className="text-[8px] opacity-90 leading-tight truncate px-0.5 max-w-full">
+                {shift.title}
+              </div>
+            </>
+          )}
         </div>
       );
         })}
