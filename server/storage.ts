@@ -1062,6 +1062,9 @@ export class DrizzleStorage implements IStorage {
         case 'employee_time_edit':
           featureName = 'employee_time_edit';
           break;
+        case 'Cuadrante de horarios':
+          featureName = 'schedules';
+          break;
         default:
           continue; // Skip unknown features
       }
