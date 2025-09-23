@@ -665,6 +665,52 @@ export default function Schedules() {
     return workShifts.filter((shift: WorkShift) => shift.employeeId === employeeId);
   };
 
+  // ⚠️ PROTECTED - Lane assignment algorithm for shift collision detection - DO NOT MODIFY ⚠️
+  const assignShiftLanes = (dayShifts: WorkShift[]): { shift: WorkShift; lane: number; totalLanes: number }[] => {
+    if (dayShifts.length === 0) return [];
+    
+    // Sort shifts by start time
+    const sortedShifts = [...dayShifts].sort((a, b) => {
+      const timeA = parseISO(a.startAt).getTime();
+      const timeB = parseISO(b.startAt).getTime();
+      return timeA - timeB;
+    });
+    
+    const lanes: { endTime: number; shifts: WorkShift[] }[] = [];
+    const shiftLaneMap = new Map<number, number>();
+    
+    for (const shift of sortedShifts) {
+      const startTime = parseISO(shift.startAt).getTime();
+      const endTime = parseISO(shift.endAt).getTime();
+      
+      // Find the first lane where this shift can fit (no overlap)
+      let assignedLane = -1;
+      for (let i = 0; i < lanes.length; i++) {
+        if (lanes[i].endTime <= startTime) {
+          assignedLane = i;
+          break;
+        }
+      }
+      
+      // If no existing lane works, create a new one
+      if (assignedLane === -1) {
+        assignedLane = lanes.length;
+        lanes.push({ endTime, shifts: [] });
+      } else {
+        lanes[assignedLane].endTime = endTime;
+      }
+      
+      lanes[assignedLane].shifts.push(shift);
+      shiftLaneMap.set(shift.id, assignedLane);
+    }
+    
+    return sortedShifts.map(shift => ({
+      shift,
+      lane: shiftLaneMap.get(shift.id)!,
+      totalLanes: lanes.length
+    }));
+  };
+
   // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
   const renderShiftBar = (employee: Employee, day: Date) => {
     const shifts = getShiftsForEmployee(employee.id);
@@ -679,12 +725,21 @@ export default function Schedules() {
     
     if (dayShifts.length === 0) return null;
     
+    // Assign lanes to prevent overlapping
+    const shiftLanes = assignShiftLanes(dayShifts);
+    const maxVisibleLanes = 2; // Show maximum 2 lanes, rest in overflow
+    const hasOverflow = shiftLanes.length > 0 && shiftLanes[0].totalLanes > maxVisibleLanes;
+    const laneHeight = viewMode === 'week' ? 14 : 20; // Smaller lanes in week mode
+    const laneGap = 2;
+    
     // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
     const TIMELINE_START_HOUR = 6; // 6:00 AM
     const TIMELINE_END_HOUR = 22; // 10:00 PM
     const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
     
-    return dayShifts.map((shift: WorkShift, index: number) => {
+    return (
+      <>
+        {shiftLanes.slice(0, maxVisibleLanes).map(({ shift, lane }, index: number) => {
       const shiftStart = parseISO(shift.startAt);
       const shiftEnd = parseISO(shift.endAt);
       
@@ -713,8 +768,8 @@ export default function Schedules() {
           style={{
             left: `${startPosition}%`,
             width: `${Math.min(Math.max(width, 15), 100 - startPosition)}%`, // Limitar para que no se salga
-            top: '2px',
-            bottom: '2px',
+            top: `${2 + lane * (laneHeight + laneGap)}px`,
+            height: `${laneHeight}px`,
             backgroundColor: shift.color || '#007AFF',
             zIndex: 10
           }}
@@ -740,7 +795,24 @@ export default function Schedules() {
           </div>
         </div>
       );
-    }).filter(Boolean);
+        })}
+        
+        {/* Overflow badge for additional shifts */}
+        {hasOverflow && (
+          <div 
+            className="absolute bottom-1 right-1 bg-gray-600 dark:bg-gray-400 text-white dark:text-gray-900 text-[8px] font-semibold rounded px-1 py-0.5 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors z-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Show popover with all shifts
+              console.log('Show all shifts for this day:', dayShifts);
+            }}
+            title={`+${shiftLanes[0].totalLanes - maxVisibleLanes} turnos más`}
+          >
+            +{shiftLanes[0].totalLanes - maxVisibleLanes}
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
