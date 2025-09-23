@@ -3,6 +3,7 @@ export interface SubscriptionFeatures {
   messages: boolean;
   documents: boolean;
   vacation: boolean;
+  schedules: boolean;
   timeTracking: boolean;
   timeEditingPermissions: boolean;
   analytics: boolean;
@@ -51,6 +52,7 @@ export const checkFeatureAccess = (subscription: Subscription | null, feature: k
     messages: 'messages',
     documents: 'documents',
     vacation: 'vacation',
+    schedules: 'schedules',
     reminders: 'reminders',
     timeEditingPermissions: 'employee_time_edit_permission',
     analytics: 'reports',
@@ -75,6 +77,7 @@ export const getRequiredPlanForFeature = (feature: keyof SubscriptionFeatures): 
     messages: 'Basic',
     documents: 'Pro',
     vacation: 'Basic',
+    schedules: 'Basic',
     timeTracking: 'Basic',
     timeEditingPermissions: 'Pro',
     analytics: 'Pro',

@@ -2,7 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
-import { LayoutDashboard, Clock, Calendar, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Clock, Calendar, CalendarClock, FileText, Mail, Bell, Users, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 
@@ -58,6 +58,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: Calendar,
       feature: 'vacation' as const
     },
+    ...(user?.role === 'admin' || user?.role === 'manager' ? [
+      { 
+        name: 'Cuadrante', 
+        href: `/${companyAlias}/cuadrante`, 
+        icon: CalendarClock,
+        feature: 'schedules' as const
+      }
+    ] : []),
     { 
       name: 'Documentos', 
       href: `/${companyAlias}/documentos`, 
