@@ -559,21 +559,7 @@ export default function Schedules() {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
     
-    // Calcular altura mínima basada en el número de turnos para este día
-    const dayShifts = getShiftsForEmployee(employeeId).filter((shift: WorkShift) => {
-      const shiftStart = parseISO(shift.startAt);
-      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
-      return shiftStartDay === format(date, 'yyyy-MM-dd');
-    });
-    
-    const shiftLanes = assignShiftLanes(dayShifts);
-    const totalLanes = shiftLanes.length > 0 ? shiftLanes[0].totalLanes : 0;
-    const laneHeight = viewMode === 'week' ? 14 : 20;
-    const laneGap = 2;
-    const minCellHeight = Math.max(60, totalLanes * 28 + 12); // Altura base más generosa para que respiren los badges
-    
-    let baseStyle = "relative rounded border overflow-hidden";
-    baseStyle += ` min-h-[${minCellHeight}px]`;
+    let baseStyle = "relative rounded border overflow-hidden min-h-[80px]"; // Altura fija más alta
     
     if (holiday) {
       // Día festivo - fondo rojo suave
@@ -587,6 +573,20 @@ export default function Schedules() {
     }
     
     return baseStyle;
+  };
+  
+  // Función para obtener la altura dinámica de la celda
+  const getCellHeightStyle = (employeeId: number, date: Date) => {
+    const dayShifts = getShiftsForEmployee(employeeId).filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
+      return shiftStartDay === format(date, 'yyyy-MM-dd');
+    });
+    
+    const numShifts = dayShifts.length;
+    const minHeight = Math.max(80, numShifts * 32 + 16); // Altura base más generosa
+    
+    return { minHeight: `${minHeight}px` };
   };
 
   // Función para obtener el contenido adicional de la celda
@@ -959,6 +959,7 @@ export default function Schedules() {
                             className={`${getCellStyle(employee.id, day)} ${!isDisabled ? 'cursor-pointer hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
   viewMode === 'day' ? 'p-1 md:p-2' : ''
                             }`}
+                            style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled) {
                                 setSelectedCell({
