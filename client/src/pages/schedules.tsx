@@ -15,6 +15,20 @@ import { useAuth } from "@/hooks/use-auth";
 import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
 import Autocomplete from "react-google-autocomplete";
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  useSensor, 
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverEvent,
+  useDraggable,
+  useDroppable
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 interface WorkShift {
   id: number;
@@ -499,6 +513,109 @@ export default function Schedules() {
     color: SHIFT_COLORS[0]
   });
 
+  // Estados y configuración para drag & drop
+  const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
+  const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
+  
+  // Configurar sensors para drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px threshold to start dragging
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handlers para eventos de drag & drop
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const shift = workShifts.find(s => s.id === Number(active.id));
+    if (shift) {
+      setActiveShift(shift);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setDragOverCellId(over ? String(over.id) : null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    setActiveShift(null);
+    setDragOverCellId(null);
+
+    if (!over || !activeShift) return;
+
+    // Parse drop target (format: "cell-employeeId-date")
+    const [prefix, employeeIdStr, dateStr] = String(over.id).split('-');
+    if (prefix !== 'cell') return;
+
+    const targetEmployeeId = Number(employeeIdStr);
+    const targetDate = new Date(dateStr);
+    
+    // Don't duplicate if dropped on the same cell
+    if (targetEmployeeId === activeShift.employeeId && 
+        format(targetDate, 'yyyy-MM-dd') === format(parseISO(activeShift.startAt), 'yyyy-MM-dd')) {
+      return;
+    }
+
+    try {
+      // Duplicate the shift with new employee/date
+      await duplicateShift(activeShift, targetEmployeeId, targetDate);
+      
+      toast({
+        title: 'Turno duplicado',
+        description: `El turno "${activeShift.title}" se ha duplicado exitosamente`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error al duplicar turno',
+        description: error.message || 'No se pudo duplicar el turno',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Function to duplicate a shift
+  const duplicateShift = async (originalShift: WorkShift, newEmployeeId: number, newDate: Date) => {
+    const originalStart = parseISO(originalShift.startAt);
+    const originalEnd = parseISO(originalShift.endAt);
+    
+    // Create new dates with same time but different date
+    const newStart = new Date(newDate);
+    newStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+    
+    const newEnd = new Date(newDate);
+    newEnd.setHours(originalEnd.getHours(), originalEnd.getMinutes(), 0, 0);
+    
+    // Handle overnight shifts
+    if (originalEnd < originalStart) {
+      newEnd.setDate(newEnd.getDate() + 1);
+    }
+
+    const duplicateData = {
+      employeeId: newEmployeeId,
+      startAt: newStart.toISOString(),
+      endAt: newEnd.toISOString(),
+      title: originalShift.title,
+      location: originalShift.location || '',
+      notes: originalShift.notes || '',
+      color: originalShift.color
+    };
+
+    const response = await apiRequest('POST', '/api/work-shifts', duplicateData);
+    
+    // Invalidate and refetch shifts data
+    queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+    
+    return response;
+  };
+
   // Calcular rango según el modo de vista
   const getWeekRange = () => {
     if (viewMode === 'day') {
@@ -967,7 +1084,13 @@ export default function Schedules() {
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
 
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       {loadingEmployees ? (
         <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto flex justify-center py-8" style={{ overflowX: 'clip' }}>
           <LoadingSpinner />
@@ -1577,6 +1700,6 @@ export default function Schedules() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </DndContext>
   );
 }
