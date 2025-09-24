@@ -873,6 +873,62 @@ export default function Schedules() {
     return { start: startWithMargin, end: endWithMargin };
   }, [workShifts]);
 
+  // Componente draggable para badges de turnos
+  function DraggableBadge({ 
+    shift, 
+    shiftHours, 
+    style, 
+    onClick, 
+    title, 
+    className 
+  }: {
+    shift: WorkShift;
+    shiftHours: string;
+    style: React.CSSProperties;
+    onClick: (e: React.MouseEvent) => void;
+    title: string;
+    className?: string;
+  }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      isDragging,
+    } = useDraggable({
+      id: shift.id,
+    });
+
+    const dragStyle = transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    } : {};
+
+    return (
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={`absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 ${isDragging ? 'opacity-50 z-50' : ''} ${className || ''}`}
+        style={{
+          ...style,
+          ...dragStyle,
+          backgroundColor: shift.color || '#007AFF',
+          zIndex: isDragging ? 1000 : (style.zIndex || 10),
+        }}
+        onClick={onClick}
+        title={title}
+      >
+        {/* Diseño de dos líneas: nombre arriba, hora abajo */}
+        <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
+          {shift.title}
+        </div>
+        <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
+          {shiftHours}
+        </div>
+      </div>
+    );
+  }
+
   // ⚠️ OPTIMIZACIÓN: Renderizar barras de turnos memoizado para evitar O(E×S) recálculos
   const renderShiftBar = useCallback((employee: Employee, day: Date) => {
     const shifts = getShiftsForEmployee(employee.id);
@@ -999,15 +1055,15 @@ export default function Schedules() {
           
           {/* Badges de turnos */}
           {shiftsWithPositions.map(({ shift, shiftHours, leftPercent, widthPercent }) => (
-            <div
+            <DraggableBadge
               key={shift.id}
-              className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+              shift={shift}
+              shiftHours={shiftHours}
               style={{
                 left: `${leftPercent}%`,
                 width: `${widthPercent}%`,
                 top: '28px',          // Margen para la regla de horas arriba
                 bottom: '3px',        
-                backgroundColor: shift.color || '#007AFF',
                 zIndex: 10,
                 boxSizing: 'border-box'
               }}
@@ -1017,15 +1073,7 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-            >
-              {/* Diseño de dos líneas: nombre arriba, hora abajo */}
-              <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
-                {shift.title}
-              </div>
-              <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
-                {shiftHours}
-              </div>
-            </div>
+            />
           ))}
         </>
       );
@@ -1050,15 +1098,15 @@ export default function Schedules() {
           const shiftHours = `${startTime}-${endTime}`;
           
           return (
-            <div
+            <DraggableBadge
               key={`${shift.id}-${index}`}
-              className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+              shift={shift}
+              shiftHours={shiftHours}
               style={{
                 left: '3px',
                 right: '3px',
                 top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible})`, // Espacio disponible (menos márgenes) dividido uniformemente
                 height: `calc((100% - 6px) / ${totalVisible} - 2px)`, // Altura con separación interna de 2px entre badges
-                backgroundColor: shift.color || '#007AFF',
                 zIndex: 10,
                 boxSizing: 'border-box'
               }}
@@ -1068,15 +1116,7 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-            >
-              {/* Diseño de dos líneas: nombre arriba, hora abajo */}
-              <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
-                {shift.title}
-              </div>
-              <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
-                {shiftHours}
-              </div>
-            </div>
+            />
           );
         })}
       </>
