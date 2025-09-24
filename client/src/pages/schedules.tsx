@@ -762,8 +762,13 @@ export default function Schedules() {
 
       // Then duplicate the original shift
       console.log('🚨 About to duplicate shift');
-      await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
-      console.log('🚨 Shift duplicated successfully');
+      try {
+        await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
+        console.log('🚨 Shift duplicated successfully');
+      } catch (duplicateError: any) {
+        console.error('🚨 Error during duplication:', duplicateError);
+        throw duplicateError;
+      }
       
       toast({
         title: '✅ Turno sobrescrito',
