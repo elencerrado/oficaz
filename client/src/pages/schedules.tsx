@@ -366,6 +366,104 @@ export default function Schedules() {
     },
   });
 
+  // Mutation para eliminar todos los turnos de la semana de un empleado
+  const deleteWeekShiftsMutation = useMutation({
+    mutationFn: async ({ employeeId, weekStart }: { employeeId: number; weekStart: Date }) => {
+      // Obtener todos los turnos del empleado en esa semana
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+      
+      const employeeShifts = workShifts.filter(shift => 
+        shift.employeeId === employeeId &&
+        weekDays.some(day => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
+      );
+
+      // Eliminar todos los turnos de la semana
+      const deletePromises = employeeShifts.map(shift => 
+        apiRequest('DELETE', `/api/work-shifts/${shift.id}`)
+      );
+      
+      return Promise.all(deletePromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+    },
+    onError: (error: any) => {
+      console.error('Error deleting week shifts:', error);
+    },
+  });
+
+  // Mutation para duplicar semana actual a la siguiente
+  const duplicateWeekMutation = useMutation({
+    mutationFn: async ({ employeeId, currentWeekStart }: { employeeId: number; currentWeekStart: Date }) => {
+      // Calcular semana siguiente
+      const nextWeekStart = addWeeks(currentWeekStart, 1);
+      const nextWeekEnd = endOfWeek(nextWeekStart, { weekStartsOn: 1 });
+      
+      // Obtener turnos de la semana actual
+      const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
+      const currentWeekDays = eachDayOfInterval({ start: currentWeekStart, end: currentWeekEnd });
+      
+      const currentWeekShifts = workShifts.filter(shift => 
+        shift.employeeId === employeeId &&
+        currentWeekDays.some(day => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
+      );
+
+      if (currentWeekShifts.length === 0) {
+        throw new Error('No hay turnos en la semana actual para duplicar');
+      }
+
+      // Eliminar turnos existentes en la semana siguiente
+      const nextWeekDays = eachDayOfInterval({ start: nextWeekStart, end: nextWeekEnd });
+      const nextWeekShifts = workShifts.filter(shift => 
+        shift.employeeId === employeeId &&
+        nextWeekDays.some(day => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd'))
+      );
+
+      const deletePromises = nextWeekShifts.map(shift => 
+        apiRequest('DELETE', `/api/work-shifts/${shift.id}`)
+      );
+      
+      if (deletePromises.length > 0) {
+        await Promise.all(deletePromises);
+      }
+
+      // Duplicar turnos de la semana actual a la siguiente
+      const createPromises = currentWeekShifts.map(shift => {
+        const originalStart = parseISO(shift.startAt);
+        const originalEnd = parseISO(shift.endAt);
+        
+        // Calcular la nueva fecha (misma hora, semana siguiente)
+        const daysDiff = differenceInDays(originalStart, currentWeekStart);
+        const newStart = addDays(nextWeekStart, daysDiff);
+        const newEnd = addDays(newStart, differenceInDays(originalEnd, originalStart));
+        
+        newStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+        newEnd.setHours(originalEnd.getHours(), originalEnd.getMinutes(), 0, 0);
+
+        return apiRequest('POST', '/api/work-shifts', {
+          employeeId: shift.employeeId,
+          startAt: newStart.toISOString(),
+          endAt: newEnd.toISOString(),
+          title: shift.title,
+          location: shift.location || '',
+          notes: shift.notes || '',
+          color: shift.color
+        });
+      });
+      
+      return Promise.all(createPromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+    },
+    onError: (error: any) => {
+      console.error('Error duplicating week:', error);
+    },
+  });
+
   // Set page header
   useEffect(() => {
     setHeader({
@@ -1528,7 +1626,7 @@ export default function Schedules() {
                   <div key={employee.id} className="p-4">
                     <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
-                      <div className="flex flex-col items-center justify-center gap-1">
+                      <div className="flex flex-col items-center justify-center gap-1 relative group">
                         <UserAvatar 
                           fullName={employee.fullName} 
                           size="sm" 
@@ -1539,6 +1637,43 @@ export default function Schedules() {
                         <div className="text-[10px] md:text-xs font-medium text-foreground text-center max-w-full leading-tight">
                           {employee.fullName}
                         </div>
+                        
+                        {/* Iconos de acciones de semana - solo visibles en modo semana */}
+                        {(viewMode === 'week' || viewMode === 'workweek') && (
+                          <div className="absolute -right-1 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {/* Botón eliminar todos los turnos de la semana */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteWeekShiftsMutation.mutate({
+                                  employeeId: employee.id,
+                                  weekStart: weekRange.start
+                                });
+                              }}
+                              className="w-5 h-5 bg-red-500 hover:bg-red-600 rounded flex items-center justify-center shadow-md border border-white/30 transition-colors"
+                              title="Eliminar todos los turnos de esta semana"
+                              disabled={deleteWeekShiftsMutation.isPending}
+                            >
+                              <Trash2 className="w-3 h-3 text-white" />
+                            </button>
+                            
+                            {/* Botón duplicar semana actual a la siguiente */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                duplicateWeekMutation.mutate({
+                                  employeeId: employee.id,
+                                  currentWeekStart: weekRange.start
+                                });
+                              }}
+                              className="w-5 h-5 bg-blue-500 hover:bg-blue-600 rounded flex items-center justify-center shadow-md border border-white/30 transition-colors"
+                              title="Duplicar esta semana a la siguiente (sobreescribe todo)"
+                              disabled={duplicateWeekMutation.isPending}
+                            >
+                              <Copy className="w-3 h-3 text-white" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Columnas de días */}
