@@ -409,7 +409,7 @@ export default function Schedules() {
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState<WorkShift | null>(null);
   const [showShiftModal, setShowShiftModal] = useState(false);
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
+  const [viewMode, setViewMode] = useState<'day' | 'workweek' | 'week'>('week');
   
   // Forzar vista día en móvil
   useEffect(() => {
@@ -507,8 +507,13 @@ export default function Schedules() {
         end: viewDate,
         days: [viewDate]
       };
+    } else if (viewMode === 'workweek') {
+      // Solo mostrar días laborales (lunes a viernes)
+      const start = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday start
+      const end = addDays(start, 4); // Friday (Monday + 4 days = Friday)
+      return { start, end, days: eachDayOfInterval({ start, end }) };
     } else {
-      // Mostrar toda la semana
+      // Mostrar toda la semana (incluyendo sábado y domingo)
       const start = startOfWeek(viewDate, { weekStartsOn: 1 }); // Monday start
       const end = endOfWeek(viewDate, { weekStartsOn: 1 });
       return { start, end, days: eachDayOfInterval({ start, end }) };
@@ -1002,7 +1007,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
@@ -1018,14 +1023,14 @@ export default function Schedules() {
                       
                       {/* Tab buttons */}
                       <div className="relative flex">
-                        {(['day', 'week'] as const).map((mode) => {
-                          const labels = { day: '1', week: '7' };
+                        {(['day', 'workweek', 'week'] as const).map((mode) => {
+                          const labels = { day: '1', workweek: '5', week: '7' };
                           return (
                             <button
                               key={mode}
                               onClick={() => {
-                              // Prevenir cambio a week en móvil
-                              if (window.innerWidth >= 640 || mode === 'day') {
+                              // Prevenir cambio a week en móvil (workweek y day sí funcionan)
+                              if (window.innerWidth >= 640 || mode === 'day' || mode === 'workweek') {
                                 setViewMode(mode);
                               }
                             }}
@@ -1087,7 +1092,7 @@ export default function Schedules() {
               {employees.map((employee: Employee) => {
                 return (
                   <div key={employee.id} className="p-2 md:p-4">
-                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
                         <UserAvatar 
