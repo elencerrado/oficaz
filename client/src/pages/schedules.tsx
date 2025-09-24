@@ -978,7 +978,7 @@ export default function Schedules() {
         </div>
       ) : (
         <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
-            <CardHeader className="bg-muted/10 p-4 flex-shrink-0">
+            <CardHeader className="bg-muted/10 px-4 py-2 flex-shrink-0">
               {/* Header con mes y navegación */}
               <div>
                 <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -1008,7 +1008,7 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-1 ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+                <div className={`grid gap-1 py-0.5 ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                   {/* Selector de vista */}
                   <div className="flex items-center justify-center">
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
@@ -1056,7 +1056,7 @@ export default function Schedules() {
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
                     return (
-                      <div key={index} className={`flex flex-col items-center justify-center h-10 ${
+                      <div key={index} className={`flex flex-col items-center justify-center h-8 ${
                         viewMode === 'day' ? 'justify-center' : 'items-center'
                       }`}>
                         <div className={`text-[10px] md:text-xs font-medium uppercase tracking-wide leading-none ${
@@ -1090,7 +1090,7 @@ export default function Schedules() {
               </div>
             </CardHeader>
             
-            <CardContent className="p-0 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
+            <CardContent className="p-0 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
