@@ -652,7 +652,11 @@ export default function Schedules() {
     }
     
     // Find shifts with actual time conflicts (including overnight shifts)
+    // Exclude the original shift being dragged to avoid deleting it
     const conflictingShifts = existingShifts.filter((shift: WorkShift) => {
+      // Skip the original shift being dragged
+      if (shift.id === activeShift.id) return false;
+      
       const shiftStart = parseISO(shift.startAt);
       const shiftEnd = parseISO(shift.endAt);
       const shiftStartDateStr = format(shiftStart, 'yyyy-MM-dd');
