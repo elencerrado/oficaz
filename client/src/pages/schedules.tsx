@@ -873,6 +873,60 @@ export default function Schedules() {
     return { start: startWithMargin, end: endWithMargin };
   }, [workShifts]);
 
+  // Componente droppable para celdas del calendario
+  function DroppableCell({
+    employeeId,
+    day,
+    isDisabled,
+    className,
+    style,
+    onClick,
+    children,
+    title
+  }: {
+    employeeId: number;
+    day: Date;
+    isDisabled: boolean;
+    className: string;
+    style: React.CSSProperties;
+    onClick: () => void;
+    children: React.ReactNode;
+    title: string;
+  }) {
+    const cellId = `cell-${employeeId}-${format(day, 'yyyy-MM-dd')}`;
+    
+    const {
+      isOver,
+      setNodeRef
+    } = useDroppable({
+      id: cellId,
+      disabled: isDisabled
+    });
+
+    // Visual feedback when dragging over
+    const dropStyle = isOver && !isDisabled ? {
+      backgroundColor: 'rgba(59, 130, 246, 0.1)', // blue-500 with opacity
+      borderColor: 'rgb(59, 130, 246)', // blue-500
+      borderWidth: '2px',
+      borderStyle: 'dashed'
+    } : {};
+
+    return (
+      <div
+        ref={setNodeRef}
+        className={`${className} ${isOver && !isDisabled ? 'ring-2 ring-blue-500/50' : ''}`}
+        style={{
+          ...style,
+          ...dropStyle
+        }}
+        onClick={onClick}
+        title={title}
+      >
+        {children}
+      </div>
+    );
+  }
+
   // Componente draggable para badges de turnos
   function DraggableBadge({ 
     shift, 
@@ -1277,11 +1331,14 @@ export default function Schedules() {
                       {filteredDays.map((day, dayIndex) => {
                         const holiday = isHoliday(day);
                         const vacation = isEmployeeOnVacation(employee.id, day);
-                        const isDisabled = vacation; // Solo las vacaciones deshabilitan la celda
+                        const isDisabled = !!vacation; // Solo las vacaciones deshabilitan la celda
                         
                         return (
-                          <div 
-                            key={dayIndex} 
+                          <DroppableCell
+                            key={dayIndex}
+                            employeeId={employee.id}
+                            day={day}
+                            isDisabled={isDisabled}
                             className={`${getCellStyle(employee.id, day)} ${
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
@@ -1300,8 +1357,8 @@ export default function Schedules() {
                             }}
                             title={
                               vacation ? 'Empleado de vacaciones' : 
-                              holiday ? `Día festivo: ${holiday.name} - Click para añadir turno` : 
-                              'Click para añadir turno'
+                              holiday ? `Día festivo: ${holiday.name} - Click para añadir turno o arrastrar turno aquí` : 
+                              'Click para añadir turno o arrastrar turno aquí'
                             }
                           >
                             {/* Área principal de la celda (badges y contenido especial) */}
@@ -1365,7 +1422,7 @@ export default function Schedules() {
                                 </button>
                               </div>
                             )}
-                          </div>
+                          </DroppableCell>
                         );
                       })}
                     </div>
