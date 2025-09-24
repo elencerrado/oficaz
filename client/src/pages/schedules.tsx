@@ -982,7 +982,7 @@ export default function Schedules() {
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
               {/* Header con mes y navegación */}
-              <div className="bg-muted/10 p-2 md:p-4">
+              <div className="bg-muted/10">
                 <div className="flex items-center justify-between mb-2 md:mb-4">
                   <Button
                     variant="ghost"
@@ -1094,7 +1094,7 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className="p-2 md:p-4">
+                  <div key={employee.id} className="">
                     <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
