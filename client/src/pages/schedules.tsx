@@ -814,7 +814,7 @@ export default function Schedules() {
       }, {} as Record<number, typeof shiftsWithPositions>);
       
       // Ajustar posiciones para evitar solapamiento horizontal con separación mínima
-      const minGapPercent = 2; // 2% de separación mínima horizontal
+      const minGapPercent = 0.3; // 0.3% de separación mínima horizontal (similar a 2px)
       Object.values(shiftsByLane).forEach(laneShifts => {
         laneShifts.sort((a, b) => a.leftPercent - b.leftPercent);
         
