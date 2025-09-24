@@ -774,7 +774,7 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ SISTEMA SIMPLE QUE FUNCIONA: Distribución equitativa sin complejidad
+      // ⚠️ TIMELINE HÍBRIDO INTELIGENTE: Cronología real + anti-solapamiento
       const shiftsWithPositions: Array<{
         shift: WorkShift;
         lane: number;
@@ -783,35 +783,81 @@ export default function Schedules() {
         shiftHours: string;
       }> = [];
       
-      // Agrupar por carril
+      // Procesar cada carril independientemente
       const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
         if (!acc[item.lane]) acc[item.lane] = [];
         acc[item.lane].push(item);
         return acc;
       }, {} as Record<number, typeof shiftsWithLanes>);
       
-      // Para cada carril, distribución SIMPLE y EQUITATIVA
       Object.values(shiftsByLane).forEach(laneShifts => {
         if (laneShifts.length === 0) return;
         
         // Ordenar cronológicamente
         laneShifts.sort((a, b) => parseISO(a.shift.startAt).getTime() - parseISO(b.shift.startAt).getTime());
         
-        const shiftsCount = laneShifts.length;
-        const gap = shiftsCount > 1 ? 1 : 0; // 1% de gap entre badges
-        const totalGap = gap * (shiftsCount - 1);
-        const badgeWidth = (100 - totalGap) / shiftsCount; // Ancho equitativo
-        
-        laneShifts.forEach(({ shift, lane }, index) => {
+        // Paso 1: Calcular posiciones cronológicas ideales
+        const chronoData = laneShifts.map(({ shift, lane }) => {
           const shiftStart = parseISO(shift.startAt);
           const shiftEnd = parseISO(shift.endAt);
           const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
           
+          // Calcular horas como decimales
+          const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
+          const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+          
+          // Limitar al timeline visible (6:00 AM - 10:00 PM)
+          const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
+          const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
+          
+          // Posición cronológica exacta en %
+          const chronoLeft = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+          const chronoWidth = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+          
+          return {
+            shift,
+            lane,
+            shiftHours,
+            chronoLeft,
+            chronoWidth,
+            adjustedLeft: chronoLeft,
+            adjustedWidth: chronoWidth
+          };
+        });
+        
+        // Paso 2: Resolver conflictos horizontales manteniendo cronología
+        if (chronoData.length > 1) {
+          const minGap = 0.8; // Gap mínimo entre badges
+          
+          for (let i = 1; i < chronoData.length; i++) {
+            const current = chronoData[i];
+            const previous = chronoData[i - 1];
+            
+            const prevRightEdge = previous.adjustedLeft + previous.adjustedWidth;
+            
+            // Si hay solapamiento horizontal
+            if (current.adjustedLeft < prevRightEdge + minGap) {
+              // Ajustar posición manteniendo cronología relativa
+              const overlap = (prevRightEdge + minGap) - current.adjustedLeft;
+              
+              // Mover ligeramente a la derecha pero conservar ancho proporcional
+              current.adjustedLeft = prevRightEdge + minGap;
+              
+              // Si se sale del 100%, comprimir ancho proporcionalmente
+              if (current.adjustedLeft + current.adjustedWidth > 100) {
+                current.adjustedWidth = Math.max(8, 100 - current.adjustedLeft);
+              }
+            }
+          }
+        }
+        
+        // Paso 3: Añadir a la lista final
+        chronoData.forEach(({ shift, lane, shiftHours, adjustedLeft, adjustedWidth }) => {
           shiftsWithPositions.push({
             shift,
             lane,
-            leftPercent: index * (badgeWidth + gap), // Posición simple: index * (ancho + gap)
-            widthPercent: badgeWidth,
+            leftPercent: adjustedLeft,
+            widthPercent: adjustedWidth,
             shiftHours
           });
         });
