@@ -20,6 +20,7 @@ import {
   closestCenter, 
   KeyboardSensor, 
   PointerSensor, 
+  TouchSensor,
   useSensor, 
   useSensors,
   DragEndEvent,
@@ -527,13 +528,24 @@ export default function Schedules() {
     existingShifts: WorkShift[];
   } | null>(null);
   
-  // Configurar sensors para drag & drop
+  // Configurar sensors para drag & drop con soporte móvil mejorado
   const sensors = useSensors(
+    // Mouse/trackpad support
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // 8px threshold to start dragging
       },
     }),
+    
+    // Touch support for mobile devices
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250, // 250ms long press to start dragging
+        tolerance: 8, // Allow 8px of movement during delay
+      },
+    }),
+    
+    // Keyboard support for accessibility
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
