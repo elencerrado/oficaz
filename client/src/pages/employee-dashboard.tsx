@@ -691,7 +691,7 @@ export default function EmployeeDashboard() {
       feature: 'timeTracking'
     },
     { 
-      icon: User, 
+      icon: Calendar, 
       title: 'Cuadrante', 
       route: `/${companyAlias}/cuadrante`,
       notification: false,
