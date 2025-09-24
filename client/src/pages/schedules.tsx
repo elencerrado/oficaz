@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2 } from "lucide-react";
+import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2, MapPin } from "lucide-react";
 import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,6 +14,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
+import Autocomplete from "react-google-autocomplete";
 
 interface WorkShift {
   id: number;
@@ -1320,14 +1321,39 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación */}
-              <input
-                type="text"
-                value={newShift.location}
-                onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Ubicación (opcional)"
-                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              {/* Ubicación con autocompletado */}
+              <div className="relative">
+                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Autocomplete
+                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                  onPlaceSelected={(place) => {
+                    setNewShift(prev => ({ 
+                      ...prev, 
+                      location: place.formatted_address || place.name || ''
+                    }));
+                  }}
+                  options={{
+                    types: ['establishment', 'geocode'],
+                    componentRestrictions: { country: 'es' }
+                  }}
+                  value={newShift.location}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    paddingLeft: '2rem',
+                    paddingRight: '0.75rem',
+                    paddingTop: '0.5rem',
+                    paddingBottom: '0.5rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))'
+                  }}
+                />
+              </div>
               
               {/* Notas */}
               <textarea
@@ -1495,14 +1521,39 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación */}
-              <input
-                type="text"
-                value={editShift.location}
-                onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Ubicación (opcional)"
-                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              {/* Ubicación con autocompletado */}
+              <div className="relative">
+                <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Autocomplete
+                  apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                  onPlaceSelected={(place) => {
+                    setEditShift(prev => ({ 
+                      ...prev, 
+                      location: place.formatted_address || place.name || ''
+                    }));
+                  }}
+                  options={{
+                    types: ['establishment', 'geocode'],
+                    componentRestrictions: { country: 'es' }
+                  }}
+                  value={editShift.location}
+                  onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  style={{
+                    width: '100%',
+                    paddingLeft: '2rem',
+                    paddingRight: '0.75rem',
+                    paddingTop: '0.5rem',
+                    paddingBottom: '0.5rem',
+                    fontSize: '0.875rem',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '0.375rem',
+                    backgroundColor: 'hsl(var(--background))',
+                    color: 'hsl(var(--foreground))'
+                  }}
+                />
+              </div>
               
               {/* Notas */}
               <textarea
