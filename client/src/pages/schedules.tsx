@@ -774,23 +774,21 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ TIMELINE ESTILIZADO: Orden cronológico + distribución proporcional sin solapamiento
+      // ⚠️ DISTRIBUCIÓN GARANTIZADA SIN DESBORDAMIENTO
+      const shiftsWithPositions: Array<{
+        shift: WorkShift;
+        lane: number;
+        leftPercent: number;
+        widthPercent: number;
+        shiftHours: string;
+      }> = [];
+      
       // Agrupar turnos por carril y procesarlos independientemente
       const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
         if (!acc[item.lane]) acc[item.lane] = [];
         acc[item.lane].push(item);
         return acc;
       }, {} as Record<number, typeof shiftsWithLanes>);
-      
-      // Procesar cada carril independientemente
-      const shiftsWithPositions = Object.values(shiftsByLane).flat().map(() => ({
-        shift: {} as WorkShift,
-        lane: 0,
-        leftPercent: 0,
-        widthPercent: 0,
-        shiftHours: ''
-      }));
-      let positionIndex = 0;
       
       Object.values(shiftsByLane).forEach(laneShifts => {
         if (laneShifts.length === 0) return;
@@ -802,52 +800,82 @@ export default function Schedules() {
           return timeA - timeB;
         });
         
-        // Calcular duración total de todos los turnos en este carril
-        const totalDuration = laneShifts.reduce((sum, { shift }) => {
-          const start = parseISO(shift.startAt);
-          const end = parseISO(shift.endAt);
-          const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // horas
-          return sum + duration;
-        }, 0);
+        const shiftsCount = laneShifts.length;
         
-        // Distribución proporcional: cada turno ocupa % basado en su duración relativa
-        const minGapPercent = laneShifts.length > 1 ? Math.max(0.5, 100 / (laneShifts.length * 100)) : 0;
-        const totalGapPercent = minGapPercent * (laneShifts.length - 1);
-        const availableWidthPercent = 100 - totalGapPercent;
-        
-        let currentLeftPercent = 0;
-        
-        laneShifts.forEach(({ shift, lane }) => {
+        if (shiftsCount === 1) {
+          // Un solo turno: usar todo el ancho disponible
+          const { shift, lane } = laneShifts[0];
           const shiftStart = parseISO(shift.startAt);
           const shiftEnd = parseISO(shift.endAt);
-          const startTime = format(shiftStart, 'HH:mm');
-          const endTime = format(shiftEnd, 'HH:mm');
-          const shiftHours = `${startTime}-${endTime}`;
+          const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
           
-          // Duración de este turno específico
-          const shiftDuration = (shiftEnd.getTime() - shiftStart.getTime()) / (1000 * 60 * 60);
-          
-          // Ancho proporcional basado en duración relativa (no cronología absoluta)
-          const proportionalWidth = totalDuration > 0 
-            ? (shiftDuration / totalDuration) * availableWidthPercent
-            : availableWidthPercent / laneShifts.length;
-          
-          // Ancho mínimo para legibilidad
-          const minWidthPercent = Math.max(6, availableWidthPercent / laneShifts.length * 0.8);
-          const finalWidthPercent = Math.max(minWidthPercent, proportionalWidth);
-          
-          shiftsWithPositions[positionIndex] = {
+          shiftsWithPositions.push({
             shift,
             lane,
-            leftPercent: currentLeftPercent,
-            widthPercent: finalWidthPercent,
+            leftPercent: 0,
+            widthPercent: 100,
             shiftHours
-          };
+          });
+        } else {
+          // Múltiples turnos: distribución estricta sin desbordamiento
+          const minGapPercent = Math.min(1, 100 / (shiftsCount * 50)); // Gap muy pequeño
+          const totalGapPercent = minGapPercent * (shiftsCount - 1);
+          const availableWidth = 100 - totalGapPercent;
           
-          // Siguiente posición: posición actual + ancho + gap
-          currentLeftPercent += finalWidthPercent + minGapPercent;
-          positionIndex++;
-        });
+          // Calcular duración total para proporcionalidad
+          const totalDuration = laneShifts.reduce((sum, { shift }) => {
+            const start = parseISO(shift.startAt);
+            const end = parseISO(shift.endAt);
+            return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+          }, 0);
+          
+          // Primera pasada: calcular anchos ideales
+          const idealWidths: number[] = [];
+          let totalIdealWidth = 0;
+          
+          laneShifts.forEach(({ shift }) => {
+            const start = parseISO(shift.startAt);
+            const end = parseISO(shift.endAt);
+            const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+            
+            const proportionalWidth = totalDuration > 0 
+              ? (duration / totalDuration) * availableWidth
+              : availableWidth / shiftsCount;
+            
+            const minWidth = availableWidth / shiftsCount * 0.7; // Mínimo 70% del espacio equitativo
+            const idealWidth = Math.max(minWidth, proportionalWidth);
+            
+            idealWidths.push(idealWidth);
+            totalIdealWidth += idealWidth;
+          });
+          
+          // Segunda pasada: escalar si es necesario
+          const scaleFactor = totalIdealWidth > availableWidth 
+            ? availableWidth / totalIdealWidth 
+            : 1;
+          
+          // Tercera pasada: posicionar con ancho escalado
+          let currentLeft = 0;
+          
+          laneShifts.forEach(({ shift, lane }, index) => {
+            const shiftStart = parseISO(shift.startAt);
+            const shiftEnd = parseISO(shift.endAt);
+            const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
+            
+            const finalWidth = idealWidths[index] * scaleFactor;
+            
+            shiftsWithPositions.push({
+              shift,
+              lane,
+              leftPercent: currentLeft,
+              widthPercent: finalWidth,
+              shiftHours
+            });
+            
+            // GARANTIZADO: siguiente posición nunca excede límites
+            currentLeft = Math.min(100 - finalWidth, currentLeft + finalWidth + minGapPercent);
+          });
+        }
       });
       
       return (
