@@ -1144,7 +1144,7 @@ export default function Schedules() {
                                 ? 'flex-1' // Modo día: ocupa espacio restante
                                 : 'flex-1' // Modo semana: ocupa el espacio menos el footer
                             }`} style={
-                              viewMode === 'week' 
+                              viewMode === 'week' || viewMode === 'workweek' 
                                 ? { paddingBottom: '24px', maxHeight: 'calc(100% - 24px)' }
                                 : {}
                             }>
