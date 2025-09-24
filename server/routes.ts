@@ -3552,6 +3552,24 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Endpoint for employee to get their own shifts
+  app.get('/api/work-shifts/my-shifts', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      
+      const shifts = await storage.getWorkShiftsByEmployee(
+        req.user!.id, 
+        startDate as string, 
+        endDate as string
+      );
+      
+      res.json(shifts);
+    } catch (error: any) {
+      console.error('Error fetching my work shifts:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.patch('/api/work-shifts/:id', authenticateToken, requireRole(['admin', 'manager']), async (req: AuthRequest, res) => {
     try {
       const id = parseInt(req.params.id);

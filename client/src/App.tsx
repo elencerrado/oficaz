@@ -59,6 +59,7 @@ import EmployeeReminders from "@/pages/employee-reminders";
 import EmployeesSimple from "@/pages/employees-simple";
 import Settings from "@/pages/settings";
 import EmployeeProfile from "@/pages/employee-profile";
+import EmployeeSchedule from "@/pages/employee-schedule";
 
 // Super admin pages - lazy loaded (rarely accessed)
 const SuperAdminSecurity = lazy(() => import("@/pages/super-admin-security"));
@@ -438,6 +439,14 @@ function Router() {
         <ProtectedRoute>
           <AppLayout>
             <EmployeeProfile />
+          </AppLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/:companyAlias/mi-cuadrante">
+        <ProtectedRoute>
+          <AppLayout>
+            <EmployeeSchedule />
           </AppLayout>
         </ProtectedRoute>
       </Route>
