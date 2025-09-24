@@ -215,25 +215,11 @@ export default function Schedules() {
       
       if (failures.length === 0) {
         // Todos exitosos
-        toast({
-          title: "✅ Turnos actualizados",
-          description: `Se ${successes === 1 ? 'ha actualizado 1 turno' : `han procesado ${successes} turnos`} correctamente`
-        });
       } else if (successes === 0) {
         // Todos fallaron
         const errorMsg = failures[0]?.error || 'Error desconocido';
-        toast({
-          title: "❌ Error al actualizar turnos",
-          description: errorMsg,
-          variant: "destructive"
-        });
       } else {
         // Parcialmente exitoso
-        toast({
-          title: "⚠️ Actualización parcial",
-          description: `${successes} turnos procesados, ${failures.length} fallaron`,
-          variant: "destructive"
-        });
       }
       
       // Reset si al menos uno fue exitoso
@@ -246,11 +232,6 @@ export default function Schedules() {
     onError: (error: any) => {
       console.error('Error updating shifts:', error);
       const message = error?.message || 'Error desconocido';
-      toast({
-        title: "❌ Error al actualizar turnos",
-        description: message,
-        variant: "destructive"
-      });
     },
   });
   
@@ -260,21 +241,12 @@ export default function Schedules() {
       return apiRequest('DELETE', `/api/work-shifts/${shiftId}`);
     },
     onSuccess: () => {
-      toast({ 
-        title: "Turno eliminado exitosamente", 
-        description: "El turno ha sido eliminado del calendario" 
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
       refetchShifts();
       setShowShiftModal(false);
       setSelectedShift(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error al eliminar el turno", 
-        description: error.message || "Ha ocurrido un error inesperado",
-        variant: "destructive" 
-      });
     },
   });
 
@@ -363,25 +335,11 @@ export default function Schedules() {
       
       if (failures.length === 0) {
         // Todos exitosos
-        toast({
-          title: "✅ Turnos creados",
-          description: `Se ${successes === 1 ? 'ha creado 1 turno' : `han creado ${successes} turnos`} correctamente`
-        });
       } else if (successes === 0) {
         // Todos fallaron
         const errorMsg = failures[0]?.error || 'Error desconocido';
-        toast({
-          title: "❌ Error al crear turnos",
-          description: errorMsg,
-          variant: "destructive"
-        });
       } else {
         // Parcialmente exitoso
-        toast({
-          title: "⚠️ Creación parcial",
-          description: `${successes} turnos creados, ${failures.length} fallaron`,
-          variant: "destructive"
-        });
       }
       
       // Reset form si al menos uno fue exitoso
@@ -405,11 +363,6 @@ export default function Schedules() {
     onError: (error: any) => {
       console.error('Error creating shifts:', error);
       const message = error?.message || 'Error desconocido';
-      toast({
-        title: "❌ Error al crear turnos",
-        description: message,
-        variant: "destructive"
-      });
     },
   });
 
@@ -598,31 +551,16 @@ export default function Schedules() {
     // 1. Validate target employee exists and is active
     const targetEmployee = getEmployeeById(targetEmployeeId);
     if (!targetEmployee) {
-      toast({
-        title: 'Error de validación',
-        description: 'El empleado de destino no existe',
-        variant: 'destructive'
-      });
       return;
     }
     
     if (!targetEmployee.isActive) {
-      toast({
-        title: 'Empleado inactivo',
-        description: `No se pueden asignar turnos a ${targetEmployee.fullName} porque está inactivo`,
-        variant: 'destructive'
-      });
       return;
     }
 
     // 2. Validate employee is not on vacation
     const vacation = isEmployeeOnVacation(targetEmployeeId, targetDate);
     if (vacation) {
-      toast({
-        title: 'Empleado de vacaciones',
-        description: `${targetEmployee.fullName} está de vacaciones en esta fecha`,
-        variant: 'destructive'
-      });
       return;
     }
 
@@ -687,16 +625,7 @@ export default function Schedules() {
     try {
       await duplicateShift(activeShift, targetEmployeeId, targetDate);
       
-      toast({
-        title: '✅ Turno duplicado',
-        description: `El turno "${activeShift.title}" se ha duplicado para ${targetEmployee.fullName}`,
-      });
     } catch (error: any) {
-      toast({
-        title: 'Error al duplicar turno',
-        description: error.message || 'No se pudo duplicar el turno',
-        variant: 'destructive'
-      });
     }
   };
 
@@ -763,19 +692,10 @@ export default function Schedules() {
       // Then duplicate the original shift
       await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
       
-      toast({
-        title: '✅ Turno sobrescrito',
-        description: `El turno "${conflictData.sourceShift.title}" ha reemplazado los turnos existentes para ${conflictData.targetEmployeeName}`,
-      });
       
       setShowConflictModal(false);
       setConflictData(null);
     } catch (error: any) {
-      toast({
-        title: 'Error al sobrescribir turnos',
-        description: error.message || 'No se pudieron sobrescribir los turnos',
-        variant: 'destructive'
-      });
     } finally {
       setIsOverriding(false);
     }
