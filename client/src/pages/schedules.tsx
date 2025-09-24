@@ -808,11 +808,12 @@ export default function Schedules() {
                 style={{
                   left: `${leftPercent}%`,
                   width: `${widthPercent}%`,
-                  top: lane === 0 ? '3px' : `${lane * laneHeight}%`, // Solo margen superior en el primer carril
-                  height: lane === (maxLanes - 1) ? `calc(${laneHeight}% - 3px)` : `${laneHeight}%`, // Solo margen inferior en el último carril
+                  top: `calc(3px + ${lane} * (100% - 6px) / ${maxLanes})`, // Espacio disponible dividido uniformemente entre carriles
+                  height: `calc((100% - 6px) / ${maxLanes} - 2px)`, // Altura con separación interna de 2px entre carriles
                   backgroundColor: shift.color || '#007AFF',
                   zIndex: 10,
-                  minWidth: '60px' // Ancho mínimo para legibilidad
+                  minWidth: '60px', // Ancho mínimo para legibilidad
+                  boxSizing: 'border-box'
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
