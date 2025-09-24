@@ -967,7 +967,7 @@ export default function Schedules() {
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
 
   return (
-    <div className="px-2 md:px-6 py-2 md:py-4 min-h-screen bg-gray-50 dark:bg-gray-900 space-y-3 md:space-y-6" style={{ overflowX: 'clip' }}>
+    <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto" style={{ overflowX: 'clip' }}>
       {loadingEmployees ? (
           <div className="flex justify-center py-8">
             <LoadingSpinner />
