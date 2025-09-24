@@ -563,18 +563,26 @@ export default function Schedules() {
   const getCellStyle = (employeeId: number, date: Date): string => {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
     
-    let baseStyle = "relative rounded border overflow-hidden min-h-[80px]"; // Altura fija más alta
+    let baseStyle = "relative rounded-lg border overflow-hidden min-h-[80px] shadow-sm"; // Altura fija más alta con sombra sutil
     
     if (holiday) {
-      // Día festivo - fondo rojo suave
-      baseStyle += " bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800";
+      // Día festivo - fondo rojo elegante con gradiente
+      baseStyle += " bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/40 dark:to-red-900/50 border-red-200 dark:border-red-800/60";
     } else if (vacation) {
-      // Empleado de vacaciones - fondo azul suave
-      baseStyle += " bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
+      // Empleado de vacaciones - fondo azul elegante con gradiente
+      baseStyle += " bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/50 border-blue-200 dark:border-blue-800/60";
+    } else if (isToday) {
+      // Día de hoy - fondo especial con gradiente dorado
+      baseStyle += " bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-950/40 dark:to-yellow-900/50 border-amber-200 dark:border-amber-800/60 ring-2 ring-amber-200 dark:ring-amber-800/60";
+    } else if (isWeekend) {
+      // Fin de semana - fondo más suave y diferenciado
+      baseStyle += " bg-gradient-to-br from-gray-50 to-slate-100 dark:from-slate-900/40 dark:to-gray-900/50 border-gray-200 dark:border-gray-700/60";
     } else {
-      // Día normal
-      baseStyle += " bg-muted/20 dark:bg-muted/30 border-border";
+      // Día laboral normal - fondo blanco limpio con gradiente sutil
+      baseStyle += " bg-gradient-to-br from-white to-gray-50 dark:from-gray-800/40 dark:to-gray-900/50 border-gray-200 dark:border-gray-700/60";
     }
     
     return baseStyle;
@@ -974,12 +982,12 @@ export default function Schedules() {
             No hay empleados registrados
           </div>
         ) : (
-          <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-lg">
 
             {/* Timeline Grid */}
             <div className="divide-y divide-border">
               {/* Header con mes y navegación */}
-              <div className="bg-muted/10 p-2 md:p-4">
+              <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 p-2 md:p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-2 md:mb-4">
                   <Button
                     variant="ghost"
@@ -1093,7 +1101,7 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className="p-2 md:p-4">
+                  <div key={employee.id} className="p-2 md:p-4 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
                     <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
@@ -1124,7 +1132,7 @@ export default function Schedules() {
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
                                 : 'flex flex-col' // Modo semana: layout vertical
-                            } ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'}`}
+                            } ${!isDisabled ? 'hover:shadow-md hover:scale-[1.02] transition-all duration-200 ease-in-out' : 'cursor-not-allowed opacity-60'}`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
@@ -1182,7 +1190,7 @@ export default function Schedules() {
                               </div>
                             ) : (
                               /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors z-30">
+                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-blue-50 to-transparent dark:from-blue-900/20 dark:to-transparent border-t border-blue-200 dark:border-blue-700 rounded-b flex items-center justify-center group hover:from-blue-100 dark:hover:from-blue-800/30 transition-all duration-200 z-30">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                   onClick={(e) => {
