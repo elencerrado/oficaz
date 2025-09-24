@@ -977,8 +977,8 @@ export default function Schedules() {
           No hay empleados registrados
         </div>
       ) : (
-        <Card className="px-6 pt-4 pb-8 min-h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
-            <CardHeader className="bg-muted/10 p-4 sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/75">
+        <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
+            <CardHeader className="bg-muted/10 p-4 flex-shrink-0">
               {/* Header con mes y navegación */}
               <div>
                 <div className="flex items-center justify-between mb-2 md:mb-4">
@@ -1090,7 +1090,7 @@ export default function Schedules() {
               </div>
             </CardHeader>
             
-            <CardContent className="p-0 flex-1 overflow-y-auto">
+            <CardContent className="p-0 overflow-y-auto" style={{ height: 'calc(100vh - 200px)' }}>
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
