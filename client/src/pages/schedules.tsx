@@ -1337,7 +1337,7 @@ export default function Schedules() {
                     componentRestrictions: { country: 'es' }
                   }}
                   value={newShift.location}
-                  onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, location: (e.target as HTMLInputElement).value }))}
                   placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                   className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                   style={{
@@ -1537,7 +1537,7 @@ export default function Schedules() {
                     componentRestrictions: { country: 'es' }
                   }}
                   value={editShift.location}
-                  onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) => setEditShift(prev => ({ ...prev, location: (e.target as HTMLInputElement).value }))}
                   placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                   className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                   style={{
