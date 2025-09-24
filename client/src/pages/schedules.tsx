@@ -788,10 +788,10 @@ export default function Schedules() {
                 key={shift.id}
                 className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
                 style={{
-                  left: `calc(${leftPercent}% + 3px)`,
-                  width: `calc(${widthPercent}% - 6px)`,
-                  top: `calc(${lane * laneHeight}% + 3px)`,
-                  height: `calc(${laneHeight}% - 6px)`, // Margen de 3px por todos lados
+                  left: `${leftPercent}%`,
+                  width: `${widthPercent}%`,
+                  top: lane === 0 ? '3px' : `${lane * laneHeight}%`, // Solo margen superior en el primer carril
+                  height: lane === (maxLanes - 1) ? `calc(${laneHeight}% - 3px)` : `${laneHeight}%`, // Solo margen inferior en el último carril
                   backgroundColor: shift.color || '#007AFF',
                   zIndex: 10,
                   minWidth: '60px' // Ancho mínimo para legibilidad
@@ -845,8 +845,8 @@ export default function Schedules() {
               style={{
                 left: '3px',
                 right: '3px',
-                top: `calc(${index * (100 / totalVisible)}% + 3px)`,
-                height: `calc(${shiftHeight} - 6px)`, // Margen de 3px por todos lados
+                top: index === 0 ? '3px' : `${index * (100 / totalVisible)}%`, // Solo margen superior en el primer badge
+                height: index === (totalVisible - 1) ? `calc(${shiftHeight} - 3px)` : shiftHeight, // Solo margen inferior en el último badge
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10
               }}
@@ -875,8 +875,8 @@ export default function Schedules() {
             style={{
               left: '3px',
               right: '3px',
-              top: `calc(${(totalVisible - 1) * (100 / totalVisible)}% + 3px)`,
-              height: `calc(${shiftHeight} - 6px)`, // Margen de 3px por todos lados
+              top: `${(totalVisible - 1) * (100 / totalVisible)}%`, // Sin margen superior ya que no es el primer badge
+              height: `calc(${shiftHeight} - 3px)`, // Solo margen inferior ya que es el último badge
               zIndex: 10
             }}
             onClick={(e) => {
