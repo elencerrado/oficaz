@@ -935,7 +935,7 @@ export default function Schedules() {
               className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
               style={{
                 left: '3px',
-                right: '12px', // Margen derecho más amplio para dejar espacio al botón "+"
+                right: '3px',
                 top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible})`, // Espacio disponible (menos márgenes) dividido uniformemente
                 height: `calc((100% - 6px) / ${totalVisible} - 2px)`, // Altura con separación interna de 2px entre badges
                 backgroundColor: shift.color || '#007AFF',
@@ -1178,7 +1178,7 @@ export default function Schedules() {
                               </div>
                             ) : (
                               /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors z-20">
+                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors z-30">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                   onClick={(e) => {
