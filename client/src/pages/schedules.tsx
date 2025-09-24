@@ -821,17 +821,14 @@ export default function Schedules() {
     // Assign lanes to prevent overlapping
     const shiftLanes = assignShiftLanes(dayShifts);
     
-    // Configuración para modo semana: badges de alto completo
-    const maxVisibleShifts = 3; // Máximo 3 turnos visibles
-    const hasOverflow = dayShifts.length > maxVisibleShifts;
-    const visibleShifts = hasOverflow ? shiftLanes.slice(0, maxVisibleShifts - 1) : shiftLanes;
-    const totalVisible = hasOverflow ? maxVisibleShifts : dayShifts.length;
+    // Configuración para modo semana: mostrar todos los badges
+    const totalVisible = dayShifts.length; // Mostrar todos sin límite
     const shiftHeight = `${100 / totalVisible}%`; // Altura dinámica según número de turnos
     
     return (
       <>
-        {/* Renderizar turnos visibles */}
-        {visibleShifts.map(({ shift, lane }, index: number) => {
+        {/* Renderizar todos los turnos */}
+        {shiftLanes.map(({ shift, lane }, index: number) => {
           const shiftStart = parseISO(shift.startAt);
           const shiftEnd = parseISO(shift.endAt);
           const startTime = format(shiftStart, 'HH:mm');
@@ -867,32 +864,6 @@ export default function Schedules() {
             </div>
           );
         })}
-        
-        {/* Badge "más" si hay turnos adicionales */}
-        {hasOverflow && (
-          <div
-            className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 bg-gray-600 dark:bg-gray-500"
-            style={{
-              left: '3px',
-              right: '3px',
-              top: `${(totalVisible - 1) * (100 / totalVisible)}%`, // Posición basada únicamente en índice
-              height: shiftHeight, // Altura fija para mantener coherencia
-              zIndex: 10
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setViewMode('day'); // Cambiar a vista día
-            }}
-            title={`+${dayShifts.length - (maxVisibleShifts - 1)} turnos más - Click para ver todos en vista día`}
-          >
-            <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center">
-              más
-            </div>
-            <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center mt-0.5">
-              +{dayShifts.length - (maxVisibleShifts - 1)}
-            </div>
-          </div>
-        )}
       </>
     );
   };
