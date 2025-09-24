@@ -737,8 +737,13 @@ export default function Schedules() {
 
   // Funciones para manejar el modal de conflictos
   const handleConfirmOverride = async () => {
-    if (!conflictData || isOverriding) return;
+    console.log('🚨 handleConfirmOverride called', { hasConflictData: !!conflictData, isOverriding });
+    if (!conflictData || isOverriding) {
+      console.log('🚨 Early return from handleConfirmOverride');
+      return;
+    }
 
+    console.log('🚨 Setting isOverriding to true');
     setIsOverriding(true);
     try {
       // First, delete existing conflicting shifts
