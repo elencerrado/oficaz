@@ -89,7 +89,7 @@ export default function EmployeeDashboard() {
     gcTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
     retryDelay: 500,
-    refetchInterval: 10 * 1000, // Poll every 10 seconds instead of 3
+    refetchInterval: 45 * 1000, // ⚡ Optimizado: poll cada 45 segundos 
     refetchIntervalInBackground: false, // Stop background polling
   });
 
@@ -97,7 +97,7 @@ export default function EmployeeDashboard() {
   const { data: activeBreak } = useQuery({
     queryKey: ['/api/break-periods/active'],
     enabled: !!user && !!activeSession,
-    refetchInterval: activeSession ? 15 * 1000 : false, // Only poll when session active
+    refetchInterval: activeSession ? 60 * 1000 : false, // ⚡ Optimizado: solo cada minuto cuando hay sesión
     refetchIntervalInBackground: false,
     staleTime: 10 * 1000,
   });
@@ -115,9 +115,9 @@ export default function EmployeeDashboard() {
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ['/api/messages/unread-count'],
     enabled: !!user,
-    refetchInterval: 30000, // Check every 30 seconds instead of 10
+    refetchInterval: 2 * 60 * 1000, // ⚡ Optimizado: mensajes cada 2 minutos
     refetchIntervalInBackground: false,
-    staleTime: 25000, // Cache for 25 seconds
+    staleTime: 90 * 1000, // ⚡ Optimizado: cache mensajes por 90 segundos
   });
 
 
@@ -125,36 +125,36 @@ export default function EmployeeDashboard() {
   const { data: documents } = useQuery({
     queryKey: ['/api/documents'],
     enabled: !!user,
-    refetchInterval: 60000, // Check every minute instead of 15 seconds
+    refetchInterval: 5 * 60 * 1000, // ⚡ Optimizado: documentos cada 5 minutos
     refetchIntervalInBackground: false,
-    staleTime: 45000,
+    staleTime: 4 * 60 * 1000, // ⚡ Optimizado: cache documentos por 4 minutos
   });
 
   // Get real document notifications from database with reduced frequency
   const { data: documentNotifications } = useQuery({
     queryKey: ['/api/document-notifications'],
     enabled: !!user,
-    refetchInterval: 60000, // Check every minute instead of 15 seconds
+    refetchInterval: 5 * 60 * 1000, // ⚡ Optimizado: notificaciones cada 5 minutos
     refetchIntervalInBackground: false,
-    staleTime: 45000,
+    staleTime: 4 * 60 * 1000, // ⚡ Optimizado: cache notificaciones por 4 minutos
   });
 
   // Get vacation requests with reduced frequency
   const { data: vacationRequests = [] } = useQuery({
     queryKey: ['/api/vacation-requests'],
     enabled: !!user,
-    refetchInterval: 120000, // Check every 2 minutes instead of 10 seconds
+    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: vacaciones cada 10 minutos
     refetchIntervalInBackground: false,
-    staleTime: 90000, // Cache for 90 seconds
+    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache vacaciones por 8 minutos
   });
 
   // Get all reminders to check for overdue ones
   const { data: allReminders = [] } = useQuery({
     queryKey: ['/api/reminders'],
     enabled: !!user,
-    refetchInterval: 120000, // Check every 2 minutes 
+    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: reminders cada 10 minutos
     refetchIntervalInBackground: false,
-    staleTime: 90000,
+    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache reminders por 8 minutos
   });
 
   // Check for vacation updates - clear notification when back on dashboard
@@ -402,9 +402,9 @@ export default function EmployeeDashboard() {
   const { data: activeReminders = [] } = useQuery({
     queryKey: ['/api/reminders/active'],
     enabled: !!user,
-    refetchInterval: 120000, // Check every 2 minutes
+    refetchInterval: 10 * 60 * 1000, // ⚡ Optimizado: reminders activos cada 10 minutos
     refetchIntervalInBackground: false,
-    staleTime: 90000,
+    staleTime: 8 * 60 * 1000, // ⚡ Optimizado: cache reminders activos por 8 minutos
   });
 
   // Update active reminders state
