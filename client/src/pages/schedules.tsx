@@ -742,34 +742,33 @@ export default function Schedules() {
         const start2 = parseISO(shift2.startAt).getTime();
         const end2 = parseISO(shift2.endAt).getTime();
         
-        // Verificar solapamiento: (start1 < end2) && (start2 < end1)
+        // Verificar solapamiento real: (start1 < end2) && (start2 < end1)
+        // Los turnos consecutivos (end1 === start2) NO se consideran solapamiento
         return (start1 < end2) && (start2 < end1);
       };
       
-      // Asignar carriles para evitar solapamiento
-      const shiftsWithLanes = dayShifts.map((shift, index) => {
+      // Asignar carriles para evitar solapamiento usando algoritmo optimizado
+      const shiftsWithLanes: { shift: WorkShift; lane: number }[] = [];
+      
+      dayShifts.forEach((shift, index) => {
         // Encontrar el carril más bajo disponible para este turno
         let lane = 0;
-        const overlappingShifts = dayShifts.slice(0, index).filter(prevShift => 
-          doShiftsOverlap(shift, prevShift)
-        );
         
-        if (overlappingShifts.length > 0) {
-          // Obtener todos los carriles ocupados por turnos superpuestos
-          const occupiedLanes = new Set(overlappingShifts.map((_, idx) => {
-            // Calcular el carril del turno previo
-            const prevOverlaps = dayShifts.slice(0, dayShifts.indexOf(overlappingShifts[idx]))
-              .filter(earlierShift => doShiftsOverlap(overlappingShifts[idx], earlierShift));
-            return prevOverlaps.length;
-          }));
-          
-          // Encontrar el primer carril libre
-          while (occupiedLanes.has(lane)) {
-            lane++;
+        // Buscar entre turnos ya procesados cuáles se solapan con el actual
+        const conflictingLanes = new Set<number>();
+        
+        shiftsWithLanes.forEach(processedShift => {
+          if (doShiftsOverlap(shift, processedShift.shift)) {
+            conflictingLanes.add(processedShift.lane);
           }
+        });
+        
+        // Encontrar el primer carril disponible (no ocupado por turnos solapados)
+        while (conflictingLanes.has(lane)) {
+          lane++;
         }
         
-        return { shift, lane };
+        shiftsWithLanes.push({ shift, lane });
       });
       
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
