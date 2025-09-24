@@ -569,14 +569,34 @@ export default function Schedules() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
+    console.log('🔍 DEBUG - handleDragEnd:', {
+      active: active?.id,
+      over: over?.id,
+      overString: String(over?.id),
+      activeShift: activeShift ? {
+        id: activeShift.id,
+        title: activeShift.title,
+        employeeId: activeShift.employeeId,
+        startAt: activeShift.startAt
+      } : null
+    });
+    
     setActiveShift(null);
     setDragOverCellId(null);
 
-    if (!over || !activeShift) return;
+    if (!over || !activeShift) {
+      console.log('🚫 DEBUG - Early return:', { hasOver: !!over, hasActiveShift: !!activeShift });
+      return;
+    }
 
     // Parse drop target (format: "cell-employeeId-date")
     const [prefix, employeeIdStr, dateStr] = String(over.id).split('-');
-    if (prefix !== 'cell') return;
+    console.log('🔍 DEBUG - Parsed drop target:', { prefix, employeeIdStr, dateStr, fullId: String(over.id) });
+    
+    if (prefix !== 'cell') {
+      console.log('🚫 DEBUG - Invalid prefix:', prefix);
+      return;
+    }
 
     const targetEmployeeId = Number(employeeIdStr);
     const targetDate = parseISO(dateStr);
@@ -1006,6 +1026,7 @@ export default function Schedules() {
     title: string;
   }) {
     const cellId = `cell-${employeeId}-${format(day, 'yyyy-MM-dd')}`;
+    console.log('🔍 DEBUG - DroppableCell created:', { cellId, employeeId, day: format(day, 'yyyy-MM-dd') });
     
     const {
       isOver,
