@@ -1054,9 +1054,7 @@ export default function Schedules() {
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
                                 : 'flex flex-col' // Modo semana: layout vertical
-                            } ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'} ${
-                              viewMode === 'day' ? 'p-1 md:p-2' : ''
-                            }`}
+                            } ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'}`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
