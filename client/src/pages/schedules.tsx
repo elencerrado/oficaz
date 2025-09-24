@@ -758,38 +758,45 @@ export default function Schedules() {
         const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
         const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
         
-        console.log(`⏰ MODO DÍA - Turno "${shift.title}" (${shiftHours}):`, {
-          startHour: startHour.toFixed(2),
-          endHour: endHour.toFixed(2),
-          leftPercent: leftPercent.toFixed(2) + '%',
-          widthPercent: widthPercent.toFixed(2) + '%'
-        });
-        
         return {
           shift,
           shiftHours,
           leftPercent,
-          widthPercent: Math.max(widthPercent, 5) // Ancho mínimo de 5%
+          widthPercent: widthPercent
         };
       });
       
-      // Resolver SOLO solapamiento visual entre badges consecutivos
+      // ⚠️ ANCHO MÍNIMO INTELIGENTE: Garantizar legibilidad sin romper cronología
+      const MIN_WIDTH_PERCENT = 8; // 8% mínimo para mostrar "18:00-19:00" completo
+      const minGap = 0.5;
+      
+      // Aplicar ancho mínimo a todos los badges
+      shiftsWithPositions.forEach(item => {
+        item.widthPercent = Math.max(item.widthPercent, MIN_WIDTH_PERCENT);
+      });
+      
+      // Verificar si todos los badges caben en el timeline
+      const totalRequiredWidth = shiftsWithPositions.reduce((sum, item) => sum + item.widthPercent, 0);
+      const totalGaps = (shiftsWithPositions.length - 1) * minGap;
+      const totalRequired = totalRequiredWidth + totalGaps;
+      
+      // Si no cabe todo, aplicar compresión proporcional
+      if (totalRequired > 100) {
+        const compressionFactor = (100 - totalGaps) / totalRequiredWidth;
+        
+        shiftsWithPositions.forEach(item => {
+          item.widthPercent = Math.max(MIN_WIDTH_PERCENT * 0.7, item.widthPercent * compressionFactor); // Permitir hasta 70% del mínimo
+        });
+      }
+      
+      // Reposicionar manteniendo orden cronológico
+      let currentPosition = shiftsWithPositions[0].leftPercent;
+      shiftsWithPositions[0].leftPercent = currentPosition;
+      
       for (let i = 1; i < shiftsWithPositions.length; i++) {
-        const current = shiftsWithPositions[i];
         const previous = shiftsWithPositions[i - 1];
-        const minGap = 0.5; // Gap mínimo muy pequeño
-        
-        const prevRightEdge = previous.leftPercent + previous.widthPercent;
-        
-        // Solo ajustar si hay solapamiento visual (no temporal)
-        if (current.leftPercent < prevRightEdge + minGap) {
-          current.leftPercent = prevRightEdge + minGap;
-          
-          // Si se sale del 100%, comprimir el ancho
-          if (current.leftPercent + current.widthPercent > 100) {
-            current.widthPercent = Math.max(5, 100 - current.leftPercent);
-          }
-        }
+        currentPosition = previous.leftPercent + previous.widthPercent + minGap;
+        shiftsWithPositions[i].leftPercent = Math.min(currentPosition, 100 - shiftsWithPositions[i].widthPercent);
       }
       
       return (
