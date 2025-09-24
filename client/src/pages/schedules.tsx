@@ -977,9 +977,11 @@ export default function Schedules() {
             No hay empleados registrados
           </div>
         ) : (
-          <>
-            {/* Header con mes y navegación */}
-            <div className="bg-muted/10 p-4 border-b border-border">
+          <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
+            {/* Timeline Grid */}
+            <div className="divide-y divide-border">
+              {/* Header con mes y navegación */}
+              <div className="bg-muted/10 p-4">
                 <div className="flex items-center justify-between mb-2 md:mb-4">
                   <Button
                     variant="ghost"
@@ -1088,10 +1090,10 @@ export default function Schedules() {
                 </div>
               </div>
 
-            {/* Filas de empleados */}
-            {employees.map((employee: Employee) => {
-              return (
-                <div key={employee.id} className="p-4 border-b border-border">
+              {/* Filas de empleados */}
+              {employees.map((employee: Employee) => {
+                return (
+                  <div key={employee.id} className="p-4">
                     <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1">
@@ -1203,13 +1205,14 @@ export default function Schedules() {
                         );
                       })}
                     </div>
-                </div>
-              );
-            })}
-          </>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
-        {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
+      {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
       <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-hidden">
           {/* Header con preview del badge */}
@@ -1390,8 +1393,8 @@ export default function Schedules() {
         </DialogContent>
       </Dialog>
 
-        {/* Modal para editar turno - DISEÑO VISUAL TIPO BADGE */}
-        <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
+      {/* Modal para editar turno - DISEÑO VISUAL TIPO BADGE */}
+      <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-hidden">
           {/* Header con preview del badge */}
           <div 
@@ -1572,7 +1575,7 @@ export default function Schedules() {
             </div>
           </div>
         </DialogContent>
-        </Dialog>
+      </Dialog>
     </div>
   );
 }
