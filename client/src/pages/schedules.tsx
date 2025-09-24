@@ -801,6 +801,30 @@ export default function Schedules() {
       
       return (
         <>
+          {/* ⏰ REGLA DE HORAS - Referencia visual cronológica */}
+          <div className="absolute top-0 left-0 right-0 h-6 border-b border-border/30 bg-muted/5 dark:bg-muted/10 flex items-end z-5">
+            {Array.from({ length: TIMELINE_TOTAL_HOURS + 1 }, (_, i) => {
+              const hour = TIMELINE_START_HOUR + i;
+              const hourPercent = (i / TIMELINE_TOTAL_HOURS) * 100;
+              
+              return (
+                <div
+                  key={hour}
+                  className="absolute flex flex-col items-center"
+                  style={{ left: `${hourPercent}%` }}
+                >
+                  {/* Línea vertical de referencia */}
+                  <div className="w-px h-2 bg-muted-foreground/30 dark:bg-muted-foreground/40 mb-1" />
+                  {/* Etiqueta de hora */}
+                  <div className="text-[8px] md:text-[9px] font-medium text-muted-foreground whitespace-nowrap">
+                    {hour.toString().padStart(2, '0')}:00
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Badges de turnos */}
           {shiftsWithPositions.map(({ shift, shiftHours, leftPercent, widthPercent }) => (
             <div
               key={shift.id}
@@ -808,12 +832,11 @@ export default function Schedules() {
               style={{
                 left: `${leftPercent}%`,
                 width: `${widthPercent}%`,
-                top: '3px',           
+                top: '28px',          // Margen para la regla de horas arriba
                 bottom: '3px',        
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10,
                 boxSizing: 'border-box'
-                // ⚠️ SIN minWidth - que joda la matemática perfecta
               }}
               onClick={(e) => {
                 e.stopPropagation();
