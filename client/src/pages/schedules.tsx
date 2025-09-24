@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader as DialogHeaderComponent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarClock, Users, Plus, ChevronLeft, ChevronRight, Clock, Edit, Copy, Trash2, MapPin } from "lucide-react";
 import { format, differenceInDays, addDays, subDays, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, addWeeks, subWeeks, getDay } from "date-fns";
@@ -977,10 +977,10 @@ export default function Schedules() {
             No hay empleados registrados
           </div>
         ) : (
-          <>
-            <div className="divide-y divide-border">
+          <Card>
+            <CardHeader className="bg-muted/10 p-4">
               {/* Header con mes y navegación */}
-              <div className="bg-muted/10 p-4">
+              <div>
                 <div className="flex items-center justify-between mb-2 md:mb-4">
                   <Button
                     variant="ghost"
@@ -1088,7 +1088,9 @@ export default function Schedules() {
                   })}
                 </div>
               </div>
-
+            </CardHeader>
+            
+            <CardContent className="p-0">
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
@@ -1207,8 +1209,8 @@ export default function Schedules() {
                   </div>
                 );
               })}
-            </div>
-          </>
+            </CardContent>
+          </Card>
         )}
 
       {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
