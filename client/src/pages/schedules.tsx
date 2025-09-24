@@ -1340,21 +1340,8 @@ export default function Schedules() {
                       types: ['establishment', 'geocode'],
                       componentRestrictions: { country: 'es' }
                     }}
-                    defaultValue={newShift.location}
                     placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                     className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    style={{
-                      width: '100%',
-                      paddingLeft: '2rem',
-                      paddingRight: '0.75rem',
-                      paddingTop: '0.5rem',
-                      paddingBottom: '0.5rem',
-                      fontSize: '0.875rem',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))'
-                    }}
                   />
                 ) : (
                   <input
@@ -1557,21 +1544,8 @@ export default function Schedules() {
                       types: ['establishment', 'geocode'],
                       componentRestrictions: { country: 'es' }
                     }}
-                    defaultValue={editShift.location}
                     placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                     className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    style={{
-                      width: '100%',
-                      paddingLeft: '2rem',
-                      paddingRight: '0.75rem',
-                      paddingTop: '0.5rem',
-                      paddingBottom: '0.5rem',
-                      fontSize: '0.875rem',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'hsl(var(--background))',
-                      color: 'hsl(var(--foreground))'
-                    }}
                   />
                 ) : (
                   <input
