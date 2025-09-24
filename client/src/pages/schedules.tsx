@@ -644,15 +644,50 @@ export default function Schedules() {
       return;
     }
 
-    // 3. Check for existing shifts on the same day that might conflict
+    // 3. Check for real time conflicts (overlapping hours) on the same day
     const existingShifts = getShiftsForEmployee(targetEmployeeId);
     const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+    
+    // Helper function to check if two shifts have overlapping times
+    const hasTimeConflict = (shift1: WorkShift, shift2Start: Date, shift2End: Date): boolean => {
+      const shift1Start = parseISO(shift1.startAt);
+      const shift1End = parseISO(shift1.endAt);
+      
+      // Check if times overlap: (start1 < end2) && (start2 < end1)
+      return shift1Start < shift2End && shift2Start < shift1End;
+    };
+    
+    // Calculate the new shift's start and end times
+    const originalStart = parseISO(activeShift.startAt);
+    const originalEnd = parseISO(activeShift.endAt);
+    const newStart = new Date(targetDate);
+    newStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+    const newEnd = new Date(targetDate);
+    newEnd.setHours(originalEnd.getHours(), originalEnd.getMinutes(), 0, 0);
+    
+    // Handle overnight shifts
+    if (originalEnd < originalStart) {
+      newEnd.setDate(newEnd.getDate() + 1);
+    }
+    
+    // Find shifts with actual time conflicts
     const conflictingShifts = existingShifts.filter((shift: WorkShift) => {
       const shiftDateStr = format(parseISO(shift.startAt), 'yyyy-MM-dd');
-      return shiftDateStr === targetDateStr;
+      return shiftDateStr === targetDateStr && hasTimeConflict(shift, newStart, newEnd);
+    });
+    
+    console.log('🔍 DEBUG - Time conflict check:', {
+      targetDateStr,
+      newStart: format(newStart, 'HH:mm'),
+      newEnd: format(newEnd, 'HH:mm'),
+      existingShiftsOnDay: existingShifts.filter((shift: WorkShift) => {
+        const shiftDateStr = format(parseISO(shift.startAt), 'yyyy-MM-dd');
+        return shiftDateStr === targetDateStr;
+      }).length,
+      conflictingShifts: conflictingShifts.length
     });
 
-    // If there are existing shifts, show confirmation modal
+    // If there are time conflicts, show confirmation modal
     if (conflictingShifts.length > 0) {
       setConflictData({
         sourceShift: activeShift,
