@@ -837,30 +837,62 @@ export default function Schedules() {
           shift.leftPercent = shift.chronoLeftPercent;
           shift.widthPercent = (shift.duration / TIMELINE_TOTAL_HOURS) * 100;
         } else {
-          // Múltiples turnos: distribución robusta con separación garantizada
-          const minGapPercent = Math.max(1.5, 100 / (shiftsCount * 8)); // Gap dinámico: mínimo 1.5%, escala según cantidad
-          const totalGapPercent = minGapPercent * (shiftsCount - 1); // Espacio total para gaps
-          const availableWidthPercent = 100 - totalGapPercent; // Espacio disponible para badges
+          // ⚠️ LÓGICA ROBUSTA: Distribución que NUNCA excede el 100% del contenedor
+          // Calcular gap mínimo escalado por cantidad de badges
+          const minGapPercent = Math.max(0.5, Math.min(2, 100 / (shiftsCount * 20))); // Gap adaptativo: 0.5% a 2%
+          const totalGapPercent = minGapPercent * (shiftsCount - 1); // Espacio total para separaciones
+          
+          // ✅ GARANTIZADO: espacio disponible nunca negativo
+          let availableWidthPercent = Math.max(10, 100 - totalGapPercent);
+          
+          // Si los gaps son demasiado grandes, reducirlos para asegurar espacio para badges
+          if (totalGapPercent > 85) {
+            const adjustedGapPercent = 15 / (shiftsCount - 1); // Máximo 15% total para gaps
+            availableWidthPercent = 85; // 85% para badges, 15% para gaps
+          }
           
           // Calcular duración total para proporcionalidad
           const totalDuration = laneShifts.reduce((sum, shift) => sum + shift.duration, 0);
           
-          let currentLeftPercent = 0;
+          // Primera pasada: calcular anchos ideales usando Map temporal
+          const idealWidths = new Map<number, number>();
+          let totalIdealWidth = 0;
           
           laneShifts.forEach((shift, index) => {
-            // Ancho proporcional a la duración, pero limitado por espacio disponible
+            // Ancho proporcional a la duración
             const proportionalWidth = totalDuration > 0 
               ? (shift.duration / totalDuration) * availableWidthPercent
               : availableWidthPercent / shiftsCount;
             
-            // Ancho mínimo para legibilidad
-            const minWidthPercent = Math.min(8, availableWidthPercent / shiftsCount);
+            // Ancho mínimo garantizado: al menos 6% pero no más del espacio disponible dividido equitativamente
+            const minWidth = Math.max(6, availableWidthPercent / shiftsCount * 0.7); // 70% del espacio equitativo como mínimo
+            const idealWidth = Math.max(minWidth, proportionalWidth);
             
-            shift.widthPercent = Math.max(minWidthPercent, proportionalWidth);
+            idealWidths.set(index, idealWidth);
+            totalIdealWidth += idealWidth;
+          });
+          
+          // Segunda pasada: ajustar si excede el espacio disponible
+          const scaleFactor = totalIdealWidth > availableWidthPercent 
+            ? availableWidthPercent / totalIdealWidth 
+            : 1;
+          
+          // Tercera pasada: posicionar badges con escala aplicada
+          let currentLeftPercent = 0;
+          const actualGapPercent = totalGapPercent > 0 
+            ? Math.min(minGapPercent, (100 - totalIdealWidth * scaleFactor) / (shiftsCount - 1))
+            : 0;
+          
+          laneShifts.forEach((shift, index) => {
+            const idealWidth = idealWidths.get(index) || 0;
+            shift.widthPercent = idealWidth * scaleFactor;
             shift.leftPercent = currentLeftPercent;
             
-            // Siguiente posición: posición actual + ancho + gap
-            currentLeftPercent = shift.leftPercent + shift.widthPercent + minGapPercent;
+            // Siguiente posición: actual + ancho + gap (pero nunca exceder 100%)
+            currentLeftPercent = Math.min(
+              100 - (laneShifts.length - index - 1) * 6, // Reservar espacio mínimo para badges restantes
+              currentLeftPercent + shift.widthPercent + actualGapPercent
+            );
           });
         }
       });
