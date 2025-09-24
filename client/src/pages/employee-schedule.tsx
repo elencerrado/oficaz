@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Clock, MapPin, ArrowLeft } from "lucide-react";
 import { format, addDays, subDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { Link, useLocation } from "wouter";
+import { PageLoading } from "@/components/ui/page-loading";
 
 interface WorkShift {
   id: number;
@@ -42,10 +42,18 @@ interface Holiday {
 }
 
 export default function EmployeeSchedule() {
-  const { user } = useAuth();
+  const { user, company } = useAuth();
+  const [location] = useLocation();
 
   // Estado para la fecha actual (solo vista de día)
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Get company alias from URL
+  const urlParts = location.split('/').filter(part => part.length > 0);
+  const companyAlias = urlParts[0] || company?.companyAlias || 'test';
+
+  // Check if should show logo based on subscription features
+  const shouldShowLogo = company?.logoUrl && company?.subscription?.features?.logoUpload;
 
   // Queries para datos
   const { data: shifts = [], isLoading: shiftsLoading, refetch: refetchShifts } = useQuery<WorkShift[]>({
@@ -114,12 +122,12 @@ export default function EmployeeSchedule() {
     return (
       <div 
         key={shift.id}
-        className="mb-2 p-3 rounded-lg text-white shadow-sm border border-white/20"
+        className="mb-3 p-4 rounded-xl text-white shadow-sm border border-white/20 backdrop-blur-sm"
         style={{ backgroundColor: shift.color }}
       >
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-2">
           <span className="font-medium text-sm">{shift.title}</span>
-          <div className="flex items-center text-xs">
+          <div className="flex items-center text-xs bg-black/20 px-2 py-1 rounded-lg">
             <Clock className="w-3 h-3 mr-1" />
             {startTime} - {endTime}
           </div>
@@ -133,7 +141,7 @@ export default function EmployeeSchedule() {
         )}
         
         {shift.notes && (
-          <div className="text-xs opacity-80 mt-1">
+          <div className="text-xs opacity-80 mt-2 bg-black/20 p-2 rounded-lg">
             {shift.notes}
           </div>
         )}
@@ -148,20 +156,22 @@ export default function EmployeeSchedule() {
     
     if (vacation) {
       return (
-        <div className="h-full flex items-center justify-center">
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-            Vacaciones
-          </Badge>
+        <div className="h-full flex items-center justify-center p-4">
+          <div className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 text-center backdrop-blur-sm">
+            <div className="text-blue-300 font-medium mb-1">🏖️ Vacaciones</div>
+            <div className="text-blue-200 text-xs">Disfruta tu descanso</div>
+          </div>
         </div>
       );
     }
     
     if (holiday) {
       return (
-        <div className="h-full flex items-center justify-center">
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200 text-center text-xs leading-tight">
-            {holiday.name}
-          </Badge>
+        <div className="h-full flex items-center justify-center p-4">
+          <div className="bg-orange-500/20 border border-orange-500/30 rounded-xl p-4 text-center backdrop-blur-sm">
+            <div className="text-orange-300 font-medium mb-1">🎉 {holiday.name}</div>
+            <div className="text-orange-200 text-xs">Día festivo</div>
+          </div>
         </div>
       );
     }
@@ -172,44 +182,79 @@ export default function EmployeeSchedule() {
   const dayShifts = getShiftsForDate(currentDate);
   const isToday = format(new Date(), 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd');
 
+  // Show loading state
   if (shiftsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50 dark:bg-gray-900" style={{ overflowX: 'clip' }}>
-      <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
+    <div 
+      className="bg-employee-gradient text-white min-h-screen"
+      style={{
+        overscrollBehavior: 'none'
+      }}
+    >
+      {/* Header - Fixed height */}
+      <div className="flex items-center justify-between p-6 pb-8 h-20">
+        <Link href={`/${companyAlias}/inicio`}>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="text-white hover:bg-white/20 px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm transition-all duration-200 transform hover:scale-105"
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <span className="font-medium">Atrás</span>
+          </Button>
+        </Link>
         
-        <CardHeader className="bg-muted/10 px-4 py-2 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <CalendarClock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Mi Cuadrante</h1>
+        <div className="flex-1 flex flex-col items-end text-right">
+          {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
+          {shouldShowLogo ? (
+            <img 
+              src={company.logoUrl} 
+              alt={company.name} 
+              className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
+            />
+          ) : (
+            <div className="text-white text-sm font-medium mb-1">
+              {company?.name || 'Mi Empresa'}
             </div>
+          )}
+          <div className="text-white/70 text-xs">
+            {user?.fullName}
           </div>
-          
-          {/* Navegación de días */}
-          <div className="flex items-center justify-between mb-2">
+        </div>
+      </div>
+
+      {/* Page Title */}
+      <div className="px-6 pb-6">
+        <h1 className="text-3xl font-bold text-white mb-2">Cuadrante</h1>
+        <p className="text-white/70 text-sm">
+          Consulta tus horarios y turnos asignados
+        </p>
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="px-6 mb-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigateDay('prev')}
-              className="h-8 w-8 p-0"
+              className="text-white hover:bg-white/20 px-4 py-2 rounded-lg"
               data-testid="button-prev-day"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Anterior
             </Button>
             
             <div className="text-center">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-lg font-semibold text-white">
                 {format(currentDate, "EEEE, d 'de' MMMM yyyy", { locale: es })}
               </h2>
               {isToday && (
-                <Badge variant="secondary" className="mt-1 bg-blue-100 text-blue-800 border-blue-200">
+                <Badge variant="secondary" className="mt-1 bg-blue-500 text-white border-blue-400">
                   Hoy
                 </Badge>
               )}
@@ -219,70 +264,77 @@ export default function EmployeeSchedule() {
               variant="ghost"
               size="sm"
               onClick={() => navigateDay('next')}
-              className="h-8 w-8 p-0"
+              className="text-white hover:bg-white/20 px-4 py-2 rounded-lg"
               data-testid="button-next-day"
             >
-              <ChevronRight className="w-4 h-4" />
+              Siguiente
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
-        </CardHeader>
-        
-        <CardContent className="p-0 overflow-y-auto" style={{ height: 'calc(100vh - 160px)' }}>
-          <div className="p-4">
-            {/* Información del empleado */}
-            <div className="flex items-center gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
-              <UserAvatar 
-                fullName={user?.fullName || ''} 
-                size="md" 
-                userId={user?.id}
-                profilePicture={user?.profilePicture}
-              />
-              <div>
-                <h3 className="font-medium text-foreground">{user?.fullName}</h3>
-                <p className="text-sm text-muted-foreground">Mi horario del día</p>
+        </div>
+      </div>
+
+      {/* Day Content */}
+      <div className="px-6 mb-6">
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 min-h-[400px]">
+          
+          {/* Contenido especial (vacaciones/festivos) */}
+          {getCellContent(currentDate)}
+          
+          {/* Turnos del día */}
+          {dayShifts.length > 0 && !getCellContent(currentDate) && (
+            <div className="p-6">
+              <h3 className="font-medium text-white mb-4 flex items-center gap-2">
+                <CalendarClock className="w-5 h-5 text-blue-400" />
+                Tus turnos de hoy ({dayShifts.length})
+              </h3>
+              <div className="space-y-3">
+                {dayShifts.map(shift => renderShiftBadge(shift))}
               </div>
             </div>
+          )}
 
-            {/* Contenido del día */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-border min-h-[300px] p-4">
-              {/* Contenido especial (vacaciones/festivos) */}
-              {getCellContent(currentDate)}
-              
-              {/* Turnos del día */}
-              {dayShifts.length > 0 ? (
-                <div>
-                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Turnos del día ({dayShifts.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {dayShifts.map(shift => renderShiftBadge(shift))}
-                  </div>
-                </div>
-              ) : !getCellContent(currentDate) ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <CalendarClock className="w-12 h-12 text-muted-foreground mb-3" />
-                  <h3 className="font-medium text-foreground mb-1">Sin turnos programados</h3>
-                  <p className="text-sm text-muted-foreground">No tienes horarios asignados para este día</p>
-                </div>
-              ) : null}
+          {/* Sin turnos programados */}
+          {dayShifts.length === 0 && !getCellContent(currentDate) && (
+            <div className="flex flex-col items-center justify-center h-full text-center p-12">
+              <CalendarClock className="w-16 h-16 text-white/30 mb-4" />
+              <h3 className="font-medium text-white mb-2">Sin turnos programados</h3>
+              <p className="text-sm text-white/70">No tienes horarios asignados para este día</p>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Botón para volver a hoy */}
-            {!isToday && (
-              <div className="mt-4 text-center">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentDate(new Date())}
-                  className="text-sm"
-                >
-                  Volver a hoy
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick Actions */}
+      <div className="px-6 mb-6">
+        <div className="grid grid-cols-2 gap-4">
+          {!isToday && (
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentDate(new Date())}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-3"
+            >
+              Volver a hoy
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-3"
+            onClick={() => refetchShifts()}
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            Actualizar
+          </Button>
+        </div>
+      </div>
+
+      {/* Copyright at bottom */}
+      <div className="text-center pb-4 mt-auto">
+        <div className="flex items-center justify-center space-x-1 text-white/60 text-xs">
+          <span className="font-semibold text-blue-400">Oficaz</span>
+          <span>© {new Date().getFullYear()}</span>
+        </div>
+      </div>
     </div>
   );
 }
