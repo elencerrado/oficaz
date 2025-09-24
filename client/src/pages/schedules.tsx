@@ -774,7 +774,7 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ DISTRIBUCIÓN GARANTIZADA SIN DESBORDAMIENTO
+      // ⚠️ SISTEMA SIMPLE QUE FUNCIONA: Distribución equitativa sin complejidad
       const shiftsWithPositions: Array<{
         shift: WorkShift;
         lane: number;
@@ -783,28 +783,26 @@ export default function Schedules() {
         shiftHours: string;
       }> = [];
       
-      // Agrupar turnos por carril y procesarlos independientemente
+      // Agrupar por carril
       const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
         if (!acc[item.lane]) acc[item.lane] = [];
         acc[item.lane].push(item);
         return acc;
       }, {} as Record<number, typeof shiftsWithLanes>);
       
+      // Para cada carril, distribución SIMPLE y EQUITATIVA
       Object.values(shiftsByLane).forEach(laneShifts => {
         if (laneShifts.length === 0) return;
         
-        // Ordenar por hora de inicio (orden cronológico)
-        laneShifts.sort((a, b) => {
-          const timeA = parseISO(a.shift.startAt).getTime();
-          const timeB = parseISO(b.shift.startAt).getTime();
-          return timeA - timeB;
-        });
+        // Ordenar cronológicamente
+        laneShifts.sort((a, b) => parseISO(a.shift.startAt).getTime() - parseISO(b.shift.startAt).getTime());
         
         const shiftsCount = laneShifts.length;
+        const gap = shiftsCount > 1 ? 1 : 0; // 1% de gap entre badges
+        const totalGap = gap * (shiftsCount - 1);
+        const badgeWidth = (100 - totalGap) / shiftsCount; // Ancho equitativo
         
-        if (shiftsCount === 1) {
-          // Un solo turno: usar todo el ancho disponible
-          const { shift, lane } = laneShifts[0];
+        laneShifts.forEach(({ shift, lane }, index) => {
           const shiftStart = parseISO(shift.startAt);
           const shiftEnd = parseISO(shift.endAt);
           const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
@@ -812,70 +810,11 @@ export default function Schedules() {
           shiftsWithPositions.push({
             shift,
             lane,
-            leftPercent: 0,
-            widthPercent: 100,
+            leftPercent: index * (badgeWidth + gap), // Posición simple: index * (ancho + gap)
+            widthPercent: badgeWidth,
             shiftHours
           });
-        } else {
-          // Múltiples turnos: distribución estricta sin desbordamiento
-          const minGapPercent = Math.min(1, 100 / (shiftsCount * 50)); // Gap muy pequeño
-          const totalGapPercent = minGapPercent * (shiftsCount - 1);
-          const availableWidth = 100 - totalGapPercent;
-          
-          // Calcular duración total para proporcionalidad
-          const totalDuration = laneShifts.reduce((sum, { shift }) => {
-            const start = parseISO(shift.startAt);
-            const end = parseISO(shift.endAt);
-            return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-          }, 0);
-          
-          // Primera pasada: calcular anchos ideales
-          const idealWidths: number[] = [];
-          let totalIdealWidth = 0;
-          
-          laneShifts.forEach(({ shift }) => {
-            const start = parseISO(shift.startAt);
-            const end = parseISO(shift.endAt);
-            const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-            
-            const proportionalWidth = totalDuration > 0 
-              ? (duration / totalDuration) * availableWidth
-              : availableWidth / shiftsCount;
-            
-            const minWidth = availableWidth / shiftsCount * 0.7; // Mínimo 70% del espacio equitativo
-            const idealWidth = Math.max(minWidth, proportionalWidth);
-            
-            idealWidths.push(idealWidth);
-            totalIdealWidth += idealWidth;
-          });
-          
-          // Segunda pasada: escalar si es necesario
-          const scaleFactor = totalIdealWidth > availableWidth 
-            ? availableWidth / totalIdealWidth 
-            : 1;
-          
-          // Tercera pasada: posicionar con ancho escalado
-          let currentLeft = 0;
-          
-          laneShifts.forEach(({ shift, lane }, index) => {
-            const shiftStart = parseISO(shift.startAt);
-            const shiftEnd = parseISO(shift.endAt);
-            const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
-            
-            const finalWidth = idealWidths[index] * scaleFactor;
-            
-            shiftsWithPositions.push({
-              shift,
-              lane,
-              leftPercent: currentLeft,
-              widthPercent: finalWidth,
-              shiftHours
-            });
-            
-            // GARANTIZADO: siguiente posición nunca excede límites
-            currentLeft = Math.min(100 - finalWidth, currentLeft + finalWidth + minGapPercent);
-          });
-        }
+        });
       });
       
       return (
