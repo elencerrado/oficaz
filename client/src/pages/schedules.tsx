@@ -775,31 +775,64 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
+      // Calcular posiciones ajustadas con separación mínima horizontal
+      const shiftsWithPositions = shiftsWithLanes.map(({ shift, lane }, index) => {
+        const shiftStart = parseISO(shift.startAt);
+        const shiftEnd = parseISO(shift.endAt);
+        const startTime = format(shiftStart, 'HH:mm');
+        const endTime = format(shiftEnd, 'HH:mm');
+        const shiftHours = `${startTime}-${endTime}`;
+        
+        // Calcular posición y tamaño basado en horas
+        const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
+        const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+        
+        // Asegurar que esté dentro del rango de timeline
+        const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
+        const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
+        
+        // Calcular posición y ancho en porcentajes
+        let leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+        const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+        
+        return {
+          shift,
+          lane,
+          leftPercent,
+          widthPercent,
+          shiftHours,
+          clampedStart,
+          clampedEnd
+        };
+      }).filter(item => item.clampedStart < item.clampedEnd && item.clampedEnd > TIMELINE_START_HOUR && item.clampedStart < TIMELINE_END_HOUR);
+      
+      // Ordenar por posición horizontal dentro de cada carril
+      const shiftsByLane = shiftsWithPositions.reduce((acc, item) => {
+        if (!acc[item.lane]) acc[item.lane] = [];
+        acc[item.lane].push(item);
+        return acc;
+      }, {} as Record<number, typeof shiftsWithPositions>);
+      
+      // Ajustar posiciones para evitar solapamiento horizontal con separación mínima
+      const minGapPercent = 2; // 2% de separación mínima horizontal
+      Object.values(shiftsByLane).forEach(laneShifts => {
+        laneShifts.sort((a, b) => a.leftPercent - b.leftPercent);
+        
+        for (let i = 1; i < laneShifts.length; i++) {
+          const prevShift = laneShifts[i - 1];
+          const currentShift = laneShifts[i];
+          const prevRightEdge = prevShift.leftPercent + prevShift.widthPercent;
+          
+          // Si hay solapamiento o no hay suficiente separación, ajustar posición
+          if (currentShift.leftPercent < prevRightEdge + minGapPercent) {
+            currentShift.leftPercent = prevRightEdge + minGapPercent;
+          }
+        }
+      });
+      
       return (
         <>
-          {shiftsWithLanes.map(({ shift, lane }) => {
-            const shiftStart = parseISO(shift.startAt);
-            const shiftEnd = parseISO(shift.endAt);
-            const startTime = format(shiftStart, 'HH:mm');
-            const endTime = format(shiftEnd, 'HH:mm');
-            const shiftHours = `${startTime}-${endTime}`;
-            
-            // Calcular posición y tamaño basado en horas
-            const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
-            const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
-            
-            // Asegurar que esté dentro del rango de timeline
-            const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
-            const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
-            
-            // Si el turno está completamente fuera del rango, no mostrarlo
-            if (clampedStart >= clampedEnd || clampedEnd <= TIMELINE_START_HOUR || clampedStart >= TIMELINE_END_HOUR) {
-              return null;
-            }
-            
-            // Calcular posición y ancho en porcentajes
-            const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
-            const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+          {shiftsWithPositions.map(({ shift, lane, leftPercent, widthPercent, shiftHours }) => {
             
             return (
               <div
