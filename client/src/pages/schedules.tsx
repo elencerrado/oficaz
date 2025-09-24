@@ -774,58 +774,94 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // Calcular posiciones ajustadas con separación mínima horizontal
-      const shiftsWithPositions = shiftsWithLanes.map(({ shift, lane }, index) => {
-        const shiftStart = parseISO(shift.startAt);
-        const shiftEnd = parseISO(shift.endAt);
+      // ⚠️ NUEVA LÓGICA: Distribución robusta para evitar solapamiento con múltiples badges
+      // Calcular posiciones iniciales y agrupar por carril
+      const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
+        if (!acc[item.lane]) acc[item.lane] = [];
+        
+        const shiftStart = parseISO(item.shift.startAt);
+        const shiftEnd = parseISO(item.shift.endAt);
         const startTime = format(shiftStart, 'HH:mm');
         const endTime = format(shiftEnd, 'HH:mm');
         const shiftHours = `${startTime}-${endTime}`;
         
-        // Calcular posición y tamaño basado en horas
+        // Calcular posición cronológica real
         const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
         const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
-        
-        // Asegurar que esté dentro del rango de timeline
         const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
         const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
         
-        // Calcular posición y ancho en porcentajes
-        let leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
-        const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+        // Calcular duración relativa para proporcionalidad visual
+        const duration = clampedEnd - clampedStart;
+        const chronoLeftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
         
-        return {
-          shift,
-          lane,
-          leftPercent,
-          widthPercent,
+        acc[item.lane].push({
+          shift: item.shift,
+          lane: item.lane,
           shiftHours,
           clampedStart,
-          clampedEnd
-        };
-      }).filter(item => item.clampedStart < item.clampedEnd && item.clampedEnd > TIMELINE_START_HOUR && item.clampedStart < TIMELINE_END_HOUR);
-      
-      // Ordenar por posición horizontal dentro de cada carril
-      const shiftsByLane = shiftsWithPositions.reduce((acc, item) => {
-        if (!acc[item.lane]) acc[item.lane] = [];
-        acc[item.lane].push(item);
-        return acc;
-      }, {} as Record<number, typeof shiftsWithPositions>);
-      
-      // Ajustar posiciones para evitar solapamiento horizontal con separación mínima
-      const minGapPercent = 0.3; // 0.3% de separación mínima horizontal (similar a 2px)
-      Object.values(shiftsByLane).forEach(laneShifts => {
-        laneShifts.sort((a, b) => a.leftPercent - b.leftPercent);
+          clampedEnd,
+          duration,
+          chronoLeftPercent, // Posición cronológica real
+          leftPercent: 0, // Se calculará después
+          widthPercent: 0 // Se calculará después
+        });
         
-        for (let i = 1; i < laneShifts.length; i++) {
-          const prevShift = laneShifts[i - 1];
-          const currentShift = laneShifts[i];
-          const prevRightEdge = prevShift.leftPercent + prevShift.widthPercent;
+        return acc;
+      }, {} as Record<number, Array<{
+        shift: WorkShift;
+        lane: number;
+        shiftHours: string;
+        clampedStart: number;
+        clampedEnd: number;
+        duration: number;
+        chronoLeftPercent: number;
+        leftPercent: number;
+        widthPercent: number;
+      }>>);
+      
+      // Para cada carril, distribuir el espacio de manera robusta
+      const shiftsWithPositions = Object.values(shiftsByLane).flat();
+      
+      Object.values(shiftsByLane).forEach(laneShifts => {
+        if (laneShifts.length === 0) return;
+        
+        // Ordenar por posición cronológica
+        laneShifts.sort((a, b) => a.clampedStart - b.clampedStart);
+        
+        const shiftsCount = laneShifts.length;
+        
+        if (shiftsCount === 1) {
+          // Un solo turno: usar posición y tamaño cronológico
+          const shift = laneShifts[0];
+          shift.leftPercent = shift.chronoLeftPercent;
+          shift.widthPercent = (shift.duration / TIMELINE_TOTAL_HOURS) * 100;
+        } else {
+          // Múltiples turnos: distribución robusta con separación garantizada
+          const minGapPercent = Math.max(1.5, 100 / (shiftsCount * 8)); // Gap dinámico: mínimo 1.5%, escala según cantidad
+          const totalGapPercent = minGapPercent * (shiftsCount - 1); // Espacio total para gaps
+          const availableWidthPercent = 100 - totalGapPercent; // Espacio disponible para badges
           
-          // Si hay solapamiento o no hay suficiente separación, ajustar posición
-          if (currentShift.leftPercent < prevRightEdge + minGapPercent) {
-            currentShift.leftPercent = prevRightEdge + minGapPercent;
-          }
+          // Calcular duración total para proporcionalidad
+          const totalDuration = laneShifts.reduce((sum, shift) => sum + shift.duration, 0);
+          
+          let currentLeftPercent = 0;
+          
+          laneShifts.forEach((shift, index) => {
+            // Ancho proporcional a la duración, pero limitado por espacio disponible
+            const proportionalWidth = totalDuration > 0 
+              ? (shift.duration / totalDuration) * availableWidthPercent
+              : availableWidthPercent / shiftsCount;
+            
+            // Ancho mínimo para legibilidad
+            const minWidthPercent = Math.min(8, availableWidthPercent / shiftsCount);
+            
+            shift.widthPercent = Math.max(minWidthPercent, proportionalWidth);
+            shift.leftPercent = currentLeftPercent;
+            
+            // Siguiente posición: posición actual + ancho + gap
+            currentLeftPercent = shift.leftPercent + shift.widthPercent + minGapPercent;
+          });
         }
       });
       
