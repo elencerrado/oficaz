@@ -692,8 +692,8 @@ export default function EmployeeDashboard() {
     },
     { 
       icon: User, 
-      title: 'Usuario', 
-      route: `/${companyAlias}/usuario`,
+      title: 'Mi Cuadrante', 
+      route: `/${companyAlias}/mi-cuadrante`,
       notification: false,
       feature: null
     },
