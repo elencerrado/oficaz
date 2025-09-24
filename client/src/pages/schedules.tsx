@@ -1088,7 +1088,8 @@ export default function Schedules() {
     style, 
     onClick, 
     title, 
-    className 
+    className,
+    onDelete
   }: {
     shift: WorkShift;
     shiftHours: string;
@@ -1096,6 +1097,7 @@ export default function Schedules() {
     onClick: (e: React.MouseEvent) => void;
     title: string;
     className?: string;
+    onDelete?: (shiftId: number) => void;
   }) {
     const {
       attributes,
@@ -1159,6 +1161,20 @@ export default function Schedules() {
           {shiftHours}
         </div>
         
+        {/* Delete button - only visible on hover when not dragging */}
+        {!isDragging && onDelete && (
+          <button
+            className="absolute top-0 left-0 w-4 h-4 opacity-0 group-hover:opacity-90 transition-opacity bg-red-500 hover:bg-red-600 rounded-br-md flex items-center justify-center z-20"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(shift.id);
+            }}
+            title="Eliminar turno"
+          >
+            <span className="text-[8px] font-bold text-white leading-none">×</span>
+          </button>
+        )}
+
         {/* Drag handle indicator - only visible on hover when not dragging */}
         {!isDragging && (
           <div className="absolute top-0 right-0 w-3 h-3 opacity-0 group-hover:opacity-70 transition-opacity">
@@ -1322,6 +1338,7 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+              onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
             />
           ))}
         </>
@@ -1365,6 +1382,7 @@ export default function Schedules() {
                 setShowShiftModal(true);
               }}
               title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+              onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
             />
           );
         })}
