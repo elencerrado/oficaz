@@ -714,6 +714,40 @@ export default function Schedules() {
     return result;
   };
 
+  // ⚠️ TIMELINE GLOBAL: Calcular límites para TODOS los empleados del día
+  const getGlobalTimelineBounds = (day: Date) => {
+    const dayString = format(day, 'yyyy-MM-dd');
+    
+    // Obtener TODOS los turnos de TODOS los empleados para este día
+    const allDayShifts = workShifts.filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
+      return shiftStartDay === dayString;
+    });
+    
+    if (allDayShifts.length === 0) {
+      return { start: 6, end: 22 }; // Default si no hay turnos
+    }
+    
+    let minHour = 24;
+    let maxHour = 0;
+    
+    allDayShifts.forEach(shift => {
+      const startHour = parseISO(shift.startAt).getHours();
+      const endHour = parseISO(shift.endAt).getHours();
+      const endMinutes = parseISO(shift.endAt).getMinutes();
+      
+      minHour = Math.min(minHour, startHour);
+      maxHour = Math.max(maxHour, endMinutes > 0 ? endHour + 1 : endHour);
+    });
+    
+    // Añadir margen de 1 hora a cada lado para mejor visualización
+    const startWithMargin = Math.max(0, minHour - 1);
+    const endWithMargin = Math.min(24, maxHour + 1);
+    
+    return { start: startWithMargin, end: endWithMargin };
+  };
+
   // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
   const renderShiftBar = (employee: Employee, day: Date) => {
     const shifts = getShiftsForEmployee(employee.id);
@@ -728,33 +762,8 @@ export default function Schedules() {
     
     if (dayShifts.length === 0) return null;
 
-    // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
-    // ⚠️ TIMELINE DINÁMICO: Se adapta automáticamente a los turnos existentes
-    const getTimelineBounds = (shifts: WorkShift[]) => {
-      if (shifts.length === 0) {
-        return { start: 6, end: 22 }; // Default si no hay turnos
-      }
-      
-      let minHour = 24;
-      let maxHour = 0;
-      
-      shifts.forEach(shift => {
-        const startHour = parseISO(shift.startAt).getHours();
-        const endHour = parseISO(shift.endAt).getHours();
-        const endMinutes = parseISO(shift.endAt).getMinutes();
-        
-        minHour = Math.min(minHour, startHour);
-        maxHour = Math.max(maxHour, endMinutes > 0 ? endHour + 1 : endHour);
-      });
-      
-      // Añadir margen de 1 hora a cada lado para mejor visualización
-      const startWithMargin = Math.max(0, minHour - 1);
-      const endWithMargin = Math.min(24, maxHour + 1);
-      
-      return { start: startWithMargin, end: endWithMargin };
-    };
-    
-    const timelineBounds = getTimelineBounds(dayShifts);
+    // ⚠️ USAR TIMELINE GLOBAL para que TODOS los empleados tengan la misma escala temporal
+    const timelineBounds = getGlobalTimelineBounds(day);
     const TIMELINE_START_HOUR = timelineBounds.start;
     const TIMELINE_END_HOUR = timelineBounds.end;
     const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
