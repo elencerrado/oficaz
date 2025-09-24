@@ -517,6 +517,16 @@ export default function Schedules() {
   const [activeShift, setActiveShift] = useState<WorkShift | null>(null);
   const [dragOverCellId, setDragOverCellId] = useState<string | null>(null);
   
+  // Estados para el modal de conflictos
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState<{
+    sourceShift: WorkShift;
+    targetEmployeeId: number;
+    targetEmployeeName: string;
+    targetDate: Date;
+    existingShifts: WorkShift[];
+  } | null>(null);
+  
   // Configurar sensors para drag & drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -606,13 +616,16 @@ export default function Schedules() {
       return shiftDateStr === targetDateStr;
     });
 
-    // If there are existing shifts, show confirmation modal instead of blocking
+    // If there are existing shifts, show confirmation modal
     if (conflictingShifts.length > 0) {
-      toast({
-        title: 'Ya hay turnos asignados',
-        description: `${targetEmployee.fullName} ya tiene ${conflictingShifts.length} turno(s) el ${format(targetDate, "d 'de' MMMM", { locale: es })}. Funcionalidad de conflictos pendiente de implementar.`,
-        variant: 'destructive'
+      setConflictData({
+        sourceShift: activeShift,
+        targetEmployeeId,
+        targetEmployeeName: targetEmployee.fullName,
+        targetDate,
+        existingShifts: conflictingShifts
       });
+      setShowConflictModal(true);
       return;
     }
 
@@ -666,6 +679,40 @@ export default function Schedules() {
     queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
     
     return response;
+  };
+
+  // Funciones para manejar el modal de conflictos
+  const handleConfirmOverride = async () => {
+    if (!conflictData) return;
+
+    try {
+      // First, delete existing conflicting shifts
+      for (const shift of conflictData.existingShifts) {
+        await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
+      }
+
+      // Then duplicate the original shift
+      await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
+      
+      toast({
+        title: '✅ Turno sobrescrito',
+        description: `El turno "${conflictData.sourceShift.title}" ha reemplazado los turnos existentes para ${conflictData.targetEmployeeName}`,
+      });
+      
+      setShowConflictModal(false);
+      setConflictData(null);
+    } catch (error: any) {
+      toast({
+        title: 'Error al sobrescribir turnos',
+        description: error.message || 'No se pudieron sobrescribir los turnos',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleCancelConflict = () => {
+    setShowConflictModal(false);
+    setConflictData(null);
   };
 
   // Calcular rango según el modo de vista
@@ -1845,6 +1892,94 @@ export default function Schedules() {
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de conflictos de turnos */}
+      <Dialog open={showConflictModal} onOpenChange={setShowConflictModal}>
+        <DialogContent className="max-w-md p-0 gap-0 bg-background border-0 overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 bg-orange-500 text-white">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-sm">⚠️</span>
+              </div>
+              <h3 className="text-lg font-semibold">Conflicto de turnos</h3>
+            </div>
+            <p className="text-sm opacity-90 mt-1">
+              {conflictData?.targetEmployeeName} ya tiene turnos asignados en esta fecha
+            </p>
+          </div>
+
+          {/* Body */}
+          <div className="p-6">
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground mb-3">
+                <strong>{conflictData?.targetEmployeeName}</strong> ya tiene {conflictData?.existingShifts.length} turno(s) el{' '}
+                <strong>{conflictData?.targetDate && format(conflictData.targetDate, "EEEE d 'de' MMMM", { locale: es })}</strong>:
+              </p>
+              
+              {/* Lista de turnos existentes */}
+              <div className="space-y-2 mb-4">
+                {conflictData?.existingShifts.map((shift, index) => (
+                  <div
+                    key={shift.id}
+                    className="p-3 rounded border flex items-center justify-between"
+                    style={{ borderLeftWidth: '4px', borderLeftColor: shift.color }}
+                  >
+                    <div>
+                      <div className="font-medium text-sm">{shift.title}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(parseISO(shift.startAt), 'HH:mm')} - {format(parseISO(shift.endAt), 'HH:mm')}
+                        {shift.location && ` • ${shift.location}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-1">
+                  <div
+                    className="w-3 h-3 rounded"
+                    style={{ backgroundColor: conflictData?.sourceShift.color }}
+                  />
+                  <span className="font-medium text-sm">Nuevo turno a añadir:</span>
+                </div>
+                <div className="text-sm">
+                  <strong>{conflictData?.sourceShift.title}</strong>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {conflictData?.sourceShift && format(parseISO(conflictData.sourceShift.startAt), 'HH:mm')} -{' '}
+                  {conflictData?.sourceShift && format(parseISO(conflictData.sourceShift.endAt), 'HH:mm')}
+                  {conflictData?.sourceShift.location && ` • ${conflictData.sourceShift.location}`}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              ¿Qué deseas hacer? Si sobrescribes, los turnos existentes se eliminarán permanentemente.
+            </p>
+
+            {/* Botones */}
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelConflict}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleConfirmOverride}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                Sobrescribir turnos
+              </Button>
             </div>
           </div>
         </DialogContent>
