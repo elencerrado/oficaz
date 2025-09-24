@@ -758,6 +758,7 @@ export default function Schedules() {
         const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
         const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
         
+        
         return {
           shift,
           shiftHours,
@@ -789,14 +790,26 @@ export default function Schedules() {
         });
       }
       
-      // Reposicionar manteniendo orden cronológico
-      let currentPosition = shiftsWithPositions[0].leftPercent;
-      shiftsWithPositions[0].leftPercent = currentPosition;
-      
+      // ⚠️ REPOSICIONAMIENTO INTELIGENTE: Solo si hay solapamiento visual real
       for (let i = 1; i < shiftsWithPositions.length; i++) {
+        const current = shiftsWithPositions[i];
         const previous = shiftsWithPositions[i - 1];
-        currentPosition = previous.leftPercent + previous.widthPercent + minGap;
-        shiftsWithPositions[i].leftPercent = Math.min(currentPosition, 100 - shiftsWithPositions[i].widthPercent);
+        
+        const prevRightEdge = previous.leftPercent + previous.widthPercent;
+        
+        // Solo reposicionar si HAY solapamiento visual (no temporal)
+        if (current.leftPercent < prevRightEdge + minGap) {
+          const originalLeft = current.leftPercent;
+          current.leftPercent = prevRightEdge + minGap;
+          
+          // Si se sale del 100%, comprimir el ancho
+          if (current.leftPercent + current.widthPercent > 100) {
+            current.widthPercent = Math.max(MIN_WIDTH_PERCENT * 0.7, 100 - current.leftPercent);
+          }
+          
+        } else {
+          // No hay solapamiento - mantener posición cronológica original
+        }
       }
       
       return (
