@@ -564,7 +564,7 @@ export default function Schedules() {
     const holiday = isHoliday(date);
     const vacation = isEmployeeOnVacation(employeeId, date);
     
-    let baseStyle = "relative rounded border overflow-hidden min-h-[80px]"; // Altura fija más alta
+    let baseStyle = "relative rounded border overflow-hidden min-h-[60px]"; // Altura compacta
     
     if (holiday) {
       // Día festivo - fondo rojo suave
@@ -1149,7 +1149,7 @@ export default function Schedules() {
                                 : 'flex-1' // Modo semana: ocupa el espacio menos el footer
                             }`} style={
                               viewMode === 'week' || viewMode === 'workweek' 
-                                ? { paddingBottom: '24px', maxHeight: 'calc(100% - 24px)' }
+                                ? { paddingBottom: '16px', maxHeight: 'calc(100% - 16px)' }
                                 : {}
                             }>
                               {/* Contenido especial para festivos/vacaciones */}
@@ -1182,7 +1182,7 @@ export default function Schedules() {
                               </div>
                             ) : (
                               /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-30">
+                              <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-30">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                   onClick={(e) => {
