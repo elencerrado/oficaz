@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -694,7 +694,7 @@ export default function Schedules() {
   };
 
   // ⚠️ PROTECTED - Lane assignment algorithm for shift collision detection - DO NOT MODIFY ⚠️
-  const assignShiftLanes = (dayShifts: WorkShift[]): { shift: WorkShift; lane: number; totalLanes: number }[] => {
+  const assignShiftLanes = useCallback((dayShifts: WorkShift[]): { shift: WorkShift; lane: number; totalLanes: number }[] => {
     if (dayShifts.length === 0) return [];
     
     // Sort shifts by start time
@@ -711,16 +711,11 @@ export default function Schedules() {
       totalLanes: sortedShifts.length
     }));
     
-    console.log(`Lane assignment: ${sortedShifts.length} shifts assigned to ${sortedShifts.length} separate lanes`);
-    sortedShifts.forEach((shift, index) => {
-      console.log(`Shift "${shift.title}" (${format(parseISO(shift.startAt), 'HH:mm')}-${format(parseISO(shift.endAt), 'HH:mm')}) assigned to lane ${index}`);
-    });
-    
     return result;
-  };
+  }, []);
 
-  // ⚠️ TIMELINE GLOBAL: Calcular límites para TODOS los empleados del día
-  const getGlobalTimelineBounds = (day: Date) => {
+  // ⚠️ TIMELINE GLOBAL MEMOIZADO: Calcular límites para TODOS los empleados del día
+  const getGlobalTimelineBounds = useCallback((day: Date) => {
     const dayString = format(day, 'yyyy-MM-dd');
     
     // Obtener TODOS los turnos de TODOS los empleados para este día
@@ -751,7 +746,7 @@ export default function Schedules() {
     const endWithMargin = Math.min(24, maxHour + 1);
     
     return { start: startWithMargin, end: endWithMargin };
-  };
+  }, [workShifts]);
 
   // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
   const renderShiftBar = (employee: Employee, day: Date) => {
