@@ -283,12 +283,12 @@ export default function EmployeeSchedule() {
           {/* Contenido especial (vacaciones/festivos) */}
           {getCellContent(currentDate)}
           
-          {/* Turnos del día */}
-          {dayShifts.length > 0 && !getCellContent(currentDate) && (
+          {/* Turnos del día - Mostrar SIEMPRE si hay turnos, incluso en festivos */}
+          {dayShifts.length > 0 && (
             <div className="p-6">
               <h3 className="font-medium text-white mb-4 flex items-center gap-2">
                 <CalendarClock className="w-5 h-5 text-blue-400" />
-                Tus turnos de hoy ({dayShifts.length})
+                {getCellContent(currentDate) ? 'Turnos programados (día especial)' : 'Tus turnos de hoy'} ({dayShifts.length})
               </h3>
               <div className="space-y-3">
                 {dayShifts.map(shift => renderShiftBadge(shift))}
@@ -296,7 +296,7 @@ export default function EmployeeSchedule() {
             </div>
           )}
 
-          {/* Sin turnos programados */}
+          {/* Sin turnos programados - Solo mostrar si NO hay contenido especial */}
           {dayShifts.length === 0 && !getCellContent(currentDate) && (
             <div className="flex flex-col items-center justify-center h-full text-center p-12">
               <CalendarClock className="w-16 h-16 text-white/30 mb-4" />
