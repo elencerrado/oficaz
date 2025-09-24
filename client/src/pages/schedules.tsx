@@ -564,13 +564,65 @@ export default function Schedules() {
       return;
     }
 
+    // ⚠️ PROTECTED - DO NOT MODIFY - Validation Logic
+    // Critical drop validation system that prevents data conflicts
+    
+    // 1. Validate target employee exists and is active
+    const targetEmployee = getEmployeeById(targetEmployeeId);
+    if (!targetEmployee) {
+      toast({
+        title: 'Error de validación',
+        description: 'El empleado de destino no existe',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!targetEmployee.isActive) {
+      toast({
+        title: 'Empleado inactivo',
+        description: `No se pueden asignar turnos a ${targetEmployee.fullName} porque está inactivo`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // 2. Validate employee is not on vacation
+    const vacation = isEmployeeOnVacation(targetEmployeeId, targetDate);
+    if (vacation) {
+      toast({
+        title: 'Empleado de vacaciones',
+        description: `${targetEmployee.fullName} está de vacaciones en esta fecha`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // 3. Check for existing shifts on the same day that might conflict
+    const existingShifts = getShiftsForEmployee(targetEmployeeId);
+    const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+    const conflictingShifts = existingShifts.filter((shift: WorkShift) => {
+      const shiftDateStr = format(parseISO(shift.startAt), 'yyyy-MM-dd');
+      return shiftDateStr === targetDateStr;
+    });
+
+    // If there are existing shifts, show confirmation modal instead of blocking
+    if (conflictingShifts.length > 0) {
+      toast({
+        title: 'Ya hay turnos asignados',
+        description: `${targetEmployee.fullName} ya tiene ${conflictingShifts.length} turno(s) el ${format(targetDate, "d 'de' MMMM", { locale: es })}. Funcionalidad de conflictos pendiente de implementar.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // All validations passed - proceed with duplication
     try {
-      // Duplicate the shift with new employee/date
       await duplicateShift(activeShift, targetEmployeeId, targetDate);
       
       toast({
-        title: 'Turno duplicado',
-        description: `El turno "${activeShift.title}" se ha duplicado exitosamente`,
+        title: '✅ Turno duplicado',
+        description: `El turno "${activeShift.title}" se ha duplicado para ${targetEmployee.fullName}`,
       });
     } catch (error: any) {
       toast({
