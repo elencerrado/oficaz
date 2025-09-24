@@ -116,7 +116,7 @@ export default function EmployeeSchedule() {
     );
   };
 
-  // Función para renderizar badge de turno
+  // Función para renderizar badge de turno - Optimizada para móvil
   const renderShiftBadge = (shift: WorkShift) => {
     const startTime = format(parseISO(shift.startAt), 'HH:mm');
     const endTime = format(parseISO(shift.endAt), 'HH:mm');
@@ -124,26 +124,26 @@ export default function EmployeeSchedule() {
     return (
       <div 
         key={shift.id}
-        className="mb-3 p-4 rounded-xl text-white shadow-sm border border-white/20 backdrop-blur-sm"
+        className="p-3 rounded-xl text-white shadow-sm border border-white/20 backdrop-blur-sm"
         style={{ backgroundColor: shift.color }}
       >
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-medium text-sm">{shift.title}</span>
-          <div className="flex items-center text-xs bg-black/20 px-2 py-1 rounded-lg">
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-medium text-sm truncate pr-2">{shift.title}</span>
+          <div className="flex items-center text-xs bg-black/20 px-2 py-1 rounded-lg whitespace-nowrap">
             <Clock className="w-3 h-3 mr-1" />
-            {startTime} - {endTime}
+            {startTime}-{endTime}
           </div>
         </div>
         
         {shift.location && (
           <div className="flex items-center text-xs opacity-90 mb-1">
-            <MapPin className="w-3 h-3 mr-1" />
-            {shift.location}
+            <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{shift.location}</span>
           </div>
         )}
         
         {shift.notes && (
-          <div className="text-xs opacity-80 mt-2 bg-black/20 p-2 rounded-lg">
+          <div className="text-xs opacity-80 mt-1.5 bg-black/20 p-2 rounded-lg">
             {shift.notes}
           </div>
         )}
@@ -236,95 +236,99 @@ export default function EmployeeSchedule() {
         </p>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="px-6 mb-6">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+      {/* Mobile-optimized Navigation */}
+      <div className="px-4 mb-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
           <div className="flex items-center justify-between">
+            {/* Botón Anterior - Solo icono para móvil */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigateDay('prev')}
-              className="text-white hover:bg-white/20 px-4 py-2 rounded-lg"
+              className="text-white hover:bg-white/20 w-12 h-12 rounded-full p-0 flex items-center justify-center"
               data-testid="button-prev-day"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Anterior
+              <ChevronLeft className="w-6 h-6" />
             </Button>
             
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-white">
-                {format(currentDate, "EEEE, d 'de' MMMM yyyy", { locale: es })}
-              </h2>
+            {/* Fecha compacta para móvil */}
+            <div className="text-center flex-1 px-2">
+              <div className="text-sm font-medium text-white/80 leading-tight capitalize">
+                {format(currentDate, "EEEE", { locale: es })}
+              </div>
+              <div className="text-lg font-bold text-white leading-tight">
+                {format(currentDate, "d MMM", { locale: es })}
+              </div>
               {isToday && (
-                <Badge variant="secondary" className="mt-1 bg-blue-500 text-white border-blue-400">
-                  Hoy
+                <Badge variant="secondary" className="mt-1 bg-blue-500 text-white border-blue-400 text-xs px-2 py-0.5">
+                  HOY
                 </Badge>
               )}
             </div>
             
+            {/* Botón Siguiente - Solo icono para móvil */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigateDay('next')}
-              className="text-white hover:bg-white/20 px-4 py-2 rounded-lg"
+              className="text-white hover:bg-white/20 w-12 h-12 rounded-full p-0 flex items-center justify-center"
               data-testid="button-next-day"
             >
-              Siguiente
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ChevronRight className="w-6 h-6" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Day Content */}
-      <div className="px-6 mb-6">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 min-h-[400px]">
+      {/* Day Content - Optimizado para móvil */}
+      <div className="px-4 mb-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 min-h-[320px]">
           
           {/* Contenido especial (vacaciones/festivos) */}
           {getCellContent(currentDate)}
           
-          {/* Turnos del día - Mostrar SIEMPRE si hay turnos, incluso en festivos */}
+          {/* Turnos del día - Compacto para móvil */}
           {dayShifts.length > 0 && (
-            <div className="p-6">
-              <h3 className="font-medium text-white mb-4 flex items-center gap-2">
-                <CalendarClock className="w-5 h-5 text-blue-400" />
-                {getCellContent(currentDate) ? 'Turnos programados (día especial)' : 'Tus turnos de hoy'} ({dayShifts.length})
+            <div className="p-4">
+              <h3 className="font-medium text-white mb-3 flex items-center gap-2 text-sm">
+                <CalendarClock className="w-4 h-4 text-blue-400" />
+                {getCellContent(currentDate) ? 'Turnos (día especial)' : 'Turnos de hoy'} ({dayShifts.length})
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {dayShifts.map(shift => renderShiftBadge(shift))}
               </div>
             </div>
           )}
 
-          {/* Sin turnos programados - Solo mostrar si NO hay contenido especial */}
+          {/* Sin turnos programados - Compacto para móvil */}
           {dayShifts.length === 0 && !getCellContent(currentDate) && (
-            <div className="flex flex-col items-center justify-center h-full text-center p-12">
-              <CalendarClock className="w-16 h-16 text-white/30 mb-4" />
-              <h3 className="font-medium text-white mb-2">Sin turnos programados</h3>
-              <p className="text-sm text-white/70">No tienes horarios asignados para este día</p>
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <CalendarClock className="w-12 h-12 text-white/30 mb-3" />
+              <h3 className="font-medium text-white mb-1 text-sm">Sin turnos</h3>
+              <p className="text-xs text-white/70">No hay horarios para este día</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-6 mb-6">
-        <div className="grid grid-cols-2 gap-4">
+      {/* Quick Actions - Móvil */}
+      <div className="px-4 mb-4">
+        <div className="flex gap-3">
           {!isToday && (
             <Button
               variant="ghost"
               onClick={() => setCurrentDate(new Date())}
-              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-3"
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-2.5 px-4 text-sm flex-1"
             >
-              Volver a hoy
+              🏠 Hoy
             </Button>
           )}
           <Button
             variant="ghost"
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-3"
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm rounded-xl py-2.5 px-4 text-sm flex-1"
             onClick={() => refetchShifts()}
           >
-            <Clock className="w-4 h-4 mr-2" />
+            <Clock className="w-4 h-4 mr-1" />
             Actualizar
           </Button>
         </div>
