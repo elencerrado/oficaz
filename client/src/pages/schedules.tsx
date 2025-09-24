@@ -521,6 +521,7 @@ export default function Schedules() {
   
   // Estados para el modal de conflictos
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [isOverriding, setIsOverriding] = useState(false);
   const [conflictData, setConflictData] = useState<{
     sourceShift: WorkShift;
     targetEmployeeId: number;
@@ -736,18 +737,12 @@ export default function Schedules() {
 
   // Funciones para manejar el modal de conflictos
   const handleConfirmOverride = async () => {
-    if (!conflictData) return;
+    if (!conflictData || isOverriding) return;
 
+    setIsOverriding(true);
     try {
-      console.log('🔧 OVERRIDE DEBUG - About to delete shifts:', {
-        totalShifts: conflictData.existingShifts.length,
-        shiftIds: conflictData.existingShifts.map(s => s.id),
-        sourceShiftId: conflictData.sourceShift.id
-      });
-      
       // First, delete existing conflicting shifts
       for (const shift of conflictData.existingShifts) {
-        console.log('🗑️ Deleting shift:', shift.id);
         await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
       }
 
@@ -767,6 +762,8 @@ export default function Schedules() {
         description: error.message || 'No se pudieron sobrescribir los turnos',
         variant: 'destructive'
       });
+    } finally {
+      setIsOverriding(false);
     }
   };
 
@@ -2141,9 +2138,10 @@ export default function Schedules() {
                 variant="destructive"
                 size="sm"
                 onClick={handleConfirmOverride}
-                className="bg-orange-500 hover:bg-orange-600"
+                disabled={isOverriding}
+                className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50"
               >
-                Sobrescribir turnos
+                {isOverriding ? 'Sobrescribiendo...' : 'Sobrescribir turnos'}
               </Button>
             </div>
           </div>
