@@ -758,6 +758,13 @@ export default function Schedules() {
         const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
         const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
         
+        console.log(`⏰ MODO DÍA - Turno "${shift.title}" (${shiftHours}):`, {
+          startHour: startHour.toFixed(2),
+          endHour: endHour.toFixed(2),
+          leftPercent: leftPercent.toFixed(2) + '%',
+          widthPercent: widthPercent.toFixed(2) + '%'
+        });
+        
         return {
           shift,
           shiftHours,
@@ -794,12 +801,12 @@ export default function Schedules() {
               style={{
                 left: `${leftPercent}%`,
                 width: `${widthPercent}%`,
-                top: '3px',           // Todos en la misma línea horizontal
-                bottom: '3px',        // Ocupan toda la altura disponible
+                top: '3px',           
+                bottom: '3px',        
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10,
-                minWidth: '60px',
                 boxSizing: 'border-box'
+                // ⚠️ SIN minWidth - que joda la matemática perfecta
               }}
               onClick={(e) => {
                 e.stopPropagation();
