@@ -1002,26 +1002,90 @@ export default function Schedules() {
       disabled: isDisabled
     });
 
-    // Visual feedback when dragging over
-    const dropStyle = isOver && !isDisabled ? {
-      backgroundColor: 'rgba(59, 130, 246, 0.1)', // blue-500 with opacity
-      borderColor: 'rgb(59, 130, 246)', // blue-500
-      borderWidth: '2px',
-      borderStyle: 'dashed'
-    } : {};
+    // Enhanced visual feedback based on drag state and validity
+    const getDropStyles = () => {
+      if (!activeShift) return {};
+      
+      const isValidDrop = !isDisabled;
+      const isDraggedOver = isOver;
+      
+      if (isDraggedOver) {
+        if (isValidDrop) {
+          // Valid drop zone - green highlight
+          return {
+            backgroundColor: 'rgba(34, 197, 94, 0.1)', // green-500 with opacity
+            borderColor: 'rgb(34, 197, 94)', // green-500
+            borderWidth: '2px',
+            borderStyle: 'dashed',
+            transform: 'scale(1.02)',
+            transition: 'all 0.2s ease'
+          };
+        } else {
+          // Invalid drop zone - red highlight
+          return {
+            backgroundColor: 'rgba(239, 68, 68, 0.1)', // red-500 with opacity
+            borderColor: 'rgb(239, 68, 68)', // red-500
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            transform: 'scale(0.98)',
+            transition: 'all 0.2s ease'
+          };
+        }
+      } else if (activeShift && isValidDrop) {
+        // Valid but not hovered - subtle indication
+        return {
+          backgroundColor: 'rgba(34, 197, 94, 0.03)', // very subtle green
+          borderColor: 'rgba(34, 197, 94, 0.3)', // subtle green border
+          borderWidth: '1px',
+          borderStyle: 'dotted',
+          transition: 'all 0.2s ease'
+        };
+      }
+      
+      return {};
+    };
+
+    const dropStyles = getDropStyles();
+    const isValidDrop = !isDisabled;
+    const isDraggedOver = isOver;
 
     return (
       <div
         ref={setNodeRef}
-        className={`${className} ${isOver && !isDisabled ? 'ring-2 ring-blue-500/50' : ''}`}
+        className={`${className} ${
+          activeShift ? 
+            (isDraggedOver ? 
+              (isValidDrop ? 'ring-2 ring-green-400/50 shadow-lg' : 'ring-2 ring-red-400/50') : 
+              (isValidDrop ? 'ring-1 ring-green-300/30' : '')) : 
+            ''
+        }`}
         style={{
           ...style,
-          ...dropStyle
+          ...dropStyles
         }}
         onClick={onClick}
-        title={title}
+        title={activeShift && isDraggedOver ? 
+          (isValidDrop ? 'Soltar aquí para duplicar el turno' : title) : 
+          title
+        }
       >
         {children}
+        {/* Visual indicator for valid drop zones */}
+        {activeShift && isDraggedOver && isValidDrop && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg animate-pulse">
+              <span className="text-sm font-bold">+</span>
+            </div>
+          </div>
+        )}
+        {/* Visual indicator for invalid drop zones */}
+        {activeShift && isDraggedOver && !isValidDrop && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+              <span className="text-sm font-bold">✕</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1056,20 +1120,45 @@ export default function Schedules() {
       transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     } : {};
 
+    // Enhanced drag styling with better visual feedback
+    const getDragStyles = () => {
+      if (isDragging) {
+        return {
+          opacity: 0.8,
+          transform: `${transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : ''} rotate(5deg) scale(1.05)`,
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.8)',
+          zIndex: 1000,
+          transition: 'none', // Remove transitions during drag for smooth movement
+          filter: 'brightness(1.1) saturate(1.2)', // Make colors more vibrant when dragging
+          border: '2px solid rgba(255, 255, 255, 0.9)',
+        };
+      }
+      return {
+        ...dragStyle,
+        transition: 'all 0.2s ease',
+        cursor: 'grab'
+      };
+    };
+
+    const enhancedDragStyles = getDragStyles();
+
     return (
       <div
         ref={setNodeRef}
         {...listeners}
         {...attributes}
-        className={`absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 ${isDragging ? 'opacity-50 z-50' : ''} ${className || ''}`}
+        className={`absolute rounded-md flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none ${
+          isDragging ? 
+            'z-50 shadow-2xl ring-2 ring-white/50' : 
+            'cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md hover:scale-105 active:cursor-grabbing'
+        } ${className || ''}`}
         style={{
           ...style,
-          ...dragStyle,
+          ...enhancedDragStyles,
           backgroundColor: shift.color || '#007AFF',
-          zIndex: isDragging ? 1000 : (style.zIndex || 10),
         }}
         onClick={onClick}
-        title={title}
+        title={isDragging ? 'Arrastrando turno...' : `${title} (Click para editar, arrastrar para duplicar)`}
       >
         {/* Diseño de dos líneas: nombre arriba, hora abajo */}
         <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
@@ -1078,6 +1167,22 @@ export default function Schedules() {
         <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
           {shiftHours}
         </div>
+        
+        {/* Drag handle indicator - only visible on hover when not dragging */}
+        {!isDragging && (
+          <div className="absolute top-0 right-0 w-3 h-3 opacity-0 group-hover:opacity-70 transition-opacity">
+            <div className="w-full h-full bg-white/30 rounded-bl-md flex items-center justify-center">
+              <span className="text-[6px] font-bold">⋮⋮</span>
+            </div>
+          </div>
+        )}
+        
+        {/* Duplicate icon when dragging */}
+        {isDragging && (
+          <div className="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-pulse">
+            <span className="text-[8px] font-bold text-white">📋</span>
+          </div>
+        )}
       </div>
     );
   }
