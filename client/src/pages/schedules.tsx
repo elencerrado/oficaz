@@ -1321,42 +1321,19 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación con autocompletado */}
+              {/* Ubicación */}
               <div className="relative">
                 <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
-                  <Autocomplete
-                    apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-                    onPlaceSelected={(place) => {
-                      console.log('🗺️ Lugar seleccionado:', place);
-                      const address = place.formatted_address || place.name || '';
-                      console.log('📍 Dirección extraída:', address);
-                      setNewShift(prev => ({ 
-                        ...prev, 
-                        location: address
-                      }));
-                    }}
-                    options={{
-                      types: ['establishment', 'geocode'],
-                      componentRestrictions: { country: 'es' }
-                    }}
-                    placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={newShift.location}
-                    onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                )}
-                {!import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
-                  <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 pl-8">
-                    ⚠️ Autocompletado deshabilitado - configura Google Maps API
-                  </div>
-                )}
+                <input
+                  type="text"
+                  value={newShift.location}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8">
+                  🗺️ Para habilitar autocompletado: quita restricciones de tu API key de Google Maps
+                </div>
               </div>
               
               {/* Notas */}
@@ -1525,42 +1502,19 @@ export default function Schedules() {
                 })}
               </div>
               
-              {/* Ubicación con autocompletado */}
+              {/* Ubicación */}
               <div className="relative">
                 <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? (
-                  <Autocomplete
-                    apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
-                    onPlaceSelected={(place) => {
-                      console.log('🗺️ Lugar seleccionado (edit):', place);
-                      const address = place.formatted_address || place.name || '';
-                      console.log('📍 Dirección extraída (edit):', address);
-                      setEditShift(prev => ({ 
-                        ...prev, 
-                        location: address
-                      }));
-                    }}
-                    options={{
-                      types: ['establishment', 'geocode'],
-                      componentRestrictions: { country: 'es' }
-                    }}
-                    placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={editShift.location}
-                    onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                )}
-                {!import.meta.env.VITE_GOOGLE_MAPS_API_KEY && (
-                  <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 pl-8">
-                    ⚠️ Autocompletado deshabilitado - configura Google Maps API
-                  </div>
-                )}
+                <input
+                  type="text"
+                  value={editShift.location}
+                  onChange={(e) => setEditShift(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
+                  className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <div className="text-xs text-blue-600 dark:text-blue-400 mt-1 pl-8">
+                  🗺️ Para habilitar autocompletado: quita restricciones de tu API key de Google Maps
+                </div>
               </div>
               
               {/* Notas */}
