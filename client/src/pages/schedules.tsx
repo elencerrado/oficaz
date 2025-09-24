@@ -1105,7 +1105,7 @@ export default function Schedules() {
                           profilePicture={employee.profilePicture}
                           className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8"
                         />
-                        <div className="text-[10px] md:text-xs font-medium text-foreground text-center truncate max-w-full">
+                        <div className="text-[10px] md:text-xs font-medium text-foreground text-center max-w-full leading-tight">
                           {employee.fullName}
                         </div>
                       </div>
