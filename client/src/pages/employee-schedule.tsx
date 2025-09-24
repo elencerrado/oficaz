@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { PageLoading } from "@/components/ui/page-loading";
+import { useFeatureCheck } from "@/hooks/use-feature-check";
 
 interface WorkShift {
   id: number;
@@ -44,6 +45,7 @@ interface Holiday {
 export default function EmployeeSchedule() {
   const { user, company } = useAuth();
   const [location] = useLocation();
+  const { hasAccess } = useFeatureCheck();
 
   // Estado para la fecha actual (solo vista de día)
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -52,8 +54,8 @@ export default function EmployeeSchedule() {
   const urlParts = location.split('/').filter(part => part.length > 0);
   const companyAlias = urlParts[0] || company?.companyAlias || 'test';
 
-  // Check if should show logo based on subscription features
-  const shouldShowLogo = company?.logoUrl && company?.subscription?.features?.logoUpload;
+  // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
+  const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
 
   // Queries para datos
   const { data: shifts = [], isLoading: shiftsLoading, refetch: refetchShifts } = useQuery<WorkShift[]>({
@@ -211,7 +213,7 @@ export default function EmployeeSchedule() {
           {/* Mostrar logo solo si tiene logo Y función habilitada en super admin */}
           {shouldShowLogo ? (
             <img 
-              src={company.logoUrl} 
+              src={company.logoUrl!} 
               alt={company.name} 
               className="h-8 w-auto mb-1 object-contain filter brightness-0 invert"
             />
