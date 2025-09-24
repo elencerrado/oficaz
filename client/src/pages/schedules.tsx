@@ -774,7 +774,10 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ LÍNEA DE TIEMPO CRONOLÓGICA REAL: Los badges se posicionan según su hora exacta
+      // ⚠️ LÍNEA DE TIEMPO HÍBRIDA: Cronología real + separación por carriles
+      // Calcular gap horizontal mínimo para separación entre carriles
+      const laneGapPercent = Math.max(0.3, Math.min(1.2, 100 / (maxLanes * 50))); // Gap adaptativo: 0.3% a 1.2%
+      
       const shiftsWithPositions = shiftsWithLanes.map(({ shift, lane }) => {
         const shiftStart = parseISO(shift.startAt);
         const shiftEnd = parseISO(shift.endAt);
@@ -790,17 +793,28 @@ export default function Schedules() {
         const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
         const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
         
-        // ✅ POSICIÓN CRONOLÓGICA EXACTA: left % basado en hora de inicio real
-        const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+        // ✅ PASO 1: Posición y ancho cronológico puro
+        let chronoLeftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+        let chronoWidthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
         
-        // ✅ ANCHO PROPORCIONAL: width % basado en duración real del turno
-        const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+        // ✅ PASO 2: Aplicar offset horizontal basado en carril para evitar solapamiento
+        const laneOffsetPercent = lane * laneGapPercent; // Cada carril se desplaza horizontalmente
+        let adjustedLeftPercent = chronoLeftPercent + laneOffsetPercent;
+        let adjustedWidthPercent = Math.max(2, chronoWidthPercent - laneGapPercent); // Reducir ancho para dar espacio al offset
+        
+        // ✅ PASO 3: Clampear para asegurar que no excede el 100% del contenedor
+        const rightEdgePercent = adjustedLeftPercent + adjustedWidthPercent;
+        if (rightEdgePercent > 100) {
+          // Si se sale del contenedor, comprimir proporcionalmente
+          const overflowPercent = rightEdgePercent - 100;
+          adjustedWidthPercent = Math.max(2, adjustedWidthPercent - overflowPercent);
+        }
         
         return {
           shift,
           lane,
-          leftPercent,
-          widthPercent,
+          leftPercent: adjustedLeftPercent,
+          widthPercent: adjustedWidthPercent,
           shiftHours,
           clampedStart,
           clampedEnd
