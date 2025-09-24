@@ -733,198 +733,90 @@ export default function Schedules() {
     const TIMELINE_END_HOUR = 22; // 10:00 PM
     const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
     
-    // MODO DÍA: Sistema horizontal cronológico con carriles verticales para evitar solapamiento
+    // MODO DÍA: Timeline cronológico puro - SIN carriles verticales
     if (viewMode === 'day') {
-      // Función para detectar si dos turnos se solapan horizontalmente
-      const doShiftsOverlap = (shift1: WorkShift, shift2: WorkShift): boolean => {
-        const start1 = parseISO(shift1.startAt).getTime();
-        const end1 = parseISO(shift1.endAt).getTime();
-        const start2 = parseISO(shift2.startAt).getTime();
-        const end2 = parseISO(shift2.endAt).getTime();
-        
-        // Verificar solapamiento real: (start1 < end2) && (start2 < end1)
-        // Los turnos consecutivos (end1 === start2) NO se consideran solapamiento
-        return (start1 < end2) && (start2 < end1);
-      };
+      // Ordenar turnos cronológicamente
+      const sortedShifts = [...dayShifts].sort((a, b) => 
+        parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime()
+      );
       
-      // Asignar carriles para evitar solapamiento usando algoritmo optimizado
-      const shiftsWithLanes: { shift: WorkShift; lane: number }[] = [];
-      
-      dayShifts.forEach((shift, index) => {
-        // Encontrar el carril más bajo disponible para este turno
-        let lane = 0;
+      // Calcular posiciones cronológicas directas para TODOS los turnos
+      const shiftsWithPositions = sortedShifts.map(shift => {
+        const shiftStart = parseISO(shift.startAt);
+        const shiftEnd = parseISO(shift.endAt);
+        const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
         
-        // Buscar entre turnos ya procesados cuáles se solapan con el actual
-        const conflictingLanes = new Set<number>();
+        // Calcular horas como decimales
+        const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
+        const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
         
-        shiftsWithLanes.forEach(processedShift => {
-          if (doShiftsOverlap(shift, processedShift.shift)) {
-            conflictingLanes.add(processedShift.lane);
-          }
-        });
+        // Limitar al timeline visible
+        const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
+        const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
         
-        // Encontrar el primer carril disponible (no ocupado por turnos solapados)
-        while (conflictingLanes.has(lane)) {
-          lane++;
-        }
+        // Posición cronológica exacta en %
+        const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+        const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
         
-        shiftsWithLanes.push({ shift, lane });
+        return {
+          shift,
+          shiftHours,
+          leftPercent,
+          widthPercent: Math.max(widthPercent, 5) // Ancho mínimo de 5%
+        };
       });
       
-      const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
-      const laneHeight = 100 / maxLanes;
-      
-      // ⚠️ TIMELINE HÍBRIDO INTELIGENTE: Cronología real + anti-solapamiento
-      const shiftsWithPositions: Array<{
-        shift: WorkShift;
-        lane: number;
-        leftPercent: number;
-        widthPercent: number;
-        shiftHours: string;
-      }> = [];
-      
-      // Procesar cada carril independientemente
-      const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
-        if (!acc[item.lane]) acc[item.lane] = [];
-        acc[item.lane].push(item);
-        return acc;
-      }, {} as Record<number, typeof shiftsWithLanes>);
-      
-      Object.values(shiftsByLane).forEach(laneShifts => {
-        if (laneShifts.length === 0) return;
+      // Resolver SOLO solapamiento visual entre badges consecutivos
+      for (let i = 1; i < shiftsWithPositions.length; i++) {
+        const current = shiftsWithPositions[i];
+        const previous = shiftsWithPositions[i - 1];
+        const minGap = 0.5; // Gap mínimo muy pequeño
         
-        // Ordenar cronológicamente
-        laneShifts.sort((a, b) => parseISO(a.shift.startAt).getTime() - parseISO(b.shift.startAt).getTime());
+        const prevRightEdge = previous.leftPercent + previous.widthPercent;
         
-        // Paso 1: Calcular posiciones cronológicas ideales
-        const chronoData = laneShifts.map(({ shift, lane }) => {
-          const shiftStart = parseISO(shift.startAt);
-          const shiftEnd = parseISO(shift.endAt);
-          const shiftHours = `${format(shiftStart, 'HH:mm')}-${format(shiftEnd, 'HH:mm')}`;
+        // Solo ajustar si hay solapamiento visual (no temporal)
+        if (current.leftPercent < prevRightEdge + minGap) {
+          current.leftPercent = prevRightEdge + minGap;
           
-          // Calcular horas como decimales
-          const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
-          const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
-          
-          // Limitar al timeline visible (6:00 AM - 10:00 PM)
-          const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
-          const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
-          
-          // Posición cronológica exacta en %
-          const chronoLeft = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
-          const chronoWidth = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
-          
-          return {
-            shift,
-            lane,
-            shiftHours,
-            chronoLeft,
-            chronoWidth,
-            adjustedLeft: chronoLeft,
-            adjustedWidth: chronoWidth
-          };
-        });
-        
-        // Paso 2: Resolver conflictos horizontales con algoritmo iterativo robusto
-        if (chronoData.length > 1) {
-          const minGap = 1; // Gap mínimo entre badges en %
-          let conflictsResolved = false;
-          let iterations = 0;
-          const maxIterations = 10; // Prevenir bucles infinitos
-          
-          // Algoritmo iterativo hasta resolver todos los conflictos
-          while (!conflictsResolved && iterations < maxIterations) {
-            conflictsResolved = true;
-            iterations++;
-            
-            for (let i = 1; i < chronoData.length; i++) {
-              const current = chronoData[i];
-              const previous = chronoData[i - 1];
-              
-              const prevRightEdge = previous.adjustedLeft + previous.adjustedWidth;
-              
-              // Si hay solapamiento
-              if (current.adjustedLeft < prevRightEdge + minGap) {
-                conflictsResolved = false;
-                
-                // Mover el turno actual justo después del anterior
-                current.adjustedLeft = prevRightEdge + minGap;
-                
-                // Si se sale del 100%, comprimir todo proporcionalmente
-                if (current.adjustedLeft + current.adjustedWidth > 100) {
-                  // Calcular factor de compresión necesario
-                  const totalUsedSpace = chronoData.reduce((sum, item) => sum + item.adjustedWidth, 0);
-                  const totalGaps = (chronoData.length - 1) * minGap;
-                  const requiredSpace = totalUsedSpace + totalGaps;
-                  
-                  if (requiredSpace > 100) {
-                    const compressionFactor = (100 - totalGaps) / totalUsedSpace;
-                    
-                    // Comprimir todos los anchos proporcionalmente
-                    chronoData.forEach(item => {
-                      item.adjustedWidth = Math.max(6, item.adjustedWidth * compressionFactor);
-                    });
-                    
-                    // Recalcular posiciones después de la compresión
-                    chronoData[0].adjustedLeft = chronoData[0].chronoLeft;
-                    for (let j = 1; j < chronoData.length; j++) {
-                      const prev = chronoData[j - 1];
-                      chronoData[j].adjustedLeft = prev.adjustedLeft + prev.adjustedWidth + minGap;
-                    }
-                  }
-                }
-              }
-            }
+          // Si se sale del 100%, comprimir el ancho
+          if (current.leftPercent + current.widthPercent > 100) {
+            current.widthPercent = Math.max(5, 100 - current.leftPercent);
           }
         }
-        
-        // Paso 3: Añadir a la lista final
-        chronoData.forEach(({ shift, lane, shiftHours, adjustedLeft, adjustedWidth }) => {
-          shiftsWithPositions.push({
-            shift,
-            lane,
-            leftPercent: adjustedLeft,
-            widthPercent: adjustedWidth,
-            shiftHours
-          });
-        });
-      });
+      }
       
       return (
         <>
-          {shiftsWithPositions.map(({ shift, lane, leftPercent, widthPercent, shiftHours }) => {
-            
-            return (
-              <div
-                key={shift.id}
-                className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
-                style={{
-                  left: `${leftPercent}%`,
-                  width: `${widthPercent}%`,
-                  top: `calc(3px + ${lane} * (100% - 6px) / ${maxLanes})`, // Espacio disponible dividido uniformemente entre carriles
-                  height: `calc((100% - 6px) / ${maxLanes} - 2px)`, // Altura con separación interna de 2px entre carriles
-                  backgroundColor: shift.color || '#007AFF',
-                  zIndex: 10 + shiftsWithPositions.indexOf(shiftsWithPositions.find(item => item.shift.id === shift.id)!), // Z-index único para evitar solapamiento visual
-                  minWidth: '60px', // Ancho mínimo para legibilidad
-                  boxSizing: 'border-box'
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedShift(shift);
-                  setShowShiftModal(true);
-                }}
-                title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
-              >
-                {/* Diseño de dos líneas: nombre arriba, hora abajo */}
-                <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
-                  {shift.title}
-                </div>
-                <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
-                  {shiftHours}
-                </div>
+          {shiftsWithPositions.map(({ shift, shiftHours, leftPercent, widthPercent }) => (
+            <div
+              key={shift.id}
+              className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
+              style={{
+                left: `${leftPercent}%`,
+                width: `${widthPercent}%`,
+                top: '3px',           // Todos en la misma línea horizontal
+                bottom: '3px',        // Ocupan toda la altura disponible
+                backgroundColor: shift.color || '#007AFF',
+                zIndex: 10,
+                minWidth: '60px',
+                boxSizing: 'border-box'
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedShift(shift);
+                setShowShiftModal(true);
+              }}
+              title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+            >
+              {/* Diseño de dos líneas: nombre arriba, hora abajo */}
+              <div className="text-[10px] md:text-[11px] font-semibold leading-tight text-center truncate w-full">
+                {shift.title}
               </div>
-            );
-          })}
+              <div className="text-[8px] md:text-[9px] opacity-90 leading-tight text-center truncate w-full mt-0.5">
+                {shiftHours}
+              </div>
+            </div>
+          ))}
         </>
       );
     }
