@@ -967,17 +967,17 @@ export default function Schedules() {
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
 
   return (
-    <>
+    <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto" style={{ overflowX: 'clip' }}>
       {loadingEmployees ? (
-        <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto flex justify-center py-8" style={{ overflowX: 'clip' }}>
+        <div className="flex justify-center py-8">
           <LoadingSpinner />
         </div>
       ) : employees.length === 0 ? (
-        <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto text-center py-8 text-muted-foreground" style={{ overflowX: 'clip' }}>
+        <div className="text-center py-8 text-muted-foreground">
           No hay empleados registrados
         </div>
       ) : (
-        <Card className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto" style={{ overflowX: 'clip' }}>
+        <Card className="h-full w-full bg-card text-card-foreground border-border border shadow-sm">
             <CardHeader className="bg-muted/10 p-4">
               {/* Header con mes y navegación */}
               <div>
@@ -1213,8 +1213,8 @@ export default function Schedules() {
           </Card>
         )}
 
-      {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
-      <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
+        {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
+        <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-hidden">
           {/* Header con preview del badge */}
           <div 
@@ -1392,10 +1392,10 @@ export default function Schedules() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+        </Dialog>
 
-      {/* Modal para editar turno - DISEÑO VISUAL TIPO BADGE */}
-      <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
+        {/* Modal para editar turno - DISEÑO VISUAL TIPO BADGE */}
+        <Dialog open={showShiftModal} onOpenChange={setShowShiftModal}>
         <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-hidden">
           {/* Header con preview del badge */}
           <div 
@@ -1576,7 +1576,7 @@ export default function Schedules() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
-    </>
+        </Dialog>
+    </div>
   );
 }
