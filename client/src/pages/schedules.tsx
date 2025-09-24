@@ -1016,8 +1016,8 @@ export default function Schedules() {
                       <div 
                         className="absolute top-1 bottom-1 bg-white dark:bg-gray-900 rounded-lg shadow-sm transition-all duration-300 ease-in-out border border-gray-200 dark:border-gray-700"
                         style={{
-                          left: viewMode === 'day' ? '0%' : '50%',
-                          width: '50%'
+                          left: viewMode === 'day' ? '0%' : viewMode === 'workweek' ? '33.33%' : '66.66%',
+                          width: '33.33%'
                         }}
                       />
                       
