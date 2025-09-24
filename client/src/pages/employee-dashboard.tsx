@@ -815,7 +815,7 @@ export default function EmployeeDashboard() {
                   onClick={() => {
                     const urlParts = window.location.pathname.split('/').filter((part: string) => part.length > 0);
                     const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
-                    window.location.href = `/${currentCompanyAlias}/usuario`;
+                    handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
                   className="text-white hover:text-blue-300 hover:bg-blue-500/20"
                 >
