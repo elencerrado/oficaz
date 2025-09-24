@@ -1212,77 +1212,78 @@ export default function Schedules() {
           </div>
         )}
 
-      {/* Modal para nuevo turno */}
+      {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
       <Dialog open={showNewShiftModal} onOpenChange={setShowNewShiftModal}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              Nuevo Turno - {selectedCell?.employeeName}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {selectedCell && format(selectedCell.date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
-            </p>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Hora de inicio</label>
-                <input
-                  type="time"
-                  value={newShift.startTime}
-                  onChange={(e) => setNewShift(prev => ({ ...prev, startTime: e.target.value }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Hora de fin</label>
-                <input
-                  type="time"
-                  value={newShift.endTime}
-                  onChange={(e) => setNewShift(prev => ({ ...prev, endTime: e.target.value }))}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+        <DialogContent className="max-w-lg p-0 gap-0 bg-background border-0 overflow-hidden">
+          {/* Header con preview del badge */}
+          <div 
+            className="px-6 py-4 text-white relative overflow-hidden"
+            style={{ backgroundColor: newShift.color || SHIFT_COLORS[0] }}
+          >
+            <div className="absolute inset-0 bg-black/10" />
+            <div className="relative z-10">
+              <h3 className="text-lg font-semibold">
+                {newShift.title || 'Nuevo Turno'}
+              </h3>
+              <p className="text-sm opacity-90">
+                {newShift.startTime && newShift.endTime 
+                  ? `${newShift.startTime} - ${newShift.endTime}`
+                  : '09:00 - 17:00'
+                }
+              </p>
+              <p className="text-xs opacity-75 mt-1">
+                {selectedCell?.employeeName} • {selectedCell && format(selectedCell.date, "d MMM", { locale: es })}
+              </p>
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Título del turno</label>
+          </div>
+
+          <div className="flex">
+            {/* Panel izquierdo - Colores verticales */}
+            <div className="w-16 bg-muted/30 p-2 flex flex-col gap-1">
+              {SHIFT_COLORS.map((color, index) => (
+                <button
+                  key={color}
+                  onClick={() => setNewShift(prev => ({ ...prev, color }))}
+                  className={`w-12 h-8 rounded border-2 transition-all hover:scale-105 ${
+                    newShift.color === color 
+                      ? 'border-gray-800 dark:border-gray-200 scale-105 shadow-md' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={`Color ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Panel derecho - Formulario compacto */}
+            <div className="flex-1 p-4 space-y-3">
+              {/* Título */}
               <input
                 type="text"
                 value={newShift.title}
                 onChange={(e) => setNewShift(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Ej: Turno de mañana, Guardia, etc."
-                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Título del turno (ej: Mañana, Tarde, Noche)"
+                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Ubicación (opcional)</label>
-              <input
-                type="text"
-                value={newShift.location}
-                onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Ej: Oficina central, Sucursal norte, etc."
-                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Notas (opcional)</label>
-              <textarea
-                value={newShift.notes}
-                onChange={(e) => setNewShift(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Instrucciones especiales, tareas específicas, etc."
-                rows={3}
-                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Días de la semana</label>
-              <div className="flex gap-2 flex-wrap">
+              
+              {/* Horas */}
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="time"
+                  value={newShift.startTime}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, startTime: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <input
+                  type="time"
+                  value={newShift.endTime}
+                  onChange={(e) => setNewShift(prev => ({ ...prev, endTime: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              
+              {/* Días de la semana */}
+              <div className="flex gap-1 justify-center">
                 {dayNames.map((dayName, index) => {
                   const dayNumber = index + 1;
                   const isSelected = selectedDays.has(dayNumber);
@@ -1290,7 +1291,7 @@ export default function Schedules() {
                   return (
                     <label
                       key={dayNumber}
-                      className="flex flex-col items-center gap-1 cursor-pointer select-none"
+                      className="cursor-pointer select-none"
                       data-testid={`checkbox-day-${dayNumber}`}
                     >
                       <input
@@ -1305,82 +1306,83 @@ export default function Schedules() {
                           }
                           setSelectedDays(newSelectedDays);
                         }}
-                        className="w-4 h-4 rounded border-2 border-border text-blue-600 focus:ring-2 focus:ring-blue-500"
+                        className="sr-only"
                       />
-                      <span className={`text-xs font-medium ${
+                      <div className={`w-6 h-6 rounded text-xs font-medium flex items-center justify-center transition-colors ${
                         isSelected 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-muted-foreground'
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                       }`}>
-                        {dayName}
-                      </span>
+                        {dayName.charAt(0)}
+                      </div>
                     </label>
                   );
                 })}
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Color del turno</label>
-              <div className="flex gap-2 flex-wrap">
-                {SHIFT_COLORS.map((color, index) => (
-                  <button
-                    key={color}
-                    onClick={() => setNewShift(prev => ({ ...prev, color }))}
-                    className={`w-8 h-8 rounded-full border-2 transition-all hover:scale-110 ${
-                      newShift.color === color 
-                        ? 'border-gray-800 dark:border-gray-200 scale-110' 
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    title={`Color ${index + 1}`}
-                  />
-                ))}
+              
+              {/* Ubicación */}
+              <input
+                type="text"
+                value={newShift.location}
+                onChange={(e) => setNewShift(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Ubicación (opcional)"
+                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              
+              {/* Notas */}
+              <textarea
+                value={newShift.notes}
+                onChange={(e) => setNewShift(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="Notas (opcional)"
+                rows={2}
+                className="w-full px-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              />
+              
+              {/* Botones */}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setShowNewShiftModal(false);
+                    setSelectedCell(null);
+                    setNewShift({
+                      employeeId: '',
+                      startDate: '',
+                      endDate: '',
+                      startTime: '09:00',
+                      endTime: '17:00',
+                      title: '',
+                      location: '',
+                      notes: '',
+                      color: SHIFT_COLORS[0]
+                    });
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={() => {
+                    if (selectedCell && newShift.title && newShift.startTime && newShift.endTime) {
+                      createShiftMutation.mutate({
+                        employeeId: selectedCell.employeeId,
+                        date: selectedCell.date,
+                        startTime: newShift.startTime,
+                        endTime: newShift.endTime,
+                        title: newShift.title,
+                        location: newShift.location,
+                        notes: newShift.notes,
+                        color: newShift.color
+                      });
+                    }
+                  }}
+                  disabled={!newShift.title || !newShift.startTime || !newShift.endTime || createShiftMutation.isPending}
+                >
+                  {createShiftMutation.isPending ? 'Creando...' : 'Crear'}
+                </Button>
               </div>
             </div>
-          </div>
-          
-          <div className="flex justify-end gap-3 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowNewShiftModal(false);
-                setSelectedCell(null);
-                // Reset form
-                setNewShift({
-                  employeeId: '',
-                  startDate: '',
-                  endDate: '',
-                  startTime: '09:00',
-                  endTime: '17:00',
-                  title: '',
-                  location: '',
-                  notes: '',
-                  color: SHIFT_COLORS[0]
-                });
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => {
-                if (selectedCell && newShift.title && newShift.startTime && newShift.endTime) {
-                  createShiftMutation.mutate({
-                    employeeId: selectedCell.employeeId,
-                    date: selectedCell.date,
-                    startTime: newShift.startTime,
-                    endTime: newShift.endTime,
-                    title: newShift.title,
-                    location: newShift.location,
-                    notes: newShift.notes,
-                    color: newShift.color
-                  });
-                }
-              }}
-              disabled={!newShift.title || !newShift.startTime || !newShift.endTime || createShiftMutation.isPending}
-            >
-              {createShiftMutation.isPending ? 'Creando...' : 'Crear Turno'}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
