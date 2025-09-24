@@ -967,17 +967,17 @@ export default function Schedules() {
   }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
 
   return (
-    <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto" style={{ overflowX: 'clip' }}>
+    <>
       {loadingEmployees ? (
-          <div className="flex justify-center py-8">
-            <LoadingSpinner />
-          </div>
-        ) : employees.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No hay empleados registrados
-          </div>
-        ) : (
-          <Card>
+        <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto flex justify-center py-8" style={{ overflowX: 'clip' }}>
+          <LoadingSpinner />
+        </div>
+      ) : employees.length === 0 ? (
+        <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto text-center py-8 text-muted-foreground" style={{ overflowX: 'clip' }}>
+          No hay empleados registrados
+        </div>
+      ) : (
+        <Card className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto" style={{ overflowX: 'clip' }}>
             <CardHeader className="bg-muted/10 p-4">
               {/* Header con mes y navegación */}
               <div>
@@ -1577,6 +1577,6 @@ export default function Schedules() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
