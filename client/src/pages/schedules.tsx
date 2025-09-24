@@ -739,8 +739,15 @@ export default function Schedules() {
     if (!conflictData) return;
 
     try {
+      console.log('🔧 OVERRIDE DEBUG - About to delete shifts:', {
+        totalShifts: conflictData.existingShifts.length,
+        shiftIds: conflictData.existingShifts.map(s => s.id),
+        sourceShiftId: conflictData.sourceShift.id
+      });
+      
       // First, delete existing conflicting shifts
       for (const shift of conflictData.existingShifts) {
+        console.log('🗑️ Deleting shift:', shift.id);
         await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
       }
 
