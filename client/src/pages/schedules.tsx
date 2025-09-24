@@ -743,7 +743,16 @@ export default function Schedules() {
     try {
       // First, delete existing conflicting shifts
       for (const shift of conflictData.existingShifts) {
-        await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
+        try {
+          await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
+        } catch (error: any) {
+          // If shift is already deleted (404), continue
+          if (error.status === 404) {
+            console.warn(`Shift ${shift.id} already deleted, skipping...`);
+            continue;
+          }
+          throw error; // Re-throw other errors
+        }
       }
 
       // Then duplicate the original shift
