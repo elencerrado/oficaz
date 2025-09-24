@@ -845,8 +845,8 @@ export default function Schedules() {
               style={{
                 left: '3px',
                 right: '3px',
-                top: index === 0 ? '3px' : `${index * (100 / totalVisible)}%`, // Solo margen superior en el primer badge
-                height: index === (totalVisible - 1) ? `calc(${shiftHeight} - 3px)` : shiftHeight, // Solo margen inferior en el último badge
+                top: `${index * (100 / totalVisible)}%`, // Posición basada únicamente en índice
+                height: shiftHeight, // Altura fija para cada badge
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10
               }}
@@ -875,8 +875,8 @@ export default function Schedules() {
             style={{
               left: '3px',
               right: '3px',
-              top: `${(totalVisible - 1) * (100 / totalVisible)}%`, // Sin margen superior ya que no es el primer badge
-              height: `calc(${shiftHeight} - 3px)`, // Solo margen inferior ya que es el último badge
+              top: `${(totalVisible - 1) * (100 / totalVisible)}%`, // Posición basada únicamente en índice
+              height: shiftHeight, // Altura fija para mantener coherencia
               zIndex: 10
             }}
             onClick={(e) => {
