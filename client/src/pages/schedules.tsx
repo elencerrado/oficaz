@@ -1140,7 +1140,7 @@ export default function Schedules() {
         ref={setNodeRef}
         {...listeners}
         {...attributes}
-        className={`absolute rounded-md flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none ${
+        className={`group absolute rounded-md flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none ${
           isDragging ? 
             'z-50 shadow-2xl ring-2 ring-white/50' : 
             'cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md hover:scale-105 active:cursor-grabbing'
@@ -1164,14 +1164,15 @@ export default function Schedules() {
         {/* Delete button - only visible on hover when not dragging */}
         {!isDragging && onDelete && (
           <button
-            className="absolute top-0 left-0 w-4 h-4 opacity-0 group-hover:opacity-90 transition-opacity bg-red-500 hover:bg-red-600 rounded-br-md flex items-center justify-center z-20"
+            className="absolute top-0 left-0 w-5 h-5 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-red-500 hover:bg-red-600 rounded-br-lg flex items-center justify-center shadow-md border border-white/30"
+            style={{ zIndex: 1001 }}
             onClick={(e) => {
               e.stopPropagation();
               onDelete(shift.id);
             }}
             title="Eliminar turno"
           >
-            <span className="text-[8px] font-bold text-white leading-none">×</span>
+            <span className="text-[10px] font-bold text-white leading-none">×</span>
           </button>
         )}
 
