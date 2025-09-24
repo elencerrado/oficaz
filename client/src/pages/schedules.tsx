@@ -569,37 +569,18 @@ export default function Schedules() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    console.log('🔍 DEBUG - handleDragEnd:', {
-      active: active?.id,
-      over: over?.id,
-      overString: String(over?.id),
-      activeShift: activeShift ? {
-        id: activeShift.id,
-        title: activeShift.title,
-        employeeId: activeShift.employeeId,
-        startAt: activeShift.startAt
-      } : null
-    });
-    
     setActiveShift(null);
     setDragOverCellId(null);
 
-    if (!over || !activeShift) {
-      console.log('🚫 DEBUG - Early return:', { hasOver: !!over, hasActiveShift: !!activeShift });
-      return;
-    }
+    if (!over || !activeShift) return;
 
     // Parse drop target (format: "cell-employeeId-yyyy-MM-dd")
     const parts = String(over.id).split('-');
     const prefix = parts[0];
     const employeeIdStr = parts[1];
     const dateStr = parts.slice(2).join('-'); // Reconstruct the full date (yyyy-MM-dd)
-    console.log('🔍 DEBUG - Parsed drop target:', { prefix, employeeIdStr, dateStr, fullId: String(over.id) });
     
-    if (prefix !== 'cell') {
-      console.log('🚫 DEBUG - Invalid prefix:', prefix);
-      return;
-    }
+    if (prefix !== 'cell') return;
 
     const targetEmployeeId = Number(employeeIdStr);
     const targetDate = parseISO(dateStr);
@@ -670,22 +651,19 @@ export default function Schedules() {
       newEnd.setDate(newEnd.getDate() + 1);
     }
     
-    // Find shifts with actual time conflicts
+    // Find shifts with actual time conflicts (including overnight shifts)
     const conflictingShifts = existingShifts.filter((shift: WorkShift) => {
-      const shiftDateStr = format(parseISO(shift.startAt), 'yyyy-MM-dd');
-      return shiftDateStr === targetDateStr && hasTimeConflict(shift, newStart, newEnd);
+      const shiftStart = parseISO(shift.startAt);
+      const shiftEnd = parseISO(shift.endAt);
+      const shiftStartDateStr = format(shiftStart, 'yyyy-MM-dd');
+      const shiftEndDateStr = format(shiftEnd, 'yyyy-MM-dd');
+      
+      // Check if the shift overlaps with the target date
+      const shiftOverlapsTargetDate = shiftStartDateStr === targetDateStr || shiftEndDateStr === targetDateStr;
+      
+      return shiftOverlapsTargetDate && hasTimeConflict(shift, newStart, newEnd);
     });
     
-    console.log('🔍 DEBUG - Time conflict check:', {
-      targetDateStr,
-      newStart: format(newStart, 'HH:mm'),
-      newEnd: format(newEnd, 'HH:mm'),
-      existingShiftsOnDay: existingShifts.filter((shift: WorkShift) => {
-        const shiftDateStr = format(parseISO(shift.startAt), 'yyyy-MM-dd');
-        return shiftDateStr === targetDateStr;
-      }).length,
-      conflictingShifts: conflictingShifts.length
-    });
 
     // If there are time conflicts, show confirmation modal
     if (conflictingShifts.length > 0) {
@@ -1064,7 +1042,6 @@ export default function Schedules() {
     title: string;
   }) {
     const cellId = `cell-${employeeId}-${format(day, 'yyyy-MM-dd')}`;
-    console.log('🔍 DEBUG - DroppableCell created:', { cellId, employeeId, day: format(day, 'yyyy-MM-dd') });
     
     const {
       isOver,
