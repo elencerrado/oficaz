@@ -589,8 +589,11 @@ export default function Schedules() {
       return;
     }
 
-    // Parse drop target (format: "cell-employeeId-date")
-    const [prefix, employeeIdStr, dateStr] = String(over.id).split('-');
+    // Parse drop target (format: "cell-employeeId-yyyy-MM-dd")
+    const parts = String(over.id).split('-');
+    const prefix = parts[0];
+    const employeeIdStr = parts[1];
+    const dateStr = parts.slice(2).join('-'); // Reconstruct the full date (yyyy-MM-dd)
     console.log('🔍 DEBUG - Parsed drop target:', { prefix, employeeIdStr, dateStr, fullId: String(over.id) });
     
     if (prefix !== 'cell') {
