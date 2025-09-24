@@ -575,9 +575,27 @@ export default function Schedules() {
     return baseStyle;
   };
   
-  // Función para obtener la altura fija de la celda (todas iguales)
+  // Función para obtener la altura de la celda (fija en día, dinámica en semana)
   const getCellHeightStyle = (employeeId: number, date: Date) => {
-    return { minHeight: '120px' }; // Altura fija para todas las celdas
+    if (viewMode === 'day') {
+      return { minHeight: '120px' }; // Altura fija para modo día
+    }
+    
+    // Modo semana: altura dinámica basada en el número de turnos
+    const shifts = getShiftsForEmployee(employeeId);
+    const dayString = format(date, 'yyyy-MM-dd');
+    const dayShifts = shifts.filter((shift: WorkShift) => {
+      const shiftStart = parseISO(shift.startAt);
+      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
+      return shiftStartDay === dayString;
+    });
+    
+    // Altura mínima de 120px, más 30px por cada turno adicional
+    const baseHeight = 120;
+    const heightPerShift = dayShifts.length > 0 ? 30 : 0;
+    const totalHeight = Math.max(baseHeight, baseHeight + (dayShifts.length - 1) * heightPerShift);
+    
+    return { minHeight: `${totalHeight}px` };
   };
 
   // Función para obtener el contenido adicional de la celda
