@@ -443,14 +443,6 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
-      <Route path="/:companyAlias/mi-cuadrante">
-        <ProtectedRoute>
-          <AppLayout>
-            <EmployeeSchedule />
-          </AppLayout>
-        </ProtectedRoute>
-      </Route>
-
       <Route path="/:companyAlias/vacaciones">
         <ProtectedRoute>
           <AppLayout>
@@ -469,7 +461,7 @@ function Router() {
             {user && (user.role === 'admin' || user.role === 'manager') ? (
               <Schedules />
             ) : (
-              <Redirect to={`/${company?.companyAlias || 'test'}/inicio`} />
+              <EmployeeSchedule />
             )}
           </AppLayout>
         </ProtectedRoute>
