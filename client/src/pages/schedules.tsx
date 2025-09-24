@@ -774,128 +774,43 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ NUEVA LÓGICA: Distribución robusta para evitar solapamiento con múltiples badges
-      // Calcular posiciones iniciales y agrupar por carril
-      const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
-        if (!acc[item.lane]) acc[item.lane] = [];
-        
-        const shiftStart = parseISO(item.shift.startAt);
-        const shiftEnd = parseISO(item.shift.endAt);
+      // ⚠️ LÍNEA DE TIEMPO CRONOLÓGICA REAL: Los badges se posicionan según su hora exacta
+      const shiftsWithPositions = shiftsWithLanes.map(({ shift, lane }) => {
+        const shiftStart = parseISO(shift.startAt);
+        const shiftEnd = parseISO(shift.endAt);
         const startTime = format(shiftStart, 'HH:mm');
         const endTime = format(shiftEnd, 'HH:mm');
         const shiftHours = `${startTime}-${endTime}`;
         
-        // Calcular posición cronológica real
+        // Calcular posición cronológica real basada en horas
         const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
         const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+        
+        // Limitar al rango del timeline visible
         const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
         const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
         
-        // Calcular duración relativa para proporcionalidad visual
-        const duration = clampedEnd - clampedStart;
-        const chronoLeftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
+        // ✅ POSICIÓN CRONOLÓGICA EXACTA: left % basado en hora de inicio real
+        const leftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
         
-        acc[item.lane].push({
-          shift: item.shift,
-          lane: item.lane,
+        // ✅ ANCHO PROPORCIONAL: width % basado en duración real del turno
+        const widthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+        
+        return {
+          shift,
+          lane,
+          leftPercent,
+          widthPercent,
           shiftHours,
           clampedStart,
-          clampedEnd,
-          duration,
-          chronoLeftPercent, // Posición cronológica real
-          leftPercent: 0, // Se calculará después
-          widthPercent: 0 // Se calculará después
-        });
-        
-        return acc;
-      }, {} as Record<number, Array<{
-        shift: WorkShift;
-        lane: number;
-        shiftHours: string;
-        clampedStart: number;
-        clampedEnd: number;
-        duration: number;
-        chronoLeftPercent: number;
-        leftPercent: number;
-        widthPercent: number;
-      }>>);
-      
-      // Para cada carril, distribuir el espacio de manera robusta
-      const shiftsWithPositions = Object.values(shiftsByLane).flat();
-      
-      Object.values(shiftsByLane).forEach(laneShifts => {
-        if (laneShifts.length === 0) return;
-        
-        // Ordenar por posición cronológica
-        laneShifts.sort((a, b) => a.clampedStart - b.clampedStart);
-        
-        const shiftsCount = laneShifts.length;
-        
-        if (shiftsCount === 1) {
-          // Un solo turno: usar posición y tamaño cronológico
-          const shift = laneShifts[0];
-          shift.leftPercent = shift.chronoLeftPercent;
-          shift.widthPercent = (shift.duration / TIMELINE_TOTAL_HOURS) * 100;
-        } else {
-          // ⚠️ LÓGICA ROBUSTA: Distribución que NUNCA excede el 100% del contenedor
-          // Calcular gap mínimo escalado por cantidad de badges
-          const minGapPercent = Math.max(0.5, Math.min(2, 100 / (shiftsCount * 20))); // Gap adaptativo: 0.5% a 2%
-          const totalGapPercent = minGapPercent * (shiftsCount - 1); // Espacio total para separaciones
-          
-          // ✅ GARANTIZADO: espacio disponible nunca negativo
-          let availableWidthPercent = Math.max(10, 100 - totalGapPercent);
-          
-          // Si los gaps son demasiado grandes, reducirlos para asegurar espacio para badges
-          if (totalGapPercent > 85) {
-            const adjustedGapPercent = 15 / (shiftsCount - 1); // Máximo 15% total para gaps
-            availableWidthPercent = 85; // 85% para badges, 15% para gaps
-          }
-          
-          // Calcular duración total para proporcionalidad
-          const totalDuration = laneShifts.reduce((sum, shift) => sum + shift.duration, 0);
-          
-          // Primera pasada: calcular anchos ideales usando Map temporal
-          const idealWidths = new Map<number, number>();
-          let totalIdealWidth = 0;
-          
-          laneShifts.forEach((shift, index) => {
-            // Ancho proporcional a la duración
-            const proportionalWidth = totalDuration > 0 
-              ? (shift.duration / totalDuration) * availableWidthPercent
-              : availableWidthPercent / shiftsCount;
-            
-            // Ancho mínimo garantizado: al menos 6% pero no más del espacio disponible dividido equitativamente
-            const minWidth = Math.max(6, availableWidthPercent / shiftsCount * 0.7); // 70% del espacio equitativo como mínimo
-            const idealWidth = Math.max(minWidth, proportionalWidth);
-            
-            idealWidths.set(index, idealWidth);
-            totalIdealWidth += idealWidth;
-          });
-          
-          // Segunda pasada: ajustar si excede el espacio disponible
-          const scaleFactor = totalIdealWidth > availableWidthPercent 
-            ? availableWidthPercent / totalIdealWidth 
-            : 1;
-          
-          // Tercera pasada: posicionar badges con escala aplicada
-          let currentLeftPercent = 0;
-          const actualGapPercent = totalGapPercent > 0 
-            ? Math.min(minGapPercent, (100 - totalIdealWidth * scaleFactor) / (shiftsCount - 1))
-            : 0;
-          
-          laneShifts.forEach((shift, index) => {
-            const idealWidth = idealWidths.get(index) || 0;
-            shift.widthPercent = idealWidth * scaleFactor;
-            shift.leftPercent = currentLeftPercent;
-            
-            // Siguiente posición: actual + ancho + gap (pero nunca exceder 100%)
-            currentLeftPercent = Math.min(
-              100 - (laneShifts.length - index - 1) * 6, // Reservar espacio mínimo para badges restantes
-              currentLeftPercent + shift.widthPercent + actualGapPercent
-            );
-          });
-        }
-      });
+          clampedEnd
+        };
+      }).filter(item => 
+        // Solo mostrar turnos que tienen duración visible en el timeline
+        item.clampedEnd > TIMELINE_START_HOUR && 
+        item.clampedStart < TIMELINE_END_HOUR &&
+        item.widthPercent > 0
+      );
       
       return (
         <>
