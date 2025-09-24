@@ -729,9 +729,35 @@ export default function Schedules() {
     if (dayShifts.length === 0) return null;
 
     // Configuración del timeline: 6:00 AM a 10:00 PM (16 horas de trabajo)
-    const TIMELINE_START_HOUR = 6; // 6:00 AM
-    const TIMELINE_END_HOUR = 22; // 10:00 PM
-    const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR; // 16 horas
+    // ⚠️ TIMELINE DINÁMICO: Se adapta automáticamente a los turnos existentes
+    const getTimelineBounds = (shifts: WorkShift[]) => {
+      if (shifts.length === 0) {
+        return { start: 6, end: 22 }; // Default si no hay turnos
+      }
+      
+      let minHour = 24;
+      let maxHour = 0;
+      
+      shifts.forEach(shift => {
+        const startHour = parseISO(shift.startAt).getHours();
+        const endHour = parseISO(shift.endAt).getHours();
+        const endMinutes = parseISO(shift.endAt).getMinutes();
+        
+        minHour = Math.min(minHour, startHour);
+        maxHour = Math.max(maxHour, endMinutes > 0 ? endHour + 1 : endHour);
+      });
+      
+      // Añadir margen de 1 hora a cada lado para mejor visualización
+      const startWithMargin = Math.max(0, minHour - 1);
+      const endWithMargin = Math.min(24, maxHour + 1);
+      
+      return { start: startWithMargin, end: endWithMargin };
+    };
+    
+    const timelineBounds = getTimelineBounds(dayShifts);
+    const TIMELINE_START_HOUR = timelineBounds.start;
+    const TIMELINE_END_HOUR = timelineBounds.end;
+    const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
     
     // MODO DÍA: Timeline cronológico puro - SIN carriles verticales
     if (viewMode === 'day') {
