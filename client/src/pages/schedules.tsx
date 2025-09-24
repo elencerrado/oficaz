@@ -755,8 +755,8 @@ export default function Schedules() {
     return { start: startWithMargin, end: endWithMargin };
   }, [workShifts]);
 
-  // Renderizar barras de turnos para un día específico con tamaño proporcional por horas
-  const renderShiftBar = (employee: Employee, day: Date) => {
+  // ⚠️ OPTIMIZACIÓN: Renderizar barras de turnos memoizado para evitar O(E×S) recálculos
+  const renderShiftBar = useCallback((employee: Employee, day: Date) => {
     const shifts = getShiftsForEmployee(employee.id);
     const dayString = format(day, 'yyyy-MM-dd');
     
@@ -963,7 +963,7 @@ export default function Schedules() {
         })}
       </>
     );
-  };
+  }, [workShifts, viewMode, getShiftsForEmployee, getGlobalTimelineBounds, assignShiftLanes]);
 
   return (
     <div className="px-2 md:px-6 py-2 md:py-4 min-h-screen bg-gray-50 dark:bg-gray-900 space-y-3 md:space-y-6" style={{ overflowX: 'clip' }}>
