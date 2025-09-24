@@ -688,6 +688,13 @@ export default function Schedules() {
     queryKey: ['/api/holidays/custom'],
   });
 
+  // ⚠️ OPTIMIZACIÓN: Memoizar filtros de días para evitar recálculos en cada renderizado
+  const filteredDays = useMemo(() => {
+    return viewMode === 'workweek' 
+      ? weekRange.days.filter(day => day.getDay() >= 1 && day.getDay() <= 5)
+      : weekRange.days;
+  }, [weekRange.days, viewMode]);
+
   // Obtener turnos para un empleado específico
   const getShiftsForEmployee = (employeeId: number) => {
     return workShifts.filter((shift: WorkShift) => shift.employeeId === employeeId);
@@ -1045,9 +1052,7 @@ export default function Schedules() {
                   </div>
                   
                   {/* Días de la semana */}
-                  {weekRange.days
-                    .filter(day => viewMode === 'workweek' ? (day.getDay() >= 1 && day.getDay() <= 5) : true)
-                    .map((day, index) => {
+                  {filteredDays.map((day, index) => {
                     const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
@@ -1105,9 +1110,7 @@ export default function Schedules() {
                       </div>
 
                       {/* Columnas de días */}
-                      {weekRange.days
-                        .filter(day => viewMode === 'workweek' ? (day.getDay() >= 1 && day.getDay() <= 5) : true)
-                        .map((day, dayIndex) => {
+                      {filteredDays.map((day, dayIndex) => {
                         const holiday = isHoliday(day);
                         const vacation = isEmployeeOnVacation(employee.id, day);
                         const isDisabled = vacation; // Solo las vacaciones deshabilitan la celda
