@@ -977,8 +977,7 @@ export default function Schedules() {
             No hay empleados registrados
           </div>
         ) : (
-          <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
-            {/* Timeline Grid */}
+          <>
             <div className="divide-y divide-border">
               {/* Header con mes y navegación */}
               <div className="bg-muted/10 p-4">
@@ -1209,7 +1208,7 @@ export default function Schedules() {
                 );
               })}
             </div>
-          </div>
+          </>
         )}
 
       {/* Modal para nuevo turno - DISEÑO VISUAL TIPO BADGE */}
