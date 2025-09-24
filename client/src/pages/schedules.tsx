@@ -573,8 +573,8 @@ export default function Schedules() {
       // Empleado de vacaciones - fondo azul suave
       baseStyle += " bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
     } else {
-      // Día normal
-      baseStyle += " bg-muted/20 dark:bg-muted/30 border-border";
+      // Día normal - fondo más claro y atractivo
+      baseStyle += " bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
     }
     
     return baseStyle;
@@ -1124,7 +1124,7 @@ export default function Schedules() {
                               viewMode === 'day' 
                                 ? 'flex flex-row' // Modo día: layout horizontal 
                                 : 'flex flex-col' // Modo semana: layout vertical
-                            } ${!isDisabled ? 'hover:bg-muted/40 dark:hover:bg-muted/50 transition-colors' : 'cursor-not-allowed'}`}
+                            } ${!isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'}`}
                             style={getCellHeightStyle(employee.id, day)}
                             onClick={() => {
                               if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
@@ -1160,7 +1160,7 @@ export default function Schedules() {
                             
                             {viewMode === 'day' ? (
                               /* MODO DÍA: Barra lateral derecha con botón "+" */
-                              <div className="w-6 bg-muted/10 dark:bg-muted/20 border-l border-border/30 rounded-r flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors">
+                              <div className="w-6 bg-gray-100 dark:bg-gray-700/50 border-l border-gray-300 dark:border-gray-600 rounded-r flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
                                   onClick={(e) => {
@@ -1182,7 +1182,7 @@ export default function Schedules() {
                               </div>
                             ) : (
                               /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-muted/10 dark:bg-muted/20 border-t border-border/30 rounded-b flex items-center justify-center group hover:bg-muted/20 dark:hover:bg-muted/30 transition-colors z-30">
+                              <div className="absolute bottom-0 left-0 right-0 h-6 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-30">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                   onClick={(e) => {
