@@ -812,7 +812,7 @@ export default function EmployeeDashboard() {
                   <p className="text-xs text-white/60 capitalize">{translateRole(user?.role) || 'Empleado'}</p>
                 </div>
                 <DropdownMenuItem 
-                  onClick={() => window.location.href = '/employee-profile'} 
+                  onClick={() => window.location.href = '/test/usuario'} 
                   className="text-white hover:text-blue-300 hover:bg-blue-500/20"
                 >
                   <User className="mr-2 h-4 w-4" />
