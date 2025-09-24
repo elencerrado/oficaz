@@ -825,27 +825,54 @@ export default function Schedules() {
           };
         });
         
-        // Paso 2: Resolver conflictos horizontales manteniendo cronología
+        // Paso 2: Resolver conflictos horizontales con algoritmo iterativo robusto
         if (chronoData.length > 1) {
-          const minGap = 0.8; // Gap mínimo entre badges
+          const minGap = 1; // Gap mínimo entre badges en %
+          let conflictsResolved = false;
+          let iterations = 0;
+          const maxIterations = 10; // Prevenir bucles infinitos
           
-          for (let i = 1; i < chronoData.length; i++) {
-            const current = chronoData[i];
-            const previous = chronoData[i - 1];
+          // Algoritmo iterativo hasta resolver todos los conflictos
+          while (!conflictsResolved && iterations < maxIterations) {
+            conflictsResolved = true;
+            iterations++;
             
-            const prevRightEdge = previous.adjustedLeft + previous.adjustedWidth;
-            
-            // Si hay solapamiento horizontal
-            if (current.adjustedLeft < prevRightEdge + minGap) {
-              // Ajustar posición manteniendo cronología relativa
-              const overlap = (prevRightEdge + minGap) - current.adjustedLeft;
+            for (let i = 1; i < chronoData.length; i++) {
+              const current = chronoData[i];
+              const previous = chronoData[i - 1];
               
-              // Mover ligeramente a la derecha pero conservar ancho proporcional
-              current.adjustedLeft = prevRightEdge + minGap;
+              const prevRightEdge = previous.adjustedLeft + previous.adjustedWidth;
               
-              // Si se sale del 100%, comprimir ancho proporcionalmente
-              if (current.adjustedLeft + current.adjustedWidth > 100) {
-                current.adjustedWidth = Math.max(8, 100 - current.adjustedLeft);
+              // Si hay solapamiento
+              if (current.adjustedLeft < prevRightEdge + minGap) {
+                conflictsResolved = false;
+                
+                // Mover el turno actual justo después del anterior
+                current.adjustedLeft = prevRightEdge + minGap;
+                
+                // Si se sale del 100%, comprimir todo proporcionalmente
+                if (current.adjustedLeft + current.adjustedWidth > 100) {
+                  // Calcular factor de compresión necesario
+                  const totalUsedSpace = chronoData.reduce((sum, item) => sum + item.adjustedWidth, 0);
+                  const totalGaps = (chronoData.length - 1) * minGap;
+                  const requiredSpace = totalUsedSpace + totalGaps;
+                  
+                  if (requiredSpace > 100) {
+                    const compressionFactor = (100 - totalGaps) / totalUsedSpace;
+                    
+                    // Comprimir todos los anchos proporcionalmente
+                    chronoData.forEach(item => {
+                      item.adjustedWidth = Math.max(6, item.adjustedWidth * compressionFactor);
+                    });
+                    
+                    // Recalcular posiciones después de la compresión
+                    chronoData[0].adjustedLeft = chronoData[0].chronoLeft;
+                    for (let j = 1; j < chronoData.length; j++) {
+                      const prev = chronoData[j - 1];
+                      chronoData[j].adjustedLeft = prev.adjustedLeft + prev.adjustedWidth + minGap;
+                    }
+                  }
+                }
               }
             }
           }
