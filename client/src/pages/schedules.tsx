@@ -935,7 +935,7 @@ export default function Schedules() {
               className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
               style={{
                 left: '3px',
-                right: '3px',
+                right: '12px', // Margen derecho más amplio para dejar espacio al botón "+"
                 top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible})`, // Espacio disponible (menos márgenes) dividido uniformemente
                 height: `calc((100% - 6px) / ${totalVisible} - 2px)`, // Altura con separación interna de 2px entre badges
                 backgroundColor: shift.color || '#007AFF',
