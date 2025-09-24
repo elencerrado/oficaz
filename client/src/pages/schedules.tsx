@@ -843,7 +843,7 @@ export default function Schedules() {
                   top: `calc(3px + ${lane} * (100% - 6px) / ${maxLanes})`, // Espacio disponible dividido uniformemente entre carriles
                   height: `calc((100% - 6px) / ${maxLanes} - 2px)`, // Altura con separación interna de 2px entre carriles
                   backgroundColor: shift.color || '#007AFF',
-                  zIndex: 10,
+                  zIndex: 10 + shiftsWithPositions.indexOf(shiftsWithPositions.find(item => item.shift.id === shift.id)!), // Z-index único para evitar solapamiento visual
                   minWidth: '60px', // Ancho mínimo para legibilidad
                   boxSizing: 'border-box'
                 }}
