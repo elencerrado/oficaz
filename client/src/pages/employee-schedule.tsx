@@ -9,7 +9,6 @@ import { es } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
-import { usePageHeader } from '@/components/layout/page-header';
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface WorkShift {
@@ -44,20 +43,9 @@ interface Holiday {
 
 export default function EmployeeSchedule() {
   const { user } = useAuth();
-  const { setHeader, resetHeader } = usePageHeader();
 
   // Estado para la fecha actual (solo vista de día)
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  // Configurar header de página
-  useEffect(() => {
-    setHeader({
-      title: 'Mi Cuadrante',
-      subtitle: 'Consulta tus horarios y turnos asignados'
-    });
-    
-    return () => resetHeader();
-  }, [setHeader, resetHeader]);
 
   // Queries para datos
   const { data: shifts = [], isLoading: shiftsLoading, refetch: refetchShifts } = useQuery<WorkShift[]>({
