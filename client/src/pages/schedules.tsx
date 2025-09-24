@@ -1050,7 +1050,9 @@ export default function Schedules() {
                   </div>
                   
                   {/* Días de la semana */}
-                  {weekRange.days.map((day, index) => {
+                  {weekRange.days
+                    .filter(day => viewMode === 'workweek' ? (day.getDay() >= 1 && day.getDay() <= 5) : true)
+                    .map((day, index) => {
                     const isToday = format(new Date(), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
                     const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                     
@@ -1071,7 +1073,7 @@ export default function Schedules() {
                           }
                         </div>
                         
-                        {viewMode === 'week' && (
+                        {(viewMode === 'week' || viewMode === 'workweek') && (
                           <div className={`text-sm font-semibold rounded w-5 h-5 flex items-center justify-center leading-none mt-0.5 ${
                             isToday 
                               ? 'bg-blue-500 text-white shadow' 
@@ -1108,7 +1110,9 @@ export default function Schedules() {
                       </div>
 
                       {/* Columnas de días */}
-                      {weekRange.days.map((day, dayIndex) => {
+                      {weekRange.days
+                        .filter(day => viewMode === 'workweek' ? (day.getDay() >= 1 && day.getDay() <= 5) : true)
+                        .map((day, dayIndex) => {
                         const holiday = isHoliday(day);
                         const vacation = isEmployeeOnVacation(employee.id, day);
                         const isDisabled = vacation; // Solo las vacaciones deshabilitan la celda
