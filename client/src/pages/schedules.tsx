@@ -575,27 +575,9 @@ export default function Schedules() {
     return baseStyle;
   };
   
-  // Función para obtener la altura de la celda (fija en día, dinámica en semana)
+  // Función para obtener la altura fija de la celda (todas iguales)
   const getCellHeightStyle = (employeeId: number, date: Date) => {
-    if (viewMode === 'day') {
-      return { minHeight: '120px' }; // Altura fija para modo día
-    }
-    
-    // Modo semana: altura dinámica basada en el número de turnos
-    const shifts = getShiftsForEmployee(employeeId);
-    const dayString = format(date, 'yyyy-MM-dd');
-    const dayShifts = shifts.filter((shift: WorkShift) => {
-      const shiftStart = parseISO(shift.startAt);
-      const shiftStartDay = format(shiftStart, 'yyyy-MM-dd');
-      return shiftStartDay === dayString;
-    });
-    
-    // Altura mínima de 120px, más 30px por cada turno adicional
-    const baseHeight = 120;
-    const heightPerShift = dayShifts.length > 0 ? 30 : 0;
-    const totalHeight = Math.max(baseHeight, baseHeight + (dayShifts.length - 1) * heightPerShift);
-    
-    return { minHeight: `${totalHeight}px` };
+    return { minHeight: '120px' }; // Altura fija para todas las celdas, independiente del número de badges
   };
 
   // Función para obtener el contenido adicional de la celda
@@ -860,8 +842,8 @@ export default function Schedules() {
               style={{
                 left: '3px',
                 right: '3px',
-                top: `calc(3px + ${index} * (100% - 30px) / ${totalVisible} + ${index} * 2px)`, // Distribución con 2px de separación, restando 24px footer + 6px márgenes
-                height: `calc((100% - 30px - ${Math.max(0, totalVisible - 1)} * 2px) / ${totalVisible})`, // Altura ajustada para footer (24px) + márgenes (6px) + separaciones
+                top: `calc(3px + ${index} * (100% - 27px) / ${totalVisible} + ${index} * 2px)`, // Distribución con 2px de separación, restando 24px footer + 3px márgenes
+                height: `calc((100% - 27px - ${Math.max(0, totalVisible - 1)} * 2px) / ${totalVisible})`, // Altura ajustada para footer (24px) + margen superior (3px) + separaciones
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10
               }}
