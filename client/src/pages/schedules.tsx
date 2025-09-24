@@ -860,8 +860,8 @@ export default function Schedules() {
               style={{
                 left: '3px',
                 right: '3px',
-                top: index === 0 ? '3px' : `${index * (100 / totalVisible)}%`, // Margen superior solo en el primer badge
-                height: index === (totalVisible - 1) ? `calc(${shiftHeight} - 3px)` : shiftHeight, // Margen inferior solo en el último badge
+                top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible} + ${index} * 2px)`, // Distribución con 2px de separación entre badges
+                height: `calc((100% - 6px - ${Math.max(0, totalVisible - 1)} * 2px) / ${totalVisible})`, // Altura ajustada para las separaciones
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10
               }}
