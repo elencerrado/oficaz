@@ -1328,17 +1328,19 @@ export default function Schedules() {
                   <Autocomplete
                     apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                     onPlaceSelected={(place) => {
+                      console.log('🗺️ Lugar seleccionado:', place);
+                      const address = place.formatted_address || place.name || '';
+                      console.log('📍 Dirección extraída:', address);
                       setNewShift(prev => ({ 
                         ...prev, 
-                        location: place.formatted_address || place.name || ''
+                        location: address
                       }));
                     }}
                     options={{
                       types: ['establishment', 'geocode'],
                       componentRestrictions: { country: 'es' }
                     }}
-                    value={newShift.location}
-                    onChange={(e) => setNewShift(prev => ({ ...prev, location: (e.target as HTMLInputElement).value }))}
+                    defaultValue={newShift.location}
                     placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                     className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                     style={{
@@ -1543,17 +1545,19 @@ export default function Schedules() {
                   <Autocomplete
                     apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
                     onPlaceSelected={(place) => {
+                      console.log('🗺️ Lugar seleccionado (edit):', place);
+                      const address = place.formatted_address || place.name || '';
+                      console.log('📍 Dirección extraída (edit):', address);
                       setEditShift(prev => ({ 
                         ...prev, 
-                        location: place.formatted_address || place.name || ''
+                        location: address
                       }));
                     }}
                     options={{
                       types: ['establishment', 'geocode'],
                       componentRestrictions: { country: 'es' }
                     }}
-                    value={editShift.location}
-                    onChange={(e) => setEditShift(prev => ({ ...prev, location: (e.target as HTMLInputElement).value }))}
+                    defaultValue={editShift.location}
                     placeholder="Dirección o ubicación (ej: Calle Gran Vía 1, Madrid)"
                     className="w-full pl-8 pr-3 py-2 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500"
                     style={{
