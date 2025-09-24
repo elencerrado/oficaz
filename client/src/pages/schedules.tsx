@@ -860,11 +860,10 @@ export default function Schedules() {
               style={{
                 left: '3px',
                 right: '3px',
-                top: `${(100 / totalVisible) * index}%`, // Distribución perfectamente uniforme
-                height: `${100 / totalVisible}%`, // Altura perfectamente uniforme
+                top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible})`, // Espacio disponible (menos márgenes) dividido uniformemente
+                height: `calc((100% - 6px) / ${totalVisible} - 2px)`, // Altura con separación interna de 2px entre badges
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10,
-                margin: '1px 0', // Separación visual simple de 2px total entre badges
                 boxSizing: 'border-box'
               }}
               onClick={(e) => {
