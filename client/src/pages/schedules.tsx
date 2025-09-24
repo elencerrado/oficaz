@@ -788,10 +788,10 @@ export default function Schedules() {
                 key={shift.id}
                 className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
                 style={{
-                  left: `${leftPercent}%`,
-                  width: `${widthPercent}%`,
-                  top: `${lane * laneHeight}%`,
-                  height: `${laneHeight - 2}%`, // Pequeño margen entre carriles
+                  left: `calc(${leftPercent}% + 3px)`,
+                  width: `calc(${widthPercent}% - 6px)`,
+                  top: `calc(${lane * laneHeight}% + 3px)`,
+                  height: `calc(${laneHeight}% - 6px)`, // Margen de 3px por todos lados
                   backgroundColor: shift.color || '#007AFF',
                   zIndex: 10,
                   minWidth: '60px' // Ancho mínimo para legibilidad
@@ -843,10 +843,10 @@ export default function Schedules() {
               key={`${shift.id}-${index}`}
               className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1"
               style={{
-                left: '2px',
-                right: '2px',
-                top: `${index * (100 / totalVisible)}%`,
-                height: shiftHeight, // Usar altura completa disponible
+                left: '3px',
+                right: '3px',
+                top: `calc(${index * (100 / totalVisible)}% + 3px)`,
+                height: `calc(${shiftHeight} - 6px)`, // Margen de 3px por todos lados
                 backgroundColor: shift.color || '#007AFF',
                 zIndex: 10
               }}
@@ -873,10 +873,10 @@ export default function Schedules() {
           <div
             className="absolute rounded-md cursor-pointer transition-all hover:opacity-90 dark:hover:opacity-80 flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 bg-gray-600 dark:bg-gray-500"
             style={{
-              left: '2px',
-              right: '2px',
-              top: `${(totalVisible - 1) * (100 / totalVisible)}%`,
-              height: shiftHeight,
+              left: '3px',
+              right: '3px',
+              top: `calc(${(totalVisible - 1) * (100 / totalVisible)}% + 3px)`,
+              height: `calc(${shiftHeight} - 6px)`, // Margen de 3px por todos lados
               zIndex: 10
             }}
             onClick={(e) => {
