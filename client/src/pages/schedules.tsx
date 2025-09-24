@@ -737,19 +737,15 @@ export default function Schedules() {
 
   // Funciones para manejar el modal de conflictos
   const handleConfirmOverride = async () => {
-    console.log('🚨 handleConfirmOverride called', { hasConflictData: !!conflictData, isOverriding });
-    if (!conflictData || isOverriding) {
-      console.log('🚨 Early return from handleConfirmOverride');
-      return;
-    }
-
-    console.log('🚨 Setting isOverriding to true');
+    if (!conflictData || isOverriding) return;
     setIsOverriding(true);
     try {
       // First, delete existing conflicting shifts
       for (const shift of conflictData.existingShifts) {
         try {
           await apiRequest('DELETE', `/api/work-shifts/${shift.id}`);
+          // Invalidate cache immediately after each deletion
+          queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
         } catch (error: any) {
           // If shift is already deleted (404), continue
           if (error.status === 404) {
@@ -759,16 +755,12 @@ export default function Schedules() {
           throw error; // Re-throw other errors
         }
       }
+      
+      // Wait a moment for cache to update
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Then duplicate the original shift
-      console.log('🚨 About to duplicate shift');
-      try {
-        await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
-        console.log('🚨 Shift duplicated successfully');
-      } catch (duplicateError: any) {
-        console.error('🚨 Error during duplication:', duplicateError);
-        throw duplicateError;
-      }
+      await duplicateShift(conflictData.sourceShift, conflictData.targetEmployeeId, conflictData.targetDate);
       
       toast({
         title: '✅ Turno sobrescrito',
