@@ -47,6 +47,7 @@ interface Employee {
   id: number;
   fullName: string;
   status: string;
+  isActive: boolean;
   profilePicture?: string;
 }
 
@@ -578,7 +579,7 @@ export default function Schedules() {
     if (prefix !== 'cell') return;
 
     const targetEmployeeId = Number(employeeIdStr);
-    const targetDate = new Date(dateStr);
+    const targetDate = parseISO(dateStr);
     
     // Don't duplicate if dropped on the same cell
     if (targetEmployeeId === activeShift.employeeId && 
