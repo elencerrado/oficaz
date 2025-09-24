@@ -774,57 +774,81 @@ export default function Schedules() {
       const maxLanes = Math.max(...shiftsWithLanes.map(s => s.lane), 0) + 1;
       const laneHeight = 100 / maxLanes;
       
-      // ⚠️ LÍNEA DE TIEMPO HÍBRIDA: Cronología real + separación por carriles
-      // Calcular gap horizontal mínimo para separación entre carriles
-      const laneGapPercent = Math.max(0.3, Math.min(1.2, 100 / (maxLanes * 50))); // Gap adaptativo: 0.3% a 1.2%
+      // ⚠️ TIMELINE ESTILIZADO: Orden cronológico + distribución proporcional sin solapamiento
+      // Agrupar turnos por carril y procesarlos independientemente
+      const shiftsByLane = shiftsWithLanes.reduce((acc, item) => {
+        if (!acc[item.lane]) acc[item.lane] = [];
+        acc[item.lane].push(item);
+        return acc;
+      }, {} as Record<number, typeof shiftsWithLanes>);
       
-      const shiftsWithPositions = shiftsWithLanes.map(({ shift, lane }) => {
-        const shiftStart = parseISO(shift.startAt);
-        const shiftEnd = parseISO(shift.endAt);
-        const startTime = format(shiftStart, 'HH:mm');
-        const endTime = format(shiftEnd, 'HH:mm');
-        const shiftHours = `${startTime}-${endTime}`;
+      // Procesar cada carril independientemente
+      const shiftsWithPositions = Object.values(shiftsByLane).flat().map(() => ({
+        shift: {} as WorkShift,
+        lane: 0,
+        leftPercent: 0,
+        widthPercent: 0,
+        shiftHours: ''
+      }));
+      let positionIndex = 0;
+      
+      Object.values(shiftsByLane).forEach(laneShifts => {
+        if (laneShifts.length === 0) return;
         
-        // Calcular posición cronológica real basada en horas
-        const startHour = shiftStart.getHours() + shiftStart.getMinutes() / 60;
-        const endHour = shiftEnd.getHours() + shiftEnd.getMinutes() / 60;
+        // Ordenar por hora de inicio (orden cronológico)
+        laneShifts.sort((a, b) => {
+          const timeA = parseISO(a.shift.startAt).getTime();
+          const timeB = parseISO(b.shift.startAt).getTime();
+          return timeA - timeB;
+        });
         
-        // Limitar al rango del timeline visible
-        const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
-        const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
+        // Calcular duración total de todos los turnos en este carril
+        const totalDuration = laneShifts.reduce((sum, { shift }) => {
+          const start = parseISO(shift.startAt);
+          const end = parseISO(shift.endAt);
+          const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60); // horas
+          return sum + duration;
+        }, 0);
         
-        // ✅ PASO 1: Posición y ancho cronológico puro
-        let chronoLeftPercent = ((clampedStart - TIMELINE_START_HOUR) / TIMELINE_TOTAL_HOURS) * 100;
-        let chronoWidthPercent = ((clampedEnd - clampedStart) / TIMELINE_TOTAL_HOURS) * 100;
+        // Distribución proporcional: cada turno ocupa % basado en su duración relativa
+        const minGapPercent = laneShifts.length > 1 ? Math.max(0.5, 100 / (laneShifts.length * 100)) : 0;
+        const totalGapPercent = minGapPercent * (laneShifts.length - 1);
+        const availableWidthPercent = 100 - totalGapPercent;
         
-        // ✅ PASO 2: Aplicar offset horizontal basado en carril para evitar solapamiento
-        const laneOffsetPercent = lane * laneGapPercent; // Cada carril se desplaza horizontalmente
-        let adjustedLeftPercent = chronoLeftPercent + laneOffsetPercent;
-        let adjustedWidthPercent = Math.max(2, chronoWidthPercent - laneGapPercent); // Reducir ancho para dar espacio al offset
+        let currentLeftPercent = 0;
         
-        // ✅ PASO 3: Clampear para asegurar que no excede el 100% del contenedor
-        const rightEdgePercent = adjustedLeftPercent + adjustedWidthPercent;
-        if (rightEdgePercent > 100) {
-          // Si se sale del contenedor, comprimir proporcionalmente
-          const overflowPercent = rightEdgePercent - 100;
-          adjustedWidthPercent = Math.max(2, adjustedWidthPercent - overflowPercent);
-        }
-        
-        return {
-          shift,
-          lane,
-          leftPercent: adjustedLeftPercent,
-          widthPercent: adjustedWidthPercent,
-          shiftHours,
-          clampedStart,
-          clampedEnd
-        };
-      }).filter(item => 
-        // Solo mostrar turnos que tienen duración visible en el timeline
-        item.clampedEnd > TIMELINE_START_HOUR && 
-        item.clampedStart < TIMELINE_END_HOUR &&
-        item.widthPercent > 0
-      );
+        laneShifts.forEach(({ shift, lane }) => {
+          const shiftStart = parseISO(shift.startAt);
+          const shiftEnd = parseISO(shift.endAt);
+          const startTime = format(shiftStart, 'HH:mm');
+          const endTime = format(shiftEnd, 'HH:mm');
+          const shiftHours = `${startTime}-${endTime}`;
+          
+          // Duración de este turno específico
+          const shiftDuration = (shiftEnd.getTime() - shiftStart.getTime()) / (1000 * 60 * 60);
+          
+          // Ancho proporcional basado en duración relativa (no cronología absoluta)
+          const proportionalWidth = totalDuration > 0 
+            ? (shiftDuration / totalDuration) * availableWidthPercent
+            : availableWidthPercent / laneShifts.length;
+          
+          // Ancho mínimo para legibilidad
+          const minWidthPercent = Math.max(6, availableWidthPercent / laneShifts.length * 0.8);
+          const finalWidthPercent = Math.max(minWidthPercent, proportionalWidth);
+          
+          shiftsWithPositions[positionIndex] = {
+            shift,
+            lane,
+            leftPercent: currentLeftPercent,
+            widthPercent: finalWidthPercent,
+            shiftHours
+          };
+          
+          // Siguiente posición: posición actual + ancho + gap
+          currentLeftPercent += finalWidthPercent + minGapPercent;
+          positionIndex++;
+        });
+      });
       
       return (
         <>
