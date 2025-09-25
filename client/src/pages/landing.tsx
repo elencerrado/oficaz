@@ -30,7 +30,8 @@ import {
   Mail,
   Settings,
   Zap,
-  CreditCard
+  CreditCard,
+  Bell
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -101,33 +102,33 @@ export default function Landing() {
   const features = [
     {
       icon: Clock,
-      title: "Control de Tiempo",
-      description: "Fichajes automáticos con seguimiento en tiempo real y reportes detallados"
+      title: "Fichajes",
+      description: "Control automático con seguimiento en tiempo real y reportes detallados"
     },
     {
       icon: Calendar,
-      title: "Gestión de Vacaciones",
+      title: "Vacaciones",
       description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
     },
     {
       icon: CalendarDays,
-      title: "Cuadrantes de Turnos",
+      title: "Cuadrantes",
       description: "Planificación visual drag & drop con turnos inteligentes y gestión semanal"
     },
     {
       icon: FileText,
-      title: "Documentos Inteligentes",
-      description: "Subida automática con detección de empleados y categorización"
+      title: "Documentos",
+      description: "Subida automática con detección de empleados y categorización inteligente"
     },
     {
       icon: MessageSquare,
-      title: "Comunicación Interna",
-      description: "Mensajería empresarial estilo WhatsApp para toda la organización"
+      title: "Mensajes",
+      description: "Comunicación empresarial estilo WhatsApp para toda la organización"
     },
     {
-      icon: Users,
-      title: "Gestión de Empleados",
-      description: "Base de datos completa con roles, permisos y configuración flexible"
+      icon: Settings,
+      title: "Recordatorios",
+      description: "Recordatorios personalizados, tareas automáticas y notificaciones inteligentes"
     }
   ];
 
@@ -589,68 +590,6 @@ export default function Landing() {
           {/* Interactive Dashboard Preview - Compact 3 Column Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             
-            {/* Employee Dashboard Preview */}
-            <div className="group relative h-full flex flex-col">
-              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Empleados</h3>
-                    <p className="text-xs text-[#007AFF] font-medium">Control en tiempo real</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 flex-grow">
-                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        JR
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900 text-sm">Juan Ramírez</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-green-600 font-medium">Trabajando</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        MP
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900 text-sm">Marta Pérez</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
-                      <span className="text-xs text-orange-600 font-medium">Descanso</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                        AS
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900 text-sm">Ana Sánchez</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                      <span className="text-xs text-blue-600 font-medium">Vacaciones</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Time Tracking Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
@@ -696,6 +635,52 @@ export default function Landing() {
                   </button>
                   <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
                     Descanso
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Vacation Management Preview */}
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Vacaciones</h3>
+                    <p className="text-xs text-blue-500 font-medium">Control automático</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 flex-grow">
+                  <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-700">Juan - Disponibles</span>
+                      <span className="text-xs text-blue-600 font-bold">18/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[60%]"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-700">Marta - Disponibles</span>
+                      <span className="text-xs text-green-600 font-bold">25/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full w-[83%]"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300">
+                    Solicitar
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Calendario
                   </button>
                 </div>
               </div>
@@ -769,52 +754,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Vacation Management Preview */}
-            <div className="group relative h-full flex flex-col">
-              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Vacaciones</h3>
-                    <p className="text-xs text-blue-500 font-medium">Control automático</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-3 flex-grow">
-                  <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-700">Juan - Disponibles</span>
-                      <span className="text-xs text-blue-600 font-bold">18/30</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[60%]"></div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-700">Marta - Disponibles</span>
-                      <span className="text-xs text-green-600 font-bold">25/30</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full w-[83%]"></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4 flex gap-2">
-                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300">
-                    Solicitar
-                  </button>
-                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
-                    Calendario
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Document Management Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
@@ -854,6 +793,102 @@ export default function Landing() {
                     </div>
                     <span className="text-xs text-amber-600 font-medium">...</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages Preview */}
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <MessageSquare className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-indigo-500 transition-colors">Mensajes</h3>
+                    <p className="text-xs text-indigo-500 font-medium">Comunicación instantánea</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 flex-grow">
+                  <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        JR
+                      </div>
+                      <span className="text-xs font-medium text-gray-700">Juan Ramírez</span>
+                      <span className="text-xs text-gray-400 ml-auto">9:30</span>
+                    </div>
+                    <p className="text-xs text-gray-600">¿A qué hora es la reunión?</p>
+                  </div>
+                  
+                  <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        MP
+                      </div>
+                      <span className="text-xs font-medium text-gray-700">Marta Pérez</span>
+                      <span className="text-xs text-gray-400 ml-auto">8:45</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Buenos días equipo! 👋</p>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all duration-300">
+                    Chat
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Grupos
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Reminders Preview */}
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-teal-500/10 hover:border-teal-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
+                    <Bell className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-teal-500 transition-colors">Recordatorios</h3>
+                    <p className="text-xs text-teal-500 font-medium">Tareas automáticas</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 flex-grow">
+                  <div className="p-3 bg-teal-50/50 rounded-lg border border-teal-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Revisar nóminas</span>
+                      <span className="text-xs text-teal-600 font-bold">14:00</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-teal-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-gray-500">Pendiente</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Llamar cliente</span>
+                      <span className="text-xs text-gray-600 font-bold">10:30</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                      <span className="text-xs text-green-600">Completado</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300">
+                    Crear
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Ver todos
+                  </button>
                 </div>
               </div>
             </div>
