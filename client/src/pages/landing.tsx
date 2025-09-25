@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Star,
   Calendar,
+  CalendarDays,
   FileText,
   MessageSquare,
   Shield,
@@ -585,85 +586,65 @@ export default function Landing() {
             </p>
           </div>
           
-          {/* Interactive Dashboard Preview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Interactive Dashboard Preview - Compact 3 Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
             
             {/* Employee Dashboard Preview */}
-            <div className="group relative">
-              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25">
-                    <Users className="w-7 h-7 text-white" />
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-[#007AFF]/10 hover:border-[#007AFF]/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#007AFF] to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-[#007AFF]/25">
+                    <Users className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Panel de Empleados</h3>
-                    <p className="text-[#007AFF] font-medium">Vista en tiempo real</p>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#007AFF] transition-colors">Empleados</h3>
+                    <p className="text-xs text-[#007AFF] font-medium">Control en tiempo real</p>
                   </div>
                 </div>
                 
-                {/* Employee Status List */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                <div className="space-y-2 flex-grow">
+                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                         JR
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">Juan Ramírez</div>
-                        <div className="text-sm text-gray-500">Empleado</div>
+                        <div className="font-medium text-gray-900 text-sm">Juan Ramírez</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                      <span className="text-sm text-orange-600 font-medium">En descanso</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-600 font-medium">Trabajando</span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 bg-gradient-to-br from-blue-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                         MP
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">Marta Pérez</div>
-                        <div className="text-sm text-gray-500">Manager</div>
+                        <div className="font-medium text-gray-900 text-sm">Marta Pérez</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
+                      <span className="text-xs text-orange-600 font-medium">Descanso</span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        CL
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Carmen López</div>
-                        <div className="text-sm text-gray-500">Administradora</div>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-lg border border-gray-100">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-green-600 font-medium">Trabajando</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-7 h-7 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
                         AS
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">Ana Sánchez</div>
-                        <div className="text-sm text-gray-500">Empleada</div>
+                        <div className="font-medium text-gray-900 text-sm">Ana Sánchez</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      <span className="text-sm text-blue-600 font-medium">De vacaciones</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                      <span className="text-xs text-blue-600 font-medium">Vacaciones</span>
                     </div>
                   </div>
                 </div>
@@ -671,175 +652,207 @@ export default function Landing() {
             </div>
 
             {/* Time Tracking Preview */}
-            <div className="group relative">
-              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                    <Clock className="w-7 h-7 text-white" />
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                    <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-emerald-500 transition-colors">Control de Fichajes</h3>
-                    <p className="text-emerald-500 font-medium">Automático y preciso</p>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-500 transition-colors">Fichajes</h3>
+                    <p className="text-xs text-emerald-500 font-medium">Automático y preciso</p>
                   </div>
                 </div>
                 
-                {/* Mock Time Entries */}
-                <div className="space-y-3">
-                  <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Hoy, 26 Junio</span>
-                      <span className="text-sm text-emerald-600 font-medium">8h 32m</span>
+                <div className="space-y-2 flex-grow">
+                  <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Hoy</span>
+                      <span className="text-xs text-emerald-600 font-bold">8h 32m</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>Entrada: 09:00</span>
-                      <span>Salida: 17:32</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Ayer, 25 Junio</span>
-                      <span className="text-sm text-gray-600 font-medium">8h 00m</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>Entrada: 09:15</span>
-                      <span>Salida: 17:15</span>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>09:00</span>
+                      <span>→</span>
+                      <span>17:32</span>
                     </div>
                   </div>
                   
-                  <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">24 Junio</span>
-                      <span className="text-sm text-gray-600 font-medium">7h 45m</span>
+                  <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Ayer</span>
+                      <span className="text-xs text-gray-600 font-bold">8h 00m</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <span>Entrada: 09:30</span>
-                      <span>Salida: 17:15</span>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>09:15</span>
+                      <span>→</span>
+                      <span>17:15</span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 flex gap-3">
-                  <button className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg">
-                    Fichar Entrada
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-emerald-600 hover:to-green-600 transition-all duration-300">
+                    Fichar
                   </button>
-                  <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
                     Descanso
                   </button>
                 </div>
               </div>
             </div>
 
-          </div>
-
-          {/* Second Row - Vacation and Documents */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-16 lg:mt-20">
-            
-            {/* Vacation Management Preview */}
-            <div className="group relative">
-              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
-                    <Calendar className="w-7 h-7 text-white" />
+            {/* Work Schedules/Cuadrante Preview */}
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+                    <CalendarDays className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Gestión de Vacaciones</h3>
-                    <p className="text-blue-500 font-medium">Control visual y automático</p>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-purple-500 transition-colors">Cuadrantes</h3>
+                    <p className="text-xs text-purple-500 font-medium">Planificación visual</p>
                   </div>
                 </div>
                 
-                {/* Vacation Progress Bars */}
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Juan Ramírez - Días disponibles</span>
-                      <span className="text-sm text-blue-600 font-medium">18/30</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full w-[60%]"></div>
-                    </div>
+                <div className="space-y-2 flex-grow">
+                  <div className="grid grid-cols-7 gap-1 text-xs text-gray-500 font-medium mb-2">
+                    <div className="text-center">L</div>
+                    <div className="text-center">M</div>
+                    <div className="text-center">X</div>
+                    <div className="text-center">J</div>
+                    <div className="text-center">V</div>
+                    <div className="text-center">S</div>
+                    <div className="text-center">D</div>
                   </div>
                   
-                  <div className="p-4 bg-green-50/50 rounded-xl border border-green-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Marta Pérez - Días disponibles</span>
-                      <span className="text-sm text-green-600 font-medium">25/30</span>
+                  <div className="grid grid-cols-7 gap-1">
+                    <div className="h-8 bg-blue-100 rounded border border-blue-200 flex items-center justify-center">
+                      <span className="text-xs text-blue-700 font-medium">M</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full w-[83%]"></div>
+                    <div className="h-8 bg-green-100 rounded border border-green-200 flex items-center justify-center">
+                      <span className="text-xs text-green-700 font-medium">T</span>
                     </div>
+                    <div className="h-8 bg-orange-100 rounded border border-orange-200 flex items-center justify-center">
+                      <span className="text-xs text-orange-700 font-medium">N</span>
+                    </div>
+                    <div className="h-8 bg-blue-100 rounded border border-blue-200 flex items-center justify-center">
+                      <span className="text-xs text-blue-700 font-medium">M</span>
+                    </div>
+                    <div className="h-8 bg-green-100 rounded border border-green-200 flex items-center justify-center">
+                      <span className="text-xs text-green-700 font-medium">T</span>
+                    </div>
+                    <div className="h-8 bg-gray-100 rounded border border-gray-200"></div>
+                    <div className="h-8 bg-gray-100 rounded border border-gray-200"></div>
                   </div>
                   
-                  <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Ana Sánchez - Días disponibles</span>
-                      <span className="text-sm text-orange-600 font-medium">8/30</span>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-400 rounded"></div>
+                      <span>Mañana 8-16h</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                      <div className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full w-[27%]"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-400 rounded"></div>
+                      <span>Tarde 14-22h</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-400 rounded"></div>
+                      <span>Noche 22-6h</span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="mt-6 flex gap-3">
-                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg">
-                    Nueva Solicitud
+                <div className="mt-4">
+                  <button className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-purple-600 hover:to-violet-600 transition-all duration-300">
+                    Gestionar Turnos
                   </button>
-                  <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all duration-300">
-                    Ver Calendario
+                </div>
+              </div>
+            </div>
+
+            {/* Vacation Management Preview */}
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Vacaciones</h3>
+                    <p className="text-xs text-blue-500 font-medium">Control automático</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-3 flex-grow">
+                  <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-700">Juan - Disponibles</span>
+                      <span className="text-xs text-blue-600 font-bold">18/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[60%]"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-700">Marta - Disponibles</span>
+                      <span className="text-xs text-green-600 font-bold">25/30</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full w-[83%]"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex gap-2">
+                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300">
+                    Solicitar
+                  </button>
+                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
+                    Calendario
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Document Management Preview */}
-            <div className="group relative">
-              <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-gray-900/5 border border-gray-200/50 hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-700 hover:scale-[1.02] hover:-translate-y-2">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25">
-                    <FileText className="w-7 h-7 text-white" />
+            <div className="group relative h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-500 transition-colors">Documentos Inteligentes</h3>
-                    <p className="text-amber-500 font-medium">Arrastra y distribuye automático</p>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-500 transition-colors">Documentos</h3>
+                    <p className="text-xs text-amber-500 font-medium">Distribución automática</p>
                   </div>
                 </div>
                 
-                {/* Drag & Drop Area */}
-                <div className="border-2 border-dashed border-amber-300 rounded-xl p-6 bg-amber-50/30 hover:bg-amber-50/50 transition-colors mb-4">
+                <div className="border-2 border-dashed border-amber-300 rounded-lg p-4 bg-amber-50/30 hover:bg-amber-50/50 transition-colors mb-3 flex-grow flex flex-col justify-center">
                   <div className="text-center">
-                    <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
-                      <FileText className="w-6 h-6 text-amber-600" />
+                    <div className="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <FileText className="w-4 h-4 text-amber-600" />
                     </div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Arrastra nóminas aquí</p>
-                    <p className="text-xs text-gray-500">Se envían automáticamente a cada empleado</p>
+                    <p className="text-xs font-medium text-gray-700 mb-1">Arrastra nóminas</p>
+                    <p className="text-xs text-gray-500">Auto-distribución</p>
                   </div>
                 </div>
                 
-                {/* Document Distribution Status */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Nómina Junio → Juan Ramírez</span>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between p-2 bg-green-50/50 rounded border border-green-100">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                      <span className="text-xs text-gray-700">Juan</span>
                     </div>
-                    <span className="text-xs text-green-600 font-medium">Enviado</span>
+                    <span className="text-xs text-green-600 font-medium">✓</span>
                   </div>
                   
-                  <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg border border-green-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span className="text-sm text-gray-700">Nómina Junio → Marta Pérez</span>
+                  <div className="flex items-center justify-between p-2 bg-amber-50/50 rounded border border-amber-100">
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-gray-700">Ana</span>
                     </div>
-                    <span className="text-xs text-green-600 font-medium">Enviado</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-lg border border-amber-100">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm text-gray-700">Nómina Junio → Ana Sánchez</span>
-                    </div>
-                    <span className="text-xs text-amber-600 font-medium">Enviando...</span>
+                    <span className="text-xs text-amber-600 font-medium">...</span>
                   </div>
                 </div>
               </div>
