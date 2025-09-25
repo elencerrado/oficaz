@@ -592,48 +592,84 @@ export default function Landing() {
             
             {/* Time Tracking Preview */}
             <div className="group relative h-full flex flex-col">
-              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+              <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-emerald-500 transition-colors">Fichajes</h3>
-                    <p className="text-xs text-emerald-500 font-medium">Automático y preciso</p>
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-500 transition-colors">Fichajes</h3>
+                    <p className="text-xs text-blue-500 font-medium">Control horario visual</p>
                   </div>
                 </div>
                 
-                <div className="space-y-2 flex-grow">
-                  <div className="p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
-                    <div className="flex items-center justify-between mb-1">
+                <div className="space-y-3 flex-grow">
+                  {/* Sesión de hoy con barra de tiempo real */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-gray-700">Hoy</span>
-                      <span className="text-xs text-emerald-600 font-bold">8h 32m</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-blue-600 font-bold">7h 45m</span>
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                      </div>
                     </div>
+                    
+                    {/* Barra de tiempo real como en la app */}
+                    <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
+                      {/* Barra principal de trabajo */}
+                      <div className="absolute inset-0 bg-blue-500 rounded-lg" style={{ width: '82%' }}></div>
+                      
+                      {/* Período de descanso */}
+                      <div 
+                        className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                        style={{ left: '35%', width: '8%' }}
+                      ></div>
+                      
+                      {/* Descanso activo */}
+                      <div 
+                        className="absolute top-0 bottom-0 bg-orange-400 rounded animate-pulse"
+                        style={{ left: '75%', width: '5%' }}
+                      ></div>
+                    </div>
+                    
                     <div className="flex items-center justify-between text-xs text-gray-500">
                       <span>09:00</span>
-                      <span>→</span>
-                      <span>17:32</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-orange-600 font-medium">En descanso</span>
+                        <div className="w-1 h-1 bg-orange-500 rounded-full animate-pulse"></div>
+                      </div>
+                      <span>~17:30</span>
                     </div>
                   </div>
                   
-                  <div className="p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-                    <div className="flex items-center justify-between mb-1">
+                  {/* Sesión de ayer completada */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-gray-700">Ayer</span>
-                      <span className="text-xs text-gray-600 font-bold">8h 00m</span>
+                      <span className="text-xs text-gray-600 font-bold">8h 15m</span>
                     </div>
+                    
+                    <div className="relative h-5 bg-gray-100 rounded-lg overflow-hidden">
+                      <div className="absolute inset-0 bg-blue-500 rounded-lg"></div>
+                      <div 
+                        className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                        style={{ left: '40%', width: '10%' }}
+                      ></div>
+                    </div>
+                    
                     <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>09:15</span>
-                      <span>→</span>
-                      <span>17:15</span>
+                      <span>08:45</span>
+                      <span>30m descanso</span>
+                      <span>17:30</span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="mt-4 flex gap-2">
-                  <button className="flex-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-emerald-600 hover:to-green-600 transition-all duration-300">
+                  <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300">
                     Fichar
                   </button>
-                  <button className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-300 transition-all duration-300">
+                  <button className="flex-1 bg-orange-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-orange-600 transition-all duration-300">
                     Descanso
                   </button>
                 </div>
