@@ -758,17 +758,17 @@ export default function Landing() {
                   </div>
                   
                   {/* Empleados con turnos - Ocupa todo el espacio disponible */}
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 space-y-4">
                     {/* Juan */}
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-12">
+                    <div className="grid grid-cols-[70px_repeat(5,1fr)] gap-1 items-stretch h-16">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           J
                         </div>
-                        <span className="text-xs text-gray-600 mt-1">Juan</span>
+                        <span className="text-xs text-gray-600 mt-1.5">Juan</span>
                       </div>
                       <div className="h-full bg-blue-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">9-17h</span>
+                        <span className="text-sm font-medium">9-17h</span>
                       </div>
                       <div className="h-full flex flex-col gap-1">
                         <div className="flex-1 bg-green-500 rounded text-white flex items-center justify-center">
@@ -779,27 +779,27 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="h-full bg-blue-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">9-17h</span>
+                        <span className="text-sm font-medium">9-17h</span>
                       </div>
                       <div className="h-full bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-                        <span className="text-xs text-gray-400">+</span>
+                        <span className="text-sm text-gray-400">+</span>
                       </div>
                       <div className="h-full bg-gray-100 rounded"></div>
                     </div>
                     
                     {/* Ana */}
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-12">
+                    <div className="grid grid-cols-[70px_repeat(5,1fr)] gap-1 items-stretch h-16">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           A
                         </div>
-                        <span className="text-xs text-gray-600 mt-1">Ana</span>
+                        <span className="text-xs text-gray-600 mt-1.5">Ana</span>
                       </div>
                       <div className="h-full bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
+                        <span className="text-sm font-medium">14-22h</span>
                       </div>
                       <div className="h-full bg-orange-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">22-6h</span>
+                        <span className="text-sm font-medium">22-6h</span>
                       </div>
                       <div className="h-full flex flex-col gap-1">
                         <div className="flex-1 bg-blue-500 rounded text-white flex items-center justify-center">
@@ -810,50 +810,29 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="h-full bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
+                        <span className="text-sm font-medium">14-22h</span>
                       </div>
                       <div className="h-full bg-gray-100 rounded"></div>
                     </div>
                     
                     {/* Luis */}
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-12">
+                    <div className="grid grid-cols-[70px_repeat(5,1fr)] gap-1 items-stretch h-16">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           L
                         </div>
-                        <span className="text-xs text-gray-600 mt-1">Luis</span>
+                        <span className="text-xs text-gray-600 mt-1.5">Luis</span>
                       </div>
                       <div className="h-full bg-gray-100 rounded"></div>
                       <div className="h-full bg-blue-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">9-17h</span>
+                        <span className="text-sm font-medium">9-17h</span>
                       </div>
                       <div className="h-full bg-gray-100 rounded"></div>
                       <div className="h-full bg-orange-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">22-6h</span>
+                        <span className="text-sm font-medium">22-6h</span>
                       </div>
                       <div className="h-full bg-blue-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">9-17h</span>
-                      </div>
-                    </div>
-                    
-                    {/* María */}
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-12">
-                      <div className="flex flex-col items-center justify-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-                          M
-                        </div>
-                        <span className="text-xs text-gray-600 mt-1">María</span>
-                      </div>
-                      <div className="h-full bg-orange-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">22-6h</span>
-                      </div>
-                      <div className="h-full bg-gray-100 rounded"></div>
-                      <div className="h-full bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
-                      </div>
-                      <div className="h-full bg-gray-100 rounded"></div>
-                      <div className="h-full bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
+                        <span className="text-sm font-medium">9-17h</span>
                       </div>
                     </div>
                   </div>
