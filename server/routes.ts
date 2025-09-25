@@ -268,6 +268,9 @@ async function generateComprehensiveDemoData(companyId: number, employees: any[]
   // Generate incomplete sessions for demonstration
   await generateIncompleteSessions(employees, companyId);
   
+  // Generate work shifts for current week + 3 next weeks
+  await generateDemoWorkShifts(companyId, employees, registrationDate);
+  
   console.log('✅ Generated comprehensive demo data for', employees.length, 'employees');
 }
 
@@ -656,6 +659,107 @@ async function generateIncompleteSessions(employees: any[], companyId: number) {
   }
   
   console.log(`⚠️ Generated incomplete sessions for ${employeesForIncomplete.length} employees`);
+}
+
+// Generate demo work shifts for current week + 3 next weeks
+async function generateDemoWorkShifts(companyId: number, employees: any[], registrationDate: Date) {
+  console.log('📅 Generating demo work shifts for 4 weeks...');
+  
+  // Find admin user to be the creator of shifts
+  const adminEmployee = employees.find(emp => emp.role === 'admin');
+  if (!adminEmployee) {
+    console.log('⚠️ No admin found, skipping work shifts generation');
+    return;
+  }
+  
+  // Get working employees (exclude those on vacation)
+  const workingEmployees = employees.filter(emp => emp.status === 'working');
+  
+  // Define shift types with colors
+  const shiftTypes = [
+    { title: 'Turno Mañana', startHour: 8, endHour: 16, color: '#007AFF' }, // Blue
+    { title: 'Turno Tarde', startHour: 14, endHour: 22, color: '#FF9500' }, // Orange  
+    { title: 'Turno Completo', startHour: 9, endHour: 18, color: '#34C759' }, // Green
+    { title: 'Medio Turno', startHour: 9, endHour: 14, color: '#AF52DE' }, // Purple
+  ];
+  
+  const locations = ['Oficina Central', 'Sucursal Norte', 'Trabajo Remoto', null];
+  
+  // Calculate start of current week (Monday)
+  const now = new Date();
+  const currentWeekStart = new Date(now);
+  currentWeekStart.setDate(now.getDate() - now.getDay() + 1); // Monday
+  currentWeekStart.setHours(0, 0, 0, 0);
+  
+  // Generate shifts for 4 weeks (current + 3 next)
+  for (let week = 0; week < 4; week++) {
+    const weekStart = new Date(currentWeekStart);
+    weekStart.setDate(currentWeekStart.getDate() + (week * 7));
+    
+    console.log(`📅 Generating shifts for week ${week + 1}: ${weekStart.toDateString()}`);
+    
+    // Generate shifts for Monday to Friday
+    for (let day = 0; day < 5; day++) {
+      const shiftDate = new Date(weekStart);
+      shiftDate.setDate(weekStart.getDate() + day);
+      
+      // Skip if date is in the past (before today)
+      if (shiftDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+        continue;
+      }
+      
+      // Randomly assign shifts to employees (not everyone every day)
+      const shuffledEmployees = [...workingEmployees].sort(() => Math.random() - 0.5);
+      const employeesToAssign = shuffledEmployees.slice(0, Math.floor(Math.random() * workingEmployees.length) + 1);
+      
+      for (const employee of employeesToAssign) {
+        // Skip some days randomly for variety  
+        if (Math.random() < 0.3) continue;
+        
+        // Choose random shift type
+        const shiftType = shiftTypes[Math.floor(Math.random() * shiftTypes.length)];
+        
+        // Create start and end times
+        const startAt = new Date(shiftDate);
+        startAt.setHours(shiftType.startHour, 0, 0, 0);
+        
+        const endAt = new Date(shiftDate);
+        endAt.setHours(shiftType.endHour, 0, 0, 0);
+        
+        // Random location
+        const location = locations[Math.floor(Math.random() * locations.length)];
+        
+        // Create notes occasionally
+        const notes = Math.random() < 0.3 ? [
+          'Revisar informes pendientes',
+          'Reunión con cliente programada',
+          'Proyecto urgente en curso',
+          'Formación programada',
+          null
+        ][Math.floor(Math.random() * 5)] : null;
+        
+        try {
+          await db.insert(schema.workShifts).values({
+            companyId,
+            employeeId: employee.id,
+            startAt,
+            endAt,
+            title: shiftType.title,
+            location,
+            notes,
+            color: shiftType.color,
+            createdByUserId: adminEmployee.id,
+          });
+          
+          console.log(`📋 Created shift: ${employee.fullName} - ${shiftType.title} on ${shiftDate.toDateString()}`);
+        } catch (error) {
+          console.error(`❌ Error creating shift for ${employee.fullName}:`, error);
+        }
+      }
+    }
+  }
+  
+  console.log(`✅ Generated demo work shifts for ${workingEmployees.length} employees across 4 weeks`);
 }
 
 // Generate demo vacation requests
