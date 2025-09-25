@@ -110,6 +110,11 @@ export default function Landing() {
       description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
     },
     {
+      icon: CalendarDays,
+      title: "Cuadrantes de Turnos",
+      description: "Planificación visual drag & drop con turnos inteligentes y gestión semanal"
+    },
+    {
       icon: FileText,
       title: "Documentos Inteligentes",
       description: "Subida automática con detección de empleados y categorización"
@@ -123,11 +128,6 @@ export default function Landing() {
       icon: Users,
       title: "Gestión de Empleados",
       description: "Base de datos completa con roles, permisos y configuración flexible"
-    },
-    {
-      icon: Settings,
-      title: "Y mucho más",
-      description: "Recordatorios personalizados, reportes avanzados, integraciones y configuración flexible"
     }
   ];
 
