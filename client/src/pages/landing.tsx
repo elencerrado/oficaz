@@ -649,7 +649,7 @@ export default function Landing() {
                       <span className="text-xs text-gray-600 font-bold">8h 15m</span>
                     </div>
                     
-                    <div className="relative h-5 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="relative h-6 bg-gray-100 rounded-lg overflow-hidden">
                       <div className="absolute inset-0 bg-blue-500 rounded-lg"></div>
                       <div 
                         className="absolute top-0.5 bottom-0.5 bg-orange-400 rounded-md"
