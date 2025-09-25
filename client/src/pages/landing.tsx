@@ -1014,30 +1014,38 @@ export default function Landing() {
             <span className="text-white font-semibold">Oficaz automatiza lo tedioso para que te enfoques en lo importante.</span>
           </p>
           
-          {/* Benefits Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-4xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <CheckCircle className="w-6 h-6 text-green-400" />
+          {/* Benefits Grid - Compact Visual Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16 max-w-5xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
+              <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                <CheckCircle className="w-5 h-5 text-green-400" />
               </div>
-              <h3 className="text-white font-semibold mb-2">Configuración Instantánea</h3>
-              <p className="text-blue-100 text-sm">Tu empresa funcionando en menos de 5 minutos</p>
+              <h3 className="text-white font-semibold mb-1 text-sm">Setup Rápido</h3>
+              <p className="text-blue-100 text-xs">5 minutos activo</p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <Users className="w-6 h-6 text-blue-400" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
+              <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                <Users className="w-5 h-5 text-blue-400" />
               </div>
-              <h3 className="text-white font-semibold mb-2">Equipo Productivo</h3>
-              <p className="text-blue-100 text-sm">Empleados felices con procesos claros</p>
+              <h3 className="text-white font-semibold mb-1 text-sm">Equipo Happy</h3>
+              <p className="text-blue-100 text-xs">Procesos claros</p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <TrendingUp className="w-6 h-6 text-purple-400" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
+              <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                <CalendarDays className="w-5 h-5 text-purple-400" />
               </div>
-              <h3 className="text-white font-semibold mb-2">Crecimiento Real</h3>
-              <p className="text-blue-100 text-sm">Más tiempo para hacer crecer tu negocio</p>
+              <h3 className="text-white font-semibold mb-1 text-sm">Turnos Smart</h3>
+              <p className="text-blue-100 text-xs">Drag & drop visual</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center mb-3 mx-auto">
+                <TrendingUp className="w-5 h-5 text-orange-400" />
+              </div>
+              <h3 className="text-white font-semibold mb-1 text-sm">ROI Real</h3>
+              <p className="text-blue-100 text-xs">Tiempo para crecer</p>
             </div>
           </div>
           
