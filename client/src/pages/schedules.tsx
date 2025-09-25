@@ -1640,7 +1640,7 @@ export default function Schedules() {
                         
                         {/* Iconos de acciones de semana - solo visibles en modo semana */}
                         {(viewMode === 'week' || viewMode === 'workweek') && (
-                          <div className="absolute -right-2 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute -right-4 top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             {/* Botón eliminar todos los turnos de la semana */}
                             <button
                               onClick={(e) => {
