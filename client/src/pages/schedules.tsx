@@ -1313,8 +1313,11 @@ export default function Schedules() {
     const TIMELINE_END_HOUR = timelineBounds.end;
     const TIMELINE_TOTAL_HOURS = TIMELINE_END_HOUR - TIMELINE_START_HOUR;
     
-    // MODO DÍA: Timeline cronológico puro - SIN carriles verticales
-    if (viewMode === 'day') {
+    // Detectar si estamos en móvil (menos de 640px)
+    const isMobile = window.innerWidth < 640;
+    
+    // MODO DÍA: Timeline cronológico horizontal en desktop, vertical en móvil
+    if (viewMode === 'day' && !isMobile) {
       // Ordenar turnos cronológicamente
       const sortedShifts = [...dayShifts].sort((a, b) => 
         parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime()
@@ -1440,6 +1443,49 @@ export default function Schedules() {
               onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
             />
           ))}
+        </>
+      );
+    }
+    
+    // MODO DÍA MÓVIL: Layout vertical como modo semana
+    if (viewMode === 'day' && isMobile) {
+      // Usar la misma lógica vertical que el modo semana
+      const shiftLanes = assignShiftLanes(dayShifts);
+      const totalVisible = dayShifts.length;
+      
+      return (
+        <>
+          {/* Renderizar todos los turnos verticalmente */}
+          {shiftLanes.map(({ shift, lane }, index: number) => {
+            const shiftStart = parseISO(shift.startAt);
+            const shiftEnd = parseISO(shift.endAt);
+            const startTime = format(shiftStart, 'HH:mm');
+            const endTime = format(shiftEnd, 'HH:mm');
+            const shiftHours = `${startTime}-${endTime}`;
+            
+            return (
+              <DraggableBadge
+                key={`${shift.id}-${index}`}
+                shift={shift}
+                shiftHours={shiftHours}
+                style={{
+                  left: '3px',
+                  right: '3px',
+                  top: `calc(3px + ${index} * (100% - 6px) / ${totalVisible})`,
+                  height: `calc((100% - 6px) / ${totalVisible} - 2px)`,
+                  zIndex: 10,
+                  boxSizing: 'border-box'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedShift(shift);
+                  setShowShiftModal(true);
+                }}
+                title={`${shift.title}\n${shiftHours}${shift.location ? `\n📍 ${shift.location}` : ''}${shift.notes ? `\n📝 ${shift.notes}` : ''}`}
+                onDelete={(shiftId) => deleteShiftMutation.mutate(shiftId)}
+              />
+            );
+          })}
         </>
       );
     }
