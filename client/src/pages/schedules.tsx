@@ -1646,7 +1646,7 @@ export default function Schedules() {
                           </div>
                         </div>
                         
-                        {/* Timeline que ocupa todo el ancho */}
+                        {/* Timeline que ocupa todo el ancho - Layout vertical como modo semana */}
                         <div className="w-full">
                           {filteredDays.map((day, dayIndex) => {
                             const holiday = isHoliday(day);
@@ -1659,7 +1659,7 @@ export default function Schedules() {
                                 employeeId={employee.id}
                                 day={day}
                                 isDisabled={isDisabled}
-                                className={`${getCellStyle(employee.id, day)} flex flex-row w-full min-h-[60px] rounded-lg border border-border/30 ${
+                                className={`${getCellStyle(employee.id, day)} flex flex-col w-full min-h-[120px] rounded-lg border border-border/30 relative ${
                                   !isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'
                                 }`}
                                 style={getCellHeightStyle(employee.id, day)}
@@ -1679,16 +1679,16 @@ export default function Schedules() {
                                   'Click para añadir turno o arrastrar turno aquí'
                                 }
                               >
-                                {/* Área principal de la celda */}
-                                <div className="flex-1 relative overflow-hidden">
+                                {/* Área principal de la celda - Layout vertical para badges */}
+                                <div className="flex-1 relative overflow-hidden" style={{ paddingBottom: '16px', maxHeight: 'calc(100% - 16px)' }}>
                                   {getCellContent(employee.id, day)}
                                   {renderShiftBar(employee, day)}
                                 </div>
                                 
-                                {/* Botón "+" lateral derecho */}
-                                <div className="w-8 bg-gray-100 dark:bg-gray-700/50 border-l border-gray-300 dark:border-gray-600 rounded-r flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
+                                {/* Footer con botón "+" como en modo semana */}
+                                <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-30">
                                   <button
-                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
+                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (!isDisabled) {
@@ -1703,7 +1703,7 @@ export default function Schedules() {
                                     title="Añadir turno"
                                     data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
                                   >
-                                    <span className="text-sm">+</span>
+                                    <span className="text-[10px]">+</span>
                                   </button>
                                 </div>
                               </DroppableCell>
