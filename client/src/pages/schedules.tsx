@@ -1726,14 +1726,15 @@ export default function Schedules() {
                                 }
                               >
                                 {/* Área principal de la celda - Layout vertical para badges */}
-                                <div className="flex-1 relative overflow-hidden p-2">
+                                <div className="flex-1 relative overflow-hidden">
                                   {getCellContent(employee.id, day)}
                                   {renderShiftBar(employee, day)}
                                 </div>
                                 
-                                {/* Botón "+" como último badge */}
-                                <div className="px-2 pb-2">
+                                {/* Botón "+" simple al final */}
+                                <div className="h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
                                   <button
+                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       if (!isDisabled) {
@@ -1745,11 +1746,10 @@ export default function Schedules() {
                                         setShowNewShiftModal(true);
                                       }
                                     }}
-                                    className="w-full h-8 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded text-muted-foreground hover:text-foreground hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors text-xs font-medium"
                                     title="Añadir turno"
                                     data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
                                   >
-                                    + Añadir turno
+                                    <span className="text-[10px]">+</span>
                                   </button>
                                 </div>
                               </DroppableCell>
