@@ -362,10 +362,11 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveWorkSession(userId: number): Promise<WorkSession | undefined> {
-    // Check for sessions that are truly active (no clock_out time)
+    // Check for sessions that are truly active (status 'active', not 'incomplete')
     const [activeSession] = await db.select().from(schema.workSessions)
       .where(and(
         eq(schema.workSessions.userId, userId), 
+        eq(schema.workSessions.status, 'active'),
         isNull(schema.workSessions.clockOut)
       ))
       .orderBy(desc(schema.workSessions.clockIn))
