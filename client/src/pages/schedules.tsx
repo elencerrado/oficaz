@@ -1537,9 +1537,9 @@ export default function Schedules() {
                 </div>
                 
                 {/* Header de días súper compacto */}
-                <div className={`grid gap-1 py-0.5 ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
-                  {/* Selector de vista */}
-                  <div className="flex items-center justify-center">
+                <div className={`grid gap-1 py-0.5 ${viewMode === 'day' ? 'sm:grid-cols-[120px_minmax(0,1fr)] grid-cols-1' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+                  {/* Selector de vista - Solo visible en desktop o no en modo día */}
+                  <div className={`flex items-center justify-center ${viewMode === 'day' ? 'hidden sm:flex' : ''}`}>
                     {/* Slider con estética de TabNavigation - Oculto en móvil */}
                     <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 relative scale-75 hidden sm:block">
                       {/* Sliding indicator */}
@@ -1623,8 +1623,98 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className="p-4">
-                    <div className={`grid gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
+                  <div key={employee.id} className={viewMode === 'day' ? 'p-3 border-b border-border/50' : 'p-4'}>
+                    {viewMode === 'day' ? (
+                      /* Layout móvil para modo día - Estructura vertical */
+                      <div className="space-y-2 sm:hidden">
+                        {/* Header del empleado en móvil */}
+                        <div className="flex items-center gap-3 px-2">
+                          <UserAvatar 
+                            fullName={employee.fullName} 
+                            size="sm" 
+                            userId={employee.id}
+                            profilePicture={employee.profilePicture}
+                            className="w-8 h-8"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-foreground">
+                              {employee.fullName}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(filteredDays[0], "EEEE, d 'de' MMMM", { locale: es })}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Timeline que ocupa todo el ancho */}
+                        <div className="w-full">
+                          {filteredDays.map((day, dayIndex) => {
+                            const holiday = isHoliday(day);
+                            const vacation = isEmployeeOnVacation(employee.id, day);
+                            const isDisabled = !!vacation;
+                            
+                            return (
+                              <DroppableCell
+                                key={dayIndex}
+                                employeeId={employee.id}
+                                day={day}
+                                isDisabled={isDisabled}
+                                className={`${getCellStyle(employee.id, day)} flex flex-row w-full min-h-[60px] rounded-lg border border-border/30 ${
+                                  !isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700/70 transition-colors' : 'cursor-not-allowed'
+                                }`}
+                                style={getCellHeightStyle(employee.id, day)}
+                                onClick={() => {
+                                  if (!isDisabled && getShiftsForEmployee(employee.id).filter(shift => format(parseISO(shift.startAt), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')).length === 0) {
+                                    setSelectedCell({
+                                      employeeId: employee.id,
+                                      date: day,
+                                      employeeName: employee.fullName
+                                    });
+                                    setShowNewShiftModal(true);
+                                  }
+                                }}
+                                title={
+                                  vacation ? 'Empleado de vacaciones' : 
+                                  holiday ? `Día festivo: ${holiday.name} - Click para añadir turno o arrastrar turno aquí` : 
+                                  'Click para añadir turno o arrastrar turno aquí'
+                                }
+                              >
+                                {/* Área principal de la celda */}
+                                <div className="flex-1 relative overflow-hidden">
+                                  {getCellContent(employee.id, day)}
+                                  {renderShiftBar(employee, day)}
+                                </div>
+                                
+                                {/* Botón "+" lateral derecho */}
+                                <div className="w-8 bg-gray-100 dark:bg-gray-700/50 border-l border-gray-300 dark:border-gray-600 rounded-r flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors">
+                                  <button
+                                    className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center justify-center w-full h-full"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!isDisabled) {
+                                        setSelectedCell({
+                                          employeeId: employee.id,
+                                          date: day,
+                                          employeeName: employee.fullName
+                                        });
+                                        setShowNewShiftModal(true);
+                                      }
+                                    }}
+                                    title="Añadir turno"
+                                    data-testid={`button-add-shift-${employee.id}-${format(day, 'yyyy-MM-dd')}`}
+                                  >
+                                    <span className="text-sm">+</span>
+                                  </button>
+                                </div>
+                              </DroppableCell>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    {/* Layout original para desktop o modos semana */}
+                    <div className={`${viewMode === 'day' ? 'hidden sm:grid' : 'grid'} gap-1 items-stretch ${viewMode === 'day' ? 'grid-cols-[120px_minmax(0,1fr)]' : viewMode === 'workweek' ? 'grid-cols-[120px_repeat(5,minmax(0,1fr))]' : 'grid-cols-[120px_repeat(7,minmax(0,1fr))]'}`}>
                       {/* Columna del empleado */}
                       <div className="flex flex-col items-center justify-center gap-1 relative group">
                         <UserAvatar 
