@@ -621,13 +621,13 @@ export default function Landing() {
                       
                       {/* Período de descanso */}
                       <div 
-                        className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                        className="absolute top-0.5 bottom-0.5 bg-orange-400 rounded-md"
                         style={{ left: '35%', width: '8%' }}
                       ></div>
                       
                       {/* Descanso activo */}
                       <div 
-                        className="absolute top-0 bottom-0 bg-orange-400 rounded animate-pulse"
+                        className="absolute top-0.5 bottom-0.5 bg-orange-400 rounded-md animate-pulse"
                         style={{ left: '75%', width: '5%' }}
                       ></div>
                     </div>
@@ -652,7 +652,7 @@ export default function Landing() {
                     <div className="relative h-5 bg-gray-100 rounded-lg overflow-hidden">
                       <div className="absolute inset-0 bg-blue-500 rounded-lg"></div>
                       <div 
-                        className="absolute top-0 bottom-0 bg-orange-400 rounded"
+                        className="absolute top-0.5 bottom-0.5 bg-orange-400 rounded-md"
                         style={{ left: '40%', width: '10%' }}
                       ></div>
                     </div>
