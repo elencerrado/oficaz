@@ -706,8 +706,8 @@ export default function Landing() {
                       </div>
                     </div>
                     
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[40%]"></div>
+                    <div className="w-full bg-gray-200 rounded-lg h-6 mt-3">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-6 rounded-lg w-[40%]"></div>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">40% utilizados</div>
                   </div>
