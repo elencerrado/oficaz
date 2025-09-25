@@ -362,7 +362,7 @@ export class DrizzleStorage implements IStorage {
   }
 
   async getActiveWorkSession(userId: number): Promise<WorkSession | undefined> {
-    // Check for sessions that are truly active (status 'active', not 'incomplete')
+    // Get session with status 'active' and no clockOut
     const [activeSession] = await db.select().from(schema.workSessions)
       .where(and(
         eq(schema.workSessions.userId, userId), 
@@ -372,17 +372,26 @@ export class DrizzleStorage implements IStorage {
       .orderBy(desc(schema.workSessions.clockIn))
       .limit(1);
     
-    return activeSession;
-  }
-
-  async getAllActiveSessions(): Promise<WorkSession[]> {
-    // Get all sessions with status 'active' and no clockOut
-    return db.select().from(schema.workSessions)
-      .where(and(
-        eq(schema.workSessions.status, 'active'),
-        isNull(schema.workSessions.clockOut)
-      ))
-      .orderBy(desc(schema.workSessions.clockIn));
+    if (!activeSession) {
+      return undefined;
+    }
+    
+    // Get company settings for working hours
+    const companyData = await this.getCompanyByUserId(userId);
+    const maxWorkHours = companyData?.workingHoursPerDay || 8;
+    const maxHoursWithOvertime = maxWorkHours + 4; // +4 hours for overtime allowance
+    
+    // Calculate elapsed time since clock-in
+    const sessionStart = new Date(activeSession.clockIn);
+    const now = new Date();
+    const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+    
+    // If session has exceeded max working hours + 4h overtime, don't block new clock-ins
+    if (elapsedHours > maxHoursWithOvertime) {
+      return undefined; // Allow new clock-in
+    }
+    
+    return activeSession; // Block new clock-in
   }
 
   async getWorkSession(id: number): Promise<WorkSession | undefined> {

@@ -7,9 +7,7 @@ import type { ImageProcessingJob } from '@shared/schema';
 class BackgroundImageProcessor {
   private isRunning = false;
   private processingInterval: NodeJS.Timeout | null = null;
-  private sessionCheckInterval: NodeJS.Timeout | null = null;
   private readonly PROCESSING_INTERVAL = Number(process.env.IMAGE_PROCESSING_INTERVAL_MS ?? '1000'); // Check every 1 second
-  private readonly SESSION_CHECK_INTERVAL = 60000; // Check sessions every minute
   private readonly MAX_CONCURRENT_JOBS = 2; // Limit concurrent processing
   private currentlyProcessing = new Set<number>();
 
@@ -27,16 +25,8 @@ class BackgroundImageProcessor {
       await this.processNextJob();
     }, this.PROCESSING_INTERVAL);
     
-    // Start the session check loop
-    this.sessionCheckInterval = setInterval(async () => {
-      await this.checkActiveSessions();
-    }, this.SESSION_CHECK_INTERVAL);
-    
     // Process any existing jobs immediately
     await this.processNextJob();
-    
-    // Check sessions immediately
-    await this.checkActiveSessions();
   }
 
   async stop() {
@@ -50,11 +40,6 @@ class BackgroundImageProcessor {
     if (this.processingInterval) {
       clearInterval(this.processingInterval);
       this.processingInterval = null;
-    }
-    
-    if (this.sessionCheckInterval) {
-      clearInterval(this.sessionCheckInterval);
-      this.sessionCheckInterval = null;
     }
     
     // Wait for current jobs to finish (max 30 seconds)
@@ -237,45 +222,6 @@ class BackgroundImageProcessor {
     });
   }
 
-  // Check and mark active sessions as incomplete when they exceed working hours
-  private async checkActiveSessions(): Promise<void> {
-    try {
-      // Get all active sessions from the database
-      const activeSessions = await storage.getAllActiveSessions();
-      
-      if (!activeSessions.length) {
-        return; // No active sessions to check
-      }
-      
-      console.log(`⏰ Checking ${activeSessions.length} active sessions for timeouts`);
-      
-      for (const session of activeSessions) {
-        try {
-          // Get the user's company settings for working hours
-          const companyData = await storage.getCompanyByUserId(session.userId);
-          const maxWorkHours = companyData?.workingHoursPerDay || 8;
-          
-          // Calculate elapsed time since clock-in
-          const sessionStart = new Date(session.clockIn);
-          const now = new Date();
-          const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-          
-          // If session has exceeded max working hours, mark as incomplete
-          if (elapsedHours > maxWorkHours) {
-            await storage.updateWorkSession(session.id, {
-              status: 'incomplete'
-            });
-            
-            console.log(`📋 Marked session ${session.id} (user ${session.userId}) as incomplete after ${elapsedHours.toFixed(1)}h (max: ${maxWorkHours}h)`);
-          }
-        } catch (sessionError) {
-          console.error(`❌ Error processing session ${session.id}:`, sessionError);
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error checking active sessions:', error);
-    }
-  }
 
   getStatus() {
     return {
