@@ -1241,7 +1241,7 @@ export default function Schedules() {
         className={`group absolute rounded-md flex flex-col items-center justify-center text-white dark:text-gray-100 shadow-sm dark:shadow-md dark:ring-1 dark:ring-white/20 overflow-hidden px-2 py-1 select-none ${
           isDragging ? 
             'z-50 shadow-2xl ring-2 ring-white/50' : 
-            'cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md hover:scale-105 active:cursor-grabbing'
+            'cursor-grab hover:opacity-90 dark:hover:opacity-80 hover:shadow-md active:cursor-grabbing'
         } ${className || ''}`}
         style={{
           ...style,
