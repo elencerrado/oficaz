@@ -747,48 +747,62 @@ export default function Landing() {
                 </div>
                 
                 <div className="space-y-2 flex-grow">
-                  <div className="grid grid-cols-7 gap-1 text-xs text-gray-500 font-medium mb-2">
-                    <div className="text-center">L</div>
-                    <div className="text-center">M</div>
-                    <div className="text-center">X</div>
-                    <div className="text-center">J</div>
-                    <div className="text-center">V</div>
-                    <div className="text-center">S</div>
-                    <div className="text-center">D</div>
+                  {/* Header de días */}
+                  <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-0.5 text-xs font-medium mb-2">
+                    <div></div>
+                    <div className="text-center text-gray-500">L</div>
+                    <div className="text-center text-gray-500">M</div>
+                    <div className="text-center text-gray-500">X</div>
+                    <div className="text-center text-gray-500">J</div>
+                    <div className="text-center text-gray-500">V</div>
                   </div>
                   
-                  <div className="grid grid-cols-7 gap-1">
-                    <div className="h-8 bg-blue-100 rounded border border-blue-200 flex items-center justify-center">
-                      <span className="text-xs text-blue-700 font-medium">M</span>
+                  {/* Empleados con turnos */}
+                  <div className="space-y-1">
+                    {/* Juan */}
+                    <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-0.5 items-center">
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                          J
+                        </div>
+                        <span className="text-xs text-gray-600 mt-0.5">Juan</span>
+                      </div>
+                      <div className="h-8 bg-blue-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">9-17h</span>
+                      </div>
+                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">14-22h</span>
+                      </div>
+                      <div className="h-8 bg-blue-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">9-17h</span>
+                      </div>
+                      <div className="h-8 bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+                        <span className="text-xs text-gray-400">+</span>
+                      </div>
+                      <div className="h-8 bg-gray-100 rounded"></div>
                     </div>
-                    <div className="h-8 bg-green-100 rounded border border-green-200 flex items-center justify-center">
-                      <span className="text-xs text-green-700 font-medium">T</span>
-                    </div>
-                    <div className="h-8 bg-orange-100 rounded border border-orange-200 flex items-center justify-center">
-                      <span className="text-xs text-orange-700 font-medium">N</span>
-                    </div>
-                    <div className="h-8 bg-blue-100 rounded border border-blue-200 flex items-center justify-center">
-                      <span className="text-xs text-blue-700 font-medium">M</span>
-                    </div>
-                    <div className="h-8 bg-green-100 rounded border border-green-200 flex items-center justify-center">
-                      <span className="text-xs text-green-700 font-medium">T</span>
-                    </div>
-                    <div className="h-8 bg-gray-100 rounded border border-gray-200"></div>
-                    <div className="h-8 bg-gray-100 rounded border border-gray-200"></div>
-                  </div>
-                  
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-400 rounded"></div>
-                      <span>Mañana 8-16h</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded"></div>
-                      <span>Tarde 14-22h</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-orange-400 rounded"></div>
-                      <span>Noche 22-6h</span>
+                    
+                    {/* Ana */}
+                    <div className="grid grid-cols-[50px_repeat(5,1fr)] gap-0.5 items-center">
+                      <div className="flex flex-col items-center">
+                        <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                          A
+                        </div>
+                        <span className="text-xs text-gray-600 mt-0.5">Ana</span>
+                      </div>
+                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">14-22h</span>
+                      </div>
+                      <div className="h-8 bg-orange-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">22-6h</span>
+                      </div>
+                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">14-22h</span>
+                      </div>
+                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
+                        <span className="text-xs font-medium">14-22h</span>
+                      </div>
+                      <div className="h-8 bg-gray-100 rounded"></div>
                     </div>
                   </div>
                 </div>
