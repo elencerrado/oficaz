@@ -3063,6 +3063,8 @@ Responde directamente a este email para contactar con la persona.
         const now = new Date();
         const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
         
+        console.log(`[DEBUG] Clock-in attempt: Session ${activeSession.id}, started ${sessionStart.toISOString()}, elapsed ${elapsedHours.toFixed(1)}h, maxHours: ${maxWorkHours}h`);
+        
         // If session has exceeded max hours, close it automatically
         if (elapsedHours > maxWorkHours) {
           // Close the incomplete session with company's max working hours
