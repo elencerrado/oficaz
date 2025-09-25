@@ -770,8 +770,13 @@ export default function Landing() {
                       <div className="h-8 bg-blue-500 rounded text-white flex flex-col items-center justify-center">
                         <span className="text-xs font-medium">9-17h</span>
                       </div>
-                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
+                      <div className="h-8 flex flex-col gap-0.5">
+                        <div className="flex-1 bg-green-500 rounded text-white flex items-center justify-center">
+                          <span className="text-xs font-medium">14-18h</span>
+                        </div>
+                        <div className="flex-1 bg-orange-500 rounded text-white flex items-center justify-center">
+                          <span className="text-xs font-medium">18-22h</span>
+                        </div>
                       </div>
                       <div className="h-8 bg-blue-500 rounded text-white flex flex-col items-center justify-center">
                         <span className="text-xs font-medium">9-17h</span>
@@ -796,8 +801,13 @@ export default function Landing() {
                       <div className="h-8 bg-orange-500 rounded text-white flex flex-col items-center justify-center">
                         <span className="text-xs font-medium">22-6h</span>
                       </div>
-                      <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
-                        <span className="text-xs font-medium">14-22h</span>
+                      <div className="h-8 flex flex-col gap-0.5">
+                        <div className="flex-1 bg-blue-500 rounded text-white flex items-center justify-center">
+                          <span className="text-xs font-medium">9-13h</span>
+                        </div>
+                        <div className="flex-1 bg-green-500 rounded text-white flex items-center justify-center">
+                          <span className="text-xs font-medium">14-18h</span>
+                        </div>
                       </div>
                       <div className="h-8 bg-green-500 rounded text-white flex flex-col items-center justify-center">
                         <span className="text-xs font-medium">14-22h</span>
@@ -807,11 +817,6 @@ export default function Landing() {
                   </div>
                 </div>
                 
-                <div className="mt-4">
-                  <button className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:from-purple-600 hover:to-violet-600 transition-all duration-300">
-                    Gestionar Turnos
-                  </button>
-                </div>
               </div>
             </div>
 
