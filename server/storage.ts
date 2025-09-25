@@ -375,6 +375,16 @@ export class DrizzleStorage implements IStorage {
     return activeSession;
   }
 
+  async getAllActiveSessions(): Promise<WorkSession[]> {
+    // Get all sessions with status 'active' and no clockOut
+    return db.select().from(schema.workSessions)
+      .where(and(
+        eq(schema.workSessions.status, 'active'),
+        isNull(schema.workSessions.clockOut)
+      ))
+      .orderBy(desc(schema.workSessions.clockIn));
+  }
+
   async getWorkSession(id: number): Promise<WorkSession | undefined> {
     const [session] = await db.select().from(schema.workSessions)
       .where(eq(schema.workSessions.id, id))
