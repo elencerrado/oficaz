@@ -3054,33 +3054,7 @@ Responde directamente a este email para contactar con la persona.
       // Check if user already has an active session
       const activeSession = await storage.getActiveWorkSession(req.user!.id);
       if (activeSession) {
-        // ⚠️ PROTECTED - DO NOT MODIFY - Critical incomplete session handling
-        // Check if this is an incomplete session that should be auto-closed
-        const companyData = await storage.getCompanyByUserId(req.user!.id);
-        const maxWorkHours = companyData?.workingHoursPerDay || 8;
-        
-        const sessionStart = new Date(activeSession.clockIn);
-        const now = new Date();
-        const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
-        
-        console.log(`[DEBUG] Clock-in attempt: Session ${activeSession.id}, started ${sessionStart.toISOString()}, elapsed ${elapsedHours.toFixed(1)}h, maxHours: ${maxWorkHours}h`);
-        
-        // If session has exceeded max hours, close it automatically
-        if (elapsedHours > maxWorkHours) {
-          // Close the incomplete session with company's max working hours
-          const clockOutTime = new Date(sessionStart.getTime() + (maxWorkHours * 60 * 60 * 1000));
-          
-          await storage.updateWorkSession(activeSession.id, {
-            clockOut: clockOutTime,
-            totalHours: maxWorkHours.toString(),
-            status: 'completed',
-          });
-          
-          console.log(`Auto-closed incomplete session ${activeSession.id} for user ${req.user!.id} after ${elapsedHours.toFixed(1)} hours`);
-        } else {
-          // Session is still within normal hours, return error
-          return res.status(400).json({ message: 'Already clocked in' });
-        }
+        return res.status(400).json({ message: 'Already clocked in' });
       }
 
       // ⚠️ PROTECTED - DO NOT MODIFY - Critical cleanup on clock-in
