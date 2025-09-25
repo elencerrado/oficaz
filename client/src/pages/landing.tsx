@@ -689,25 +689,36 @@ export default function Landing() {
                   </div>
                 </div>
                 
-                <div className="space-y-3 flex-grow">
-                  <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-700">Juan - Disponibles</span>
-                      <span className="text-xs text-blue-600 font-bold">18/30</span>
+                <div className="space-y-4 flex-grow">
+                  {/* Resumen Personal */}
+                  <div className="text-center p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <div className="text-lg font-bold text-blue-600 mb-1">Juan Pérez</div>
+                    <div className="text-xs text-gray-500 mb-3">Balance de vacaciones 2024</div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center">
+                        <div className="text-sm font-bold text-gray-800">12</div>
+                        <div className="text-xs text-red-600">Usados</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-bold text-gray-800">18</div>
+                        <div className="text-xs text-green-600">Disponibles</div>
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[60%]"></div>
+                    
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full w-[40%]"></div>
                     </div>
+                    <div className="text-xs text-gray-500 mt-1">40% utilizados</div>
                   </div>
                   
-                  <div className="p-3 bg-green-50/50 rounded-lg border border-green-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-700">Marta - Disponibles</span>
-                      <span className="text-xs text-green-600 font-bold">25/30</span>
+                  {/* Próximas solicitudes */}
+                  <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-gray-700">Semana Santa</span>
+                      <span className="text-xs text-amber-600 font-bold">Pendiente</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full w-[83%]"></div>
-                    </div>
+                    <div className="text-xs text-gray-500">15-19 Abril • 5 días</div>
                   </div>
                 </div>
                 
