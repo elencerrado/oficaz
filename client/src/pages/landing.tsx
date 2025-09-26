@@ -151,6 +151,7 @@ export default function Landing() {
             "Hasta ... empleados",
             "Control horario básico",
             "Gestión de vacaciones",
+            "Cuadrante",
             "Mensajería interna",
             "Soporte por email"
           ],
@@ -198,6 +199,7 @@ export default function Landing() {
         documents: "Gestión de documentos",
         notifications: "Notificaciones",
         reminders: "Recordatorios personalizados",
+        schedules: "Cuadrante",
         logoUpload: "Logos personalizados",
         reports: "Reportes avanzados",
         analytics: "Análisis de datos",
@@ -246,7 +248,8 @@ export default function Landing() {
       // Define the order of features - modify this array to change the order
       const featureOrder = [
         'time',
-        'vacation', 
+        'vacation',
+        'schedules',
         'messages',
         'documents',
         'notifications',
