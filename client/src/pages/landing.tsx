@@ -99,22 +99,27 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const features = [
+  // Funciones principales
+  const mainFeatures = [
     {
       icon: Clock,
-      title: "Fichajes",
+      title: "Control horario",
       description: "Control automático con seguimiento en tiempo real y reportes detallados"
     },
     {
       icon: Calendar,
-      title: "Vacaciones",
+      title: "Gestión de vacaciones",
       description: "Solicitudes digitales con flujo de aprobación y calendario integrado"
     },
     {
       icon: CalendarDays,
-      title: "Cuadrantes",
+      title: "Cuadrante",
       description: "Planificación visual drag & drop con turnos inteligentes y gestión semanal"
-    },
+    }
+  ];
+
+  // Funciones adicionales
+  const additionalFeatures = [
     {
       icon: FileText,
       title: "Documentos",
@@ -132,6 +137,8 @@ export default function Landing() {
     }
   ];
 
+  const features = [...mainFeatures, ...additionalFeatures];
+
   // Combine static plan data with dynamic pricing and user limits
   const getPlansWithDynamicPricing = () => {
     // Merge static data with dynamic pricing and user limits
@@ -142,7 +149,7 @@ export default function Landing() {
           description: "Perfecto para pequeñas empresas",
           features: [
             "Hasta ... empleados",
-            "Control de tiempo básico",
+            "Control horario básico",
             "Gestión de vacaciones",
             "Mensajería interna",
             "Soporte por email"
@@ -184,8 +191,8 @@ export default function Landing() {
     const getFeatureDisplayName = (featureKey: string) => {
       const featureNames: { [key: string]: string } = {
         // Core features - these keys come from the database
-        time: "Control de tiempo",
-        timeTracking: "Control de tiempo", 
+        time: "Control horario",
+        timeTracking: "Control horario", 
         vacation: "Gestión de vacaciones",
         messages: "Mensajería interna",
         documents: "Gestión de documentos",
@@ -745,7 +752,7 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Work Schedules/Cuadrante Preview */}
+            {/* Cuadrantes Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
                 {/* Plan Badge */}
