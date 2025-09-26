@@ -593,6 +593,12 @@ export default function Landing() {
             {/* Time Tracking Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Basic
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
                     <Clock className="w-5 h-5 text-white" />
@@ -679,6 +685,12 @@ export default function Landing() {
             {/* Vacation Management Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Basic
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
                     <Calendar className="w-5 h-5 text-white" />
@@ -736,6 +748,12 @@ export default function Landing() {
             {/* Work Schedules/Cuadrante Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Basic
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
                     <CalendarDays className="w-5 h-5 text-white" />
@@ -844,6 +862,12 @@ export default function Landing() {
             {/* Document Management Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Pro
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
                     <FileText className="w-5 h-5 text-white" />
@@ -887,6 +911,12 @@ export default function Landing() {
             {/* Messages Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Pro
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
                     <MessageSquare className="w-5 h-5 text-white" />
@@ -935,6 +965,12 @@ export default function Landing() {
             {/* Reminders Preview */}
             <div className="group relative h-full flex flex-col">
               <div className="relative bg-white rounded-2xl p-4 lg:p-6 shadow-lg shadow-gray-900/5 border border-gray-100/50 hover:shadow-2xl hover:shadow-teal-500/10 hover:border-teal-500/20 transition-all duration-500 hover:scale-105 hover:-translate-y-1 backdrop-blur-xl h-full flex flex-col">
+                {/* Plan Badge */}
+                <div className="absolute top-3 right-3 z-10">
+                  <span className="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                    Pro
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
                     <Bell className="w-5 h-5 text-white" />
