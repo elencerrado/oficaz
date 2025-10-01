@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
+import { useDemoBanner } from '@/hooks/use-demo-banner';
 import { FeatureRestrictedPage } from '@/components/feature-restricted-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,7 @@ interface Manager {
 export default function Messages() {
   const { user, company } = useAuth();
   const { hasAccess, getRequiredPlan } = useFeatureCheck();
+  const { showBanner, bannerHeight } = useDemoBanner();
   
   // Check if user has access to messages feature
   if (!hasAccess('messages')) {
@@ -81,6 +83,10 @@ export default function Messages() {
   const queryClient = useQueryClient();
   const [location] = useLocation();
   const companyAlias = location.split('/')[1];
+  
+  // Calculate heights dynamically based on banner presence
+  const headerHeight = 100; // Standard header height
+  const totalTopOffset = showBanner ? headerHeight + bannerHeight : headerHeight;
 
   // All state declarations together - FIXED ORDER
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
@@ -554,7 +560,13 @@ export default function Messages() {
   // Admin/Manager view
   if (user?.role === 'admin' || user?.role === 'manager') {
     return (
-      <div className="h-[calc(100vh-100px)] w-full bg-background overflow-hidden" style={{ overflowX: 'clip' }}>
+      <div 
+        className="w-full bg-background overflow-hidden" 
+        style={{ 
+          height: `calc(100vh - ${totalTopOffset}px)`,
+          overflowX: 'clip' 
+        }}
+      >
         {/* Desktop Layout: Two columns side by side */}
         <div className="hidden lg:flex h-full w-full gap-6 min-h-0">
           {/* Left Column: Employee List (1/3 width) */}
@@ -766,7 +778,12 @@ export default function Messages() {
             </div>
         </div>
         {/* Mobile Layout for Admin/Manager */}
-        <div className="lg:hidden h-[calc(100vh-100px)] flex flex-col min-h-0">
+        <div 
+          className="lg:hidden flex flex-col min-h-0" 
+          style={{ 
+            height: `calc(100vh - ${totalTopOffset}px)` 
+          }}
+        >
           {!selectedChat ? (
             /* Employee List View */
             (<div className="flex-1 flex flex-col min-h-0">
@@ -827,12 +844,16 @@ export default function Messages() {
           ) : (
             /* Chat View - Full screen overlay */
             (<div 
-              className="fixed inset-0 bg-background z-[60] flex flex-col lg:hidden"
+              className="fixed bg-background z-[60] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                height: '100dvh',
+                top: showBanner ? `${bannerHeight}px` : '0',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
                 minHeight: '-webkit-fill-available'
               }}
             >
@@ -1277,12 +1298,16 @@ export default function Messages() {
       ) : (
             /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed inset-0 bg-background z-[60]"
+              className="fixed bg-background z-[60]"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                height: '100dvh',
+                top: showBanner ? `${bannerHeight}px` : '0',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
                 minHeight: '-webkit-fill-available',
                 overflow: 'hidden' // Prevent scrolling on main container
               }}
@@ -1292,7 +1317,7 @@ export default function Messages() {
                 className="flex items-center space-x-3 p-4 border-b border-border bg-background"
                 style={{
                   position: 'fixed',
-                  top: 0,
+                  top: showBanner ? `${bannerHeight}px` : '0',
                   left: 0,
                   right: 0,
                   zIndex: 10,
