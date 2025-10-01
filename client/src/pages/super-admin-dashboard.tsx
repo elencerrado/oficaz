@@ -372,8 +372,10 @@ export default function SuperAdminDashboard() {
             <CardTitle className="text-white">Distribución de Planes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(stats?.planDistribution || {}).map(([plan, count]) => (
+            <div className="grid grid-cols-3 gap-4">
+              {Object.entries(stats?.planDistribution || {})
+                .filter(([plan]) => plan !== 'basic')
+                .map(([plan, count]) => (
                 <div key={plan} className="text-center">
                   <div className={`w-12 h-12 ${planColors[plan as keyof typeof planColors]} rounded-xl flex items-center justify-center mx-auto mb-2`}>
                     <span className="text-white font-bold">{count}</span>
