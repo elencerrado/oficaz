@@ -922,23 +922,23 @@ export default function Landing() {
                 </div>
                 <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                   Mensajería
-                  <span className="block text-[#007AFF]">corporativa</span>
+                  <span className="block text-[#007AFF]">interna</span>
                 </h3>
                 <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Chat empresarial estilo WhatsApp para mantener a tu equipo conectado. Grupos, canales y mensajes directos en un solo lugar.
+                  Comunicación directa con empleados. Mensajes individuales y circulares a todo el equipo.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-purple-600" />
                     </div>
-                    <span className="text-gray-700">Chat en tiempo real</span>
+                    <span className="text-gray-700">Mensajes individuales</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-purple-600" />
                     </div>
-                    <span className="text-gray-700">Grupos y canales</span>
+                    <span className="text-gray-700">Circulares a todo el equipo</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -983,10 +983,10 @@ export default function Landing() {
                   </div>
                   <div className="mt-6 flex gap-3">
                     <button className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-indigo-600 hover:to-purple-600 transition-all">
-                      Chat
+                      Individual
                     </button>
                     <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-300 transition-all">
-                      Grupos
+                      Circular
                     </button>
                   </div>
                 </div>
