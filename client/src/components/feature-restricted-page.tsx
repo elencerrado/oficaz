@@ -38,23 +38,23 @@ export function FeatureRestrictedPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon className="w-8 h-8 text-red-600" />
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          <CardTitle className="text-xl font-semibold text-gray-900">
+          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Funcionalidad No Disponible
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <div>
-            <h3 className="font-medium text-lg text-gray-900 mb-2">{featureName}</h3>
-            <p className="text-gray-600 text-sm">{description}</p>
+            <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100 mb-2">{featureName}</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">{description}</p>
           </div>
 
-          <div className="text-sm text-gray-500 p-3 bg-blue-50 rounded-lg">
+          <div className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <p>Esta funcionalidad no está disponible en tu plan actual.</p>
             <p className="mt-1">Contacta con tu administrador para más información.</p>
           </div>
