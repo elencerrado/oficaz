@@ -553,7 +553,7 @@ export default function Landing() {
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Barras de tiempo en vivo</span>
+                    <span className="text-gray-700">Visualizacion en vivo</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
