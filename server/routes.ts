@@ -672,11 +672,11 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
     return;
   }
   
-  // Get working employees (exclude those on vacation)
-  const workingEmployees = employees.filter(emp => emp.status === 'working');
+  // Get employees excluding admin
+  const regularEmployees = employees.filter(emp => emp.role !== 'admin');
   
-  if (workingEmployees.length === 0) {
-    console.log('⚠️ No working employees found for shifts');
+  if (regularEmployees.length === 0) {
+    console.log('⚠️ No employees found for shifts (excluding admin)');
     return;
   }
   
@@ -718,9 +718,9 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
         continue; // Skip past days in future weeks only
       }
       
-      // Assign shifts to all working employees with varied patterns
-      for (let i = 0; i < workingEmployees.length; i++) {
-        const employee = workingEmployees[i];
+      // Assign shifts to all employees with varied patterns
+      for (let i = 0; i < regularEmployees.length; i++) {
+        const employee = regularEmployees[i];
         
         try {
           // Determine shift pattern based on employee index and day
@@ -872,7 +872,7 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
     }
   }
   
-  console.log(`✅ Generated ${totalShiftsCreated} demo work shifts for ${workingEmployees.length} employees (${splitShiftsCreated} split shift days)`);
+  console.log(`✅ Generated ${totalShiftsCreated} demo work shifts for ${regularEmployees.length} employees (${splitShiftsCreated} split shift days)`);
 }
 
 // Generate demo vacation requests
@@ -8475,24 +8475,7 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Demo data management endpoints  
-  app.get('/api/demo-data/status', authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const userId = req.user!.id;
-      const company = await storage.getCompanyByUserId(userId);
-      
-      if (!company) {
-        return res.status(404).json({ message: 'Empresa no encontrada' });
-      }
-      
-      // Fix field mapping: Drizzle converts has_demo_data to hasDemoData automatically
-      const hasDemoData = company.hasDemoData || false;
-      res.json({ hasDemoData });
-    } catch (error) {
-      console.error('Error checking demo data status:', error);
-      res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
-    }
-  });
+  // Demo data management endpoints
 
   // Generate demo data manually (for testing)
   app.post('/api/demo-data/generate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
@@ -8521,39 +8504,6 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
-  // Generate work shifts if missing
-  app.post('/api/demo-data/generate-shifts', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
-    try {
-      const userId = req.user!.id;
-      const company = await storage.getCompanyByUserId(userId);
-      
-      if (!company) {
-        return res.status(404).json({ message: 'Empresa no encontrada' });
-      }
-
-      // Get employees
-      const employees = await db.select()
-        .from(users)
-        .where(eq(users.companyId, company.id));
-
-      if (employees.length === 0) {
-        return res.status(400).json({ message: 'No hay empleados en la empresa' });
-      }
-
-      console.log('📅 Generating work shifts for company:', company.id);
-
-      // Generate work shifts
-      await generateDemoWorkShifts(company.id, employees, new Date());
-      
-      res.json({ 
-        success: true, 
-        message: '✅ Turnos de trabajo generados correctamente para las próximas 4 semanas.'
-      });
-    } catch (error) {
-      console.error('Error generating work shifts:', error);
-      res.status(500).json({ message: 'Error al generar los turnos: ' + (error as any).message });
-    }
-  });
 
   // Temporary endpoint to force regenerate demo data with improvements
   app.post('/api/demo-data/force-regenerate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
