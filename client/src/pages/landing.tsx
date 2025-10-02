@@ -591,7 +591,7 @@ export default function Landing() {
                       </div>
                       <div className="relative h-8 bg-gray-100 rounded-lg overflow-hidden">
                         <div className="absolute inset-0 bg-blue-500 rounded-lg" style={{ width: '82%' }}></div>
-                        <div className="absolute top-1 bottom-1 bg-orange-400 rounded-md animate-pulse" style={{ left: '78%', width: '4%' }}></div>
+                        <div className="absolute top-1 bottom-1 bg-orange-400 rounded-md animate-pulse" style={{ left: '73%', width: '5%' }}></div>
                       </div>
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>09:00</span>
