@@ -602,13 +602,11 @@ export default function Landing() {
                     </div>
                   </div>
                   <div className="mt-6 flex gap-4 justify-center">
-                    <button className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex flex-col items-center justify-center shadow-xl hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300">
-                      <Clock className="w-8 h-8 mb-1" />
-                      <span className="text-xs font-bold">Fichar</span>
+                    <button className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300">
+                      FICHAR
                     </button>
-                    <button className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full flex flex-col items-center justify-center shadow-xl hover:from-orange-600 hover:to-orange-700 hover:scale-105 transition-all duration-300">
-                      <Square className="w-8 h-8 mb-1" />
-                      <span className="text-xs font-bold">Descanso</span>
+                    <button className="w-32 h-32 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold shadow-lg transition-all duration-300">
+                      <span className="whitespace-pre-line">Tomar{'\n'}Descanso</span>
                     </button>
                   </div>
                 </div>
