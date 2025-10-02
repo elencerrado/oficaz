@@ -31,7 +31,8 @@ import {
   Settings,
   Zap,
   CreditCard,
-  Bell
+  Bell,
+  Square
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -600,12 +601,14 @@ export default function Landing() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-6 flex gap-3">
-                    <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-blue-700 transition-all">
-                      Fichar
+                  <div className="mt-6 flex gap-4 justify-center">
+                    <button className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full flex flex-col items-center justify-center shadow-xl hover:from-blue-600 hover:to-blue-700 hover:scale-105 transition-all duration-300">
+                      <Clock className="w-8 h-8 mb-1" />
+                      <span className="text-xs font-bold">Fichar</span>
                     </button>
-                    <button className="flex-1 bg-orange-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:bg-orange-600 transition-all">
-                      Descanso
+                    <button className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full flex flex-col items-center justify-center shadow-xl hover:from-orange-600 hover:to-orange-700 hover:scale-105 transition-all duration-300">
+                      <Square className="w-8 h-8 mb-1" />
+                      <span className="text-xs font-bold">Descanso</span>
                     </button>
                   </div>
                 </div>
