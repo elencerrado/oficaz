@@ -663,7 +663,7 @@ async function generateIncompleteSessions(employees: any[], companyId: number) {
 
 // Generate demo work shifts for current week + 3 next weeks
 async function generateDemoWorkShifts(companyId: number, employees: any[], registrationDate: Date) {
-  console.log('📅 Generating demo work shifts for 4 weeks...');
+  console.log('📅 Generating demo work shifts for current week + 3 upcoming weeks...');
   
   // Find admin user to be the creator of shifts
   const adminEmployee = employees.find(emp => emp.role === 'admin');
@@ -675,13 +675,16 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
   // Get working employees (exclude those on vacation)
   const workingEmployees = employees.filter(emp => emp.status === 'working');
   
+  if (workingEmployees.length === 0) {
+    console.log('⚠️ No working employees found for shifts');
+    return;
+  }
+  
   // Define shift types with colors
-  const shiftTypes = [
-    { title: 'Turno Mañana', startHour: 8, endHour: 16, color: '#007AFF' }, // Blue
-    { title: 'Turno Tarde', startHour: 14, endHour: 22, color: '#FF9500' }, // Orange  
-    { title: 'Turno Completo', startHour: 9, endHour: 18, color: '#34C759' }, // Green
-    { title: 'Medio Turno', startHour: 9, endHour: 14, color: '#AF52DE' }, // Purple
-  ];
+  const morningShift = { title: 'Turno Mañana', startHour: 9, endHour: 14, color: '#007AFF' }; // Blue
+  const afternoonShift = { title: 'Turno Tarde', startHour: 15, endHour: 20, color: '#FF9500' }; // Orange  
+  const fullDayShift = { title: 'Jornada Completa', startHour: 9, endHour: 18, color: '#34C759' }; // Green
+  const extendedShift = { title: 'Turno Extendido', startHour: 8, endHour: 16, color: '#AF52DE' }; // Purple
   
   const locations = ['Oficina Central', 'Sucursal Norte', 'Trabajo Remoto', null];
   
@@ -690,6 +693,9 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
   const currentWeekStart = new Date(now);
   currentWeekStart.setDate(now.getDate() - now.getDay() + 1); // Monday
   currentWeekStart.setHours(0, 0, 0, 0);
+  
+  let totalShiftsCreated = 0;
+  let splitShiftsCreated = 0;
   
   // Generate shifts for 4 weeks (current + 3 next)
   for (let week = 0; week < 4; week++) {
@@ -703,55 +709,162 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
       const shiftDate = new Date(weekStart);
       shiftDate.setDate(weekStart.getDate() + day);
       
-      // Skip if date is in the past (before today)
-      if (shiftDate < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
-        continue;
+      // For current week (week === 0), generate ALL days including past ones
+      // For future weeks, only generate from today onwards
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (week > 0 && shiftDate < today) {
+        continue; // Skip past days in future weeks only
       }
       
-      // Randomly assign shifts to employees (not everyone every day)
-      const shuffledEmployees = [...workingEmployees].sort(() => Math.random() - 0.5);
-      const employeesToAssign = shuffledEmployees.slice(0, Math.floor(Math.random() * workingEmployees.length) + 1);
-      
-      for (const employee of employeesToAssign) {
-        // Skip some days randomly for variety  
-        if (Math.random() < 0.3) continue;
-        
-        // Choose random shift type
-        const shiftType = shiftTypes[Math.floor(Math.random() * shiftTypes.length)];
-        
-        // Create start and end times
-        const startAt = new Date(shiftDate);
-        startAt.setHours(shiftType.startHour, 0, 0, 0);
-        
-        const endAt = new Date(shiftDate);
-        endAt.setHours(shiftType.endHour, 0, 0, 0);
-        
-        // Random location
-        const location = locations[Math.floor(Math.random() * locations.length)];
-        
-        // Create notes occasionally
-        const notes = Math.random() < 0.3 ? [
-          'Revisar informes pendientes',
-          'Reunión con cliente programada',
-          'Proyecto urgente en curso',
-          'Formación programada',
-          null
-        ][Math.floor(Math.random() * 5)] : null;
+      // Assign shifts to all working employees with varied patterns
+      for (let i = 0; i < workingEmployees.length; i++) {
+        const employee = workingEmployees[i];
         
         try {
-          await db.insert(schema.workShifts).values({
-            companyId,
-            employeeId: employee.id,
-            startAt,
-            endAt,
-            title: shiftType.title,
-            location,
-            notes,
-            color: shiftType.color,
-            createdByUserId: adminEmployee.id,
-          });
+          // Determine shift pattern based on employee index and day
+          // Employee 0: Split shifts on Mon/Wed/Fri, full day on Tue/Thu
+          // Employee 1: Mostly full days with occasional extended shift
+          // Employee 2+: Mixed patterns including split shifts
           
-          console.log(`📋 Created shift: ${employee.fullName} - ${shiftType.title} on ${shiftDate.toDateString()}`);
+          if (i === 0 && day % 2 === 0) {
+            // SPLIT SHIFT: Create morning and afternoon shifts for first employee on alternate days
+            const location = locations[Math.floor(Math.random() * locations.length)];
+            
+            // Morning shift
+            const morningStart = new Date(shiftDate);
+            morningStart.setHours(morningShift.startHour, 0, 0, 0);
+            const morningEnd = new Date(shiftDate);
+            morningEnd.setHours(morningShift.endHour, 0, 0, 0);
+            
+            await db.insert(schema.workShifts).values({
+              companyId,
+              employeeId: employee.id,
+              startAt: morningStart,
+              endAt: morningEnd,
+              title: morningShift.title,
+              location,
+              notes: 'Turno partido - mañana',
+              color: morningShift.color,
+              createdByUserId: adminEmployee.id,
+            });
+            
+            // Afternoon shift
+            const afternoonStart = new Date(shiftDate);
+            afternoonStart.setHours(afternoonShift.startHour, 0, 0, 0);
+            const afternoonEnd = new Date(shiftDate);
+            afternoonEnd.setHours(afternoonShift.endHour, 0, 0, 0);
+            
+            await db.insert(schema.workShifts).values({
+              companyId,
+              employeeId: employee.id,
+              startAt: afternoonStart,
+              endAt: afternoonEnd,
+              title: afternoonShift.title,
+              location,
+              notes: 'Turno partido - tarde',
+              color: afternoonShift.color,
+              createdByUserId: adminEmployee.id,
+            });
+            
+            totalShiftsCreated += 2;
+            splitShiftsCreated++;
+            console.log(`📋 Created SPLIT shift: ${employee.fullName} on ${shiftDate.toDateString()}`);
+            
+          } else if (i === 1) {
+            // Full days with occasional extended shift (Thursday)
+            const shiftType = day === 3 ? extendedShift : fullDayShift;
+            
+            const startAt = new Date(shiftDate);
+            startAt.setHours(shiftType.startHour, 0, 0, 0);
+            const endAt = new Date(shiftDate);
+            endAt.setHours(shiftType.endHour, 0, 0, 0);
+            
+            await db.insert(schema.workShifts).values({
+              companyId,
+              employeeId: employee.id,
+              startAt,
+              endAt,
+              title: shiftType.title,
+              location: locations[Math.floor(Math.random() * locations.length)],
+              notes: day === 3 ? 'Reunión importante' : null,
+              color: shiftType.color,
+              createdByUserId: adminEmployee.id,
+            });
+            
+            totalShiftsCreated++;
+            console.log(`📋 Created ${shiftType.title}: ${employee.fullName} on ${shiftDate.toDateString()}`);
+            
+          } else {
+            // Other employees: Mix of split shifts and regular shifts
+            if ((i + day) % 3 === 0) {
+              // SPLIT SHIFT for variety
+              const location = locations[Math.floor(Math.random() * locations.length)];
+              
+              const morningStart = new Date(shiftDate);
+              morningStart.setHours(morningShift.startHour, 0, 0, 0);
+              const morningEnd = new Date(shiftDate);
+              morningEnd.setHours(morningShift.endHour, 0, 0, 0);
+              
+              await db.insert(schema.workShifts).values({
+                companyId,
+                employeeId: employee.id,
+                startAt: morningStart,
+                endAt: morningEnd,
+                title: morningShift.title,
+                location,
+                notes: 'Turno partido',
+                color: morningShift.color,
+                createdByUserId: adminEmployee.id,
+              });
+              
+              const afternoonStart = new Date(shiftDate);
+              afternoonStart.setHours(afternoonShift.startHour, 0, 0, 0);
+              const afternoonEnd = new Date(shiftDate);
+              afternoonEnd.setHours(afternoonShift.endHour, 0, 0, 0);
+              
+              await db.insert(schema.workShifts).values({
+                companyId,
+                employeeId: employee.id,
+                startAt: afternoonStart,
+                endAt: afternoonEnd,
+                title: afternoonShift.title,
+                location,
+                notes: 'Turno partido',
+                color: afternoonShift.color,
+                createdByUserId: adminEmployee.id,
+              });
+              
+              totalShiftsCreated += 2;
+              splitShiftsCreated++;
+              console.log(`📋 Created SPLIT shift: ${employee.fullName} on ${shiftDate.toDateString()}`);
+              
+            } else {
+              // Regular single shift
+              const shiftType = day % 2 === 0 ? fullDayShift : extendedShift;
+              
+              const startAt = new Date(shiftDate);
+              startAt.setHours(shiftType.startHour, 0, 0, 0);
+              const endAt = new Date(shiftDate);
+              endAt.setHours(shiftType.endHour, 0, 0, 0);
+              
+              await db.insert(schema.workShifts).values({
+                companyId,
+                employeeId: employee.id,
+                startAt,
+                endAt,
+                title: shiftType.title,
+                location: locations[Math.floor(Math.random() * locations.length)],
+                notes: null,
+                color: shiftType.color,
+                createdByUserId: adminEmployee.id,
+              });
+              
+              totalShiftsCreated++;
+              console.log(`📋 Created ${shiftType.title}: ${employee.fullName} on ${shiftDate.toDateString()}`);
+            }
+          }
         } catch (error) {
           console.error(`❌ Error creating shift for ${employee.fullName}:`, error);
         }
@@ -759,7 +872,7 @@ async function generateDemoWorkShifts(companyId: number, employees: any[], regis
     }
   }
   
-  console.log(`✅ Generated demo work shifts for ${workingEmployees.length} employees across 4 weeks`);
+  console.log(`✅ Generated ${totalShiftsCreated} demo work shifts for ${workingEmployees.length} employees (${splitShiftsCreated} split shift days)`);
 }
 
 // Generate demo vacation requests
