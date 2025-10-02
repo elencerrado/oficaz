@@ -5,6 +5,7 @@ import oficazLogo from '@/assets/oficaz-logo.png';
 
 interface DemoLoadingOverlayProps {
   isVisible: boolean;
+  isBackendComplete?: boolean; // Signal from parent that backend is done
   onComplete?: () => void;
 }
 
@@ -18,11 +19,12 @@ const loadingSteps = [
   { text: "¡Listo! Preparando tu espacio...", duration: 1000 }
 ];
 
-export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlayProps) {
+export function DemoLoadingOverlay({ isVisible, isBackendComplete = false, onComplete }: DemoLoadingOverlayProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const [currentText, setCurrentText] = useState(loadingSteps[0]?.text || "");
 
+  // Main progress animation to 95%
   useEffect(() => {
     if (!isVisible) {
       setCurrentStep(0);
@@ -31,31 +33,28 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
       return;
     }
 
-    let progressInterval: NodeJS.Timeout;
-    let stepTimeout: NodeJS.Timeout;
+    let animationFrameId: number;
+    let stepTimeouts: NodeJS.Timeout[] = [];
+    const startTime = Date.now();
+    const targetProgress = 95; // Animate to 95% then wait for backend signal
+    const totalDuration = 10000; // 10 seconds to reach 95%
 
-    const totalDuration = loadingSteps.reduce((sum, step) => sum + step.duration, 0);
-    let elapsedTime = 0;
+    // Smooth progress animation using requestAnimationFrame (no jitter)
+    const animateProgress = () => {
+      const elapsed = Date.now() - startTime;
+      const calculatedProgress = Math.min((elapsed / totalDuration) * targetProgress, targetProgress);
+      
+      setProgress(calculatedProgress);
 
-    // Start progress animation
-    progressInterval = setInterval(() => {
-      elapsedTime += 50;
-      const newProgress = Math.min((elapsedTime / totalDuration) * 100, 100);
-      setProgress(newProgress);
-
-      // Only complete when progress reaches exactly 100%
-      if (newProgress >= 100) {
-        clearInterval(progressInterval);
-        // Ensure we show 100% briefly before completing
-        setTimeout(() => {
-          onComplete?.();
-        }, 800);
+      // Keep animating until we reach target progress
+      if (calculatedProgress < targetProgress) {
+        animationFrameId = requestAnimationFrame(animateProgress);
       }
-    }, 50);
+    };
 
-    // Handle step changes
-    let currentStepTime = 0;
-    
+    animationFrameId = requestAnimationFrame(animateProgress);
+
+    // Handle step text changes
     const advanceStep = (stepIndex: number) => {
       if (stepIndex >= loadingSteps.length) return;
       
@@ -63,19 +62,49 @@ export function DemoLoadingOverlay({ isVisible, onComplete }: DemoLoadingOverlay
       setCurrentText(loadingSteps[stepIndex].text);
       
       if (stepIndex < loadingSteps.length - 1) {
-        stepTimeout = setTimeout(() => {
+        const timeout = setTimeout(() => {
           advanceStep(stepIndex + 1);
         }, loadingSteps[stepIndex].duration);
+        stepTimeouts.push(timeout);
       }
     };
 
     advanceStep(0);
 
     return () => {
-      clearInterval(progressInterval);
-      clearTimeout(stepTimeout);
+      cancelAnimationFrame(animationFrameId);
+      stepTimeouts.forEach(timeout => clearTimeout(timeout));
     };
-  }, [isVisible, onComplete]);
+  }, [isVisible]);
+
+  // Complete to 100% when backend signals completion
+  useEffect(() => {
+    if (!isVisible || !isBackendComplete) return;
+
+    const startProgress = progress;
+    const remainingProgress = 100 - startProgress;
+    const completionDuration = 600; // 600ms to smoothly complete to 100%
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const ratio = Math.min(elapsed / completionDuration, 1);
+      const currentProgress = startProgress + (remainingProgress * ratio);
+      
+      setProgress(currentProgress);
+
+      if (ratio < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Progress is at 100%, now trigger onComplete after a brief pause
+        setTimeout(() => {
+          onComplete?.();
+        }, 400);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isBackendComplete, isVisible, onComplete, progress]);
 
   if (!isVisible) return null;
 

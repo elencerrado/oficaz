@@ -127,6 +127,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showDemoLoading, setShowDemoLoading] = useState(false);
+  const [isBackendComplete, setIsBackendComplete] = useState(false);
   const [promoCodeValidation, setPromoCodeValidation] = useState<{ status: 'idle' | 'checking' | 'valid' | 'invalid', message?: string, trialDays?: number }>({ status: 'idle' });
 
   // Check for verification token (only if not by invitation)
@@ -333,6 +334,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     try {
       setIsLoading(true);
       setShowDemoLoading(true);
+      setIsBackendComplete(false); // Reset completion state
       
       // Prepare final registration data
       const finalData = { 
@@ -348,14 +350,15 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       
       try {
         await register(finalData);
-        console.log('Registration successful, redirecting to dashboard');
+        console.log('Registration successful - backend complete');
         // Set flag to show welcome modal on dashboard
         localStorage.setItem('showWelcomeModal', 'true');
-        // Keep loading overlay visible until redirect
-        setLocation('/dashboard');
+        // Signal that backend is complete - overlay will finish animation and redirect
+        setIsBackendComplete(true);
       } catch (error: any) {
         console.error('Registration failed:', error);
         setShowDemoLoading(false);
+        setIsBackendComplete(false);
         
         // Handle scheduled deletion conflicts specially
         if (error.message && error.message.includes('programada para eliminación')) {
@@ -374,6 +377,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
     } catch (error: any) {
       console.error('Registration error:', error.message || 'Ha ocurrido un error durante el registro');
       setShowDemoLoading(false);
+      setIsBackendComplete(false);
       
       // Handle scheduled deletion conflicts specially
       if (error.message && error.message.includes('programada para eliminación')) {
@@ -1241,9 +1245,12 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       {/* Demo Loading Overlay */}
       <DemoLoadingOverlay 
         isVisible={showDemoLoading}
+        isBackendComplete={isBackendComplete}
         onComplete={() => {
           setShowDemoLoading(false);
-          // Redirect will happen naturally from handleStep4Submit
+          setIsBackendComplete(false);
+          // Redirect to dashboard after animation completes
+          setLocation('/dashboard');
         }}
       />
     </div>
