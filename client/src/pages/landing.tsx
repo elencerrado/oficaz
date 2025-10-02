@@ -603,10 +603,10 @@ export default function Landing() {
                   </div>
                   <div className="mt-6 flex gap-4 justify-center">
                     <button className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300">
-                      FICHAR
+                      SALIR
                     </button>
-                    <button className="w-32 h-32 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold shadow-lg transition-all duration-300">
-                      <span className="whitespace-pre-line leading-tight">Tomar{'\n'}Descanso</span>
+                    <button className="w-32 h-32 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold shadow-lg transition-all duration-300">
+                      <span className="whitespace-pre-line leading-tight">Finalizar{'\n'}Descanso</span>
                     </button>
                   </div>
                 </div>
