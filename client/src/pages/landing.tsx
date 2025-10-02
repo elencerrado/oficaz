@@ -32,7 +32,8 @@ import {
   Zap,
   CreditCard,
   Bell,
-  Square
+  Square,
+  Eye
 } from 'lucide-react';
 
 import oficazLogo from '@assets/Imagotipo Oficaz_1750321812493.png';
@@ -834,19 +835,45 @@ export default function Landing() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg border border-green-100">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-gray-700 font-medium">Juan Pérez</span>
+                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 rounded-lg bg-muted flex-shrink-0">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm text-foreground truncate">
+                            Nómina_Marzo_2025.pdf
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                              ✓ Firmada
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm text-green-600 font-bold">✓</span>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-amber-50/50 rounded-lg border border-amber-100">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-                        <span className="text-sm text-gray-700 font-medium">Ana López</span>
+                    <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 rounded-lg bg-muted flex-shrink-0">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm text-foreground truncate">
+                            Contrato_2025.pdf
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300">
+                              Pendiente firma
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm text-amber-600 font-medium">...</span>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                        <Eye className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </div>
