@@ -546,26 +546,26 @@ export default function Landing() {
                   <span className="block text-[#007AFF]">en tiempo real</span>
                 </h3>
                 <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Sigue el tiempo de trabajo al instante con barras visuales intuitivas. Registra fichajes, descansos y horas extra sin complicaciones.
+                  Sigue el tiempo de trabajo al instante con barras visuales intuitivas. Registra fichajes y descansos sin complicaciones.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Visualizacion en vivo</span>
+                    <span className="text-gray-700">Visualizacion en directo</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Gestión de descansos automática</span>
+                    <span className="text-gray-700">Gestión de ausencias</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Reportes de horas trabajadas</span>
+                    <span className="text-gray-700">Reportes automaticos de horas trabajadas</span>
                   </li>
                 </ul>
               </div>
@@ -642,14 +642,9 @@ export default function Landing() {
                     </div>
                     <div className="text-sm text-gray-500 mt-2">40% utilizados</div>
                   </div>
-                  <div className="flex gap-3">
-                    <button className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all">
-                      Solicitar
-                    </button>
-                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-xl text-sm font-semibold hover:bg-gray-300 transition-all">
-                      Calendario
-                    </button>
-                  </div>
+                  <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all">
+                    Nueva Solicitud
+                  </button>
                 </div>
               </div>
               <div className="order-2">
@@ -669,19 +664,19 @@ export default function Landing() {
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Solicitudes digitales rápidas</span>
+                    <span className="text-gray-700">Solicitudes digitales instantáneas</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Balance actualizado en tiempo real</span>
+                    <span className="text-gray-700">Días restantes en tiempo real</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <CheckCircle className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700">Calendario compartido</span>
+                    <span className="text-gray-700">Gestión de días extra</span>
                   </li>
                 </ul>
               </div>
