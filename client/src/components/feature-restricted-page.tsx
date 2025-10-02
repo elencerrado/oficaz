@@ -56,7 +56,7 @@ export function FeatureRestrictedPage({
 
           <div className="text-sm text-gray-500 dark:text-gray-400 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
             <p>Esta funcionalidad no está disponible en tu plan actual.</p>
-            <p className="mt-1">Contacta con tu administrador para más información.</p>
+            <p className="mt-1">Aumenta tu plan para disfrutar de esta opción.</p>
           </div>
 
           <div className="flex gap-2">
