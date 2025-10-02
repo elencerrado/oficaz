@@ -59,17 +59,11 @@ export function FeatureRestrictedPage({
             <p className="mt-1">Aumenta tu plan para disfrutar de esta opción.</p>
           </div>
 
-          <div className="flex gap-2">
-            <Link href={`/${companyAlias}/inicio`} className="flex-1">
+          <div>
+            <Link href={`/${companyAlias}/inicio`}>
               <Button variant="outline" className="w-full">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver al Inicio
-              </Button>
-            </Link>
-            <Link href={`/${companyAlias}/configuracion`} className="flex-1">
-              <Button className="w-full bg-oficaz-primary hover:bg-oficaz-primary/90">
-                <Crown className="w-4 h-4 mr-2" />
-                Ver Planes
               </Button>
             </Link>
           </div>
