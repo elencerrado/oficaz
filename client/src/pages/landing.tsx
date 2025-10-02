@@ -605,7 +605,7 @@ export default function Landing() {
                     <button className="w-32 h-32 rounded-full bg-[#007AFF] hover:bg-[#0056CC] text-white text-xl font-bold shadow-lg transition-all duration-300">
                       SALIR
                     </button>
-                    <button className="w-32 h-32 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold shadow-lg transition-all duration-300">
+                    <button className="w-32 h-32 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold shadow-lg transition-all duration-300">
                       <span className="whitespace-pre-line leading-tight">Finalizar{'\n'}Descanso</span>
                     </button>
                   </div>
