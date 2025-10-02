@@ -596,7 +596,6 @@ export default function Landing() {
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>09:00</span>
                         <span className="text-orange-600 font-medium">En descanso</span>
-                        <span>~17:30</span>
                       </div>
                     </div>
                   </div>
