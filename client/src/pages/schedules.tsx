@@ -994,6 +994,33 @@ export default function Schedules() {
     queryKey: ['/api/holidays/custom'],
   });
 
+  // Query para obtener estado de datos demo
+  const { data: demoStatus } = useQuery<{ hasDemoData: boolean }>({
+    queryKey: ['/api/demo-data/status'],
+  });
+
+  // Mutation para generar turnos demo
+  const generateShiftsMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/demo-data/generate-shifts');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/work-shifts/company'] });
+      refetchShifts();
+      toast({
+        title: "Turnos generados",
+        description: "Se han creado turnos demo para las próximas 4 semanas",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron generar los turnos",
+        variant: "destructive",
+      });
+    },
+  });
+
   // ⚠️ OPTIMIZACIÓN: Memoizar filtros de días para evitar recálculos en cada renderizado
   const filteredDays = useMemo(() => {
     return viewMode === 'workweek' 
@@ -1550,6 +1577,31 @@ export default function Schedules() {
       ) : employees.length === 0 ? (
         <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto text-center py-8 text-muted-foreground" style={{ overflowX: 'clip' }}>
           No hay empleados registrados
+        </div>
+      ) : workShifts.length === 0 && !loadingShifts && demoStatus?.hasDemoData ? (
+        <div className="px-6 pt-4 pb-8 min-h-screen bg-background overflow-y-auto flex items-center justify-center" style={{ overflowX: 'clip' }}>
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+                  <CalendarClock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-semibold">No hay turnos de prueba</h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Parece que los datos demo no incluyen turnos de trabajo. Puedes generarlos ahora para ver cómo funciona el cuadrante.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button 
+                onClick={() => generateShiftsMutation.mutate()}
+                disabled={generateShiftsMutation.isPending}
+                className="w-full"
+              >
+                {generateShiftsMutation.isPending ? 'Generando...' : 'Generar turnos demo'}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
