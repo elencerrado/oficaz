@@ -829,7 +829,7 @@ export default function Landing() {
                       <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-3">
                         <FileText className="w-6 h-6 text-amber-600" />
                       </div>
-                      <p className="text-base font-medium text-gray-700 mb-1">Arrastra nóminas aquí</p>
+                      <p className="text-base font-medium text-gray-700 mb-1">Arrastra documentos aquí</p>
                       <p className="text-sm text-gray-500">Distribución automática</p>
                     </div>
                   </div>
@@ -861,7 +861,7 @@ export default function Landing() {
                   <span className="block text-[#007AFF]">inteligentes</span>
                 </h3>
                 <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-                  Sube nóminas y documentos masivamente. El sistema detecta automáticamente a cada empleado y distribuye los archivos al instante.
+                  Sube documentos masivamente. Detección automática y distribución instantánea a cada empleado.
                 </p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-3">
