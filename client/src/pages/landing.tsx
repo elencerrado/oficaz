@@ -743,36 +743,63 @@ export default function Landing() {
                     <div className="text-center text-gray-500">V</div>
                   </div>
                   <div className="space-y-3">
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-14">
+                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-24">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                           J
                         </div>
                       </div>
-                      <div className="bg-blue-500 rounded text-white flex items-center justify-center text-xs font-medium">9-17h</div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex-1 bg-green-500 rounded text-white flex items-center justify-center text-xs">14-18h</div>
-                        <div className="flex-1 bg-orange-500 rounded text-white flex items-center justify-center text-xs">18-22h</div>
+                      <div className="bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
+                        <span className="text-[10px] opacity-75 mb-0.5">Jornada</span>
+                        <span className="font-bold">9-17h</span>
                       </div>
-                      <div className="bg-blue-500 rounded text-white flex items-center justify-center text-xs font-medium">9-17h</div>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex-1 bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs">
+                          <span className="text-[9px] opacity-75">Tarde</span>
+                          <span className="font-medium">14-18h</span>
+                        </div>
+                        <div className="flex-1 bg-orange-500 rounded text-white flex flex-col items-center justify-center text-xs">
+                          <span className="text-[9px] opacity-75">Noche</span>
+                          <span className="font-medium">18-22h</span>
+                        </div>
+                      </div>
+                      <div className="bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
+                        <span className="text-[10px] opacity-75 mb-0.5">Jornada</span>
+                        <span className="font-bold">9-17h</span>
+                      </div>
                       <div className="bg-gray-100 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
                         <span className="text-gray-400">+</span>
                       </div>
                       <div className="bg-gray-100 rounded"></div>
                     </div>
-                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-14">
+                    <div className="grid grid-cols-[60px_repeat(5,1fr)] gap-1 items-stretch h-24">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-9 h-9 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
                           A
                         </div>
                       </div>
-                      <div className="bg-green-500 rounded text-white flex items-center justify-center text-xs font-medium">14-22h</div>
-                      <div className="bg-orange-500 rounded text-white flex items-center justify-center text-xs font-medium">22-6h</div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex-1 bg-blue-500 rounded text-white flex items-center justify-center text-xs">9-13h</div>
-                        <div className="flex-1 bg-green-500 rounded text-white flex items-center justify-center text-xs">14-18h</div>
+                      <div className="bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
+                        <span className="text-[10px] opacity-75 mb-0.5">Tarde</span>
+                        <span className="font-bold">14-22h</span>
                       </div>
-                      <div className="bg-green-500 rounded text-white flex items-center justify-center text-xs font-medium">14-22h</div>
+                      <div className="bg-orange-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
+                        <span className="text-[10px] opacity-75 mb-0.5">Noche</span>
+                        <span className="font-bold">22-6h</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex-1 bg-blue-500 rounded text-white flex flex-col items-center justify-center text-xs">
+                          <span className="text-[9px] opacity-75">Mañana</span>
+                          <span className="font-medium">9-13h</span>
+                        </div>
+                        <div className="flex-1 bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs">
+                          <span className="text-[9px] opacity-75">Tarde</span>
+                          <span className="font-medium">14-18h</span>
+                        </div>
+                      </div>
+                      <div className="bg-green-500 rounded text-white flex flex-col items-center justify-center text-xs font-medium">
+                        <span className="text-[10px] opacity-75 mb-0.5">Tarde</span>
+                        <span className="font-bold">14-22h</span>
+                      </div>
                       <div className="bg-gray-100 rounded"></div>
                     </div>
                   </div>
