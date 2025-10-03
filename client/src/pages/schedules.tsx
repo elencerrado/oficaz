@@ -1886,7 +1886,7 @@ export default function Schedules() {
                               </div>
                             ) : (
                               /* MODO SEMANA: Footer abajo con botón "+" */
-                              <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-30">
+                              <div className="absolute bottom-0 left-0 right-0 h-4 bg-gray-100 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b flex items-center justify-center group hover:bg-gray-200 dark:hover:bg-gray-600/70 transition-colors z-10">
                                 <button
                                   className="text-muted-foreground group-hover:text-foreground transition-colors text-xs font-medium flex items-center gap-1 px-2 py-1"
                                   onClick={(e) => {
