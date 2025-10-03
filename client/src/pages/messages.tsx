@@ -350,7 +350,10 @@ export default function Messages() {
   // Detectar scroll para mostrar/ocultar botón de "bajar"
   useEffect(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
+    if (!container || !selectedChat) {
+      setShowScrollButton(false);
+      return;
+    }
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
@@ -360,9 +363,18 @@ export default function Messages() {
       setShowScrollButton(distanceFromBottom > 200);
     };
 
+    // Ejecutar después de un pequeño delay para asegurar que el contenido esté renderizado
+    const timer = setTimeout(() => {
+      handleScroll();
+    }, 150);
+
     container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [selectedChat]);
+    
+    return () => {
+      clearTimeout(timer);
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [selectedChat, messages?.length]);
 
 
 
