@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (dniOrEmail: string, password: string, companyAlias?: string) => {
+  const login = async (dniOrEmail: string, password: string, companyAlias?: string, remember: boolean = true) => {
     const loginData = companyAlias 
       ? { dniOrEmail, password, companyAlias }
       : { dniOrEmail, password };
@@ -142,7 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasUser: !!data.user, 
       tokenLength: data.token?.length,
       userEmail: data.user?.email,
-      companyName: data.company?.name
+      companyName: data.company?.name,
+      remember
     });
     
     // CRITICAL SECURITY FIX: Clear cache when logging into different company
@@ -157,15 +158,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     }
     
-    // Save auth data to localStorage using proper function
+    // Save auth data with remember preference
     const authDataToSave = { user: data.user, token: data.token, company: data.company, subscription: data.subscription };
     
-    // Save to localStorage first
-    localStorage.setItem('authData', JSON.stringify(authDataToSave));
-    console.log('🔐 Auth data saved directly to localStorage');
-    
-    // Also use the helper function
-    saveAuthData(authDataToSave);
+    // Use the updated setAuthData function with remember parameter
+    saveAuthData(authDataToSave, remember);
+    console.log(`🔐 Auth data saved to ${remember ? 'localStorage' : 'sessionStorage'}`);
     
     // Update state immediately
     setUser(data.user);
@@ -173,15 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(data.token);
     setAuthData(authDataToSave);
     console.log('🔐 Auth state updated, token length:', data.token?.length);
-    
-    // Verify localStorage was updated
-    const verification = localStorage.getItem('authData');
-    if (verification) {
-      const parsed = JSON.parse(verification);
-      console.log('✅ localStorage verification successful:', { hasToken: !!parsed.token, tokenLength: parsed.token?.length, companyName: parsed.company?.name });
-    } else {
-      console.error('❌ localStorage verification failed - no data found');
-    }
     
     // Clear and invalidate queries immediately since auth is now available
     queryClient.clear();

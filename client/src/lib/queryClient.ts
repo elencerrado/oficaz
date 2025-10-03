@@ -128,9 +128,10 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 1 * 60 * 1000, // 1 minute cache for reminders
-      gcTime: 2 * 60 * 1000, // 2 minutes garbage collection for reminders
+      refetchOnWindowFocus: true, // Refetch when window regains focus
+      refetchOnReconnect: true, // Refetch when internet reconnects
+      staleTime: 1 * 60 * 1000, // 1 minute cache
+      gcTime: 2 * 60 * 1000, // 2 minutes garbage collection
       retry: 1,
       retryDelay: 500,
     },
@@ -139,3 +140,27 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Track last activity time to detect stale sessions
+let lastActivityTime = Date.now();
+
+// Update activity time on any user interaction
+if (typeof window !== 'undefined') {
+  ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+    window.addEventListener(event, () => {
+      lastActivityTime = Date.now();
+    }, { passive: true });
+  });
+
+  // When window regains focus after being inactive for >30 minutes, invalidate all queries
+  window.addEventListener('focus', () => {
+    const inactiveTime = Date.now() - lastActivityTime;
+    const thirtyMinutes = 30 * 60 * 1000;
+    
+    if (inactiveTime > thirtyMinutes) {
+      console.log(`🔄 Window inactive for ${Math.round(inactiveTime / 60000)} minutes - refreshing all data`);
+      queryClient.invalidateQueries(); // Force refetch all data
+      lastActivityTime = Date.now();
+    }
+  });
+}

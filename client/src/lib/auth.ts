@@ -7,26 +7,39 @@ interface AuthData {
   subscription?: any;
 }
 
-export function setAuthData(data: AuthData) {
+export function setAuthData(data: AuthData, remember: boolean = true) {
   try {
-    console.log('🔐 Saving auth data to localStorage:', { hasToken: !!data.token, tokenLength: data.token?.length });
-    localStorage.setItem('authData', JSON.stringify(data));
+    const storage = remember ? localStorage : sessionStorage;
+    const storageType = remember ? 'localStorage' : 'sessionStorage';
+    
+    console.log(`🔐 Saving auth data to ${storageType}:`, { hasToken: !!data.token, tokenLength: data.token?.length, remember });
+    storage.setItem('authData', JSON.stringify(data));
+    
+    // Clear from the other storage to avoid conflicts
+    const otherStorage = remember ? sessionStorage : localStorage;
+    otherStorage.removeItem('authData');
     
     // Verify it was saved correctly
-    const saved = localStorage.getItem('authData');
+    const saved = storage.getItem('authData');
     if (saved) {
       const parsed = JSON.parse(saved);
-      console.log('✅ Auth data verification - saved successfully:', { hasToken: !!parsed.token });
+      console.log(`✅ Auth data verification - saved successfully to ${storageType}:`, { hasToken: !!parsed.token });
     } else {
-      console.error('❌ Auth data was not saved to localStorage');
+      console.error(`❌ Auth data was not saved to ${storageType}`);
     }
   } catch (error) {
-    console.error('Error saving to localStorage:', error);
+    console.error('Error saving auth data:', error);
   }
 }
 
 export function getAuthData(): AuthData | null {
-  const authDataStr = localStorage.getItem('authData');
+  // Try localStorage first (persistent sessions)
+  let authDataStr = localStorage.getItem('authData');
+  
+  // If not in localStorage, try sessionStorage (temporary sessions)
+  if (!authDataStr) {
+    authDataStr = sessionStorage.getItem('authData');
+  }
   
   if (!authDataStr) {
     return null;
@@ -41,6 +54,7 @@ export function getAuthData(): AuthData | null {
 
 export function clearAuthData() {
   localStorage.removeItem('authData');
+  sessionStorage.removeItem('authData');
 }
 
 // Emergency function to force clear all authentication data

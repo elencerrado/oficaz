@@ -158,8 +158,8 @@ export default function Login() {
       };
       
       console.log('🔐 Frontend login starting...');
-      const response = await login(normalizedData.dniOrEmail, data.password, companyAlias);
-      console.log('🔐 Frontend login completed successfully:', { hasResponse: !!response });
+      const response = await login(normalizedData.dniOrEmail, data.password, companyAlias, rememberMe);
+      console.log('🔐 Frontend login completed successfully:', { hasResponse: !!response, rememberMe });
       
       // Debug: Check localStorage immediately after login
       setTimeout(() => {
