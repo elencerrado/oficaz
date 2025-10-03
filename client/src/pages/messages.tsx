@@ -695,8 +695,19 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={messagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30"
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30 relative"
                   >
+                    {/* Scroll to bottom button - Desktop */}
+                    {showScrollButton && (
+                      <button
+                        onClick={scrollToBottom}
+                        className="absolute bottom-6 right-6 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-10 hover:scale-110"
+                        data-testid="button-scroll-to-bottom-desktop"
+                      >
+                        <ArrowDown className="h-5 w-5" />
+                      </button>
+                    )}
+
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
                         messagesGroupedByDate.map((group) => (
@@ -763,17 +774,6 @@ export default function Messages() {
                     </div>
                     <div ref={messagesEndRef} style={{ height: '20px' }} />
                   </div>
-
-                  {/* Scroll to bottom button */}
-                  {showScrollButton && (
-                    <button
-                      onClick={scrollToBottom}
-                      className="absolute bottom-24 right-8 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-10 hover:scale-110"
-                      data-testid="button-scroll-to-bottom"
-                    >
-                      <ArrowDown className="h-5 w-5" />
-                    </button>
-                  )}
 
                   {/* Message Input - Fixed at bottom */}
                   <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
