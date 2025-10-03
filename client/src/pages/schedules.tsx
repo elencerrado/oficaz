@@ -1552,7 +1552,7 @@ export default function Schedules() {
           No hay empleados registrados
         </div>
       ) : (
-        <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col" style={{ overflowX: 'clip' }}>
+        <Card className="px-6 pt-4 pb-8 h-screen bg-card text-card-foreground border-border border shadow-sm flex flex-col z-10" style={{ overflowX: 'clip' }}>
             <CardHeader className="bg-muted/10 px-4 py-2 flex-shrink-0">
               {/* Header con mes y navegación */}
               <div>
