@@ -703,7 +703,7 @@ export default function Messages() {
             </div>
 
             {/* Right Column: Chat Area (2/3 width) */}
-            <div className="flex-1 min-h-0 bg-card rounded-lg border border-border flex flex-col overflow-hidden">
+            <div className="flex-1 min-h-0 bg-card rounded-lg border border-border flex flex-col overflow-hidden relative">
               {selectedChat ? (
                 <>
                   {/* Chat Header */}
@@ -729,19 +729,8 @@ export default function Messages() {
                   {/* Messages - Scrollable middle section */}
                   <div 
                     ref={desktopMessagesContainerRef} 
-                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30 relative"
+                    className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30"
                   >
-                    {/* Scroll to bottom button - Desktop */}
-                    {showScrollButton && (
-                      <button
-                        onClick={scrollToBottom}
-                        className="absolute bottom-6 right-6 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-10 hover:scale-110"
-                        data-testid="button-scroll-to-bottom-desktop"
-                      >
-                        <ArrowDown className="h-5 w-5" />
-                      </button>
-                    )}
-
                     <div className="space-y-6">
                       {messagesGroupedByDate.length > 0 ? (
                         messagesGroupedByDate.map((group) => (
@@ -829,6 +818,17 @@ export default function Messages() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Scroll to bottom button - Desktop with smooth transition */}
+                  <button
+                    onClick={scrollToBottom}
+                    className={`absolute bottom-24 right-6 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                      showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+                    }`}
+                    data-testid="button-scroll-to-bottom-desktop"
+                  >
+                    <ArrowDown className="h-5 w-5" />
+                  </button>
                 </>
               ) : (
                 <div className="flex-1 grid place-items-center p-6">
@@ -1032,16 +1032,16 @@ export default function Messages() {
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
 
-              {/* Scroll to bottom button - Mobile Admin */}
-              {showScrollButton && (
-                <button
-                  onClick={scrollToBottom}
-                  className="fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-20 hover:scale-110"
-                  data-testid="button-scroll-to-bottom-mobile"
-                >
-                  <ArrowDown className="h-5 w-5" />
-                </button>
-              )}
+              {/* Scroll to bottom button - Mobile Admin with smooth transition */}
+              <button
+                onClick={scrollToBottom}
+                className={`fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                  showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+                }`}
+                data-testid="button-scroll-to-bottom-mobile"
+              >
+                <ArrowDown className="h-5 w-5" />
+              </button>
 
               {/* Message Input - Fixed at bottom */}
               <div 
@@ -1511,16 +1511,16 @@ export default function Messages() {
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
 
-              {/* Scroll to bottom button - Employee */}
-              {showScrollButton && (
-                <button
-                  onClick={scrollToBottom}
-                  className="fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-20 hover:scale-110"
-                  data-testid="button-scroll-to-bottom-employee"
-                >
-                  <ArrowDown className="h-5 w-5" />
-                </button>
-              )}
+              {/* Scroll to bottom button - Employee with smooth transition */}
+              <button
+                onClick={scrollToBottom}
+                className={`fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg hover:scale-110 z-20 transition-all duration-300 ${
+                  showScrollButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+                }`}
+                data-testid="button-scroll-to-bottom-employee"
+              >
+                <ArrowDown className="h-5 w-5" />
+              </button>
 
               {/* Message Input - Fixed at bottom */}
               <div 
