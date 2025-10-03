@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { 
   Send, 
   ArrowLeft,
+  ArrowDown,
   User,
   Bell,
   MessageCircle,
@@ -102,6 +103,7 @@ export default function Messages() {
   const [modalSelectedEmployees, setModalSelectedEmployees] = useState<number[]>([]);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSearchTerm, setModalSearchTerm] = useState('');
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // All refs together
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -344,6 +346,23 @@ export default function Messages() {
       return () => timers.forEach(timer => clearTimeout(timer));
     }
   }, [selectedChat, messages?.length, scrollToBottom]);
+
+  // Detectar scroll para mostrar/ocultar botón de "bajar"
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      
+      // Mostrar botón si el usuario está a más de 200px del final
+      setShowScrollButton(distanceFromBottom > 200);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [selectedChat]);
 
 
 
@@ -745,6 +764,17 @@ export default function Messages() {
                     <div ref={messagesEndRef} style={{ height: '20px' }} />
                   </div>
 
+                  {/* Scroll to bottom button */}
+                  {showScrollButton && (
+                    <button
+                      onClick={scrollToBottom}
+                      className="absolute bottom-24 right-8 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-10 hover:scale-110"
+                      data-testid="button-scroll-to-bottom"
+                    >
+                      <ArrowDown className="h-5 w-5" />
+                    </button>
+                  )}
+
                   {/* Message Input - Fixed at bottom */}
                   <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex-shrink-0">
                     <div className="flex space-x-2">
@@ -967,6 +997,18 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
+
+              {/* Scroll to bottom button - Mobile Admin */}
+              {showScrollButton && (
+                <button
+                  onClick={scrollToBottom}
+                  className="fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-20 hover:scale-110"
+                  data-testid="button-scroll-to-bottom-mobile"
+                >
+                  <ArrowDown className="h-5 w-5" />
+                </button>
+              )}
+
               {/* Message Input - Fixed at bottom */}
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background"
@@ -1434,6 +1476,18 @@ export default function Messages() {
                 </div>
                 <div ref={messagesEndRef} style={{ height: '8px' }} />
               </div>
+
+              {/* Scroll to bottom button - Employee */}
+              {showScrollButton && (
+                <button
+                  onClick={scrollToBottom}
+                  className="fixed bottom-24 right-4 bg-oficaz-primary hover:bg-oficaz-primary/90 text-white rounded-full p-3 shadow-lg transition-all duration-200 z-20 hover:scale-110"
+                  data-testid="button-scroll-to-bottom-employee"
+                >
+                  <ArrowDown className="h-5 w-5" />
+                </button>
+              )}
+
               {/* Message Input - Fixed at bottom */}
               <div 
                 className="flex space-x-2 p-4 border-t border-border bg-background"
