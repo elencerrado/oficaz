@@ -753,7 +753,7 @@ export default function EmployeesSimple() {
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex flex-col items-center">
-                        <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
+                        <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} role={employee.role} />
                         <Badge className={`${getStatusColor(employee.status)} capitalize border-0 text-xs mt-2`}>
                           {translateStatus(employee.status)}
                         </Badge>
@@ -797,7 +797,7 @@ export default function EmployeesSimple() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} />
+                      <UserAvatar fullName={employee.fullName || ''} size="md" userId={employee.id} profilePicture={employee.profilePicture} role={employee.role} />
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-foreground">{employee.fullName}</p>
