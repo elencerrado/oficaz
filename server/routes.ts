@@ -6143,39 +6143,18 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
-      // Calculate correct authorization amount (use custom price if available)
-      const customPrice = company.subscription.customMonthlyPrice ? Number(company.subscription.customMonthlyPrice) : null;
-      const standardPrice = company.subscription.plan === 'pro' ? 39.95 : 
-                           company.subscription.plan === 'basic' ? 19.95 : 
-                           company.subscription.plan === 'master' ? 99.95 : 39.95;
-      
-      let finalPrice = customPrice || standardPrice;
-      
-      // Stripe requires minimum €0.50 - enforce this limit
-      if (finalPrice < 0.50) {
-        console.log(`⚠️ Price €${finalPrice} below Stripe minimum, using €0.50 for authorization`);
-        finalPrice = 0.50; // Use minimum for authorization, but keep custom price for actual billing
-      }
-      
-      const authAmountCents = Math.round(finalPrice * 100); // Convert to cents
-      
-      console.log(`💰 AUTHORIZATION AMOUNT: customPrice=${customPrice}, standardPrice=${standardPrice}, finalPrice=${finalPrice}, authAmountCents=${authAmountCents}`);
-
-      // Create payment intent with authorization hold (manual capture for trial end)
-      const paymentIntent = await stripe.paymentIntents.create({
+      // Create setup intent for €0 card verification (no charge during trial)
+      const setupIntent = await stripe.setupIntents.create({
         customer: stripeCustomerId,
-        amount: authAmountCents, // Use calculated amount based on custom or standard price
-        currency: 'eur',
         payment_method_types: ['card'],
-        capture_method: 'manual', // Authorize now, capture later
-        setup_future_usage: 'off_session', // Save for future use
-        description: `Autorización para Plan ${company.subscription.plan} - ${company.name}`,
+        usage: 'off_session', // Will be charged after trial ends
+        description: `Verificación de tarjeta para Plan ${company.subscription.plan} - ${company.name}`,
       });
 
       res.json({
-        clientSecret: paymentIntent.client_secret,
+        clientSecret: setupIntent.client_secret,
         customerId: stripeCustomerId,
-        paymentIntentId: paymentIntent.id
+        setupIntentId: setupIntent.id
       });
     } catch (error) {
       console.error('Error creating setup intent:', error);
@@ -6185,27 +6164,41 @@ Responde directamente a este email para contactar con la persona.
 
   // Confirm payment method and create recurring subscription
   app.post('/api/account/confirm-payment-method', authenticateToken, async (req: AuthRequest, res) => {
-    console.log(`🚨 PAYMENT ENDPOINT CALLED - User ${req.user!.id}, paymentIntentId: ${req.body.paymentIntentId}`);
+    const { setupIntentId, paymentIntentId } = req.body;
+    const intentId = setupIntentId || paymentIntentId; // Support both for backward compatibility
+    
+    console.log(`🚨 PAYMENT ENDPOINT CALLED - User ${req.user!.id}, intentId: ${intentId}`);
     try {
       const userId = req.user!.id;
-      const { paymentIntentId } = req.body;
 
-      if (!paymentIntentId) {
-        console.log(`🚨 PAYMENT FAILED - No paymentIntentId provided`);
-        return res.status(400).json({ message: 'Payment Intent ID es requerido' });
+      if (!intentId) {
+        console.log(`🚨 PAYMENT FAILED - No intentId provided`);
+        return res.status(400).json({ message: 'Setup Intent ID es requerido' });
       }
       
-      console.log(`🚨 PAYMENT PROCESSING - Retrieving paymentIntent ${paymentIntentId}`);
+      console.log(`🚨 PAYMENT PROCESSING - Retrieving intent ${intentId}`);
 
-      // Retrieve the payment intent to get payment method and authorization status
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      // Retrieve the setup intent to get payment method
+      let paymentMethodId: string;
       
-      if (paymentIntent.status !== 'requires_capture') {
-        console.log(`🚨 AUTHORIZATION FAILED - Status: ${paymentIntent.status}`);
-        return res.status(400).json({ message: 'La autorización del pago no fue exitosa' });
+      if (setupIntentId) {
+        const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+        
+        if (setupIntent.status !== 'succeeded') {
+          console.log(`🚨 VERIFICATION FAILED - Status: ${setupIntent.status}`);
+          return res.status(400).json({ message: 'La verificación de la tarjeta no fue exitosa' });
+        }
+        
+        paymentMethodId = setupIntent.payment_method as string;
+        console.log(`✅ CARD VERIFIED - PaymentMethod: ${paymentMethodId}`);
+      } else {
+        // Legacy PaymentIntent support
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status !== 'requires_capture' && paymentIntent.status !== 'succeeded') {
+          return res.status(400).json({ message: 'La autorización del pago no fue exitosa' });
+        }
+        paymentMethodId = paymentIntent.payment_method as string;
       }
-      
-      console.log(`🏦 AUTHORIZATION SUCCESSFUL - Amount: €${paymentIntent.amount/100}, Status: ${paymentIntent.status}`);
 
       // Get company and subscription data
       const company = await storage.getCompanyByUserId(userId);
@@ -6293,15 +6286,22 @@ Responde directamente a este email para contactar con la persona.
         console.log(`Created new production customer: ${stripeCustomerId}`);
       }
 
-      // Attach payment method to customer
-      await stripe.paymentMethods.attach(paymentIntent.payment_method as string, {
-        customer: stripeCustomerId,
-      });
+      // Attach payment method to customer (if not already attached by SetupIntent)
+      try {
+        await stripe.paymentMethods.attach(paymentMethodId, {
+          customer: stripeCustomerId,
+        });
+      } catch (error: any) {
+        // Ignore if already attached (SetupIntent does this automatically)
+        if (error.code !== 'resource_missing') {
+          console.log(`Payment method already attached or error:`, error.message);
+        }
+      }
 
       // Set as default payment method
       await stripe.customers.update(stripeCustomerId, {
         invoice_settings: {
-          default_payment_method: paymentIntent.payment_method as string,
+          default_payment_method: paymentMethodId,
         },
       });
 

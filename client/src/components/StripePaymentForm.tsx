@@ -36,7 +36,7 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
     }
 
     setIsLoading(true);
-    console.log('Starting payment setup process...');
+    console.log('Starting card verification process...');
 
     try {
       console.log('Confirming setup with Stripe...');
@@ -46,7 +46,7 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
         setTimeout(() => reject(new Error('Timeout: Stripe setup took too long')), 30000)
       );
 
-      const stripePromise = stripe.confirmPayment({
+      const stripePromise = stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: window.location.origin + '/configuracion',
@@ -56,32 +56,32 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
 
       const result = await Promise.race([stripePromise, timeoutPromise]) as any;
 
-      console.log('Stripe payment response:', result);
+      console.log('Stripe setup response:', result);
 
       if (result.error) {
-        console.error('Stripe payment error:', result.error);
+        console.error('Stripe setup error:', result.error);
         toast({
-          title: "Error al autorizar el pago",
+          title: "Error al verificar la tarjeta",
           description: result.error.message || "Ha ocurrido un error inesperado",
           variant: "destructive",
         });
-      } else if (result.paymentIntent) {
-        console.log('Payment authorization response:', result.paymentIntent);
+      } else if (result.setupIntent) {
+        console.log('Card verification response:', result.setupIntent);
         
-        // Check payment intent status
-        const status = result.paymentIntent.status;
-        console.log('PaymentIntent status:', status);
+        // Check setup intent status
+        const status = result.setupIntent.status;
+        console.log('SetupIntent status:', status);
         
-        if (status === 'requires_capture' || status === 'succeeded') {
-          // Authorization successful - proceed with backend confirmation
+        if (status === 'succeeded') {
+          // Verification successful - proceed with backend confirmation
           try {
             await apiRequest('POST', '/api/account/confirm-payment-method', {
-              paymentIntentId: result.paymentIntent.id,
+              setupIntentId: result.setupIntent.id,
             });
 
             toast({
-              title: "¡Autorización exitosa!",
-              description: `Se ha autorizado €${(result.paymentIntent.amount / 100).toFixed(2)}. El cobro será efectivo al finalizar el trial.`,
+              title: "¡Tarjeta verificada!",
+              description: `Tu tarjeta ha sido verificada correctamente. El primer cobro será cuando termine tu prueba gratuita.`,
             });
             
             // Invalidate auth data to refresh subscription status
@@ -95,7 +95,7 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             console.error('Backend confirmation error:', backendError);
             toast({
               title: "Error",
-              description: "El método de pago se procesó pero no se pudo confirmar en el servidor",
+              description: "La tarjeta se verificó pero no se pudo confirmar en el servidor",
               variant: "destructive",
             });
           }
@@ -103,24 +103,24 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
           // 3D Secure authentication still in progress - this is normal
           console.log('3D Secure authentication in progress - waiting for user action');
           toast({
-            title: "Autorización en curso",
+            title: "Verificación en curso",
             description: "Completa la verificación en tu banco para continuar",
           });
         } else {
           // Unexpected status
-          console.error('Unexpected PaymentIntent status:', status);
+          console.error('Unexpected SetupIntent status:', status);
           toast({
             title: "Estado inesperado",
-            description: `Estado del pago: ${status}. Inténtalo de nuevo.`,
+            description: `Estado de la verificación: ${status}. Inténtalo de nuevo.`,
             variant: "destructive",
           });
         }
       }
     } catch (error) {
-      console.error('Error processing payment:', error);
+      console.error('Error processing card verification:', error);
       toast({
         title: "Error",
-        description: "No se pudo procesar el pago. Inténtalo de nuevo.",
+        description: "No se pudo verificar la tarjeta. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -139,13 +139,17 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             €{planPrice}/mes • Facturación mensual
           </p>
         </div>
-        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            🔒 <strong>Autorización bancaria:</strong> Se verificará tu tarjeta con €{planPrice}
+        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">
+            🔒 <strong>Verificación sin cobro:</strong> Solo validaremos tu tarjeta (€0)
           </p>
-          {formattedTrialEndDate && (
-            <p className="text-xs text-yellow-600 mt-1">
-              El cobro se realizará el {formattedTrialEndDate} cuando termine tu prueba gratuita
+          {formattedTrialEndDate ? (
+            <p className="text-xs text-green-600 mt-1">
+              El primer cobro de €{planPrice} será el {formattedTrialEndDate} cuando termine tu prueba gratuita
+            </p>
+          ) : (
+            <p className="text-xs text-green-600 mt-1">
+              El primer cobro de €{planPrice} será cuando termine tu prueba gratuita
             </p>
           )}
         </div>
@@ -179,12 +183,12 @@ export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess
             {isLoading ? (
               <>
                 <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                Procesando...
+                Verificando...
               </>
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Autorizar €{planPrice}
+                Verificar tarjeta
               </>
             )}
           </Button>
