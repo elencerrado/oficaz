@@ -8476,6 +8476,22 @@ Responde directamente a este email para contactar con la persona.
   });
 
   // Demo data management endpoints
+  app.get('/api/demo-data/status', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+      
+      const hasDemoData = company.hasDemoData || false;
+      res.json({ hasDemoData });
+    } catch (error) {
+      console.error('Error checking demo data status:', error);
+      res.status(500).json({ message: 'Error al verificar el estado de los datos de prueba' });
+    }
+  });
 
   // Generate demo data manually (for testing)
   app.post('/api/demo-data/generate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
