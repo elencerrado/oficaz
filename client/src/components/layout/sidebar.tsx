@@ -135,7 +135,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         
         {/* Scrollable Navigation */}
         <div 
-          className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500 flex flex-col bg-sidebar"
+          className="flex-1 overflow-y-auto flex flex-col bg-sidebar"
           style={{
             backgroundColor: 'hsl(var(--sidebar-background))'
           }}
