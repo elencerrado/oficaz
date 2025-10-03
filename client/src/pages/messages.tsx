@@ -106,7 +106,8 @@ export default function Messages() {
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   // All refs together
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const desktopMessagesContainerRef = useRef<HTMLDivElement>(null);
+  const mobileMessagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -317,9 +318,12 @@ export default function Messages() {
       }
     });
 
-    // MÉTODO 3: Usar messagesContainerRef si existe
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    // MÉTODO 3: Usar refs si existen
+    if (desktopMessagesContainerRef.current) {
+      desktopMessagesContainerRef.current.scrollTop = desktopMessagesContainerRef.current.scrollHeight;
+    }
+    if (mobileMessagesContainerRef.current) {
+      mobileMessagesContainerRef.current.scrollTop = mobileMessagesContainerRef.current.scrollHeight;
     }
 
     // MÉTODO 4: Buscar contenedor padre de los mensajes por clase
@@ -349,13 +353,15 @@ export default function Messages() {
 
   // Detectar scroll para mostrar/ocultar botón de "bajar"
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container || !selectedChat) {
+    const desktopContainer = desktopMessagesContainerRef.current;
+    const mobileContainer = mobileMessagesContainerRef.current;
+    
+    if (!selectedChat) {
       setShowScrollButton(false);
       return;
     }
 
-    const handleScroll = () => {
+    const handleScroll = (container: HTMLElement) => () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       
@@ -365,14 +371,30 @@ export default function Messages() {
 
     // Ejecutar después de un pequeño delay para asegurar que el contenido esté renderizado
     const timer = setTimeout(() => {
-      handleScroll();
+      if (desktopContainer) {
+        handleScroll(desktopContainer)();
+      }
+      if (mobileContainer) {
+        handleScroll(mobileContainer)();
+      }
     }, 150);
 
-    container.addEventListener('scroll', handleScroll);
+    // Agregar listeners a ambos contenedores (solo uno estará visible según el breakpoint)
+    if (desktopContainer) {
+      desktopContainer.addEventListener('scroll', handleScroll(desktopContainer));
+    }
+    if (mobileContainer) {
+      mobileContainer.addEventListener('scroll', handleScroll(mobileContainer));
+    }
     
     return () => {
       clearTimeout(timer);
-      container.removeEventListener('scroll', handleScroll);
+      if (desktopContainer) {
+        desktopContainer.removeEventListener('scroll', handleScroll(desktopContainer));
+      }
+      if (mobileContainer) {
+        mobileContainer.removeEventListener('scroll', handleScroll(mobileContainer));
+      }
     };
   }, [selectedChat, messages?.length]);
 
@@ -706,7 +728,7 @@ export default function Messages() {
 
                   {/* Messages - Scrollable middle section */}
                   <div 
-                    ref={messagesContainerRef} 
+                    ref={desktopMessagesContainerRef} 
                     className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900/30 relative"
                   >
                     {/* Scroll to bottom button - Desktop */}
@@ -931,7 +953,7 @@ export default function Messages() {
               </div>
               {/* Messages - Scrollable area with bounce prevention */}
               <div 
-                ref={messagesContainerRef}
+                ref={mobileMessagesContainerRef}
                 className="flex-1 overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
                   paddingBottom: '16px',
@@ -1404,7 +1426,7 @@ export default function Messages() {
               </div>
               {/* Messages - Fixed positioning with exact dimensions */}
               <div 
-                ref={messagesContainerRef}
+                ref={mobileMessagesContainerRef}
                 className="overflow-y-auto px-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col" 
                 style={{ 
                   position: 'fixed',
