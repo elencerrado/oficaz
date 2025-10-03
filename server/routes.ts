@@ -8521,6 +8521,44 @@ Responde directamente a este email para contactar con la persona.
   });
 
 
+  // Endpoint to generate missing work shifts for existing demo data
+  app.post('/api/demo-data/generate-missing-shifts', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const company = await storage.getCompanyByUserId(userId);
+      
+      if (!company) {
+        return res.status(404).json({ message: 'Empresa no encontrada' });
+      }
+
+      if (!company.hasDemoData) {
+        return res.status(400).json({ message: 'Esta empresa no tiene datos demo' });
+      }
+
+      // Get all employees
+      const employees = await db.select()
+        .from(users)
+        .where(eq(users.companyId, company.id));
+
+      if (employees.length === 0) {
+        return res.status(400).json({ message: 'No hay empleados en la empresa' });
+      }
+
+      console.log('📅 Generating missing work shifts for company:', company.id);
+
+      // Generate work shifts for current week + 3 next weeks
+      await generateDemoWorkShifts(company.id, employees, new Date());
+      
+      res.json({ 
+        success: true, 
+        message: '✅ Turnos de trabajo generados correctamente para las próximas 4 semanas.'
+      });
+    } catch (error) {
+      console.error('Error generating missing shifts:', error);
+      res.status(500).json({ message: 'Error al generar los turnos: ' + (error as any).message });
+    }
+  });
+
   // Temporary endpoint to force regenerate demo data with improvements
   app.post('/api/demo-data/force-regenerate', authenticateToken, requireRole(['admin']), async (req: AuthRequest, res) => {
     try {
