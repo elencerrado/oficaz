@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
-
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -9,16 +10,22 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 interface StripePaymentFormProps {
   planName: string;
   planPrice: number;
+  trialEndDate?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: StripePaymentFormProps) {
+export function StripePaymentForm({ planName, planPrice, trialEndDate, onSuccess, onCancel }: StripePaymentFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const stripe = useStripe();
   const elements = useElements();
+
+  // Format the trial end date
+  const formattedTrialEndDate = trialEndDate 
+    ? format(new Date(trialEndDate), "d 'de' MMMM", { locale: es })
+    : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +143,11 @@ export function StripePaymentForm({ planName, planPrice, onSuccess, onCancel }: 
           <p className="text-sm text-yellow-800">
             🔒 <strong>Autorización bancaria:</strong> Se verificará tu tarjeta con €{planPrice}
           </p>
-          <p className="text-xs text-yellow-600 mt-1">
-            El cobro se realizará el 16 de septiembre cuando termine tu prueba gratuita
-          </p>
+          {formattedTrialEndDate && (
+            <p className="text-xs text-yellow-600 mt-1">
+              El cobro se realizará el {formattedTrialEndDate} cuando termine tu prueba gratuita
+            </p>
+          )}
         </div>
       </div>
       

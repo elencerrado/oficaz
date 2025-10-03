@@ -12,6 +12,7 @@ interface LazyStripeFormProps {
   clientSecret: string;
   planName: string;
   planPrice: number;
+  trialEndDate?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -20,6 +21,7 @@ export function LazyStripeForm({
   clientSecret, 
   planName, 
   planPrice, 
+  trialEndDate,
   onSuccess, 
   onCancel 
 }: LazyStripeFormProps) {
@@ -114,6 +116,7 @@ export function LazyStripeForm({
         <LazyStripePaymentForm
           planName={planName}
           planPrice={planPrice}
+          trialEndDate={trialEndDate}
           onSuccess={onSuccess}
           onCancel={onCancel}
         />

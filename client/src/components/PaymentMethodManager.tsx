@@ -61,6 +61,12 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
     staleTime: 30000,
   });
 
+  // Get trial status for trial end date
+  const { data: trialStatus } = useQuery({
+    queryKey: ['/api/account/trial-status'],
+    staleTime: 30000,
+  });
+
   // Determine the actual plan and price to display
   const actualPlan = selectedPlan || subscription?.plan || "basic";
   const currentPlanData = subscriptionPlans?.find((plan: any) => plan.name === actualPlan);
@@ -452,6 +458,7 @@ export function PaymentMethodManager({ paymentMethods, onPaymentSuccess, selecte
               <StripePaymentForm
                 planName={actualPlan}
                 planPrice={actualPrice}
+                trialEndDate={trialStatus?.trialEnd}
                 onSuccess={handlePaymentSuccess}
                 onCancel={handlePaymentCancel}
               />
