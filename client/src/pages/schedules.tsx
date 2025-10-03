@@ -49,6 +49,7 @@ interface Employee {
   status: string;
   isActive: boolean;
   profilePicture?: string;
+  role: 'admin' | 'manager' | 'employee';
 }
 
 interface VacationRequest {
@@ -1680,6 +1681,7 @@ export default function Schedules() {
                             size="sm" 
                             userId={employee.id}
                             profilePicture={employee.profilePicture}
+                            role={employee.role}
                             className="w-8 h-8"
                           />
                           <div className="flex-1">
@@ -1768,6 +1770,7 @@ export default function Schedules() {
                           size="sm" 
                           userId={employee.id}
                           profilePicture={employee.profilePicture}
+                          role={employee.role}
                           className="w-4 h-4 sm:w-6 sm:h-6 md:w-8 md:h-8"
                         />
                         <div className="text-[10px] md:text-xs font-medium text-foreground text-center max-w-full leading-tight">

@@ -12,9 +12,23 @@ interface UserAvatarProps {
   userId?: number; // Para generar color único por empleado
   profilePicture?: string | null; // URL de la foto de perfil
   showUpload?: boolean; // Mostrar opción de subir foto
+  role?: 'admin' | 'manager' | 'employee'; // Rol del usuario para mostrar indicador
 }
 
-export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false }: UserAvatarProps) {
+// Helper para obtener letra y color del rol
+const getRoleIndicator = (role?: 'admin' | 'manager' | 'employee') => {
+  if (!role) return null;
+  
+  const roleConfig = {
+    admin: { letter: 'A', bg: '#EF4444', label: 'Administrador' },
+    manager: { letter: 'M', bg: '#F59E0B', label: 'Manager' },
+    employee: { letter: 'E', bg: '#3B82F6', label: 'Empleado' }
+  };
+  
+  return roleConfig[role];
+};
+
+export function UserAvatar({ fullName, size = 'md', className = '', userId, profilePicture, showUpload = false, role }: UserAvatarProps) {
   const { toast } = useToast();
   const { refreshUser } = useAuth();
   const queryClient = useQueryClient();
@@ -388,6 +402,40 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             }}
           />
         )}
+        
+        {/* Indicador de rol */}
+        {role && (() => {
+          const roleIndicator = getRoleIndicator(role);
+          if (!roleIndicator) return null;
+          
+          const indicatorSize = Math.max(sizeConfig.size * 0.28, 14);
+          
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '0',
+                right: '0',
+                width: `${indicatorSize}px`,
+                height: `${indicatorSize}px`,
+                borderRadius: '50%',
+                backgroundColor: roleIndicator.bg,
+                border: '2px solid white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: `${indicatorSize * 0.6}px`,
+                fontWeight: 'bold',
+                color: 'white',
+                zIndex: 10,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+              } as React.CSSProperties}
+              title={roleIndicator.label}
+            >
+              {roleIndicator.letter}
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -526,6 +574,40 @@ export function UserAvatar({ fullName, size = 'md', className = '', userId, prof
             )}
           </div>
         )}
+        
+        {/* Indicador de rol */}
+        {role && (() => {
+          const roleIndicator = getRoleIndicator(role);
+          if (!roleIndicator) return null;
+          
+          const indicatorSize = Math.max(sizeConfig.size * 0.28, 14);
+          
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '-2px',
+                left: '-2px',
+                width: `${indicatorSize}px`,
+                height: `${indicatorSize}px`,
+                borderRadius: '50%',
+                backgroundColor: roleIndicator.bg,
+                border: '2px solid white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: `${indicatorSize * 0.6}px`,
+                fontWeight: 'bold',
+                color: 'white',
+                zIndex: 11,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+              } as React.CSSProperties}
+              title={roleIndicator.label}
+            >
+              {roleIndicator.letter}
+            </div>
+          );
+        })()}
       </div>
       
       {/* Botón de cámara */}
