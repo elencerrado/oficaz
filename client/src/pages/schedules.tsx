@@ -1670,10 +1670,10 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className={viewMode === 'day' ? 'p-3 border-b border-border/50' : 'p-4'}>
+                  <div key={employee.id} className={viewMode === 'day' ? 'py-1 px-3 border-b border-border/50' : 'p-4'}>
                     {viewMode === 'day' ? (
                       /* Layout móvil para modo día - Estructura vertical */
-                      <div className="space-y-2 sm:hidden">
+                      <div className="space-y-1 sm:hidden">
                         {/* Header del empleado en móvil */}
                         <div className="flex items-center gap-3 px-2">
                           <UserAvatar 
