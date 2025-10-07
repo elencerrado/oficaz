@@ -73,7 +73,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Key Features & Implementations
 - **Dynamic Work Hours Configuration**: Replaced hardcoded 8-hour limits with company-specific settings.
-- **Incomplete Sessions Management**: `getActiveWorkSession` detects and allows closing of incomplete sessions; clock-in automatically closes orphaned break periods.
+- **Incomplete Sessions Management**: Sessions exceeding maxWorkingHoursPerDay + 4 hours margin are automatically marked as 'incomplete' by backend during clock-in; frontend displays status based on database value, not calculations; `getActiveWorkSession` excludes 'incomplete' sessions to allow new clock-ins; orphaned break periods are automatically closed.
 - **Manager Role Permissions System**: Backend API supports manager role assignment with restricted access.
 - **Navigation Performance Optimization**: Eliminated full page reloads and implemented `useScrollReset` hook; SuperAdmin uses `window.history.back()`.
 - **Performance Optimization**: Database optimizations, frontend caching, reduced network overhead, lazy loading, code splitting, async resource loading, critical CSS, resource hints.

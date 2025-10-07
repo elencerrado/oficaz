@@ -129,45 +129,29 @@ export default function TimeTracking() {
 
   // Helper function to check if a specific session is incomplete
   const isSessionIncomplete = useCallback((session: any) => {
-    if (session.clockOut) return false; // Session is completed
+    // Check the authoritative status from the database first
+    if (session.status === 'incomplete') return true;
     
-    const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
-    const sessionStart = new Date(session.clockIn);
-    const now = new Date();
-    const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+    // If session has clockOut, it's completed
+    if (session.clockOut) return false;
     
-    return elapsedHours > maxHours;
-  }, [companySettings]);
+    // No additional frontend calculation needed - backend handles this
+    return false;
+  }, []);
 
-  // Function to check if a day has incomplete sessions (no clockOut after max hours)
+  // Function to check if a day has incomplete sessions
   const calculateSessionStatus = useCallback((dayData: any) => {
     if (!dayData.sessions?.length) {
       return 'complete';
     }
 
-    // Use configured max hours or fallback to 8 hours (as configured in Test Company)
-    const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
-    const maxMilliseconds = maxHours * 60 * 60 * 1000;
-    const now = new Date();
-    
-    // Check for incomplete sessions (no clockOut and exceeded max hours)
-    const hasIncompleteSession = dayData.sessions.some((session: any) => {
-      if (session.clockOut) {
-        // Session is completed, ignore it
-        return false;
-      }
-      
-      // Check if session started more than maxHours ago
-      const sessionStart = new Date(session.clockIn);
-      const timeSinceStart = now.getTime() - sessionStart.getTime();
-      
-      return timeSinceStart > maxMilliseconds;
-    });
-    
-
+    // Check if any session has status 'incomplete' from the database
+    const hasIncompleteSession = dayData.sessions.some((session: any) => 
+      session.status === 'incomplete'
+    );
     
     return hasIncompleteSession ? 'incomplete' : 'complete';
-  }, [companySettings]);
+  }, []);
 
   // All useMutation hooks
   const updateSessionMutation = useMutation({
@@ -1415,51 +1399,44 @@ export default function TimeTracking() {
       );
     }
 
-    // Handle incomplete sessions from past days - show "Incompleto" status
-    if (hasActiveSessions && !isTodaySession) {
-      const activeSession = dayData.sessions.find((session: any) => !session.clockOut);
-      const sessionStart = new Date(activeSession.clockIn);
-      const now = new Date();
-      const elapsedHours = (now.getTime() - sessionStart.getTime()) / (1000 * 60 * 60);
+    // Handle incomplete sessions - check database status
+    const hasIncompleteSession = dayData.sessions.some((session: any) => session.status === 'incomplete');
+    if (hasIncompleteSession && !isTodaySession) {
+      const incompleteSession = dayData.sessions.find((session: any) => session.status === 'incomplete');
+      const sessionStart = new Date(incompleteSession.clockIn);
       const formatTime = (date: Date) => format(date, 'HH:mm');
 
-      // Use configured max hours from company settings (same as calculateSessionStatus function)
-      const maxHours = (companySettings as any)?.workingHoursPerDay || 8;
-      
-      // Only show "Incompleto" if more than maxHours have passed
-      if (elapsedHours > maxHours) {
-        return (
-          <div className="space-y-0">
-            {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
-            <div className="relative h-4"></div>
-            
-            {/* Simple timeline showing incomplete session */}
-            <div className="relative h-5">
-              <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
-                {/* Red bar indicating incomplete session */}
-                <div className="absolute top-0 h-5 bg-red-400 rounded-sm w-full opacity-60" />
-              </div>
-            </div>
-
-            {/* Time labels showing start time and "Incompleto" status */}
-            <div className="relative h-4">
-              {/* Start time */}
-              <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
-              </div>
-              
-              {/* "Incompleto" status */}
-              <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
-                <span className="text-xs font-medium text-red-600 whitespace-nowrap mr-1">
-                  Incompleto
-                </span>
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-              </div>
+      return (
+        <div className="space-y-0">
+          {/* Contenedor para duraciones de descanso ARRIBA de las barras */}
+          <div className="relative h-4"></div>
+          
+          {/* Simple timeline showing incomplete session */}
+          <div className="relative h-5">
+            <div className="h-5 bg-gray-200 rounded-sm relative overflow-hidden">
+              {/* Red bar indicating incomplete session */}
+              <div className="absolute top-0 h-5 bg-red-400 rounded-sm w-full opacity-60" />
             </div>
           </div>
-        );
-      }
+
+          {/* Time labels showing start time and "Incompleto" status */}
+          <div className="relative h-4">
+            {/* Start time */}
+            <div className="absolute flex items-center" style={{ left: '0%', top: '0px' }}>
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+              <span className="text-xs font-medium text-green-700 whitespace-nowrap">{formatTime(sessionStart)}</span>
+            </div>
+            
+            {/* "Incompleto" status */}
+            <div className="absolute flex items-center" style={{ left: '100%', top: '0px', transform: 'translateX(-100%)' }}>
+              <span className="text-xs font-medium text-red-600 whitespace-nowrap mr-1">
+                Incompleto
+              </span>
+              <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     // Calcular el rango total del día (desde primera entrada hasta última salida) - solo sesiones completadas
