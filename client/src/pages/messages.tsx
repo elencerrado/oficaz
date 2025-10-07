@@ -908,7 +908,7 @@ export default function Messages() {
           ) : (
             /* Chat View - Full screen overlay */
             (<div 
-              className="fixed bg-background z-[60] flex flex-col lg:hidden"
+              className="fixed bg-background z-[100] flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -923,7 +923,7 @@ export default function Messages() {
             >
               {/* Chat Header with Back Button - Fixed at top */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0 z-[70]"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0 z-[110]"
                 style={{
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
                   position: 'relative'
@@ -1375,7 +1375,7 @@ export default function Messages() {
       ) : (
             /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed bg-background z-[60]"
+              className="fixed bg-background z-[100]"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -1397,7 +1397,7 @@ export default function Messages() {
                   top: showBanner ? `${bannerHeight}px` : '0',
                   left: 0,
                   right: 0,
-                  zIndex: 70,
+                  zIndex: 110,
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
                   height: '72px' // Fixed header height
                 }}
