@@ -1675,7 +1675,7 @@ export default function Schedules() {
                       /* Layout móvil para modo día - Estructura vertical */
                       <div className="space-y-1 sm:hidden">
                         {/* Header del empleado en móvil */}
-                        <div className="flex items-center gap-3 px-2">
+                        <div className="flex items-center gap-2 px-1">
                           <UserAvatar 
                             fullName={employee.fullName} 
                             size="sm" 
