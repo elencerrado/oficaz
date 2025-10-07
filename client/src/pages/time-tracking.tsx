@@ -2282,7 +2282,9 @@ export default function TimeTracking() {
                     }
                     
                     // Calcular horas totales trabajadas del día menos períodos de descanso
-                    const totalDayHours = dayData.sessions.reduce((total: number, session: any) => {
+                    // Si hay alguna sesión incomplete en el día, no mostrar total (será 0 para mostrar "-")
+                    const hasIncompleteSession = dayData.sessions.some((s: any) => s.status === 'incomplete');
+                    const totalDayHours = hasIncompleteSession ? 0 : dayData.sessions.reduce((total: number, session: any) => {
                       let sessionHours = calculateHours(session.clockIn, session.clockOut);
                       
                       // Validación: Limitar a máximo 24 horas por sesión para evitar overflow
@@ -2664,7 +2666,9 @@ export default function TimeTracking() {
                 }
                 
                 // Calculate total day hours
-                const totalDayHours = dayData.sessions.reduce((total: number, session: any) => {
+                // Si hay alguna sesión incomplete en el día, no mostrar total (será 0 para mostrar "-")
+                const hasIncompleteSession = dayData.sessions.some((s: any) => s.status === 'incomplete');
+                const totalDayHours = hasIncompleteSession ? 0 : dayData.sessions.reduce((total: number, session: any) => {
                   let sessionHours = calculateHours(session.clockIn, session.clockOut);
                   if (sessionHours > 24) sessionHours = 24;
                   const breakHours = session.breakPeriods 
