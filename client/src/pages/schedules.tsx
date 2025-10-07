@@ -1670,7 +1670,7 @@ export default function Schedules() {
               {/* Filas de empleados */}
               {employees.map((employee: Employee) => {
                 return (
-                  <div key={employee.id} className={viewMode === 'day' ? 'py-1 px-3 border-b border-border/50' : 'p-4'}>
+                  <div key={employee.id} className={viewMode === 'day' ? 'py-1 px-3 border-b border-border/50' : 'py-1 px-2'}>
                     {viewMode === 'day' ? (
                       /* Layout móvil para modo día - Estructura vertical */
                       <div className="space-y-1 sm:hidden">
