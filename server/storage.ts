@@ -52,6 +52,7 @@ export interface IStorage {
   updateWorkSession(id: number, updates: Partial<InsertWorkSession>): Promise<WorkSession | undefined>;
   getWorkSessionsByUser(userId: number, limit?: number): Promise<WorkSession[]>;
   getWorkSessionsByCompany(companyId: number): Promise<WorkSession[]>;
+  markOldSessionsAsIncomplete(userId: number): Promise<void>;
 
   // Break periods
   createBreakPeriod(breakPeriod: InsertBreakPeriod): Promise<BreakPeriod>;
@@ -485,6 +486,36 @@ export class DrizzleStorage implements IStorage {
         eq(schema.breakPeriods.userId, userId),
         eq(schema.breakPeriods.status, 'active')
       ));
+  }
+
+  // ⚠️ PROTECTED - Automatically mark old sessions as incomplete
+  async markOldSessionsAsIncomplete(userId: number): Promise<void> {
+    try {
+      // Get user's company settings for working hours
+      const user = await this.getUser(userId);
+      if (!user) return;
+
+      const company = await this.getCompany(user.companyId);
+      const maxHours = company?.workingHoursPerDay || 8;
+      const marginHours = 4; // 4 hours margin
+      const totalMaxHours = maxHours + marginHours;
+      const maxMilliseconds = totalMaxHours * 60 * 60 * 1000;
+      const now = new Date();
+
+      // Find active sessions that exceed max hours + margin
+      await db.update(schema.workSessions)
+        .set({
+          status: 'incomplete'
+        })
+        .where(and(
+          eq(schema.workSessions.userId, userId),
+          eq(schema.workSessions.status, 'active'),
+          isNull(schema.workSessions.clockOut),
+          sql`${now.getTime()} - EXTRACT(EPOCH FROM ${schema.workSessions.clockIn})::bigint * 1000 > ${maxMilliseconds}`
+        ));
+    } catch (error) {
+      console.error('Error marking old sessions as incomplete:', error);
+    }
   }
 
   async updateWorkSessionBreakTime(workSessionId: number): Promise<void> {

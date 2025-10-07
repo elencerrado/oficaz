@@ -3272,7 +3272,10 @@ Responde directamente a este email para contactar con la persona.
     try {
       // Execute clock-in with retry logic for high-concurrency scenarios (1000+ simultaneous users)
       const session = await withDatabaseRetry(async () => {
-        // Check if user already has an active session
+        // ⚠️ FIRST: Mark old sessions as incomplete (maxHours + 4 hours margin)
+        await storage.markOldSessionsAsIncomplete(req.user!.id);
+
+        // Check if user already has an active session (excludes incomplete sessions)
         const activeSession = await storage.getActiveWorkSession(req.user!.id);
         if (activeSession) {
           throw new Error('Already clocked in');
