@@ -908,7 +908,7 @@ export default function Messages() {
           ) : (
             /* Chat View - Full screen overlay */
             (<div 
-              className="fixed bg-background z-[100] flex flex-col lg:hidden"
+              className="fixed bg-background flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -918,15 +918,17 @@ export default function Messages() {
                 right: 0,
                 bottom: 0,
                 height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
-                minHeight: '-webkit-fill-available'
+                minHeight: '-webkit-fill-available',
+                zIndex: 9999
               }}
             >
               {/* Chat Header with Back Button - Fixed at top */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0 z-[110]"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
                 style={{
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
-                  position: 'relative'
+                  position: 'relative',
+                  zIndex: 10000
                 }}
               >
                 <Button
@@ -1375,7 +1377,7 @@ export default function Messages() {
       ) : (
             /* Chat View - Unified Mobile Version */
             (<div 
-              className="fixed bg-background z-[100]"
+              className="fixed bg-background"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
@@ -1386,7 +1388,8 @@ export default function Messages() {
                 bottom: 0,
                 height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
                 minHeight: '-webkit-fill-available',
-                overflow: 'hidden' // Prevent scrolling on main container
+                overflow: 'hidden', // Prevent scrolling on main container
+                zIndex: 9999
               }}
             >
               {/* Chat Header with Back Button - Position fixed within container */}
@@ -1397,7 +1400,7 @@ export default function Messages() {
                   top: showBanner ? `${bannerHeight}px` : '0',
                   left: 0,
                   right: 0,
-                  zIndex: 110,
+                  zIndex: 10000,
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
                   height: '72px' // Fixed header height
                 }}
