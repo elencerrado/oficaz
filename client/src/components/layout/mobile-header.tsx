@@ -120,45 +120,57 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
             
             <DropdownMenuSeparator />
             
-            {/* Theme Slider - Solo iconos */}
+            {/* Theme Slider - Solo iconos con estética de la app */}
             <div className="px-2 py-3">
-              <div className="flex items-center justify-center gap-1 bg-muted/50 rounded-lg p-1">
-                <button
-                  onClick={() => setTheme('light')}
-                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
-                    theme === 'light' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                  }`}
-                  aria-label="Modo claro"
-                  data-testid="theme-light"
-                >
-                  <Sun className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setTheme('system')}
-                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
-                    theme === 'system' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                  }`}
-                  aria-label="Modo sistema"
-                  data-testid="theme-system"
-                >
-                  <Monitor className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setTheme('dark')}
-                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
-                    theme === 'dark' 
-                      ? 'bg-background shadow-sm text-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                  }`}
-                  aria-label="Modo oscuro"
-                  data-testid="theme-dark"
-                >
-                  <Moon className="h-4 w-4" />
-                </button>
+              <div className="relative bg-muted rounded-full p-1">
+                {/* Indicador deslizante */}
+                <div 
+                  className="absolute top-1 bottom-1 bg-background dark:bg-primary rounded-full transition-all duration-200 shadow-sm"
+                  style={{
+                    width: 'calc(33.333% - 4px)',
+                    left: theme === 'light' ? '2px' : theme === 'system' ? 'calc(33.333% + 2px)' : 'calc(66.666% + 2px)',
+                  }}
+                />
+                
+                {/* Botones */}
+                <div className="relative flex items-center">
+                  <button
+                    onClick={() => setTheme('light')}
+                    className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                      theme === 'light' 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    aria-label="Modo claro"
+                    data-testid="theme-light"
+                  >
+                    <Sun className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setTheme('system')}
+                    className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                      theme === 'system' 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    aria-label="Modo sistema"
+                    data-testid="theme-system"
+                  >
+                    <Monitor className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setTheme('dark')}
+                    className={`flex-1 flex items-center justify-center p-2 rounded-full transition-colors z-10 ${
+                      theme === 'dark' 
+                        ? 'text-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                    aria-label="Modo oscuro"
+                    data-testid="theme-dark"
+                  >
+                    <Moon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
             
