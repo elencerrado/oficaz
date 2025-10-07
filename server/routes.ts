@@ -13,6 +13,7 @@ import rateLimit from 'express-rate-limit';
 import Stripe from 'stripe';
 import { storage } from "./storage";
 import { authenticateToken, requireRole, generateToken, AuthRequest } from './middleware/auth';
+import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { db } from './db';
 import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
@@ -3269,24 +3270,30 @@ Responde directamente a este email para contactar con la persona.
   // Work session routes
   app.post('/api/work-sessions/clock-in', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      // Check if user already has an active session
-      const activeSession = await storage.getActiveWorkSession(req.user!.id);
-      if (activeSession) {
-        return res.status(400).json({ message: 'Already clocked in' });
-      }
+      // Execute clock-in with retry logic for high-concurrency scenarios (1000+ simultaneous users)
+      const session = await withDatabaseRetry(async () => {
+        // Check if user already has an active session
+        const activeSession = await storage.getActiveWorkSession(req.user!.id);
+        if (activeSession) {
+          throw new Error('Already clocked in');
+        }
 
-      // ⚠️ PROTECTED - DO NOT MODIFY - Critical cleanup on clock-in
-      // Close any orphaned break periods before starting new session
-      await storage.closeOrphanedBreakPeriods(req.user!.id);
+        // ⚠️ PROTECTED - DO NOT MODIFY - Critical cleanup on clock-in
+        // Close any orphaned break periods before starting new session
+        await storage.closeOrphanedBreakPeriods(req.user!.id);
 
-      const session = await storage.createWorkSession({
-        userId: req.user!.id,
-        clockIn: new Date(),
-        status: 'active',
+        return await storage.createWorkSession({
+          userId: req.user!.id,
+          clockIn: new Date(),
+          status: 'active',
+        });
       });
 
       res.status(201).json(session);
     } catch (error: any) {
+      if (error.message === 'Already clocked in') {
+        return res.status(400).json({ message: error.message });
+      }
       res.status(500).json({ message: error.message });
     }
   });
@@ -3294,10 +3301,16 @@ Responde directamente a este email para contactar con la persona.
   // Regular clock out (current session)
   app.post('/api/work-sessions/clock-out', authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const activeSession = await storage.getActiveWorkSession(req.user!.id);
-      if (!activeSession) {
-        return res.status(400).json({ message: 'No active session found' });
-      }
+      // Execute clock-out with retry logic for high-concurrency scenarios
+      const result = await withDatabaseRetry(async () => {
+        const activeSession = await storage.getActiveWorkSession(req.user!.id);
+        if (!activeSession) {
+          throw new Error('No active session found');
+        }
+        return activeSession;
+      });
+      
+      const activeSession = result;
 
       const clockOut = new Date();
       const clockInTime = new Date(activeSession.clockIn);
