@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, varchar, jsonb, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -276,7 +276,12 @@ export const workSessions = pgTable("work_sessions", {
   status: text("status").notNull().default("active"), // active, completed
   autoCompleted: boolean("auto_completed").notNull().default(false), // true if automatically closed due to missed clock out
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Performance indexes for high-concurrency clock-ins (1000+ simultaneous users)
+  userStatusIdx: index("work_sessions_user_status_idx").on(table.userId, table.status),
+  clockInIdx: index("work_sessions_clock_in_idx").on(table.clockIn),
+  userClockInIdx: index("work_sessions_user_clock_in_idx").on(table.userId, table.clockIn),
+}));
 
 // Break periods table - Para gestionar descansos durante jornada laboral
 export const breakPeriods = pgTable("break_periods", {
@@ -288,7 +293,11 @@ export const breakPeriods = pgTable("break_periods", {
   duration: decimal("duration", { precision: 4, scale: 2 }), // Duration in hours
   status: text("status").notNull().default("active"), // active, completed
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Performance indexes for orphaned break cleanup during clock-in
+  userStatusIdx: index("break_periods_user_status_idx").on(table.userId, table.status),
+  sessionIdx: index("break_periods_session_idx").on(table.workSessionId),
+}));
 
 // Vacation requests table
 export const vacationRequests = pgTable("vacation_requests", {
