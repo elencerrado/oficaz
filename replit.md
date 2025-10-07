@@ -57,6 +57,14 @@ Preferred communication style: Simple, everyday language.
 - **Schema**: Type-safe schema definitions.
 - **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features.
 
+### Performance & Scalability
+- **High Concurrency Support**: Optimized for 1000+ simultaneous clock-ins during peak hours
+- **Connection Pool**: Configured with max 20 connections, min 2, 30s idle timeout, 3s connection timeout
+- **Database Indexes**: Performance indexes on work_sessions (user_id+status, clock_in, user_id+clock_in) and break_periods (user_id+status, work_session_id)
+- **Retry Logic**: Database operations use exponential backoff retry (3 attempts, 50ms-200ms delays) for timeout resilience
+- **Query Optimization**: Clock-in endpoint uses 3 optimized indexed queries for maximum performance
+- **Scalability Considerations**: Current architecture handles 500-1000 simultaneous users; further scaling requires Neon Scale plan (~200 connections) and appropriate Replit plan
+
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
 - **Production Build**: Vite for frontend, esbuild for backend.
