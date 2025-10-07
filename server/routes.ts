@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -9101,6 +9102,103 @@ Responde directamente a este email para contactar con la persona.
         success: false, 
         message: 'Error interno del servidor' 
       });
+    }
+  });
+
+  // Stripe Webhook - Handle payment events (raw body required for signature verification)
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET_TEST;
+
+    if (!webhookSecret) {
+      console.error('⚠️ STRIPE WEBHOOK: No webhook secret configured');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      // Verify webhook signature
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig as string,
+        webhookSecret
+      );
+    } catch (err: any) {
+      console.error(`⚠️ STRIPE WEBHOOK: Signature verification failed:`, err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    console.log(`📨 STRIPE WEBHOOK: Received event ${event.type}`);
+
+    try {
+      // Handle invoice payment succeeded - Update nextPaymentDate
+      if (event.type === 'invoice.payment_succeeded') {
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        console.log(`💳 STRIPE WEBHOOK: Payment succeeded for invoice ${invoice.id}`);
+        console.log(`   - Customer: ${invoice.customer}`);
+        console.log(`   - Amount: €${(invoice.amount_paid || 0) / 100}`);
+
+        // Only process subscription-related invoices
+        if (invoice.customer) {
+          // Find subscription by Stripe customer ID
+          const subscription = await db.query.subscriptions.findFirst({
+            where: eq(subscriptions.stripeCustomerId, invoice.customer as string),
+          });
+
+          if (subscription) {
+            // Calculate next payment date (1 month from now)
+            const nextPaymentDate = new Date();
+            nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
+
+            // Update subscription with new next payment date
+            await db.update(subscriptions)
+              .set({ 
+                nextPaymentDate: nextPaymentDate,
+                status: 'active',
+                updatedAt: new Date()
+              })
+              .where(eq(subscriptions.id, subscription.id));
+
+            console.log(`✅ STRIPE WEBHOOK: Updated nextPaymentDate to ${nextPaymentDate.toISOString()} for company ${subscription.companyId}`);
+          } else {
+            console.warn(`⚠️ STRIPE WEBHOOK: No subscription found for customer ${invoice.customer}`);
+          }
+        }
+      }
+
+      // Handle subscription deleted/canceled
+      if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object as Stripe.Subscription;
+        
+        console.log(`🚫 STRIPE WEBHOOK: Subscription deleted ${subscription.id}`);
+
+        await db.update(subscriptions)
+          .set({ 
+            status: 'cancelled',
+            endDate: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(subscriptions.stripeSubscriptionId, subscription.id));
+
+        console.log(`✅ STRIPE WEBHOOK: Marked subscription as cancelled`);
+      }
+
+      // Handle payment failed
+      if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        console.log(`❌ STRIPE WEBHOOK: Payment failed for invoice ${invoice.id}`);
+        console.log(`   - Customer: ${invoice.customer}`);
+        
+        // You could add logic here to notify the customer or update status
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error('❌ STRIPE WEBHOOK: Error processing webhook:', error);
+      res.status(500).json({ error: 'Webhook processing failed' });
     }
   });
 
