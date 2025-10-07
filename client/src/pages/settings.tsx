@@ -31,7 +31,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, Palette, MessageSquare, Send, Paperclip } from 'lucide-react';
+import { CreditCard, Crown, AlertCircle, CheckCircle, Lightbulb, Info, MessageSquare, Send, Paperclip } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth';
@@ -44,8 +44,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { useTheme } from '@/lib/theme-provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { DatePickerDayEmployee } from '@/components/ui/date-picker';
@@ -3311,25 +3309,6 @@ export default function Settings() {
                         </p>
                       </div>
                       <ChangePasswordModalComponent />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tema de la interfaz */}
-                <div className="space-y-4 pt-4 border-t">
-                  <div>
-                    <h3 className="text-lg font-medium text-foreground mb-3 flex items-center">
-                      <Palette className="h-5 w-5 mr-2" />
-                      Apariencia
-                    </h3>
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div>
-                        <Label className="text-sm font-medium text-foreground">Tema de la interfaz</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Elige entre modo claro, oscuro o automático según tu sistema
-                        </p>
-                      </div>
-                      <ThemeToggle />
                     </div>
                   </div>
                 </div>
