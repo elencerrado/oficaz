@@ -923,9 +923,10 @@ export default function Messages() {
             >
               {/* Chat Header with Back Button - Fixed at top */}
               <div 
-                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0"
+                className="flex items-center space-x-3 p-4 border-b border-border bg-background flex-shrink-0 z-[70]"
                 style={{
-                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))` // Padding normal + espacio del notch
+                  paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
+                  position: 'relative'
                 }}
               >
                 <Button
@@ -1396,7 +1397,7 @@ export default function Messages() {
                   top: showBanner ? `${bannerHeight}px` : '0',
                   left: 0,
                   right: 0,
-                  zIndex: 10,
+                  zIndex: 70,
                   paddingTop: `calc(16px + env(safe-area-inset-top, 0px))`, // Padding normal + espacio del notch
                   height: '72px' // Fixed header height
                 }}
