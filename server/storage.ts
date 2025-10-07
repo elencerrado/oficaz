@@ -499,10 +499,12 @@ export class DrizzleStorage implements IStorage {
       const maxHours = company?.workingHoursPerDay || 8;
       const marginHours = 4; // 4 hours margin
       const totalMaxHours = maxHours + marginHours;
-      const maxMilliseconds = totalMaxHours * 60 * 60 * 1000;
       const now = new Date();
+      
+      // Calculate cutoff time (now - maxHours - marginHours)
+      const cutoffTime = new Date(now.getTime() - (totalMaxHours * 60 * 60 * 1000));
 
-      // Find active sessions that exceed max hours + margin
+      // Find and mark sessions that started before cutoff time as incomplete
       await db.update(schema.workSessions)
         .set({
           status: 'incomplete'
@@ -511,7 +513,7 @@ export class DrizzleStorage implements IStorage {
           eq(schema.workSessions.userId, userId),
           eq(schema.workSessions.status, 'active'),
           isNull(schema.workSessions.clockOut),
-          sql`${now.getTime()} - EXTRACT(EPOCH FROM ${schema.workSessions.clockIn})::bigint * 1000 > ${maxMilliseconds}`
+          sql`${schema.workSessions.clockIn} < ${cutoffTime}`
         ));
     } catch (error) {
       console.error('Error marking old sessions as incomplete:', error);

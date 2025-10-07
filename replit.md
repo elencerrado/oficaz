@@ -64,6 +64,7 @@ Preferred communication style: Simple, everyday language.
 - **Retry Logic**: Database operations use exponential backoff retry (3 attempts, 50ms-200ms delays) for timeout resilience
 - **Query Optimization**: Clock-in endpoint uses 3 optimized indexed queries for maximum performance
 - **Scalability Considerations**: Current architecture handles 500-1000 simultaneous users; further scaling requires Neon Scale plan (~200 connections) and appropriate Replit plan
+- **Automatic Session Cleanup**: Sessions exceeding maxWorkingHoursPerDay + 4 hours margin are automatically marked as 'incomplete' during next clock-in attempt, preventing blocking issues
 
 ### Deployment Strategy
 - **Development Environment**: Node.js 20, PostgreSQL 16 (Replit managed), Vite dev server.
