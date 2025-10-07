@@ -2423,19 +2423,8 @@ export default function TimeTracking() {
                           )}
                         </td>
                         <td className="py-2 px-4">
-                          <div className="space-y-1">
-                            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-                              {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
-                            </div>
-                            {/* Show status badge for completed sessions when they exceed work hours */}
-                            {totalDayHours > 0 && (() => {
-                              const status = calculateSessionStatus(dayData);
-                              return status === 'incomplete' ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  Incompleto
-                                </Badge>
-                              ) : null;
-                            })()}
+                          <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                            {totalDayHours > 0 ? `${totalDayHours.toFixed(1)}h` : '-'}
                           </div>
                         </td>
                         <td className="py-2 px-4 text-center">
