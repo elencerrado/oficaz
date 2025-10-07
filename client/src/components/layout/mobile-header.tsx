@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut, Sun, Moon, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
 import { useFeatureCheck } from '@/hooks/use-feature-check';
 import { useDemoBanner } from '@/hooks/use-demo-banner';
+import { useTheme } from '@/lib/theme-provider';
 import oficazLogo from '@assets/oficaz logo_1750516757063.png';
 
 interface MobileHeaderProps {
@@ -16,6 +17,7 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { user, company, logout } = useAuth();
   const { hasAccess } = useFeatureCheck();
   const { showBanner } = useDemoBanner();
+  const { theme, setTheme } = useTheme();
   
   // Lógica inteligente: mostrar logo solo si tiene logo Y función habilitada
   const shouldShowLogo = company?.logoUrl && hasAccess('logoUpload');
@@ -115,6 +117,53 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
               <p className="text-xs text-muted-foreground">{user?.companyEmail}</p>
               <p className="text-xs text-muted-foreground opacity-75 capitalize">{user?.role}</p>
             </div>
+            
+            <DropdownMenuSeparator />
+            
+            {/* Theme Slider - Solo iconos */}
+            <div className="px-2 py-3">
+              <div className="flex items-center justify-center gap-1 bg-muted/50 rounded-lg p-1">
+                <button
+                  onClick={() => setTheme('light')}
+                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
+                    theme === 'light' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                  }`}
+                  aria-label="Modo claro"
+                  data-testid="theme-light"
+                >
+                  <Sun className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setTheme('system')}
+                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
+                    theme === 'system' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                  }`}
+                  aria-label="Modo sistema"
+                  data-testid="theme-system"
+                >
+                  <Monitor className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setTheme('dark')}
+                  className={`flex-1 flex items-center justify-center p-2 rounded-md transition-all ${
+                    theme === 'dark' 
+                      ? 'bg-background shadow-sm text-foreground' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                  }`}
+                  aria-label="Modo oscuro"
+                  data-testid="theme-dark"
+                >
+                  <Moon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            
+            <DropdownMenuSeparator />
+            
             <DropdownMenuItem onClick={logout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Cerrar sesión
