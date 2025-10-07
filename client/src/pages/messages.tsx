@@ -907,17 +907,26 @@ export default function Messages() {
             </div>)
           ) : (
             /* Chat View - Full screen overlay */
-            (<div 
+            (<>
+            <style>{`
+              /* Ocultar mobile-header cuando el chat está abierto */
+              @media (max-width: 1023px) {
+                body header[class*="z-40"] {
+                  display: none !important;
+                }
+              }
+            `}</style>
+            <div 
               className="fixed bg-background flex flex-col lg:hidden"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                top: showBanner ? `${bannerHeight}px` : '0',
+                top: '0',
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
+                height: '100vh',
                 minHeight: '-webkit-fill-available',
                 zIndex: 9999
               }}
@@ -1079,7 +1088,8 @@ export default function Messages() {
                   <Send className="icon-sm" />
                 </Button>
               </div>
-            </div>)
+            </div>
+            </>)
           )}
         </div>
         {/* Modal for new chat - Group message functionality */}
@@ -1376,17 +1386,26 @@ export default function Messages() {
         </>)
       ) : (
             /* Chat View - Unified Mobile Version */
-            (<div 
+            (<>
+            <style>{`
+              /* Ocultar mobile-header cuando el chat está abierto */
+              @media (max-width: 1023px) {
+                body header[class*="z-40"] {
+                  display: none !important;
+                }
+              }
+            `}</style>
+            <div 
               className="fixed bg-background"
               style={{ 
                 touchAction: 'manipulation',
                 overscrollBehavior: 'none',
                 position: 'fixed',
-                top: showBanner ? `${bannerHeight}px` : '0',
+                top: '0',
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: showBanner ? `calc(100vh - ${bannerHeight}px)` : '100vh',
+                height: '100vh',
                 minHeight: '-webkit-fill-available',
                 overflow: 'hidden', // Prevent scrolling on main container
                 zIndex: 9999
@@ -1559,7 +1578,8 @@ export default function Messages() {
                   <Send className="icon-sm" />
                 </Button>
               </div>
-            </div>)
+            </div>
+            </>)
       )}
     </div>
   );
