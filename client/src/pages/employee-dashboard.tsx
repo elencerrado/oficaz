@@ -1012,13 +1012,31 @@ export default function EmployeeDashboard() {
                   ? 'text-yellow-400'
                   : 'text-red-400'
             }`}>
-              {sessionStatus.isActive 
-                ? activeBreak 
-                  ? '🟡 En descanso' 
-                  : '🟢 Trabajando...'
-                : sessionStatus.isIncomplete
-                  ? '🟡 Sesión incompleta'
-                  : '🔴 Fuera del trabajo'}
+              <div className="flex items-center justify-center gap-2">
+                {sessionStatus.isActive ? (
+                  activeBreak ? (
+                    <>
+                      <div className="w-2.5 h-2.5 rounded-full bg-orange-400"></div>
+                      <span>En descanso</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                      <span>Trabajando...</span>
+                    </>
+                  )
+                ) : sessionStatus.isIncomplete ? (
+                  <>
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                    <span>Sesión incompleta</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                    <span>Fuera del trabajo</span>
+                  </>
+                )}
+              </div>
             </div>
             
             {temporaryMessage ? (
