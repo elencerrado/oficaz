@@ -819,12 +819,12 @@ export default function EmployeeDashboard() {
                     const currentCompanyAlias = urlParts[0] || company?.alias || 'test';
                     handleNavigation(`/${currentCompanyAlias}/usuario`);
                   }} 
-                  className="text-white hover:text-blue-300 hover:bg-blue-500/20"
+                  className="text-white hover:text-blue-300 hover:bg-blue-500/20 cursor-pointer"
                 >
                   <User className="mr-2 h-4 w-4" />
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout} className="text-red-400 hover:text-red-300 hover:bg-red-500/20">
+                <DropdownMenuItem onClick={logout} className="text-white hover:text-red-300 hover:bg-red-500/20 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
