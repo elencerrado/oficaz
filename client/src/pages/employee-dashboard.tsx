@@ -775,7 +775,7 @@ export default function EmployeeDashboard() {
   }, [user, startAlarmService]);
 
   return (
-    <div className="h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
+    <div className="dark h-screen bg-employee-gradient text-white flex flex-col overflow-hidden">
       {/* Fixed Content Container - Sin scroll */}
       <div className="flex-1 flex flex-col p-4">
         {/* Header - Compacto */}
@@ -1340,7 +1340,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           {!showForm && (
             <Button
               onClick={() => setShowForm(true)}
-              className="w-full mb-4 bg-[#007AFF] hover:bg-[#0056CC]"
+              className="w-full mb-4 bg-[#007AFF] hover:bg-[#0056CC] text-white"
             >
               + Nueva Alarma
             </Button>
@@ -1426,7 +1426,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 bg-[#007AFF] hover:bg-[#0056CC]"
+                  className="flex-1 bg-[#007AFF] hover:bg-[#0056CC] text-white"
                 >
                   {isLoading ? 'Guardando...' : editingAlarm ? 'Actualizar' : 'Crear'}
                 </Button>
@@ -1443,6 +1443,7 @@ function WorkAlarmsModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
                       soundEnabled: true
                     });
                   }}
+                  className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600 hover:text-white"
                 >
                   Cancelar
                 </Button>

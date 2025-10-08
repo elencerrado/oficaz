@@ -1274,7 +1274,7 @@ export default function Messages() {
 
   // Employee view - Responsive design for desktop and mobile
   return (
-    <div className="min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
+    <div className="dark min-h-screen bg-employee-gradient text-white flex flex-col page-scroll">
       {!selectedChat ? (
         /* Employee Dashboard - List of managers - RESPONSIVE VERSION */
         (<>
