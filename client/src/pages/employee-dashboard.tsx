@@ -655,7 +655,8 @@ export default function EmployeeDashboard() {
   };
 
   const handleClockAction = () => {
-    if (sessionStatus.isActive || sessionStatus.isIncomplete) {
+    // Solo hacer clock-out si hay sesión ACTIVA (no incompleta)
+    if (sessionStatus.isActive) {
       // Si hay un descanso activo, terminarlo primero antes de salir
       if (activeBreak) {
         endBreakMutation.mutate(undefined, {
@@ -668,6 +669,7 @@ export default function EmployeeDashboard() {
         clockOutMutation.mutate();
       }
     } else {
+      // Si no hay sesión activa (incluso si hay sesión incompleta), hacer clock-in
       clockInMutation.mutate();
     }
   };
