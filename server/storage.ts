@@ -2781,21 +2781,33 @@ export class DrizzleStorage implements IStorage {
       .from(schema.emailCampaigns)
       .orderBy(desc(schema.emailCampaigns.createdAt));
     
-    // Add sentEmails array to each campaign
-    const campaignsWithSentEmails = await Promise.all(
+    // Calculate hasNewRecipients for each campaign
+    const campaignsWithStatus = await Promise.all(
       campaigns.map(async (campaign) => {
-        const sentEmails = await db.select({ email: schema.emailCampaignSends.recipientEmail })
+        const selectedEmails = campaign.selectedEmails || [];
+        
+        if (selectedEmails.length === 0) {
+          return { ...campaign, hasNewRecipients: false };
+        }
+        
+        // Get emails already sent for this campaign
+        const sentRecords = await db.select({ email: schema.emailCampaignSends.recipientEmail })
           .from(schema.emailCampaignSends)
           .where(eq(schema.emailCampaignSends.campaignId, campaign.id));
         
+        const sentEmails = new Set(sentRecords.map(s => s.email));
+        const newEmails = selectedEmails.filter((email: string) => !sentEmails.has(email));
+        
         return {
           ...campaign,
-          sentEmails: sentEmails.map(s => s.email)
+          hasNewRecipients: newEmails.length > 0,
+          newRecipientsCount: newEmails.length,
+          sentRecipientsCount: sentEmails.size
         };
       })
     );
     
-    return campaignsWithSentEmails;
+    return campaignsWithStatus;
   }
 
   async getEmailCampaignById(id: number): Promise<any | undefined> {
