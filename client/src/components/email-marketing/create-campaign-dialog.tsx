@@ -60,7 +60,7 @@ export function CreateCampaignDialog() {
           <!-- Logo Header with Subtitle -->
           <tr>
             <td style="background: #007AFF; padding: ${content.subtitle ? '30px 20px 20px' : '30px 20px'}; text-align: center;">
-              <img src="https://oficaz.es/email-logo-white.png" alt="Oficaz Logo" height="40" style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto;" />
+              <img src="${window.location.protocol}//${window.location.host}/email-logo-white.png" alt="Oficaz Logo" height="40" style="height: 40px; width: auto; max-width: 200px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto;" />
               <!-- Subtitle -->
               ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 14px; line-height: 1.5; font-weight: 500;">${content.subtitle.replace(/\n/g, '<br/>')}</p>` : ''}
             </td>
