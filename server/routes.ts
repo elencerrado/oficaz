@@ -2226,6 +2226,10 @@ Responde directamente a este email para contactar con la persona.
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
+      // Extract email campaign tracking parameters
+      const campaignId = req.body.campaignId || req.body.campaign || null;
+      const registrationSource = req.body.source || req.body.registrationSource || 'direct';
+
       // 🏢 Create company with DEFAULT VALUES (prevents transactional inconsistency)
       const company = await storage.createCompany({
         name: data.companyName,
@@ -2239,7 +2243,14 @@ Responde directamente a este email para contactar con la persona.
         // 🔒 DEFAULT VALUES - Benefits applied only AFTER successful redemption
         trialDurationDays: 14, // Default trial duration
         usedPromotionalCode: null, // No code until successfully redeemed
+        // 📊 Email marketing conversion tracking
+        emailCampaignId: campaignId ? parseInt(campaignId) : null,
+        registrationSource: registrationSource,
       });
+      
+      if (campaignId) {
+        console.log(`📊 Company registered from email campaign: ${campaignId} (source: ${registrationSource})`);
+      }
 
       // Create admin user
       const user = await storage.createUser({
@@ -2955,7 +2966,11 @@ Responde directamente a este email para contactar con la persona.
         }
       }
 
-      // Create company with promotional code data
+      // Extract email campaign tracking parameters
+      const campaignId = req.body.campaignId || req.body.campaign || null;
+      const registrationSource = req.body.source || req.body.registrationSource || 'direct';
+      
+      // Create company with promotional code data and campaign tracking
       const company = await storage.createCompany({
         name: data.companyName,
         cif: data.cif,
@@ -2968,7 +2983,14 @@ Responde directamente a este email para contactar con la persona.
         // 🎁 Apply promotional code benefits
         trialDurationDays: appliedTrialDays,
         usedPromotionalCode: data.promotionalCode?.trim() || null,
+        // 📊 Email marketing conversion tracking
+        emailCampaignId: campaignId ? parseInt(campaignId) : null,
+        registrationSource: registrationSource,
       });
+      
+      if (campaignId) {
+        console.log(`📊 Company registered from email campaign: ${campaignId} (source: ${registrationSource})`);
+      }
 
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);

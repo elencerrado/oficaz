@@ -336,6 +336,11 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       setShowDemoLoading(true);
       setIsBackendComplete(false); // Reset completion state
       
+      // Extract campaign tracking parameters from URL
+      const urlParams = new URLSearchParams(search);
+      const campaignId = urlParams.get('campaign');
+      const registrationSource = urlParams.get('source') || 'direct';
+      
       // Prepare final registration data
       const finalData = { 
         ...formData, 
@@ -343,10 +348,16 @@ export default function Register({ byInvitation = false, invitationEmail, invita
         verificationToken: byInvitation ? null : verificationToken,
         invitationToken: byInvitation ? invitationToken : null,
         // Set contactName to adminFullName if sameAsAdmin is true
-        contactName: formData.sameAsAdmin ? formData.adminFullName : formData.contactName
+        contactName: formData.sameAsAdmin ? formData.adminFullName : formData.contactName,
+        // 📊 Email marketing conversion tracking
+        campaignId: campaignId,
+        source: registrationSource,
       };
       
       console.log('Final registration data:', finalData);
+      if (campaignId) {
+        console.log(`📊 Registration from email campaign: ${campaignId} (source: ${registrationSource})`);
+      }
       
       try {
         await register(finalData);
