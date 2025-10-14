@@ -8042,20 +8042,24 @@ Responde directamente a este email para contactar con la persona.
 
       for (const email of selectedEmails) {
         try {
+          // First, create the send record to get the ID
+          const [sendRecord] = await db.insert(schema.emailCampaignSends).values({
+            campaignId,
+            recipientEmail: email,
+            recipientType: 'user',
+            status: 'sent',
+            sentAt: new Date(),
+          }).returning();
+
+          // Add tracking pixel to HTML
+          const trackingPixel = `<img src="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://oficaz.replit.app'}/api/track/open/${sendRecord.id}" width="1" height="1" style="display:none;" alt="" />`;
+          const htmlWithTracking = campaign.htmlContent + trackingPixel;
+
           await transporter.sendMail({
             from: '"Oficaz" <soy@oficaz.es>',
             to: email,
             subject: campaign.subject,
-            html: campaign.htmlContent,
-          });
-
-          // Record successful send
-          await db.insert(schema.emailCampaignSends).values({
-            campaignId,
-            recipientEmail: email,
-            recipientType: 'user', // We'll improve this later
-            status: 'sent',
-            sentAt: new Date(),
+            html: htmlWithTracking,
           });
           
           successCount++;
