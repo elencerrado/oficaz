@@ -140,27 +140,11 @@ export function CreateCampaignDialog() {
           </div>
 
           <div className="space-y-3">
-            <Label className="text-white">Destinatarios - Usuarios Registrados</Label>
+            <Label className="text-white">Destinatarios</Label>
             <RecipientSelector
               selectedEmails={formData.selectedEmails}
               onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
             />
-          </div>
-
-          <div className="border border-white/20 rounded-lg p-4 bg-white/5">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="prospects"
-                checked={formData.includeProspects}
-                onCheckedChange={(checked) => 
-                  setFormData({ ...formData, includeProspects: checked as boolean })
-                }
-                className="border-white/30 data-[state=checked]:bg-blue-600"
-              />
-              <label htmlFor="prospects" className="text-sm cursor-pointer text-white">
-                Incluir Prospects Externos
-              </label>
-            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
