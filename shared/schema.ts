@@ -43,6 +43,10 @@ export const companies = pgTable("companies", {
   trialDurationDays: integer("trial_duration_days").default(14).notNull(), // Días de período de prueba (por defecto 14)
   usedPromotionalCode: varchar("used_promotional_code", { length: 50 }), // Código promocional utilizado durante el registro
   
+  // Email marketing conversion tracking
+  emailCampaignId: integer("email_campaign_id"), // ID de la campaña de email de la que vino el registro
+  registrationSource: varchar("registration_source", { length: 50 }).default("direct"), // direct, email_campaign, invitation
+  
   // Account deletion fields - 30 day grace period
   scheduledForDeletion: boolean("scheduled_for_deletion").default(false).notNull(),
   deletionScheduledAt: timestamp("deletion_scheduled_at"),
