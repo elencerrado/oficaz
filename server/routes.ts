@@ -8097,7 +8097,8 @@ Responde directamente a este email para contactar con la persona.
         users = await db.execute(sql`
           SELECT DISTINCT ON (c.id)
             u.company_email as email, 
-            c.name as "companyName"
+            c.name as "companyName",
+            c.marketing_emails_consent as "marketingConsent"
           FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
           INNER JOIN users u ON c.id = u.company_id
@@ -8110,7 +8111,8 @@ Responde directamente a este email para contactar con la persona.
         users = await db.execute(sql`
           SELECT DISTINCT ON (c.id)
             u.company_email as email, 
-            c.name as "companyName"
+            c.name as "companyName",
+            c.marketing_emails_consent as "marketingConsent"
           FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
           INNER JOIN users u ON c.id = u.company_id
@@ -8123,7 +8125,8 @@ Responde directamente a este email para contactar con la persona.
         users = await db.execute(sql`
           SELECT DISTINCT ON (c.id)
             u.company_email as email, 
-            c.name as "companyName"
+            c.name as "companyName",
+            c.marketing_emails_consent as "marketingConsent"
           FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
           INNER JOIN users u ON c.id = u.company_id
@@ -8136,7 +8139,8 @@ Responde directamente a este email para contactar con la persona.
         users = await db.execute(sql`
           SELECT DISTINCT ON (c.id)
             u.company_email as email, 
-            c.name as "companyName"
+            c.name as "companyName",
+            c.marketing_emails_consent as "marketingConsent"
           FROM companies c
           INNER JOIN subscriptions s ON c.id = s.company_id
           INNER JOIN users u ON c.id = u.company_id

@@ -8,9 +8,10 @@ import { Loader2 } from 'lucide-react';
 interface RecipientSelectorProps {
   selectedEmails: string[];
   onSelectionChange: (emails: string[]) => void;
+  audienceType?: 'subscribers' | 'one_time';
 }
 
-export function RecipientSelector({ selectedEmails, onSelectionChange }: RecipientSelectorProps) {
+export function RecipientSelector({ selectedEmails, onSelectionChange, audienceType = 'one_time' }: RecipientSelectorProps) {
   // Fetch users by category (parallel queries) - force fresh data
   const { data: activeUsers = [], isLoading: loadingActive } = useQuery({
     queryKey: ['/api/super-admin/recipients', 'active'],
@@ -127,11 +128,25 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
   };
 
   const selectAll = () => {
+    // Filtrar usuarios según tipo de audiencia antes de seleccionar todos
+    const filteredActiveUsers = audienceType === 'subscribers' 
+      ? activeUsers.filter(u => u.marketingConsent === true) 
+      : activeUsers;
+    const filteredTrialUsers = audienceType === 'subscribers' 
+      ? trialUsers.filter(u => u.marketingConsent === true) 
+      : trialUsers;
+    const filteredBlockedUsers = audienceType === 'subscribers' 
+      ? blockedUsers.filter(u => u.marketingConsent === true) 
+      : blockedUsers;
+    const filteredCancelledUsers = audienceType === 'subscribers' 
+      ? cancelledUsers.filter(u => u.marketingConsent === true) 
+      : cancelledUsers;
+      
     const allEmails = [
-      ...activeUsers.map(u => u.email),
-      ...trialUsers.map(u => u.email),
-      ...blockedUsers.map(u => u.email),
-      ...cancelledUsers.map(u => u.email),
+      ...filteredActiveUsers.map(u => u.email),
+      ...filteredTrialUsers.map(u => u.email),
+      ...filteredBlockedUsers.map(u => u.email),
+      ...filteredCancelledUsers.map(u => u.email),
       ...prospects.map(p => p.email)
     ];
     onSelectionChange(allEmails);
@@ -149,15 +164,29 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
     );
   }
 
+  // Filtrar usuarios según el tipo de audiencia
+  const filteredActiveUsers = audienceType === 'subscribers' 
+    ? activeUsers.filter(u => u.marketingConsent === true) 
+    : activeUsers;
+  const filteredTrialUsers = audienceType === 'subscribers' 
+    ? trialUsers.filter(u => u.marketingConsent === true) 
+    : trialUsers;
+  const filteredBlockedUsers = audienceType === 'subscribers' 
+    ? blockedUsers.filter(u => u.marketingConsent === true) 
+    : blockedUsers;
+  const filteredCancelledUsers = audienceType === 'subscribers' 
+    ? cancelledUsers.filter(u => u.marketingConsent === true) 
+    : cancelledUsers;
+
   const categories = [
-    { key: 'active', label: 'Suscripciones Activas', users: activeUsers, color: 'blue' },
-    { key: 'trial', label: 'En Período de Prueba', users: trialUsers, color: 'yellow' },
-    { key: 'blocked', label: 'Bloqueadas', users: blockedUsers, color: 'red' },
-    { key: 'cancelled', label: 'Canceladas', users: cancelledUsers, color: 'gray' },
+    { key: 'active', label: 'Suscripciones Activas', users: filteredActiveUsers, color: 'blue' },
+    { key: 'trial', label: 'En Período de Prueba', users: filteredTrialUsers, color: 'yellow' },
+    { key: 'blocked', label: 'Bloqueadas', users: filteredBlockedUsers, color: 'red' },
+    { key: 'cancelled', label: 'Canceladas', users: filteredCancelledUsers, color: 'gray' },
     { key: 'prospects', label: 'Prospects Externos', users: prospects, color: 'purple' },
   ];
 
-  const totalEmails = activeUsers.length + trialUsers.length + blockedUsers.length + cancelledUsers.length + prospects.length;
+  const totalEmails = filteredActiveUsers.length + filteredTrialUsers.length + filteredBlockedUsers.length + filteredCancelledUsers.length + prospects.length;
   const allSelected = totalEmails > 0 && selectedEmails.length === totalEmails;
 
   return (
