@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 interface RecipientSelectorProps {
@@ -79,7 +80,24 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
     gcTime: 0
   });
 
-  const isLoading = loadingActive || loadingTrial || loadingBlocked || loadingCancelled;
+  const { data: prospects = [], isLoading: loadingProspects } = useQuery({
+    queryKey: ['/api/super-admin/email-prospects'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch('/api/super-admin/email-prospects', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch prospects');
+      return response.json();
+    },
+    staleTime: 0,
+    gcTime: 0
+  });
+
+  const isLoading = loadingActive || loadingTrial || loadingBlocked || loadingCancelled || loadingProspects;
 
   const toggleEmail = (email: string) => {
     if (selectedEmails.includes(email)) {
@@ -108,6 +126,21 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
     }
   };
 
+  const selectAll = () => {
+    const allEmails = [
+      ...activeUsers.map(u => u.email),
+      ...trialUsers.map(u => u.email),
+      ...blockedUsers.map(u => u.email),
+      ...cancelledUsers.map(u => u.email),
+      ...prospects.map(p => p.email)
+    ];
+    onSelectionChange(allEmails);
+  };
+
+  const deselectAll = () => {
+    onSelectionChange([]);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -121,10 +154,29 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
     { key: 'trial', label: 'En Período de Prueba', users: trialUsers, color: 'yellow' },
     { key: 'blocked', label: 'Bloqueadas', users: blockedUsers, color: 'red' },
     { key: 'cancelled', label: 'Canceladas', users: cancelledUsers, color: 'gray' },
+    { key: 'prospects', label: 'Prospects Externos', users: prospects, color: 'purple' },
   ];
+
+  const totalEmails = activeUsers.length + trialUsers.length + blockedUsers.length + cancelledUsers.length + prospects.length;
+  const allSelected = totalEmails > 0 && selectedEmails.length === totalEmails;
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-white/60">
+          {selectedEmails.length} de {totalEmails} seleccionados
+        </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={allSelected ? deselectAll : selectAll}
+          className="text-blue-400 hover:text-blue-300 hover:bg-white/10"
+        >
+          {allSelected ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+        </Button>
+      </div>
+      
       <Accordion type="multiple" className="w-full space-y-2">
         {categories.map(({ key, label, users, color }) => {
           if (users.length === 0) return null;
@@ -174,7 +226,9 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
                         onClick={() => toggleEmail(user.email)}
                       >
                         <p className="text-sm text-white truncate">{user.email}</p>
-                        <p className="text-xs text-white/50 truncate">{user.companyName}</p>
+                        {user.companyName && (
+                          <p className="text-xs text-white/50 truncate">{user.companyName}</p>
+                        )}
                       </div>
                     </div>
                   ))}
