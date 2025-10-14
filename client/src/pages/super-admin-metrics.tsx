@@ -1,18 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
 import { getAuthHeaders } from "@/lib/auth";
 import { 
   Building2, 
   Users, 
   TrendingUp, 
   Euro,
-  ArrowLeft,
   Calendar,
   CreditCard,
   BarChart3
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SuperAdminLayout } from "@/components/layout/super-admin-layout";
 
 interface SuperAdminStats {
   totalCompanies: number;
@@ -30,8 +28,6 @@ interface SuperAdminStats {
 }
 
 export default function SuperAdminMetrics() {
-  const [, setLocation] = useLocation();
-
   const { data: stats, isLoading } = useQuery<SuperAdminStats>({
     queryKey: ['/api/super-admin/stats'],
     queryFn: async () => {
@@ -45,33 +41,25 @@ export default function SuperAdminMetrics() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white/70">Cargando métricas...</p>
+      <SuperAdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white/70">Cargando métricas...</p>
+          </div>
         </div>
-      </div>
+      </SuperAdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <SuperAdminLayout>
       {/* Header */}
       <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation('/super-admin/dashboard')}
-              className="text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Métricas y Estadísticas</h1>
-              <p className="text-white/60">Análisis completo del sistema</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Métricas y Estadísticas</h1>
+            <p className="text-white/60">Análisis completo del sistema</p>
           </div>
         </div>
       </header>
@@ -225,6 +213,6 @@ export default function SuperAdminMetrics() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }

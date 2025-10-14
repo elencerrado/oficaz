@@ -106,20 +106,19 @@ export function SuperAdminSidebar({ isOpen, onClose }: SuperAdminSidebarProps) {
               
               return (
                 <li key={item.name}>
-                  <Link href={item.href}>
-                    <a
-                      onClick={handleLinkClick}
-                      className={`
-                        flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                        ${isActive 
-                          ? 'bg-white/20 text-white shadow-lg' 
-                          : 'text-white/70 hover:bg-white/10 hover:text-white'
-                        }
-                      `}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.name}</span>
-                    </a>
+                  <Link 
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+                      ${isActive 
+                        ? 'bg-white/20 text-white shadow-lg' 
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      }
+                    `}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.name}</span>
                   </Link>
                 </li>
               );

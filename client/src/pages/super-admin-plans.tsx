@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
+import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { 
   Pencil, Euro, Users, Settings, MessageSquare, FileText, 
   Calendar, Clock, BarChart3, Palette, Upload, Zap, Bell
@@ -250,9 +251,11 @@ export default function SuperAdminPlans() {
 
   if (plansLoading || featuresLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
-      </div>
+      <SuperAdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+        </div>
+      </SuperAdminLayout>
     );
   }
 
@@ -268,22 +271,13 @@ export default function SuperAdminPlans() {
   })) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <SuperAdminLayout>
       {/* Header */}
       <header className="bg-white/10 backdrop-blur-xl border-b border-white/20">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Gestión de Planes</h1>
-              <p className="text-white/60 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
-            </div>
-            <Button 
-              variant="ghost" 
-              className="text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => window.location.href = '/super-admin/dashboard'}
-            >
-              ← Volver
-            </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Gestión de Planes</h1>
+            <p className="text-white/60 mt-1">Configura los planes de suscripción y sus funcionalidades</p>
           </div>
         </div>
       </header>
@@ -419,6 +413,6 @@ export default function SuperAdminPlans() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }

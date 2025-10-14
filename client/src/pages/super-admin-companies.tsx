@@ -9,12 +9,12 @@ import {
   Edit,
   Check,
   X,
-  ArrowLeft,
   Eye,
   Users,
   Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -197,29 +197,21 @@ export default function SuperAdminCompanies() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
-      </div>
+      <SuperAdminLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+        </div>
+      </SuperAdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <SuperAdminLayout>
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => setLocation('/super-admin/dashboard')}
-            className="text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">Gestión de Empresas</h1>
-            <p className="text-white/60">Administra y configura todas las empresas registradas</p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Gestión de Empresas</h1>
+          <p className="text-white/60">Administra y configura todas las empresas registradas</p>
         </div>
 
         {/* Filters */}
@@ -396,6 +388,6 @@ export default function SuperAdminCompanies() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }

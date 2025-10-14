@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Mail, Calendar, Trash2, Copy, Check, X, Settings, UserPlus } from 'lucide-react';
+import { Plus, Mail, Calendar, Trash2, Copy, Check, X, Settings, UserPlus } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
+import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -184,26 +185,13 @@ export default function SuperAdminInvitations() {
   const expiredInvitations = invitations?.filter(inv => !inv.used && new Date() > new Date(inv.expiresAt)) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <SuperAdminLayout>
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white hover:bg-white/10"
-                onClick={() => window.location.href = '/super-admin/dashboard'}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Gestión de Invitaciones</h1>
-                <p className="text-white/70 text-sm">Controla el acceso al registro de nuevas empresas</p>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Gestión de Invitaciones</h1>
+            <p className="text-white/70 text-sm">Controla el acceso al registro de nuevas empresas</p>
           </div>
         </div>
       </div>
@@ -475,6 +463,6 @@ export default function SuperAdminInvitations() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }

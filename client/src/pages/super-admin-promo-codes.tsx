@@ -17,10 +17,10 @@ import {
   Users, 
   Activity,
   CheckCircle,
-  XCircle,
-  ArrowLeft
+  XCircle
 } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { 
   Dialog, 
   DialogContent, 
@@ -233,23 +233,13 @@ const SuperAdminPromoCodes = () => {
   };
 
   return (
-    <div className="px-6 py-4 min-h-screen bg-gray-50" style={{ overflowX: 'clip' }}>
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation('/super-admin/dashboard')}
-            className="p-2"
-            data-testid="button-back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-semibold text-gray-900">Códigos Promocionales</h1>
+    <SuperAdminLayout>
+      <div className="px-6 py-4 min-h-screen" style={{ overflowX: 'clip' }}>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-white">Códigos Promocionales</h1>
+          <p className="text-white/60 mt-1">Gestiona los códigos promocionales para extender períodos de prueba</p>
         </div>
-        <p className="text-gray-500 mt-1">Gestiona los códigos promocionales para extender períodos de prueba</p>
-      </div>
 
       {/* Create Button */}
       <div className="mb-6">
@@ -572,7 +562,8 @@ const SuperAdminPromoCodes = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </SuperAdminLayout>
   );
 };
 
