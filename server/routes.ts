@@ -7899,7 +7899,7 @@ Responde directamente a este email para contactar con la persona.
           INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
           AND u.role = 'admin'
-          AND s.status = 'trialing'
+          AND s.status = 'trial'
           ORDER BY c.id, u.role
         `);
       } else if (category === 'blocked') {
@@ -7925,7 +7925,7 @@ Responde directamente a este email para contactar con la persona.
           INNER JOIN users u ON c.id = u.company_id
           WHERE u.company_email IS NOT NULL 
           AND u.role = 'admin'
-          AND s.status = 'inactive'
+          AND s.status = 'cancelled'
           ORDER BY c.id, u.role
         `);
       } else {
