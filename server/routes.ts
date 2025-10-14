@@ -7999,6 +7999,69 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get campaign conversion statistics (emails → registrations → trials → paid subscriptions)
+  app.get('/api/super-admin/email-campaigns/:id/conversions', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      
+      // Get total sent and clicked counts from campaign sends
+      const sendStats = await db.select({
+        totalSent: sql<number>`COUNT(*)`,
+        totalClicked: sql<number>`COUNT(CASE WHEN ${schema.emailCampaignSends.clickedAt} IS NOT NULL THEN 1 END)`,
+      })
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.campaignId, campaignId));
+      
+      // Get companies registered from this campaign
+      const registeredCompanies = await db.select({
+        companyId: schema.companies.id,
+        subscriptionStatus: schema.subscriptions.status,
+      })
+        .from(schema.companies)
+        .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+        .where(eq(schema.companies.emailCampaignId, campaignId));
+      
+      // Calculate conversion metrics
+      const totalSent = sendStats[0]?.totalSent || 0;
+      const totalClicked = sendStats[0]?.totalClicked || 0;
+      const totalRegistrations = registeredCompanies.length;
+      const totalTrials = registeredCompanies.filter(c => c.subscriptionStatus === 'trial').length;
+      const totalPaid = registeredCompanies.filter(c => c.subscriptionStatus === 'active').length;
+      
+      // Calculate conversion rates
+      const clickRate = totalSent > 0 ? (totalClicked / totalSent * 100) : 0;
+      const registrationRate = totalClicked > 0 ? (totalRegistrations / totalClicked * 100) : 0;
+      const trialRate = totalRegistrations > 0 ? (totalTrials / totalRegistrations * 100) : 0;
+      const paidRate = totalRegistrations > 0 ? (totalPaid / totalRegistrations * 100) : 0;
+      const overallConversionRate = totalSent > 0 ? (totalPaid / totalSent * 100) : 0;
+      
+      res.json({
+        campaignId,
+        funnel: {
+          sent: totalSent,
+          clicked: totalClicked,
+          registered: totalRegistrations,
+          trials: totalTrials,
+          paid: totalPaid,
+        },
+        rates: {
+          clickRate: parseFloat(clickRate.toFixed(2)),
+          registrationRate: parseFloat(registrationRate.toFixed(2)),
+          trialRate: parseFloat(trialRate.toFixed(2)),
+          paidRate: parseFloat(paidRate.toFixed(2)),
+          overallConversionRate: parseFloat(overallConversionRate.toFixed(2)),
+        },
+        companies: registeredCompanies.map(c => ({
+          companyId: c.companyId,
+          subscriptionStatus: c.subscriptionStatus,
+        })),
+      });
+    } catch (error: any) {
+      console.error('Error fetching conversion statistics:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener estadísticas de conversión' });
+    }
+  });
+
   // Get all email prospects
   app.get('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
     try {
