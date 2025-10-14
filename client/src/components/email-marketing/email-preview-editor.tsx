@@ -196,7 +196,12 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                   <img
                     src="/oficaz-logo-white.png"
                     alt="Oficaz Logo"
-                    style={{ height: '40px', display: 'block', margin: content.subtitle ? '0 auto 15px auto' : '0 auto' }}
+                    style={{ 
+                      height: '40px', 
+                      display: 'block', 
+                      margin: content.subtitle ? '0 auto 15px auto' : '0 auto',
+                      filter: 'brightness(0) invert(1)'
+                    }}
                   />
                   <p
                     ref={subtitleRef}
