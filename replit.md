@@ -25,7 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **Protection Pattern**: Wrap critical functions with warning comments and clear boundaries
 
 ### Email System Configuration
-- **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo.png'` - this is the ONLY solution that works
+- **Logo URL**: MUST use static URL `'https://oficaz.es/email-logo-white.png'` - this is the ONLY solution that works
 - **Never use dynamic domain detection for email logos** - it breaks the email display
 - **SMTP Configuration**: nodemailer.createTransport() (NOT createTransporter)
 - **Outlook Compatibility**: Email marketing templates use HTML height attribute (height="40") with width:auto in CSS to maintain logo proportions in Outlook. Tracking pixel uses border="0" and display:block for maximum compatibility.
