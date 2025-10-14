@@ -118,7 +118,7 @@ export default function SuperAdminMarketing() {
   const activeProspects = prospects?.filter((p: any) => p.status === 'active').length || 0;
 
   // Calculate email statistics
-  const totalSent = campaigns?.reduce((sum: number, c: any) => sum + (c.sentCount || 0), 0) || 0;
+  const totalSent = campaigns?.reduce((sum: number, c: any) => sum + (c.sentRecipientsCount || 0), 0) || 0;
   const totalOpened = campaigns?.reduce((sum: number, c: any) => sum + (c.openedCount || 0), 0) || 0;
   const totalClicked = campaigns?.reduce((sum: number, c: any) => sum + (c.clickedCount || 0), 0) || 0;
   
@@ -129,7 +129,7 @@ export default function SuperAdminMarketing() {
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white/80">
@@ -176,11 +176,24 @@ export default function SuperAdminMarketing() {
               <CardTitle className="text-sm font-medium text-white/80">
                 Tasa de Apertura
               </CardTitle>
-              <BarChart3 className="h-4 w-4 text-yellow-400" />
+              <Eye className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">0%</div>
-              <p className="text-xs text-white/60 mt-1">Promedio global</p>
+              <div className="text-3xl font-bold text-white">{openRate}%</div>
+              <p className="text-xs text-white/60 mt-1">{totalOpened} de {totalSent} enviados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white/80">
+                Tasa de Clics (CTR)
+              </CardTitle>
+              <MousePointerClick className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{clickRate}%</div>
+              <p className="text-xs text-white/60 mt-1">{totalClicked} clics de {totalSent} enviados</p>
             </CardContent>
           </Card>
         </div>
@@ -247,7 +260,7 @@ export default function SuperAdminMarketing() {
                             </p>
                             {campaign.status === 'sent' && (
                               <p className="text-xs text-white/60">
-                                {campaign.sentRecipientsCount || 0} enviados · {campaign.openedCount || 0} aperturas
+                                {campaign.sentRecipientsCount || 0} enviados · {campaign.openedCount || 0} aperturas · {campaign.clickedCount || 0} clics
                               </p>
                             )}
                           </div>
