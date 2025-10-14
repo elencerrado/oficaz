@@ -43,7 +43,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
   };
 
   const placeholders: Record<keyof EmailContent, string> = {
-    subtitle: 'Haz clic para añadir un subtítulo...',
+    subtitle: 'APP de gestión empresarial para los que lo quieren FÁCIL',
     heading: 'Haz clic para añadir el encabezado...',
     paragraph: 'Haz clic para añadir el contenido principal...',
     buttonText: 'Texto del botón',
@@ -147,7 +147,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                   }}
                 >
                   <img
-                    src="https://oficaz.es/email-logo.png"
+                    src="https://oficaz.es/images/logo-white.png"
                     alt="Oficaz Logo"
                     style={{ height: '40px', display: 'block', margin: '0 auto' }}
                   />
