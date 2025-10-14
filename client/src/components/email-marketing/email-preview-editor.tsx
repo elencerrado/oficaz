@@ -22,32 +22,44 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
   const paragraphRef = useRef<HTMLParagraphElement>(null);
   const buttonTextRef = useRef<HTMLAnchorElement>(null);
 
-  // Update contentEditable elements when content changes externally
-  useEffect(() => {
-    if (subtitleRef.current && subtitleRef.current.textContent !== content.subtitle) {
-      subtitleRef.current.textContent = content.subtitle;
-    }
-    if (headingRef.current && headingRef.current.textContent !== content.heading) {
-      headingRef.current.textContent = content.heading;
-    }
-    if (paragraphRef.current && paragraphRef.current.textContent !== content.paragraph) {
-      paragraphRef.current.textContent = content.paragraph;
-    }
-    if (buttonTextRef.current && buttonTextRef.current.textContent !== content.buttonText) {
-      buttonTextRef.current.textContent = content.buttonText;
-    }
-  }, [content]);
-
-  const handleContentChange = (field: keyof EmailContent, value: string) => {
-    onChange({ ...content, [field]: value });
-  };
-
   const placeholders: Record<keyof EmailContent, string> = {
     subtitle: 'APP de gestión empresarial para los que lo quieren FÁCIL',
     heading: 'Haz clic para añadir el encabezado...',
     paragraph: 'Haz clic para añadir el contenido principal...',
     buttonText: 'Texto del botón',
     buttonUrl: '',
+  };
+
+  // Update contentEditable elements when content changes externally
+  useEffect(() => {
+    if (subtitleRef.current) {
+      const displayText = content.subtitle || placeholders.subtitle;
+      if (subtitleRef.current.textContent !== displayText) {
+        subtitleRef.current.textContent = displayText;
+      }
+    }
+    if (headingRef.current) {
+      const displayText = content.heading || placeholders.heading;
+      if (headingRef.current.textContent !== displayText) {
+        headingRef.current.textContent = displayText;
+      }
+    }
+    if (paragraphRef.current) {
+      const displayText = content.paragraph || placeholders.paragraph;
+      if (paragraphRef.current.textContent !== displayText) {
+        paragraphRef.current.textContent = displayText;
+      }
+    }
+    if (buttonTextRef.current) {
+      const displayText = content.buttonText || placeholders.buttonText;
+      if (buttonTextRef.current.textContent !== displayText) {
+        buttonTextRef.current.textContent = displayText;
+      }
+    }
+  }, [content]);
+
+  const handleContentChange = (field: keyof EmailContent, value: string) => {
+    onChange({ ...content, [field]: value });
   };
 
   const handleBlur = (field: keyof EmailContent, ref: React.RefObject<HTMLElement>) => {
