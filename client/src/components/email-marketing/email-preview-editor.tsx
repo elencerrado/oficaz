@@ -339,15 +339,8 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     textAlign: 'center',
                   }}
                 >
-                  <p style={{ margin: '0 0 10px', color: '#666', fontSize: '14px' }}>
+                  <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
                     © {new Date().getFullYear()} Oficaz. Todos los derechos reservados.
-                  </p>
-                  <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
-                    Este correo fue enviado desde Oficaz
-                    <br />
-                    <a href="#" style={{ color: '#007AFF', textDecoration: 'none' }}>
-                      Cancelar suscripción
-                    </a>
                   </p>
                 </td>
               </tr>
