@@ -7892,7 +7892,7 @@ Responde directamente a este email para contactar con la persona.
       })
       .from(schema.users)
       .innerJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
-      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+      .innerJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
       .where(and(
         isNotNull(schema.users.email),
         eq(schema.subscriptions.status, statusMap[category])
