@@ -8069,6 +8069,25 @@ Responde directamente a este email para contactar con la persona.
         return res.status(400).json({ success: false, message: 'No hay destinatarios seleccionados' });
       }
 
+      // Get emails that already received this campaign
+      const alreadySent = await db.select({ email: schema.emailCampaignSends.recipientEmail })
+        .from(schema.emailCampaignSends)
+        .where(eq(schema.emailCampaignSends.campaignId, campaignId));
+      
+      const alreadySentEmails = new Set(alreadySent.map(s => s.email));
+      
+      // Filter only new emails (not already sent)
+      const newEmails = selectedEmails.filter(email => !alreadySentEmails.has(email));
+      
+      if (newEmails.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Todos los destinatarios seleccionados ya recibieron esta campaña' 
+        });
+      }
+
+      console.log(`📧 Sending to ${newEmails.length} new recipients (${alreadySentEmails.size} already received)`);
+
       // Configure email transporter
       const transporter = nodemailer.createTransport({
         host: 'smtp.hostinger.com',
@@ -8080,11 +8099,11 @@ Responde directamente a este email para contactar con la persona.
         },
       });
 
-      // Send emails to all selected recipients
+      // Send emails to new recipients only
       let successCount = 0;
       let failCount = 0;
 
-      for (const email of selectedEmails) {
+      for (const email of newEmails) {
         try {
           // First, create the send record to get the ID
           const [sendRecord] = await db.insert(schema.emailCampaignSends).values({
@@ -8123,17 +8142,23 @@ Responde directamente a este email para contactar con la persona.
         }
       }
       
-      // Update campaign status
-      await storage.updateEmailCampaign(campaignId, { 
+      // Update campaign status and increment counters
+      const updateData: any = { 
         status: 'sent',
-        recipientsCount: selectedEmails.length,
-        sentAt: new Date(),
-      });
+        sentCount: sql`${schema.emailCampaigns.sentCount} + ${successCount}`,
+      };
+      
+      // Only set sentAt on first send
+      if (!campaign.sentAt) {
+        updateData.sentAt = new Date();
+      }
+      
+      await storage.updateEmailCampaign(campaignId, updateData);
 
       res.json({ 
         success: true, 
-        message: `Campaña enviada: ${successCount} exitosos, ${failCount} fallidos`,
-        recipientsCount: selectedEmails.length,
+        message: `Campaña enviada a ${successCount} nuevos destinatarios${failCount > 0 ? ` (${failCount} fallidos)` : ''}`,
+        newRecipientsCount: newEmails.length,
         successCount,
         failCount
       });
