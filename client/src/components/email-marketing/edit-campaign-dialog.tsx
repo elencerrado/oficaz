@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { RecipientSelector } from './recipient-selector';
 
 interface EditCampaignDialogProps {
   campaign: any;
@@ -29,6 +30,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     includeBlockedSubscriptions: false,
     includeCancelledSubscriptions: false,
     includeProspects: false,
+    selectedEmails: [] as string[],
   });
 
   // Update form data when campaign changes
@@ -45,6 +47,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         includeBlockedSubscriptions: campaign.includeBlockedSubscriptions ?? false,
         includeCancelledSubscriptions: campaign.includeCancelledSubscriptions ?? false,
         includeProspects: campaign.includeProspects ?? false,
+        selectedEmails: campaign.selectedEmails || [],
       });
     }
   }, [campaign]);
@@ -142,60 +145,10 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
 
           <div className="space-y-3">
             <Label className="text-white">Destinatarios - Usuarios Registrados</Label>
-            <div className="space-y-2 border border-white/20 rounded-lg p-4 bg-white/5">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="active"
-                  checked={formData.includeActiveSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeActiveSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="active" className="text-sm cursor-pointer text-white">
-                  Suscripciones Activas
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="trial"
-                  checked={formData.includeTrialSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeTrialSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="trial" className="text-sm cursor-pointer text-white">
-                  En Período de Prueba
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="blocked"
-                  checked={formData.includeBlockedSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeBlockedSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="blocked" className="text-sm cursor-pointer text-white">
-                  Bloqueadas
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="cancelled"
-                  checked={formData.includeCancelledSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeCancelledSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="cancelled" className="text-sm cursor-pointer text-white">
-                  Canceladas
-                </label>
-              </div>
-            </div>
+            <RecipientSelector
+              selectedEmails={formData.selectedEmails}
+              onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
+            />
           </div>
 
           <div className="space-y-3">

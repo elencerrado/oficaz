@@ -851,6 +851,9 @@ export const emailCampaigns = pgTable("email_campaigns", {
   includeProspects: boolean("include_prospects").default(false),
   prospectTags: text("prospect_tags").array(), // Filtrar prospects por tags
   
+  // Emails específicos seleccionados (individual selection)
+  selectedEmails: text("selected_emails").array().default([]),
+  
   // Programación
   scheduledAt: timestamp("scheduled_at"),
   sentAt: timestamp("sent_at"),

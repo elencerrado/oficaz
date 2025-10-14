@@ -7869,6 +7869,38 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Get users grouped by subscription status with email and company
+  app.get('/api/super-admin/users-by-subscription-status', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const users = await db.select({
+        email: schema.users.email,
+        name: schema.users.name,
+        companyName: schema.companies.name,
+        subscriptionStatus: schema.subscriptions.status,
+      })
+      .from(schema.users)
+      .innerJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
+      .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+      .where(and(
+        isNotNull(schema.users.email),
+        isNotNull(schema.subscriptions.status)
+      ));
+
+      // Group by subscription status
+      const grouped = {
+        active: users.filter(u => u.subscriptionStatus === 'active'),
+        trial: users.filter(u => u.subscriptionStatus === 'trialing'),
+        blocked: users.filter(u => u.subscriptionStatus === 'blocked'),
+        cancelled: users.filter(u => u.subscriptionStatus === 'inactive'),
+      };
+
+      res.json(grouped);
+    } catch (error: any) {
+      console.error('Error fetching users by subscription status:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener usuarios' });
+    }
+  });
+
   // Create email prospect
   app.post('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
     try {

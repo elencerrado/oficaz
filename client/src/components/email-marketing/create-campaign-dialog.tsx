@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
+import { RecipientSelector } from './recipient-selector';
 
 export function CreateCampaignDialog() {
   const [open, setOpen] = useState(false);
@@ -25,6 +26,7 @@ export function CreateCampaignDialog() {
     includeBlockedSubscriptions: false,
     includeCancelledSubscriptions: false,
     includeProspects: false,
+    selectedEmails: [] as string[],
   });
 
   const createCampaignMutation = useMutation({
@@ -59,6 +61,7 @@ export function CreateCampaignDialog() {
         includeBlockedSubscriptions: false,
         includeCancelledSubscriptions: false,
         includeProspects: false,
+        selectedEmails: [],
       });
     },
     onError: () => {
@@ -138,60 +141,10 @@ export function CreateCampaignDialog() {
 
           <div className="space-y-3">
             <Label className="text-white">Destinatarios - Usuarios Registrados</Label>
-            <div className="space-y-2 border border-white/20 rounded-lg p-4 bg-white/5">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="active"
-                  checked={formData.includeActiveSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeActiveSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="active" className="text-sm cursor-pointer text-white">
-                  Suscripciones Activas
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="trial"
-                  checked={formData.includeTrialSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeTrialSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="trial" className="text-sm cursor-pointer text-white">
-                  En Período de Prueba
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="blocked"
-                  checked={formData.includeBlockedSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeBlockedSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="blocked" className="text-sm cursor-pointer text-white">
-                  Bloqueadas
-                </label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="cancelled"
-                  checked={formData.includeCancelledSubscriptions}
-                  onCheckedChange={(checked) => 
-                    setFormData({ ...formData, includeCancelledSubscriptions: checked as boolean })
-                  }
-                  className="border-white/30 data-[state=checked]:bg-blue-600"
-                />
-                <label htmlFor="cancelled" className="text-sm cursor-pointer text-white">
-                  Canceladas
-                </label>
-              </div>
-            </div>
+            <RecipientSelector
+              selectedEmails={formData.selectedEmails}
+              onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
+            />
           </div>
 
           <div className="space-y-3">
