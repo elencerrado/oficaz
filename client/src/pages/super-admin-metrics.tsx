@@ -28,7 +28,7 @@ interface SuperAdminStats {
 }
 
 export default function SuperAdminMetrics() {
-  const { data: stats, isLoading } = useQuery<SuperAdminStats>({
+  const { data: stats } = useQuery<SuperAdminStats>({
     queryKey: ['/api/super-admin/stats'],
     queryFn: async () => {
       const response = await fetch('/api/super-admin/stats', {
@@ -37,20 +37,9 @@ export default function SuperAdminMetrics() {
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
-
-  if (isLoading) {
-    return (
-      <SuperAdminLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white/70">Cargando métricas...</p>
-          </div>
-        </div>
-      </SuperAdminLayout>
-    );
-  }
 
   return (
     <SuperAdminLayout>

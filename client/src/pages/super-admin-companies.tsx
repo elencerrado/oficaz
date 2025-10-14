@@ -126,7 +126,7 @@ export default function SuperAdminCompanies() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies, isLoading } = useQuery({
+  const { data: companies } = useQuery({
     queryKey: ['/api/super-admin/companies'],
     queryFn: async () => {
       const response = await fetch('/api/super-admin/companies', {
@@ -136,6 +136,8 @@ export default function SuperAdminCompanies() {
       return response.json();
     },
     retry: false,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
 
   const updateSubscriptionMutation = useMutation({
@@ -194,16 +196,6 @@ export default function SuperAdminCompanies() {
     setEditingCompany(null);
     setNewPlan("");
   };
-
-  if (isLoading) {
-    return (
-      <SuperAdminLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
-        </div>
-      </SuperAdminLayout>
-    );
-  }
 
   return (
     <SuperAdminLayout>

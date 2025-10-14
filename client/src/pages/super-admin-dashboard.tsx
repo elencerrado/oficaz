@@ -70,6 +70,8 @@ export default function SuperAdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
 
   const { data: companies, isLoading: companiesLoading } = useQuery<CompanyWithStats[]>({
@@ -81,6 +83,8 @@ export default function SuperAdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch companies');
       return response.json();
     },
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
 
   const { data: pendingDeletions } = useQuery({

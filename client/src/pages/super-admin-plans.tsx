@@ -86,7 +86,7 @@ export default function SuperAdminPlans() {
   const [editingPrice, setEditingPrice] = useState<number | null>(null);
   const [editingMaxUsers, setEditingMaxUsers] = useState<number | null>(null);
 
-  const { data: plans, isLoading: plansLoading } = useQuery({
+  const { data: plans } = useQuery({
     queryKey: ['/api/super-admin/subscription-plans'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
@@ -99,9 +99,11 @@ export default function SuperAdminPlans() {
       return response.json();
     },
     retry: false,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
 
-  const { data: dbFeatures, isLoading: featuresLoading } = useQuery({
+  const { data: dbFeatures } = useQuery({
     queryKey: ['/api/super-admin/features'],
     queryFn: async () => {
       const token = localStorage.getItem('superAdminToken');
@@ -114,6 +116,8 @@ export default function SuperAdminPlans() {
       return response.json();
     },
     retry: false,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false,
   });
 
   const updatePlanMutation = useMutation({
@@ -249,15 +253,6 @@ export default function SuperAdminPlans() {
     setEditingMaxUsers(null);
   };
 
-  if (plansLoading || featuresLoading) {
-    return (
-      <SuperAdminLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
-        </div>
-      </SuperAdminLayout>
-    );
-  }
 
   // Crear lista de features desde la base de datos con iconos correspondientes
   const features = dbFeatures?.map((feature: Feature) => ({
