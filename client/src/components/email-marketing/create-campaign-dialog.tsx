@@ -5,13 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronRight, ChevronLeft } from 'lucide-react';
 import { RecipientSelector } from './recipient-selector';
+
+interface EmailContent {
+  subtitle: string;
+  heading: string;
+  paragraph: string;
+  buttonText: string;
+  buttonUrl: string;
+}
 
 export function CreateCampaignDialog() {
   const [open, setOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -19,15 +27,82 @@ export function CreateCampaignDialog() {
     name: '',
     subject: '',
     preheader: '',
-    htmlContent: '',
-    targetAudience: 'registered_users' as string,
-    includeActiveSubscriptions: true,
-    includeTrialSubscriptions: true,
-    includeBlockedSubscriptions: false,
-    includeCancelledSubscriptions: false,
-    includeProspects: false,
     selectedEmails: [] as string[],
   });
+
+  const [emailContent, setEmailContent] = useState<EmailContent>({
+    subtitle: '',
+    heading: '',
+    paragraph: '',
+    buttonText: '',
+    buttonUrl: '',
+  });
+
+  const generateHtmlContent = (content: EmailContent) => {
+    return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${formData.subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Logo Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); padding: 30px; text-align: center;">
+              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto;" />
+            </td>
+          </tr>
+          
+          <!-- Subtitle -->
+          ${content.subtitle ? `
+          <tr>
+            <td style="padding: 20px 40px 10px; text-align: center;">
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5;">${content.subtitle}</p>
+            </td>
+          </tr>
+          ` : ''}
+          
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: ${content.subtitle ? '10px' : '30px'} 40px 20px;">
+              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
+              ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
+            </td>
+          </tr>
+          
+          <!-- Button -->
+          ${content.buttonText && content.buttonUrl ? `
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center;">
+              <a href="${content.buttonUrl}" style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
+            </td>
+          </tr>
+          ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px 40px; border-top: 1px solid #e9ecef; text-align: center;">
+              <p style="margin: 0 0 10px; color: #666; font-size: 14px;">© ${new Date().getFullYear()} Oficaz. Todos los derechos reservados.</p>
+              <p style="margin: 0; color: #999; font-size: 12px;">
+                Este correo fue enviado desde Oficaz<br/>
+                <a href="{{{unsubscribe_url}}}" style="color: #007AFF; text-decoration: none;">Cancelar suscripción</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+  };
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -50,18 +125,19 @@ export function CreateCampaignDialog() {
       });
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
       setOpen(false);
+      setCurrentStep(1);
       setFormData({
         name: '',
         subject: '',
         preheader: '',
-        htmlContent: '',
-        targetAudience: 'registered_users',
-        includeActiveSubscriptions: true,
-        includeTrialSubscriptions: true,
-        includeBlockedSubscriptions: false,
-        includeCancelledSubscriptions: false,
-        includeProspects: false,
         selectedEmails: [],
+      });
+      setEmailContent({
+        subtitle: '',
+        heading: '',
+        paragraph: '',
+        buttonText: '',
+        buttonUrl: '',
       });
     },
     onError: () => {
@@ -73,13 +149,29 @@ export function CreateCampaignDialog() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createCampaignMutation.mutate(formData);
+  const handleSubmit = () => {
+    const htmlContent = generateHtmlContent(emailContent);
+    createCampaignMutation.mutate({
+      ...formData,
+      htmlContent,
+      targetAudience: 'registered_users',
+      includeActiveSubscriptions: true,
+      includeTrialSubscriptions: true,
+      includeBlockedSubscriptions: false,
+      includeCancelledSubscriptions: false,
+      includeProspects: false,
+    });
   };
 
+  const canProceedStep1 = formData.name && formData.subject;
+  const canProceedStep2 = true; // Content is optional
+  const canSubmit = formData.selectedEmails.length > 0;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) setCurrentStep(1);
+    }}>
       <DialogTrigger asChild>
         <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-create-campaign">
           <Plus className="w-4 h-4 mr-2" />
@@ -88,74 +180,197 @@ export function CreateCampaignDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white">
         <DialogHeader>
-          <DialogTitle className="text-white">Crear Nueva Campaña de Email</DialogTitle>
+          <DialogTitle className="text-white">Crear Nueva Campaña - Paso {currentStep} de 3</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name" className="text-white">Nombre de la Campaña</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ej: Newsletter Septiembre 2024"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
-            />
-          </div>
 
-          <div>
-            <Label htmlFor="subject" className="text-white">Asunto del Email</Label>
-            <Input
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              placeholder="Ej: Novedades de Oficaz - Septiembre"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
+        {/* Progress Indicator */}
+        <div className="flex items-center justify-center gap-2 mb-4">
+          {[1, 2, 3].map((step) => (
+            <div
+              key={step}
+              className={`h-2 w-20 rounded-full transition-colors ${
+                step === currentStep ? 'bg-blue-500' : step < currentStep ? 'bg-blue-400/50' : 'bg-white/20'
+              }`}
             />
-          </div>
+          ))}
+        </div>
 
-          <div>
-            <Label htmlFor="preheader" className="text-white">Preheader (texto preview)</Label>
-            <Input
-              id="preheader"
-              value={formData.preheader}
-              onChange={(e) => setFormData({ ...formData, preheader: e.target.value })}
-              placeholder="Texto que aparece junto al asunto en el inbox"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
-          </div>
+        {/* Step 1: Basic Info */}
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name" className="text-white">Nombre de la Campaña</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ej: Newsletter Septiembre 2024"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-campaign-name"
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="htmlContent" className="text-white">Contenido del Email (HTML)</Label>
-            <Textarea
-              id="htmlContent"
-              value={formData.htmlContent}
-              onChange={(e) => setFormData({ ...formData, htmlContent: e.target.value })}
-              placeholder="<h1>¡Hola!</h1><p>Contenido del email...</p>"
-              rows={8}
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              required
-            />
-          </div>
+            <div>
+              <Label htmlFor="subject" className="text-white">Asunto del Email</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                placeholder="Ej: Novedades de Oficaz - Septiembre"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-campaign-subject"
+              />
+            </div>
 
-          <div className="space-y-3">
-            <Label className="text-white">Destinatarios</Label>
-            <RecipientSelector
-              selectedEmails={formData.selectedEmails}
-              onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
-            />
+            <div>
+              <Label htmlFor="preheader" className="text-white">Preheader (opcional)</Label>
+              <Input
+                id="preheader"
+                value={formData.preheader}
+                onChange={(e) => setFormData({ ...formData, preheader: e.target.value })}
+                placeholder="Texto que aparece junto al asunto en el inbox"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-campaign-preheader"
+              />
+              <p className="text-xs text-white/50 mt-1">Este texto aparece como preview del email</p>
+            </div>
           </div>
+        )}
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-white/20 text-white hover:bg-white/10">
-              Cancelar
+        {/* Step 2: Email Content */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            <div className="bg-white/5 rounded-lg p-4 mb-4">
+              <p className="text-sm text-white/70">
+                <strong className="text-white">Vista previa:</strong> El email incluirá automáticamente el logo de Oficaz en la parte superior.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="subtitle" className="text-white">Subtítulo (opcional)</Label>
+              <Input
+                id="subtitle"
+                value={emailContent.subtitle}
+                onChange={(e) => setEmailContent({ ...emailContent, subtitle: e.target.value })}
+                placeholder="Ej: Descubre las novedades de este mes"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-email-subtitle"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="heading" className="text-white">Encabezado Principal</Label>
+              <Input
+                id="heading"
+                value={emailContent.heading}
+                onChange={(e) => setEmailContent({ ...emailContent, heading: e.target.value })}
+                placeholder="Ej: ¡Nuevas funcionalidades disponibles!"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-email-heading"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="paragraph" className="text-white">Párrafo de Contenido</Label>
+              <Textarea
+                id="paragraph"
+                value={emailContent.paragraph}
+                onChange={(e) => setEmailContent({ ...emailContent, paragraph: e.target.value })}
+                placeholder="Escribe el contenido principal del email..."
+                rows={5}
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                data-testid="input-email-paragraph"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="buttonText" className="text-white">Texto del Botón (opcional)</Label>
+                <Input
+                  id="buttonText"
+                  value={emailContent.buttonText}
+                  onChange={(e) => setEmailContent({ ...emailContent, buttonText: e.target.value })}
+                  placeholder="Ej: Ver más"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  data-testid="input-button-text"
+                />
+              </div>
+              <div>
+                <Label htmlFor="buttonUrl" className="text-white">URL del Botón (opcional)</Label>
+                <Input
+                  id="buttonUrl"
+                  value={emailContent.buttonUrl}
+                  onChange={(e) => setEmailContent({ ...emailContent, buttonUrl: e.target.value })}
+                  placeholder="https://oficaz.es"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                  data-testid="input-button-url"
+                />
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-white/70">
+                El pie de página se añadirá automáticamente con el copyright de Oficaz y el enlace de cancelar suscripción.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Recipients */}
+        {currentStep === 3 && (
+          <div className="space-y-4">
+            <div className="bg-white/5 rounded-lg p-4 mb-4">
+              <p className="text-sm text-white/70">
+                Selecciona los destinatarios que recibirán esta campaña. Puedes elegir usuarios registrados por estado de suscripción y/o prospects externos.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <Label className="text-white">Destinatarios</Label>
+              <RecipientSelector
+                selectedEmails={formData.selectedEmails}
+                onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between pt-6 border-t border-white/10">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : setOpen(false)}
+            className="border-white/20 text-white hover:bg-white/10"
+            data-testid="button-previous-step"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            {currentStep === 1 ? 'Cancelar' : 'Anterior'}
+          </Button>
+
+          {currentStep < 3 ? (
+            <Button
+              type="button"
+              onClick={() => setCurrentStep(currentStep + 1)}
+              disabled={currentStep === 1 && !canProceedStep1}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-next-step"
+            >
+              Siguiente
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
-            <Button type="submit" disabled={createCampaignMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
+          ) : (
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit || createCampaignMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+              data-testid="button-create-campaign"
+            >
               {createCampaignMutation.isPending ? 'Creando...' : 'Crear Campaña'}
             </Button>
-          </div>
-        </form>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
