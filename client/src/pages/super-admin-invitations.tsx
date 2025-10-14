@@ -194,14 +194,7 @@ export default function SuperAdminInvitations() {
                 variant="ghost" 
                 size="sm" 
                 className="text-white hover:bg-white/10"
-                onClick={() => {
-                  // Try to go back in history, fallback to dashboard
-                  if (window.history.length > 1) {
-                    window.history.back();
-                  } else {
-                    window.location.href = '/super-admin/dashboard';
-                  }
-                }}
+                onClick={() => window.location.href = '/super-admin/dashboard'}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver

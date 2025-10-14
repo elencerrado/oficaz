@@ -280,14 +280,7 @@ export default function SuperAdminPlans() {
             <Button 
               variant="ghost" 
               className="text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => {
-                // Try to go back in history, fallback to dashboard
-                if (window.history.length > 1) {
-                  window.history.back();
-                } else {
-                  window.location.href = '/super-admin/dashboard';
-                }
-              }}
+              onClick={() => window.location.href = '/super-admin/dashboard'}
             >
               ← Volver
             </Button>

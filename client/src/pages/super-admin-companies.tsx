@@ -210,14 +210,7 @@ export default function SuperAdminCompanies() {
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
-            onClick={() => {
-              // Try to go back in history, fallback to dashboard
-              if (window.history.length > 1) {
-                window.history.back();
-              } else {
-                setLocation('/super-admin/dashboard');
-              }
-            }}
+            onClick={() => setLocation('/super-admin/dashboard')}
             className="text-white hover:bg-white/10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
