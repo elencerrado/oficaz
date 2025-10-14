@@ -84,91 +84,98 @@ export function AddProspectDialog() {
           Añadir Prospect
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 border-white/20 text-white">
         <DialogHeader>
-          <DialogTitle>Añadir Nuevo Prospect</DialogTitle>
+          <DialogTitle className="text-white">Añadir Nuevo Prospect</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email" className="text-white">Email *</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="contacto@empresa.com"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="name">Nombre</Label>
+              <Label htmlFor="name" className="text-white">Nombre</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Juan Pérez"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
             <div>
-              <Label htmlFor="company">Empresa</Label>
+              <Label htmlFor="company" className="text-white">Empresa</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 placeholder="Mi Empresa S.L."
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone" className="text-white">Teléfono</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+34 600 000 000"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
             <div>
-              <Label htmlFor="source">Fuente</Label>
+              <Label htmlFor="source" className="text-white">Fuente</Label>
               <Input
                 id="source"
                 value={formData.source}
                 onChange={(e) => setFormData({ ...formData, source: e.target.value })}
                 placeholder="manual, landing_page, etc."
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="tags">Tags (separadas por comas)</Label>
+            <Label htmlFor="tags" className="text-white">Tags (separadas por comas)</Label>
             <Input
               id="tags"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder="lead, interesado, premium"
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
             />
           </div>
 
           <div>
-            <Label htmlFor="notes">Notas</Label>
+            <Label htmlFor="notes" className="text-white">Notas</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Información adicional sobre el contacto..."
               rows={3}
+              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-white/20 text-white hover:bg-white/10">
               Cancelar
             </Button>
-            <Button type="submit" disabled={createProspectMutation.isPending}>
+            <Button type="submit" disabled={createProspectMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
               {createProspectMutation.isPending ? 'Añadiendo...' : 'Añadir Prospect'}
             </Button>
           </div>
