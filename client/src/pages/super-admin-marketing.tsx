@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
+import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
   Users, 
@@ -15,11 +17,15 @@ import {
   CheckCircle,
   Eye,
   MousePointerClick,
-  Trash2
+  Trash2,
+  Edit
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
   const [activeTab, setActiveTab] = useState('campaigns');
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: campaigns } = useQuery({
     queryKey: ['/api/super-admin/email-campaigns'],
@@ -67,6 +73,35 @@ export default function SuperAdminMarketing() {
     },
     staleTime: 30000,
     refetchOnMount: false,
+  });
+
+  // Send campaign mutation
+  const sendCampaignMutation = useMutation({
+    mutationFn: async (campaignId: number) => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to send campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Campaña enviada',
+        description: 'La campaña se está enviando a los destinatarios',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo enviar la campaña',
+        variant: 'destructive',
+      });
+    },
   });
 
   // Calculate statistics
@@ -191,8 +226,8 @@ export default function SuperAdminMarketing() {
                             <p className="text-sm text-white/60">{campaign.subject}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-right">
+                        <div className="flex items-center gap-3">
+                          <div className="text-right mr-4">
                             <p className="text-sm text-white/80">{campaign.recipientsCount || 0} destinatarios</p>
                             {campaign.status === 'sent' && (
                               <p className="text-xs text-white/60">
@@ -200,9 +235,29 @@ export default function SuperAdminMarketing() {
                               </p>
                             )}
                           </div>
-                          <Button variant="ghost" className="text-white/70 hover:text-white">
-                            Ver detalles
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => setEditingCampaign(campaign)}
+                            className="text-white/70 hover:text-white hover:bg-white/10"
+                            data-testid={`button-edit-campaign-${campaign.id}`}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
                           </Button>
+                          {campaign.status === 'draft' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                              disabled={sendCampaignMutation.isPending}
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                              data-testid={`button-send-campaign-${campaign.id}`}
+                            >
+                              <Send className="w-4 h-4 mr-1" />
+                              {sendCampaignMutation.isPending ? 'Enviando...' : 'Enviar'}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -358,6 +413,15 @@ export default function SuperAdminMarketing() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Campaign Dialog */}
+      {editingCampaign && (
+        <EditCampaignDialog
+          campaign={editingCampaign}
+          open={!!editingCampaign}
+          onOpenChange={(open) => !open && setEditingCampaign(null)}
+        />
+      )}
     </SuperAdminLayout>
   );
 }

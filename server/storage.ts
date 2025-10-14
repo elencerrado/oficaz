@@ -230,6 +230,7 @@ export interface IStorage {
 
   // Email Marketing
   getAllEmailCampaigns(): Promise<any[]>;
+  getEmailCampaignById(id: number): Promise<any | undefined>;
   getAllEmailProspects(): Promise<any[]>;
   getRegisteredUsersStats(): Promise<{ total: number; active: number; trial: number; blocked: number; cancelled: number }>;
   createEmailProspect(prospect: any): Promise<any>;
@@ -2778,6 +2779,13 @@ export class DrizzleStorage implements IStorage {
     return await db.select()
       .from(schema.emailCampaigns)
       .orderBy(desc(schema.emailCampaigns.createdAt));
+  }
+
+  async getEmailCampaignById(id: number): Promise<any | undefined> {
+    const [campaign] = await db.select()
+      .from(schema.emailCampaigns)
+      .where(eq(schema.emailCampaigns.id, id));
+    return campaign;
   }
 
   async getAllEmailProspects(): Promise<any[]> {

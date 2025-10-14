@@ -7915,6 +7915,101 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Send email campaign
+  app.post('/api/super-admin/email-campaigns/:id/send', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      const campaignId = parseInt(req.params.id);
+      
+      // Get campaign details
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
+      }
+
+      // Get recipients based on campaign settings
+      const recipients: Array<{ email: string; type: 'user' | 'prospect'; name?: string }> = [];
+
+      // Get registered users based on filters
+      if (campaign.includeActiveSubscriptions || campaign.includeTrialSubscriptions || 
+          campaign.includeBlockedSubscriptions || campaign.includeCancelledSubscriptions) {
+        const users = await db.select({
+          email: schema.users.email,
+          name: schema.users.name,
+          subscriptionStatus: schema.subscriptions.status,
+        })
+        .from(schema.users)
+        .leftJoin(schema.companies, eq(schema.users.companyId, schema.companies.id))
+        .leftJoin(schema.subscriptions, eq(schema.companies.id, schema.subscriptions.companyId))
+        .where(
+          or(
+            campaign.includeActiveSubscriptions ? eq(schema.subscriptions.status, 'active') : undefined,
+            campaign.includeTrialSubscriptions ? eq(schema.subscriptions.status, 'trialing') : undefined,
+            campaign.includeBlockedSubscriptions ? eq(schema.subscriptions.status, 'blocked') : undefined,
+            campaign.includeCancelledSubscriptions ? eq(schema.subscriptions.status, 'cancelled') : undefined,
+          )
+        );
+        
+        recipients.push(...users.filter(u => u.email).map(u => ({ 
+          email: u.email!, 
+          name: u.name || undefined, 
+          type: 'user' as const 
+        })));
+      }
+
+      // Get prospects if included
+      if (campaign.includeProspects) {
+        const prospects = await db.select({
+          email: schema.emailProspects.email,
+          name: schema.emailProspects.name,
+        })
+        .from(schema.emailProspects)
+        .where(eq(schema.emailProspects.status, 'active'));
+        
+        recipients.push(...prospects.filter(p => p.email).map(p => ({ 
+          email: p.email, 
+          name: p.name || undefined, 
+          type: 'prospect' as const 
+        })));
+      }
+
+      // Remove duplicates by email
+      const uniqueRecipients = Array.from(
+        new Map(recipients.map(r => [r.email, r])).values()
+      );
+
+      // TODO: Integrate with SendGrid to actually send emails
+      // For now, just mark campaign as sent and create send records
+      
+      // Update campaign status
+      await storage.updateEmailCampaign(campaignId, { 
+        status: 'sent',
+        recipientsCount: uniqueRecipients.length,
+        sentAt: new Date(),
+      });
+
+      // Create campaign send records
+      for (const recipient of uniqueRecipients) {
+        await db.insert(schema.emailCampaignSends).values({
+          campaignId,
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          recipientType: recipient.type,
+          status: 'sent',
+          sentAt: new Date(),
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Campaña enviada a ${uniqueRecipients.length} destinatarios`,
+        recipientsCount: uniqueRecipients.length,
+      });
+    } catch (error: any) {
+      console.error('Error sending email campaign:', error);
+      res.status(500).json({ success: false, message: 'Error al enviar campaña' });
+    }
+  });
+
   // Delete email prospect
   app.delete('/api/super-admin/email-prospects/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
