@@ -230,37 +230,49 @@ export default function SuperAdminMarketing() {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="text-right mr-4">
-                            <p className="text-sm text-white/80">{campaign.selectedEmails?.length || 0} seleccionados</p>
-                            {campaign.status === 'sent' && (
-                              <p className="text-xs text-white/60">
-                                {campaign.sentCount || 0} enviados · {campaign.openedCount || 0} aperturas
-                              </p>
-                            )}
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => setEditingCampaign(campaign)}
-                            className="text-white/70 hover:text-white hover:bg-white/10"
-                            data-testid={`button-edit-campaign-${campaign.id}`}
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Editar
-                          </Button>
-                          {(campaign.selectedEmails?.length > 0) && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                              disabled={sendCampaignMutation.isPending}
-                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
-                              data-testid={`button-send-campaign-${campaign.id}`}
-                            >
-                              <Send className="w-4 h-4 mr-1" />
-                              {sendCampaignMutation.isPending ? 'Enviando...' : campaign.status === 'sent' ? 'Enviar a Nuevos' : 'Enviar'}
-                            </Button>
-                          )}
+                          {(() => {
+                            const selectedEmails = campaign.selectedEmails || [];
+                            const sentEmails = campaign.sentEmails || [];
+                            const newEmails = selectedEmails.filter((email: string) => !sentEmails.includes(email));
+                            const hasNewEmails = newEmails.length > 0;
+                            
+                            return (
+                              <>
+                                <div className="text-right mr-4">
+                                  <p className="text-sm text-white/80">{selectedEmails.length} seleccionados</p>
+                                  {campaign.status === 'sent' && (
+                                    <p className="text-xs text-white/60">
+                                      {sentEmails.length} enviados · {campaign.openedCount || 0} aperturas
+                                      {hasNewEmails && <span className="text-green-400"> · {newEmails.length} nuevos</span>}
+                                    </p>
+                                  )}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => setEditingCampaign(campaign)}
+                                  className="text-white/70 hover:text-white hover:bg-white/10"
+                                  data-testid={`button-edit-campaign-${campaign.id}`}
+                                >
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  Editar
+                                </Button>
+                                {hasNewEmails && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                                    disabled={sendCampaignMutation.isPending}
+                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                    data-testid={`button-send-campaign-${campaign.id}`}
+                                  >
+                                    <Send className="w-4 h-4 mr-1" />
+                                    {sendCampaignMutation.isPending ? 'Enviando...' : sentEmails.length > 0 ? 'Enviar a Nuevos' : 'Enviar'}
+                                  </Button>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     ))}

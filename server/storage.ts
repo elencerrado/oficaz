@@ -2777,9 +2777,25 @@ export class DrizzleStorage implements IStorage {
   // ===== EMAIL MARKETING =====
   
   async getAllEmailCampaigns(): Promise<any[]> {
-    return await db.select()
+    const campaigns = await db.select()
       .from(schema.emailCampaigns)
       .orderBy(desc(schema.emailCampaigns.createdAt));
+    
+    // Add sentEmails array to each campaign
+    const campaignsWithSentEmails = await Promise.all(
+      campaigns.map(async (campaign) => {
+        const sentEmails = await db.select({ email: schema.emailCampaignSends.recipientEmail })
+          .from(schema.emailCampaignSends)
+          .where(eq(schema.emailCampaignSends.campaignId, campaign.id));
+        
+        return {
+          ...campaign,
+          sentEmails: sentEmails.map(s => s.email)
+        };
+      })
+    );
+    
+    return campaignsWithSentEmails;
   }
 
   async getEmailCampaignById(id: number): Promise<any | undefined> {
