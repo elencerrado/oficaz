@@ -14,6 +14,7 @@ import type {
   PromotionalCode, InsertPromotionalCode,
   ImageProcessingJob, InsertImageProcessingJob
 } from '@shared/schema';
+import Stripe from 'stripe';
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
@@ -21,6 +22,16 @@ if (!process.env.DATABASE_URL) {
 
 const connection = neon(process.env.DATABASE_URL);
 const db = drizzle(connection, { schema });
+
+// Initialize Stripe
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY or STRIPE_SECRET_KEY_TEST environment variable is required');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
+  apiVersion: '2025-05-28.basil',
+});
 
 export interface IStorage {
   // Companies
@@ -1012,25 +1023,46 @@ export class DrizzleStorage implements IStorage {
       return acc;
     }, 0);
 
-    // Get real pricing from subscription_plans table
-    const planPricing = await db.select({
-      name: schema.subscriptionPlans.name,
-      monthlyPrice: schema.subscriptionPlans.monthlyPrice
-    }).from(schema.subscriptionPlans);
+    // Get real pricing from Stripe for accurate revenue calculation
+    let monthlyRevenue = 0;
+    
+    // Get all active subscriptions with Stripe IDs
+    const activeSubscriptions = await db
+      .select({
+        stripeSubscriptionId: schema.subscriptions.stripeSubscriptionId,
+        plan: schema.subscriptions.plan,
+      })
+      .from(schema.subscriptions)
+      .where(eq(schema.subscriptions.status, 'active'));
 
-    const pricing = planPricing.reduce((acc, plan) => {
-      acc[plan.name] = Number(plan.monthlyPrice);
-      return acc;
-    }, {} as Record<string, number>);
-
-    // Calculate monthly revenue using plan prices (not per user)
-    const monthlyRevenue = subscriptionStats.reduce((acc, row) => {
-      if (row.plan !== 'free' && row.status === 'active') {
-        const planPrice = pricing[row.plan] || 0;
-        acc += planPrice * row.count; // Each subscription pays the full plan price
+    // Fetch real prices from Stripe
+    for (const sub of activeSubscriptions) {
+      if (sub.stripeSubscriptionId && sub.plan !== 'free') {
+        try {
+          const stripeSubscription = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+          
+          // Sum up all items in the subscription
+          if (stripeSubscription.items?.data) {
+            for (const item of stripeSubscription.items.data) {
+              const priceAmount = item.price.unit_amount || 0;
+              const quantity = item.quantity || 1;
+              // Convert from cents to euros and calculate based on billing interval
+              const itemPrice = (priceAmount / 100) * quantity;
+              
+              // If yearly subscription, convert to monthly equivalent
+              if (item.price.recurring?.interval === 'year') {
+                monthlyRevenue += itemPrice / 12;
+              } else {
+                monthlyRevenue += itemPrice;
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching Stripe subscription ${sub.stripeSubscriptionId}:`, error);
+          // Continue with other subscriptions
+        }
       }
-      return acc;
-    }, 0);
+    }
 
     const yearlyRevenue = monthlyRevenue * 12;
 
