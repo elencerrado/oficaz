@@ -8,6 +8,7 @@ interface EmailContent {
   paragraph: string;
   buttonText: string;
   buttonUrl: string;
+  signature: string;
 }
 
 interface EmailPreviewEditorProps {
@@ -21,6 +22,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
   const headingRef = useRef<HTMLHeadingElement>(null);
   const paragraphRef = useRef<HTMLParagraphElement>(null);
   const buttonTextRef = useRef<HTMLAnchorElement>(null);
+  const signatureRef = useRef<HTMLParagraphElement>(null);
 
   const placeholders: Record<keyof EmailContent, string> = {
     subtitle: 'APP de gestión empresarial para los que lo quieren FÁCIL',
@@ -28,6 +30,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
     paragraph: 'Haz clic para añadir el contenido principal...',
     buttonText: 'Texto del botón',
     buttonUrl: '',
+    signature: 'Saludos cordiales',
   };
 
   // Update contentEditable elements when content changes externally
@@ -54,6 +57,12 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
       const displayText = content.buttonText || placeholders.buttonText;
       if (buttonTextRef.current.textContent !== displayText) {
         buttonTextRef.current.textContent = displayText;
+      }
+    }
+    if (signatureRef.current) {
+      const displayText = content.signature || placeholders.signature;
+      if (signatureRef.current.textContent !== displayText) {
+        signatureRef.current.textContent = displayText;
       }
     }
   }, [content]);
@@ -187,7 +196,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
 
               {/* Main Content - Editable */}
               <tr>
-                <td style={{ padding: '10px 40px 20px' }}>
+                <td style={{ padding: '30px 40px 20px' }}>
                   <h1
                     ref={headingRef}
                     contentEditable
@@ -232,7 +241,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
 
               {/* Button - Editable Text */}
               <tr>
-                <td style={{ padding: '20px 40px 40px', textAlign: 'center' }}>
+                <td style={{ padding: '20px 40px 30px', textAlign: 'center' }}>
                   <a
                     ref={buttonTextRef}
                     contentEditable
@@ -259,6 +268,32 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                   >
                     {content.buttonText || placeholders.buttonText}
                   </a>
+                </td>
+              </tr>
+
+              {/* Signature/Farewell - Editable */}
+              <tr>
+                <td style={{ padding: '0 40px 40px', textAlign: 'center' }}>
+                  <p
+                    ref={signatureRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={() => handleBlur('signature', signatureRef)}
+                    style={{
+                      margin: 0,
+                      color: '#666',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      fontStyle: 'italic',
+                      minHeight: '20px',
+                      outline: 'none',
+                      cursor: 'text',
+                    }}
+                    className="hover:bg-blue-50 transition-colors rounded px-2 py-1"
+                    data-testid="editable-signature"
+                  >
+                    {content.signature || placeholders.signature}
+                  </p>
                 </td>
               </tr>
 

@@ -16,6 +16,7 @@ interface EmailContent {
   paragraph: string;
   buttonText: string;
   buttonUrl: string;
+  signature: string;
 }
 
 export function CreateCampaignDialog() {
@@ -37,6 +38,7 @@ export function CreateCampaignDialog() {
     paragraph: '',
     buttonText: '',
     buttonUrl: '',
+    signature: '',
   });
 
   const generateHtmlContent = (content: EmailContent) => {
@@ -64,7 +66,7 @@ export function CreateCampaignDialog() {
           
           <!-- Main Content -->
           <tr>
-            <td style="padding: ${content.subtitle ? '10px' : '30px'} 40px 20px;">
+            <td style="padding: 30px 40px 20px;">
               ${content.heading ? `<h1 style="margin: 0 0 20px; color: #007AFF; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
               ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
             </td>
@@ -73,11 +75,20 @@ export function CreateCampaignDialog() {
           <!-- Button -->
           ${content.buttonText && content.buttonUrl ? `
           <tr>
-            <td style="padding: 20px 40px 40px; text-align: center;">
+            <td style="padding: 20px 40px 30px; text-align: center;">
               <a href="${content.buttonUrl}" style="display: inline-block; background: #007AFF; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
             </td>
           </tr>
           ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}
+          
+          <!-- Signature -->
+          ${content.signature ? `
+          <tr>
+            <td style="padding: 0 40px 40px; text-align: center;">
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5; font-style: italic;">${content.signature}</p>
+            </td>
+          </tr>
+          ` : ''}
           
           <!-- Footer -->
           <tr>
@@ -132,6 +143,7 @@ export function CreateCampaignDialog() {
         paragraph: '',
         buttonText: '',
         buttonUrl: '',
+        signature: '',
       });
     },
     onError: () => {

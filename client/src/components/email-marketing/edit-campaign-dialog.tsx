@@ -22,6 +22,7 @@ interface EmailContent {
   paragraph: string;
   buttonText: string;
   buttonUrl: string;
+  signature: string;
 }
 
 export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaignDialogProps) {
@@ -48,6 +49,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     paragraph: '',
     buttonText: '',
     buttonUrl: '',
+    signature: '',
   });
 
   const [useRawHtml, setUseRawHtml] = useState(false);
@@ -67,6 +69,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
       const paragraphMatch = html.match(/<h1[^>]*>.*?<\/h1>[\s\S]*?<p[^>]*>(.*?)<\/p>/);
       const buttonTextMatch = html.match(/<a[^>]*style="[^"]*display: inline-block[^"]*"[^>]*>(.*?)<\/a>/);
       const buttonUrlMatch = html.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display: inline-block[^"]*"/);
+      const signatureMatch = html.match(/<!-- Signature -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
 
       return {
         subtitle: subtitleMatch ? subtitleMatch[1].trim() : '',
@@ -74,6 +77,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         paragraph: paragraphMatch ? paragraphMatch[1].trim() : '',
         buttonText: buttonTextMatch ? buttonTextMatch[1].trim() : '',
         buttonUrl: buttonUrlMatch ? buttonUrlMatch[1].trim() : '',
+        signature: signatureMatch ? signatureMatch[1].trim() : '',
       };
     } catch (e) {
       // If parsing fails, return null
@@ -137,7 +141,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           
           <!-- Main Content -->
           <tr>
-            <td style="padding: ${content.subtitle ? '10px' : '30px'} 40px 20px;">
+            <td style="padding: 30px 40px 20px;">
               ${content.heading ? `<h1 style="margin: 0 0 20px; color: #007AFF; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
               ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
             </td>
@@ -146,11 +150,20 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <!-- Button -->
           ${content.buttonText && content.buttonUrl ? `
           <tr>
-            <td style="padding: 20px 40px 40px; text-align: center;">
+            <td style="padding: 20px 40px 30px; text-align: center;">
               <a href="${content.buttonUrl}" style="display: inline-block; background: #007AFF; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
             </td>
           </tr>
           ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}
+          
+          <!-- Signature -->
+          ${content.signature ? `
+          <tr>
+            <td style="padding: 0 40px 40px; text-align: center;">
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5; font-style: italic;">${content.signature}</p>
+            </td>
+          </tr>
+          ` : ''}
           
           <!-- Footer -->
           <tr>
