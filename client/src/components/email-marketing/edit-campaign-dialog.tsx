@@ -129,8 +129,8 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <!-- Logo Header with Subtitle -->
           <tr>
-            <td style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); padding: 20px; text-align: center;">
-              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 35px; display: block; margin: 0 auto ${content.subtitle ? '10px' : '0'} auto;" />
+            <td style="background: #007AFF; padding: 20px; text-align: center;">
+              <img src="https://oficaz.es/oficaz-logo-white.png" alt="Oficaz Logo" style="height: 35px; display: block; margin: 0 auto ${content.subtitle ? '10px' : '0'} auto;" />
               ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.4;">${content.subtitle}</p>` : ''}
             </td>
           </tr>
@@ -138,7 +138,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <!-- Main Content -->
           <tr>
             <td style="padding: ${content.subtitle ? '10px' : '30px'} 40px 20px;">
-              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #1a1a1a; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
+              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #007AFF; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
               ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
             </td>
           </tr>
@@ -147,7 +147,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           ${content.buttonText && content.buttonUrl ? `
           <tr>
             <td style="padding: 20px 40px 40px; text-align: center;">
-              <a href="${content.buttonUrl}" style="display: inline-block; background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
+              <a href="${content.buttonUrl}" style="display: inline-block; background: #007AFF; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">${content.buttonText}</a>
             </td>
           </tr>
           ` : '<tr><td style="padding-bottom: 20px;"></td></tr>'}

@@ -153,13 +153,13 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
               <tr>
                 <td
                   style={{
-                    background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+                    background: '#007AFF',
                     padding: '20px',
                     textAlign: 'center',
                   }}
                 >
                   <img
-                    src="/email-logo.png"
+                    src="/oficaz-logo-white.png"
                     alt="Oficaz Logo"
                     style={{ height: '35px', display: 'block', margin: '0 auto 10px auto' }}
                   />
@@ -195,7 +195,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     onBlur={() => handleBlur('heading', headingRef)}
                     style={{
                       margin: '0 0 20px',
-                      color: '#1a1a1a',
+                      color: '#007AFF',
                       fontSize: '24px',
                       fontWeight: 600,
                       lineHeight: '1.3',
@@ -242,7 +242,7 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     onClick={(e) => e.preventDefault()}
                     style={{
                       display: 'inline-block',
-                      background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+                      background: '#007AFF',
                       color: '#ffffff',
                       textDecoration: 'none',
                       padding: '14px 32px',
