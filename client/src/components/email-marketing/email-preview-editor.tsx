@@ -37,20 +37,23 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
   useEffect(() => {
     if (subtitleRef.current) {
       const displayText = content.subtitle || placeholders.subtitle;
-      if (subtitleRef.current.textContent !== displayText) {
-        subtitleRef.current.textContent = displayText;
+      const displayHtml = displayText.replace(/\n/g, '<br>');
+      if (subtitleRef.current.innerHTML !== displayHtml) {
+        subtitleRef.current.innerHTML = displayHtml;
       }
     }
     if (headingRef.current) {
       const displayText = content.heading || placeholders.heading;
-      if (headingRef.current.textContent !== displayText) {
-        headingRef.current.textContent = displayText;
+      const displayHtml = displayText.replace(/\n/g, '<br>');
+      if (headingRef.current.innerHTML !== displayHtml) {
+        headingRef.current.innerHTML = displayHtml;
       }
     }
     if (paragraphRef.current) {
       const displayText = content.paragraph || placeholders.paragraph;
-      if (paragraphRef.current.textContent !== displayText) {
-        paragraphRef.current.textContent = displayText;
+      const displayHtml = displayText.replace(/\n/g, '<br>');
+      if (paragraphRef.current.innerHTML !== displayHtml) {
+        paragraphRef.current.innerHTML = displayHtml;
       }
     }
     if (buttonTextRef.current) {
@@ -61,8 +64,9 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
     }
     if (signatureRef.current) {
       const displayText = content.signature || placeholders.signature;
-      if (signatureRef.current.textContent !== displayText) {
-        signatureRef.current.textContent = displayText;
+      const displayHtml = displayText.replace(/\n/g, '<br>');
+      if (signatureRef.current.innerHTML !== displayHtml) {
+        signatureRef.current.innerHTML = displayHtml;
       }
     }
   }, [content]);
@@ -73,9 +77,31 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
 
   const handleBlur = (field: keyof EmailContent, ref: React.RefObject<HTMLElement>) => {
     if (ref.current) {
-      const newValue = ref.current.textContent || '';
+      // For button text, use textContent (no line breaks needed)
+      if (field === 'buttonText') {
+        const newValue = ref.current.textContent || '';
+        if (newValue === placeholders[field]) {
+          handleContentChange(field, '');
+        } else if (newValue !== content[field]) {
+          handleContentChange(field, newValue);
+        }
+        return;
+      }
+      
+      // For other fields, preserve line breaks by converting <br> to \n
+      let html = ref.current.innerHTML || '';
+      // Convert <br>, <br/>, <br />, and <div> to newlines
+      html = html.replace(/<br\s*\/?>/gi, '\n');
+      html = html.replace(/<\/div><div>/gi, '\n');
+      html = html.replace(/<div>/gi, '\n');
+      html = html.replace(/<\/div>/gi, '');
+      // Remove other HTML tags
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const newValue = tempDiv.textContent || '';
+      
       // Don't save placeholder text as actual content
-      if (newValue === placeholders[field]) {
+      if (newValue.trim() === placeholders[field]) {
         handleContentChange(field, '');
       } else if (newValue !== content[field]) {
         handleContentChange(field, newValue);

@@ -61,15 +61,15 @@ export function CreateCampaignDialog() {
             <td style="background: #007AFF; padding: 20px; text-align: center;">
               <img src="https://oficaz.es/oficaz-logo-white.png" alt="Oficaz Logo" style="height: 35px; display: block; margin: 0 auto ${content.subtitle ? '10px' : '0'} auto;" />
               <!-- Subtitle -->
-              ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.4;">${content.subtitle}</p>` : ''}
+              ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.4;">${content.subtitle.replace(/\n/g, '<br/>')}</p>` : ''}
             </td>
           </tr>
           
           <!-- Main Content -->
           <tr>
             <td style="padding: 30px 40px 20px;">
-              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #007AFF; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading}</h1>` : ''}
-              ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph}</p>` : ''}
+              ${content.heading ? `<h1 style="margin: 0 0 20px; color: #007AFF; font-size: 24px; font-weight: 600; line-height: 1.3;">${content.heading.replace(/\n/g, '<br/>')}</h1>` : ''}
+              ${content.paragraph ? `<p style="margin: 0; color: #444; font-size: 16px; line-height: 1.6;">${content.paragraph.replace(/\n/g, '<br/>')}</p>` : ''}
             </td>
           </tr>
           
@@ -86,7 +86,7 @@ export function CreateCampaignDialog() {
           ${content.signature ? `
           <tr>
             <td style="padding: 0 40px 40px; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5; font-style: italic;">${content.signature}</p>
+              <p style="margin: 0; color: #666; font-size: 14px; line-height: 1.5; font-style: italic;">${content.signature.replace(/\n/g, '<br/>')}</p>
             </td>
           </tr>
           ` : ''}
