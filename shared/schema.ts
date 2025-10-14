@@ -46,6 +46,7 @@ export const companies = pgTable("companies", {
   // Email marketing conversion tracking
   emailCampaignId: integer("email_campaign_id"), // ID de la campaña de email de la que vino el registro
   registrationSource: varchar("registration_source", { length: 50 }).default("direct"), // direct, email_campaign, invitation
+  marketingEmailsConsent: boolean("marketing_emails_consent").default(false).notNull(), // Consentimiento para recibir emails comerciales
   
   // Account deletion fields - 30 day grace period
   scheduledForDeletion: boolean("scheduled_for_deletion").default(false).notNull(),
@@ -840,6 +841,9 @@ export const emailCampaigns = pgTable("email_campaigns", {
   preheader: varchar("preheader", { length: 255 }), // Texto preview en inbox
   htmlContent: text("html_content").notNull(),
   status: varchar("status", { length: 50 }).default("draft").notNull(), // draft, scheduled, sending, sent, failed
+  
+  // Tipo de audiencia (determina si incluye footer de cancelar suscripción)
+  audienceType: varchar("audience_type", { length: 50 }).default("subscribers").notNull(), // "subscribers" (con footer), "one_time" (sin footer)
   
   // Segmentación de destinatarios
   targetAudience: varchar("target_audience", { length: 50 }).notNull(), // "all_users", "registered_users", "prospects", "custom"
