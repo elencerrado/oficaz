@@ -9870,6 +9870,115 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Email unsubscribe endpoint (public, no auth required)
+  app.get('/api/email/unsubscribe', async (req: any, res) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email) {
+        return res.status(400).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Error - Oficaz</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+              .container { text-align: center; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 500px; }
+              h1 { color: #dc2626; margin-bottom: 16px; }
+              p { color: #666; margin-bottom: 24px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Error</h1>
+              <p>No se proporcionó una dirección de correo electrónico válida.</p>
+            </div>
+          </body>
+          </html>
+        `);
+      }
+      
+      // Update marketing consent to false
+      const result = await db.update(companies)
+        .set({ marketingEmailsConsent: false })
+        .where(eq(companies.email, email as string))
+        .returning();
+      
+      if (result.length === 0) {
+        return res.status(404).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>No encontrado - Oficaz</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+              .container { text-align: center; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 500px; }
+              h1 { color: #dc2626; margin-bottom: 16px; }
+              p { color: #666; margin-bottom: 24px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Email no encontrado</h1>
+              <p>No se encontró una cuenta asociada a este correo electrónico.</p>
+            </div>
+          </body>
+          </html>
+        `);
+      }
+      
+      console.log(`📧 User unsubscribed from marketing emails: ${email}`);
+      
+      // Return success page
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Desuscrito - Oficaz</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+            .container { text-align: center; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 500px; }
+            .logo { width: 120px; margin-bottom: 24px; }
+            h1 { color: #007AFF; margin-bottom: 16px; }
+            p { color: #666; margin-bottom: 24px; line-height: 1.6; }
+            .success-icon { font-size: 48px; margin-bottom: 16px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="success-icon">✅</div>
+            <h1>Te has dado de baja</h1>
+            <p>Has sido eliminado de nuestra lista de correos de marketing.</p>
+            <p style="font-size: 14px; color: #999;">Si cambias de opinión, puedes volver a suscribirte desde tu cuenta de Oficaz.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    } catch (error: any) {
+      console.error('Error unsubscribing user:', error);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error - Oficaz</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+            .container { text-align: center; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 500px; }
+            h1 { color: #dc2626; margin-bottom: 16px; }
+            p { color: #666; margin-bottom: 24px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>Error</h1>
+            <p>Hubo un problema al procesar tu solicitud. Por favor, inténtalo de nuevo más tarde.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
