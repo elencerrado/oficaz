@@ -58,10 +58,10 @@ export function CreateCampaignDialog() {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           <!-- Logo Header with Subtitle -->
           <tr>
-            <td style="background: #007AFF; padding: 20px; text-align: center;">
-              <img src="https://oficaz.es/oficaz-logo-white.png" alt="Oficaz Logo" style="height: 35px; display: block; margin: 0 auto ${content.subtitle ? '10px' : '0'} auto;" />
+            <td style="background: #007AFF; padding: ${content.subtitle ? '30px 20px 20px' : '30px 20px'}; text-align: center;">
+              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto;" />
               <!-- Subtitle -->
-              ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.4;">${content.subtitle.replace(/\n/g, '<br/>')}</p>` : ''}
+              ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 14px; line-height: 1.5; font-weight: 500;">${content.subtitle.replace(/\n/g, '<br/>')}</p>` : ''}
             </td>
           </tr>
           
@@ -157,7 +157,27 @@ export function CreateCampaignDialog() {
   });
 
   const handleSubmit = () => {
-    const htmlContent = generateHtmlContent(emailContent);
+    // Define default placeholders to use if fields are empty
+    const defaultPlaceholders = {
+      subtitle: 'APP de gestión empresarial para los que lo quieren FÁCIL',
+      heading: '',
+      paragraph: '',
+      buttonText: '',
+      buttonUrl: '',
+      signature: 'Saludos cordiales',
+    };
+    
+    // Fill empty fields with default placeholders
+    const contentWithDefaults = {
+      subtitle: emailContent.subtitle || defaultPlaceholders.subtitle,
+      heading: emailContent.heading || defaultPlaceholders.heading,
+      paragraph: emailContent.paragraph || defaultPlaceholders.paragraph,
+      buttonText: emailContent.buttonText || defaultPlaceholders.buttonText,
+      buttonUrl: emailContent.buttonUrl || defaultPlaceholders.buttonUrl,
+      signature: emailContent.signature || defaultPlaceholders.signature,
+    };
+    
+    const htmlContent = generateHtmlContent(contentWithDefaults);
     createCampaignMutation.mutate({
       ...formData,
       htmlContent,
