@@ -70,23 +70,41 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           .trim();
       };
 
-      // Extract subtitle (in blue header, after <!-- Subtitle --> comment)
-      const subtitleMatch = html.match(/<!-- Subtitle -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      // Extract subtitle - look for p tag in blue header (after logo, before Main Content)
+      // First try with comment marker
+      let subtitleMatch = html.match(/<!-- Subtitle -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      // If not found, look for p tag in blue background section (between img and Main Content comment)
+      if (!subtitleMatch) {
+        const blueHeaderSection = html.match(/background:\s*#007AFF[\s\S]*?<\/tr>/i);
+        if (blueHeaderSection) {
+          subtitleMatch = blueHeaderSection[0].match(/<p[^>]*>(.*?)<\/p>/);
+        }
+      }
       
       // Extract heading (h1 tag)
       const headingMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
       
-      // Extract paragraph (first p tag after h1, in white content area)
-      // Look for p tag that's NOT in the blue header (after h1)
-      const contentAfterH1 = html.split(/<h1[^>]*>.*?<\/h1>/)[1];
-      const paragraphMatch = contentAfterH1?.match(/<p[^>]*>(.*?)<\/p>/);
+      // Extract paragraph - find the section after "Main Content" comment
+      let paragraphMatch = null;
+      const mainContentSection = html.split(/<!-- Main Content -->/)[1];
+      if (mainContentSection) {
+        // Get first <p> tag in main content (not h1)
+        paragraphMatch = mainContentSection.match(/<p[^>]*>(.*?)<\/p>/);
+      }
       
       // Extract button text and URL
       const buttonTextMatch = html.match(/<a[^>]*style="[^"]*display: inline-block[^"]*"[^>]*>(.*?)<\/a>/);
       const buttonUrlMatch = html.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display: inline-block[^"]*"/);
       
-      // Extract signature (after <!-- Signature --> comment, in italic style)
-      const signatureMatch = html.match(/<!-- Signature -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      // Extract signature - look for p tag with italic style or after Signature comment
+      let signatureMatch = html.match(/<!-- Signature -->[\s\S]*?<p[^>]*>(.*?)<\/p>/);
+      if (!signatureMatch) {
+        // Try finding italic paragraph after button
+        const afterButton = html.split(/<\/a>[\s\S]*?<\/tr>/)[1];
+        if (afterButton) {
+          signatureMatch = afterButton.match(/<p[^>]*font-style:\s*italic[^>]*>(.*?)<\/p>/);
+        }
+      }
 
       return {
         subtitle: subtitleMatch ? cleanHtml(subtitleMatch[1]) : '',
