@@ -114,6 +114,14 @@ export default function SuperAdminMarketing() {
   const totalProspects = prospects?.length || 0;
   const activeProspects = prospects?.filter((p: any) => p.status === 'active').length || 0;
 
+  // Calculate email statistics
+  const totalSent = campaigns?.reduce((sum: number, c: any) => sum + (c.sentCount || 0), 0) || 0;
+  const totalOpened = campaigns?.reduce((sum: number, c: any) => sum + (c.openedCount || 0), 0) || 0;
+  const totalClicked = campaigns?.reduce((sum: number, c: any) => sum + (c.clickedCount || 0), 0) || 0;
+  
+  const openRate = totalSent > 0 ? Math.round((totalOpened / totalSent) * 100) : 0;
+  const clickRate = totalSent > 0 ? Math.round((totalClicked / totalSent) * 100) : 0;
+
   return (
     <SuperAdminLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -372,8 +380,8 @@ export default function SuperAdminMarketing() {
                   <Eye className="h-5 w-5 text-blue-300" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold text-white">0%</div>
-                  <p className="text-xs text-white/70 mt-2">Promedio de campañas enviadas</p>
+                  <div className="text-4xl font-bold text-white">{openRate}%</div>
+                  <p className="text-xs text-white/70 mt-2">{totalOpened} de {totalSent} emails abiertos</p>
                 </CardContent>
               </Card>
 
@@ -385,8 +393,8 @@ export default function SuperAdminMarketing() {
                   <MousePointerClick className="h-5 w-5 text-emerald-300" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold text-white">0%</div>
-                  <p className="text-xs text-white/70 mt-2">CTR promedio</p>
+                  <div className="text-4xl font-bold text-white">{clickRate}%</div>
+                  <p className="text-xs text-white/70 mt-2">{totalClicked} de {totalSent} emails con clics</p>
                 </CardContent>
               </Card>
 
@@ -398,8 +406,8 @@ export default function SuperAdminMarketing() {
                   <Send className="h-5 w-5 text-purple-300" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-4xl font-bold text-white">0</div>
-                  <p className="text-xs text-white/70 mt-2">Total de envíos</p>
+                  <div className="text-4xl font-bold text-white">{totalSent}</div>
+                  <p className="text-xs text-white/70 mt-2">Total de envíos realizados</p>
                 </CardContent>
               </Card>
             </div>
