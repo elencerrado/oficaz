@@ -135,6 +135,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <tr>
             <td style="background: #007AFF; padding: 20px; text-align: center;">
               <img src="https://oficaz.es/oficaz-logo-white.png" alt="Oficaz Logo" style="height: 35px; display: block; margin: 0 auto ${content.subtitle ? '10px' : '0'} auto;" />
+              <!-- Subtitle -->
               ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 13px; line-height: 1.4;">${content.subtitle}</p>` : ''}
             </td>
           </tr>
