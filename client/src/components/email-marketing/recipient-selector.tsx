@@ -125,10 +125,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
                   <Checkbox
                     checked={allSelected}
                     data-state={someSelected ? 'indeterminate' : undefined}
-                    onCheckedChange={(e) => {
-                      e.stopPropagation();
-                      toggleCategory(users);
-                    }}
+                    onCheckedChange={() => toggleCategory(users)}
                     onClick={(e) => e.stopPropagation()}
                     className="border-white/30 data-[state=checked]:bg-blue-600"
                   />
