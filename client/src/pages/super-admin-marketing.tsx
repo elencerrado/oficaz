@@ -85,20 +85,23 @@ export default function SuperAdminMarketing() {
           'Authorization': `Bearer ${token}`,
         },
       });
-      if (!response.ok) throw new Error('Failed to send campaign');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send campaign');
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: 'Campaña enviada',
-        description: 'La campaña se está enviando a los destinatarios',
+        description: data.message || 'La campaña se envió correctamente',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
-        description: 'No se pudo enviar la campaña',
+        description: error.message || 'No se pudo enviar la campaña',
         variant: 'destructive',
       });
     },
@@ -228,10 +231,10 @@ export default function SuperAdminMarketing() {
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right mr-4">
-                            <p className="text-sm text-white/80">{campaign.recipientsCount || 0} destinatarios</p>
+                            <p className="text-sm text-white/80">{campaign.selectedEmails?.length || 0} seleccionados</p>
                             {campaign.status === 'sent' && (
                               <p className="text-xs text-white/60">
-                                {campaign.openedCount || 0} aperturas · {campaign.clickedCount || 0} clics
+                                {campaign.sentCount || 0} enviados · {campaign.openedCount || 0} aperturas
                               </p>
                             )}
                           </div>
@@ -245,7 +248,7 @@ export default function SuperAdminMarketing() {
                             <Edit className="w-4 h-4 mr-1" />
                             Editar
                           </Button>
-                          {campaign.status === 'draft' && (
+                          {(campaign.selectedEmails?.length > 0) && (
                             <Button 
                               variant="ghost" 
                               size="sm"
@@ -255,7 +258,7 @@ export default function SuperAdminMarketing() {
                               data-testid={`button-send-campaign-${campaign.id}`}
                             >
                               <Send className="w-4 h-4 mr-1" />
-                              {sendCampaignMutation.isPending ? 'Enviando...' : 'Enviar'}
+                              {sendCampaignMutation.isPending ? 'Enviando...' : campaign.status === 'sent' ? 'Enviar a Nuevos' : 'Enviar'}
                             </Button>
                           )}
                         </div>
