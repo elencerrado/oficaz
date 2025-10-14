@@ -171,7 +171,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           <!-- Logo Header with Subtitle -->
           <tr>
             <td style="background: #007AFF; padding: ${content.subtitle ? '30px 20px 20px' : '30px 20px'}; text-align: center;">
-              <img src="https://oficaz.es/email-logo.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto; filter: brightness(0) invert(1);" />
+              <img src="${window.location.origin}/email-logo-white.png" alt="Oficaz Logo" style="height: 40px; display: block; margin: 0 auto ${content.subtitle ? '15px' : '0'} auto;" />
               <!-- Subtitle -->
               ${content.subtitle ? `<p style="margin: 0; color: #ffffff; font-size: 14px; line-height: 1.5; font-weight: 500;">${content.subtitle.replace(/\n/g, '<br/>')}</p>` : ''}
             </td>
