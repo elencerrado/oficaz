@@ -7872,10 +7872,15 @@ Responde directamente a este email para contactar con la persona.
   // Create email prospect
   app.post('/api/super-admin/email-prospects', authenticateSuperAdmin, async (req: any, res) => {
     try {
-      const prospect = await storage.createEmailProspect(req.body);
+      // Validate with Zod schema
+      const prospectData = schema.insertEmailProspectSchema.parse(req.body);
+      const prospect = await storage.createEmailProspect(prospectData);
       res.json(prospect);
     } catch (error: any) {
       console.error('Error creating email prospect:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ success: false, message: 'Datos inválidos', errors: error.errors });
+      }
       if (error.message?.includes('unique constraint')) {
         return res.status(400).json({ success: false, message: 'Este email ya existe' });
       }
@@ -7886,10 +7891,15 @@ Responde directamente a este email para contactar con la persona.
   // Create email campaign
   app.post('/api/super-admin/email-campaigns', authenticateSuperAdmin, async (req: any, res) => {
     try {
-      const campaign = await storage.createEmailCampaign(req.body);
+      // Validate with Zod schema
+      const campaignData = schema.insertEmailCampaignSchema.parse(req.body);
+      const campaign = await storage.createEmailCampaign(campaignData);
       res.json(campaign);
     } catch (error: any) {
       console.error('Error creating email campaign:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ success: false, message: 'Datos inválidos', errors: error.errors });
+      }
       res.status(500).json({ success: false, message: 'Error al crear campaña' });
     }
   });

@@ -4,17 +4,18 @@ import { SuperAdminLayout } from '@/components/layout/super-admin-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
+import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
 import { 
   Send, 
   Users, 
   Mail, 
   BarChart3,
-  Plus,
   Clock,
   CheckCircle,
-  XCircle,
   Eye,
-  MousePointerClick
+  MousePointerClick,
+  Trash2
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
@@ -156,10 +157,7 @@ export default function SuperAdminMarketing() {
                 <h2 className="text-xl font-semibold text-white">Campañas de Email</h2>
                 <p className="text-white/60 text-sm">Crea y gestiona tus campañas de marketing</p>
               </div>
-              <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-create-campaign">
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Campaña
-              </Button>
+              <CreateCampaignDialog />
             </div>
 
             <Card className="bg-white/10 backdrop-blur-xl border-white/20">
@@ -169,10 +167,7 @@ export default function SuperAdminMarketing() {
                     <Mail className="w-12 h-12 text-white/40 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-white mb-2">No hay campañas</h3>
                     <p className="text-white/60 mb-4">Crea tu primera campaña de email marketing</p>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Crear Primera Campaña
-                    </Button>
+                    <CreateCampaignDialog />
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -260,10 +255,7 @@ export default function SuperAdminMarketing() {
                       <Send className="w-5 h-5" />
                       Prospects Externos
                     </CardTitle>
-                    <Button className="bg-purple-600 hover:bg-purple-700" data-testid="button-add-prospect">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Añadir Prospect
-                    </Button>
+                    <AddProspectDialog />
                   </div>
                 </CardHeader>
                 <CardContent>

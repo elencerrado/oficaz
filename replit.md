@@ -48,14 +48,15 @@ Preferred communication style: Simple, everyday language.
 - **File Uploads**: Multer with Sharp (image compression), with specific handling for iOS devices.
 - **Session Management**: Express sessions with PostgreSQL store.
 - **Security**: Helmet for CSP, CORS, rate limiting, HSTS, X-XSS-Protection, Referrer-Policy; SQL injection protection via parameterized queries. SuperAdmin access is exclusive via email verification (`soy@oficaz.es`).
-- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders.
+- **Core Modules**: Authentication, Time Tracking, Vacation Management, Document Management, Messaging, Administrative Features, Subscription Management, Reminders, Email Marketing (SuperAdmin).
 - **Account Management**: Includes a 30-day grace period for account deletion with a recovery process that bypasses the registration wizard. Cancelled accounts are immediately blocked.
 - **Data Integrity**: Break periods must belong to the current work session. Orphaned documents (DB records without physical files) are automatically removed.
+- **Email Marketing System** (SuperAdmin): Complete email marketing module with campaign management, prospect database, and user segmentation by subscription status (active, trial, blocked, cancelled). Includes SendGrid integration structure for transactional/marketing emails. Campaign creation with HTML content, audience targeting, and tracking infrastructure (sends, opens, clicks). Zod validation on backend endpoints ensures data integrity.
 
 ### Database Design
 - **ORM**: Drizzle with PostgreSQL dialect.
 - **Schema**: Type-safe schema definitions.
-- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features.
+- **Key Tables**: Companies, Users, Work Sessions, Vacation Requests, Documents, Messages, Subscriptions, Reminders, Notifications, Features, Email Campaigns, Email Prospects, Email Campaign Sends.
 
 ### Performance & Scalability
 - **High Concurrency Support**: Optimized for 1000+ simultaneous clock-ins during peak hours
