@@ -155,45 +155,89 @@ export default function SuperAdminDashboard() {
                   <BarChart3 className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-white text-xl">Resumen de Métricas</CardTitle>
-                  <p className="text-white/60 text-sm mt-1">Vista general del sistema</p>
+                  <CardTitle className="text-white text-xl">Panel de Métricas</CardTitle>
+                  <p className="text-white/60 text-sm mt-1">Haz clic para ver análisis completo</p>
                 </div>
               </div>
               <ArrowRight className="w-5 h-5 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-blue-500/20 rounded-xl flex items-center justify-center mb-3">
-                  <Building2 className="w-7 h-7 text-blue-400" />
+            {/* Main Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-400/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stats?.totalCompanies || 0}</div>
+                    <p className="text-xs text-white/60">Empresas</p>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-1">{stats?.totalCompanies || 0}</div>
-                <p className="text-xs text-white/60">Empresas</p>
               </div>
 
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-emerald-500/20 rounded-xl flex items-center justify-center mb-3">
-                  <Users className="w-7 h-7 text-emerald-400" />
+              <div className="bg-emerald-500/10 rounded-xl p-4 border border-emerald-400/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-emerald-400" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stats?.totalUsers || 0}</div>
+                    <p className="text-xs text-white/60">Usuarios</p>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-1">{stats?.totalUsers || 0}</div>
-                <p className="text-xs text-white/60">Usuarios</p>
               </div>
 
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-purple-500/20 rounded-xl flex items-center justify-center mb-3">
-                  <TrendingUp className="w-7 h-7 text-purple-400" />
+              <div className="bg-purple-500/10 rounded-xl p-4 border border-purple-400/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stats?.activePaidSubscriptions || 0}</div>
+                    <p className="text-xs text-white/60">Activas</p>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-1">{stats?.activePaidSubscriptions || 0}</div>
-                <p className="text-xs text-white/60">Suscripciones</p>
               </div>
 
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto bg-yellow-500/20 rounded-xl flex items-center justify-center mb-3">
-                  <Euro className="w-7 h-7 text-yellow-400" />
+              <div className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-400/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <Euro className="w-6 h-6 text-yellow-400" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-white">{stats?.monthlyRevenue?.toFixed(2) || '0.00'}€</div>
+                    <p className="text-xs text-white/60">MRR</p>
+                  </div>
                 </div>
-                <div className="text-3xl font-bold text-white mb-1">{stats?.monthlyRevenue?.toFixed(0) || 0}€</div>
-                <p className="text-xs text-white/60">Ingresos/mes</p>
+              </div>
+            </div>
+
+            {/* Plan Distribution */}
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-sm text-white/60 mb-3">Distribución por Plan</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-blue-500/5 rounded-lg p-3 border border-blue-400/10 text-center">
+                  <div className="w-10 h-10 bg-blue-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.basic || 0}</span>
+                  </div>
+                  <p className="text-xs text-white/70 font-medium">Basic</p>
+                </div>
+
+                <div className="bg-purple-500/5 rounded-lg p-3 border border-purple-400/10 text-center">
+                  <div className="w-10 h-10 bg-purple-500 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.pro || 0}</span>
+                  </div>
+                  <p className="text-xs text-white/70 font-medium">Pro</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-yellow-500/5 to-yellow-600/5 rounded-lg p-3 border border-yellow-400/10 text-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">{stats?.planDistribution?.master || 0}</span>
+                  </div>
+                  <p className="text-xs text-white/70 font-medium">Master</p>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -265,50 +309,6 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Plan Distribution Quick View */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-blue-500/10 backdrop-blur-xl border-blue-400/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white/80 mb-1">Plan Basic</p>
-                  <div className="text-2xl font-bold text-white">{stats?.planDistribution?.basic || 0}</div>
-                </div>
-                <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-purple-500/10 backdrop-blur-xl border-purple-400/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white/80 mb-1">Plan Pro</p>
-                  <div className="text-2xl font-bold text-white">{stats?.planDistribution?.pro || 0}</div>
-                </div>
-                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/10 backdrop-blur-xl border-yellow-400/30">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-white/80 mb-1">Plan Master</p>
-                  <div className="text-2xl font-bold text-white">{stats?.planDistribution?.master || 0}</div>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
-                  <Crown className="w-6 h-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Pending Deletions Alert */}
         {pendingDeletions && pendingDeletions.length > 0 && (

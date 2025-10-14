@@ -999,8 +999,22 @@ export class DrizzleStorage implements IStorage {
     // Total active users across all companies
     const usersCount = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
     
-    // Get subscription stats with active status filter
-    const subscriptionStats = await db
+    // Get all subscription stats (including trial and active)
+    const allSubscriptionStats = await db
+      .select({
+        plan: schema.subscriptions.plan,
+        count: sql<number>`count(*)`,
+      })
+      .from(schema.subscriptions)
+      .groupBy(schema.subscriptions.plan);
+
+    const planCounts = allSubscriptionStats.reduce((acc, row) => {
+      acc[row.plan as keyof typeof acc] = row.count;
+      return acc;
+    }, { free: 0, basic: 0, pro: 0, master: 0 });
+
+    // Get only active subscriptions for paid count
+    const activeSubscriptionStats = await db
       .select({
         plan: schema.subscriptions.plan,
         status: schema.subscriptions.status,
@@ -1010,13 +1024,8 @@ export class DrizzleStorage implements IStorage {
       .where(eq(schema.subscriptions.status, 'active'))
       .groupBy(schema.subscriptions.plan, schema.subscriptions.status);
 
-    const planCounts = subscriptionStats.reduce((acc, row) => {
-      acc[row.plan as keyof typeof acc] = row.count;
-      return acc;
-    }, { free: 0, basic: 0, pro: 0, master: 0 });
-
     // Calculate active paid subscriptions (excluding free)
-    const activePaidSubscriptions = subscriptionStats.reduce((acc, row) => {
+    const activePaidSubscriptions = activeSubscriptionStats.reduce((acc, row) => {
       if (row.plan !== 'free' && row.status === 'active') {
         acc += row.count;
       }
