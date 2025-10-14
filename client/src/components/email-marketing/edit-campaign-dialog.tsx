@@ -83,6 +83,35 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
     },
   });
 
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-campaigns/${campaign.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete campaign');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Campaña eliminada',
+        description: 'La campaña ha sido eliminada correctamente',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/email-campaigns'] });
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar la campaña',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateCampaignMutation.mutate(formData);
@@ -144,37 +173,31 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
           </div>
 
           <div className="space-y-3">
-            <Label className="text-white">Destinatarios - Usuarios Registrados</Label>
+            <Label className="text-white">Destinatarios</Label>
             <RecipientSelector
               selectedEmails={formData.selectedEmails}
               onSelectionChange={(emails) => setFormData({ ...formData, selectedEmails: emails })}
             />
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-white">Prospects Externos</Label>
-            <div className="flex items-center space-x-2 border border-white/20 rounded-lg p-4 bg-white/5">
-              <Checkbox
-                id="prospects"
-                checked={formData.includeProspects}
-                onCheckedChange={(checked) => 
-                  setFormData({ ...formData, includeProspects: checked as boolean })
-                }
-                className="border-white/30 data-[state=checked]:bg-blue-600"
-              />
-              <label htmlFor="prospects" className="text-sm cursor-pointer text-white">
-                Incluir Prospects Externos
-              </label>
+          <div className="flex justify-between gap-2 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => deleteCampaignMutation.mutate()} 
+              disabled={deleteCampaignMutation.isPending}
+              className="border-red-500 text-red-500 hover:bg-red-500/10"
+            >
+              {deleteCampaignMutation.isPending ? 'Eliminando...' : 'Eliminar Campaña'}
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-white/20 text-white hover:bg-white/10">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateCampaignMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
+                {updateCampaignMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-white/20 text-white hover:bg-white/10">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={updateCampaignMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
-              {updateCampaignMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
           </div>
         </form>
       </DialogContent>

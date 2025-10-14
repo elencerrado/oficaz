@@ -7985,6 +7985,17 @@ Responde directamente a este email para contactar con la persona.
     }
   });
 
+  // Delete email campaign
+  app.delete('/api/super-admin/email-campaigns/:id', authenticateSuperAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteEmailCampaign(parseInt(req.params.id));
+      res.json({ success: true, message: 'Campaña eliminada correctamente' });
+    } catch (error: any) {
+      console.error('Error deleting email campaign:', error);
+      res.status(500).json({ success: false, message: 'Error al eliminar campaña' });
+    }
+  });
+
   // Send email campaign
   app.post('/api/super-admin/email-campaigns/:id/send', authenticateSuperAdmin, async (req: any, res) => {
     try {
