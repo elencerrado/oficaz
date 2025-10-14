@@ -7991,7 +7991,15 @@ Responde directamente a este email para contactar con la persona.
   // Delete email campaign
   app.delete('/api/super-admin/email-campaigns/:id', authenticateSuperAdmin, async (req: any, res) => {
     try {
-      await storage.deleteEmailCampaign(parseInt(req.params.id));
+      const campaignId = parseInt(req.params.id);
+      console.log('🗑️ Attempting to delete campaign ID:', campaignId);
+      const deleted = await storage.deleteEmailCampaign(campaignId);
+      console.log('🗑️ Delete result:', deleted);
+      
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
+      }
+      
       res.json({ success: true, message: 'Campaña eliminada correctamente' });
     } catch (error: any) {
       console.error('Error deleting email campaign:', error);

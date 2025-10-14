@@ -2839,9 +2839,11 @@ export class DrizzleStorage implements IStorage {
   }
 
   async deleteEmailCampaign(id: number): Promise<boolean> {
+    console.log('📦 Storage: Deleting email campaign with ID:', id);
     const result = await db.delete(schema.emailCampaigns)
       .where(eq(schema.emailCampaigns.id, id))
       .returning();
+    console.log('📦 Storage: Delete result rows:', result.length);
     return result.length > 0;
   }
 
