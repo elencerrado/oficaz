@@ -131,8 +131,7 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
       ...activeUsers.map(u => u.email),
       ...trialUsers.map(u => u.email),
       ...blockedUsers.map(u => u.email),
-      ...cancelledUsers.map(u => u.email),
-      ...prospects.map(p => p.email)
+      ...cancelledUsers.map(u => u.email)
     ];
     onSelectionChange(allEmails);
   };
@@ -154,10 +153,9 @@ export function RecipientSelector({ selectedEmails, onSelectionChange }: Recipie
     { key: 'trial', label: 'En Período de Prueba', users: trialUsers, color: 'yellow' },
     { key: 'blocked', label: 'Bloqueadas', users: blockedUsers, color: 'red' },
     { key: 'cancelled', label: 'Canceladas', users: cancelledUsers, color: 'gray' },
-    { key: 'prospects', label: 'Prospects Externos', users: prospects, color: 'purple' },
   ];
 
-  const totalEmails = activeUsers.length + trialUsers.length + blockedUsers.length + cancelledUsers.length + prospects.length;
+  const totalEmails = activeUsers.length + trialUsers.length + blockedUsers.length + cancelledUsers.length;
   const allSelected = totalEmails > 0 && selectedEmails.length === totalEmails;
 
   return (
