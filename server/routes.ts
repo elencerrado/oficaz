@@ -2246,6 +2246,7 @@ Responde directamente a este email para contactar con la persona.
         // 📊 Email marketing conversion tracking
         emailCampaignId: campaignId ? parseInt(campaignId) : null,
         registrationSource: registrationSource,
+        marketingEmailsConsent: data.acceptMarketing || false, // Consentimiento para recibir correos comerciales
       });
       
       if (campaignId) {
@@ -2986,6 +2987,7 @@ Responde directamente a este email para contactar con la persona.
         // 📊 Email marketing conversion tracking
         emailCampaignId: campaignId ? parseInt(campaignId) : null,
         registrationSource: registrationSource,
+        marketingEmailsConsent: data.acceptMarketing || false, // Consentimiento para recibir correos comerciales
       });
       
       if (campaignId) {

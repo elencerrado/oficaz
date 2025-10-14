@@ -95,6 +95,7 @@ const step4Schema = z.object({
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'Debes aceptar los términos y condiciones para continuar',
   }),
+  acceptMarketing: z.boolean().optional(), // Consentimiento para recibir correos comerciales
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
@@ -209,6 +210,7 @@ export default function Register({ byInvitation = false, invitationEmail, invita
       selectedPlan: '',
       promotionalCode: '',
       acceptTerms: false,
+      acceptMarketing: false,
     },
   });
 
@@ -1222,6 +1224,22 @@ export default function Register({ byInvitation = false, invitationEmail, invita
                   {step4Form.formState.errors.acceptTerms.message}
                 </p>
               )}
+
+              {/* Marketing emails consent checkbox */}
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+                <Checkbox
+                  id="acceptMarketing"
+                  checked={step4Form.watch('acceptMarketing') || false}
+                  onCheckedChange={(checked) => step4Form.setValue('acceptMarketing', checked as boolean)}
+                  className="mt-0.5"
+                  data-testid="checkbox-accept-marketing"
+                />
+                <div className="flex-1">
+                  <Label htmlFor="acceptMarketing" className="text-sm text-gray-700 leading-relaxed cursor-pointer">
+                    Acepto recibir correos comerciales e informativos de Oficaz (opcional)
+                  </Label>
+                </div>
+              </div>
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                 <Button type="submit" className="w-full sm:flex-1 rounded-xl px-8 order-1 sm:order-2" disabled={isLoading}>
