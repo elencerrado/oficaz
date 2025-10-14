@@ -23,6 +23,16 @@ interface EmailSend {
 export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenChange }: CampaignHistoryDialogProps) {
   const { data: sends = [], isLoading } = useQuery<EmailSend[]>({
     queryKey: ['/api/super-admin/email-campaigns', campaignId, 'history'],
+    queryFn: async () => {
+      const token = localStorage.getItem('superAdminToken');
+      const response = await fetch(`/api/super-admin/email-campaigns/${campaignId}/history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch campaign history');
+      return response.json();
+    },
     enabled: open,
   });
 

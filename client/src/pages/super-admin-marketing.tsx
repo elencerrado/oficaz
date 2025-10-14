@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CreateCampaignDialog } from '@/components/email-marketing/create-campaign-dialog';
 import { AddProspectDialog } from '@/components/email-marketing/add-prospect-dialog';
 import { EditCampaignDialog } from '@/components/email-marketing/edit-campaign-dialog';
+import { CampaignHistoryDialog } from '@/components/email-marketing/campaign-history-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Send, 
@@ -18,12 +19,14 @@ import {
   Eye,
   MousePointerClick,
   Trash2,
-  Edit
+  Edit,
+  History
 } from 'lucide-react';
 
 export default function SuperAdminMarketing() {
   const [activeTab, setActiveTab] = useState('campaigns');
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
+  const [historyCampaign, setHistoryCampaign] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -248,6 +251,18 @@ export default function SuperAdminMarketing() {
                               </p>
                             )}
                           </div>
+                          {campaign.status === 'sent' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setHistoryCampaign(campaign)}
+                              className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10"
+                              data-testid={`button-history-campaign-${campaign.id}`}
+                            >
+                              <History className="w-4 h-4 mr-1" />
+                              Historial
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm"
@@ -433,6 +448,16 @@ export default function SuperAdminMarketing() {
           campaign={editingCampaign}
           open={!!editingCampaign}
           onOpenChange={(open) => !open && setEditingCampaign(null)}
+        />
+      )}
+
+      {/* Campaign History Dialog */}
+      {historyCampaign && (
+        <CampaignHistoryDialog
+          campaignId={historyCampaign.id}
+          campaignName={historyCampaign.name}
+          open={!!historyCampaign}
+          onOpenChange={(open) => !open && setHistoryCampaign(null)}
         />
       )}
     </SuperAdminLayout>
