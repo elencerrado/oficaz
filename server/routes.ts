@@ -16,7 +16,7 @@ import { authenticateToken, requireRole, generateToken, AuthRequest } from './mi
 import { withDatabaseRetry } from './utils';
 import { loginSchema, companyRegistrationSchema, insertVacationRequestSchema, insertWorkShiftSchema, insertMessageSchema, passwordResetRequestSchema, passwordResetSchema, contactFormSchema } from '@shared/schema';
 import { db } from './db';
-import { eq, and, or, desc, sql, not, inArray, count, gte, lt } from 'drizzle-orm';
+import { eq, and, or, desc, sql, not, inArray, count, gte, lt, isNotNull } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import { subscriptions, companies, features, users, workSessions, breakPeriods, vacationRequests, messages, reminders, documents, employeeActivationTokens, passwordResetTokens } from '@shared/schema';
 import { sendEmail, sendEmployeeWelcomeEmail, sendPasswordResetEmail, sendSuperAdminSecurityCode, sendNewCompanyRegistrationNotification } from './email';
