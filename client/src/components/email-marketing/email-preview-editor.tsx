@@ -14,9 +14,10 @@ interface EmailContent {
 interface EmailPreviewEditorProps {
   content: EmailContent;
   onChange: (content: EmailContent) => void;
+  audienceType?: 'subscribers' | 'one_time';
 }
 
-export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProps) {
+export function EmailPreviewEditor({ content, onChange, audienceType = 'subscribers' }: EmailPreviewEditorProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -339,9 +340,17 @@ export function EmailPreviewEditor({ content, onChange }: EmailPreviewEditorProp
                     textAlign: 'center',
                   }}
                 >
-                  <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
+                  <p style={{ margin: audienceType === 'subscribers' ? '0 0 10px' : 0, color: '#666', fontSize: '14px' }}>
                     © {new Date().getFullYear()} Oficaz. Todos los derechos reservados.
                   </p>
+                  {audienceType === 'subscribers' && (
+                    <p style={{ margin: 0, color: '#999', fontSize: '12px' }}>
+                      Este correo fue enviado desde Oficaz<br />
+                      <a href="#unsubscribe" style={{ color: '#007AFF', textDecoration: 'none' }}>
+                        Cancelar suscripción
+                      </a>
+                    </p>
+                  )}
                 </td>
               </tr>
             </tbody>

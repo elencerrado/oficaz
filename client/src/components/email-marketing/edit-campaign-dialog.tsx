@@ -418,6 +418,7 @@ export function EditCampaignDialog({ campaign, open, onOpenChange }: EditCampaig
               <EmailPreviewEditor
                 content={emailContent}
                 onChange={setEmailContent}
+                audienceType={formData.audienceType}
               />
             )}
           </div>

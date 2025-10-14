@@ -319,6 +319,7 @@ export function CreateCampaignDialog() {
           <EmailPreviewEditor
             content={emailContent}
             onChange={setEmailContent}
+            audienceType={formData.audienceType}
           />
         )}
 
