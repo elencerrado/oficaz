@@ -8124,7 +8124,7 @@ Responde directamente a este email para contactar con la persona.
         return res.status(404).json({ success: false, message: 'Campaña no encontrada' });
       }
 
-      // Create duplicate without sent data
+      // Create duplicate without sent data - include all required fields
       const duplicateData = {
         name: `${originalCampaign.name} (Copia)`,
         subject: originalCampaign.subject,
@@ -8132,6 +8132,14 @@ Responde directamente a este email para contactar con la persona.
         htmlContent: originalCampaign.htmlContent,
         selectedEmails: originalCampaign.selectedEmails || [],
         status: 'draft' as const,
+        targetAudience: originalCampaign.targetAudience,
+        includeActiveSubscriptions: originalCampaign.includeActiveSubscriptions || false,
+        includeTrialSubscriptions: originalCampaign.includeTrialSubscriptions || false,
+        includeBlockedSubscriptions: originalCampaign.includeBlockedSubscriptions || false,
+        includeCancelledSubscriptions: originalCampaign.includeCancelledSubscriptions || false,
+        includeProspects: originalCampaign.includeProspects || false,
+        specificPlans: originalCampaign.specificPlans || [],
+        prospectTags: originalCampaign.prospectTags || [],
       };
 
       const duplicatedCampaign = await storage.createEmailCampaign(duplicateData);
