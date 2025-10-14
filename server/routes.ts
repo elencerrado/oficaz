@@ -8176,9 +8176,27 @@ Responde directamente a este email para contactar con la persona.
             sentAt: new Date(),
           }).returning();
 
+          const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://oficaz.replit.app';
+
           // Add tracking pixel to HTML
-          const trackingPixel = `<img src="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://oficaz.replit.app'}/api/track/open/${sendRecord.id}" width="1" height="1" style="display:none;" alt="" />`;
-          const htmlWithTracking = campaign.htmlContent + trackingPixel;
+          const trackingPixel = `<img src="${domain}/api/track/open/${sendRecord.id}" width="1" height="1" style="display:none;" alt="" />`;
+          
+          // Replace button URL with tracking URL
+          let htmlWithTracking = campaign.htmlContent;
+          
+          // Find button href and replace with tracking URL
+          const buttonMatch = htmlWithTracking.match(/<a[^>]*href="([^"]+)"[^>]*style="[^"]*display:\s*inline-block[^"]*"[^>]*>/);
+          if (buttonMatch) {
+            const originalUrl = buttonMatch[1];
+            const trackingUrl = `${domain}/api/track/click/${sendRecord.id}?url=${encodeURIComponent(originalUrl)}`;
+            htmlWithTracking = htmlWithTracking.replace(
+              buttonMatch[0],
+              buttonMatch[0].replace(`href="${originalUrl}"`, `href="${trackingUrl}"`)
+            );
+          }
+          
+          // Add tracking pixel
+          htmlWithTracking = htmlWithTracking + trackingPixel;
 
           await transporter.sendMail({
             from: '"Oficaz" <soy@oficaz.es>',
