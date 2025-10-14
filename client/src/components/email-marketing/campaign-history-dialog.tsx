@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, Mail, MailOpen } from "lucide-react";
+import { Clock, Mail, MailOpen, MousePointerClick } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -18,6 +18,7 @@ interface EmailSend {
   recipientName: string | null;
   sentAt: string;
   openedAt: string | null;
+  clickedAt: string | null;
 }
 
 export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenChange }: CampaignHistoryDialogProps) {
@@ -71,6 +72,7 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
             {sortedDates.map(date => {
               const daySends = groupedSends[date];
               const openedCount = daySends.filter(s => s.openedAt).length;
+              const clickedCount = daySends.filter(s => s.clickedAt).length;
               
               return (
                 <div key={date} className="bg-white/5 rounded-lg p-4">
@@ -82,7 +84,7 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
                       </h3>
                     </div>
                     <div className="text-sm text-white/60">
-                      {daySends.length} enviados · {openedCount} abiertos
+                      {daySends.length} enviados · {openedCount} abiertos · {clickedCount} clics
                     </div>
                   </div>
 
@@ -93,11 +95,16 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
                         className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
                       >
                         <div className="flex items-center gap-3">
-                          {send.openedAt ? (
-                            <MailOpen className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Mail className="w-4 h-4 text-white/40" />
-                          )}
+                          <div className="flex items-center gap-1">
+                            {send.openedAt ? (
+                              <MailOpen className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Mail className="w-4 h-4 text-white/40" />
+                            )}
+                            {send.clickedAt && (
+                              <MousePointerClick className="w-4 h-4 text-blue-400" />
+                            )}
+                          </div>
                           <div>
                             <p className="text-white font-medium">
                               {send.recipientName || send.recipientEmail}
@@ -114,6 +121,11 @@ export function CampaignHistoryDialog({ campaignId, campaignName, open, onOpenCh
                           {send.openedAt && (
                             <p className="text-xs text-green-400">
                               Abierto {format(parseISO(send.openedAt), 'HH:mm', { locale: es })}
+                            </p>
+                          )}
+                          {send.clickedAt && (
+                            <p className="text-xs text-blue-400">
+                              Clic {format(parseISO(send.clickedAt), 'HH:mm', { locale: es })}
                             </p>
                           )}
                         </div>
