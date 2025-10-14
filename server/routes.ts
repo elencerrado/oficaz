@@ -7887,11 +7887,13 @@ Responde directamente a este email para contactar con la persona.
       }
 
       const users = await db.execute(sql`
-        SELECT u.email, c.name as "companyName"
+        SELECT 
+          COALESCE(u.company_email, u.personal_email) as email, 
+          c.name as "companyName"
         FROM users u
         INNER JOIN companies c ON u.company_id = c.id
         INNER JOIN subscriptions s ON c.id = s.company_id
-        WHERE u.email IS NOT NULL 
+        WHERE COALESCE(u.company_email, u.personal_email) IS NOT NULL 
         AND s.status = ${statusMap[category]}
       `);
 
